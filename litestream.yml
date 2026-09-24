@@ -1,0 +1,7 @@
+# Replicación continua de la base SQLite (Litestream 0.5). La usa scripts/iniciar.sh solo si
+# está definida LITESTREAM_REPLICA_URL; en Fly.io, iniciar.sh la arma desde BUCKET_NAME (Tigris).
+# Las credenciales se leen de AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY.
+dbs:
+  - path: ${PORTAL_DB}
+    replica:
+      url: ${LITESTREAM_REPLICA_URL}

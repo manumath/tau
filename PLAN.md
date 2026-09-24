@@ -149,7 +149,11 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 | 6. Informes | CV, informe de proyecto, memoria anual; descargas XLSX, CSV y BibTeX | ✔ |
 | 7. Extras | Recuperación e invitación por correo, avisos, perfiles públicos, API JSON, auditoría | ✔ |
 
-196 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+**Despliegue:** servidor propio (systemd + Caddy) o Fly.io (contenedor, volumen y réplica
+continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
+lectura permiten mudarse entre ambos sin perder información.
+
+200 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -179,11 +183,16 @@ conviene validarlas con el instituto antes del piloto.
 
 ## 9. Pendiente
 
-**Antes de producción** (ver [despliegue](docs/despliegue.md)):
+**Antes de producción** (ver [despliegue](docs/despliegue.md) o [Fly.io](docs/despliegue-fly.md)):
 - Compilar Tailwind localmente en lugar de cargarlo desde un CDN (el aviso de la consola lo
   recomienda) y, idealmente, servir también los scripts de htmx, FrankenUI y KaTeX desde el propio servidor.
 - Configurar SMTP, `PORTAL_URL`, `PORTAL_SECRET_KEY`, `PORTAL_HTTPS_ONLY=1` y `PORTAL_CONTACTO`.
 - Revisar con el instituto las decisiones marcadas «(confirmar)».
+- Elegir dónde alojar el piloto (servidor del instituto o Fly.io) según su política sobre datos
+  personales en proveedores externos; usar un dominio propio desde el inicio facilita mudarse.
+- Si se usa Fly.io: construir la imagen (`docker build .`) y probar un despliegue real. El
+  arranque con Litestream (restauración tras perder el volumen) se probó localmente; la imagen de
+  Docker y la plataforma, todavía no.
 
 **Funcionalidad que el plan original incluía y aún no está:**
 - Administrar los catálogos (tipos de actividad y de producto, índices) desde la interfaz. Hoy

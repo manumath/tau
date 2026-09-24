@@ -67,7 +67,13 @@ def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = 
     """Página completa. Con usuario muestra la navegación; sin él, un lienzo centrado."""
     cuerpo = Container(*contenido, cls=(ContainerT.xl, "py-8")) if usuario else Div(
         *contenido, cls="min-h-screen flex items-center justify-center p-4 bg-muted/40")
+    aviso = Div(UkIcon("wrench", height=16, width=16, cls="shrink-0"),
+                Span("El portal está en mantenimiento: puede consultar, pero por ahora los cambios no se guardan."),
+                cls="flex items-center justify-center gap-2 px-4 py-2 text-sm bg-amber-100 text-amber-900 "
+                    "dark:bg-amber-950 dark:text-amber-200 no-imprimir", role="status") \
+        if config.SOLO_LECTURA else ""
     return (Title(f"{titulo} · {config.NOMBRE_INSTITUTO}"),
+            aviso,
             barra_navegacion(usuario, seccion) if usuario else "",
             Main(cuerpo),
             Div(id=ID_MODAL))

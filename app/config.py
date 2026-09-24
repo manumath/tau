@@ -25,6 +25,9 @@ SMTP_USUARIO = os.environ.get("PORTAL_SMTP_USUARIO")
 SMTP_CLAVE = os.environ.get("PORTAL_SMTP_CLAVE")
 SMTP_STARTTLS = os.environ.get("PORTAL_SMTP_STARTTLS", "1") == "1"
 
+# Modo solo lectura (mudanzas y mantenimiento): se puede consultar, pero ningún cambio se guarda.
+SOLO_LECTURA = os.environ.get("PORTAL_SOLO_LECTURA", "0") == "1"
+
 # Bloqueo de login: N intentos fallidos por email dentro de la ventana.
 LOGIN_MAX_FALLOS = 5
 LOGIN_VENTANA_MIN = 15

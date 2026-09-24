@@ -40,6 +40,22 @@ def _cargar_usuario(req, sess):
 
 beforeware = Beforeware(_cargar_usuario, skip=RUTAS_PUBLICAS)
 
+# Rutas que modifican solo la sesión (y registros de acceso sin importancia en una mudanza).
+PERMITIDAS_EN_SOLO_LECTURA = {"/login", "/logout"}
+
+
+def _solo_lectura(req):
+    """Con PORTAL_SOLO_LECTURA=1 rechaza toda petición que modifique datos (se usa al exportar los
+    datos para una mudanza, para que nada cambie después de la copia)."""
+    if (config.SOLO_LECTURA and req.method not in ("GET", "HEAD", "OPTIONS")
+            and req.url.path not in PERMITIDAS_EN_SOLO_LECTURA):
+        return Response("El portal está en mantenimiento: por ahora solo se puede consultar.",
+                        status_code=503)
+
+
+# Sin rutas excluidas: el modo solo lectura también protege las públicas (p. ej. /recuperar).
+beforeware_solo_lectura = Beforeware(_solo_lectura)
+
 rt = APIRouter()
 
 

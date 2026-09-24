@@ -1,5 +1,8 @@
 # Despliegue en producción
 
+> ¿Sin servidor propio? Vea la alternativa en [Fly.io](despliegue-fly.md). Los datos se pueden
+> mudar después entre una y otra sin perder nada (ver [Mudanzas](#mudanzas-y-mantenimiento)).
+
 Guía para instalar el portal en un servidor Linux (Ubuntu o Debian) con HTTPS. Supone un dominio,
 por ejemplo `portal.instituto.cl`, que ya apunta al servidor, y una cuenta de correo SMTP para
 los envíos.
@@ -133,6 +136,27 @@ ambas cosas. Por ejemplo, con `crontab -e`, una copia diaria a las 3:00:
 `.backup` hace una copia consistente aunque el portal esté en uso. Guarde los respaldos fuera
 del servidor y pruebe de vez en cuando que se pueden restaurar. Para respaldo continuo, considere
 [Litestream](https://litestream.io).
+
+**Respaldo completo en un solo archivo:** `scripts/paquete.py` junta la base, las fotos y los
+adjuntos en un `.tar.gz` con un manifiesto verificable (se puede ejecutar con el portal en marcha):
+
+```bash
+cd /opt/portal && set -a && source /etc/portal.env && set +a
+uv run python scripts/paquete.py exportar /respaldos/portal-$(date +%F).tar.gz
+```
+
+## Mudanzas y mantenimiento
+
+El mismo paquete sirve para trasladar el portal a otro servidor (o a/desde [Fly.io](despliegue-fly.md)):
+exportar en el origen, `uv run python scripts/paquete.py importar archivo.tar.gz` en el destino
+(con el portal detenido). El importador verifica la integridad y los conteos, no borra datos
+existentes (los mueve a `respaldo-previo-…` si se usa `--reemplazar`) y aplica las migraciones
+pendientes.
+
+Para que nada cambie después de la copia, active el **modo solo lectura**: agregue
+`PORTAL_SOLO_LECTURA=1` a `/etc/portal.env` y reinicie el servicio. Las personas pueden seguir
+consultando, ven un aviso de mantenimiento, y cualquier cambio se rechaza con un mensaje claro.
+Quite la variable y reinicie para volver a la normalidad.
 
 ## 8. Actualizar a una versión nueva
 

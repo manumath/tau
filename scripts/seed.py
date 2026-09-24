@@ -6,6 +6,7 @@
 Las contraseñas de demostración son fijas para poder probar el portal; en
 producción las cuentas se crean desde Administración → Usuarios.
 """
+import shutil
 import sys
 from pathlib import Path
 
@@ -190,7 +191,11 @@ def main():
         for ruta in (config.DB_PATH, *(config.DB_PATH.with_name(config.DB_PATH.name + s)
                                        for s in ("-wal", "-shm", "-journal"))):
             ruta.unlink(missing_ok=True)
-        print(f"Base de datos eliminada: {config.DB_PATH} (detenga el servidor antes de --reset)")
+        # Fotos, adjuntos y correos pertenecen a la base borrada: sin esto quedarían huérfanos.
+        for carpeta in ("fotos", "adjuntos", "correos"):
+            shutil.rmtree(config.DB_PATH.parent / carpeta, ignore_errors=True)
+        print(f"Base de datos eliminada: {config.DB_PATH}, con sus fotos, adjuntos y correos "
+              "(detenga el servidor antes de --reset)")
     init_db(config.DB_PATH)
 
     creados = []

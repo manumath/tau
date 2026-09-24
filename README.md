@@ -7,7 +7,8 @@ memoria anual. Hecho con [FastHTML](https://fastht.ml), HTMX, MonsterUI y SQLite
 | Documento | Para qué |
 |---|---|
 | [Guía de uso](docs/guia-de-uso.md) | Cómo usar el portal: investigadores, responsables de proyecto y administración |
-| [Despliegue](docs/despliegue.md) | Instalación en producción, correo, respaldos y actualizaciones |
+| [Despliegue](docs/despliegue.md) | Instalación en un servidor propio, correo, respaldos, mudanzas y actualizaciones |
+| [Despliegue en Fly.io](docs/despliegue-fly.md) | Alternativa sin servidor propio, y cómo mudarse después a uno |
 | [PLAN.md](PLAN.md) | Diseño, reglas de negocio, modelo de datos, estado, decisiones y pendientes |
 
 ## Qué hace
@@ -31,7 +32,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 196 pruebas
+uv run pytest                            # 200 pruebas
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan
@@ -85,7 +86,11 @@ catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar
 scripts/seed.py                datos de ejemplo
 scripts/crear_admin.py         primer administrador en producción
-docs/                          guía de uso y guía de despliegue
+scripts/paquete.py             exportar e importar todos los datos (base, fotos, adjuntos): respaldos y mudanzas
+scripts/iniciar.sh             arranque en contenedor (con Litestream si hay réplica configurada)
+Dockerfile, fly.toml,
+litestream.yml                 imagen de contenedor y configuración para Fly.io
+docs/                          guía de uso y guías de despliegue (servidor propio y Fly.io)
 tests/                         pytest con el TestClient de Starlette
 ```
 
@@ -105,6 +110,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_CORREO_REMITENTE` | `Portal de Investigación <no-responder@instituto.test>` | Remitente |
 | `PORTAL_SMTP_HOST` / `_PUERTO` / `_USUARIO` / `_CLAVE` | `localhost` / `587` / — / — | Servidor SMTP |
 | `PORTAL_SMTP_STARTTLS` | `1` | `0` para desactivar STARTTLS |
+| `PORTAL_SOLO_LECTURA` | `0` | `1` durante mudanzas o mantenimiento: se consulta, pero no se guardan cambios |
 
 ## Pruebas
 
