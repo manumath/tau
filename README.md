@@ -49,11 +49,13 @@ app/informes.py             datos de CV, informe de proyecto y memoria anual; ex
 app/correo.py               envío de correo (archivo .eml en desarrollo, SMTP en producción)
 app/tokens.py               enlaces de un solo uso (recuperar contraseña, invitación)
 app/avisos.py               avisos por correo del flujo de propuestas en proyectos
+app/importar_usuarios.py    carga masiva de cuentas desde CSV (validación y alta)
 app/auth.py                 Beforeware, login/logout, cambio de contraseña
 app/components/layout.py    página, navegación, modal HTMX
 app/components/perfil.py    avatar, áreas MSC, identificadores y KaTeX
 app/components/personas.py  selector ordenable de autores/participantes con alta rápida de externos
 app/components/registros.py insignias, filtros, adjuntos y fichas
+app/components/errores.py   páginas 403/404 con estilo y avisos de error en peticiones HTMX
 app/routes/inicio.py        tablero
 app/routes/admin_usuarios.py  administración de cuentas
 app/routes/perfil.py        «Mi perfil»: edición en línea, áreas MSC y foto

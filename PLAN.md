@@ -375,8 +375,16 @@ más valor agregan para un instituto.
   - **Auditoría** para la administración: filtros por persona, acción y texto; carga progresiva
     al llegar al final (`hx-trigger="revealed"`).
   - 170 tests.
-- **Pendiente de la fase 1:** vista de auditoría, página 403 con estilo, desbloqueo manual sin restablecer
-  la contraseña, carga masiva de cuentas desde CSV.
+- **Fase 1 completada (iteración 8):**
+  - Páginas de error 403 y 404 con el estilo del portal y la navegación. Un «after hook» convierte
+    los 403/404 de texto de cualquier ruta, y hay un manejador para las rutas inexistentes.
+  - Aviso en pantalla cuando una acción HTMX falla (403, 404, 5xx, sin conexión); antes no pasaba nada.
+  - Desbloqueo manual de cuentas bloqueadas por intentos fallidos, sin cambiar la contraseña.
+  - **Carga masiva de cuentas desde CSV:**
+    - Acepta coma, punto y coma o tabulador; UTF-8 o Latin-1; encabezados flexibles.
+    - Vista previa con el estado de cada fila (nueva, ya existe, error) antes de crear nada.
+    - Creación con invitación por correo o con contraseñas temporales, y plantilla descargable.
+  - 184 tests.
 
 ## 13. Preguntas abiertas
 1. ¿La agencia financiadora exige cuartiles (Q1–Q4) o factor de impacto de las revistas indexadas?

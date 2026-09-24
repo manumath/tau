@@ -1,13 +1,15 @@
 """Administración de cuentas: listado con búsqueda en vivo, alta, activación y restablecimiento."""
+import base64
 import re
 import secrets
 from datetime import datetime, timezone
 
-from fasthtml.common import APIRouter, Code, Div, P, Span, Template, Thead, Tr
+from fasthtml.common import A, APIRouter, Code, Div, P, Response, Span, Template, Thead, Tr, UploadFile
+from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Form, Input, Label, LabelCheckboxX, LabelInput, LabelT,
                            Table, Tbody, Td, Th, TextPresets, UkIcon)
 
-from app import config, correo, tokens, usuarios
+from app import config, correo, importar_usuarios, tokens, usuarios
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.db import auditar
 from app.seguridad import password_temporal
@@ -38,9 +40,13 @@ def _etiquetas_perfil(u):
     return Div(*etiquetas, cls="flex gap-1 flex-wrap")
 
 
-def _estado(u):
+def _estado(u, bloqueada=False):
     if not u["activo"]:
         return Label("Inactiva", cls=LabelT.destructive)
+    if bloqueada:
+        return Span(UkIcon("lock", height=14, width=14), "Bloqueada por intentos fallidos",
+                    title=f"Se desbloquea sola a los {config.LOGIN_VENTANA_MIN} minutos, o con el botón del candado.",
+                    cls="inline-flex items-center gap-1 text-red-600 text-sm whitespace-nowrap")
     if u["debe_cambiar_pass"]:
         return Span(UkIcon("clock", height=14, width=14), "Sin primer ingreso",
                     cls="inline-flex items-center gap-1 text-amber-600 text-sm whitespace-nowrap")
@@ -51,6 +57,12 @@ def _estado(u):
 def fila(u, yo_id: int):
     uid = u["id"]
     es_yo = uid == yo_id
+    bloqueada = usuarios.bloqueado(u["email"])
+    boton_desbloquear = Button(
+        UkIcon("lock-open", height=18, width=18), cls=(ButtonT.ghost, ButtonT.icon),
+        aria_label="Desbloquear", title="Desbloquear (sin cambiar la contraseña)",
+        hx_post=f"/admin/usuarios/{uid}/desbloquear", hx_target=f"#usuario-{uid}",
+        hx_swap="outerHTML") if bloqueada else ""
     boton_activo = Button(
         UkIcon("user-x" if u["activo"] else "user-check", height=18, width=18),
         cls=(ButtonT.ghost, ButtonT.icon),
@@ -75,10 +87,10 @@ def fila(u, yo_id: int):
            Div("(usted)", cls=TextPresets.muted_sm) if es_yo else ""),
         Td(u["email"]),
         Td(_etiquetas_perfil(u)),
-        Td(_estado(u)),
+        Td(_estado(u, bloqueada)),
         Td(fecha_local(u["ultimo_acceso"]),
            cls=(TextPresets.muted_sm, "whitespace-nowrap hidden lg:table-cell")),
-        Td(Div(boton_activo, boton_reset, cls="flex gap-1 justify-end")),
+        Td(Div(boton_desbloquear, boton_activo, boton_reset, cls="flex gap-1 justify-end")),
         id=f"usuario-{uid}")
 
 
@@ -157,8 +169,11 @@ def get(auth, q: str = ""):
         "Usuarios",
         Div(Div(H2("Usuarios"),
                 P("Cuentas con acceso al portal.", cls=TextPresets.muted_sm)),
-            Button(UkIcon("user-plus", height=16, width=16), "Nuevo usuario", cls=ButtonT.primary,
-                   hx_get="/admin/usuarios/nuevo", hx_target=f"#{ID_MODAL}"),
+            Div(Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
+                       hx_get="/admin/usuarios/importar", hx_target=f"#{ID_MODAL}"),
+                Button(UkIcon("user-plus", height=16, width=16), "Nuevo usuario", cls=ButtonT.primary,
+                       hx_get="/admin/usuarios/nuevo", hx_target=f"#{ID_MODAL}"),
+                cls="flex gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         Div(buscador,
             Span(UkIcon("loader-circle", height=16, width=16, cls="animate-spin"),
@@ -230,6 +245,17 @@ def post(uid: int, auth):
     return fila(usuarios.con_perfil(uid), auth["id"]) if u else ""
 
 
+@rt(BASE + "/{uid}/desbloquear")
+def post(uid: int, auth, sess):
+    u = usuarios.con_perfil(uid)
+    if not u:
+        return ""
+    usuarios.desbloquear(u["email"])
+    auditar(auth["id"], "desbloquear_usuario", "usuario", uid)
+    add_toast(sess, f"Cuenta de {u['nombres']} {u['apellidos']} desbloqueada. Su contraseña no cambió.", "success")
+    return fila(u, auth["id"])
+
+
 @rt(BASE + "/{uid}/restablecer")
 def post(uid: int, auth):
     u = usuarios.con_perfil(uid)
@@ -244,3 +270,111 @@ def post(uid: int, auth):
                                "La contraseña anterior dejó de funcionar. El usuario deberá "
                                "definir una nueva al ingresar."),
             Template(fila(u, auth["id"])(hx_swap_oob="true")))
+
+
+# --- Carga masiva desde CSV ------------------------------------------------------------------
+
+def _form_archivo(errores=()):
+    return Form(
+        mensaje_error(*errores),
+        P("Suba un archivo CSV (se puede exportar desde Excel) con una fila por persona y las columnas ",
+          Code("email"), ", ", Code("nombres"), ", ", Code("apellidos"), " y, si quiere, ", Code("investigador"),
+          " y ", Code("admin"), " (sí/no). Primero verá una vista previa: no se crea nada hasta confirmar.",
+          cls="text-sm"),
+        A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/plantilla",
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
+        Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+            Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
+        hx_post="/admin/usuarios/importar/revisar", hx_encoding="multipart/form-data",
+        hx_target=f"#{ID_MODAL}", cls="space-y-4")
+
+
+@rt(f"{BASE}/importar")
+def get():
+    return modal("Importar cuentas desde CSV", _form_archivo(), ancho="max-w-2xl")
+
+
+@rt(f"{BASE}/plantilla")
+def get():
+    return Response(importar_usuarios.PLANTILLA.encode("utf-8-sig"), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="plantilla-usuarios.csv"'})
+
+
+def _etiqueta_estado(f):
+    if f["estado"] == "nueva":
+        return Label("Nueva", cls=LabelT.primary)
+    if f["estado"] == "existe":
+        return Label("Ya existe", cls=LabelT.secondary)
+    return Label("Error", cls=LabelT.destructive)
+
+
+@rt(f"{BASE}/importar/revisar")
+async def post(archivo: UploadFile = None):
+    if archivo is None or not archivo.filename:
+        return modal("Importar cuentas desde CSV", _form_archivo(["Seleccione un archivo."]), ancho="max-w-2xl")
+    contenido = await archivo.read(importar_usuarios.MAX_BYTES + 1)
+    filas, errores = importar_usuarios.leer(contenido)
+    if not filas:
+        return modal("Importar cuentas desde CSV", _form_archivo(errores), ancho="max-w-2xl")
+    nuevas = sum(f["estado"] == "nueva" for f in filas)
+    con_error = sum(f["estado"] == "error" for f in filas)
+    existentes = sum(f["estado"] == "existe" for f in filas)
+    tabla = Table(
+        Thead(Tr(Th("Fila"), Th("Correo"), Th("Nombre"), Th("Perfil"), Th("Estado"))),
+        Tbody(*[Tr(Td(str(f["linea"]), cls=TextPresets.muted_sm), Td(f["email"]),
+                   Td(f"{f['apellidos']}, {f['nombres']}"),
+                   Td(", ".join(x for x, ok in (("investigador", f["es_investigador"]), ("admin", f["es_admin"])) if ok)),
+                   Td(_etiqueta_estado(f), Span(f" {f['mensaje']}", cls="text-sm") if f["mensaje"] else ""))
+                for f in filas]),
+        cls="uk-table-divider uk-table-small")
+    return modal(
+        "Vista previa de la importación",
+        mensaje_error(*errores),
+        P(f"{nuevas} cuenta(s) nueva(s) · {existentes} ya existente(s), se omiten · {con_error} con error, se omiten.",
+          cls="text-sm font-medium mb-3"),
+        Div(tabla, cls="max-h-80 overflow-y-auto border border-border rounded-md mb-4"),
+        Form(
+            # El contenido viaja de vuelta en base64 y se valida otra vez al confirmar.
+            Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),
+            LabelCheckboxX("Enviar invitaciones por correo (cada persona define su contraseña)", id="invitar",
+                           checked=config.CORREO_MODO != "desactivado"),
+            P("Sin invitación, se mostrará una contraseña temporal por cuenta para entregarla a mano.",
+              cls=TextPresets.muted_sm),
+            Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                Button(f"Crear {nuevas} cuenta(s)", type="submit", cls=ButtonT.primary, disabled=not nuevas),
+                cls="flex justify-end gap-2"),
+            hx_post="/admin/usuarios/importar/confirmar", hx_target=f"#{ID_MODAL}", cls="space-y-2"),
+        ancho="max-w-4xl")
+
+
+@rt(f"{BASE}/importar/confirmar")
+def post(auth, sess, contenido: str = "", invitar: bool = False):
+    try:
+        datos = base64.b64decode(contenido, validate=True)
+    except ValueError:
+        return modal("Importar cuentas desde CSV", _form_archivo(["No se pudo leer el archivo. Súbalo otra vez."]))
+    filas, _ = importar_usuarios.leer(datos)
+    creadas = importar_usuarios.crear(filas, invitar, auth["id"], enviar_invitacion)
+    tabla = Template(cuerpo_tabla(usuarios.listar(), auth["id"], oob=True))
+    add_toast(sess, f"{len(creadas)} cuenta(s) creada(s).", "success")
+    if invitar or not creadas:
+        cuerpo = P(f"Se crearon {len(creadas)} cuenta(s)" + (" y se enviaron las invitaciones por correo (válidas 3 días)."
+                                                            if invitar and creadas else "."))
+    else:
+        credenciales = "\n".join(f"{u['email']}\t{u['password']}" for u in creadas)
+        cuerpo = Div(
+            P("Entregue cada contraseña temporal por un canal seguro: no se volverán a mostrar. "
+              "Deberán cambiarla en su primer ingreso.", cls="text-sm mb-3"),
+            Div(Table(Thead(Tr(Th("Correo"), Th("Contraseña temporal"))),
+                      Tbody(*[Tr(Td(u["email"]), Td(Code(u["password"], cls="font-mono"))) for u in creadas]),
+                      cls="uk-table-divider uk-table-small"),
+                cls="max-h-80 overflow-y-auto border border-border rounded-md"),
+            Button(UkIcon("copy", height=16, width=16), "Copiar todo (correo y contraseña)", type="button",
+                   cls=(ButtonT.default, "mt-3"), data_credenciales=credenciales,
+                   onclick="navigator.clipboard.writeText(this.dataset.credenciales);"
+                           "this.lastChild.textContent=' Copiado'"))
+    return (modal("Importación terminada", cuerpo,
+                  Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+                      cls="flex justify-end mt-4"), ancho="max-w-2xl"),
+            tabla)

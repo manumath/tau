@@ -11,6 +11,7 @@ from monsterui.all import Theme
 from app import config
 from app.auth import beforeware
 from app.auth import rt as rutas_auth
+from app.components.errores import JS_AVISOS, no_encontrado, paginas_de_error
 from app.components.perfil import katex_headers
 from app.db import init_db
 from app.routes.actividades import rt as rutas_actividades
@@ -35,7 +36,9 @@ def create_app(db_path=config.DB_PATH):
               # Sin herencia de atributos hx-*: cada elemento declara su propio destino y swap.
               # Evita que, p. ej., un botón dentro de un contenedor con hx-swap="outerHTML"
               # herede ese swap sin querer (es además el comportamiento por defecto en htmx 4).
-              Meta(name="htmx-config", content=json.dumps({"disableInheritance": True}))),
+              Meta(name="htmx-config", content=json.dumps({"disableInheritance": True})),
+              JS_AVISOS),
+        exception_handlers={404: no_encontrado},
         before=beforeware,
         secret_key=config.SECRET_KEY,
         key_fname=str(config.RAIZ / ".sesskey"),
@@ -47,6 +50,7 @@ def create_app(db_path=config.DB_PATH):
         title="Portal de Investigación",
     )
     setup_toasts(app)
+    app.after.append(paginas_de_error)
     for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
                    rutas_adjuntos, rutas_proyectos, rutas_informes, rutas_publico,
