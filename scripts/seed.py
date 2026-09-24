@@ -151,6 +151,10 @@ def _cargar_proyectos():
                               "fecha_inicio": "2025-03-01", "fecha_fin": "2028-02-29"}, sofia, admin)
     proyectos.agregar_participante(rigido, f"i:{emmy}", "co_investigador", True)
 
+    # En los datos de ejemplo, el equipo participa desde el inicio de cada proyecto.
+    get_db().execute("""UPDATE proyecto_participante SET fecha_desde =
+                        (SELECT fecha_inicio FROM proyecto WHERE id = proyecto_id)""")
+
     # Emmy (responsable) vincula lo suyo: queda aprobado de inmediato.
     proyectos.sincronizar("producto", id_de("producto", "Anillos con condición de cadena ascendente y "
                                                          "sus ideales primarios"), [algebra], {"id": emmy})

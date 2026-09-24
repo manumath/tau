@@ -101,9 +101,14 @@ def get(auth, uid: int):
             Div(H2(f"{p['nombres']} {p['apellidos']}"),
                 P(subtitulo, cls=TextPresets.muted_sm) if subtitulo else "",
                 A(p["email"], href=f"mailto:{p['email']}", cls="text-sm text-primary hover:underline"),
-                A(UkIcon("pencil", height=14, width=14), "Editar mi perfil", href="/perfil",
-                  cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2")
-                if propio else "",
+                Div(A(UkIcon("pencil", height=14, width=14), "Editar mi perfil", href="/perfil",
+                      cls="inline-flex items-center gap-1 text-sm text-primary hover:underline")
+                    if propio else "",
+                    A(UkIcon("file-user", height=14, width=14), "Ver CV",
+                      href="/informes/cv" if propio else f"/informes/cv?uid={uid}",
+                      cls="inline-flex items-center gap-1 text-sm text-primary hover:underline")
+                    if propio or auth["es_admin"] else "",
+                    cls="flex gap-4 mt-2"),
                 cls="flex flex-col"),
             cls="flex flex-col sm:flex-row gap-6 items-center sm:items-start mb-8"),
         Div(seccion("pub-areas", "Áreas de investigación (MSC2020)",

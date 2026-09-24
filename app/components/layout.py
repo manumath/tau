@@ -50,6 +50,8 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
                                extra=contador))
     enlaces.append(_enlace("Investigadores", "/investigadores", "book-user",
                            seccion == "investigadores"))
+    if usuario["es_investigador"] or usuario["es_admin"]:
+        enlaces.append(_enlace("Informes", "/informes", "file-text", seccion == "informes"))
     if usuario["es_admin"]:
         enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
     enlaces.append(_menu_usuario(usuario))

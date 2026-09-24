@@ -12,6 +12,7 @@ dependencies = [
     "fastmigrate>=0.5.3",
     "httpx2>=2.13.1",
     "monsterui>=1.0.47",
+    "openpyxl>=3.1.5",
     "pillow>=12.3.0",
     "python-fasthtml>=0.14.13",
 ]

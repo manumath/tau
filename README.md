@@ -45,6 +45,7 @@ app/productos.py            productos, autores, reglas de revisión e informe, D
 app/adjuntos.py             archivos adjuntos validados por contenido
 app/proyectos.py            proyectos, participantes, permisos y flujo propuesta → aprobación
 app/importacion.py          importación desde Crossref (DOI) y arXiv; reconocimiento de autores
+app/informes.py             datos de CV, informe de proyecto y memoria anual; exportación CSV/XLSX
 app/auth.py                 Beforeware, login/logout, cambio de contraseña
 app/components/layout.py    página, navegación, modal HTMX
 app/components/perfil.py    avatar, áreas MSC, identificadores y KaTeX
@@ -59,6 +60,7 @@ app/routes/productos.py     «Mis productos»: lista, modal, duplicados, ficha
 app/routes/personas.py      autocompletar de personas y alta de externos
 app/routes/adjuntos.py      subida, descarga (con permisos) y borrado de adjuntos
 app/routes/proyectos.py     proyectos: lista, alta, ficha con pestañas y bandeja de pendientes
+app/routes/informes.py      informes imprimibles (CV, proyecto, memoria) y descargas
 catalogos/MSC2020.tsv       catálogo MSC2020 (CC BY-NC-SA 4.0, ver catalogos/README.md)
 migrations/NNNN-*.sql       migraciones versionadas (se aplican al arrancar)
 scripts/seed.py             datos de demostración
@@ -92,3 +94,6 @@ fastmigrate registra en la base la versión aplicada.
 - **Filas de tabla fuera de banda** (`hx-swap-oob`) siempre dentro de `<template>`.
 - **URL de las vistas filtradas:** la fija el servidor con `HX-Replace-Url`, para que apunte a la
   página y no al fragmento.
+- **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): FastHTML tiene
+  una ruta de archivos estáticos que captura cualquier URL terminada en extensiones conocidas. El
+  nombre del archivo lo da `Content-Disposition`.

@@ -345,6 +345,21 @@ más valor agregan para un instituto.
     explica el problema.
   - Red simulada en los tests; 146 tests.
   - **Pendiente de la fase 5:** importar y exportar BibTeX.
+- **Iteración 6 (hecha): fase 6, informes.**
+  - Menú «Informes» con tres documentos imprimibles: se ven como una hoja y el botón
+    «Imprimir / Guardar PDF» usa el navegador, de modo que las fórmulas LaTeX salen bien.
+    **Decisión:** no generar PDF en el servidor. WeasyPrint requiere librerías del sistema y
+    ninguna de las dos alternativas entiende LaTeX.
+  - **CV:** periodo configurable y opción «solo lo que cuenta». Agrupa en indexados,
+    arbitrados, libros, en curso, reportes, preprints y presentaciones; luego actividades por
+    tipo y proyectos. La persona aparece destacada en cada cita. La administración puede ver el
+    CV de cualquier investigador.
+  - **Informe de proyecto:** periodo configurable, solo lo aprobado; equipo, objetivos,
+    productos (los que cuentan y los demás) y actividades con su responsable. Descarga en XLSX.
+  - **Memoria anual** (solo administración): cifras, conteo por índice y por tipo de actividad,
+    tabla por investigador y listados. Cada producto se cuenta una vez. Descarga en XLSX
+    (4 hojas) y CSV (UTF-8 con BOM).
+  - Protección contra inyección de fórmulas en planillas; 156 tests.
 - **Pendiente de la fase 1:** vista de auditoría, página 403 con estilo, desbloqueo manual sin restablecer
   la contraseña, carga masiva de cuentas desde CSV.
 
