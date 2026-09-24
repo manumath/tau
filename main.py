@@ -38,4 +38,5 @@ def create_app(db_path=config.DB_PATH):
 app = create_app()
 
 if __name__ == "__main__":
-    serve()
+    # Solo en este equipo: los navegadores bloquean enlaces a 0.0.0.0.
+    serve(host="127.0.0.1")
