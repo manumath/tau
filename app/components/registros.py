@@ -13,6 +13,7 @@ def insignia(texto, tono="gris", titulo=None, icono=None):
         "azul": "bg-primary/15 text-primary",
         "verde": "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
         "ambar": "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+        "rojo": "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
     }
     return Span(UkIcon(icono, height=12, width=12) if icono else "", texto, title=titulo,
                 cls=f"inline-flex items-center gap-1 text-xs rounded px-2 py-0.5 {tonos[tono]}")
@@ -93,3 +94,60 @@ def dato(etiqueta, valor):
         return ""
     return Div(Span(etiqueta, cls=(TextPresets.muted_sm, "w-40 shrink-0")), Div(valor),
                cls="flex flex-col sm:flex-row gap-1 py-1.5")
+
+
+# --- Vínculos con proyectos ------------------------------------------------------------------------
+
+TONO_VINCULO = {"pendiente": "ambar", "aprobado": "azul", "rechazado": "rojo"}
+ICONO_VINCULO = {"pendiente": "clock", "aprobado": "folder-check", "rechazado": "circle-x"}
+
+
+def insignias_proyectos(vinculos: list[dict]):
+    """Una insignia por proyecto: «Proyecto X · pendiente». El motivo de rechazo va en el title."""
+    from app.proyectos import ESTADOS_VINCULO
+    return [insignia(f"{v['proyecto']} · {ESTADOS_VINCULO[v['estado']].lower()}",
+                     TONO_VINCULO[v["estado"]], icono=ICONO_VINCULO[v["estado"]],
+                     titulo=f"Motivo: {v['comentario']}" if v.get("comentario") else None)
+            for v in vinculos]
+
+
+def casillas_proyectos(tipo: str, registro_id: int | None, usuario: dict,
+                       marcados_form: list[int] | None = None, preseleccion: int | None = None):
+    """Casillas «Vincular a proyectos» para el formulario de una actividad o un producto."""
+    from app import proyectos
+    disponibles = {p["id"]: p for p in proyectos.para_proponer(usuario["id"])}
+    vinculos = {v["proyecto_id"]: v for v in proyectos.vinculos_de(tipo, registro_id)} \
+        if registro_id else {}
+    ids = list(dict.fromkeys([*disponibles, *vinculos]))
+    if not ids:
+        return ""
+    filas = []
+    for pid in ids:
+        p = disponibles.get(pid)
+        v = vinculos.get(pid)
+        nombre = p["nombre"] if p else v["proyecto"]
+        if marcados_form is not None:
+            marcado = pid in marcados_form or (v and v["estado"] == "aprobado")
+        else:
+            marcado = bool(v) or pid == preseleccion
+        directo = p and p["mi_rol"] in proyectos.ROLES_RESPONSABLES
+        if v and v["estado"] == "aprobado":
+            nota = Span("aprobado · solo un responsable puede desvincularlo", cls=TextPresets.muted_sm)
+        elif v and v["estado"] == "pendiente":
+            nota = Span("propuesta pendiente de aprobación", cls="text-sm text-amber-600")
+        elif v and v["estado"] == "rechazado":
+            nota = Span(f"rechazado: «{v['comentario']}». Si lo deja marcado, se vuelve a proponer.",
+                        cls="text-sm text-red-600")
+        elif directo:
+            nota = Span("usted es responsable: se vincula directamente", cls=TextPresets.muted_sm)
+        else:
+            nota = Span("quedará pendiente hasta que un responsable lo apruebe", cls=TextPresets.muted_sm)
+        bloqueado = (v and v["estado"] == "aprobado") or not p
+        filas.append(fh.Label(
+            Input(type="checkbox", name="proyecto", value=str(pid), checked=marcado,
+                  disabled=bloqueado, cls="uk-checkbox mt-0.5"),
+            Div(Span(nombre, cls="font-medium text-sm"), nota, cls="flex flex-col"),
+            cls="flex items-start gap-2"))
+    return Div(Span("Vincular a proyectos", cls="uk-form-label"),
+               Div(*filas, cls="space-y-2 rounded-md border border-border p-3"),
+               cls="space-y-2")

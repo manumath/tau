@@ -21,6 +21,7 @@ from app.routes.investigadores import rt as rutas_investigadores
 from app.routes.perfil import rt as rutas_perfil
 from app.routes.personas import rt as rutas_personas
 from app.routes.productos import rt as rutas_productos
+from app.routes.proyectos import rt as rutas_proyectos
 
 
 def create_app(db_path=config.DB_PATH):
@@ -45,7 +46,7 @@ def create_app(db_path=config.DB_PATH):
     setup_toasts(app)
     for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
-                   rutas_adjuntos):
+                   rutas_adjuntos, rutas_proyectos):
         router.to_app(app)
     return app
 

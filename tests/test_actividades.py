@@ -28,7 +28,7 @@ def test_crear_actividad_con_participantes_y_roles(inv):
     r = inv.post("/actividades", headers=HX, data=_form(
         inv.uid, participante=[f"i:{inv.uid}", f"e:{weyl['id']}", f"i:{colega['id']}"],
         rol=["organizador", "expositor", "asistente"]))
-    assert r.headers["hx-trigger"] == "actividades-cambiadas"
+    assert "actividades-cambiadas" in r.headers["hx-trigger"]
     a = actividades.de_investigador(inv.uid)[0]
     assert a["mi_rol"] == "organizador" and a["n_part"] == 3
     assert [(p["apellidos"], p["rol"]) for p in actividades.participantes(a["id"])] == [

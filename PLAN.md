@@ -312,6 +312,23 @@ más valor agregan para un instituto.
   - Filtros con URL compartible; tablero con cifras del año; producción en el perfil público; 103 tests.
   - **Decisión:** un indexado o arbitrado *enviado* o *en preparación* aún no cuenta para el informe.
   - **Permisos:** editan el creador y los autores o participantes del instituto; elimina solo el creador.
+- **Iteración 4 (hecha): fase 4, proyectos.**
+  - La administración crea proyectos y asigna responsable. Responsables y co-responsables editan
+    los datos y los objetivos, y gestionan participantes internos o externos (roles, bajas).
+  - Siempre queda al menos un responsable. Solo la administración asigna o quita responsables, y
+    los externos no pueden serlo.
+  - **Flujo de aprobación:** «Vincular a proyectos» en los formularios de actividades y productos.
+    - Lo que propone un participante queda pendiente; lo que vincula un responsable queda aprobado.
+    - El responsable aprueba (y puede asignar el responsable de la actividad) o rechaza con motivo
+      obligatorio.
+    - Lo rechazado vuelve a proponerse al guardar el registro con la casilla marcada.
+    - Una propuesta pendiente se retira desmarcando la casilla; lo aprobado solo lo desvincula un
+      responsable.
+  - Aviso «fuera del periodo del proyecto» en la bandeja.
+  - «Editados después de aprobados» en el resumen del proyecto.
+  - Al dar de baja a un participante, lo que ya estaba aprobado se conserva.
+  - Contador de pendientes en la navegación, refrescado por evento y cada 60 s.
+  - Pestañas con URL propia; tablero con cifras de proyectos; 124 tests.
 - **Pendiente de la fase 1:** vista de auditoría, página 403 con estilo, desbloqueo manual sin restablecer
   la contraseña, carga masiva de cuentas desde CSV.
 

@@ -102,9 +102,12 @@ def resultados(campo: str, texto: str, encontradas: list[dict]):
                              "border-border bg-background shadow-lg divide-y divide-border")
 
 
-def form_externo(campo: str, texto: str, errores=()):
+def form_externo(campo: str, texto: str, errores=(), url: str | None = None, destino: str | None = None):
     """Mini formulario para registrar un externo. No es un <form> (estaría anidado): sus
-    campos llevan prefijo ext_ y el botón los envía con hx-include."""
+    campos llevan prefijo ext_ y el botón los envía con hx-include.
+
+    Por omisión agrega la persona como fila de la lista `campo`; con `url` y `destino` publica
+    en otra ruta y reemplaza el contenido de `destino` (p. ej. participantes de un proyecto)."""
     lista_id, resultados_id, _ = ids(campo)
     partes = texto.strip().split()
     nombres, apellidos = (" ".join(partes[:-1]), partes[-1]) if len(partes) > 1 else (texto.strip(), "")
@@ -123,9 +126,10 @@ def form_externo(campo: str, texto: str, errores=()):
         Div(Button("Cancelar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
                    onclick=f"document.getElementById('{resultados_id}').innerHTML=''"),
             Button("Agregar", type="button", cls=(ButtonT.primary, ButtonT.sm),
-                   hx_post=f"/personas/externo?campo={campo}", hx_include=f"#{bloque}",
-                   hx_target=f"#{lista_id}", hx_swap="beforeend",
-                   hx_on__after_request=js_limpiar(campo)),
+                   hx_include=f"#{bloque}",
+                   **({"hx_post": url, "hx_target": destino} if url else
+                      {"hx_post": f"/personas/externo?campo={campo}", "hx_target": f"#{lista_id}",
+                       "hx_swap": "beforeend", "hx_on__after_request": js_limpiar(campo)})),
             cls="flex justify-end gap-2"),
         id=bloque,
         cls="absolute z-30 w-full mt-1 rounded-md border border-border bg-background shadow-lg p-3 space-y-2")

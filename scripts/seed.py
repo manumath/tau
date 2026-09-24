@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import actividades, config, perfiles, personas, productos, usuarios  # noqa: E402
+from app import actividades, config, perfiles, personas, productos, proyectos, usuarios  # noqa: E402
 from app.db import get_db  # noqa: E402
 from app.db import init_db  # noqa: E402
 
@@ -115,6 +115,61 @@ def _cargar_produccion():
     return True
 
 
+def _cargar_proyectos():
+    """Dos proyectos de ejemplo con vínculos aprobados, pendientes y rechazados."""
+    if get_db().q("SELECT 1 FROM proyecto LIMIT 1") or not get_db().q("SELECT 1 FROM producto LIMIT 1"):
+        return False
+    uid = {u["email"].split(".")[0]: u["id"] for u in usuarios.listar()}
+    emmy, alan, sofia, srini, admin = (uid["emmy"], uid["alan"], uid["sofia"], uid["srinivasa"],
+                                       usuarios.por_email(ADMIN["email"])["id"])
+    weyl = get_db().q("SELECT id FROM persona_externa WHERE apellidos = 'Weyl'")[0]["id"]
+
+    def id_de(tabla, titulo):
+        return get_db().q(f"SELECT id FROM {tabla} WHERE titulo = ?", [titulo])[0]["id"]
+
+    base = dict(descripcion=None, objetivo_general=None, fuente_financiamiento=None, monto=None,
+                fecha_fin=None)
+    algebra = proyectos.crear({**base, "codigo": "FONDECYT 1260001", "estado": "vigente",
+                               "nombre": "Estructuras algebraicas y computación",
+                               "fecha_inicio": "2026-03-01", "fecha_fin": "2029-02-28",
+                               "fuente_financiamiento": "FONDECYT Regular", "monto": 180000000,
+                               "descripcion": "Estudio de invariantes algebraicos de modelos de cómputo "
+                                              "y de anillos noetherianos asociados.",
+                               "objetivo_general": "Caracterizar algebraicamente clases de máquinas de "
+                                                   "estados mediante sus anillos de invariantes."},
+                              emmy, admin)
+    for texto in ("Construir el anillo de invariantes de una máquina de estados finitos.",
+                  "Determinar cuándo dicho anillo es noetheriano.",
+                  "Formar a un estudiante de doctorado en la línea."):
+        proyectos.agregar_objetivo(algebra, texto)
+    proyectos.agregar_participante(algebra, f"i:{alan}", "co_investigador", True)
+    proyectos.agregar_participante(algebra, f"i:{srini}", "tesista", True)
+    proyectos.agregar_participante(algebra, f"e:{weyl}", "colaborador", True)
+
+    rigido = proyectos.crear({**base, "codigo": "FONDECYT 1250042", "estado": "vigente",
+                              "nombre": "Ecuaciones diferenciales y mecánica del sólido rígido",
+                              "fecha_inicio": "2025-03-01", "fecha_fin": "2028-02-29"}, sofia, admin)
+    proyectos.agregar_participante(rigido, f"i:{emmy}", "co_investigador", True)
+
+    # Emmy (responsable) vincula lo suyo: queda aprobado de inmediato.
+    proyectos.sincronizar("producto", id_de("producto", "Anillos con condición de cadena ascendente y "
+                                                         "sus ideales primarios"), [algebra], {"id": emmy})
+    seminario = id_de("actividad", "Seminario de Álgebra del Instituto")
+    proyectos.sincronizar("actividad", seminario, [algebra], {"id": emmy})
+    part_alan = get_db().q("SELECT id FROM proyecto_participante WHERE proyecto_id = ? AND investigador_id = ?",
+                           [algebra, alan])[0]["id"]
+    proyectos.asignar_responsable_actividad(seminario, algebra, part_alan)
+    # Alan (participante) propone: queda pendiente para que Emmy lo revise.
+    proyectos.sincronizar("producto", id_de("producto", "Invariantes algebraicos de máquinas de estados "
+                                                         "finitos"), [algebra], {"id": alan})
+    proyectos.sincronizar("actividad", id_de("actividad", "Visita al grupo de Lógica"), [algebra], {"id": alan})
+    reporte = id_de("producto", "Sobre números computables: notas del seminario")
+    proyectos.sincronizar("producto", reporte, [algebra], {"id": alan})
+    proyectos.rechazar("producto", reporte, algebra, emmy,
+                       "Es de 2025, anterior al inicio del proyecto: no corresponde incluirlo.")
+    return True
+
+
 def _cargar_perfil(uid: int, datos: dict | None):
     if not datos:
         return
@@ -145,7 +200,8 @@ def main():
                             "investigador + admin" if inv.get("es_admin") else "investigador"))
 
     produccion = _cargar_produccion()
-    if not creados and not produccion:
+    con_proyectos = _cargar_proyectos()
+    if not creados and not produccion and not con_proyectos:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:
@@ -154,6 +210,9 @@ def main():
             print(f"  {email:40} {pw:20} {rol}")
     if produccion:
         print("Actividades y productos de ejemplo cargados (Emmy Noether y Alan Turing).")
+    if con_proyectos:
+        print("Proyectos de ejemplo cargados: Emmy es responsable de uno (con propuestas pendientes "
+              "de Alan) y co-investigadora en otro de Sofía.")
 
 
 if __name__ == "__main__":

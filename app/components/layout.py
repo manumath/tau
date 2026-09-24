@@ -9,9 +9,9 @@ from app import config
 ID_MODAL = "modal"
 
 
-def _enlace(texto, href, icono, activo=False):
+def _enlace(texto, href, icono, activo=False, extra=""):
     cls = "flex items-center gap-1 " + ("font-semibold text-primary" if activo else "")
-    return A(UkIcon(icono, height=16, width=16), texto, href=href, cls=cls)
+    return A(UkIcon(icono, height=16, width=16), texto, extra, href=href, cls=cls)
 
 
 def _menu_usuario(usuario: dict):
@@ -41,6 +41,13 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
     if usuario["es_investigador"]:
         enlaces += [_enlace("Actividades", "/actividades", "calendar-days", seccion == "actividades"),
                     _enlace("Productos", "/productos", "book-open", seccion == "productos")]
+    if usuario["es_investigador"] or usuario["es_admin"]:
+        # Contador de propuestas por revisar: se carga aparte y se refresca solo (ver
+        # /proyectos/pendientes/contador), para no consultar la BD en cada página.
+        contador = Span(id="badge-pendientes", cls="hidden", hx_get="/proyectos/pendientes/contador",
+                        hx_trigger="load", hx_swap="outerHTML")
+        enlaces.append(_enlace("Proyectos", "/proyectos", "folder-kanban", seccion == "proyectos",
+                               extra=contador))
     enlaces.append(_enlace("Investigadores", "/investigadores", "book-user",
                            seccion == "investigadores"))
     if usuario["es_admin"]:

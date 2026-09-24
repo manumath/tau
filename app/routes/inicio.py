@@ -4,16 +4,12 @@ from datetime import date
 from fasthtml.common import A, APIRouter, Div, P, Span
 from monsterui.all import H2, H4, Card, Grid, Label, LabelT, Progress, TextPresets, UkIcon
 
-from app import actividades, perfiles, productos
+from app import actividades, perfiles, productos, proyectos
 from app.components.layout import pagina
 
 rt = APIRouter()
 
 # (icono, título, descripción, fase en que se habilita, enlace si ya está disponible)
-MODULOS_FUTUROS = [
-    ("folder-kanban", "Mis proyectos", "Proyectos en los que participa y propuestas pendientes.",
-     4, None),
-]
 MODULO_DIRECTORIO = ("book-user", "Investigadores",
                      "Directorio interno: busque colegas por nombre o área MSC.", 2, "/investigadores")
 MODULO_USUARIOS = ("users", "Usuarios", "Crear cuentas, restablecer contraseñas y desactivar accesos.",
@@ -24,8 +20,7 @@ def _tarjeta(icono, titulo, descripcion, fase, href, extra=None):
     disponible = href is not None
     contenido = Div(
         Div(UkIcon(icono, height=22, width=22, cls="text-primary"),
-            Label("Disponible" if disponible else f"Fase {fase}",
-                  cls=LabelT.primary if disponible else LabelT.secondary),
+            "" if disponible else Label(f"Fase {fase}", cls=LabelT.secondary),
             cls="flex items-center justify-between"),
         H4(titulo, cls="mt-3"),
         P(descripcion, cls=TextPresets.muted_sm),
@@ -59,6 +54,22 @@ def _tarjetas_produccion(uid):
     ]
 
 
+def _tarjeta_proyectos(auth):
+    mios = [p for p in proyectos.de_investigador(auth["id"]) if p["vigente"] and p["estado"] != "finalizado"]
+    por_revisar = proyectos.n_pendientes_para(auth)
+    propias = proyectos.mis_propuestas(auth["id"])
+    rechazadas = sum(v["estado"] == "rechazado" for v in propias)
+    extra = Div(
+        Div(_cifra(len(mios), "vigentes"), _cifra(por_revisar, "por revisar"),
+            _cifra(len(propias), "propuestas mías"), cls="grid grid-cols-3 gap-2 mt-3"),
+        P(f"{rechazadas} propuesta{'s' if rechazadas != 1 else ''} rechazada{'s' if rechazadas != 1 else ''}: "
+          "revise el motivo en «Proyectos».", cls="text-sm text-red-600 mt-2") if rechazadas else "",
+        P(f"Tiene {por_revisar} propuesta{'s' if por_revisar != 1 else ''} por revisar.",
+          cls="text-sm text-amber-600 mt-2") if por_revisar else "")
+    return _tarjeta("folder-kanban", "Mis proyectos", "Proyectos en que participa y el flujo de "
+                    "propuestas y aprobaciones.", 4, "/proyectos", extra)
+
+
 def _tarjeta_perfil(uid):
     p = perfiles.obtener(uid)
     porcentaje, faltan = perfiles.completitud(p, len(perfiles.areas(uid)))
@@ -74,17 +85,15 @@ def _tarjeta_perfil(uid):
 def get(auth):
     tarjetas = []
     if auth["es_investigador"]:
-        tarjetas += [*_tarjetas_produccion(auth["id"]), _tarjeta_perfil(auth["id"])]
+        tarjetas += [_tarjeta_proyectos(auth), *_tarjetas_produccion(auth["id"]),
+                     _tarjeta_perfil(auth["id"])]
     tarjetas.append(_tarjeta(*MODULO_DIRECTORIO))
     if auth["es_admin"]:
         tarjetas.append(_tarjeta(*MODULO_USUARIOS))
-    if auth["es_investigador"]:
-        tarjetas += [_tarjeta(*m) for m in MODULOS_FUTUROS]
     return pagina(
         "Inicio",
         Div(H2(f"Hola, {auth['nombres']}"),
-            P("Los módulos marcados con su fase se habilitarán en las próximas entregas.",
-              cls=TextPresets.muted_sm),
+            P("Resumen de su actividad en el portal.", cls=TextPresets.muted_sm),
             cls="mb-6 space-y-1"),
         Grid(*tarjetas, cols_sm=1, cols_md=2, cols_lg=3, gap=4),
         usuario=auth, seccion="inicio")

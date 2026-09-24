@@ -15,11 +15,11 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, CheckboxX, Form, FormLabel, LabelInput,
                            LabelTextArea, TextPresets, UkIcon)
 
-from app import actividades, personas, productos
+from app import actividades, personas, productos, proyectos
 from app.components import personas as selector_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.components.registros import (dato, enlace_persona, filtros, insignia,
-                                      seccion_adjuntos, url_filtrada)
+from app.components.registros import (casillas_proyectos, dato, enlace_persona, filtros, insignia,
+                                      insignias_proyectos, seccion_adjuntos, url_filtrada)
 from app.db import auditar
 
 rt = APIRouter()
@@ -74,6 +74,8 @@ def item(p, uid):
             Div(autores_texto(p)),
             P(medio, cls=TextPresets.muted_sm) if medio else "",
             insignias(p),
+            Div(*insignias_proyectos(proyectos.vinculos_de("producto", p["id"])),
+                cls="flex flex-wrap gap-1.5"),
             cls="min-w-0 flex-1 space-y-1"),
         acciones,
         cls="flex gap-4 py-4")
@@ -148,7 +150,9 @@ def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id):
     return Div(*partes, id="campos-dependientes", cls="space-y-4")
 
 
-def form_producto(uid, d, autores_elegidos, indices_sel, errores=(), pid=None):
+def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, proyectos_sel=None,
+                  preseleccion=None):
+    uid = auth["id"]
     def campo(etiqueta, nombre, **kw):
         return LabelInput(etiqueta, id=nombre, value=d.get(nombre) or "", **kw)
 
@@ -188,6 +192,7 @@ def form_producto(uid, d, autores_elegidos, indices_sel, errores=(), pid=None):
         campo("Enlace (URL)", "url", type="url", placeholder="https://…"),
         LabelTextArea("Resumen", id="resumen", value=d.get("resumen") or "", rows=4,
                       placeholder="Admite LaTeX: $\\zeta(s)$"),
+        casillas_proyectos("producto", pid, auth, proyectos_sel, preseleccion),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
             Button("Guardar", type="submit", cls=ButtonT.primary),
             cls="flex justify-end gap-2"),
@@ -195,9 +200,11 @@ def form_producto(uid, d, autores_elegidos, indices_sel, errores=(), pid=None):
         hx_target=f"#{ID_MODAL}", cls="space-y-4")
 
 
-def _modal_form(uid, d, autores_elegidos, indices_sel, errores=(), pid=None):
+def _modal_form(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, proyectos_sel=None,
+                preseleccion=None):
     return modal("Editar producto" if pid else "Nuevo producto",
-                 form_producto(uid, d, autores_elegidos, indices_sel, errores, pid),
+                 form_producto(auth, d, autores_elegidos, indices_sel, errores, pid, proyectos_sel,
+                               preseleccion),
                  ancho="max-w-3xl")
 
 
@@ -245,12 +252,12 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
 # --- Rutas: formulario -------------------------------------------------------------------
 
 @rt("/productos/nuevo")
-def get(auth):
+def get(auth, proyecto: int = None):
     tipo_articulo = next((t for t in productos.tipos() if t["nombre"] == "Artículo en revista"),
                          productos.tipos()[0])
     d = dict(tipo_id=tipo_articulo["id"], anio=date.today().year, estado_publicacion="publicado",
              revision="arbitrado")
-    return _modal_form(auth["id"], d, _autores_de_refs([f"i:{auth['id']}"]), [])
+    return _modal_form(auth, d, _autores_de_refs([f"i:{auth['id']}"]), [], preseleccion=proyecto)
 
 
 @rt("/productos/campos")
@@ -285,16 +292,19 @@ def post(auth, doi: str = "", arxiv_id: str = "", pid: str = ""):
             "dark:border-amber-800 p-3")
 
 
-def _guardar(auth, sess, pid, datos, autor, indice):
+def _guardar(auth, sess, pid, datos, autor, indice, proyecto):
     d, errores = productos.preparar(datos, autor or [], indice or [], pid)
     if errores:
-        return _modal_form(auth["id"], datos, _autores_de_refs(autor), indice or [], errores, pid)
+        return _modal_form(auth, datos, _autores_de_refs(autor), indice or [], errores, pid,
+                           proyecto or [])
     nuevo = pid is None
     pid = productos.guardar(d, autor, auth["id"], pid)
+    for aviso in proyectos.sincronizar("producto", pid, proyecto or [], auth):
+        add_toast(sess, aviso, "warning")
     auditar(auth["id"], "crear_producto" if nuevo else "editar_producto", "producto", pid)
     add_toast(sess, "Producto registrado." if nuevo else "Cambios guardados.", "success")
-    # Vacía el modal y avisa a la lista (o a la ficha) que se recargue.
-    return "", HtmxResponseHeaders(trigger=EVENTO)
+    # Vacía el modal y avisa a la lista (o ficha) y al contador de pendientes que se recarguen.
+    return "", HtmxResponseHeaders(trigger=f"{EVENTO}, pendientes-cambiados")
 
 
 @rt("/productos")
@@ -302,10 +312,10 @@ def post(auth, sess, tipo_id: str = "", titulo: str = "", anio: str = "",
          estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
          numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
          resumen: str = "", actividad_id: str = "", autor: list[str] = None,
-         indice: list[str] = None):
+         indice: list[str] = None, proyecto: list[int] = None):
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
                         paginas, doi, arxiv_id, url, resumen, actividad_id)
-    return _guardar(auth, sess, None, datos, autor, indice)
+    return _guardar(auth, sess, None, datos, autor, indice, proyecto)
 
 
 @rt("/productos/{pid}/editar")
@@ -313,7 +323,7 @@ def get(auth, pid: int):
     p = productos.obtener(pid)
     if not p or not productos.puede_editar(p, auth["id"]):
         return Response("No autorizado", status_code=403)
-    return _modal_form(auth["id"], p, p["autores"], [str(i["id"]) for i in p["indices"]], pid=pid)
+    return _modal_form(auth, p, p["autores"], [str(i["id"]) for i in p["indices"]], pid=pid)
 
 
 @rt("/productos/{pid}")
@@ -321,13 +331,13 @@ def put(auth, sess, pid: int, tipo_id: str = "", titulo: str = "", anio: str = "
         estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
         numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
         resumen: str = "", actividad_id: str = "", autor: list[str] = None,
-        indice: list[str] = None):
+        indice: list[str] = None, proyecto: list[int] = None):
     p = productos.obtener(pid)
     if not p or not productos.puede_editar(p, auth["id"]):
         return Response("No autorizado", status_code=403)
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
                         paginas, doi, arxiv_id, url, resumen, actividad_id)
-    return _guardar(auth, sess, pid, datos, autor, indice)
+    return _guardar(auth, sess, pid, datos, autor, indice, proyecto)
 
 
 @rt("/productos/{pid}/sumarme")
@@ -392,6 +402,9 @@ def ficha(p, auth):
                                     cls="text-primary hover:underline") if actividad else None),
             dato("Identificadores", Div(*[e for e in enlaces if e], cls="flex gap-4 flex-wrap"))
             if any(enlaces) else "",
+            dato("Proyectos", Div(*insignias_proyectos(proyectos.vinculos_de("producto", p["id"])),
+                                  cls="flex flex-wrap gap-1.5")
+                 if proyectos.vinculos_de("producto", p["id"]) else None),
             dato("Cita", P(productos.cita(p), cls="text-sm")),
         ),
         Card(H3("Resumen", cls="text-base font-semibold mb-2"),

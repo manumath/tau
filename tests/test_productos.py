@@ -94,7 +94,7 @@ def test_crear_producto_con_coautor_externo_y_orden(inv, colega):
     weyl = personas.crear_externo("Hermann", "Weyl", "IAS", "EE. UU.", inv.uid)
     r = inv.post("/productos", headers=HX,
                  data=_form(inv.uid, autor=[f"e:{weyl['id']}", f"i:{colega['id']}", f"i:{inv.uid}"]))
-    assert r.headers["hx-trigger"] == "productos-cambiados"
+    assert "productos-cambiados" in r.headers["hx-trigger"]
     assert "Producto registrado" in r.text and "<form" not in r.text  # modal vacío + aviso
     p = productos.de_investigador(inv.uid)[0]
     assert [a["apellidos"] for a in p["autores"]] == ["Weyl", "Turing", "Noether"]
@@ -153,7 +153,7 @@ def test_permisos_edicion_y_borrado(inv, colega, client):
     assert client.delete(f"/productos/{pid}", headers=HX).status_code == 403
     r = client.put(f"/productos/{pid}", headers=HX,
                    data=_form(inv.uid, titulo="Título corregido", autor=[f"i:{inv.uid}", f"i:{colega['id']}"]))
-    assert r.headers["hx-trigger"] == "productos-cambiados"
+    assert "productos-cambiados" in r.headers["hx-trigger"]
     assert productos.obtener(pid)["titulo"] == "Título corregido"
 
 
@@ -174,7 +174,7 @@ def test_eliminar_borra_adjuntos(inv):
     adj = adjuntos.listar("producto", pid)[0]
     assert adjuntos.ruta(adj).exists()
     r = inv.delete(f"/productos/{pid}", headers=HX)
-    assert r.headers["hx-trigger"] == "productos-cambiados"
+    assert "productos-cambiados" in r.headers["hx-trigger"]
     assert productos.obtener(pid) is None and not adjuntos.ruta(adj).exists()
 
 

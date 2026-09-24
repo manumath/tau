@@ -23,7 +23,9 @@ uv run pytest                            # tests
 Las cuentas con contraseña temporal deben cambiarla en su primer ingreso. Sofía, Emmy y Alan
 tienen perfiles de ejemplo; el de Srinivasa está vacío para probar cómo se completa uno. Emmy y
 Alan tienen además actividades y productos de ejemplo, incluido un artículo en coautoría
-(registrado una vez, visible en ambos perfiles).
+(registrado una vez, visible en ambos perfiles). Hay dos proyectos de ejemplo: Emmy es responsable
+de «Estructuras algebraicas y computación», donde Alan le propuso dos registros que esperan su
+revisión y uno que ella ya rechazó; y es co-investigadora en un proyecto de Sofía.
 
 ## Estructura
 
@@ -41,6 +43,7 @@ app/personas.py             autores/participantes: investigadores ('i:<id>') y e
 app/actividades.py          actividades, participantes, permisos y listados
 app/productos.py            productos, autores, reglas de revisión e informe, DOI/arXiv, citas
 app/adjuntos.py             archivos adjuntos validados por contenido
+app/proyectos.py            proyectos, participantes, permisos y flujo propuesta → aprobación
 app/auth.py                 Beforeware, login/logout, cambio de contraseña
 app/components/layout.py    página, navegación, modal HTMX
 app/components/perfil.py    avatar, áreas MSC, identificadores y KaTeX
@@ -54,6 +57,7 @@ app/routes/actividades.py   «Mis actividades»: lista, modal de alta/edición, 
 app/routes/productos.py     «Mis productos»: lista, modal, duplicados, ficha
 app/routes/personas.py      autocompletar de personas y alta de externos
 app/routes/adjuntos.py      subida, descarga (con permisos) y borrado de adjuntos
+app/routes/proyectos.py     proyectos: lista, alta, ficha con pestañas y bandeja de pendientes
 catalogos/MSC2020.tsv       catálogo MSC2020 (CC BY-NC-SA 4.0, ver catalogos/README.md)
 migrations/NNNN-*.sql       migraciones versionadas (se aplican al arrancar)
 scripts/seed.py             datos de demostración

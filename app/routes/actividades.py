@@ -10,11 +10,11 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app import actividades, personas, productos
+from app import actividades, personas, productos, proyectos
 from app.components import personas as selector_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.components.registros import (dato, enlace_persona, filtros, insignia, seccion_adjuntos,
-                                      url_filtrada)
+from app.components.registros import (casillas_proyectos, dato, enlace_persona, filtros, insignia,
+                                      insignias_proyectos, seccion_adjuntos, url_filtrada)
 from app.db import auditar, get_db
 
 rt = APIRouter()
@@ -50,7 +50,8 @@ def item(a, uid):
         Div(actividades.fechas_texto(a), cls="text-sm text-muted-foreground w-28 shrink-0 pt-0.5"),
         Div(A(a["titulo"], href=f"/actividades/{a['id']}", cls="block font-medium hover:underline"),
             P(_lugar(a), cls=TextPresets.muted_sm) if _lugar(a) else "",
-            Div(*etiquetas, cls="flex flex-wrap gap-1.5"),
+            Div(*etiquetas, *insignias_proyectos(proyectos.vinculos_de("actividad", a["id"])),
+                cls="flex flex-wrap gap-1.5"),
             cls="min-w-0 flex-1 space-y-1"),
         acciones, cls="flex gap-4 py-4")
 
@@ -76,7 +77,8 @@ def _select(etiqueta, nombre, opciones: dict, valor):
                cls="space-y-2")
 
 
-def form_actividad(d, participantes_, errores=(), aid=None):
+def form_actividad(auth, d, participantes_, errores=(), aid=None, proyectos_sel=None,
+                   preseleccion=None):
     def campo(etiqueta, nombre, **kw):
         return LabelInput(etiqueta, id=nombre, value=d.get(nombre) or "", **kw)
 
@@ -98,6 +100,7 @@ def form_actividad(d, participantes_, errores=(), aid=None):
                                    "Del instituto o externos, con su rol en la actividad."),
         campo("Enlace (URL)", "url", type="url", placeholder="https://…"),
         LabelTextArea("Descripción", id="descripcion", value=d.get("descripcion") or "", rows=3),
+        casillas_proyectos("actividad", aid, auth, proyectos_sel, preseleccion),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
             Button("Guardar", type="submit", cls=ButtonT.primary),
             cls="flex justify-end gap-2"),
@@ -105,9 +108,10 @@ def form_actividad(d, participantes_, errores=(), aid=None):
         hx_target=f"#{ID_MODAL}", cls="space-y-4")
 
 
-def _modal_form(d, participantes_, errores=(), aid=None):
+def _modal_form(auth, d, participantes_, errores=(), aid=None, proyectos_sel=None, preseleccion=None):
     return modal("Editar actividad" if aid else "Nueva actividad",
-                 form_actividad(d, participantes_, errores, aid), ancho="max-w-3xl")
+                 form_actividad(auth, d, participantes_, errores, aid, proyectos_sel, preseleccion),
+                 ancho="max-w-3xl")
 
 
 def _participantes_de(refs, roles):
@@ -118,18 +122,20 @@ def _participantes_de(refs, roles):
     return res
 
 
-def _guardar(auth, sess, aid, d, participante, rol):
+def _guardar(auth, sess, aid, d, participante, rol, proyecto):
     pares = list(zip(participante or [], rol or []))
     d = {k: (v.strip() or None) if isinstance(v, str) else v for k, v in d.items()}
     d["tipo_id"] = int(d["tipo_id"]) if str(d.get("tipo_id") or "").isdigit() else None
     errores = actividades.validar(d, pares)
     if errores:
-        return _modal_form(d, _participantes_de(participante, rol), errores, aid)
+        return _modal_form(auth, d, _participantes_de(participante, rol), errores, aid, proyecto or [])
     nueva = aid is None
     aid = actividades.guardar(d, pares, auth["id"], aid)
+    for aviso in proyectos.sincronizar("actividad", aid, proyecto or [], auth):
+        add_toast(sess, aviso, "warning")
     auditar(auth["id"], "crear_actividad" if nueva else "editar_actividad", "actividad", aid)
     add_toast(sess, "Actividad registrada." if nueva else "Cambios guardados.", "success")
-    return "", HtmxResponseHeaders(trigger=EVENTO)
+    return "", HtmxResponseHeaders(trigger=f"{EVENTO}, pendientes-cambiados")
 
 
 def _datos(tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin, modalidad, ambito,
@@ -165,21 +171,21 @@ def get(auth, q: str = "", anio: str = "", tipo: str = ""):
 
 
 @rt("/actividades/nueva")
-def get(auth):
+def get(auth, proyecto: int = None):
     d = dict(tipo_id=actividades.tipos()[0]["id"], fecha_inicio=date.today().isoformat(),
              modalidad="presencial", ambito="nacional")
     yo = {**personas.por_ref(f"i:{auth['id']}"), "rol": "expositor"}
-    return _modal_form(d, [yo])
+    return _modal_form(auth, d, [yo], preseleccion=proyecto)
 
 
 @rt("/actividades")
 def post(auth, sess, tipo_id: str = "", titulo: str = "", institucion: str = "", lugar: str = "",
          pais: str = "", fecha_inicio: str = "", fecha_fin: str = "", modalidad: str = "",
          ambito: str = "", url: str = "", descripcion: str = "", participante: list[str] = None,
-         rol: list[str] = None):
+         rol: list[str] = None, proyecto: list[int] = None):
     d = _datos(tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin, modalidad,
                ambito, url, descripcion)
-    return _guardar(auth, sess, None, d, participante, rol)
+    return _guardar(auth, sess, None, d, participante, rol, proyecto)
 
 
 @rt("/actividades/{aid}/editar")
@@ -187,20 +193,20 @@ def get(auth, aid: int):
     a = actividades.obtener(aid)
     if not a or not actividades.puede_editar(a, auth["id"]):
         return Response("No autorizado", status_code=403)
-    return _modal_form(a, actividades.participantes(aid), aid=aid)
+    return _modal_form(auth, a, actividades.participantes(aid), aid=aid)
 
 
 @rt("/actividades/{aid}")
 def put(auth, sess, aid: int, tipo_id: str = "", titulo: str = "", institucion: str = "",
         lugar: str = "", pais: str = "", fecha_inicio: str = "", fecha_fin: str = "",
         modalidad: str = "", ambito: str = "", url: str = "", descripcion: str = "",
-        participante: list[str] = None, rol: list[str] = None):
+        participante: list[str] = None, rol: list[str] = None, proyecto: list[int] = None):
     a = actividades.obtener(aid)
     if not a or not actividades.puede_editar(a, auth["id"]):
         return Response("No autorizado", status_code=403)
     d = _datos(tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin, modalidad,
                ambito, url, descripcion)
-    return _guardar(auth, sess, aid, d, participante, rol)
+    return _guardar(auth, sess, aid, d, participante, rol, proyecto)
 
 
 @rt("/actividades/{aid}")
@@ -245,6 +251,9 @@ def ficha(a, auth):
             dato("Participantes", Div(*[Div(enlace_persona(p),
                                             Span(f" · {actividades.ROLES[p['rol']]}",
                                                  cls=TextPresets.muted_sm)) for p in participantes_])),
+            dato("Proyectos", Div(*insignias_proyectos(proyectos.vinculos_de("actividad", a["id"])),
+                                  cls="flex flex-wrap gap-1.5")
+                 if proyectos.vinculos_de("actividad", a["id"]) else None),
             dato("Presentaciones", Div(*[Div(A(p["titulo"], href=f"/productos/{p['id']}",
                                                cls="text-primary hover:underline"))
                                          for p in presentaciones]) if presentaciones else None),
