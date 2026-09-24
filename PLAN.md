@@ -190,9 +190,9 @@ conviene validarlas con el instituto antes del piloto.
 - Revisar con el instituto las decisiones marcadas «(confirmar)».
 - Elegir dónde alojar el piloto (servidor del instituto o Fly.io) según su política sobre datos
   personales en proveedores externos; usar un dominio propio desde el inicio facilita mudarse.
-- Si se usa Fly.io: construir la imagen (`docker build .`) y probar un despliegue real. El
-  arranque con Litestream (restauración tras perder el volumen) se probó localmente; la imagen de
-  Docker y la plataforma, todavía no.
+- Si se usa Fly.io: probar un despliegue real. La imagen se construyó y se probó localmente con
+  Podman (arranque con Litestream, paquete de datos y restauración tras destruir el volumen);
+  falta probarla en la plataforma, con Tigris como réplica.
 
 **Funcionalidad que el plan original incluía y aún no está:**
 - Administrar los catálogos (tipos de actividad y de producto, índices) desde la interfaz. Hoy
