@@ -55,9 +55,9 @@ def _id_tipo(tabla: str, nombre: str) -> int:
 
 
 def _cargar_produccion():
-    """Actividades y productos de ejemplo (solo si aún no hay productos)."""
-    if get_db().q("SELECT 1 FROM producto LIMIT 1"):
-        return
+    """Actividades y productos de ejemplo (solo si aún no hay ninguno). True si los cargó."""
+    if get_db().q("SELECT 1 FROM producto UNION ALL SELECT 1 FROM actividad LIMIT 1"):
+        return False
     uid = {e.split(".")[0]: usuarios.por_email(e)["id"]
            for e in ("emmy.noether@instituto.test", "alan.turing@instituto.test")}
     emmy, turing = f"i:{uid['emmy']}", f"i:{uid['alan']}"
@@ -112,6 +112,7 @@ def _cargar_produccion():
              medio="Reportes de investigación del Instituto, n.º 7")
     producto(uid["emmy"], "Presentación", [emmy], titulo="Ideales primarios en anillos noetherianos",
              anio="2026", actividad_id=str(congreso))
+    return True
 
 
 def _cargar_perfil(uid: int, datos: dict | None):
@@ -143,13 +144,16 @@ def main():
             creados.append((inv["email"], PASS_TEMPORAL_DEMO,
                             "investigador + admin" if inv.get("es_admin") else "investigador"))
 
-    _cargar_produccion()
-    if not creados:
+    produccion = _cargar_produccion()
+    if not creados and not produccion:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
-    print("Cuentas creadas:")
-    for email, pw, rol in creados:
-        print(f"  {email:40} {pw:20} {rol}")
+    if creados:
+        print("Cuentas creadas:")
+        for email, pw, rol in creados:
+            print(f"  {email:40} {pw:20} {rol}")
+    if produccion:
+        print("Actividades y productos de ejemplo cargados (Emmy Noether y Alan Turing).")
 
 
 if __name__ == "__main__":
