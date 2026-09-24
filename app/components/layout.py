@@ -39,7 +39,8 @@ def _menu_usuario(usuario: dict):
 def barra_navegacion(usuario: dict, seccion: str = ""):
     enlaces = [_enlace("Inicio", "/", "home", seccion == "inicio")]
     if usuario["es_investigador"]:
-        enlaces.append(_enlace("Mi perfil", "/perfil", "user-round", seccion == "perfil"))
+        enlaces += [_enlace("Actividades", "/actividades", "calendar-days", seccion == "actividades"),
+                    _enlace("Productos", "/productos", "book-open", seccion == "productos")]
     enlaces.append(_enlace("Investigadores", "/investigadores", "book-user",
                            seccion == "investigadores"))
     if usuario["es_admin"]:

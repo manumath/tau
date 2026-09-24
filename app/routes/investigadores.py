@@ -1,9 +1,11 @@
 """Directorio interno de investigadores, perfil de solo lectura y fotos."""
-from fasthtml.common import A, APIRouter, Div, FileResponse, FtResponse, P, Response, Span
+from fasthtml.common import (A, APIRouter, Div, FileResponse, FtResponse, HtmxResponseHeaders, Li,
+                             P, Response, Span, Ul)
 from monsterui.all import H2, Card, Grid, Input, TextPresets, UkIcon
 
-from app import fotos, perfiles
+from app import actividades, fotos, perfiles, productos
 from app.components.layout import pagina
+from app.components.registros import url_filtrada
 from app.components.perfil import (avatar, chip_msc, lista_identificadores, seccion,
                                    texto_con_parrafos)
 
@@ -49,16 +51,36 @@ def get(auth, q: str = ""):
         Input(type="search", name="q", value=q, placeholder="Buscar…", cls="max-w-md mb-6",
               aria_label="Buscar investigadores", hx_get="/investigadores/resultados",
               hx_target=f"#{ID_RESULTADOS}", hx_swap="outerHTML",
-              hx_trigger="input changed delay:300ms, search",
-              # Mantiene la búsqueda en la URL: se puede recargar o compartir.
-              hx_replace_url="true"),
+              hx_trigger="input changed delay:300ms, search"),
         resultados(q),
         usuario=auth, seccion="investigadores")
 
 
 @rt("/investigadores/resultados")
 def get(q: str = ""):
-    return resultados(q)
+    # Mantiene la búsqueda en la URL de la página (no la del fragmento): se puede recargar o
+    # compartir.
+    return resultados(q), HtmxResponseHeaders(replace_url=url_filtrada("/investigadores", q=q))
+
+
+def _produccion(uid):
+    """Productos (primero los que cuentan para el informe) y actividades recientes."""
+    prods = productos.de_investigador(uid)
+    prods.sort(key=lambda x: (not productos.cuenta_para_informe(x), -x["anio"]))
+    acts = actividades.de_investigador(uid)[:8]
+    return Div(
+        seccion("pub-productos", f"Productos ({len(prods)})",
+                Ul(*[Li(A(productos.cita(x), href=f"/productos/{x['id']}", cls="hover:underline"),
+                        Span(" ✓ informe", cls="text-xs text-green-600")
+                        if productos.cuenta_para_informe(x) else "",
+                        cls="text-sm py-1") for x in prods[:15]], cls="space-y-1")
+                if prods else P("Sin productos registrados.", cls=TextPresets.muted_sm)),
+        seccion("pub-actividades", "Actividades recientes",
+                Ul(*[Li(Span(actividades.fechas_texto(a), cls=(TextPresets.muted_sm, "mr-2")),
+                        A(a["titulo"], href=f"/actividades/{a['id']}", cls="hover:underline"),
+                        cls="text-sm py-1") for a in acts])
+                if acts else P("Sin actividades registradas.", cls=TextPresets.muted_sm)),
+        cls="space-y-6")
 
 
 @rt("/investigadores/{uid}")
@@ -89,6 +111,7 @@ def get(auth, uid: int):
                         cls="flex flex-wrap gap-2") if areas
                     else P("Sin áreas declaradas.", cls=TextPresets.muted_sm)),
             seccion("pub-bio", "Resumen de investigación", texto_con_parrafos(p["bio"])),
+            _produccion(uid),
             seccion("pub-ids", "Identificadores", lista_identificadores(p)),
             cls="space-y-6 max-w-3xl"),
         usuario=auth, seccion="investigadores")

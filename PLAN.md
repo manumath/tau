@@ -299,6 +299,19 @@ más valor agregan para un instituto.
   - Directorio interno buscable por nombre, unidad o área, y perfil de solo lectura.
   - Búsquedas sin distinguir tildes ni mayúsculas (función `sin_tildes` registrada en SQLite).
   - Menú de usuario desplegable; 64 tests.
+- **Iteración 3 (hecha): fase 3, actividades y productos.**
+  - Personas externas reutilizables. Se dan de alta desde el mismo formulario y se reutilizan si
+    ya existe alguien con igual nombre.
+  - Actividades con participantes internos y externos, cada uno con su rol.
+  - Productos con autores ordenables, nivel de revisión según el tipo e índices.
+  - **Cuenta para el informe:** producto indexado o arbitrado, aceptado o publicado.
+  - DOI y arXiv normalizados. Aviso de duplicado en vivo con la opción «Sumarme como autor».
+  - Presentaciones vinculadas a su actividad.
+  - Fichas de detalle con adjuntos (PDF, PNG o JPG validados por contenido), visibles solo para
+    quien puede editar el registro.
+  - Filtros con URL compartible; tablero con cifras del año; producción en el perfil público; 103 tests.
+  - **Decisión:** un indexado o arbitrado *enviado* o *en preparación* aún no cuenta para el informe.
+  - **Permisos:** editan el creador y los autores o participantes del instituto; elimina solo el creador.
 - **Pendiente de la fase 1:** vista de auditoría, página 403 con estilo, desbloqueo manual sin restablecer
   la contraseña, carga masiva de cuentas desde CSV.
 

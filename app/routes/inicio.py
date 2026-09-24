@@ -1,17 +1,16 @@
 """Tablero personal: accesos a los módulos y estado del perfil."""
-from fasthtml.common import A, APIRouter, Div, P
+from datetime import date
+
+from fasthtml.common import A, APIRouter, Div, P, Span
 from monsterui.all import H2, H4, Card, Grid, Label, LabelT, Progress, TextPresets, UkIcon
 
-from app import perfiles
+from app import actividades, perfiles, productos
 from app.components.layout import pagina
 
 rt = APIRouter()
 
 # (icono, título, descripción, fase en que se habilita, enlace si ya está disponible)
-MODULOS = [
-    ("calendar-days", "Mis actividades", "Seminarios, congresos, visitas y escuelas.", 3, None),
-    ("book-open", "Mis productos", "Artículos indexados o arbitrados, reportes de investigación, "
-                                   "libros y presentaciones.", 3, None),
+MODULOS_FUTUROS = [
     ("folder-kanban", "Mis proyectos", "Proyectos en los que participa y propuestas pendientes.",
      4, None),
 ]
@@ -36,6 +35,30 @@ def _tarjeta(icono, titulo, descripcion, fase, href, extra=None):
     return A(tarjeta, href=href, cls="block hover:shadow-md transition") if disponible else tarjeta
 
 
+def _cifra(valor, texto):
+    return Div(Span(str(valor), cls="text-2xl font-semibold"), Span(texto, cls=TextPresets.muted_sm),
+               cls="flex flex-col")
+
+
+def _tarjetas_produccion(uid):
+    anio = date.today().year
+    prods = productos.de_investigador(uid)
+    del_anio = [p for p in prods if p["anio"] == anio]
+    acts = [a for a in actividades.de_investigador(uid) if a["fecha_inicio"].startswith(str(anio))]
+    extra_p = Div(_cifra(len(del_anio), f"en {anio}"),
+                  _cifra(sum(productos.cuenta_para_informe(p) for p in del_anio), "para el informe"),
+                  _cifra(len(prods), "en total"), cls="grid grid-cols-3 gap-2 mt-3")
+    extra_a = Div(_cifra(len(acts), f"en {anio}"),
+                  _cifra(sum(a["ambito"] == "internacional" for a in acts), "internacionales"),
+                  cls="grid grid-cols-3 gap-2 mt-3")
+    return [
+        _tarjeta("book-open", "Mis productos", "Artículos indexados o arbitrados, reportes de "
+                 "investigación, libros y presentaciones.", 3, "/productos", extra_p),
+        _tarjeta("calendar-days", "Mis actividades", "Seminarios, congresos, visitas y escuelas.",
+                 3, "/actividades", extra_a),
+    ]
+
+
 def _tarjeta_perfil(uid):
     p = perfiles.obtener(uid)
     porcentaje, faltan = perfiles.completitud(p, len(perfiles.areas(uid)))
@@ -51,12 +74,12 @@ def _tarjeta_perfil(uid):
 def get(auth):
     tarjetas = []
     if auth["es_investigador"]:
-        tarjetas.append(_tarjeta_perfil(auth["id"]))
+        tarjetas += [*_tarjetas_produccion(auth["id"]), _tarjeta_perfil(auth["id"])]
     tarjetas.append(_tarjeta(*MODULO_DIRECTORIO))
     if auth["es_admin"]:
         tarjetas.append(_tarjeta(*MODULO_USUARIOS))
     if auth["es_investigador"]:
-        tarjetas += [_tarjeta(*m) for m in MODULOS]
+        tarjetas += [_tarjeta(*m) for m in MODULOS_FUTUROS]
     return pagina(
         "Inicio",
         Div(H2(f"Hola, {auth['nombres']}"),
