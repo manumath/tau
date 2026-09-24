@@ -1,121 +1,154 @@
 # Portal de Investigación
 
-Portal del instituto para que los investigadores gestionen su actividad científica.
-Está hecho con FastHTML, HTMX, MonsterUI y SQLite. El diseño completo está en [PLAN.md](PLAN.md).
+Portal del instituto para que cada investigador registre su actividad científica (productos,
+actividades, proyectos) una sola vez y, con eso, se generen su CV, los informes de proyecto y la
+memoria anual. Hecho con [FastHTML](https://fastht.ml), HTMX, MonsterUI y SQLite.
 
-## Puesta en marcha
+| Documento | Para qué |
+|---|---|
+| [Guía de uso](docs/guia-de-uso.md) | Cómo usar el portal: investigadores, responsables de proyecto y administración |
+| [Despliegue](docs/despliegue.md) | Instalación en producción, correo, respaldos y actualizaciones |
+| [PLAN.md](PLAN.md) | Diseño, reglas de negocio, modelo de datos, estado, decisiones y pendientes |
+
+## Qué hace
+
+- **Acceso:** cuentas con invitación por correo o contraseña temporal, recuperación de
+  contraseña, bloqueo por intentos fallidos, carga masiva desde CSV.
+- **Perfil:** datos, identificadores (ORCID, MathSciNet, zbMATH, arXiv…), áreas MSC2020, foto,
+  resumen con LaTeX; directorio interno y perfil público opcional.
+- **Productos y actividades:** autores del instituto y externos, nivel de revisión e índices,
+  detección de duplicados, adjuntos; importación desde DOI (Crossref), arXiv y BibTeX.
+- **Proyectos:** participantes, objetivos y flujo *propuesta → aprobación* de actividades y
+  productos, con bandeja de pendientes y avisos por correo.
+- **Informes:** CV, informe de proyecto y memoria anual imprimibles; descargas XLSX, CSV y BibTeX.
+- **Administración:** cuentas, proyectos, auditoría. **API JSON** de solo lectura para perfiles públicos.
+
+## Puesta en marcha (desarrollo)
+
+Requiere [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync                                  # instala dependencias
-uv run python scripts/seed.py --reset    # crea la BD con cuentas de demostración (servidor detenido)
-uv run python main.py                    # http://localhost:5001 (recarga automática)
-uv run pytest                            # tests
+uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
+uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
+uv run pytest                            # 196 pruebas
 ```
 
-### Cuentas de demostración
+`seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan
+como archivos `.eml` en `data/correos/` y se abren con cualquier cliente de correo.
+
+### Cuentas de ejemplo
 
 | Correo | Contraseña | Perfil |
 |---|---|---|
 | admin@instituto.test | `Admin-portal-2026` | Administradora |
-| sofia.kovalevskaya@instituto.test | `Temporal-2026` (temporal) | Investigadora y administradora |
-| emmy.noether@instituto.test, alan.turing@…, srinivasa.ramanujan@… | `Temporal-2026` (temporal) | Investigador |
+| sofia.kovalevskaya@instituto.test | `Temporal-2026` (temporal) | Investigadora y administradora; responsable de un proyecto |
+| emmy.noether@instituto.test | `Temporal-2026` (temporal) | Investigadora; responsable de un proyecto con propuestas pendientes |
+| alan.turing@instituto.test | `Temporal-2026` (temporal) | Investigador; tiene propuestas pendientes y una rechazada |
+| srinivasa.ramanujan@instituto.test | `Temporal-2026` (temporal) | Investigador con el perfil vacío |
 
-Las cuentas con contraseña temporal deben cambiarla en su primer ingreso. Sofía, Emmy y Alan
-tienen perfiles de ejemplo; el de Srinivasa está vacío para probar cómo se completa uno. Emmy y
-Alan tienen además actividades y productos de ejemplo, incluido un artículo en coautoría
-(registrado una vez, visible en ambos perfiles). Hay dos proyectos de ejemplo: Emmy es responsable
-de «Estructuras algebraicas y computación», donde Alan le propuso dos registros que esperan su
-revisión y uno que ella ya rechazó; y es co-investigadora en un proyecto de Sofía.
+Las contraseñas temporales se cambian en el primer ingreso. Emmy y Alan tienen productos y
+actividades de ejemplo, incluido un artículo en coautoría (un solo registro, visible en ambos
+perfiles).
 
 ## Estructura
 
 ```
-main.py                     create_app(): fast_app + MonsterUI + Beforeware + routers
-app/config.py               configuración (variables de entorno PORTAL_*)
-app/db.py                   fastlite + fastmigrate (init_db, auditar)
-app/seguridad.py            Argon2, contraseñas temporales, política de contraseñas
-app/usuarios.py             acceso a datos de cuentas y límite de intentos de login
-app/perfiles.py             perfil del investigador, áreas MSC, completitud y directorio
-app/identificadores.py      validación y enlaces de ORCID, MathSciNet, zbMATH, arXiv y Scholar
-app/msc.py                  búsqueda en el catálogo MSC2020
-app/fotos.py                recorte y normalización de fotos de perfil (Pillow)
-app/personas.py             autores/participantes: investigadores ('i:<id>') y externos ('e:<id>')
-app/actividades.py          actividades, participantes, permisos y listados
-app/productos.py            productos, autores, reglas de revisión e informe, DOI/arXiv, citas
-app/adjuntos.py             archivos adjuntos validados por contenido
-app/proyectos.py            proyectos, participantes, permisos y flujo propuesta → aprobación
-app/importacion.py          importación desde Crossref (DOI) y arXiv; reconocimiento de autores
-app/informes.py             datos de CV, informe de proyecto y memoria anual; exportación CSV/XLSX
-app/correo.py               envío de correo (archivo .eml en desarrollo, SMTP en producción)
-app/tokens.py               enlaces de un solo uso (recuperar contraseña, invitación)
-app/avisos.py               avisos por correo del flujo de propuestas en proyectos
-app/importar_usuarios.py    carga masiva de cuentas desde CSV (validación y alta)
-app/bibtex.py               importar (con clasificación de duplicados) y exportar BibTeX
-app/auth.py                 Beforeware, login/logout, cambio de contraseña
-app/components/layout.py    página, navegación, modal HTMX
-app/components/perfil.py    avatar, áreas MSC, identificadores y KaTeX
-app/components/personas.py  selector ordenable de autores/participantes con alta rápida de externos
-app/components/registros.py insignias, filtros, adjuntos y fichas
-app/components/errores.py   páginas 403/404 con estilo y avisos de error en peticiones HTMX
-app/routes/inicio.py        tablero
-app/routes/admin_usuarios.py  administración de cuentas
-app/routes/perfil.py        «Mi perfil»: edición en línea, áreas MSC y foto
-app/routes/investigadores.py  directorio, perfil de solo lectura y fotos
-app/routes/actividades.py   «Mis actividades»: lista, modal de alta/edición, ficha
-app/routes/productos.py     «Mis productos»: lista, modal, duplicados, ficha
-app/routes/personas.py      autocompletar de personas y alta de externos
-app/routes/adjuntos.py      subida, descarga (con permisos) y borrado de adjuntos
-app/routes/proyectos.py     proyectos: lista, alta, ficha con pestañas y bandeja de pendientes
-app/routes/informes.py      informes imprimibles (CV, proyecto, memoria) y descargas
-app/routes/publico.py       perfiles públicos (sin sesión) y API JSON /api/v1
-app/routes/admin_auditoria.py  registro de auditoría con filtros y carga progresiva
-app/routes/bibtex.py        importar BibTeX con vista previa; exportar productos y CV
-catalogos/MSC2020.tsv       catálogo MSC2020 (CC BY-NC-SA 4.0, ver catalogos/README.md)
-migrations/NNNN-*.sql       migraciones versionadas (se aplican al arrancar)
-scripts/seed.py             datos de demostración
-scripts/crear_admin.py      primer administrador en producción
-tests/                      pytest con el TestClient de Starlette
+main.py                        create_app(): fast_app, MonsterUI, Beforeware, routers, manejo de errores
+app/
+  config.py                    configuración (variables de entorno PORTAL_*)
+  db.py                        fastlite + fastmigrate; función SQL sin_tildes; auditar()
+  seguridad.py                 Argon2, contraseñas temporales, política de contraseñas
+  auth.py                      Beforeware de sesión, login, cambio y recuperación de contraseña
+  usuarios.py                  cuentas y límite de intentos de ingreso
+  importar_usuarios.py         carga masiva de cuentas desde CSV
+  tokens.py                    enlaces de un solo uso (recuperar contraseña, invitación)
+  correo.py                    envío de correo (archivo .eml, SMTP, memoria para pruebas)
+  avisos.py                    avisos por correo del flujo de proyectos
+  perfiles.py                  perfil, áreas MSC, completitud y directorio
+  identificadores.py           ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
+  msc.py                       búsqueda en el catálogo MSC2020
+  fotos.py                     recorte y limpieza de fotos (Pillow)
+  personas.py                  autores y participantes: 'i:<id>', 'e:<id>' y provisionales 'n:…'
+  actividades.py               actividades y participantes
+  productos.py                 productos, autores, reglas de revisión e informe, DOI/arXiv, citas
+  adjuntos.py                  adjuntos validados por contenido
+  proyectos.py                 proyectos, permisos y flujo propuesta → aprobación
+  importacion.py               importación desde Crossref y arXiv; reconocimiento de autores
+  bibtex.py                    importar y exportar BibTeX
+  informes.py                  datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
+  components/                  layout (página, navegación, modal), perfil, personas, registros, errores
+  routes/                      un APIRouter por área: inicio, perfil, investigadores, actividades,
+                               productos, bibtex, personas, adjuntos, proyectos, informes,
+                               publico (+ API), admin_usuarios, admin_auditoria
+catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)
+migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar
+scripts/seed.py                datos de ejemplo
+scripts/crear_admin.py         primer administrador en producción
+docs/                          guía de uso y guía de despliegue
+tests/                         pytest con el TestClient de Starlette
 ```
 
 ## Configuración
 
+Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
+
 | Variable | Por defecto | Uso |
 |---|---|---|
-| `PORTAL_DB` | `data/portal.db` | Ruta de la base SQLite (fotos y adjuntos se guardan en `fotos/` y `adjuntos/` junto a ella) |
+| `PORTAL_DB` | `data/portal.db` | Base SQLite. Fotos, adjuntos y correos van en `fotos/`, `adjuntos/` y `correos/` junto a ella |
+| `PORTAL_URL` | `http://localhost:5001` | Dirección pública, para los enlaces de los correos |
 | `PORTAL_SECRET_KEY` | archivo `.sesskey` | Clave de firma de la cookie de sesión |
-| `PORTAL_HTTPS_ONLY` | `0` | `1` en producción para usar cookies solo por HTTPS |
-| `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre que se muestra en la interfaz |
-| `PORTAL_CONTACTO` | (vacío) | Correo que se informa a Crossref al importar (recomendado en producción) |
-| `PORTAL_URL` | `http://localhost:5001` | Dirección pública del portal, para los enlaces de los correos |
-| `PORTAL_CORREO_MODO` | `archivo` | `archivo` (guarda `.eml` en `data/correos/`), `smtp`, `desactivado` |
-| `PORTAL_CORREO_REMITENTE` | `Portal de Investigación <no-responder@instituto.test>` | Remitente de los correos |
-| `PORTAL_SMTP_HOST` / `_PUERTO` / `_USUARIO` / `_CLAVE` | `localhost` / `587` / — / — | Servidor SMTP (modo `smtp`) |
+| `PORTAL_HTTPS_ONLY` | `0` | `1` en producción: cookie solo por HTTPS |
+| `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre que muestra la interfaz |
+| `PORTAL_CONTACTO` | (vacío) | Correo que se informa a Crossref al importar |
+| `PORTAL_CORREO_MODO` | `archivo` | `archivo`, `smtp` o `desactivado` (las pruebas usan `memoria`) |
+| `PORTAL_CORREO_REMITENTE` | `Portal de Investigación <no-responder@instituto.test>` | Remitente |
+| `PORTAL_SMTP_HOST` / `_PUERTO` / `_USUARIO` / `_CLAVE` | `localhost` / `587` / — / — | Servidor SMTP |
 | `PORTAL_SMTP_STARTTLS` | `1` | `0` para desactivar STARTTLS |
+
+## Pruebas
+
+`uv run pytest`. Cada prueba usa una base nueva en un directorio temporal. Los correos quedan en
+memoria (`app.correo.ENVIADOS`, fixture `buzon`) y las consultas a Crossref y arXiv se simulan
+(`tests/test_importacion.py`), así que las pruebas no necesitan red.
 
 ## Migraciones
 
-Para cambiar el esquema, agregue un archivo `migrations/000N-descripcion.sql`. Nunca edite una
-migración ya aplicada. `init_db()` aplica las migraciones pendientes al arrancar la app, y
-fastmigrate registra en la base la versión aplicada.
+Para cambiar el esquema, agregue `migrations/000N-descripcion.sql` (o `.py` para cargar datos,
+como `0004-msc2020.py`). Nunca edite una migración ya aplicada: fastmigrate registra en la base
+la versión aplicada y ejecuta solo las nuevas al arrancar.
 
-## Convenciones de HTMX
+## Convenciones
 
+**HTMX**
 - **Sin herencia de atributos** (`htmx.config.disableInheritance`): cada elemento declara su
   `hx-target` y `hx-swap`. Un botón dentro de un contenedor con `hx-swap="outerHTML"` no lo hereda.
-- **Refrescos por evento:** tras guardar o eliminar, el servidor responde con `HX-Trigger`
-  (`productos-cambiados`, `actividades-cambiadas`). Las listas y fichas escuchan ese evento y se
-  recargan solas, con los filtros vigentes.
+- **Refrescos por evento:** tras guardar, el servidor responde con `HX-Trigger`
+  (`productos-cambiados`, `actividades-cambiadas`, `pendientes-cambiados`) y las listas, fichas y
+  contadores que lo escuchan se recargan solos.
 - **Filas de tabla fuera de banda** (`hx-swap-oob`) siempre dentro de `<template>`.
 - **URL de las vistas filtradas:** la fija el servidor con `HX-Replace-Url`, para que apunte a la
   página y no al fragmento.
-- **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): FastHTML tiene
-  una ruta de archivos estáticos que captura cualquier URL terminada en extensiones conocidas. El
-  nombre del archivo lo da `Content-Disposition`.
+- **Errores:** a HTMX se le responde con el código (403, 404…) y el navegador muestra un aviso
+  (`app/components/errores.py`). A las peticiones normales, una página con el estilo del portal.
+
+**Rutas y archivos**
+- **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): la ruta de
+  archivos estáticos de FastHTML captura cualquier URL terminada en extensiones conocidas.
+- Rutas con segmento literal que choca con `{id}` (p. ej. `/productos/bibtex` frente a
+  `/productos/{pid}`) se registran antes: ver el orden de routers en `main.py`.
+- Fotos y adjuntos se guardan fuera de `static/`, con nombre aleatorio, y se sirven por rutas que
+  verifican permisos.
+
+**Seguridad**
+- La autorización se verifica en el servidor en cada ruta; ocultar un botón no basta.
+- Sin sesión solo se accede a `/login`, `/recuperar…`, `/publico/…` y `/api/v1/…` (reglas exactas
+  en `app/auth.py`).
+- Las exportaciones CSV/XLSX neutralizan fórmulas (`=`, `+`, `-`, `@`) para evitar su ejecución en Excel.
 
 ## Partes públicas y API
 
-Sin sesión solo se accede a `/login`, `/recuperar…`, `/publico/…` y `/api/v1/…`. Lo público
-se limita a quienes activaron «Perfil público» en «Mi perfil».
+Lo público se limita a quienes activaron «Perfil público» en «Mi perfil».
 
 | Ruta | Contenido |
 |---|---|
@@ -126,3 +159,8 @@ se limita a quienes activaron «Perfil público» en «Mi perfil».
 | `GET /api/v1/productos` | Productos aceptados o publicados con algún autor de perfil público (`?anio=`) |
 
 La API responde con `Access-Control-Allow-Origin: *`, así la web del instituto puede consumirla.
+
+## Licencias de datos
+
+El catálogo MSC2020 (`catalogos/MSC2020.tsv`) es de Mathematical Reviews y zbMATH Open, bajo
+CC BY-NC-SA 4.0; ver [catalogos/README.md](catalogos/README.md).

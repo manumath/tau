@@ -1,0 +1,173 @@
+# Guía de uso del Portal de Investigación
+
+El portal reúne la actividad científica del instituto: cada persona registra sus productos y
+actividades **una sola vez**, y con eso se generan su CV, los informes de los proyectos y la
+memoria anual.
+
+- [Ingreso y contraseña](#ingreso-y-contraseña)
+- [Mi perfil](#mi-perfil)
+- [Productos](#productos)
+- [Actividades](#actividades)
+- [Proyectos](#proyectos)
+- [Informes](#informes)
+- [Administración](#administración)
+- [Preguntas frecuentes](#preguntas-frecuentes)
+
+## Ingreso y contraseña
+
+- Ingrese con su correo institucional. Si recibió una **invitación por correo**, abra el enlace
+  (vale 3 días) y defina su contraseña. Si le entregaron una **contraseña temporal**, el portal
+  le pedirá cambiarla al primer ingreso.
+- La contraseña debe tener al menos 10 caracteres y combinar letras con números o símbolos.
+- **¿La olvidó?** Use «¿Olvidó su contraseña?» en la pantalla de ingreso: recibirá un enlace
+  válido por una hora.
+- Tras 5 intentos fallidos el ingreso se bloquea 15 minutos. La administración puede
+  desbloquearlo antes.
+- Para cambiar su contraseña: menú con su nombre (arriba a la derecha) → «Cambiar contraseña».
+
+## Mi perfil
+
+Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».
+
+- **Datos básicos:** grado, cargo y unidad o grupo.
+- **Identificadores:** ORCID, MathSciNet, zbMATH, arXiv, Google Scholar y página web. Puede pegar
+  la dirección de su perfil: el portal guarda solo el identificador y verifica el ORCID.
+- **Áreas de investigación:** escriba un código MSC2020 (`11M`) o un tema en inglés (`zeta`,
+  `graph coloring`) y elija de la lista. La marcada con ★ es su área principal.
+- **Resumen de investigación:** admite fórmulas en LaTeX (`$\zeta(s)$`, `$$…$$`), con vista previa.
+- **Foto:** JPG, PNG o WebP hasta 5 MB; se recorta en un cuadrado.
+- **Privacidad y avisos:**
+  - *Perfil público*: publica su perfil y sus publicaciones en la web del portal (sin correo,
+    actividades ni proyectos). Está desactivado hasta que usted lo active.
+  - *Avisos por correo*: sobre propuestas en proyectos que usted dirige y sobre la revisión de
+    las suyas.
+
+El indicador «Perfil completo» muestra qué falta. Los demás investigadores ven su perfil en
+«Investigadores», el directorio interno.
+
+## Productos
+
+«Productos» lista los artículos, libros, reportes, presentaciones y demás de los que usted es
+autor(a) o que registró. Los filtros (texto, año, tipo, «solo los que cuentan para el informe»)
+quedan en la dirección de la página, para volver a ellos o compartirlos.
+
+### Registrar un producto
+
+- **La forma más rápida:** «Nuevo producto» → pegue el **DOI** o el identificador **arXiv** (o su
+  dirección) en «Importar» y presione Enter. El formulario se completa con título, autores,
+  revista, año y páginas; revíselo y guarde.
+  - Si importa un preprint que ya tiene versión publicada, aparece el botón «Importar versión
+    publicada»: queda como artículo y conserva el arXiv.
+- **Desde BibTeX:** «Importar BibTeX» → suba su archivo `.bib` (el de LaTeX, o el que exportan
+  Google Scholar, MathSciNet o Zotero) o pegue las entradas. Verá cada entrada como *nueva*, *ya
+  registrada* o *con error* antes de confirmar.
+- **A mano:** complete el formulario.
+
+### Autores
+
+- Agregue autores buscando por nombre: primero aparecen los del instituto. Si alguien no existe,
+  «Registrar como persona externa» lo crea en el momento.
+- Ordénelos con las flechas, en el orden de la publicación.
+- Un artículo con varios autores del instituto se registra **una vez** y aparece en el perfil de
+  cada uno. Si al escribir el DOI el portal avisa que el producto ya existe, use **«Sumarme como
+  autor»** en vez de registrarlo de nuevo.
+
+### Nivel de revisión y el informe del instituto
+
+- Indique si el producto es **indexado** (y en qué índices), **arbitrado** o **sin arbitraje**.
+  Los reportes, preprints y presentaciones son siempre sin arbitraje.
+- Un producto **cuenta para el informe del instituto** si es indexado o arbitrado y ya está
+  aceptado o publicado. Se marca con la etiqueta verde «Cuenta para el informe».
+- Lo importado desde DOI o BibTeX queda como *arbitrado*: si la revista está indexada, edítelo
+  y marque los índices.
+
+### Adjuntos, edición y exportación
+
+- En la ficha de cada producto puede adjuntar PDF, PNG o JPG (hasta 20 MB). Los adjuntos solo
+  los ven quienes pueden editar el registro y la administración.
+- Pueden editar el producto quien lo registró y sus autores del instituto; solo quien lo
+  registró puede eliminarlo.
+- «Exportar BibTeX» descarga lo que está viendo, con los filtros aplicados.
+
+## Actividades
+
+«Actividades» reúne seminarios, congresos, escuelas, visitas y otras actividades. Al registrar
+una, indique el tipo, las fechas, el lugar, la modalidad y el ámbito, y los participantes (del
+instituto o externos) con su rol: expositor(a), organizador(a), asistente o comité. En la ficha
+puede adjuntar certificados o afiches.
+
+Para una **charla** en un congreso, registre el congreso como actividad y la charla como producto
+de tipo «Presentación», vinculada a esa actividad.
+
+## Proyectos
+
+### Si participa en un proyecto
+
+- En el formulario de un producto o una actividad, marque el proyecto en **«Vincular a
+  proyectos»**. Queda **pendiente** hasta que un responsable lo apruebe.
+- Si lo rechazan, verá el motivo en «Proyectos → Mis propuestas en revisión» (y por correo, si
+  tiene los avisos activos). Corrija el registro y guárdelo con la casilla marcada: se vuelve a
+  proponer.
+- Mientras está pendiente puede retirarlo desmarcando la casilla.
+- En la ficha del proyecto, «Registrar producto del proyecto» abre el formulario con el proyecto
+  ya marcado.
+
+### Si es responsable o co-responsable
+
+- El número junto a «Proyectos» en la barra indica cuántas propuestas debe revisar.
+- En la pestaña **Pendientes** del proyecto, apruebe o rechace cada propuesta. Al rechazar,
+  indique el motivo. Al aprobar una actividad puede asignar su responsable. Un aviso señala
+  lo que cae fuera del periodo del proyecto.
+- Lo que usted mismo vincula queda aprobado de inmediato.
+- En **Participantes** agregue personas del instituto o externas, cambie roles o dé de baja
+  (lo ya aprobado se conserva). Solo la administración asigna responsables.
+- En **Resumen** edite los datos y los objetivos; ahí aparecen también los registros editados
+  después de aprobados, por si quiere revisarlos.
+- El botón **«Informe»** genera el informe de avance del proyecto.
+
+## Informes
+
+Menú «Informes»:
+
+- **Mi CV:** elija el periodo y, si quiere, «solo lo que cuenta para el informe». Agrupa sus
+  productos por categoría y lista actividades y proyectos. Descárguelo con «Imprimir / Guardar
+  PDF» (use «Guardar como PDF» en el diálogo del navegador) o en BibTeX.
+- **Informe de proyecto:** equipo, objetivos, productos y actividades aprobados en el periodo;
+  descarga en XLSX.
+- **Memoria anual** (administración): ver abajo.
+
+## Administración
+
+- **Usuarios → Nuevo usuario:** con «Enviar invitación por correo» la persona define su
+  contraseña. Sin invitación, el portal muestra una contraseña temporal para entregar a mano.
+- **Usuarios → Importar CSV:** alta masiva desde una planilla con `email`, `nombres`,
+  `apellidos` y, opcionalmente, `investigador` y `admin` (sí/no). Hay una plantilla. La vista
+  previa marca cada fila como nueva, ya existente o con error antes de crear nada.
+- En la tabla de usuarios:
+  - 🔓 **Desbloquear**: una cuenta bloqueada por intentos fallidos, sin cambiar su contraseña.
+  - 🔑 **Restablecer**: genera una contraseña temporal nueva.
+  - Activar o desactivar una cuenta; desactivarla cierra su sesión de inmediato.
+- **Proyectos → Nuevo proyecto:** crea el proyecto y asigna su responsable.
+- **Informes → Memoria anual:** productos que cuentan (una vez cada uno), actividades, proyectos
+  vigentes y un resumen por investigador; descarga en XLSX y CSV.
+- **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
+
+## Preguntas frecuentes
+
+**Registré un artículo y mi coautor(a) del instituto también: ¿quedó duplicado?**
+El portal avisa al escribir el DOI o el arXiv. Si igual ocurrió, quien lo registró segundo puede
+eliminar el suyo y usar «Sumarme como autor» en el existente.
+
+**¿Por qué mi artículo no aparece en la memoria anual?**
+Revise que sea indexado o arbitrado, que esté aceptado o publicado, que el año sea correcto y
+que usted figure como autor(a) del instituto.
+
+**¿Quién ve lo que registro?**
+Sus colegas ven su perfil y su producción en el directorio interno. Los adjuntos solo los ven
+quienes pueden editar el registro. Fuera del instituto solo se ve lo que usted publique con
+«Perfil público».
+
+**¿Cómo obtengo el CV en PDF?**
+Con «Imprimir / Guardar PDF» (o el menú Imprimir del navegador), elija «Guardar como PDF» como
+destino. Al imprimir, el portal oculta la navegación y los botones y usa texto negro sobre blanco
+en tamaño A4, aunque en pantalla use el tema oscuro.
