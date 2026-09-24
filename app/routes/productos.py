@@ -287,8 +287,15 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
                 P("Artículos, libros, reportes, presentaciones y más. Un producto con varios autores "
                   "del instituto se registra una sola vez y aparece en el perfil de cada uno.",
                   cls=TextPresets.muted_sm)),
-            Button(UkIcon("plus", height=16, width=16), "Nuevo producto", cls=ButtonT.primary,
-                   hx_get="/productos/nuevo", hx_target=f"#{ID_MODAL}"),
+            Div(A(UkIcon("download", height=16, width=16), "Exportar BibTeX", href="/productos/bibtex",
+                  # Exporta lo que se ve: agrega los filtros vigentes (están en la URL de la página).
+                  onclick="this.href='/productos/bibtex'+location.search",
+                  cls="uk-btn uk-btn-default inline-flex items-center gap-1"),
+                Button(UkIcon("file-up", height=16, width=16), "Importar BibTeX", cls=ButtonT.default,
+                       hx_get="/productos/importar-bibtex", hx_target=f"#{ID_MODAL}"),
+                Button(UkIcon("plus", height=16, width=16), "Nuevo producto", cls=ButtonT.primary,
+                       hx_get="/productos/nuevo", hx_target=f"#{ID_MODAL}"),
+                cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         filtros(ID_FILTROS, "/productos/lista", ID_LISTA, q, anio, productos.anios_de(uid), tipo,
                 productos.tipos(), extra=[casilla_informe]),

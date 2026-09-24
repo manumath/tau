@@ -50,6 +50,7 @@ app/correo.py               envío de correo (archivo .eml en desarrollo, SMTP e
 app/tokens.py               enlaces de un solo uso (recuperar contraseña, invitación)
 app/avisos.py               avisos por correo del flujo de propuestas en proyectos
 app/importar_usuarios.py    carga masiva de cuentas desde CSV (validación y alta)
+app/bibtex.py               importar (con clasificación de duplicados) y exportar BibTeX
 app/auth.py                 Beforeware, login/logout, cambio de contraseña
 app/components/layout.py    página, navegación, modal HTMX
 app/components/perfil.py    avatar, áreas MSC, identificadores y KaTeX
@@ -68,6 +69,7 @@ app/routes/proyectos.py     proyectos: lista, alta, ficha con pestañas y bandej
 app/routes/informes.py      informes imprimibles (CV, proyecto, memoria) y descargas
 app/routes/publico.py       perfiles públicos (sin sesión) y API JSON /api/v1
 app/routes/admin_auditoria.py  registro de auditoría con filtros y carga progresiva
+app/routes/bibtex.py        importar BibTeX con vista previa; exportar productos y CV
 catalogos/MSC2020.tsv       catálogo MSC2020 (CC BY-NC-SA 4.0, ver catalogos/README.md)
 migrations/NNNN-*.sql       migraciones versionadas (se aplican al arrancar)
 scripts/seed.py             datos de demostración

@@ -8,6 +8,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "argon2-cffi>=25.1.0",
+    "bibtexparser>=2.0.1",
     "fastlite>=0.2.4",
     "fastmigrate>=0.5.3",
     "httpx2>=2.13.1",

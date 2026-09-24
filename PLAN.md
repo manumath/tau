@@ -344,7 +344,17 @@ más valor agregan para un instituto.
   - **Límite de arXiv:** una consulta cada 3 s; ante 406/429/503 reintenta una vez y luego
     explica el problema.
   - Red simulada en los tests; 146 tests.
-  - **Pendiente de la fase 5:** importar y exportar BibTeX.
+  - BibTeX (iteración 9), en «Mis productos»:
+    - **Importar** un archivo .bib o texto pegado, con `bibtexparser` 2:
+      - convierte acentos LaTeX y conserva las fórmulas; resuelve `@string` y partículas
+        («van der»);
+      - reconoce el formato de Google Scholar («arXiv preprint …»).
+    - **Vista previa** por entrada: nueva, ya registrada (mismo DOI, arXiv, o título y año;
+      ofrece «sumarme como autor») o error (tipo sin equivalente, año faltante, sintaxis).
+    - **Exportar** «Mis productos» respetando los filtros, y el CV por periodo.
+      - Claves únicas del tipo Apellido+año.
+      - Escapa `& % #` fuera de las fórmulas y protege las mayúsculas del título.
+      - Verificado exportando y volviendo a importar; 196 tests.
 - **Iteración 6 (hecha): fase 6, informes.**
   - Menú «Informes» con tres documentos imprimibles: se ven como una hoja y el botón
     «Imprimir / Guardar PDF» usa el navegador, de modo que las fórmulas LaTeX salen bien.

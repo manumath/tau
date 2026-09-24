@@ -16,6 +16,7 @@ from app.components.perfil import katex_headers
 from app.db import init_db
 from app.routes.actividades import rt as rutas_actividades
 from app.routes.adjuntos import rt as rutas_adjuntos
+from app.routes.bibtex import rt as rutas_bibtex
 from app.routes.admin_auditoria import rt as rutas_admin_auditoria
 from app.routes.admin_usuarios import rt as rutas_admin_usuarios
 from app.routes.informes import rt as rutas_informes
@@ -51,7 +52,8 @@ def create_app(db_path=config.DB_PATH):
     )
     setup_toasts(app)
     app.after.append(paginas_de_error)
-    for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil,
+    # rutas_bibtex va antes que rutas_productos: /productos/bibtex coincidiría con /productos/{pid}.
+    for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
                    rutas_adjuntos, rutas_proyectos, rutas_informes, rutas_publico,
                    rutas_admin_auditoria):

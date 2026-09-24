@@ -195,8 +195,10 @@ def get(auth, desde: str = "", hasta: str = "", informe: bool = False, uid: int 
                fh.Label(fh.Input(type="checkbox", name="informe", value="1", checked=informe, cls="uk-checkbox"),
                         Span("Solo lo que cuenta para el informe", cls="text-sm"), cls="flex items-center gap-2"),
                fh.Input(type="hidden", name="uid", value=str(uid)) if uid != auth["id"] else ""]
+    consulta = f"desde={d}&hasta={h}" + ("&informe=1" if informe else "") + (f"&uid={uid}" if uid != auth["id"] else "")
     return pagina(f"CV · {datos['perfil']['nombres']} {datos['perfil']['apellidos']}",
-                  ESTILO_IMPRESION, barra(filtros), documento_cv(datos, uid, d, h),
+                  ESTILO_IMPRESION, barra(filtros, [descarga("BibTeX", f"/informes/cv/bibtex?{consulta}")]),
+                  documento_cv(datos, uid, d, h),
                   usuario=auth, seccion="informes")
 
 

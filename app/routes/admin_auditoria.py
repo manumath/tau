@@ -22,7 +22,7 @@ ACCIONES = {
     "solicitar_recuperacion": "Pidió recuperar contraseña", "definir_password_enlace": "Definió contraseña por enlace",
     "crear_usuario": "Creó cuenta", "activar_usuario": "Activó cuenta", "desactivar_usuario": "Desactivó cuenta",
     "restablecer_password": "Restableció contraseña", "desbloquear_usuario": "Desbloqueó cuenta",
-    "importar_usuarios": "Importó cuentas desde CSV",
+    "importar_usuarios": "Importó cuentas desde CSV", "importar_bibtex": "Importó productos desde BibTeX",
     "editar_perfil": "Editó perfil", "perfil_publico": "Publicó su perfil", "perfil_privado": "Ocultó su perfil",
     "crear_producto": "Registró producto", "editar_producto": "Editó producto", "eliminar_producto": "Eliminó producto",
     "sumarse_autor": "Se sumó como autor(a)", "crear_actividad": "Registró actividad",
