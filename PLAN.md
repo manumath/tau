@@ -329,6 +329,22 @@ más valor agregan para un instituto.
   - Al dar de baja a un participante, lo que ya estaba aprobado se conserva.
   - Contador de pendientes en la navegación, refrescado por evento y cada 60 s.
   - Pestañas con URL propia; tablero con cifras de proyectos; 124 tests.
+- **Iteración 5 (hecha): fase 5, importación desde DOI y arXiv.**
+  - Recuadro «Importar desde DOI o arXiv» en «Nuevo producto». Acepta identificadores o URL, y
+    los DOI de arXiv (10.48550/…).
+  - Consulta Crossref o arXiv y deja el formulario completo para revisar: tipo, título, autores,
+    revista, año, volumen, número, páginas y resumen.
+  - **Autores del instituto:** se reconocen por ORCID o por nombre (apellido o primer apellido,
+    más la inicial), sin distinguir tildes.
+  - **Externos:** se reutilizan los que ya existen. Los nuevos viajan como referencia provisional
+    y se registran recién al guardar, así que cancelar no deja registros huérfanos.
+  - **Preprint con versión publicada:** botón «Importar versión publicada», que trae el artículo
+    por DOI y conserva el arXiv asociado.
+  - Si el producto ya existe, el aviso ofrece «Sumarme como autor».
+  - **Límite de arXiv:** una consulta cada 3 s; ante 406/429/503 reintenta una vez y luego
+    explica el problema.
+  - Red simulada en los tests; 146 tests.
+  - **Pendiente de la fase 5:** importar y exportar BibTeX.
 - **Pendiente de la fase 1:** vista de auditoría, página 403 con estilo, desbloqueo manual sin restablecer
   la contraseña, carga masiva de cuentas desde CSV.
 

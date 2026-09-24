@@ -10,6 +10,7 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "fastlite>=0.2.4",
     "fastmigrate>=0.5.3",
+    "httpx2>=2.13.1",
     "monsterui>=1.0.47",
     "pillow>=12.3.0",
     "python-fasthtml>=0.14.13",

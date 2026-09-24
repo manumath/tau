@@ -138,7 +138,7 @@ def preparar(datos: dict, autores_refs: list[str], indices_ids: list[int],
 
     if not autores_refs:
         errores.append("Agregue al menos un autor.")
-    elif any(not personas.parsear_ref(r) for r in autores_refs):
+    elif any(not personas.por_ref(r) for r in autores_refs):
         errores.append("Hay autores no válidos.")
     elif len(set(autores_refs)) != len(autores_refs):
         errores.append("Hay autores repetidos.")

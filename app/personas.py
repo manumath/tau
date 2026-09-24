@@ -1,8 +1,13 @@
 """Personas que figuran como autores o participantes: investigadores del instituto y externos.
 
 En formularios y datos se identifican con una referencia de texto: 'i:<usuario_id>' para
-investigadores e 'e:<persona_externa_id>' para externos.
+investigadores e 'e:<persona_externa_id>' para externos. Los externos que llegan de una
+importación y aún no existen viajan como 'n:<datos codificados>' y se registran recién al
+guardar (`materializar`), para no dejar personas huérfanas si se cancela el formulario.
 """
+import base64
+import json
+
 from app.db import get_db, sin_tildes
 
 
@@ -11,11 +16,35 @@ def ref(investigador_id=None, externo_id=None) -> str:
 
 
 def parsear_ref(texto: str) -> tuple[str, int] | None:
-    """'i:3' → ('i', 3). None si el formato no es válido."""
+    """'i:3' → ('i', 3). None si el formato no es válido (las 'n:' no tienen id todavía)."""
     tipo, _, num = (texto or "").partition(":")
     if tipo in ("i", "e") and num.isdigit():
         return tipo, int(num)
     return None
+
+
+def ref_nueva(nombres: str, apellidos: str, afiliacion: str | None) -> str:
+    datos = json.dumps({"n": nombres, "a": apellidos, "f": afiliacion}, ensure_ascii=False)
+    return "n:" + base64.urlsafe_b64encode(datos.encode()).decode()
+
+
+def _datos_nueva(r: str) -> dict | None:
+    try:
+        d = json.loads(base64.urlsafe_b64decode(r[2:].encode()).decode())
+        return {"nombres": str(d["n"])[:100], "apellidos": str(d["a"])[:100],
+                "afiliacion": (str(d["f"])[:200] if d.get("f") else None)}
+    except (ValueError, KeyError, TypeError):
+        return None
+
+
+def materializar(r: str, creado_por: int) -> str:
+    """'n:…' → 'e:<id>' (reutiliza un externo con el mismo nombre si ya existe). Las demás
+    referencias se devuelven tal cual."""
+    if not (r or "").startswith("n:") or not (d := _datos_nueva(r)) or not d["apellidos"]:
+        return r
+    existente = externo_similar(d["nombres"], d["apellidos"]) or crear_externo(
+        d["nombres"] or "—", d["apellidos"], d["afiliacion"], None, creado_por)
+    return f"e:{existente['id']}"
 
 
 def columnas(r: str) -> dict:
@@ -27,6 +56,9 @@ def columnas(r: str) -> dict:
 
 def por_ref(r: str) -> dict | None:
     """Datos para mostrar una persona: nombre, afiliación y si es interna."""
+    if (r or "").startswith("n:"):
+        d = _datos_nueva(r)
+        return {**d, "id": None, "ref": r, "interno": False, "nueva": True} if d else None
     p = parsear_ref(r)
     if not p:
         return None

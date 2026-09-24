@@ -44,6 +44,7 @@ app/actividades.py          actividades, participantes, permisos y listados
 app/productos.py            productos, autores, reglas de revisión e informe, DOI/arXiv, citas
 app/adjuntos.py             archivos adjuntos validados por contenido
 app/proyectos.py            proyectos, participantes, permisos y flujo propuesta → aprobación
+app/importacion.py          importación desde Crossref (DOI) y arXiv; reconocimiento de autores
 app/auth.py                 Beforeware, login/logout, cambio de contraseña
 app/components/layout.py    página, navegación, modal HTMX
 app/components/perfil.py    avatar, áreas MSC, identificadores y KaTeX
@@ -73,6 +74,7 @@ tests/                      pytest con el TestClient de Starlette
 | `PORTAL_SECRET_KEY` | archivo `.sesskey` | Clave de firma de la cookie de sesión |
 | `PORTAL_HTTPS_ONLY` | `0` | `1` en producción para usar cookies solo por HTTPS |
 | `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre que se muestra en la interfaz |
+| `PORTAL_CONTACTO` | (vacío) | Correo que se informa a Crossref al importar (recomendado en producción) |
 
 ## Migraciones
 

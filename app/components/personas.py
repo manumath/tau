@@ -36,7 +36,7 @@ def js_limpiar(campo):
 
 def fila(p: dict, campo: str, rol: str | None = None):
     """Una persona elegida. Si `campo` es 'participante' incluye el selector de rol."""
-    etiqueta = Span("Instituto" if p["interno"] else "Externo",
+    etiqueta = Span("Instituto" if p["interno"] else ("Externo · nuevo" if p.get("nueva") else "Externo"),
                     cls="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 "
                         + ("bg-primary/15 text-primary" if p["interno"] else "bg-muted"))
     selector_rol = Select(*[Option(t, value=v, selected=v == (rol or "asistente"))

@@ -7,6 +7,7 @@ Patrones HTMX:
   se vuelve a pedir al servidor cuando cambian (/productos/campos).
 - Al escribir un DOI o arXiv se avisa si el producto ya existe (/productos/verificar).
 """
+import json
 from datetime import date
 
 from fasthtml.common import (A, APIRouter, Div, H3, HtmxResponseHeaders, Input, Label, Option, P,
@@ -15,7 +16,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, CheckboxX, Form, FormLabel, LabelInput,
                            LabelTextArea, TextPresets, UkIcon)
 
-from app import actividades, personas, productos, proyectos
+from app import actividades, importacion, personas, productos, proyectos
 from app.components import personas as selector_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import (casillas_proyectos, dato, enlace_persona, filtros, insignia,
@@ -150,13 +151,66 @@ def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id):
     return Div(*partes, id="campos-dependientes", cls="space-y-4")
 
 
+def caja_importar(valor="", error=None, contenido=None):
+    """Recuadro «Importar desde DOI o arXiv» (solo al crear). `contenido` reemplaza al mensaje
+    de ayuda, p. ej. con el aviso de que el producto ya existe."""
+    return Div(
+        Div(UkIcon("download", height=16, width=16, cls="shrink-0 text-primary"),
+            Span("Importar desde DOI o arXiv", cls="font-medium text-sm"), cls="flex items-center gap-2"),
+        Div(Input(id="identificador", name="identificador", value=valor, autocomplete="off",
+                  placeholder="10.1090/S0002-9947-1965-0170805-7  ·  2401.01234  ·  o la URL",
+                  cls="uk-input", aria_label="DOI o identificador arXiv",
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();"
+                            "document.getElementById('boton-importar').click()}"),
+            Button("Importar", type="button", id="boton-importar",
+                   cls=(ButtonT.primary, "shrink-0"), hx_post="/productos/importar",
+                   hx_include="#identificador, input[name=proyecto]:checked", hx_target=f"#{ID_MODAL}",
+                   hx_indicator="#importando", hx_disabled_elt="this"),
+            cls="flex gap-2"),
+        Span(UkIcon("loader-circle", height=14, width=14, cls="animate-spin"),
+             " Consultando Crossref / arXiv…", id="importando", cls="htmx-indicator text-sm"),
+        mensaje_error(error) if error else "",
+        contenido or P("Completa el formulario con los datos publicados: título, autores (reconoce a "
+                       "los del instituto), revista, año, páginas y resumen. Luego puede revisarlos.",
+                       cls=TextPresets.muted_sm),
+        id="caja-importar", cls="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 space-y-2")
+
+
+def banner_importacion(info):
+    """Resumen de lo importado: fuente, autores reconocidos y avisos."""
+    r = info["resumen"]
+    lineas = []
+    if r["internos"]:
+        lineas.append(f"Del instituto: {', '.join(r['internos'])}.")
+    if r["existentes"]:
+        lineas.append(f"Externos ya registrados: {', '.join(r['existentes'])}.")
+    if r["nuevos"]:
+        lineas.append(f"Externos nuevos (se registrarán al guardar): {', '.join(r['nuevos'])}.")
+    avisos = [Div(UkIcon("triangle-alert", height=14, width=14, cls="shrink-0 mt-0.5"), Span(a),
+                  cls="flex gap-1.5 text-sm text-amber-700 dark:text-amber-400") for a in info["avisos"]]
+    version = Button(UkIcon("download", height=14, width=14), f"Importar versión publicada ({info['doi_publicado']})",
+                     type="button", cls=(ButtonT.default, ButtonT.sm), hx_post="/productos/importar",
+                     hx_vals=json.dumps({"identificador": info["doi_publicado"],
+                                         "arxiv_asociado": info["arxiv_id"]}),
+                     hx_include="input[name=proyecto]:checked", hx_target=f"#{ID_MODAL}") \
+        if info.get("doi_publicado") else ""
+    return Div(
+        Div(UkIcon("circle-check", height=16, width=16, cls="shrink-0 text-green-600"),
+            Span(f"Datos importados de {info['fuente']}. Revíselos antes de guardar."),
+            cls="flex items-center gap-1.5 font-medium text-sm"),
+        *[P(x, cls="text-sm") for x in lineas], *avisos, version,
+        cls="rounded-md border border-green-300 bg-green-50 dark:bg-green-950/40 dark:border-green-800 "
+            "p-3 space-y-1")
+
+
 def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, proyectos_sel=None,
-                  preseleccion=None):
+                  preseleccion=None, importado=None):
     uid = auth["id"]
     def campo(etiqueta, nombre, **kw):
         return LabelInput(etiqueta, id=nombre, value=d.get(nombre) or "", **kw)
 
     return Form(
+        banner_importacion(importado) if importado else ("" if pid else caja_importar()),
         mensaje_error(*errores),
         Input(type="hidden", name="pid", value=pid or ""),
         Div(Div(FormLabel("Tipo", fr="tipo_id"),
@@ -201,10 +255,10 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
 
 
 def _modal_form(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, proyectos_sel=None,
-                preseleccion=None):
+                preseleccion=None, importado=None):
     return modal("Editar producto" if pid else "Nuevo producto",
                  form_producto(auth, d, autores_elegidos, indices_sel, errores, pid, proyectos_sel,
-                               preseleccion),
+                               preseleccion, importado),
                  ancho="max-w-3xl")
 
 
@@ -260,6 +314,28 @@ def get(auth, proyecto: int = None):
     return _modal_form(auth, d, _autores_de_refs([f"i:{auth['id']}"]), [], preseleccion=proyecto)
 
 
+@rt("/productos/importar")
+def post(auth, identificador: str = "", arxiv_asociado: str = "", proyecto: list[int] = None):
+    """Consulta Crossref o arXiv y devuelve el formulario completo, prellenado.
+    Si hay un error o el producto ya existe, solo se actualiza el recuadro de importación."""
+    def en_la_caja(*args, **kw):
+        return caja_importar(*args, **kw), HtmxResponseHeaders(retarget="#caja-importar", reswap="outerHTML")
+
+    try:
+        info = importacion.importar(identificador, arxiv_asociado or None)
+    except importacion.ErrorImportacion as e:
+        return en_la_caja(identificador, str(e))
+    d = info["datos"]
+    if (otro := productos.existente(d["doi"], d["arxiv_id"])):
+        return en_la_caja(identificador, contenido=aviso_duplicado(otro, auth["id"]))
+    refs, info["resumen"] = importacion.resolver_autores(info["autores"])
+    if f"i:{auth['id']}" not in refs:
+        info["avisos"].append("Usted no aparece entre los autores reconocidos. Si es coautor(a), "
+                              "agréguese o revise que su nombre coincida con el publicado.")
+    info["arxiv_id"] = d["arxiv_id"]
+    return _modal_form(auth, d, _autores_de_refs(refs), [], proyectos_sel=proyecto or [], importado=info)
+
+
 @rt("/productos/campos")
 def get(auth, tipo_id: str = "", revision: str = "", indice: list[str] = None,
         actividad_id: str = ""):
@@ -274,9 +350,11 @@ def post(auth, doi: str = "", arxiv_id: str = "", pid: str = ""):
     except ValueError as e:
         return P(str(e), cls="text-sm text-amber-600")
     otro = productos.existente(doi_n, arxiv_n, excluir=int(pid) if pid.isdigit() else None)
-    if not otro:
-        return ""
-    ya_es_autor = productos.es_autor(otro["id"], auth["id"])
+    return aviso_duplicado(otro, auth["id"]) if otro else ""
+
+
+def aviso_duplicado(otro, uid):
+    ya_es_autor = productos.es_autor(otro["id"], uid)
     return Div(
         Div(UkIcon("copy", height=16, width=16, cls="shrink-0"),
             Div(P("Este producto ya está registrado:", cls="font-medium"),
@@ -298,6 +376,7 @@ def _guardar(auth, sess, pid, datos, autor, indice, proyecto):
         return _modal_form(auth, datos, _autores_de_refs(autor), indice or [], errores, pid,
                            proyecto or [])
     nuevo = pid is None
+    autor = [personas.materializar(r, auth["id"]) for r in autor]  # externos importados
     pid = productos.guardar(d, autor, auth["id"], pid)
     for aviso in proyectos.sincronizar("producto", pid, proyecto or [], auth):
         add_toast(sess, aviso, "warning")
