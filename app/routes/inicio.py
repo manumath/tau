@@ -1,26 +1,27 @@
-"""Tablero personal. En esta iteración muestra los módulos y su fase de desarrollo."""
-from fasthtml.common import A, APIRouter, Div, P, Span
-from monsterui.all import H2, H4, Card, Grid, Label, LabelT, TextPresets, UkIcon
+"""Tablero personal: accesos a los módulos y estado del perfil."""
+from fasthtml.common import A, APIRouter, Div, P
+from monsterui.all import H2, H4, Card, Grid, Label, LabelT, Progress, TextPresets, UkIcon
 
+from app import perfiles
 from app.components.layout import pagina
 
 rt = APIRouter()
 
+# (icono, título, descripción, fase en que se habilita, enlace si ya está disponible)
 MODULOS = [
-    ("user-round", "Mi perfil", "Datos básicos, ORCID, MathSciNet, zbMATH y áreas MSC.", 2, None),
     ("calendar-days", "Mis actividades", "Seminarios, congresos, visitas y escuelas.", 3, None),
     ("book-open", "Mis productos", "Artículos indexados o arbitrados, reportes de investigación, "
                                    "libros y presentaciones.", 3, None),
     ("folder-kanban", "Mis proyectos", "Proyectos en los que participa y propuestas pendientes.",
      4, None),
 ]
-MODULOS_ADMIN = [
-    ("users", "Usuarios", "Crear cuentas, restablecer contraseñas y desactivar accesos.", 1,
-     "/admin/usuarios"),
-]
+MODULO_DIRECTORIO = ("book-user", "Investigadores",
+                     "Directorio interno: busque colegas por nombre o área MSC.", 2, "/investigadores")
+MODULO_USUARIOS = ("users", "Usuarios", "Crear cuentas, restablecer contraseñas y desactivar accesos.",
+                   1, "/admin/usuarios")
 
 
-def _tarjeta(icono, titulo, descripcion, fase, href):
+def _tarjeta(icono, titulo, descripcion, fase, href, extra=None):
     disponible = href is not None
     contenido = Div(
         Div(UkIcon(icono, height=22, width=22, cls="text-primary"),
@@ -29,20 +30,38 @@ def _tarjeta(icono, titulo, descripcion, fase, href):
             cls="flex items-center justify-between"),
         H4(titulo, cls="mt-3"),
         P(descripcion, cls=TextPresets.muted_sm),
+        extra or "",
     )
     tarjeta = Card(contenido, cls="h-full" + ("" if disponible else " opacity-70"))
     return A(tarjeta, href=href, cls="block hover:shadow-md transition") if disponible else tarjeta
 
 
+def _tarjeta_perfil(uid):
+    p = perfiles.obtener(uid)
+    porcentaje, faltan = perfiles.completitud(p, len(perfiles.areas(uid)))
+    extra = Div(Progress(value=str(porcentaje), cls="mt-3 mb-1"),
+                P(f"{porcentaje} % completo" + (f" · falta: {', '.join(faltan[:3])}"
+                                                 + ("…" if len(faltan) > 3 else "") if faltan else ""),
+                  cls=TextPresets.muted_sm))
+    return _tarjeta("user-round", "Mi perfil", "Datos básicos, ORCID, MathSciNet, zbMATH, áreas MSC "
+                    "y foto.", 2, "/perfil", extra)
+
+
 @rt("/")
 def get(auth):
-    modulos = (MODULOS_ADMIN if auth["es_admin"] else []) + MODULOS
+    tarjetas = []
+    if auth["es_investigador"]:
+        tarjetas.append(_tarjeta_perfil(auth["id"]))
+    tarjetas.append(_tarjeta(*MODULO_DIRECTORIO))
+    if auth["es_admin"]:
+        tarjetas.append(_tarjeta(*MODULO_USUARIOS))
+    if auth["es_investigador"]:
+        tarjetas += [_tarjeta(*m) for m in MODULOS]
     return pagina(
         "Inicio",
         Div(H2(f"Hola, {auth['nombres']}"),
-            P(Span("Primera iteración del portal: acceso y administración de cuentas. "),
-              "Los módulos marcados con su fase se habilitarán en las próximas entregas.",
+            P("Los módulos marcados con su fase se habilitarán en las próximas entregas.",
               cls=TextPresets.muted_sm),
             cls="mb-6 space-y-1"),
-        Grid(*[_tarjeta(*m) for m in modulos], cols_sm=1, cols_md=2, cols_lg=3, gap=4),
+        Grid(*tarjetas, cols_sm=1, cols_md=2, cols_lg=3, gap=4),
         usuario=auth, seccion="inicio")

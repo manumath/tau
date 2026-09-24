@@ -9,16 +9,19 @@ from monsterui.all import Theme
 from app import config
 from app.auth import beforeware
 from app.auth import rt as rutas_auth
+from app.components.perfil import katex_headers
 from app.db import init_db
 from app.routes.admin_usuarios import rt as rutas_admin_usuarios
 from app.routes.inicio import rt as rutas_inicio
+from app.routes.investigadores import rt as rutas_investigadores
+from app.routes.perfil import rt as rutas_perfil
 
 
 def create_app(db_path=config.DB_PATH):
     init_db(db_path)
     app, _ = fast_app(
         pico=False,
-        hdrs=Theme.blue.headers(),
+        hdrs=(*Theme.blue.headers(), *katex_headers()),
         before=beforeware,
         secret_key=config.SECRET_KEY,
         key_fname=str(config.RAIZ / ".sesskey"),
@@ -30,7 +33,8 @@ def create_app(db_path=config.DB_PATH):
         title="Portal de Investigación",
     )
     setup_toasts(app)
-    for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios):
+    for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil,
+                   rutas_investigadores):
         router.to_app(app)
     return app
 

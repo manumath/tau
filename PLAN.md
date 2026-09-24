@@ -287,6 +287,18 @@ más valor agregan para un instituto.
   - Login con Argon2 y límite de intentos; Beforeware; cambio obligatorio de la contraseña temporal.
   - Administración de usuarios: búsqueda en vivo, alta en modal con contraseña temporal, activar o desactivar, restablecer.
   - Tablero; datos de demostración; 26 tests.
+- **Iteración 2 (hecha): fase 2, perfil del investigador.**
+  - Catálogo MSC2020 oficial (6.603 códigos), cargado con una migración en Python.
+  - «Mi perfil» con edición en línea por sección: datos básicos, identificadores de autor y
+    resumen de investigación con LaTeX (KaTeX) y vista previa en vivo.
+  - Identificadores validados y normalizados: el ORCID se comprueba con su dígito verificador y se
+    acepta pegar la URL del perfil.
+  - Áreas MSC con autocompletar por código o tema, área principal, hasta 10 áreas.
+  - Foto recortada a 400×400 y sin metadatos (Pillow), servida solo con sesión.
+  - Indicador de perfil completo en el perfil y en el tablero.
+  - Directorio interno buscable por nombre, unidad o área, y perfil de solo lectura.
+  - Búsquedas sin distinguir tildes ni mayúsculas (función `sin_tildes` registrada en SQLite).
+  - Menú de usuario desplegable; 64 tests.
 - **Pendiente de la fase 1:** vista de auditoría, página 403 con estilo, desbloqueo manual sin restablecer
   la contraseña, carga masiva de cuentas desde CSV.
 

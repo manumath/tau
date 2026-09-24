@@ -9,7 +9,9 @@ from app.db import auditar
 from app.seguridad import errores_password, verificar_password
 
 # Rutas accesibles sin sesión.
-RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico", r"/static/.*", r".*\.(css|js|png|svg|ico)"]
+# Ojo: los patrones deben ser estrictos. Uno como r".*\.png" dejaría pasar sin sesión
+# cualquier ruta que termine en .png.
+RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico", r"/[\w\-]+\.(css|js|png|svg|ico|woff2?)"]
 # Rutas permitidas mientras la contraseña es temporal.
 RUTAS_CAMBIO_PASS = {"/cambiar-password", "/logout"}
 
@@ -30,6 +32,8 @@ def _cargar_usuario(req, sess):
         return Redirect("/cambiar-password")
     if ruta.startswith("/admin") and not usuario["es_admin"]:
         return Response("No autorizado", status_code=403)
+    if ruta.startswith("/perfil") and not usuario["es_investigador"]:
+        return Response("Esta cuenta no tiene perfil de investigador.", status_code=403)
 
 
 beforeware = Beforeware(_cargar_usuario, skip=RUTAS_PUBLICAS)

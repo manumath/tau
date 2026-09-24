@@ -1,4 +1,5 @@
 """Estructura común de las páginas: barra de navegación, contenedor y modal."""
+import fasthtml.common as fh
 from fasthtml.common import A, Div, Form, Main, Span, Title
 from monsterui.all import (H3, Button, ButtonT, Container, ContainerT, DivHStacked, NavBar,
                            TextPresets, UkIcon)
@@ -13,17 +14,37 @@ def _enlace(texto, href, icono, activo=False):
     return A(UkIcon(icono, height=16, width=16), texto, href=href, cls=cls)
 
 
-def barra_navegacion(usuario: dict, seccion: str = ""):
-    enlaces = [_enlace("Inicio", "/", "home", seccion == "inicio")]
-    if usuario["es_admin"]:
-        enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
-    enlaces += [
-        _enlace("Contraseña", "/cambiar-password", "key-round", seccion == "password"),
-        Span(f'{usuario["nombres"]} {usuario["apellidos"]}', cls=TextPresets.muted_sm),
-        Form(Button(UkIcon("log-out", height=16, width=16), "Salir", cls=ButtonT.ghost,
-                    type="submit"),
+def _menu_usuario(usuario: dict):
+    """Nombre del usuario con un desplegable: perfil, contraseña y salir."""
+    item = "flex items-center gap-2 px-3 py-2 rounded hover:bg-muted w-full text-left text-sm"
+    opciones = []
+    if usuario["es_investigador"]:
+        opciones.append(A(UkIcon("user-round", height=16, width=16), "Mi perfil", href="/perfil",
+                          cls=item))
+    opciones += [
+        A(UkIcon("key-round", height=16, width=16), "Cambiar contraseña", href="/cambiar-password",
+          cls=item),
+        Form(fh.Button(UkIcon("log-out", height=16, width=16), "Salir", type="submit", cls=item),
              method="post", action="/logout", hx_post="/logout"),
     ]
+    return Div(
+        Button(Span(usuario["nombres"], cls="max-w-40 truncate"),
+               UkIcon("chevron-down", height=14, width=14), cls=(ButtonT.ghost, "gap-1"),
+               type="button", aria_haspopup="true"),
+        Div(Div(Span(usuario["email"], cls=(TextPresets.muted_sm, "block px-3 py-2 truncate")),
+                *opciones, cls="flex flex-col"),
+            uk_dropdown="mode: click; pos: bottom-right", cls="uk-drop uk-dropdown w-60 p-1"))
+
+
+def barra_navegacion(usuario: dict, seccion: str = ""):
+    enlaces = [_enlace("Inicio", "/", "home", seccion == "inicio")]
+    if usuario["es_investigador"]:
+        enlaces.append(_enlace("Mi perfil", "/perfil", "user-round", seccion == "perfil"))
+    enlaces.append(_enlace("Investigadores", "/investigadores", "book-user",
+                           seccion == "investigadores"))
+    if usuario["es_admin"]:
+        enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
+    enlaces.append(_menu_usuario(usuario))
     marca = A(DivHStacked(UkIcon("sigma", height=26, width=26),
                           H3("Portal de Investigación", cls="text-lg")), href="/")
     return NavBar(*enlaces, brand=marca, sticky=True, cls="px-6 py-3 border-b border-border")

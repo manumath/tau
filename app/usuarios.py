@@ -1,6 +1,6 @@
 """Acceso a datos de cuentas de usuario."""
 from app import config
-from app.db import get_db
+from app.db import get_db, sin_tildes
 from app.seguridad import hash_password
 
 
@@ -15,13 +15,13 @@ def por_email(email: str) -> dict | None:
 
 
 def listar(texto: str = "") -> list[dict]:
-    patron = f"%{texto.strip()}%"
+    patron = f"%{sin_tildes(texto.strip())}%"
     return get_db().q(
         """SELECT u.*, (i.usuario_id IS NOT NULL) AS es_investigador
            FROM usuario u LEFT JOIN investigador i ON i.usuario_id = u.id
-           WHERE u.email LIKE :p OR u.nombres LIKE :p OR u.apellidos LIKE :p
-                 OR (u.nombres || ' ' || u.apellidos) LIKE :p
-           ORDER BY u.apellidos, u.nombres""",
+           WHERE u.email LIKE :p OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
+                 OR sin_tildes(u.apellidos || ' ' || u.nombres) LIKE :p
+           ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""",
         {"p": patron})
 
 
