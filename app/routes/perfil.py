@@ -15,11 +15,11 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
 
-from app import fotos, msc, perfiles
+from app import fotos, msc, perfiles, usuarios
 from app.components.layout import mensaje_error, pagina
 from app.components.perfil import (avatar, chip_msc, lista_identificadores, seccion,
                                    texto_con_parrafos)
-from app.db import auditar
+from app.db import auditar, get_db
 from app.identificadores import IDENTIFICADORES, normalizar_todos
 
 rt = APIRouter()
@@ -371,6 +371,47 @@ def delete(auth):
     return _respuesta(auth["id"], seccion_foto(perfiles.obtener(auth["id"])))
 
 
+# --- Privacidad y avisos -----------------------------------------------------------
+
+def seccion_preferencias(p, avisos_correo):
+    def interruptor(nombre, activo, titulo, ayuda):
+        return fh.Label(
+            Input(type="checkbox", name=nombre, value="1", checked=bool(activo),
+                  cls="uk-toggle-switch uk-toggle-switch-primary min-w-9 mt-0.5",
+                  hx_post=f"/perfil/preferencias/{nombre}", hx_trigger="change",
+                  hx_target="#seccion-preferencias", hx_swap="outerHTML"),
+            Div(Span(titulo, cls="text-sm font-medium"), Span(ayuda, cls=TextPresets.muted_sm),
+                cls="flex flex-col"),
+            cls="flex items-start gap-3 cursor-pointer")
+    return seccion(
+        "seccion-preferencias", "Privacidad y avisos",
+        Div(interruptor("perfil_publico", p["perfil_publico"], "Perfil público",
+                        "Publica en la web del portal su nombre, cargo, áreas, resumen, identificadores, "
+                        "foto y productos publicados. No se muestran su correo, sus actividades ni los "
+                        "productos en preparación."),
+            A(UkIcon("external-link", height=14, width=14), "Ver mi perfil público",
+              href=f"/publico/investigadores/{p['id']}", target="_blank",
+              cls="inline-flex items-center gap-1 text-sm text-primary hover:underline ml-12")
+            if p["perfil_publico"] else "",
+            interruptor("avisos_correo", avisos_correo, "Avisos por correo",
+                        "Cuando alguien propone algo a un proyecto que usted dirige, o cuando revisan "
+                        "una propuesta suya."),
+            cls="space-y-4"))
+
+
+@rt("/perfil/preferencias/{nombre}")
+def post(auth, sess, nombre: str, perfil_publico: bool = False, avisos_correo: bool = False):
+    if nombre == "perfil_publico":
+        perfiles.actualizar_campos(auth["id"], perfil_publico=int(perfil_publico))
+        auditar(auth["id"], "perfil_publico" if perfil_publico else "perfil_privado", "investigador", auth["id"])
+        add_toast(sess, "Su perfil ahora es público." if perfil_publico else "Su perfil ya no es público.",
+                  "success")
+    elif nombre == "avisos_correo":
+        get_db().execute("UPDATE usuario SET avisos_correo = ? WHERE id = ?", [int(avisos_correo), auth["id"]])
+    p = perfiles.obtener(auth["id"])
+    return seccion_preferencias(p, usuarios.por_id(auth["id"])["avisos_correo"])
+
+
 # --- Página ----------------------------------------------------------------------
 
 @rt("/perfil")
@@ -389,6 +430,7 @@ def get(auth):
             Div(Card(seccion_foto(p), Hr(cls="my-4 border-border"), tarjeta_completitud(p)),
                 cls="lg:col-span-1 space-y-6"),
             Div(vista_datos(p), vista_identificadores(p), seccion_areas(p["id"]), vista_bio(p),
+                seccion_preferencias(p, usuarios.por_id(auth["id"])["avisos_correo"]),
                 cls="lg:col-span-2 space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"),
         usuario=auth, seccion="perfil")

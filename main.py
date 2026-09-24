@@ -15,6 +15,7 @@ from app.components.perfil import katex_headers
 from app.db import init_db
 from app.routes.actividades import rt as rutas_actividades
 from app.routes.adjuntos import rt as rutas_adjuntos
+from app.routes.admin_auditoria import rt as rutas_admin_auditoria
 from app.routes.admin_usuarios import rt as rutas_admin_usuarios
 from app.routes.informes import rt as rutas_informes
 from app.routes.inicio import rt as rutas_inicio
@@ -23,6 +24,7 @@ from app.routes.perfil import rt as rutas_perfil
 from app.routes.personas import rt as rutas_personas
 from app.routes.productos import rt as rutas_productos
 from app.routes.proyectos import rt as rutas_proyectos
+from app.routes.publico import rt as rutas_publico
 
 
 def create_app(db_path=config.DB_PATH):
@@ -47,7 +49,8 @@ def create_app(db_path=config.DB_PATH):
     setup_toasts(app)
     for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
-                   rutas_adjuntos, rutas_proyectos, rutas_informes):
+                   rutas_adjuntos, rutas_proyectos, rutas_informes, rutas_publico,
+                   rutas_admin_auditoria):
         router.to_app(app)
     return app
 

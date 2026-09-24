@@ -1,12 +1,13 @@
 """Administración de cuentas: listado con búsqueda en vivo, alta, activación y restablecimiento."""
 import re
+import secrets
 from datetime import datetime, timezone
 
 from fasthtml.common import APIRouter, Code, Div, P, Span, Template, Thead, Tr
 from monsterui.all import (H2, Button, ButtonT, Form, Input, Label, LabelCheckboxX, LabelInput, LabelT,
                            Table, Tbody, Td, Th, TextPresets, UkIcon)
 
-from app import usuarios
+from app import config, correo, tokens, usuarios
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.db import auditar
 from app.seguridad import password_temporal
@@ -102,8 +103,12 @@ def form_usuario(datos=None, errores=()):
             LabelCheckboxX("Administrador del portal", id="es_admin",
                            checked=d.get("es_admin", False)),
             cls="space-y-2"),
-        P("Se generará una contraseña temporal que el usuario deberá cambiar en su primer ingreso.",
-          cls=TextPresets.muted_sm),
+        Div(LabelCheckboxX("Enviar invitación por correo", id="invitar",
+                           checked=d.get("invitar", config.CORREO_MODO != "desactivado")),
+            P("Con invitación, la persona recibe un enlace (válido 3 días) para definir su contraseña y "
+              "nadie más la conoce. Sin invitación, se muestra una contraseña temporal para entregarla "
+              "a mano; deberá cambiarla en su primer ingreso.", cls=TextPresets.muted_sm),
+            cls="space-y-1 rounded-md border border-border p-3"),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
             Button("Crear cuenta", type="submit", cls=ButtonT.primary),
             cls="flex justify-end gap-2"),
@@ -129,6 +134,14 @@ def modal_credenciales(titulo, u, password, nota):
         P(nota, cls=(TextPresets.muted_sm, "mt-3")),
         Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
             cls="flex justify-end mt-4"))
+
+
+def enviar_invitacion(u):
+    enlace = f"{config.URL_BASE}/recuperar/{tokens.emitir(u['id'], 'invitacion')}"
+    correo.enviar(u["email"], f"Invitación al Portal de Investigación · {config.NOMBRE_INSTITUTO}",
+                  f"Hola, {u['nombres']}:\n\nSe creó su cuenta en el Portal de Investigación del instituto. "
+                  f"Para definir su contraseña, abra este enlace (vale una vez y durante 3 días):\n\n{enlace}\n\n"
+                  f"Luego podrá ingresar con su correo ({u['email']}).")
 
 
 # --- Rutas -------------------------------------------------------------------
@@ -171,7 +184,7 @@ def get():
 
 @rt(BASE)
 def post(auth, nombres: str = "", apellidos: str = "", email: str = "",
-         es_investigador: bool = False, es_admin: bool = False):
+         es_investigador: bool = False, es_admin: bool = False, invitar: bool = False):
     datos = dict(nombres=nombres.strip(), apellidos=apellidos.strip(),
                  email=email.strip().lower(), es_investigador=es_investigador, es_admin=es_admin)
     errores = []
@@ -184,15 +197,27 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "",
     if not es_investigador and not es_admin:
         errores.append("La cuenta debe ser de investigador, de administrador o ambas.")
     if errores:
-        return modal("Nuevo usuario", form_usuario(datos, errores))
+        return modal("Nuevo usuario", form_usuario({**datos, "invitar": invitar}, errores))
 
+    tabla = Template(cuerpo_tabla(usuarios.listar(), auth["id"], oob=True))
+    if invitar:
+        # Contraseña aleatoria que nadie conoce: la persona define la suya con el enlace.
+        u = usuarios.crear(password=secrets.token_urlsafe(24), debe_cambiar_pass=False, **datos)
+        auditar(auth["id"], "crear_usuario", "usuario", u["id"], f"{datos['email']} (invitación)")
+        enviar_invitacion(u)
+        return (modal("Invitación enviada",
+                      P(f"Enviamos a {u['email']} un enlace para que {u['nombres']} defina su contraseña. "
+                        "Vale 3 días; si vence, use «Restablecer» o pídale que use «¿Olvidó su contraseña?»."),
+                      Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+                          cls="flex justify-end mt-4")),
+                tabla)
     password = password_temporal()
     u = usuarios.crear(password=password, **datos)
     auditar(auth["id"], "crear_usuario", "usuario", u["id"], datos["email"])
     return (modal_credenciales("Cuenta creada", u, password,
                                "Entréguela al usuario por un canal seguro. No se volverá a mostrar."),
             # Los elementos de tabla OOB deben ir en <template>: sueltos, el parser HTML los descarta.
-            Template(cuerpo_tabla(usuarios.listar(), auth["id"], oob=True)))
+            tabla)
 
 
 @rt(BASE + "/{uid}/activo")

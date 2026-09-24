@@ -32,10 +32,11 @@ def iniciales(nombres: str, apellidos: str) -> str:
     return (nombres[:1] + apellidos[:1]).upper()
 
 
-def avatar(p: dict, tam: str = "size-24", texto: str = "text-2xl"):
-    """Foto del investigador o, si no tiene, un círculo con sus iniciales."""
+def avatar(p: dict, tam: str = "size-24", texto: str = "text-2xl", ruta: str = "/fotos"):
+    """Foto del investigador o, si no tiene, un círculo con sus iniciales.
+    `ruta` = '/publico/fotos' en las páginas públicas (sin sesión)."""
     if p.get("foto"):
-        return Img(src=f"/fotos/{p['id']}?v={p['foto']}", alt=f"Foto de {p['nombres']} {p['apellidos']}",
+        return Img(src=f"{ruta}/{p['id']}?v={p['foto']}", alt=f"Foto de {p['nombres']} {p['apellidos']}",
                    cls=f"{tam} rounded-full object-cover border border-border shrink-0")
     return Div(iniciales(p["nombres"], p["apellidos"]), aria_hidden="true",
                cls=f"{tam} {texto} rounded-full bg-primary/15 text-primary font-semibold "

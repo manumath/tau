@@ -1,9 +1,9 @@
 """Autenticación: Beforeware de sesión, login, logout y cambio de contraseña."""
-from fasthtml.common import APIRouter, Beforeware, Div, P, Redirect, Response
+from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon)
 
-from app import config, usuarios
+from app import config, correo, tokens, usuarios
 from app.components.layout import mensaje_error, pagina
 from app.db import auditar
 from app.seguridad import errores_password, verificar_password
@@ -11,7 +11,9 @@ from app.seguridad import errores_password, verificar_password
 # Rutas accesibles sin sesión.
 # Ojo: los patrones deben ser estrictos. Uno como r".*\.png" dejaría pasar sin sesión
 # cualquier ruta que termine en .png.
-RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico", r"/[\w\-]+\.(css|js|png|svg|ico|woff2?)"]
+RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico", r"/[\w\-]+\.(css|js|png|svg|ico|woff2?)",
+                  r"/recuperar", r"/recuperar/[\w\-]+",
+                  r"/publico", r"/publico/.*", r"/api/v1/.*"]
 # Rutas permitidas mientras la contraseña es temporal.
 RUTAS_CAMBIO_PASS = {"/cambiar-password", "/logout"}
 
@@ -51,7 +53,7 @@ def form_login(email: str = "", error: str = ""):
         LabelInput("Contraseña", id="password", type="password", required=True,
                    autocomplete="current-password", autofocus=bool(email)),
         Button("Ingresar", cls=(ButtonT.primary, "w-full"), type="submit"),
-        P("¿Olvidó su contraseña? Solicite una nueva a la administración del instituto.",
+        P(A("¿Olvidó su contraseña?", href="/recuperar", cls="text-primary hover:underline"),
           cls=(TextPresets.muted_sm, "text-center")),
         method="post", action="/login", hx_post="/login", hx_swap="outerHTML",
         cls="space-y-4", id="form-login")
@@ -166,3 +168,96 @@ def post(auth, sess, htmx, actual: str = "", nueva: str = "", confirmacion: str 
     auditar(auth["id"], "cambio_password", "usuario", auth["id"])
     add_toast(sess, "Contraseña actualizada.", "success")
     return Redirect("/")
+
+
+# --- Recuperar contraseña (y definirla desde una invitación) ----------------------------------------
+
+def form_recuperar(email="", error=None):
+    return Form(
+        mensaje_error(error) if error else "",
+        LabelInput("Correo institucional", id="email", type="email", value=email, required=True,
+                   autocomplete="username", autofocus=True),
+        Button("Enviar enlace", cls=(ButtonT.primary, "w-full"), type="submit"),
+        P(A("Volver al ingreso", href="/login", cls="text-primary hover:underline"),
+          cls=(TextPresets.muted_sm, "text-center")),
+        method="post", action="/recuperar", hx_post="/recuperar", hx_swap="outerHTML",
+        cls="space-y-4", id="form-recuperar")
+
+
+@rt("/recuperar")
+def get():
+    return pagina("Recuperar contraseña", _tarjeta_acceso(
+        "Recuperar contraseña", "Le enviaremos un enlace para definir una nueva.", form_recuperar()))
+
+
+@rt("/recuperar")
+def post(req, htmx, email: str = ""):
+    email = email.strip().lower()
+    u = usuarios.por_email(email) if email else None
+    # Misma respuesta exista o no la cuenta: así no se puede averiguar quién está registrado.
+    if u and u["activo"] and not tokens.demasiados_pedidos(u["id"]):
+        enlace = f"{config.URL_BASE}/recuperar/{tokens.emitir(u['id'], 'recuperar')}"
+        correo.enviar(u["email"], "Recuperar su contraseña del Portal de Investigación",
+                      f"Hola, {u['nombres']}:\n\nPara definir una nueva contraseña, abra este enlace "
+                      f"(vale una vez y durante una hora):\n\n{enlace}\n\n"
+                      "Si no lo solicitó, ignore este mensaje: su contraseña actual sigue vigente.")
+        auditar(u["id"], "solicitar_recuperacion", "usuario", u["id"], req.client.host if req.client else None)
+    listo = Div(P("Si el correo corresponde a una cuenta activa, le enviamos un enlace para definir una "
+                  "nueva contraseña. Revise su bandeja de entrada (y la de spam).", cls="text-sm"),
+                P(A("Volver al ingreso", href="/login", cls="text-primary hover:underline"),
+                  cls=(TextPresets.muted_sm, "text-center mt-4")), id="form-recuperar")
+    return listo if htmx.request else pagina("Recuperar contraseña", _tarjeta_acceso(
+        "Recuperar contraseña", "Revise su correo.", listo))
+
+
+def form_nueva(token, errores=()):
+    return Form(
+        mensaje_error(*errores),
+        LabelInput("Nueva contraseña", id="nueva", type="password", required=True,
+                   minlength=config.PASS_MIN_LARGO, autocomplete="new-password", autofocus=True),
+        LabelInput("Repita la nueva contraseña", id="confirmacion", type="password", required=True,
+                   autocomplete="new-password"),
+        P(f"Mínimo {config.PASS_MIN_LARGO} caracteres, combinando letras con números o símbolos.",
+          cls=TextPresets.muted_sm),
+        Button("Guardar contraseña", cls=(ButtonT.primary, "w-full"), type="submit"),
+        method="post", action=f"/recuperar/{token}", hx_post=f"/recuperar/{token}", hx_swap="outerHTML",
+        cls="space-y-4", id="form-nueva")
+
+
+def _enlace_invalido():
+    return pagina("Enlace no válido", _tarjeta_acceso(
+        "Enlace no válido", "El enlace venció o ya se usó.",
+        P(A("Solicitar uno nuevo", href="/recuperar", cls="text-primary hover:underline"),
+          cls="text-center text-sm")))
+
+
+@rt("/recuperar/{token}")
+def get(token: str):
+    t = tokens.vigente(token)
+    if not t:
+        return _enlace_invalido()
+    u = usuarios.por_id(t["usuario_id"])
+    invitacion = t["proposito"] == "invitacion"
+    return pagina("Definir contraseña", _tarjeta_acceso(
+        "Bienvenido(a) al portal" if invitacion else "Nueva contraseña",
+        f"{u['nombres']} {u['apellidos']} · {u['email']}", form_nueva(token)))
+
+
+@rt("/recuperar/{token}")
+def post(sess, htmx, token: str, nueva: str = "", confirmacion: str = ""):
+    t = tokens.vigente(token)
+    if not t:
+        return Redirect(f"/recuperar/{token}")
+    u = usuarios.por_id(t["usuario_id"])
+    errores = errores_password(nueva, confirmacion, u["email"])
+    if errores:
+        form = form_nueva(token, errores)
+        return form if htmx.request else pagina("Definir contraseña", _tarjeta_acceso(
+            "Nueva contraseña", u["email"], form))
+    tokens.consumir(token)
+    usuarios.cambiar_password(u["id"], nueva, temporal=False)
+    usuarios.desbloquear(u["email"])
+    auditar(u["id"], "definir_password_enlace", "usuario", u["id"], t["proposito"])
+    sess.clear()
+    add_toast(sess, "Contraseña guardada. Ya puede ingresar.", "success")
+    return Redirect("/login")

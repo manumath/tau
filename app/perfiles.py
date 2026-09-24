@@ -106,7 +106,7 @@ def completitud(perfil: dict, n_areas: int) -> tuple[int, list[str]]:
 
 # --- Directorio --------------------------------------------------------------
 
-def directorio(texto: str = "") -> list[dict]:
+def directorio(texto: str = "", solo_publicos: bool = False) -> list[dict]:
     """Investigadores activos; filtra por nombre, cargo, unidad o área MSC (código o texto)."""
     texto = texto.strip()
     patron = f"%{sin_tildes(texto)}%"
@@ -116,14 +116,15 @@ def directorio(texto: str = "") -> list[dict]:
                      JOIN msc m ON m.codigo = im.codigo
                     WHERE im.usuario_id = u.id AND im.principal = 1) AS area_principal
            FROM usuario u JOIN investigador i ON i.usuario_id = u.id
-           WHERE u.activo = 1 AND (
+           WHERE u.activo = 1 AND (:pub = 0 OR i.perfil_publico = 1) AND (
                  :t = '' OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
                  OR sin_tildes(i.cargo) LIKE :p OR sin_tildes(i.unidad) LIKE :p
                  OR EXISTS (SELECT 1 FROM investigador_msc im JOIN msc m ON m.codigo = im.codigo
                              WHERE im.usuario_id = u.id
                                AND (m.codigo LIKE :c OR m.texto_plano LIKE :p)))
            ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""",
-        {"t": texto, "p": patron, "c": texto.replace("x", "_").replace("X", "_") + "%"})
+        {"t": texto, "p": patron, "c": texto.replace("x", "_").replace("X", "_") + "%",
+         "pub": int(solo_publicos)})
     for f in filas:
         codigo, _, texto_area = (f.pop("area_principal") or "").partition(chr(31))
         f["area"] = {"codigo": codigo, "texto": texto_area} if codigo else None

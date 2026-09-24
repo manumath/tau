@@ -4,6 +4,7 @@ from pathlib import Path
 
 # Antes de importar la app: que el import de main.py no toque la BD de desarrollo.
 os.environ["PORTAL_DB"] = str(Path(tempfile.mkdtemp()) / "import.db")
+os.environ["PORTAL_CORREO_MODO"] = "memoria"  # los correos quedan en app.correo.ENVIADOS
 
 import pytest  # noqa: E402
 from starlette.testclient import TestClient  # noqa: E402
@@ -14,6 +15,14 @@ from app import usuarios  # noqa: E402
 HX = {"HX-Request": "true"}
 PASS_ADMIN = "Admin-clave-123"
 PASS_TEMP = "Temp-clave-123"
+
+
+@pytest.fixture(autouse=True)
+def buzon():
+    """Correos enviados durante el test (se vacía antes de cada uno)."""
+    from app import correo
+    correo.ENVIADOS.clear()
+    return correo.ENVIADOS
 
 
 @pytest.fixture

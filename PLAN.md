@@ -360,6 +360,21 @@ más valor agregan para un instituto.
     tabla por investigador y listados. Cada producto se cuenta una vez. Descarga en XLSX
     (4 hojas) y CSV (UTF-8 con BOM).
   - Protección contra inyección de fórmulas en planillas; 156 tests.
+- **Iteración 7 (hecha): fase 7.**
+  - **Recuperar contraseña por correo:** enlace de un solo uso válido 1 hora; la BD guarda solo
+    el hash; hasta 3 pedidos por hora; la respuesta no revela si la cuenta existe.
+  - **Invitación por correo al crear cuentas:** la persona define su contraseña con un enlace
+    válido 3 días, sin contraseña temporal que alguien tenga que entregar.
+  - **Avisos por correo:** a los responsables cuando hay una propuesta nueva o vuelta a
+    proponer; a quien propuso, cuando se aprueba o se rechaza (con el motivo). Nunca a uno
+    mismo. Cada persona puede desactivarlos en «Mi perfil».
+  - **Correo:** modo `archivo` en desarrollo (`.eml`), `smtp` en producción (en un hilo aparte),
+    `memoria` en tests.
+  - **Perfiles públicos opcionales** (cada persona decide) y API JSON de solo lectura con CORS.
+    No se publican correo, actividades, proyectos, adjuntos, productos en curso ni presentaciones.
+  - **Auditoría** para la administración: filtros por persona, acción y texto; carga progresiva
+    al llegar al final (`hx-trigger="revealed"`).
+  - 170 tests.
 - **Pendiente de la fase 1:** vista de auditoría, página 403 con estilo, desbloqueo manual sin restablecer
   la contraseña, carga masiva de cuentas desde CSV.
 

@@ -46,6 +46,9 @@ app/adjuntos.py             archivos adjuntos validados por contenido
 app/proyectos.py            proyectos, participantes, permisos y flujo propuesta → aprobación
 app/importacion.py          importación desde Crossref (DOI) y arXiv; reconocimiento de autores
 app/informes.py             datos de CV, informe de proyecto y memoria anual; exportación CSV/XLSX
+app/correo.py               envío de correo (archivo .eml en desarrollo, SMTP en producción)
+app/tokens.py               enlaces de un solo uso (recuperar contraseña, invitación)
+app/avisos.py               avisos por correo del flujo de propuestas en proyectos
 app/auth.py                 Beforeware, login/logout, cambio de contraseña
 app/components/layout.py    página, navegación, modal HTMX
 app/components/perfil.py    avatar, áreas MSC, identificadores y KaTeX
@@ -61,6 +64,8 @@ app/routes/personas.py      autocompletar de personas y alta de externos
 app/routes/adjuntos.py      subida, descarga (con permisos) y borrado de adjuntos
 app/routes/proyectos.py     proyectos: lista, alta, ficha con pestañas y bandeja de pendientes
 app/routes/informes.py      informes imprimibles (CV, proyecto, memoria) y descargas
+app/routes/publico.py       perfiles públicos (sin sesión) y API JSON /api/v1
+app/routes/admin_auditoria.py  registro de auditoría con filtros y carga progresiva
 catalogos/MSC2020.tsv       catálogo MSC2020 (CC BY-NC-SA 4.0, ver catalogos/README.md)
 migrations/NNNN-*.sql       migraciones versionadas (se aplican al arrancar)
 scripts/seed.py             datos de demostración
@@ -77,6 +82,11 @@ tests/                      pytest con el TestClient de Starlette
 | `PORTAL_HTTPS_ONLY` | `0` | `1` en producción para usar cookies solo por HTTPS |
 | `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre que se muestra en la interfaz |
 | `PORTAL_CONTACTO` | (vacío) | Correo que se informa a Crossref al importar (recomendado en producción) |
+| `PORTAL_URL` | `http://localhost:5001` | Dirección pública del portal, para los enlaces de los correos |
+| `PORTAL_CORREO_MODO` | `archivo` | `archivo` (guarda `.eml` en `data/correos/`), `smtp`, `desactivado` |
+| `PORTAL_CORREO_REMITENTE` | `Portal de Investigación <no-responder@instituto.test>` | Remitente de los correos |
+| `PORTAL_SMTP_HOST` / `_PUERTO` / `_USUARIO` / `_CLAVE` | `localhost` / `587` / — / — | Servidor SMTP (modo `smtp`) |
+| `PORTAL_SMTP_STARTTLS` | `1` | `0` para desactivar STARTTLS |
 
 ## Migraciones
 
@@ -97,3 +107,18 @@ fastmigrate registra en la base la versión aplicada.
 - **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): FastHTML tiene
   una ruta de archivos estáticos que captura cualquier URL terminada en extensiones conocidas. El
   nombre del archivo lo da `Content-Disposition`.
+
+## Partes públicas y API
+
+Sin sesión solo se accede a `/login`, `/recuperar…`, `/publico/…` y `/api/v1/…`. Lo público
+se limita a quienes activaron «Perfil público» en «Mi perfil».
+
+| Ruta | Contenido |
+|---|---|
+| `/publico/investigadores` | Directorio público (búsqueda por nombre, unidad o área) |
+| `/publico/investigadores/{id}` | Perfil: cargo, áreas MSC, resumen, publicaciones, identificadores |
+| `GET /api/v1/investigadores` | Lista JSON de perfiles públicos (`?q=` para buscar) |
+| `GET /api/v1/investigadores/{id}` | Perfil público con sus productos |
+| `GET /api/v1/productos` | Productos aceptados o publicados con algún autor de perfil público (`?anio=`) |
+
+La API responde con `Access-Control-Allow-Origin: *`, así la web del instituto puede consumirla.

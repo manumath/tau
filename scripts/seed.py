@@ -184,6 +184,7 @@ def _cargar_perfil(uid: int, datos: dict | None):
 
 
 def main():
+    config.CORREO_MODO = "desactivado"  # cargar datos de ejemplo no debe generar avisos
     if "--reset" in sys.argv:
         # También los archivos -wal/-shm: si quedan huérfanos, SQLite corrompe la BD nueva.
         for ruta in (config.DB_PATH, *(config.DB_PATH.with_name(config.DB_PATH.name + s)

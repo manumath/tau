@@ -10,7 +10,7 @@ Flujo de vínculos (tablas actividad_proyecto y producto_proyecto):
 """
 from datetime import date
 
-from app import personas
+from app import avisos, personas
 from app.db import get_db, sin_tildes
 
 ESTADOS = {"formulacion": "En formulación", "vigente": "Vigente", "finalizado": "Finalizado"}
@@ -259,7 +259,7 @@ def sincronizar(tipo: str, registro_id: int, marcados: list[int], usuario: dict)
     """
     tabla, col = TABLAS[tipo]
     db = get_db()
-    avisos = []
+    mensajes = []
     permitidos = {p["id"] for p in para_proponer(usuario["id"])}
     actuales = {v["proyecto_id"]: v for v in vinculos_de(tipo, registro_id)}
     for pid in set(marcados):
@@ -267,7 +267,7 @@ def sincronizar(tipo: str, registro_id: int, marcados: list[int], usuario: dict)
         if v and v["estado"] != "rechazado":
             continue
         if pid not in permitidos:
-            avisos.append("Solo puede proponer a proyectos en que participa y que no han finalizado.")
+            mensajes.append("Solo puede proponer a proyectos en que participa y que no han finalizado.")
             continue
         directo = rol_de(pid, usuario["id"]) in ROLES_RESPONSABLES
         estado = "aprobado" if directo else "pendiente"
@@ -282,10 +282,12 @@ def sincronizar(tipo: str, registro_id: int, marcados: list[int], usuario: dict)
         else:
             db.t[tabla].insert(**{col: registro_id}, proyecto_id=pid, estado=estado,
                                propuesto_por=usuario["id"], **revision)
+        if estado == "pendiente":
+            avisos.nueva_propuesta(tipo, registro_id, pid, usuario["id"])
     for pid, v in actuales.items():
         if pid not in marcados and v["estado"] in ("pendiente", "rechazado"):
             db.execute(f"DELETE FROM {tabla} WHERE {col} = ? AND proyecto_id = ?", [registro_id, pid])
-    return list(dict.fromkeys(avisos))
+    return list(dict.fromkeys(mensajes))
 
 
 def _ahora():
@@ -308,6 +310,7 @@ def aprobar(tipo: str, registro_id: int, pid: int, revisor: int,
     get_db().execute(f"""UPDATE {tabla} SET estado = 'aprobado', revisado_por = ?{extra},
                          revisado_en = datetime('now'), comentario = NULL
                          WHERE {col} = ? AND proyecto_id = ?""", params)
+    avisos.revision(tipo, registro_id, pid, "aprobado", revisor)
     return None
 
 
@@ -322,6 +325,7 @@ def rechazar(tipo: str, registro_id: int, pid: int, revisor: int, comentario: st
                          revisado_en = datetime('now'), comentario = ?
                          WHERE {col} = ? AND proyecto_id = ?""",
                      [revisor, comentario.strip(), registro_id, pid])
+    avisos.revision(tipo, registro_id, pid, "rechazado", revisor, comentario.strip())
     return None
 
 
