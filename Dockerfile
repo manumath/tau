@@ -13,6 +13,9 @@ ADD https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VE
 RUN tar -xzf /tmp/litestream-${TARGETARCH:-amd64}.tar.gz -C /usr/local/bin litestream \
     && rm /tmp/litestream-*.tar.gz && litestream version
 
+# Datos de zonas horarias: el portal trabaja en la hora de La Paz (PORTAL_ZONA_HORARIA).
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata && rm -rf /var/lib/apt/lists/*
+
 ENV PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \

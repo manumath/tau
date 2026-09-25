@@ -19,13 +19,14 @@ def _indice(nombre):
 
 
 def _producto(creador, autores, titulo, anio=2026, tipo="Artículo en revista", revision="arbitrado",
-              estado="publicado", indices=(), **extra):
+              estado="publicado", indices=(), filiacion=1, **extra):
     datos = dict(tipo_id=str(_tipo(tipo)), titulo=titulo, anio=str(anio), estado_publicacion=estado,
                  revision=revision, medio="Revista", volumen=None, numero=None, paginas=None, doi=None,
                  arxiv_id=None, url=None, resumen=None, actividad_id=None, **extra)
     d, errores = productos.preparar(datos, autores, [str(_indice(i)) for i in indices])
     assert not errores, errores
-    return productos.guardar(d, autores, creador)
+    # Por omisión, los autores del instituto firmaron con su filiación (si no, no cuenta).
+    return productos.guardar(d, autores, creador, filiaciones=[filiacion] * len(autores))
 
 
 @pytest.fixture

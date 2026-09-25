@@ -19,7 +19,7 @@ import json
 import time
 from datetime import date
 
-from app import avisos, perfiles, personas, proyectos
+from app import avisos, config, perfiles, personas, proyectos
 from app.db import get_db
 
 ESTADOS = {"borrador": "Borrador", "enviada": "Enviada", "aceptada": "Aceptada",
@@ -192,7 +192,7 @@ def mis_propuestas(uid: int) -> list[dict]:
            WHERE pi.proponente_id = :u OR pi.proyecto_id IN (
                  SELECT proyecto_id FROM proyecto_participante WHERE investigador_id = :u
                    AND rol IN ('responsable', 'co_responsable')
-                   AND (fecha_hasta IS NULL OR fecha_hasta >= date('now')))
+                   AND (fecha_hasta IS NULL OR fecha_hasta >= date('now', 'localtime')))
            ORDER BY pi.periodo DESC, pi.estado = 'aceptada', pi.nombre""", {"u": uid})
 
 
@@ -232,7 +232,7 @@ def crear_nuevo(usuario: dict, nombre: str) -> tuple[int | None, str | None]:
     periodo = periodo_objetivo()
     db = get_db()
     with db.conn:
-        pid = db.t.proyecto.insert(nombre=nombre, estado="formulacion", tipo="institucional",
+        pid = db.t.proyecto.insert(nombre=nombre, estado="formulacion", tipo="institucional", moneda=config.MONEDA,
                                    fecha_inicio=inicio(periodo), fecha_fin=fin(periodo),
                                    creado_por=usuario["id"])["id"]
         db.t.proyecto_participante.insert(proyecto_id=pid, investigador_id=usuario["id"], rol="responsable",

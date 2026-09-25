@@ -1,6 +1,8 @@
 """Selector de personas para formularios: autores de productos y participantes de actividades.
 
 Cada persona elegida es un <li> con un input oculto `name=<campo>` y valor 'i:<id>' o 'e:<id>'.
+En los autores, cada <li> lleva además un campo `filiacion` (selector en los del instituto, oculto
+y vacío en los externos): las dos listas llegan paralelas, en el mismo orden.
 El orden de los <li> es el orden de autoría; subir, bajar y quitar se hace en el navegador
 (sin ida y vuelta al servidor). Agregar sí pasa por el servidor, que renderiza la fila.
 """
@@ -11,6 +13,7 @@ from fasthtml.common import Div, Input, Li, Option, P, Select, Span, Ul
 from monsterui.all import Button, ButtonT, TextPresets, UkIcon
 
 from app.actividades import ROLES
+from app.filiacion import OPCIONES as OPCIONES_FILIACION
 
 JS_SUBIR = ("const li=this.closest('li');"
             "if(li.previousElementSibling)li.parentNode.insertBefore(li,li.previousElementSibling)")
@@ -34,8 +37,20 @@ def js_limpiar(campo):
             f"document.getElementById('{buscar_id}').focus()}}")
 
 
-def fila(p: dict, campo: str, rol: str | None = None):
-    """Una persona elegida. Si `campo` es 'participante' incluye el selector de rol."""
+def selector_filiacion(p: dict, valor):
+    """Autores: ¿firmó con la filiación del instituto? (oculto y vacío para externos)."""
+    if not p["interno"]:
+        return Input(type="hidden", name="filiacion", value="")
+    actual = "" if valor is None else str(valor)
+    return Select(*[Option(t, value=v, selected=v == actual) for v, t in OPCIONES_FILIACION.items()],
+                  name="filiacion", aria_label=f"Filiación de {p['nombres']} {p['apellidos']}",
+                  title="¿Firmó la publicación con la filiación del instituto (IIMAT, CMAT, FCPN o UMSA)?",
+                  cls="uk-select w-52 h-8 text-sm" + (" border-amber-400 text-amber-700" if actual == "" else ""))
+
+
+def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):
+    """Una persona elegida. Si `campo` es 'participante' incluye el selector de rol; si es
+    'autor', el de filiación."""
     etiqueta = Span("Instituto" if p["interno"] else ("Externo · nuevo" if p.get("nueva") else "Externo"),
                     cls="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 "
                         + ("bg-primary/15 text-primary" if p["interno"] else "bg-muted"))
@@ -43,7 +58,7 @@ def fila(p: dict, campo: str, rol: str | None = None):
                             for v, t in ROLES.items()],
                           name="rol", cls="uk-select w-40 h-8 text-sm",
                           aria_label=f"Rol de {p['nombres']} {p['apellidos']}") \
-        if campo == "participante" else ""
+        if campo == "participante" else selector_filiacion(p, filiacion) if campo == "autor" else ""
     return Li(
         Input(type="hidden", name=campo, value=p["ref"]),
         Div(Div(Span(f"{p['nombres']} {p['apellidos']}", cls="font-medium"), etiqueta,
@@ -67,7 +82,7 @@ def selector(campo: str, elegidas: list[dict], titulo: str, ayuda: str = ""):
     return Div(
         Div(Span(titulo, cls="uk-form-label"),
             Span(ayuda, cls=TextPresets.muted_sm) if ayuda else "", cls="flex flex-col"),
-        Ul(*[fila(p, campo, p.get("rol")) for p in elegidas], id=lista_id,
+        Ul(*[fila(p, campo, p.get("rol"), p.get("filiacion")) for p in elegidas], id=lista_id,
            cls="rounded-md border border-border divide-y divide-border empty:hidden"),
         Div(Input(type="search", id=buscar_id, name="q", autocomplete="off",
                   placeholder="Buscar investigador o coautor externo por nombre…",

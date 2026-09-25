@@ -4,7 +4,7 @@
 > mudar después entre una y otra sin perder nada (ver [Mudanzas](#mudanzas-y-mantenimiento)).
 
 Guía para instalar el portal en un servidor Linux (Ubuntu o Debian) con HTTPS. Supone un dominio,
-por ejemplo `portal.instituto.cl`, que ya apunta al servidor, y una cuenta de correo SMTP para
+por ejemplo `portal.iimat.umsa.bo`, que ya apunta al servidor, y una cuenta de correo SMTP para
 los envíos.
 
 ## 1. Código y dependencias
@@ -29,17 +29,17 @@ Cree `/etc/portal.env`, legible solo por el usuario que ejecutará el portal (`c
 
 ```ini
 PORTAL_DB=/var/lib/portal/portal.db
-PORTAL_URL=https://portal.instituto.cl
+PORTAL_URL=https://portal.iimat.umsa.bo
 PORTAL_SECRET_KEY=<clave aleatoria, ver abajo>
 PORTAL_HTTPS_ONLY=1
 PORTAL_INSTITUTO=Instituto de Investigación Matemática
-PORTAL_CONTACTO=soporte@instituto.cl
+PORTAL_CONTACTO=soporte@umsa.bo
 
 PORTAL_CORREO_MODO=smtp
-PORTAL_CORREO_REMITENTE=Portal de Investigación <no-responder@instituto.cl>
-PORTAL_SMTP_HOST=smtp.instituto.cl
+PORTAL_CORREO_REMITENTE=Portal de Investigación <no-responder@umsa.bo>
+PORTAL_SMTP_HOST=smtp.umsa.bo
 PORTAL_SMTP_PUERTO=587
-PORTAL_SMTP_USUARIO=no-responder@instituto.cl
+PORTAL_SMTP_USUARIO=no-responder@umsa.bo
 PORTAL_SMTP_CLAVE=<contraseña SMTP>
 PORTAL_SMTP_STARTTLS=1
 ```
@@ -106,7 +106,7 @@ Caddy obtiene y renueva el certificado solo. Instálelo (`sudo apt install caddy
 `/etc/caddy/Caddyfile`:
 
 ```
-portal.instituto.cl {
+portal.iimat.umsa.bo {
     reverse_proxy 127.0.0.1:5001
     request_body {
         max_size 25MB      # adjuntos de hasta 20 MB
@@ -169,7 +169,7 @@ los cambios de esquema van en un archivo nuevo en `migrations/`.
 
 ## 9. Lista de verificación
 
-- [ ] `https://portal.instituto.cl` abre el ingreso con candado válido.
+- [ ] `https://portal.iimat.umsa.bo` abre el ingreso con candado válido.
 - [ ] El administrador ingresa y ve «Usuarios».
 - [ ] «¿Olvidó su contraseña?» con una cuenta real hace llegar el correo, y el enlace apunta a
       `PORTAL_URL`.

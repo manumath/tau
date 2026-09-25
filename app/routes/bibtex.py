@@ -34,10 +34,10 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
 
 
 @rt("/informes/cv/bibtex")
-def get(auth, desde: str = "", hasta: str = "", informe: bool = False, uid: int = None):
+def get(auth, desde: str = "", hasta: str = "", informe: bool = False, uid: int = None, filiacion: bool = False):
     uid = uid if (uid and auth["es_admin"]) else auth["id"]
     d, h = informes.periodo_valido(desde, hasta)
-    datos = informes.cv(uid, d, h, informe)
+    datos = informes.cv(uid, d, h, informe, filiacion)
     if not datos["perfil"]:
         return Response("No encontrado", status_code=404)
     lista = [p for clave, _ in informes.CATEGORIAS for p in datos["grupos"][clave]]

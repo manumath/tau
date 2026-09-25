@@ -10,13 +10,14 @@ Patrones HTMX:
 import json
 from datetime import date
 
+import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Div, H3, HtmxResponseHeaders, Input, Label, Option, P,
                              Redirect, Response, Select, Span)
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, CheckboxX, Form, FormLabel, LabelInput,
                            LabelTextArea, TextPresets, UkIcon)
 
-from app import actividades, importacion, personas, productos, proyectos
+from app import actividades, filiacion, importacion, personas, productos, proyectos
 from app.components import personas as selector_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import (casillas_proyectos, dato, enlace_persona, filtros, insignia,
@@ -46,13 +47,35 @@ def insignias(p):
     return Div(*res, cls="flex flex-wrap gap-1.5")
 
 
+MARCAS_FILIACION = {1: ("✓", "text-green-700", "Firmó con la filiación del instituto (IIMAT/UMSA)"),
+                    0: ("✗", "text-muted-foreground", "No firmó con la filiación del instituto"),
+                    None: ("?", "text-amber-600", "Filiación sin declarar")}
+
+
 def autores_texto(p):
+    """Autores; los del instituto con una marca de filiación (✓ firmó, ✗ no, ? sin declarar)."""
     partes = []
     for i, a in enumerate(p["autores"]):
         if i:
             partes.append(", ")
         partes.append(enlace_persona(a, "font-medium" if a["interno"] else ""))
+        if a["interno"]:
+            marca, clase, titulo = MARCAS_FILIACION[a.get("filiacion")]
+            partes.append(fh.Sup(marca, title=titulo, aria_label=titulo, cls=f"{clase} ml-0.5"))
     return Span(*partes, cls="text-sm")
+
+
+def declarar_filiacion(p, uid):
+    """Si el usuario es autor y no ha declarado su filiación: botones Sí / No en la lista."""
+    propio = next((a for a in p["autores"] if a["interno"] and a["id"] == uid), None)
+    if not propio or propio.get("filiacion") is not None or p["revision"] not in filiacion.REVISIONES_QUE_CUENTAN:
+        return ""
+    boton = lambda texto, valor: fh.Button(  # noqa: E731
+        texto, type="button", cls="text-xs px-2 py-0.5 rounded border border-border hover:bg-muted",
+        hx_post=f"/productos/{p['id']}/filiacion", hx_vals=f'{{"valor": "{valor}"}}',
+        hx_target=f"#producto-{p['id']}", hx_swap="outerHTML")
+    return Div(Span("¿Firmó con IIMAT/UMSA?", cls="text-xs text-amber-700"), boton("Sí", 1), boton("No", 0),
+               cls="flex items-center gap-2")
 
 
 def item(p, uid):
@@ -77,9 +100,10 @@ def item(p, uid):
             insignias(p),
             Div(*insignias_proyectos(proyectos.vinculos_de("producto", p["id"])),
                 cls="flex flex-wrap gap-1.5"),
+            declarar_filiacion(p, uid),
             cls="min-w-0 flex-1 space-y-1"),
         acciones,
-        cls="flex gap-4 py-4")
+        id=f"producto-{p['id']}", cls="flex gap-4 py-4")
 
 
 def _confirmacion_eliminar(p):
@@ -88,15 +112,24 @@ def _confirmacion_eliminar(p):
     return f"¿Eliminar «{p['titulo']}»?{aviso}"
 
 
-def lista(uid, q="", anio="", tipo="", informe=False):
-    items = productos.de_investigador(uid, q, anio, tipo, informe)
+def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False):
+    items = productos.de_investigador(uid, q, anio, tipo, informe, sin_filiacion)
     n_informe = sum(productos.cuenta_para_informe(p) for p in items)
     contenido = (
         [P(f"{len(items)} producto{'s' if len(items) != 1 else ''} · {n_informe} cuenta"
            f"{'n' if n_informe != 1 else ''} para el informe del instituto",
            cls=TextPresets.muted_sm),
+         Div(P("Declare si firmó cada uno con la filiación del instituto (IIMAT, CMAT, FCPN o UMSA; vale la "
+               "doble filiación). Lo anterior a su ingreso no cuenta para el instituto, aunque lo declare.",
+               cls="text-sm"),
+             Button("Firmé todos estos con IIMAT/UMSA", type="button", cls=(ButtonT.default, ButtonT.sm),
+                    hx_post="/productos/filiacion/todos", hx_include=f"#{ID_FILTROS}", hx_target=f"#{ID_LISTA}",
+                    hx_swap="outerHTML", hx_confirm=f"¿Declarar que firmó con la filiación del instituto los "
+                                                    f"{len(items)} productos de esta lista?"),
+             cls="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-300 "
+                 "bg-amber-50 dark:bg-amber-950 p-3 mt-3") if sin_filiacion else "",
          Div(*[item(p, uid) for p in items], cls="divide-y divide-border")]
-        if items else [P("No hay productos que coincidan." if (q or anio or tipo or informe)
+        if items else [P("No hay productos que coincidan." if (q or anio or tipo or informe or sin_filiacion)
                          else "Aún no registra productos. Use «Nuevo producto» para empezar.",
                          cls=(TextPresets.muted_sm, "py-8 text-center"))])
     return Div(*contenido, id=ID_LISTA, hx_get="/productos/lista", hx_include=f"#{ID_FILTROS}",
@@ -276,18 +309,24 @@ def _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volu
                 doi=doi, arxiv_id=arxiv_id, url=url, resumen=resumen, actividad_id=actividad_id)
 
 
-def _autores_de_refs(refs):
-    return [p for p in (personas.por_ref(r) for r in refs or []) if p]
+def _autores_de_refs(refs, filiaciones=None):
+    """Autores del formulario a partir de las listas paralelas `autor` y `filiacion`."""
+    filiaciones = list(filiaciones or []) + [None] * len(refs or [])
+    return [{**p, "filiacion": f} for p, f in ((personas.por_ref(r), f) for r, f in zip(refs or [], filiaciones)) if p]
 
 
 # --- Rutas: lista ---------------------------------------------------------------------
 
 @rt("/productos")
-def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False):
+def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, sin_filiacion: bool = False):
     uid = auth["id"]
     casilla_informe = Label(CheckboxX(name="informe", value="1", checked=informe),
                             Span("Solo los que cuentan para el informe"),
                             cls="flex items-center gap-2 text-sm")
+    n_pend = filiacion.pendientes(uid)
+    casilla_filiacion = Label(CheckboxX(name="sin_filiacion", value="1", checked=sin_filiacion),
+                              Span(f"Sin filiación declarada ({n_pend})", cls="text-amber-700" if n_pend else ""),
+                              cls="flex items-center gap-2 text-sm")
     return pagina(
         "Mis productos",
         Div(Div(H2("Mis productos"),
@@ -305,16 +344,38 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         filtros(ID_FILTROS, "/productos/lista", ID_LISTA, q, anio, productos.anios_de(uid), tipo,
-                productos.tipos(), extra=[casilla_informe]),
-        Card(lista(uid, q, anio, tipo, informe)),
+                productos.tipos(), extra=[casilla_informe, casilla_filiacion]),
+        Card(lista(uid, q, anio, tipo, informe, sin_filiacion)),
         usuario=auth, seccion="productos")
 
 
 @rt("/productos/lista")
-def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False):
-    return (lista(auth["id"], q, anio, tipo, informe),
+def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, sin_filiacion: bool = False):
+    return (lista(auth["id"], q, anio, tipo, informe, sin_filiacion),
             HtmxResponseHeaders(replace_url=url_filtrada("/productos", q=q, anio=anio, tipo=tipo,
-                                                         informe="1" if informe else "")))
+                                                         informe="1" if informe else "",
+                                                         sin_filiacion="1" if sin_filiacion else "")))
+
+
+@rt("/productos/filiacion/todos")
+def post(auth, sess, q: str = "", anio: str = "", tipo: str = "", informe: bool = False):
+    """Declara la filiación propia en todos los productos pendientes que muestra la lista."""
+    uid = auth["id"]
+    ids = [p["id"] for p in productos.de_investigador(uid, q, anio, tipo, informe, sin_filiacion=True)]
+    n = filiacion.declarar(uid, ids, 1)
+    auditar(uid, "declarar_filiacion", "producto", None, f"{n} producto(s)")
+    add_toast(sess, f"Filiación declarada en {n} producto(s).", "success")
+    return lista(uid, q, anio, tipo, informe, sin_filiacion=True)
+
+
+@rt("/productos/{pid}/filiacion")
+def post(auth, pid: int, valor: str = ""):
+    """El autor declara su propia filiación en un producto (Sí / No desde la lista)."""
+    p = productos.obtener(pid)
+    if not p or not productos.es_autor(pid, auth["id"]) or valor not in ("0", "1"):
+        return Response("No autorizado", status_code=403)
+    filiacion.declarar(auth["id"], [pid], int(valor))
+    return item(productos.obtener(pid), auth["id"])
 
 
 # --- Rutas: formulario -------------------------------------------------------------------
@@ -347,7 +408,11 @@ def post(auth, identificador: str = "", arxiv_asociado: str = "", proyecto: list
         info["avisos"].append("Usted no aparece entre los autores reconocidos. Si es coautor(a), "
                               "agréguese o revise que su nombre coincida con el publicado.")
     info["arxiv_id"] = d["arxiv_id"]
-    return _modal_form(auth, d, _autores_de_refs(refs), [], proyectos_sel=proyecto or [], importado=info)
+    filiaciones = [info["resumen"]["filiacion"].get(ref) for ref in refs]
+    if info["resumen"]["filiacion"]:
+        info["avisos"].append("La filiación IIMAT/UMSA se marcó según la afiliación publicada: revísela.")
+    return _modal_form(auth, d, _autores_de_refs(refs, filiaciones), [], proyectos_sel=proyecto or [],
+                       importado=info)
 
 
 @rt("/productos/campos")
@@ -384,14 +449,14 @@ def aviso_duplicado(otro, uid):
             "dark:border-amber-800 p-3")
 
 
-def _guardar(auth, sess, pid, datos, autor, indice, proyecto):
+def _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion=None):
     d, errores = productos.preparar(datos, autor or [], indice or [], pid)
     if errores:
-        return _modal_form(auth, datos, _autores_de_refs(autor), indice or [], errores, pid,
+        return _modal_form(auth, datos, _autores_de_refs(autor, filiacion), indice or [], errores, pid,
                            proyecto or [])
     nuevo = pid is None
     autor = [personas.materializar(r, auth["id"]) for r in autor]  # externos importados
-    pid = productos.guardar(d, autor, auth["id"], pid)
+    pid = productos.guardar(d, autor, auth["id"], pid, filiacion)
     for aviso in proyectos.sincronizar("producto", pid, proyecto or [], auth):
         add_toast(sess, aviso, "warning")
     auditar(auth["id"], "crear_producto" if nuevo else "editar_producto", "producto", pid)
@@ -405,10 +470,10 @@ def post(auth, sess, tipo_id: str = "", titulo: str = "", anio: str = "",
          estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
          numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
          resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
-         indice: list[str] = None, proyecto: list[int] = None):
+         indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None):
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
                         paginas, doi, arxiv_id, url, resumen, actividad_id, mes)
-    return _guardar(auth, sess, None, datos, autor, indice, proyecto)
+    return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion)
 
 
 @rt("/productos/{pid}/editar")
@@ -424,13 +489,13 @@ def put(auth, sess, pid: int, tipo_id: str = "", titulo: str = "", anio: str = "
         estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
         numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
         resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
-        indice: list[str] = None, proyecto: list[int] = None):
+        indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None):
     p = productos.obtener(pid)
     if not p or not productos.puede_editar(p, auth["id"]):
         return Response("No autorizado", status_code=403)
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
                         paginas, doi, arxiv_id, url, resumen, actividad_id, mes)
-    return _guardar(auth, sess, pid, datos, autor, indice, proyecto)
+    return _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion)
 
 
 @rt("/productos/{pid}/sumarme")

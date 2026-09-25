@@ -73,9 +73,10 @@ def validar(d: dict) -> list[str]:
 def crear(d: dict, responsable_id: int, creado_por: int, tipo: str = "individual") -> int:
     if tipo not in TIPOS:
         raise ValueError(f"Tipo de proyecto no válido: {tipo}")
+    from app import config
     db = get_db()
     with db.conn:
-        pid = db.t.proyecto.insert(**d, tipo=tipo, creado_por=creado_por)["id"]
+        pid = db.t.proyecto.insert(**{"moneda": config.MONEDA, **d}, tipo=tipo, creado_por=creado_por)["id"]
         db.t.proyecto_participante.insert(proyecto_id=pid, investigador_id=responsable_id,
                                           rol="responsable", fecha_desde=d.get("fecha_inicio"))
     return pid
@@ -106,7 +107,7 @@ def quitar_objetivo(pid: int, oid: int):
 # --- Participantes -----------------------------------------------------------------------------------
 
 def participantes(pid: int, solo_vigentes=False) -> list[dict]:
-    filtro = " AND (fecha_hasta IS NULL OR fecha_hasta >= date('now'))" if solo_vigentes else ""
+    filtro = " AND (fecha_hasta IS NULL OR fecha_hasta >= date('now', 'localtime'))" if solo_vigentes else ""
     filas = get_db().q(f"SELECT * FROM proyecto_participante WHERE proyecto_id = ?{filtro}", [pid])
     orden = list(ROLES)
     res = []
@@ -128,14 +129,14 @@ def participante(pid: int, part_id: int) -> dict | None:
 def rol_de(pid: int, uid: int) -> str | None:
     """Rol vigente del investigador en el proyecto (None si no participa o ya no está)."""
     filas = get_db().q("""SELECT rol FROM proyecto_participante WHERE proyecto_id = ?
-                          AND investigador_id = ? AND (fecha_hasta IS NULL OR fecha_hasta >= date('now'))""",
+                          AND investigador_id = ? AND (fecha_hasta IS NULL OR fecha_hasta >= date('now', 'localtime'))""",
                        [pid, uid])
     return filas[0]["rol"] if filas else None
 
 
 def _n_responsables(pid: int, excluir: int | None = None) -> int:
     return get_db().q("""SELECT COUNT(*) n FROM proyecto_participante WHERE proyecto_id = ?
-                         AND rol = 'responsable' AND (fecha_hasta IS NULL OR fecha_hasta >= date('now'))
+                         AND rol = 'responsable' AND (fecha_hasta IS NULL OR fecha_hasta >= date('now', 'localtime'))
                          AND id IS NOT ?""", [pid, excluir])[0]["n"]
 
 
@@ -274,9 +275,9 @@ def de_investigador(uid: int) -> list[dict]:
     """Proyectos en que participa (vigentes primero), con su rol y pendientes por revisar."""
     return get_db().q(
         """SELECT p.*, pp.rol AS mi_rol,
-                  (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now')) AS vigente,
+                  (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now', 'localtime')) AS vigente,
                   (SELECT COUNT(*) FROM proyecto_participante x WHERE x.proyecto_id = p.id
-                     AND (x.fecha_hasta IS NULL OR x.fecha_hasta >= date('now'))) AS n_part
+                     AND (x.fecha_hasta IS NULL OR x.fecha_hasta >= date('now', 'localtime'))) AS n_part
            FROM proyecto p JOIN proyecto_participante pp ON pp.proyecto_id = p.id
            WHERE pp.investigador_id = ?
            ORDER BY p.estado = 'finalizado', p.fecha_inicio DESC, p.nombre""", [uid])
@@ -286,7 +287,7 @@ def todos(texto: str = "", tipo: str = "") -> list[dict]:
     patron = f"%{sin_tildes(texto.strip())}%"
     return get_db().q(
         """SELECT p.*, (SELECT COUNT(*) FROM proyecto_participante x WHERE x.proyecto_id = p.id
-                         AND (x.fecha_hasta IS NULL OR x.fecha_hasta >= date('now'))) AS n_part
+                         AND (x.fecha_hasta IS NULL OR x.fecha_hasta >= date('now', 'localtime'))) AS n_part
            FROM proyecto p WHERE (sin_tildes(p.nombre) LIKE :p OR sin_tildes(p.codigo) LIKE :p)
              AND (:t = '' OR p.tipo = :t)
            ORDER BY p.estado = 'finalizado', p.fecha_inicio DESC, p.nombre""", {"p": patron, "t": tipo})
@@ -302,7 +303,7 @@ def para_proponer(uid: int) -> list[dict]:
         """SELECT p.*, pp.rol AS mi_rol FROM proyecto p
            JOIN proyecto_participante pp ON pp.proyecto_id = p.id
            WHERE pp.investigador_id = ? AND p.estado != 'finalizado'
-             AND (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now'))
+             AND (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now', 'localtime'))
            ORDER BY p.nombre""", [uid])
 
 
@@ -464,7 +465,7 @@ def n_pendientes_para(usuario: dict) -> int:
     return get_db().q(
         """WITH mios AS (SELECT proyecto_id FROM proyecto_participante WHERE investigador_id = :u
                          AND rol IN ('responsable', 'co_responsable')
-                         AND (fecha_hasta IS NULL OR fecha_hasta >= date('now')))
+                         AND (fecha_hasta IS NULL OR fecha_hasta >= date('now', 'localtime')))
            SELECT (SELECT COUNT(*) FROM actividad_proyecto WHERE estado = 'pendiente'
                      AND proyecto_id IN (SELECT proyecto_id FROM mios))
                 + (SELECT COUNT(*) FROM producto_proyecto WHERE estado = 'pendiente'

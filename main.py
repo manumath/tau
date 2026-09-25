@@ -3,12 +3,24 @@
 Desarrollo:  uv run python main.py      (recarga automática en http://localhost:5001)
 """
 import json
+import os
+import time
 
 from fasthtml.common import Beforeware, Meta, fast_app, serve
 from fasthtml.toaster import setup_toasts
 from monsterui.all import Theme
 
-from app import config, institucionales
+from app import config
+
+# Zona horaria del instituto para todo el proceso: «hoy» (plazos, vigencias), horas mostradas y
+# date('now', 'localtime') en SQLite. Antes de importar el resto de la aplicación.
+os.environ.setdefault("TZ", config.ZONA_HORARIA)
+time.tzset()
+if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not time.daylight:
+    print(f"AVISO: no se pudo aplicar la zona horaria {config.ZONA_HORARIA} (¿falta tzdata?); "
+          "se usa UTC.", flush=True)
+
+from app import institucionales  # noqa: E402
 from app.auth import beforeware, beforeware_solo_lectura
 from app.auth import rt as rutas_auth
 from app.components.errores import JS_AVISOS, no_encontrado, paginas_de_error

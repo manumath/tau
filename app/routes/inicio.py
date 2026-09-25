@@ -4,7 +4,7 @@ from datetime import date
 from fasthtml.common import A, APIRouter, Div, P, Span
 from monsterui.all import H2, H4, Card, Grid, Label, LabelT, Progress, TextPresets, UkIcon
 
-from app import actividades, perfiles, productos, proyectos
+from app import actividades, filiacion, perfiles, productos, proyectos
 from app.components.layout import pagina
 
 rt = APIRouter()
@@ -40,15 +40,19 @@ def _tarjetas_produccion(uid):
     prods = productos.de_investigador(uid)
     del_anio = [p for p in prods if p["anio"] == anio]
     acts = [a for a in actividades.de_investigador(uid) if a["fecha_inicio"].startswith(str(anio))]
-    extra_p = Div(_cifra(len(del_anio), f"en {anio}"),
-                  _cifra(sum(productos.cuenta_para_informe(p) for p in del_anio), "para el informe"),
-                  _cifra(len(prods), "en total"), cls="grid grid-cols-3 gap-2 mt-3")
+    pendientes = filiacion.pendientes(uid)
+    extra_p = Div(Div(_cifra(len(del_anio), f"en {anio}"),
+                      _cifra(sum(productos.cuenta_para_informe(p) for p in del_anio), "para el informe"),
+                      _cifra(len(prods), "en total"), cls="grid grid-cols-3 gap-2 mt-3"),
+                  P(f"{pendientes} sin filiación declarada: indique si los firmó con IIMAT/UMSA.",
+                    cls="text-sm text-amber-600 mt-2") if pendientes else "")
     extra_a = Div(_cifra(len(acts), f"en {anio}"),
                   _cifra(sum(a["ambito"] == "internacional" for a in acts), "internacionales"),
                   cls="grid grid-cols-3 gap-2 mt-3")
     return [
         _tarjeta("book-open", "Mis productos", "Artículos indexados o arbitrados, reportes de "
-                 "investigación, libros y presentaciones.", 3, "/productos", extra_p),
+                 "investigación, libros y presentaciones.", 3,
+                 "/productos?sin_filiacion=1" if pendientes else "/productos", extra_p),
         _tarjeta("calendar-days", "Mis actividades", "Seminarios, congresos, visitas y escuelas.",
                  3, "/actividades", extra_a),
     ]

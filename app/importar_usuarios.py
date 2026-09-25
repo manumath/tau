@@ -35,8 +35,8 @@ ALIAS = {
 SI = {"si", "s", "x", "1", "true", "verdadero", "yes", "y"}
 NO = {"no", "n", "0", "false", "falso", ""}
 PLANTILLA = ("email,nombres,apellidos,categoria,investigador,admin\n"
-             "sofia.kovalevskaya@instituto.cl,Sofía,Kovalévskaya,titular,sí,no\n"
-             "carl.gauss@instituto.cl,Carl Friedrich,Gauss,invitado,sí,no\n")
+             "sofia.kovalevskaya@umsa.bo,Sofía,Kovalévskaya,titular,sí,no\n"
+             "carl.gauss@umsa.bo,Carl Friedrich,Gauss,invitado,sí,no\n")
 # «Contratada», «interina», etc. también sirven.
 _CATEGORIAS = {**{c: c for c in perfiles.CATEGORIAS},
                **{c[:-1] + "a": c for c in perfiles.CATEGORIAS if c.endswith("o")}}

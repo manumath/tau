@@ -187,18 +187,22 @@ def documento_cv(datos, uid, desde, hasta):
 
 
 @rt("/informes/cv")
-def get(auth, desde: str = "", hasta: str = "", informe: bool = False, uid: int = None):
+def get(auth, desde: str = "", hasta: str = "", informe: bool = False, uid: int = None,
+        filiacion: bool = False):
     uid = uid if (uid and auth["es_admin"]) else auth["id"]
     d, h = informes.periodo_valido(desde, hasta)
-    datos = informes.cv(uid, d, h, informe)
+    datos = informes.cv(uid, d, h, informe, filiacion)
     if not datos["perfil"]:
         return Response("Esa cuenta no tiene perfil de investigador.", status_code=404)
     anios = list(range(date.today().year + 1, 1969, -1))
     filtros = [_selector_anio("desde", d, anios, "Desde"), _selector_anio("hasta", h, anios, "Hasta"),
                fh.Label(fh.Input(type="checkbox", name="informe", value="1", checked=informe, cls="uk-checkbox"),
                         Span("Solo lo que cuenta para el informe", cls="text-sm"), cls="flex items-center gap-2"),
+               fh.Label(fh.Input(type="checkbox", name="filiacion", value="1", checked=filiacion, cls="uk-checkbox"),
+                        Span("Solo con filiación IIMAT/UMSA", cls="text-sm"), cls="flex items-center gap-2"),
                fh.Input(type="hidden", name="uid", value=str(uid)) if uid != auth["id"] else ""]
-    consulta = f"desde={d}&hasta={h}" + ("&informe=1" if informe else "") + (f"&uid={uid}" if uid != auth["id"] else "")
+    consulta = (f"desde={d}&hasta={h}" + ("&informe=1" if informe else "") + ("&filiacion=1" if filiacion else "")
+                + (f"&uid={uid}" if uid != auth["id"] else ""))
     return pagina(f"CV · {datos['perfil']['nombres']} {datos['perfil']['apellidos']}",
                   ESTILO_IMPRESION, barra(filtros, [descarga("BibTeX", f"/informes/cv/bibtex?{consulta}")]),
                   documento_cv(datos, uid, d, h),

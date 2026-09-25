@@ -80,7 +80,7 @@ def normalizar_url(valor: str) -> str:
         v = f"https://{v}"
     u = urlparse(v)
     if not u.netloc or "." not in u.netloc or " " in v:
-        raise ValueError("Ingrese una dirección web válida (p. ej. https://www.instituto.cl/~usuario).")
+        raise ValueError("Ingrese una dirección web válida (p. ej. https://www.umsa.bo/~usuario).")
     return v
 
 

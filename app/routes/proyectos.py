@@ -17,7 +17,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app import actividades, institucionales, personas, productos, proyectos, usuarios
+from app import actividades, config, institucionales, personas, productos, proyectos, usuarios
 from app.components import personas as ui_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import dato, enlace_persona, insignia
@@ -59,7 +59,7 @@ def _proyecto_o_error(pid, auth, gestionar=False):
 def _monto(p):
     if p["monto"] is None:
         return None
-    return f"{p['moneda']} {p['monto']:,}".replace(",", ".")
+    return f"{config.SIMBOLOS_MONEDA.get(p['moneda'], p['moneda'])} {p['monto']:,}".replace(",", ".")
 
 
 def _periodo(p):
@@ -180,7 +180,7 @@ def form_datos_institucional(d, errores, pid):
         mensaje_error(*errores),
         campo("Código", "codigo", placeholder="Código interno o de la agencia"),
         Div(Div(campo("Fuente de financiamiento", "fuente_financiamiento"), cls="sm:col-span-2"),
-            campo(f"Monto ({d.get('moneda') or 'CLP'})", "monto", inputmode="numeric"),
+            campo(f"Monto ({d.get('moneda') or config.MONEDA})", "monto", inputmode="numeric"),
             cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, hx_get=f"/proyectos/{pid}/tab/resumen",
                    hx_target=f"#{ID_TAB}"),
@@ -200,7 +200,7 @@ def form_datos(d, errores=(), pid=None):
           cls=TextPresets.muted_sm) if not pid else "",
         mensaje_error(*errores),
         Div(campo("Nombre del proyecto", "nombre", required=True), cls="sm:col-span-2"),
-        Div(Div(campo("Código", "codigo", placeholder="FONDECYT 1260001"), cls="sm:col-span-2"),
+        Div(Div(campo("Código", "codigo", placeholder="IDH-IIMAT-2026-01"), cls="sm:col-span-2"),
             Div(FormLabel("Estado", fr="estado"),
                 Select(*[Option(t, value=v, selected=v == d.get("estado")) for v, t in proyectos.ESTADOS.items()],
                        id="estado", name="estado", cls="uk-select"), cls="space-y-2"),
@@ -208,7 +208,7 @@ def form_datos(d, errores=(), pid=None):
         Div(campo("Inicio", "fecha_inicio", type="date"), campo("Término", "fecha_fin", type="date"),
             cls="grid grid-cols-2 gap-4"),
         Div(Div(campo("Fuente de financiamiento", "fuente_financiamiento"), cls="sm:col-span-2"),
-            campo(f"Monto ({d.get('moneda') or 'CLP'})", "monto", inputmode="numeric"),
+            campo(f"Monto ({d.get('moneda') or config.MONEDA})", "monto", inputmode="numeric"),
             cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
         LabelTextArea("Descripción", id="descripcion", value=d.get("descripcion") or "", rows=3),
         LabelTextArea("Objetivo general", id="objetivo_general", value=d.get("objetivo_general") or "",

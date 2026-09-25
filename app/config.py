@@ -9,6 +9,20 @@ DB_PATH = Path(os.environ.get("PORTAL_DB", RAIZ / "data" / "portal.db"))
 SECRET_KEY = os.environ.get("PORTAL_SECRET_KEY")  # None → FastHTML usa/crea .sesskey
 HTTPS_ONLY = os.environ.get("PORTAL_HTTPS_ONLY", "0") == "1"
 NOMBRE_INSTITUTO = os.environ.get("PORTAL_INSTITUTO", "Instituto de Investigación Matemática")
+UNIVERSIDAD = os.environ.get("PORTAL_UNIVERSIDAD", "Universidad Mayor de San Andrés")
+
+# Contexto local: zona horaria de las fechas (plazos, «hoy», horas mostradas) y moneda de los montos.
+ZONA_HORARIA = os.environ.get("PORTAL_ZONA_HORARIA", "America/La_Paz")
+MONEDA = os.environ.get("PORTAL_MONEDA", "BOB")
+SIMBOLOS_MONEDA = {"BOB": "Bs", "USD": "US$", "EUR": "€"}
+
+# Nombres que cuentan como filiación del instituto en una publicación (se comparan sin tildes ni
+# mayúsculas; las siglas, como palabra completa). Vale cualquier instancia que contiene al
+# instituto y la doble filiación. Separados por «;» en PORTAL_FILIACIONES.
+FILIACIONES = [f.strip() for f in os.environ.get(
+    "PORTAL_FILIACIONES",
+    "IIMAT; Instituto de Investigación Matemática; CMAT; Carrera de Matemática; FCPN; "
+    "Facultad de Ciencias Puras y Naturales; UMSA; Universidad Mayor de San Andrés").split(";") if f.strip()]
 # Correo de contacto que se envía a Crossref (su «polite pool» responde mejor si se identifica).
 CONTACTO = os.environ.get("PORTAL_CONTACTO")
 

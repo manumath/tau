@@ -21,6 +21,7 @@ from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pag
 from app.components.perfil import texto_con_parrafos
 from app.components.registros import dato, insignia
 from app.db import auditar
+from app.routes.admin_usuarios import fecha_local
 
 rt = APIRouter()
 
@@ -284,7 +285,7 @@ def historial(prop):
     if not evs:
         return ""
     return Card(H3("Historial", cls="text-base font-semibold mb-2"),
-                Ul(*[Li(Span(e["fecha"][:16], cls=(TextPresets.muted_sm, "mr-2 font-mono")),
+                Ul(*[Li(Span(fecha_local(e["fecha"]), cls=(TextPresets.muted_sm, "mr-2 font-mono")),
                         Strong(inst.ESTADOS.get(e["accion"], e["accion"])),
                         Span(f" · {e['quien']}" if e["quien"] else "", cls=TextPresets.muted_sm),
                         P(e["comentario"], cls="text-sm mt-1") if e["comentario"] else "", cls="py-1.5")

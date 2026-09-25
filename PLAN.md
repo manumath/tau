@@ -1,5 +1,10 @@
 # Portal de Investigación: diseño y estado
 
+> **Contexto:** Instituto de Investigación Matemática (IIMAT) de la Carrera de Matemática (CMAT),
+> Facultad de Ciencias Puras y Naturales (FCPN), Universidad Mayor de San Andrés (UMSA), La Paz,
+> Bolivia. El portal sostiene la **acreditación de la Carrera y del Instituto ante IAC-CINDA**.
+> Zona horaria America/La_Paz; montos en bolivianos (Bs). Ver la sección 13.
+
 Documento de diseño del portal: qué hace, cómo está organizado, qué se decidió y qué queda
 pendiente. Para instalarlo y trabajar en el código, vea el [README](README.md); para usarlo, la
 [guía de uso](docs/guia-de-uso.md); para ponerlo en producción, la [guía de despliegue](docs/despliegue.md).
@@ -90,7 +95,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0012` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0013` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -115,7 +120,7 @@ tipo_producto(id, nombre, admite_revision, orden, activo)
 indice(id, nombre, cuenta_como_indexado, orden, activo)
 producto(id, tipo_id, titulo, anio, mes, estado_publicacion, revision, medio, volumen, numero,
          paginas, doi, arxiv_id, url, resumen, actividad_id, creado_por, creado_en, actualizado_en)
-producto_autor(producto_id, orden, investigador_id | externo_id)
+producto_autor(producto_id, orden, investigador_id | externo_id, filiacion_instituto)
 producto_indice(producto_id, indice_id)
 adjunto(id, entidad, entidad_id, nombre, archivo, mime, tamano, subido_por, subido_en)
 
@@ -170,7 +175,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-272 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+288 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -416,5 +421,32 @@ institucionales.
 | Etapa | Contenido | Estado |
 |---|---|---|
 | E1 | Historial de vínculo: migración, ventana «Vínculo» en la administración, carga del historial por CSV (reemplaza el de cada persona del archivo), pregunta al desactivar, perfil, reglas de vínculo y categoría a la fecha en la memoria | ✔ |
-| E2 | Filiación: casilla por autor, detección al importar, filtro y confirmación masiva, «por confirmar» en la memoria | Pendiente |
+| E2 | Filiación: casilla por autor, detección al importar, filtro y confirmación masiva, «por confirmar» en la memoria | ✔ |
 | E3 | Agradecimiento al proyecto, informe de proyecto con filiación y agradecimiento, datos de ejemplo y documentación | Pendiente |
+
+**Detalles de E2:**
+
+- Selector por autor del instituto en el formulario («Firmó con IIMAT/UMSA», «Sin filiación del
+  instituto», «Sin declarar»); los externos llevan un campo oculto para mantener las listas en paralelo.
+- Al importar por DOI se marca «Firmó» si la afiliación publicada menciona IIMAT, CMAT, FCPN o
+  UMSA (o sus nombres completos; `PORTAL_FILIACIONES`). BibTeX no trae afiliaciones.
+- Solo se pide declarar la filiación en productos indexados o arbitrados (los únicos que cuentan).
+  Aviso en el inicio, filtro «Sin filiación declarada», botones Sí / No y declaración masiva.
+- Memoria: cuenta si al menos un autor vinculado en la fecha firmó con la filiación. «Por
+  confirmar» indica el motivo (sin mes, vínculo parcial, filiación sin declarar). El CV admite
+  «solo con filiación IIMAT/UMSA».
+
+## 13. Contexto boliviano y acreditación IAC-CINDA
+
+- **Ajustes hechos:** zona horaria America/La_Paz para «hoy», plazos, vigencias y horas mostradas
+  (la base sigue guardando UTC; la imagen instala `tzdata`); montos en bolivianos (Bs); ejemplos
+  de proyectos con recursos IDH de la UMSA y del International Science Programme (ISP); dominios de
+  ejemplo en `umsa.bo`.
+- **Corrección:** el análisis de brechas anterior citaba normativa chilena (ANID, CNA, Ley 21.719)
+  por un supuesto erróneo sobre el país; no aplica. Las exigencias de protección de datos y de
+  reporte deben revisarse con la normativa boliviana y de la UMSA.
+- **IAC-CINDA:** la acreditación de la Carrera y del Instituto se hará con el Instituto
+  Internacional para el Aseguramiento de la Calidad (IAC) de CINDA. Pendiente: conseguir su guía o
+  manual de criterios vigente y hacer una tabla de correspondencia criterio → dato del portal →
+  evidencia, para detectar lo que falta registrar y preparar un «informe para acreditación»
+  (indicadores del periodo evaluado, normalmente varios años, con sus evidencias).

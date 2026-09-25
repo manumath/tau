@@ -234,9 +234,12 @@ def _coincide(autor: dict, inv: dict) -> bool:
 
 
 def resolver_autores(autores: list[dict]) -> tuple[list[str], dict]:
-    """→ (referencias en orden, resumen {'internos': [...], 'existentes': [...], 'nuevos': [...]})."""
+    """→ (referencias en orden, resumen {'internos': [...], 'existentes': [...], 'nuevos': [...],
+    'filiacion': {ref: '1'}}). 'filiacion' marca a los autores del instituto cuya afiliación
+    publicada menciona al instituto o a la UMSA (ver app.filiacion.detecta)."""
+    from app.filiacion import detecta
     investigadores = _investigadores()
-    refs, resumen = [], {"internos": [], "existentes": [], "nuevos": []}
+    refs, resumen = [], {"internos": [], "existentes": [], "nuevos": [], "filiacion": {}}
     for a in autores:
         nombre = f"{a['nombres']} {a['apellidos']}".strip()
         por_orcid = [i for i in investigadores if a.get("orcid") and i["orcid"] == a["orcid"]]
@@ -247,6 +250,8 @@ def resolver_autores(autores: list[dict]) -> tuple[list[str], dict]:
             if r not in refs:
                 refs.append(r)
                 resumen["internos"].append(nombre)
+                if detecta(a.get("afiliacion")):
+                    resumen["filiacion"][r] = "1"
             continue
         existente = personas.externo_similar(a["nombres"] or "", a["apellidos"])
         if existente:

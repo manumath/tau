@@ -20,7 +20,7 @@ def _producto(uid, titulo, anio, mes=None):
     d, errores = productos.preparar(dict(tipo_id=str(tipo), titulo=titulo, anio=str(anio), mes=str(mes or ""),
                                          estado_publicacion="publicado", revision="arbitrado"), [f"i:{uid}"], [])
     assert not errores, errores
-    return productos.guardar(d, [f"i:{uid}"], uid)
+    return productos.guardar(d, [f"i:{uid}"], uid, filiaciones=[1])
 
 
 def _actividad(uid, titulo, fecha):

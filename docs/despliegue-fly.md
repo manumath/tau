@@ -49,11 +49,11 @@ ser del orden de pocos dólares al mes; revise la tarifa vigente en su sitio.
 4. Defina los secretos del portal (una sola línea o varias):
    ```bash
    fly secrets set PORTAL_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
-   fly secrets set PORTAL_URL=https://portal.instituto.cl PORTAL_INSTITUTO="Instituto de Investigación Matemática" \
-                   PORTAL_CONTACTO=soporte@instituto.cl
-   fly secrets set PORTAL_CORREO_REMITENTE="Portal de Investigación <no-responder@instituto.cl>" \
-                   PORTAL_SMTP_HOST=smtp.instituto.cl PORTAL_SMTP_PUERTO=587 \
-                   PORTAL_SMTP_USUARIO=no-responder@instituto.cl PORTAL_SMTP_CLAVE='…'
+   fly secrets set PORTAL_URL=https://portal.iimat.umsa.bo PORTAL_INSTITUTO="Instituto de Investigación Matemática" \
+                   PORTAL_CONTACTO=soporte@umsa.bo
+   fly secrets set PORTAL_CORREO_REMITENTE="Portal de Investigación <no-responder@umsa.bo>" \
+                   PORTAL_SMTP_HOST=smtp.umsa.bo PORTAL_SMTP_PUERTO=587 \
+                   PORTAL_SMTP_USUARIO=no-responder@umsa.bo PORTAL_SMTP_CLAVE='…'
    ```
    `PORTAL_SECRET_KEY` debe quedar fija: si cambia, se cierran todas las sesiones. Guárdela
    también en un lugar seguro: sirve para mudarse sin cerrar sesiones.
@@ -78,7 +78,7 @@ exit
 ## 3. Dominio propio (recomendado desde el primer día)
 
 ```bash
-fly certs add portal.instituto.cl
+fly certs add portal.iimat.umsa.bo
 ```
 
 Fly indica qué registros DNS crear. Con un dominio propio, **mudarse después es invisible para

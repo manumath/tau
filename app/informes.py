@@ -64,12 +64,17 @@ def _en_periodo_proyecto(p, desde, hasta):
 
 # --- CV ----------------------------------------------------------------------------------------
 
-def cv(uid: int, desde: int, hasta: int, solo_informe: bool = False) -> dict:
+def cv(uid: int, desde: int, hasta: int, solo_informe: bool = False, solo_filiacion: bool = False) -> dict:
+    """CV personal: toda su producción del periodo (también la anterior a su ingreso). Con
+    `solo_filiacion`, solo los productos que firmó con la filiación del instituto."""
     perfil = perfiles.obtener(uid)
     prods = [p for p in productos.de_investigador(uid) if desde <= p["anio"] <= hasta
              and productos.es_autor(p["id"], uid)]  # en el CV, solo aquello de lo que es autor
     if solo_informe:
         prods = [p for p in prods if productos.cuenta_para_informe(p)]
+    if solo_filiacion:
+        prods = [p for p in prods if any(a["interno"] and a["id"] == uid and a.get("filiacion") == 1
+                                         for a in p["autores"])]
     grupos = {clave: [] for clave, _ in CATEGORIAS}
     for p in prods:
         grupos[categoria(p)].append(p)
@@ -153,10 +158,11 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
     `por_confirmar`, para completar su mes.
 
     Un autor o participante del instituto figura con un registro si tenía **vínculo** en su fecha
-    (año y mes de publicación; inicio de la actividad), con la categoría de ese momento. Si era
+    (año y mes de publicación; inicio de la actividad), con la categoría de ese momento, y, en los
+    productos, si **firmó con la filiación** del instituto (IIMAT/UMSA). Si era
     «Externo», además el registro debe estar aprobado en un proyecto institucional vigente en el
-    periodo. Un registro cuenta si al menos una persona figura. Un producto sin mes cuyo año el
-    vínculo cubre solo en parte queda «por confirmar».
+    periodo. Un registro cuenta si al menos una persona figura. Un producto que podría contar si se
+    completa un dato (mes, vínculo parcial, filiación sin declarar) queda «por confirmar».
     """
     periodo_memoria = rango(anio, periodo, desde, hasta)
     desde, hasta = periodo_memoria["desde"], periodo_memoria["hasta"]
@@ -188,16 +194,25 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
         lugar = ubicar_producto(x, desde, hasta)
         if lugar == "fuera":
             continue
-        estados = {a["id"]: situacion(a["id"], "producto", i, vinculos.en_fecha(a["id"], x["anio"], x["mes"]))
+        estados = {a["id"]: (*situacion(a["id"], "producto", i, vinculos.en_fecha(a["id"], x["anio"], x["mes"])),
+                             a.get("filiacion"))
                    for a in x["autores"] if a["interno"]}
-        figuran = {u: c for u, (e, c) in estados.items() if e == "si"}
-        dudosos = any(e == "dudoso" for e, _ in estados.values())
+        # Figura quien estaba vinculado en la fecha y firmó con la filiación del instituto.
+        figuran = {u: c for u, (e, c, f) in estados.items() if e == "si" and f == 1}
+        # Podría figurar si se completa un dato: el mes, el vínculo parcial o la filiación.
+        posibles = [(e, f) for e, _, f in estados.values() if e in ("si", "dudoso") and f != 0]
         if lugar == "dentro" and figuran:
             internos_prod[i] = figuran
             prods.append(x)
-        elif figuran or dudosos:
-            por_confirmar.append({**x, "motivo": "sin mes de publicación" if lugar == "dudoso" else
-                                  "el vínculo del autor cubre solo parte del año: indique el mes"})
+        elif figuran or posibles:
+            motivos = []
+            if lugar == "dudoso":
+                motivos.append("sin mes de publicación")
+            if not figuran and any(e == "dudoso" for e, _ in posibles):
+                motivos.append("el vínculo del autor cubre solo parte del año: indique el mes")
+            if not figuran and any(f is None for _, f in posibles):
+                motivos.append("filiación sin declarar")
+            por_confirmar.append({**x, "motivo": "; ".join(motivos)})
     prods.sort(key=lambda p: (p["revision"] != "indexado", p["tipo"], p["titulo"]))
 
     internos_act = {}

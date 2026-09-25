@@ -123,7 +123,7 @@ def _cargar_produccion():
 
 def _cargar_proyectos():
     """Dos proyectos de ejemplo con vínculos aprobados, pendientes y rechazados: uno institucional
-    (FONDECYT 1260001, de Emmy) y uno individual (de Sofía)."""
+    (IIMAT-IDH-2025-01, de Emmy) y uno individual (de Sofía)."""
     if get_db().q("SELECT 1 FROM proyecto LIMIT 1") or not get_db().q("SELECT 1 FROM producto LIMIT 1"):
         return False
     uid = {u["email"].split(".")[0]: u["id"] for u in usuarios.listar()}
@@ -135,10 +135,10 @@ def _cargar_proyectos():
 
     base = dict(descripcion=None, objetivo_general=None, fuente_financiamiento=None, monto=None,
                 fecha_fin=None)
-    algebra = proyectos.crear({**base, "codigo": "FONDECYT 1260001", "estado": "vigente",
+    algebra = proyectos.crear({**base, "codigo": "IIMAT-IDH-2025-01", "estado": "vigente",
                                "nombre": "Estructuras algebraicas y computación",
                                "fecha_inicio": "2025-10-01", "fecha_fin": "2026-09-30",
-                               "fuente_financiamiento": "FONDECYT Regular", "monto": 180000000,
+                               "fuente_financiamiento": "Recursos IDH – UMSA", "monto": 150000,
                                "descripcion": "Estudio de invariantes algebraicos de modelos de cómputo "
                                               "y de anillos noetherianos asociados.",
                                "objetivo_general": "Caracterizar algebraicamente clases de máquinas de "
@@ -152,7 +152,8 @@ def _cargar_proyectos():
     proyectos.agregar_participante(algebra, f"i:{srini}", "tesista", True)
     proyectos.agregar_participante(algebra, f"e:{weyl}", "colaborador", True)
 
-    rigido = proyectos.crear({**base, "codigo": "FONDECYT 1250042", "estado": "vigente",
+    rigido = proyectos.crear({**base, "codigo": "ISP-BOL-2025", "estado": "vigente",
+                              "fuente_financiamiento": "International Science Programme (ISP, Suecia)",
                               "nombre": "Ecuaciones diferenciales y mecánica del sólido rígido",
                               "fecha_inicio": "2025-03-01", "fecha_fin": "2028-02-29"}, sofia, sofia)
     proyectos.agregar_participante(rigido, f"i:{emmy}", "co_investigador", True)
@@ -183,7 +184,7 @@ def _cargar_proyectos():
 def _cargar_institucionales():
     """Propuestas de ejemplo (solo si aún no hay ninguna). True si las cargó.
 
-    - FONDECYT 1260001 (Emmy): aceptado para el periodo 2025–2026, que termina el 30 de septiembre
+    - IIMAT-IDH-2025-01 (Emmy): aceptado para el periodo 2025–2026, que termina el 30 de septiembre
       de 2026: sirve para ver el aviso y la propuesta de continuidad.
     - «Sistemas integrables…» (Sofía): propuesta nueva enviada, para decidir desde la
       administración.
@@ -191,7 +192,7 @@ def _cargar_institucionales():
     db = get_db()
     if db.q("SELECT 1 FROM propuesta_institucional LIMIT 1"):
         return False
-    algebra = db.q("SELECT * FROM proyecto WHERE codigo = 'FONDECYT 1260001' AND tipo = 'institucional'")
+    algebra = db.q("SELECT * FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01' AND tipo = 'institucional'")
     if not algebra:
         return False
     algebra = algebra[0]
@@ -317,16 +318,38 @@ def main():
     produccion = _cargar_produccion()
     con_proyectos = _cargar_proyectos()
     con_propuestas = _cargar_institucionales()
+    # Filiación de ejemplo (solo si nadie la ha declarado aún en estos productos): Emmy firmó su
+    # artículo con IIMAT/UMSA y Alan el suyo; Emmy aún no declara la suya en el de Alan (aviso en su inicio).
+    db = get_db()
+    demo = db.q("""SELECT pa.producto_id, pa.investigador_id, p.titulo FROM producto_autor pa
+                   JOIN producto p ON p.id = pa.producto_id WHERE pa.investigador_id IS NOT NULL
+                     AND p.titulo IN ('Anillos con condición de cadena ascendente y sus ideales primarios',
+                                      'Invariantes algebraicos de máquinas de estados finitos')""")
+    if demo and not db.q("""SELECT 1 FROM producto_autor pa JOIN producto p ON p.id = pa.producto_id
+                            WHERE pa.filiacion_instituto IS NOT NULL AND p.titulo IN
+                            ('Anillos con condición de cadena ascendente y sus ideales primarios',
+                             'Invariantes algebraicos de máquinas de estados finitos')"""):
+        emmy_id = usuarios.por_email("emmy.noether@instituto.test")["id"]
+        for f in demo:
+            if not (f["titulo"].startswith("Invariantes") and f["investigador_id"] == emmy_id):
+                db.execute("UPDATE producto_autor SET filiacion_instituto = 1 WHERE producto_id = ? AND investigador_id = ?",
+                           [f["producto_id"], f["investigador_id"]])
     # Bases creadas antes del mes de publicación: el artículo de Emmy es de marzo (el otro de 2026
     # queda sin mes, para ver «por confirmar» en la memoria del periodo 2025–2026).
     get_db().execute("""UPDATE producto SET mes = 3 WHERE doi = '10.5555/demo.2026.001' AND mes IS NULL""")
-    # Bases creadas antes de los tipos de proyecto: el FONDECYT de ejemplo es institucional.
-    tipos = get_db().q("""SELECT id FROM proyecto WHERE codigo = 'FONDECYT 1260001'
+    # Bases creadas con los ejemplos anteriores (códigos chilenos): pasan a ejemplos de la UMSA.
+    get_db().execute("""UPDATE proyecto SET codigo = 'IIMAT-IDH-2025-01', fuente_financiamiento = 'Recursos IDH – UMSA',
+                        monto = 150000 WHERE codigo = 'FONDECYT 1260001'""")
+    get_db().execute("""UPDATE proyecto SET codigo = 'ISP-BOL-2025',
+                        fuente_financiamiento = 'International Science Programme (ISP, Suecia)'
+                        WHERE codigo = 'FONDECYT 1250042'""")
+    # Bases creadas antes de los tipos de proyecto: el proyecto IDH de ejemplo es institucional.
+    tipos = get_db().q("""SELECT id FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01'
                           AND tipo = 'individual'""")
     if tipos:
         get_db().execute("UPDATE proyecto SET tipo = 'institucional' WHERE id = ?", [tipos[0]["id"]])
     if tipos:
-        print("El proyecto de ejemplo FONDECYT 1260001 quedó como institucional.")
+        print("El proyecto de ejemplo IIMAT-IDH-2025-01 quedó como institucional.")
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
     if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas \
@@ -342,7 +365,7 @@ def main():
     if con_vinculos and not creados:
         print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular; Ramanujan es invitado).")
     if con_propuestas:
-        print("Propuestas institucionales de ejemplo: FONDECYT 1260001 aceptado (termina el 30 de septiembre) "
+        print("Propuestas institucionales de ejemplo: IIMAT-IDH-2025-01 aceptado (termina el 30 de septiembre) "
               "y una propuesta nueva de Sofía por decidir.")
     if con_proyectos:
         print("Proyectos de ejemplo cargados: Emmy es responsable de uno (con propuestas pendientes "

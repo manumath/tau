@@ -72,7 +72,7 @@ def autores(pid: int) -> list[dict]:
     for f in filas:
         p = personas.por_ref(personas.ref(f["investigador_id"], f["externo_id"]))
         if p:
-            res.append(p)
+            res.append({**p, "filiacion": f["filiacion_instituto"]})
     return res
 
 
@@ -155,7 +155,13 @@ def preparar(datos: dict, autores_refs: list[str], indices_ids: list[int],
     return d, errores
 
 
-def guardar(d: dict, autores_refs: list[str], usuario_id: int, pid: int | None = None) -> int:
+def guardar(d: dict, autores_refs: list[str], usuario_id: int, pid: int | None = None,
+            filiaciones: list | None = None) -> int:
+    """`filiaciones`: en el orden de los autores, 1 / 0 / None (sin declarar) para los del
+    instituto; se ignora en los externos."""
+    from app.filiacion import normalizar
+    filiaciones = list(filiaciones or [])
+    filiaciones += [None] * (len(autores_refs) - len(filiaciones))
     db = get_db()
     indices_ids = d.pop("_indices", [])
     with db.conn:
@@ -166,8 +172,10 @@ def guardar(d: dict, autores_refs: list[str], usuario_id: int, pid: int | None =
             db.execute("UPDATE producto SET actualizado_en = datetime('now') WHERE id = ?", [pid])
             db.execute("DELETE FROM producto_autor WHERE producto_id = ?", [pid])
             db.execute("DELETE FROM producto_indice WHERE producto_id = ?", [pid])
-        for orden, r in enumerate(autores_refs):
-            db.t.producto_autor.insert(producto_id=pid, orden=orden, **personas.columnas(r))
+        for orden, (r, fil) in enumerate(zip(autores_refs, filiaciones)):
+            cols = personas.columnas(r)
+            db.t.producto_autor.insert(producto_id=pid, orden=orden, **cols,
+                                       filiacion_instituto=normalizar(fil) if cols["investigador_id"] else None)
         for i in indices_ids:
             db.t.producto_indice.insert(producto_id=pid, indice_id=i)
     return pid
@@ -209,8 +217,9 @@ def puede_eliminar(p: dict, uid: int) -> bool:
 # --- Listados ---------------------------------------------------------------------------
 
 def de_investigador(uid: int, texto: str = "", anio: str = "", tipo_id: str = "",
-                    solo_informe: bool = False) -> list[dict]:
-    """Productos de los que es autor o que registró, más recientes primero."""
+                    solo_informe: bool = False, sin_filiacion: bool = False) -> list[dict]:
+    """Productos de los que es autor o que registró, más recientes primero. `sin_filiacion`: solo
+    aquellos en que es autor(a) y no ha declarado si firmó con la filiación del instituto."""
     filtros, params = [], {"u": uid}
     if texto.strip():
         filtros.append("(sin_tildes(p.titulo) LIKE :t OR sin_tildes(p.medio) LIKE :t)")
@@ -224,6 +233,9 @@ def de_investigador(uid: int, texto: str = "", anio: str = "", tipo_id: str = ""
     if solo_informe:
         filtros.append("p.revision IN ('indexado', 'arbitrado') "
                        "AND p.estado_publicacion IN ('aceptado', 'publicado')")
+    if sin_filiacion:  # solo donde importa: indexados o arbitrados
+        filtros.append("p.revision IN ('indexado', 'arbitrado') AND EXISTS (SELECT 1 FROM producto_autor "
+                       "WHERE producto_id = p.id AND investigador_id = :u AND filiacion_instituto IS NULL)")
     where = "".join(f" AND {f}" for f in filtros)
     filas = get_db().q(
         f"""SELECT p.id FROM producto p

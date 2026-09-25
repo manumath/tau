@@ -30,7 +30,7 @@ def nueva_propuesta(tipo: str, registro_id: int, pid: int, propuesto_por: int):
     responsables = get_db().q(
         """SELECT u.* FROM proyecto_participante pp JOIN usuario u ON u.id = pp.investigador_id
            WHERE pp.proyecto_id = ? AND pp.rol IN ('responsable', 'co_responsable')
-             AND (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now'))""", [pid])
+             AND (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now', 'localtime'))""", [pid])
     for r in responsables:
         if r["id"] == propuesto_por or not _quiere(r):
             continue
@@ -76,7 +76,7 @@ def _responsables(pid: int) -> list[dict]:
     return get_db().q(
         """SELECT u.* FROM proyecto_participante pp JOIN usuario u ON u.id = pp.investigador_id
            WHERE pp.proyecto_id = ? AND pp.rol IN ('responsable', 'co_responsable')
-             AND (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now'))""", [pid])
+             AND (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now', 'localtime'))""", [pid])
 
 
 def propuesta_enviada(prop: dict, reenvio: bool):

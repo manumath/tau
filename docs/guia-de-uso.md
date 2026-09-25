@@ -62,6 +62,14 @@ quedan en la dirección de la página, para volver a ellos o compartirlos.
 El **mes de publicación** es opcional, pero conviene indicarlo: sin él, un producto no se puede
 ubicar en los informes por periodo octubre–septiembre (queda «por confirmar»).
 
+**Filiación:** junto a cada autor del instituto se indica si **firmó la publicación con la
+filiación del instituto** (IIMAT, CMAT, FCPN o UMSA; vale la doble filiación). En los informes
+institucionales solo cuenta un producto si al menos un autor vinculado al instituto en esa fecha
+firmó con ella. Al importar por DOI, se marca sola cuando la afiliación publicada menciona al
+instituto o a la UMSA; revísela. En la lista de productos, **«Sin filiación declarada»** muestra
+sus artículos indexados o arbitrados pendientes, con botones Sí / No y «Firmé todos estos con
+IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar.
+
 - **La forma más rápida:** «Nuevo producto» → pegue el **DOI** o el identificador **arXiv** (o su
   dirección) en «Importar» y presione Enter. El formulario se completa con título, autores,
   revista, año, mes y páginas; revíselo y guarde.
@@ -175,7 +183,8 @@ Hay dos tipos de proyecto:
 
 Menú «Informes»:
 
-- **Mi CV:** elija el periodo y, si quiere, «solo lo que cuenta para el informe». Agrupa sus
+- **Mi CV:** elija el periodo y, si quiere, «solo lo que cuenta para el informe» o «solo con
+  filiación IIMAT/UMSA». Agrupa sus
   productos por categoría y lista actividades y proyectos. Descárguelo con «Imprimir / Guardar
   PDF» (use «Guardar como PDF» en el diálogo del navegador) o en BibTeX.
 - **Informe de proyecto:** equipo, objetivos, productos y actividades aprobados en el periodo;
