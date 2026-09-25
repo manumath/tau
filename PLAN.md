@@ -90,7 +90,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0010` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0011` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -112,7 +112,7 @@ actividad_participante(actividad_id, orden, investigador_id | externo_id, rol)
 
 tipo_producto(id, nombre, admite_revision, orden, activo)
 indice(id, nombre, cuenta_como_indexado, orden, activo)
-producto(id, tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
+producto(id, tipo_id, titulo, anio, mes, estado_publicacion, revision, medio, volumen, numero,
          paginas, doi, arxiv_id, url, resumen, actividad_id, creado_por, creado_en, actualizado_en)
 producto_autor(producto_id, orden, investigador_id | externo_id)
 producto_indice(producto_id, indice_id)
@@ -126,7 +126,7 @@ propuesta_institucional(id, proyecto_id, periodo, modalidad, nombre, descripcion
         metodologia, resultados_esperados, bibliografia, estado, proponente_id, creada_en,
         actualizada_en, enviada_en, envios, copia_enviada, decidida_por, decidida_en, comentario)
 propuesta_objetivo(id, propuesta_id, orden, texto)
-propuesta_actividad_prevista(id, propuesta_id, orden, descripcion, mes_previsto)
+propuesta_actividad_prevista(id, propuesta_id, orden, descripcion, mes_previsto, actividad_id)
 propuesta_evento(id, propuesta_id, accion, comentario, usuario_id, fecha)
 aviso_enviado(clave, fecha)
 proyecto_participante(id, proyecto_id, investigador_id | externo_id, rol, fecha_desde, fecha_hasta)
@@ -163,13 +163,13 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 | 6. Informes | CV, informe de proyecto, memoria anual; descargas XLSX, CSV y BibTeX | ✔ |
 | 7. Extras | Recuperación e invitación por correo, avisos, perfiles públicos, API JSON, auditoría | ✔ |
 
-**Ajustes tras las pruebas con usuarios:** en curso, ver la [sección 11](#11-ajustes-tras-las-pruebas-con-usuarios-en-curso).
+**Ajustes tras las pruebas con usuarios** (categorías, proyectos individuales e institucionales, propuestas anuales, informes por periodo): completos, ver la [sección 11](#11-ajustes-tras-las-pruebas-con-usuarios).
 
 **Despliegue:** servidor propio (systemd + Caddy) o Fly.io (contenedor, volumen y réplica
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-237 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+258 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -229,7 +229,7 @@ repositorio institucional, proyectos públicos, cuartiles o factor de impacto de
 3. ¿El instituto quiere publicar los proyectos, además de los perfiles?
 4. ¿Hace falta registrar la tesis doctoral propia (hoy no hay un tipo de producto para eso)?
 
-## 11. Ajustes tras las pruebas con usuarios (en curso)
+## 11. Ajustes tras las pruebas con usuarios
 
 Cambios pedidos por el instituto después de las primeras pruebas (septiembre de 2026). Se
 implementan por etapas; cada una termina con pruebas, datos de ejemplo y documentación al día.
@@ -329,7 +329,7 @@ ligados a un proyecto institucional. Desglose por categoría y columna de catego
 | A | Categorías: migración, cuentas (alta, CSV, cambio desde el listado), perfil, directorio con filtro, memoria | ✔ |
 | B | Tipo de proyecto: individuales creados por investigadores, ajuste de permisos de la administración, listados; regla de externos en la memoria | ✔ |
 | C | Propuestas institucionales: formulario, borrador y envío, convocatoria y plazos, bandeja de decisión, condiciones, continuidad, vigencia automática, avisos | ✔ |
-| D | Informes: memoria por periodo oct–sep y por rango; exportar las propuestas de una convocatoria (XLSX); actividades previstas frente a realizadas | Pendiente |
+| D | Informes: memoria por periodo oct–sep y por rango; exportar las propuestas de una convocatoria (XLSX); actividades previstas frente a realizadas | ✔ |
 
 **Detalles de la etapa C:**
 
@@ -346,6 +346,18 @@ ligados a un proyecto institucional. Desglose por categoría y columna de catego
   decisión. Los recordatorios de continuidad se envían una vez por proyecto y periodo.
 - Datos de ejemplo: el FONDECYT 1260001 (Emmy) aceptado para 2025–2026 (termina el 30 de
   septiembre) y una propuesta nueva de Sofía por decidir.
+
+**Detalles de la etapa D:**
+
+- Los productos solo tenían año. Se agregó el **mes de publicación** (opcional; se toma de
+  Crossref, arXiv y BibTeX al importar). En un periodo o rango, un producto con mes se ubica por
+  su mes; uno sin mes cuenta si todo su año cae dentro, y si cae solo en parte queda **«por
+  confirmar»** (se lista, no se cuenta). Las actividades se ubican por su fecha de inicio.
+- Plan: cada actividad prevista de una propuesta aceptada puede enlazarse con la actividad
+  registrada que la cumple (aprobada en el proyecto y del mismo periodo). Estados: pendiente,
+  atrasada, realizada. Aparece en la pestaña «Plan» y en el informe de proyecto (HTML y XLSX).
+- XLSX de una convocatoria: hojas Propuestas, Textos, Objetivos y Actividades previstas, con la
+  copia enviada de cada propuesta (sin borradores).
 
 Nota: la convocatoria de septiembre de 2026 cierra el 30; lo realista es que el piloto use la
 de septiembre de 2027, o que la administración abra un plazo extraordinario.

@@ -162,10 +162,10 @@ def test_informe_de_proyecto(client, datos):
 def test_indice_de_informes(client, datos):
     login(client, "inv@test.cl", PASS_TEMP)
     r = client.get("/informes")
-    assert "Mi CV" in r.text and "Memoria anual" not in r.text
+    assert "Mi CV" in r.text and "Memoria del instituto" not in r.text
     client.post("/logout")
     login(client, "admin@test.cl", PASS_ADMIN)
-    assert "Memoria anual" in client.get("/informes").text
+    assert "Memoria del instituto" in client.get("/informes").text
 
 
 def test_memoria_por_categoria(datos):

@@ -13,6 +13,8 @@ ESTADOS = {"publicado": "Publicado", "aceptado": "Aceptado", "enviado": "Enviado
            "en_preparacion": "En preparación"}
 REVISIONES = {"indexado": "Indexado", "arbitrado": "Arbitrado", "sin_arbitraje": "Sin arbitraje"}
 ESTADOS_INFORME = ("aceptado", "publicado")
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
+         "octubre", "noviembre", "diciembre"]
 TIPO_PRESENTACION = "Presentación"
 
 
@@ -106,6 +108,12 @@ def preparar(datos: dict, autores_refs: list[str], indices_ids: list[int],
         errores.append(f"Indique un año entre 1900 y {date.today().year + 1}.")
     else:
         d["anio"] = int(anio)
+    if "mes" in d:
+        mes = str(d.get("mes") or "")
+        if mes and not (mes.isdigit() and 1 <= int(mes) <= 12):
+            errores.append("Mes de publicación no válido.")
+        else:
+            d["mes"] = int(mes) if mes else None
     if d.get("estado_publicacion") not in ESTADOS:
         errores.append("Estado de publicación no válido.")
 

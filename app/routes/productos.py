@@ -222,7 +222,14 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
                        hx_target="#campos-dependientes", hx_swap="outerHTML"),
                 cls="space-y-2 sm:col-span-2"),
             campo("Año", "anio", type="number", min=1900, max=date.today().year + 1, required=True),
-            cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
+            Div(FormLabel("Mes (opcional)", fr="mes"),
+                Select(Option("—", value=""),
+                       *[Option(t.capitalize(), value=str(i), selected=str(i) == str(d.get("mes") or ""))
+                         for i, t in enumerate(productos.MESES, start=1)],
+                       id="mes", name="mes", cls="uk-select",
+                       title="Permite ubicar el producto en informes por periodo (octubre a septiembre)."),
+                cls="space-y-2"),
+            cls="grid grid-cols-2 sm:grid-cols-4 gap-4"),
         campo("Título", "titulo", required=True),
         selector_personas.selector("autor", autores_elegidos, "Autores",
                                    "En el orden de la publicación. Use las flechas para reordenar."),
@@ -263,8 +270,8 @@ def _modal_form(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, pr
 
 
 def _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                paginas, doi, arxiv_id, url, resumen, actividad_id):
-    return dict(tipo_id=tipo_id, titulo=titulo, anio=anio, estado_publicacion=estado_publicacion,
+                paginas, doi, arxiv_id, url, resumen, actividad_id, mes=""):
+    return dict(tipo_id=tipo_id, titulo=titulo, anio=anio, mes=mes, estado_publicacion=estado_publicacion,
                 revision=revision, medio=medio, volumen=volumen, numero=numero, paginas=paginas,
                 doi=doi, arxiv_id=arxiv_id, url=url, resumen=resumen, actividad_id=actividad_id)
 
@@ -397,10 +404,10 @@ def _guardar(auth, sess, pid, datos, autor, indice, proyecto):
 def post(auth, sess, tipo_id: str = "", titulo: str = "", anio: str = "",
          estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
          numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
-         resumen: str = "", actividad_id: str = "", autor: list[str] = None,
+         resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
          indice: list[str] = None, proyecto: list[int] = None):
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                        paginas, doi, arxiv_id, url, resumen, actividad_id)
+                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes)
     return _guardar(auth, sess, None, datos, autor, indice, proyecto)
 
 
@@ -416,13 +423,13 @@ def get(auth, pid: int):
 def put(auth, sess, pid: int, tipo_id: str = "", titulo: str = "", anio: str = "",
         estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
         numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
-        resumen: str = "", actividad_id: str = "", autor: list[str] = None,
+        resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
         indice: list[str] = None, proyecto: list[int] = None):
     p = productos.obtener(pid)
     if not p or not productos.puede_editar(p, auth["id"]):
         return Response("No autorizado", status_code=403)
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                        paginas, doi, arxiv_id, url, resumen, actividad_id)
+                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes)
     return _guardar(auth, sess, pid, datos, autor, indice, proyecto)
 
 
@@ -477,7 +484,7 @@ def ficha(p, auth):
             dato("Autores", Div(*[Div(enlace_persona(a), Span(f" · {a['afiliacion']}",
                                                              cls=TextPresets.muted_sm)
                                       if a.get("afiliacion") else "") for a in p["autores"]])),
-            dato("Año", str(p["anio"])),
+            dato("Publicación", f"{productos.MESES[p['mes'] - 1]} {p['anio']}" if p["mes"] else str(p["anio"])),
             dato("Estado", productos.ESTADOS[p["estado_publicacion"]]),
             dato("Medio", ", ".join(x for x in (p["medio"], p["volumen"] and f"vol. {p['volumen']}",
                                                 p["numero"] and f"n.º {p['numero']}",

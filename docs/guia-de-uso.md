@@ -56,9 +56,12 @@ quedan en la dirección de la página, para volver a ellos o compartirlos.
 
 ### Registrar un producto
 
+El **mes de publicación** es opcional, pero conviene indicarlo: sin él, un producto no se puede
+ubicar en los informes por periodo octubre–septiembre (queda «por confirmar»).
+
 - **La forma más rápida:** «Nuevo producto» → pegue el **DOI** o el identificador **arXiv** (o su
   dirección) en «Importar» y presione Enter. El formulario se completa con título, autores,
-  revista, año y páginas; revíselo y guarde.
+  revista, año, mes y páginas; revíselo y guarde.
   - Si importa un preprint que ya tiene versión publicada, aparece el botón «Importar versión
     publicada»: queda como artículo y conserva el arXiv.
 - **Desde BibTeX:** «Importar BibTeX» → suba su archivo `.bib` (el de LaTeX, o el que exportan
@@ -173,8 +176,15 @@ Menú «Informes»:
   productos por categoría y lista actividades y proyectos. Descárguelo con «Imprimir / Guardar
   PDF» (use «Guardar como PDF» en el diálogo del navegador) o en BibTeX.
 - **Informe de proyecto:** equipo, objetivos, productos y actividades aprobados en el periodo;
-  descarga en XLSX.
-- **Memoria anual** (administración): ver abajo.
+  en los institucionales, además, el plan de actividades (previstas y realizadas). Descarga en XLSX.
+- **Memoria del instituto** (administración): ver abajo.
+
+### Plan de actividades (proyectos institucionales)
+
+La pestaña **Plan** del proyecto muestra, por periodo aceptado, las actividades previstas en la
+propuesta: *pendiente*, *atrasada* (pasó el mes previsto) o *realizada*. Para marcar una como
+realizada, el responsable elige la actividad registrada que la cumple (debe estar aprobada en el
+proyecto y ser del mismo periodo).
 
 ## Administración
 
@@ -200,9 +210,15 @@ Menú «Informes»:
   gestiona: los datos, participantes y propuestas son de sus responsables. En la ficha de un
   proyecto, **«Reasignar responsable»** cambia al responsable (p. ej., si deja el instituto); el
   anterior sigue como co-investigador(a) o se le da de baja.
-- **Informes → Memoria anual:** productos que cuentan (una vez cada uno), actividades, proyectos
-  vigentes (institucionales e individuales), un resumen por categoría y otro por investigador; descarga en XLSX y CSV. La producción
-  de investigadores externos figura solo si está aprobada en un proyecto institucional.
+- **Informes → Memoria del instituto:** por **año calendario**, **periodo octubre–septiembre** o
+  **rango de fechas**. Productos que cuentan (una vez cada uno), actividades, proyectos vigentes
+  (institucionales e individuales), un resumen por categoría y otro por investigador; descarga en
+  XLSX y CSV. La producción de investigadores externos figura solo si está aprobada en un
+  proyecto institucional. En un periodo que no coincide con el año calendario, los productos sin
+  mes de publicación cuyo año cae solo en parte dentro del periodo aparecen **«por confirmar»**
+  y no se cuentan hasta completar el mes.
+- **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se
+  envió (resumen, textos completos, objetivos y actividades previstas), para el comité.
 - **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
 
 ## Preguntas frecuentes

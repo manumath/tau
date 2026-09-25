@@ -15,7 +15,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
-from app import actividades, perfiles, productos, proyectos
+from app import actividades, institucionales, perfiles, productos, proyectos
 from app.db import get_db
 
 # Categorías del CV, en orden de aparición. La primera que corresponde es la que se usa.
@@ -102,21 +102,63 @@ def informe_proyecto(pid: int, desde: int, hasta: int) -> dict:
             "participantes": proyectos.participantes(pid),
             "productos_informe": [x for x in prods if productos.cuenta_para_informe(x)],
             "productos_otros": [x for x in prods if not productos.cuenta_para_informe(x)],
-            "actividades": acts}
+            "actividades": acts,
+            "plan": institucionales.plan(pid, desde, hasta) if p["tipo"] == "institucional" else []}
 
 
 # --- Memoria anual ------------------------------------------------------------------------------------
 
-def memoria(anio: int) -> dict:
-    """Productos que cuentan (del año), actividades con participación del instituto, proyectos
-    vigentes en el año y resúmenes por categoría y por investigador.
+MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"]
+
+
+def _fecha_corta(iso: str) -> str:
+    return f"{int(iso[8:10])} {MESES_CORTOS[int(iso[5:7]) - 1]} {iso[:4]}"
+
+
+def rango(anio=None, periodo=None, desde=None, hasta=None) -> dict:
+    """Periodo de una memoria: año calendario, periodo oct–sep (año de inicio) o rango libre.
+    → {'desde', 'hasta', 'titulo', 'nombre' (para archivos), 'params' (para URLs)}."""
+    if periodo is not None:
+        return {"desde": f"{periodo}-10-01", "hasta": f"{periodo + 1}-09-30", "params": {"periodo": periodo},
+                "titulo": f"Memoria del periodo {periodo}–{periodo + 1} (octubre a septiembre)",
+                "nombre": f"memoria-{periodo}-{periodo + 1}"}
+    if desde and hasta:
+        return {"desde": desde, "hasta": hasta, "params": {"desde": desde, "hasta": hasta},
+                "titulo": f"Memoria del {_fecha_corta(desde)} al {_fecha_corta(hasta)}",
+                "nombre": f"memoria-{desde}-a-{hasta}"}
+    anio = anio or date.today().year
+    return {"desde": f"{anio}-01-01", "hasta": f"{anio}-12-31", "params": {"anio": anio},
+            "titulo": f"Memoria anual {anio}", "nombre": f"memoria-{anio}"}
+
+
+def ubicar_producto(p: dict, desde: str, hasta: str) -> str:
+    """'dentro', 'fuera' o 'dudoso' (sin mes y con el año solo en parte dentro del rango)."""
+    if p.get("mes"):
+        fecha = f"{p['anio']}-{p['mes']:02d}"
+        return "dentro" if desde[:7] <= fecha <= hasta[:7] else "fuera"
+    ini, fin = f"{p['anio']}-01-01", f"{p['anio']}-12-31"
+    if desde <= ini and fin <= hasta:
+        return "dentro"
+    return "fuera" if fin < desde or ini > hasta else "dudoso"
+
+
+def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str | None = None,
+            hasta: str | None = None) -> dict:
+    """Productos que cuentan, actividades con participación del instituto, proyectos vigentes y
+    resúmenes por categoría y por investigador, en un año calendario, un periodo oct–sep o un
+    rango de fechas.
+
+    Los productos se ubican por año y mes de publicación. Uno sin mes cuyo año cae solo en parte
+    dentro del rango (p. ej., 2026 en el periodo oct 2026 – sept 2027) no se cuenta: queda en
+    `por_confirmar`, para completar su mes.
 
     Regla de los externos: la producción de investigadores de categoría «Externo» figura solo si
     está aprobada en un proyecto institucional vigente en el periodo. Un producto o actividad
     cuenta si tiene al menos un autor o participante del instituto que no sea externo, o si está
     ligado a un proyecto institucional.
     """
-    desde, hasta = f"{anio}-01-01", f"{anio}-12-31"
+    periodo_memoria = rango(anio, periodo, desde, hasta)
+    desde, hasta = periodo_memoria["desde"], periodo_memoria["hasta"]
     # Todas las cuentas de investigador (también inactivas): sus registros cuentan igual.
     categoria_de = {r["usuario_id"]: r["categoria"]
                     for r in get_db().q("SELECT usuario_id, categoria FROM investigador")}
@@ -127,17 +169,22 @@ def memoria(anio: int) -> dict:
         """¿Este investigador figura con este registro en la memoria?"""
         return categoria_de.get(uid) != "externo" or rid in ligados[tipo]
 
-    ids = [r["id"] for r in get_db().q(
+    ids = [f["id"] for f in get_db().q(
         """SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
-           WHERE p.anio = ? AND pa.investigador_id IS NOT NULL
+           WHERE p.anio BETWEEN ? AND ? AND pa.investigador_id IS NOT NULL
              AND p.revision IN ('indexado', 'arbitrado')
              AND p.estado_publicacion IN ('aceptado', 'publicado')
-           ORDER BY p.revision, p.id""", [anio])]
+           ORDER BY p.revision, p.id""", [int(desde[:4]), int(hasta[:4])])]
     # Autores del instituto que figuran con cada producto (id → conjunto de usuarios).
-    autores = {}
+    autores, por_confirmar = {}, []
     for i in ids:
         x = productos.obtener(i)
-        autores[i] = (x, {a["id"] for a in x["autores"] if a["interno"] and figura(a["id"], "producto", i)})
+        lugar = ubicar_producto(x, desde, hasta)
+        quienes = {a["id"] for a in x["autores"] if a["interno"] and figura(a["id"], "producto", i)}
+        if lugar == "dentro":
+            autores[i] = (x, quienes)
+        elif lugar == "dudoso" and quienes:
+            por_confirmar.append(x)
     prods = [x for x, quienes in autores.values() if quienes]
     prods.sort(key=lambda p: (p["revision"] != "indexado", p["tipo"], p["titulo"]))
     internos_prod = {x["id"]: autores[x["id"]][1] for x in prods}
@@ -145,14 +192,15 @@ def memoria(anio: int) -> dict:
     internos_act = {}
     for r in get_db().q(
             """SELECT DISTINCT a.id FROM actividad a JOIN actividad_participante ap ON ap.actividad_id = a.id
-               WHERE substr(a.fecha_inicio, 1, 4) = ? AND ap.investigador_id IS NOT NULL
-               ORDER BY a.fecha_inicio""", [str(anio)]):
+               WHERE a.fecha_inicio BETWEEN ? AND ? AND ap.investigador_id IS NOT NULL
+               ORDER BY a.fecha_inicio""", [desde, hasta]):
         quienes = {x["id"] for x in actividades.participantes(r["id"])
                    if x["interno"] and figura(x["id"], "actividad", r["id"])}
         if quienes:
             internos_act[r["id"]] = quienes
     acts = [actividades.obtener(i) for i in internos_act]
-    proys = [p for p in proyectos.todos() if _en_periodo_proyecto(p, anio, anio) and p["estado"] != "formulacion"]
+    proys = [p for p in proyectos.todos() if p["estado"] != "formulacion"
+             and (not p["fecha_inicio"] or p["fecha_inicio"] <= hasta) and (not p["fecha_fin"] or p["fecha_fin"] >= desde)]
     proys.sort(key=lambda p: p["tipo"] != "institucional")
 
     por_indice, por_tipo_act, por_ambito = {}, {}, {}
@@ -185,7 +233,8 @@ def memoria(anio: int) -> dict:
             "investigadores": len(ids_cat),
             "productos": sum(bool(q & ids_cat) for q in internos_prod.values()),
             "actividades": sum(bool(q & ids_cat) for q in internos_act.values())}
-    return {"anio": anio, "productos": prods, "actividades": acts, "proyectos": proys,
+    return {**periodo_memoria, "anio": anio, "productos": prods, "actividades": acts, "proyectos": proys,
+            "por_confirmar": sorted(por_confirmar, key=lambda p: (p["anio"], p["titulo"])),
             "n_indexados": sum(p["revision"] == "indexado" for p in prods),
             "n_arbitrados": sum(p["revision"] == "arbitrado" for p in prods),
             "por_indice": dict(sorted(por_indice.items(), key=lambda x: -x[1])),

@@ -96,6 +96,21 @@ def _anio(e):
     return m.group(1) if m else ""
 
 
+_MESES_BIB = {m: i for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep",
+                                          "oct", "nov", "dec"), start=1)}
+
+
+def _mes(e):
+    """Campo month (jan, January, 3, «mar.») o la fecha ISO de date; "" si no hay."""
+    texto = str(_campo(e, "month") or "").strip().lower()
+    if texto.isdigit() and 1 <= int(texto) <= 12:
+        return str(int(texto))
+    if texto[:3] in _MESES_BIB:
+        return str(_MESES_BIB[texto[:3]])
+    m = re.match(r"\d{4}-(\d{2})", str(_campo(e, "date") or ""))
+    return str(int(m.group(1))) if m and 1 <= int(m.group(1)) <= 12 else ""
+
+
 def _a_producto(e) -> dict:
     tipo_bib = e.entry_type.lower()
     avisos = []
@@ -113,7 +128,7 @@ def _a_producto(e) -> dict:
     medio = _campo(e, "journal", "booktitle", "publisher", "institution", "school", "howpublished")
     doi = _campo(e, "doi")
     datos = {
-        "tipo_id": str(tipo["id"]), "titulo": _campo(e, "title") or "", "anio": _anio(e),
+        "tipo_id": str(tipo["id"]), "titulo": _campo(e, "title") or "", "anio": _anio(e), "mes": _mes(e),
         "estado_publicacion": _estado(e, tipo_bib),
         "revision": "arbitrado" if tipo["admite_revision"] else "sin_arbitraje",
         "medio": medio, "volumen": _campo(e, "volume"), "numero": _campo(e, "number", "issue"),
@@ -224,7 +239,8 @@ def entrada(p: dict, usadas: set[str]) -> str:
                                       for a in p["autores"])),
               ("title", p["titulo"]),
               (campo_medio, p["medio"]),
-              ("year", str(p["anio"])), ("volume", p["volumen"]), ("number", p["numero"]),
+              ("year", str(p["anio"])), ("month", str(p["mes"]) if p.get("mes") else None),
+              ("volume", p["volumen"]), ("number", p["numero"]),
               ("pages", (p["paginas"] or "").replace("–", "--") or None),
               ("doi", p["doi"])]
     if p["arxiv_id"]:

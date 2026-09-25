@@ -110,11 +110,12 @@ def desde_crossref(doi: str) -> dict:
         raise ErrorImportacion(f"Crossref respondió con un error ({r.status_code}). Intente más tarde.")
     m = r.json()["message"]
     tipo = TIPOS_CROSSREF.get(m.get("type"), "Artículo en revista")
-    anio = None
+    anio = mes = None
     for clave in ("published-print", "published-online", "issued", "published"):
         partes = (m.get(clave) or {}).get("date-parts") or [[None]]
         if partes[0] and partes[0][0]:
             anio = partes[0][0]
+            mes = partes[0][1] if len(partes[0]) > 1 and 1 <= (partes[0][1] or 0) <= 12 else None
             break
     autores = []
     for a in m.get("author", []):
@@ -135,7 +136,7 @@ def desde_crossref(doi: str) -> dict:
         "fuente": "Crossref",
         "datos": {
             "tipo_id": _id_tipo(tipo), "titulo": _limpiar((m.get("title") or [""])[0]),
-            "anio": anio, "estado_publicacion": "publicado",
+            "anio": anio, "mes": mes, "estado_publicacion": "publicado",
             "revision": "arbitrado" if tipo != "Preprint" else "sin_arbitraje",
             "medio": _limpiar(medio), "volumen": m.get("volume"), "numero": m.get("issue"),
             "paginas": (m.get("page") or "").replace("-", "–") or None,
@@ -192,6 +193,7 @@ def desde_arxiv(arxiv_id: str) -> dict:
         "datos": {
             "tipo_id": _id_tipo("Preprint"), "titulo": texto("a:title"),
             "anio": int((texto("a:published") or "0000")[:4]) or None,
+            "mes": int((texto("a:published") or "0000-00")[5:7] or 0) or None,
             "estado_publicacion": "publicado", "revision": "sin_arbitraje",
             "medio": "arXiv" + (f" [{c}]" if (c := entrada.find("arxiv:primary_category", NS)) is not None
                                 and (c := c.get("term")) else ""),

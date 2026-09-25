@@ -513,3 +513,78 @@ def mantenimiento(forzar: bool = False):
     _ultimo_mantenimiento = time.monotonic()
     refrescar_vigencias()
     recordatorios()
+
+
+# --- Plan de actividades: previstas frente a realizadas ---------------------------------------------------
+
+def plan(pid: int, desde_anio: int | None = None, hasta_anio: int | None = None) -> list[dict]:
+    """Por cada periodo aceptado del proyecto (opcionalmente, los que se cruzan con los años dados):
+    sus actividades previstas, con la actividad registrada que la cumple (si se enlazó) y un
+    estado: realizada, pendiente o atrasada (el mes previsto ya pasó sin enlace)."""
+    mes_actual = hoy().isoformat()[:7]
+    res = []
+    for prop in get_db().q("""SELECT id, periodo FROM propuesta_institucional WHERE proyecto_id = ?
+                              AND estado = 'aceptada' ORDER BY periodo DESC""", [pid]):
+        if desde_anio is not None and (int(fin(prop["periodo"])[:4]) < desde_anio or prop["periodo"] > hasta_anio):
+            continue
+        filas = get_db().q(
+            """SELECT ap.*, a.titulo AS realizada_titulo, a.fecha_inicio AS realizada_fecha
+               FROM propuesta_actividad_prevista ap LEFT JOIN actividad a ON a.id = ap.actividad_id
+               WHERE ap.propuesta_id = ? ORDER BY ap.mes_previsto IS NULL, ap.mes_previsto, ap.orden""",
+            [prop["id"]])
+        for f in filas:
+            f["estado"] = ("realizada" if f["actividad_id"] else
+                           "atrasada" if f["mes_previsto"] and f["mes_previsto"] < mes_actual else "pendiente")
+        res.append({"periodo": prop["periodo"], "previstas": filas,
+                    "realizadas": sum(f["estado"] == "realizada" for f in filas)})
+    return res
+
+
+def actividades_para_enlazar(pid: int, periodo: int) -> list[dict]:
+    """Actividades aprobadas en el proyecto con inicio dentro del periodo."""
+    return get_db().q(
+        """SELECT a.id, a.titulo, a.fecha_inicio FROM actividad_proyecto v JOIN actividad a ON a.id = v.actividad_id
+           WHERE v.proyecto_id = ? AND v.estado = 'aprobado' AND a.fecha_inicio BETWEEN ? AND ?
+           ORDER BY a.fecha_inicio""", [pid, inicio(periodo), fin(periodo)])
+
+
+def enlazar_prevista(prevista_id: int, actividad_id: int | None, usuario: dict) -> str | None:
+    """Marca una actividad prevista como realizada (enlazándola) o la desmarca (None)."""
+    fila = get_db().q(
+        """SELECT ap.id, pi.proyecto_id, pi.periodo, pi.estado FROM propuesta_actividad_prevista ap
+           JOIN propuesta_institucional pi ON pi.id = ap.propuesta_id WHERE ap.id = ?""", [prevista_id])
+    if not fila or fila[0]["estado"] != "aceptada":
+        return "Actividad prevista no encontrada."
+    f = fila[0]
+    if not proyectos.puede_gestionar(f["proyecto_id"], usuario):
+        return "Solo los responsables del proyecto registran el avance del plan."
+    if actividad_id is not None and actividad_id not in {
+            a["id"] for a in actividades_para_enlazar(f["proyecto_id"], f["periodo"])}:
+        return "La actividad debe estar aprobada en el proyecto y ser del mismo periodo."
+    get_db().execute("UPDATE propuesta_actividad_prevista SET actividad_id = ? WHERE id = ?",
+                     [actividad_id, prevista_id])
+    return None
+
+
+# --- Exportación de una convocatoria ------------------------------------------------------------------------
+
+def hojas_convocatoria(periodo: int) -> dict[str, list[dict]]:
+    """Propuestas presentadas en un periodo (sin borradores), con el contenido que se envió.
+    Para el comité o la administración: una hoja de resumen, una de textos y dos de listas."""
+    resumen, textos, objetivos, actividades = [], [], [], []
+    for p in listar(periodo):
+        c = json.loads(p["copia_enviada"]) if p["copia_enviada"] else copia(obtener(p["id"]))
+        clave = {"Proyecto": p["nombre"]}
+        resumen.append({**clave, "Modalidad": MODALIDADES[p["modalidad"]], "Proponente": p["proponente"],
+                        "Estado": ESTADOS[p["estado"]], "Enviada": (p["enviada_en"] or "")[:10],
+                        "Envíos": p["envios"], "Decisión": (p["decidida_en"] or "")[:10],
+                        "Condiciones o motivo": p["comentario"] or "",
+                        "Equipo": "; ".join(f"{x['nombre']} ({x['rol']})" for x in c.get("equipo", [])),
+                        "Objetivos": len(c["objetivos"]), "Actividades previstas": len(c["actividades"])})
+        textos.append({**clave, "Descripción": c["descripcion"] or "", "Objetivo general": c["objetivo_general"] or "",
+                       "Metodología": c["metodologia"] or "", "Resultados esperados": c["resultados_esperados"] or "",
+                       "Bibliografía": c["bibliografia"] or ""})
+        objetivos += [{**clave, "N.º": i, "Objetivo específico": o} for i, o in enumerate(c["objetivos"], start=1)]
+        actividades += [{**clave, "Mes": mes_texto(a["mes"]), "Actividad prevista": a["descripcion"]}
+                        for a in c["actividades"]]
+    return {"Propuestas": resumen, "Textos": textos, "Objetivos": objetivos, "Actividades previstas": actividades}

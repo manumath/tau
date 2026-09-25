@@ -514,9 +514,13 @@ def get(auth, periodo: str = "", estado: str = ""):
         Div(Div(H2("Propuestas institucionales"),
                 P("Proyectos institucionales propuestos por periodo (octubre a septiembre). La administración "
                   "los acepta, los acepta con condiciones o los rechaza.", cls=TextPresets.muted_sm)),
-            Select(*[Option(f"Periodo {inst.periodo_texto(x)}", value=str(x), selected=x == periodo) for x in periodos],
-                   name="periodo", cls="uk-select w-52", aria_label="Periodo",
-                   onchange="location.href='/admin/propuestas?periodo='+this.value"),
+            Div(Select(*[Option(f"Periodo {inst.periodo_texto(x)}", value=str(x), selected=x == periodo)
+                         for x in periodos],
+                       name="periodo", cls="uk-select w-52", aria_label="Periodo",
+                       onchange="location.href='/admin/propuestas?periodo='+this.value"),
+                A(UkIcon("download", height=14, width=14), "Descargar XLSX", href=f"/admin/propuestas/{periodo}/xlsx",
+                  cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1") if props or n else "",
+                cls="flex items-center gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         Card(H3(f"Plazo de la convocatoria {inst.periodo_texto(periodo)}", cls="text-base font-semibold mb-2"),
              P("Abierta hoy." if inst.abierta(periodo) else "Cerrada hoy.",
@@ -532,6 +536,16 @@ def get(auth, periodo: str = "", estado: str = ""):
             cls="overflow-x-auto") if filas else P("No hay propuestas enviadas en este periodo.",
                                                     cls=TextPresets.muted_sm),
         usuario=auth, seccion="propuestas")
+
+
+@rt("/admin/propuestas/{periodo}/xlsx")
+def get(auth, periodo: int):
+    # Sin extensión en la URL: la ruta de archivos estáticos capturaría «….xlsx».
+    from app.informes import a_xlsx
+    return Response(a_xlsx(inst.hojas_convocatoria(periodo)),
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f'attachment; filename="propuestas-{periodo}-{periodo + 1}.xlsx"',
+                             "Cache-Control": "private, no-store"})
 
 
 @rt("/admin/propuestas/{periodo}/plazo")

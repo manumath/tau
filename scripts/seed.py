@@ -101,7 +101,7 @@ def _cargar_produccion():
     producto(uid["emmy"], "Artículo en revista", [emmy, weyl],
              ["Web of Science (SCIE)", "Scopus", "MathSciNet"], revision="indexado",
              titulo="Anillos con condición de cadena ascendente y sus ideales primarios",
-             anio="2026", medio="Revista de Álgebra", volumen="83", numero="2", paginas="24–66",
+             anio="2026", mes="3", medio="Revista de Álgebra", volumen="83", numero="2", paginas="24–66",
              doi="10.5555/demo.2026.001",
              resumen="Probamos que en un anillo noetheriano todo ideal $I$ admite una "
                      "descomposición primaria $I = Q_1 \\cap \\cdots \\cap Q_n$.")
@@ -292,6 +292,9 @@ def main():
     produccion = _cargar_produccion()
     con_proyectos = _cargar_proyectos()
     con_propuestas = _cargar_institucionales()
+    # Bases creadas antes del mes de publicación: el artículo de Emmy es de marzo (el otro de 2026
+    # queda sin mes, para ver «por confirmar» en la memoria del periodo 2025–2026).
+    get_db().execute("""UPDATE producto SET mes = 3 WHERE doi = '10.5555/demo.2026.001' AND mes IS NULL""")
     # Bases creadas antes de los tipos de proyecto: el FONDECYT de ejemplo es institucional.
     tipos = get_db().q("""SELECT id FROM proyecto WHERE codigo = 'FONDECYT 1260001'
                           AND tipo = 'individual'""")

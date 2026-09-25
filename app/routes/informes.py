@@ -7,12 +7,14 @@ descargan además en XLSX y CSV.
 """
 from datetime import date, datetime
 
+from urllib.parse import urlencode
+
 import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select,
                              Span, Strong, Style, Table, Tbody, Td, Th, Thead, Tr, Ul)
 from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 
-from app import actividades, config, informes, perfiles, productos, proyectos
+from app import actividades, config, informes, institucionales, perfiles, productos, proyectos
 from app.components.layout import pagina
 from app.identificadores import IDENTIFICADORES
 
@@ -132,9 +134,10 @@ def get(auth):
                                     cls="space-y-1 mt-1"))))
     if auth["es_admin"]:
         tarjetas.append(A(Card(Div(UkIcon("landmark", height=22, width=22, cls="text-primary"),
-                                   H3("Memoria anual del instituto", cls="text-base font-semibold mt-2"),
+                                   H3("Memoria del instituto", cls="text-base font-semibold mt-2"),
                                    P("Productos que cuentan (indexados y arbitrados), actividades y "
-                                     "proyectos del año. Descarga en XLSX y CSV.", cls=TextPresets.muted_sm))),
+                                     "proyectos de un año, un periodo octubre–septiembre o un rango de "
+                                     "fechas. Descarga en XLSX y CSV.", cls=TextPresets.muted_sm))),
                           href="/informes/memoria", cls="block hover:shadow-md transition"))
     return pagina("Informes",
                   Div(fh.H2("Informes", cls="uk-h2"),
@@ -220,6 +223,13 @@ def documento_proyecto(datos, desde, hasta):
                                if a["responsable"] else "—"))
                          for a in datos["actividades"]])) if datos["actividades"] \
         else P("Sin actividades aprobadas en el periodo.", cls="apagado")
+    plan = [Div(H3(f"Periodo {x['periodo']}–{x['periodo'] + 1}: {x['realizadas']} de {len(x['previstas'])} "
+                   "actividades previstas realizadas"),
+                Table(Thead(Tr(Th("Mes"), Th("Actividad prevista"), Th("Estado"), Th("Actividad registrada"))),
+                      Tbody(*[Tr(Td(institucionales.mes_texto(f["mes_previsto"])), Td(f["descripcion"]),
+                                 Td({"realizada": "Realizada", "pendiente": "Pendiente", "atrasada": "Atrasada"}[f["estado"]]),
+                                 Td(f["realizada_titulo"] or "—")) for f in x["previstas"]])))
+            for x in datos["plan"]]
     return hoja(
         P(f"Informe de avance · {desde}–{hasta}", cls="apagado text-sm uppercase tracking-wide"),
         H1(p["nombre"]),
@@ -240,7 +250,8 @@ def documento_proyecto(datos, desde, hasta):
         else P("Ninguno en el periodo.", cls="apagado"),
         *([H2(f"Otros productos ({len(datos['productos_otros'])})"),
            Ol(*[cita(x) for x in datos["productos_otros"]], cls="citas")] if datos["productos_otros"] else []),
-        H2(f"Actividades ({len(datos['actividades'])})"), acts)
+        H2(f"Actividades ({len(datos['actividades'])})"), acts,
+        *([H2("Plan de actividades: previstas y realizadas"), *plan] if plan else []))
 
 
 def _proyecto_visible(pid, auth):
@@ -279,10 +290,14 @@ def get(auth, pid: int, desde: str = "", hasta: str = ""):
         return Response("No encontrado", status_code=404)
     d, h = _periodo_proyecto(p, desde, hasta)
     datos = informes.informe_proyecto(pid, d, h)
-    contenido = informes.a_xlsx({
-        "Productos": informes.filas_productos(datos["productos_informe"] + datos["productos_otros"]),
-        "Actividades": informes.filas_actividades(datos["actividades"]),
-    })
+    hojas = {"Productos": informes.filas_productos(datos["productos_informe"] + datos["productos_otros"]),
+             "Actividades": informes.filas_actividades(datos["actividades"])}
+    if datos["plan"]:
+        hojas["Plan"] = [{"Periodo": f"{x['periodo']}–{x['periodo'] + 1}", "Mes": institucionales.mes_texto(f["mes_previsto"]),
+                          "Actividad prevista": f["descripcion"], "Estado": f["estado"].capitalize(),
+                          "Actividad registrada": f["realizada_titulo"] or ""}
+                         for x in datos["plan"] for f in x["previstas"]]
+    contenido = informes.a_xlsx(hojas)
     return _archivo(contenido, f"informe-proyecto-{pid}-{d}-{h}.xlsx", XLSX)
 
 
@@ -305,8 +320,10 @@ def _tabla_conteo(titulo_col, datos: dict, etiquetas=None):
 def documento_memoria(m):
     return hoja(
         P(config.NOMBRE_INSTITUTO, cls="apagado text-sm uppercase tracking-wide"),
-        H1(f"Memoria anual {m['anio']}"),
-        P("Productos que cuentan: indexados o arbitrados, aceptados o publicados en el año, con al menos "
+        H1(m["titulo"]),
+        P(f"Del {informes._fecha_corta(m['desde'])} al {informes._fecha_corta(m['hasta'])}.", cls="apagado text-sm")
+        if "anio" not in m["params"] else "",
+        P("Productos que cuentan: indexados o arbitrados, aceptados o publicados en el periodo, con al menos "
           "un autor del instituto. Cada producto se cuenta una vez. La producción de investigadores "
           "externos figura solo si está ligada a un proyecto institucional.", cls="apagado text-sm"),
         Div(_cifra(m["n_indexados"], "indexados"), _cifra(m["n_arbitrados"], "arbitrados"),
@@ -334,7 +351,11 @@ def documento_memoria(m):
                          Td(str(x["actividades"]), cls="text-right")) for x in m["por_investigador"]])),
         H2(f"Productos ({len(m['productos'])})"),
         Ol(*[cita(x) for x in m["productos"]], cls="citas") if m["productos"]
-        else P("No hay productos que cuenten en el año.", cls="apagado"),
+        else P("No hay productos que cuenten en el periodo.", cls="apagado"),
+        Div(H2(f"Por confirmar: productos sin mes de publicación ({len(m['por_confirmar'])})"),
+            P("Su año cae solo en parte dentro del periodo: no se cuentan hasta completar el mes de "
+              "publicación en cada producto.", cls="apagado text-sm"),
+            Ol(*[cita(x) for x in m["por_confirmar"]], cls="citas")) if m["por_confirmar"] else "",
         H2(f"Actividades ({len(m['actividades'])})"),
         Ul(*[Li(Span(actividades.fechas_texto(a), cls="apagado"), " — ", a["titulo"],
                 Span(f" · {a['tipo']} · {actividades.AMBITOS[a['ambito']].lower()}", cls="apagado"))
@@ -353,26 +374,63 @@ def _anio(anio):
     return int(anio) if str(anio).isdigit() else date.today().year
 
 
+def _periodo_memoria(anio="", periodo="", desde="", hasta="", modo=""):
+    """Parámetros de la URL → argumentos de informes.memoria. `modo` (anio | periodo | rango) viene
+    del formulario; en los enlaces de descarga se deduce de los parámetros presentes."""
+    modo = modo or ("periodo" if periodo else "rango" if desde and hasta else "anio")
+    if modo == "periodo" and str(periodo).isdigit():
+        return {"periodo": int(periodo)}
+    if modo == "rango":
+        try:
+            d, h = date.fromisoformat(desde), date.fromisoformat(hasta)
+            if d <= h:
+                return {"desde": d.isoformat(), "hasta": h.isoformat()}
+        except ValueError:
+            pass
+    return {"anio": _anio(anio)}
+
+
+def selector_periodo(r, anios):
+    """Año calendario, periodo oct–sep o rango libre (solo se muestran los campos del modo elegido)."""
+    modo = "periodo" if "periodo" in r["params"] else "rango" if "desde" in r["params"] else "anio"
+    periodos = sorted({a - 1 for a in anios} | set(anios), reverse=True)
+    # Clase «hidden» y no el atributo: la clase «flex» anularía el atributo hidden.
+    grupo = lambda m, *c: Div(*c, data_modo=m, cls="flex items-center gap-2" + (" hidden" if modo != m else ""))  # noqa: E731
+    return [
+        Select(*[Option(t, value=v, selected=v == modo) for v, t in
+                 (("anio", "Año calendario"), ("periodo", "Periodo oct–sep"), ("rango", "Rango de fechas"))],
+               name="modo", cls="uk-select w-44", aria_label="Tipo de periodo",
+               onchange="this.form.querySelectorAll('[data-modo]').forEach(e => e.classList.toggle('hidden', e.dataset.modo != this.value))"),
+        grupo("anio", Select(*[Option(str(a), value=str(a), selected=r["params"].get("anio") == a) for a in anios],
+                             name="anio", cls="uk-select w-28", aria_label="Año")),
+        grupo("periodo", Select(*[Option(f"{a}–{a + 1}", value=str(a), selected=r["params"].get("periodo") == a)
+                                  for a in periodos], name="periodo", cls="uk-select w-32", aria_label="Periodo")),
+        grupo("rango", fh.Input(type="date", name="desde", value=r["desde"], cls="uk-input w-40", aria_label="Desde"),
+              Span("a", cls="text-sm"),
+              fh.Input(type="date", name="hasta", value=r["hasta"], cls="uk-input w-40", aria_label="Hasta")),
+    ]
+
+
 @rt("/informes/memoria")
-def get(auth, anio: str = ""):
+def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "", modo: str = ""):
     if not auth["es_admin"]:
         return Response("No autorizado", status_code=403)
-    a = _anio(anio)
+    m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta, modo))
     anios = sorted(set(informes.anios_con_datos()) | {date.today().year}, reverse=True)
-    descargas = [descarga("XLSX", f"/informes/memoria/xlsx?anio={a}"),
-                 descarga("CSV productos", f"/informes/memoria/csv/productos?anio={a}"),
-                 descarga("CSV actividades", f"/informes/memoria/csv/actividades?anio={a}")]
-    return pagina(f"Memoria anual {a}", ESTILO_IMPRESION,
-                  barra([_selector_anio("anio", a, anios, "Año")], descargas),
-                  documento_memoria(informes.memoria(a)), usuario=auth, seccion="informes")
+    q = urlencode(m["params"])
+    descargas = [descarga("XLSX", f"/informes/memoria/xlsx?{q}"),
+                 descarga("CSV productos", f"/informes/memoria/csv/productos?{q}"),
+                 descarga("CSV actividades", f"/informes/memoria/csv/actividades?{q}")]
+    return pagina(m["titulo"], ESTILO_IMPRESION, barra(selector_periodo(m, anios), descargas),
+                  documento_memoria(m), usuario=auth, seccion="informes")
 
 
 @rt("/informes/memoria/xlsx")
-def get(auth, anio: str = ""):
+def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = ""):
     if not auth["es_admin"]:
         return Response("No autorizado", status_code=403)
-    m = informes.memoria(_anio(anio))
-    contenido = informes.a_xlsx({
+    m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta))
+    hojas = {
         "Productos": informes.filas_productos(m["productos"]),
         "Actividades": informes.filas_actividades(m["actividades"]),
         "Proyectos": informes.filas_proyectos(m["proyectos"]),
@@ -383,18 +441,20 @@ def get(auth, anio: str = ""):
                               "Categoría": perfiles.categoria_texto(x["categoria"]),
                               "Productos que cuentan": x["productos"], "Actividades": x["actividades"]}
                              for x in m["por_investigador"]],
-    })
-    return _archivo(contenido, f"memoria-{m['anio']}.xlsx", XLSX)
+    }
+    if m["por_confirmar"]:
+        hojas["Sin mes (por confirmar)"] = informes.filas_productos(m["por_confirmar"])
+    return _archivo(informes.a_xlsx(hojas), f"{m['nombre']}.xlsx", XLSX)
 
 
 @rt("/informes/memoria/csv/{hoja}")
-def get(auth, hoja: str, anio: str = ""):
+def get(auth, hoja: str, anio: str = "", periodo: str = "", desde: str = "", hasta: str = ""):
     if not auth["es_admin"]:
         return Response("No autorizado", status_code=403)
-    m = informes.memoria(_anio(anio))
+    m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta))
     filas = {"productos": lambda: informes.filas_productos(m["productos"]),
              "actividades": lambda: informes.filas_actividades(m["actividades"]),
              "proyectos": lambda: informes.filas_proyectos(m["proyectos"])}.get(hoja)
     if not filas:
         return Response(status_code=404)
-    return _archivo(informes.a_csv(filas()), f"memoria-{m['anio']}-{hoja}.csv", "text/csv; charset=utf-8")
+    return _archivo(informes.a_csv(filas()), f"{m['nombre']}-{hoja}.csv", "text/csv; charset=utf-8")
