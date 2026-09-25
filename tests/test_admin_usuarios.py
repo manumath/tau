@@ -4,7 +4,8 @@ from app import usuarios
 from app.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 
-NUEVO = {"nombres": "Carl", "apellidos": "Gauss", "email": "Carl@Test.cl", "es_investigador": "on"}
+NUEVO = {"nombres": "Carl", "apellidos": "Gauss", "email": "Carl@Test.cl", "es_investigador": "on",
+         "categoria": "titular"}
 
 
 def _password_mostrada(html):

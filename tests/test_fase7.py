@@ -71,7 +71,8 @@ def test_solo_se_guarda_el_hash_del_token(app, emmy):
 def test_invitacion_por_correo(client, buzon):
     login(client, "admin@test.cl", PASS_ADMIN)
     r = client.post("/admin/usuarios", headers=HX, data=dict(
-        nombres="Maryam", apellidos="Mirzakhani", email="maryam@test.cl", es_investigador="on", invitar="on"))
+        nombres="Maryam", apellidos="Mirzakhani", email="maryam@test.cl", es_investigador="on", invitar="on",
+        categoria="contratado"))
     assert "Invitación enviada" in r.text and "pass-temporal" not in r.text
     assert buzon[0]["To"] == "maryam@test.cl" and "Invitación" in buzon[0]["Subject"]
     client.post("/logout")

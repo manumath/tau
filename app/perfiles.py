@@ -4,6 +4,14 @@ from app.db import get_db, sin_tildes
 MAX_AREAS = 10
 LARGO_BIO = 3000
 
+# Categoría institucional (la asigna la administración; None = sin categoría).
+CATEGORIAS = {"titular": "Titular", "contratado": "Contratado(a)", "interino": "Interino(a)",
+              "invitado": "Invitado(a)", "externo": "Externo(a)"}
+# Quiénes pueden proponer proyectos institucionales y ser sus responsables; los interinos pueden
+# además ser co-responsables.
+CATEGORIAS_RESPONSABLES = ("titular", "contratado")
+CATEGORIAS_CO_RESPONSABLES = ("titular", "contratado", "interino")
+
 GRADOS = ["Doctorado", "Magíster", "Licenciatura o título profesional", "Otro"]
 CARGOS_SUGERIDOS = ["Investigador(a) titular", "Investigador(a) asociado(a)",
                     "Investigador(a) adjunto(a)", "Investigador(a) postdoctoral",
@@ -29,6 +37,17 @@ def actualizar_campos(uid: int, **campos):
     get_db().execute(
         f"UPDATE investigador SET {asignaciones}, actualizado_en = datetime('now') "
         "WHERE usuario_id = :uid", {**campos, "uid": uid})
+
+
+def categoria_texto(categoria: str | None) -> str:
+    return CATEGORIAS.get(categoria or "", "Sin categoría")
+
+
+def cambiar_categoria(uid: int, categoria: str | None):
+    """Solo la administración (lo controla la ruta). `categoria` debe estar en CATEGORIAS o ser None."""
+    if categoria is not None and categoria not in CATEGORIAS:
+        raise ValueError(f"Categoría no válida: {categoria}")
+    get_db().execute("UPDATE investigador SET categoria = ? WHERE usuario_id = ?", [categoria, uid])
 
 
 def actualizar_identificadores(uid: int, valores: dict):
@@ -106,17 +125,19 @@ def completitud(perfil: dict, n_areas: int) -> tuple[int, list[str]]:
 
 # --- Directorio --------------------------------------------------------------
 
-def directorio(texto: str = "", solo_publicos: bool = False) -> list[dict]:
-    """Investigadores activos; filtra por nombre, cargo, unidad o área MSC (código o texto)."""
+def directorio(texto: str = "", solo_publicos: bool = False, categoria: str = "") -> list[dict]:
+    """Investigadores activos; filtra por nombre, cargo, unidad o área MSC (código o texto) y,
+    si se indica, por categoría ('sin' = sin categoría)."""
     texto = texto.strip()
     patron = f"%{sin_tildes(texto)}%"
     filas = get_db().q(
-        """SELECT u.id, u.nombres, u.apellidos, i.cargo, i.unidad, i.foto,
+        """SELECT u.id, u.nombres, u.apellidos, i.cargo, i.unidad, i.foto, i.categoria,
                   (SELECT m.codigo || char(31) || m.texto FROM investigador_msc im
                      JOIN msc m ON m.codigo = im.codigo
                     WHERE im.usuario_id = u.id AND im.principal = 1) AS area_principal
            FROM usuario u JOIN investigador i ON i.usuario_id = u.id
-           WHERE u.activo = 1 AND (:pub = 0 OR i.perfil_publico = 1) AND (
+           WHERE u.activo = 1 AND (:pub = 0 OR i.perfil_publico = 1)
+             AND (:cat = '' OR i.categoria IS :cat OR (:cat = 'sin' AND i.categoria IS NULL)) AND (
                  :t = '' OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
                  OR sin_tildes(i.cargo) LIKE :p OR sin_tildes(i.unidad) LIKE :p
                  OR EXISTS (SELECT 1 FROM investigador_msc im JOIN msc m ON m.codigo = im.codigo
@@ -124,7 +145,7 @@ def directorio(texto: str = "", solo_publicos: bool = False) -> list[dict]:
                                AND (m.codigo LIKE :c OR m.texto_plano LIKE :p)))
            ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""",
         {"t": texto, "p": patron, "c": texto.replace("x", "_").replace("X", "_") + "%",
-         "pub": int(solo_publicos)})
+         "pub": int(solo_publicos), "cat": categoria})
     for f in filas:
         codigo, _, texto_area = (f.pop("area_principal") or "").partition(chr(31))
         f["area"] = {"codigo": codigo, "texto": texto_area} if codigo else None

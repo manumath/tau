@@ -113,7 +113,7 @@ def test_memoria_solo_admin_y_descargas(client, datos):
     r = client.get("/informes/memoria/xlsx?anio=2026")
     assert r.headers["content-disposition"] == 'attachment; filename="memoria-2026.xlsx"'
     libro = load_workbook(io.BytesIO(r.content))
-    assert libro.sheetnames == ["Productos", "Actividades", "Proyectos", "Por investigador"]
+    assert libro.sheetnames == ["Productos", "Actividades", "Proyectos", "Por categoría", "Por investigador"]
     hoja = libro["Productos"]
     assert [c.value for c in hoja[1]][:3] == ["Año", "Tipo", "Título"] and hoja.max_row == 3
 
@@ -166,3 +166,18 @@ def test_indice_de_informes(client, datos):
     client.post("/logout")
     login(client, "admin@test.cl", PASS_ADMIN)
     assert "Memoria anual" in client.get("/informes").text
+
+
+def test_memoria_por_categoria(datos):
+    from app import actividades, perfiles
+    perfiles.cambiar_categoria(datos["emmy"], "titular")
+    perfiles.cambiar_categoria(datos["alan"], "contratado")
+    tipo = get_db().q("SELECT id FROM tipo_actividad ORDER BY orden LIMIT 1")[0]["id"]
+    actividades.guardar(dict(tipo_id=tipo, titulo="Seminario", fecha_inicio="2026-05-04", fecha_fin=None,
+                             modalidad="presencial", ambito="nacional"),
+                        [(f"i:{datos['emmy']}", "expositor")], datos["emmy"])
+    m = informes.memoria(2026)
+    assert m["por_categoria"]["Titular"] == {"investigadores": 1, "productos": 1, "actividades": 1}
+    assert m["por_categoria"]["Contratado(a)"] == {"investigadores": 1, "productos": 2, "actividades": 0}
+    assert {x["apellidos"]: x["categoria"] for x in m["por_investigador"]} == \
+        {"Noether": "titular", "Turing": "contratado"}

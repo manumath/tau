@@ -4,12 +4,13 @@ import re
 import secrets
 from datetime import datetime, timezone
 
-from fasthtml.common import A, APIRouter, Code, Div, P, Response, Span, Template, Thead, Tr, UploadFile
+from fasthtml.common import (A, APIRouter, Code, Div, Option, P, Response, Select, Span, Template, Thead, Tr,
+                             UploadFile)
 from fasthtml.toaster import add_toast
-from monsterui.all import (H2, Button, ButtonT, Form, Input, Label, LabelCheckboxX, LabelInput, LabelT,
+from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, Label, LabelCheckboxX, LabelInput, LabelT,
                            Table, Tbody, Td, Th, TextPresets, UkIcon)
 
-from app import config, correo, importar_usuarios, tokens, usuarios
+from app import config, correo, importar_usuarios, perfiles, tokens, usuarios
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.db import auditar
 from app.seguridad import password_temporal
@@ -31,13 +32,30 @@ def fecha_local(iso_utc: str | None) -> str:
     return dt.strftime("%d-%m-%Y %H:%M")
 
 
+def opciones_categoria(actual, vacia="Sin categoría"):
+    return [Option(vacia, value="", selected=not actual),
+            *[Option(t, value=c, selected=c == actual) for c, t in perfiles.CATEGORIAS.items()]]
+
+
+def selector_categoria(u):
+    """Cambia la categoría al elegirla (la fila se reemplaza con el resultado)."""
+    return Select(*opciones_categoria(u["categoria"]), name="categoria",
+                  aria_label=f"Categoría de {u['nombres']} {u['apellidos']}",
+                  hx_post=f"{BASE}/{u['id']}/categoria", hx_trigger="change",
+                  hx_target=f"#usuario-{u['id']}", hx_swap="outerHTML",
+                  cls=("uk-select uk-form-small w-40",
+                       "text-amber-700 border-amber-400" if not u["categoria"] else ""))
+
+
 def _etiquetas_perfil(u):
     etiquetas = []
     if u["es_investigador"]:
         etiquetas.append(Label("Investigador", cls=LabelT.secondary))
     if u["es_admin"]:
         etiquetas.append(Label("Admin", cls=LabelT.primary))
-    return Div(*etiquetas, cls="flex gap-1 flex-wrap")
+    return Div(Div(*etiquetas, cls="flex gap-1 flex-wrap"),
+               selector_categoria(u) if u["es_investigador"] else "",
+               cls="space-y-1")
 
 
 def _estado(u, bloqueada=False):
@@ -110,6 +128,12 @@ def form_usuario(datos=None, errores=()):
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
         LabelInput("Correo institucional", id="email", type="email", value=d.get("email", ""),
                    required=True),
+        Div(FormLabel("Categoría (si es investigador)", fr="categoria"),
+            Select(*opciones_categoria(d.get("categoria"), vacia="— Elija —"), id="categoria",
+                   name="categoria", cls="uk-select"),
+            P("Titulares y contratados pueden proponer proyectos institucionales y ser sus responsables; "
+              "los interinos pueden ser co-responsables.", cls=TextPresets.muted_sm),
+            cls="space-y-2"),
         Div(LabelCheckboxX("Es investigador (tendrá perfil y registrará actividad)",
                            id="es_investigador", checked=d.get("es_investigador", True)),
             LabelCheckboxX("Administrador del portal", id="es_admin",
@@ -198,10 +222,11 @@ def get():
 
 
 @rt(BASE)
-def post(auth, nombres: str = "", apellidos: str = "", email: str = "",
+def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categoria: str = "",
          es_investigador: bool = False, es_admin: bool = False, invitar: bool = False):
     datos = dict(nombres=nombres.strip(), apellidos=apellidos.strip(),
-                 email=email.strip().lower(), es_investigador=es_investigador, es_admin=es_admin)
+                 email=email.strip().lower(), es_investigador=es_investigador, es_admin=es_admin,
+                 categoria=(categoria or None) if es_investigador else None)
     errores = []
     if not datos["nombres"] or not datos["apellidos"]:
         errores.append("Nombres y apellidos son obligatorios.")
@@ -211,6 +236,8 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "",
         errores.append("Ya existe una cuenta con ese correo.")
     if not es_investigador and not es_admin:
         errores.append("La cuenta debe ser de investigador, de administrador o ambas.")
+    if es_investigador and categoria not in perfiles.CATEGORIAS:
+        errores.append("Elija la categoría del investigador(a).")
     if errores:
         return modal("Nuevo usuario", form_usuario({**datos, "invitar": invitar}, errores))
 
@@ -243,6 +270,20 @@ def post(uid: int, auth):
         auditar(auth["id"], "desactivar_usuario" if u["activo"] else "activar_usuario",
                 "usuario", uid)
     return fila(usuarios.con_perfil(uid), auth["id"]) if u else ""
+
+
+@rt(BASE + "/{uid}/categoria")
+def post(uid: int, auth, sess, categoria: str = ""):
+    u = usuarios.con_perfil(uid)
+    if not u or not u["es_investigador"]:
+        return ""
+    if categoria and categoria not in perfiles.CATEGORIAS:
+        return Response("Categoría no válida", status_code=400)
+    perfiles.cambiar_categoria(uid, categoria or None)
+    auditar(auth["id"], "cambiar_categoria", "investigador", uid,
+            f"{perfiles.categoria_texto(u['categoria'])} → {perfiles.categoria_texto(categoria)}")
+    add_toast(sess, f"{u['nombres']} {u['apellidos']}: {perfiles.categoria_texto(categoria)}.", "success")
+    return fila(usuarios.con_perfil(uid), auth["id"])
 
 
 @rt(BASE + "/{uid}/desbloquear")
@@ -278,7 +319,8 @@ def _form_archivo(errores=()):
     return Form(
         mensaje_error(*errores),
         P("Suba un archivo CSV (se puede exportar desde Excel) con una fila por persona y las columnas ",
-          Code("email"), ", ", Code("nombres"), ", ", Code("apellidos"), " y, si quiere, ", Code("investigador"),
+          Code("email"), ", ", Code("nombres"), ", ", Code("apellidos"), " y, si quiere, ", Code("categoria"),
+          " (titular, contratado, interino, invitado o externo), ", Code("investigador"),
           " y ", Code("admin"), " (sí/no). Primero verá una vista previa: no se crea nada hasta confirmar.",
           cls="text-sm"),
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/plantilla",
@@ -321,10 +363,11 @@ async def post(archivo: UploadFile = None):
     con_error = sum(f["estado"] == "error" for f in filas)
     existentes = sum(f["estado"] == "existe" for f in filas)
     tabla = Table(
-        Thead(Tr(Th("Fila"), Th("Correo"), Th("Nombre"), Th("Perfil"), Th("Estado"))),
+        Thead(Tr(Th("Fila"), Th("Correo"), Th("Nombre"), Th("Perfil"), Th("Categoría"), Th("Estado"))),
         Tbody(*[Tr(Td(str(f["linea"]), cls=TextPresets.muted_sm), Td(f["email"]),
                    Td(f"{f['apellidos']}, {f['nombres']}"),
                    Td(", ".join(x for x, ok in (("investigador", f["es_investigador"]), ("admin", f["es_admin"])) if ok)),
+                   Td(perfiles.CATEGORIAS.get(f["categoria"], "—") if f["categoria"] else "—"),
                    Td(_etiqueta_estado(f), Span(f" {f['mensaje']}", cls="text-sm") if f["mensaje"] else ""))
                 for f in filas]),
         cls="uk-table-divider uk-table-small")

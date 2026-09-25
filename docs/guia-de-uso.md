@@ -43,7 +43,10 @@ Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Ed
     las suyas.
 
 El indicador «Perfil completo» muestra qué falta. Los demás investigadores ven su perfil en
-«Investigadores», el directorio interno.
+«Investigadores», el directorio interno, que se puede filtrar por categoría.
+
+Su **categoría** (titular, contratado(a), interino(a), invitado(a) o externo(a)) figura en «Datos
+básicos». La asigna la administración: si no es la correcta, pídale que la cambie.
 
 ## Productos
 
@@ -140,16 +143,21 @@ Menú «Informes»:
 
 - **Usuarios → Nuevo usuario:** con «Enviar invitación por correo» la persona define su
   contraseña. Sin invitación, el portal muestra una contraseña temporal para entregar a mano.
+  Las cuentas de investigador llevan **categoría** (titular, contratado, interino, invitado o
+  externo): de ella depende quién puede proponer proyectos institucionales y ser responsable.
 - **Usuarios → Importar CSV:** alta masiva desde una planilla con `email`, `nombres`,
-  `apellidos` y, opcionalmente, `investigador` y `admin` (sí/no). Hay una plantilla. La vista
+  `apellidos` y, opcionalmente, `categoria`, `investigador` y `admin` (sí/no). Las filas sin
+  categoría se crean igual y quedan como «Sin categoría». Hay una plantilla. La vista
   previa marca cada fila como nueva, ya existente o con error antes de crear nada.
 - En la tabla de usuarios:
   - 🔓 **Desbloquear**: una cuenta bloqueada por intentos fallidos, sin cambiar su contraseña.
   - 🔑 **Restablecer**: genera una contraseña temporal nueva.
   - Activar o desactivar una cuenta; desactivarla cierra su sesión de inmediato.
+  - **Categoría**: se cambia eligiéndola en la columna «Perfil» (queda en la auditoría). Las
+    cuentas «Sin categoría» se destacan en ámbar; en el directorio hay un filtro para encontrarlas.
 - **Proyectos → Nuevo proyecto:** crea el proyecto y asigna su responsable.
 - **Informes → Memoria anual:** productos que cuentan (una vez cada uno), actividades, proyectos
-  vigentes y un resumen por investigador; descarga en XLSX y CSV.
+  vigentes, un resumen por categoría y otro por investigador; descarga en XLSX y CSV.
 - **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
 
 ## Preguntas frecuentes

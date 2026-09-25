@@ -14,7 +14,7 @@ memoria anual. Hecho con [FastHTML](https://fastht.ml), HTMX, MonsterUI y SQLite
 ## Qué hace
 
 - **Acceso:** cuentas con invitación por correo o contraseña temporal, recuperación de
-  contraseña, bloqueo por intentos fallidos, carga masiva desde CSV.
+  contraseña, bloqueo por intentos fallidos, carga masiva desde CSV, categoría de cada investigador(a).
 - **Perfil:** datos, identificadores (ORCID, MathSciNet, zbMATH, arXiv…), áreas MSC2020, foto,
   resumen con LaTeX; directorio interno y perfil público opcional.
 - **Productos y actividades:** autores del instituto y externos, nivel de revisión e índices,
@@ -32,7 +32,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 200 pruebas
+uv run pytest                            # 212 pruebas
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan

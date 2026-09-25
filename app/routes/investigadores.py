@@ -1,6 +1,6 @@
 """Directorio interno de investigadores, perfil de solo lectura y fotos."""
 from fasthtml.common import (A, APIRouter, Div, FileResponse, FtResponse, HtmxResponseHeaders, Li,
-                             P, Response, Span, Ul)
+                             Option, P, Response, Select, Span, Ul)
 from monsterui.all import H2, Card, Grid, Input, TextPresets, UkIcon
 
 from app import actividades, fotos, perfiles, productos
@@ -14,12 +14,20 @@ rt = APIRouter()
 ID_RESULTADOS = "directorio-resultados"
 
 
+def etiqueta_categoria(categoria):
+    if not categoria:
+        return ""
+    return Span(perfiles.CATEGORIAS[categoria],
+                cls="inline-block rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground")
+
+
 def tarjeta(inv):
     subtitulo = " · ".join(x for x in (inv["cargo"], inv["unidad"]) if x)
     area = inv["area"]
     return A(Card(Div(
         avatar(inv, "size-14", "text-lg"),
-        Div(Div(f"{inv['nombres']} {inv['apellidos']}", cls="font-semibold"),
+        Div(Div(Span(f"{inv['nombres']} {inv['apellidos']}", cls="font-semibold"),
+                etiqueta_categoria(inv["categoria"]), cls="flex flex-wrap items-center gap-2"),
             P(subtitulo, cls=TextPresets.muted_sm) if subtitulo else "",
             Div(Span(area["codigo"], cls="font-mono text-xs font-semibold mr-1 nomath"),
                 Span(area["texto"], cls="text-xs"),
@@ -29,8 +37,8 @@ def tarjeta(inv):
         href=f"/investigadores/{inv['id']}", cls="block")
 
 
-def resultados(texto):
-    lista = perfiles.directorio(texto)
+def resultados(texto, categoria=""):
+    lista = perfiles.directorio(texto, categoria=categoria)
     if not lista:
         return Div(P("Nadie coincide con la búsqueda.", cls=(TextPresets.muted_sm, "py-6")),
                    id=ID_RESULTADOS)
@@ -40,27 +48,42 @@ def resultados(texto):
                id=ID_RESULTADOS)
 
 
+def _categoria_valida(categoria):
+    return categoria if categoria in perfiles.CATEGORIAS or categoria == "sin" else ""
+
+
 @rt("/investigadores")
-def get(auth, q: str = ""):
+def get(auth, q: str = "", categoria: str = ""):
+    categoria = _categoria_valida(categoria)
+    filtros = dict(hx_get="/investigadores/resultados", hx_target=f"#{ID_RESULTADOS}",
+                   hx_swap="outerHTML", hx_include="#filtros-directorio")
     return pagina(
         "Investigadores",
         Div(H2("Investigadores"),
             P("Directorio interno. Busque por nombre, unidad o área (código MSC como «11M» o tema "
               "como «graph»).", cls=TextPresets.muted_sm),
             cls="mb-6 space-y-1"),
-        Input(type="search", name="q", value=q, placeholder="Buscar…", cls="max-w-md mb-6",
-              aria_label="Buscar investigadores", hx_get="/investigadores/resultados",
-              hx_target=f"#{ID_RESULTADOS}", hx_swap="outerHTML",
-              hx_trigger="input changed delay:300ms, search"),
-        resultados(q),
+        Div(Input(type="search", name="q", value=q, placeholder="Buscar…", cls="max-w-md",
+                  aria_label="Buscar investigadores", hx_trigger="input changed delay:300ms, search",
+                  **filtros),
+            Select(Option("Todas las categorías", value=""),
+                   *[Option(t, value=c, selected=c == categoria) for c, t in perfiles.CATEGORIAS.items()],
+                   *([Option("Sin categoría", value="sin", selected=categoria == "sin")]
+                     if auth["es_admin"] else []),
+                   name="categoria", aria_label="Filtrar por categoría", cls="uk-select w-56",
+                   hx_trigger="change", **filtros),
+            id="filtros-directorio", cls="flex flex-wrap gap-3 mb-6"),
+        resultados(q, categoria),
         usuario=auth, seccion="investigadores")
 
 
 @rt("/investigadores/resultados")
-def get(q: str = ""):
+def get(q: str = "", categoria: str = ""):
     # Mantiene la búsqueda en la URL de la página (no la del fragmento): se puede recargar o
     # compartir.
-    return resultados(q), HtmxResponseHeaders(replace_url=url_filtrada("/investigadores", q=q))
+    categoria = _categoria_valida(categoria)
+    return (resultados(q, categoria),
+            HtmxResponseHeaders(replace_url=url_filtrada("/investigadores", q=q, categoria=categoria)))
 
 
 def _produccion(uid):
@@ -98,7 +121,8 @@ def get(auth, uid: int):
         A(UkIcon("arrow-left", height=14, width=14), "Directorio", href="/investigadores",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         Div(avatar(p, "size-28", "text-3xl"),
-            Div(H2(f"{p['nombres']} {p['apellidos']}"),
+            Div(Div(H2(f"{p['nombres']} {p['apellidos']}"), etiqueta_categoria(p["categoria"]),
+                    cls="flex flex-wrap items-center gap-3"),
                 P(subtitulo, cls=TextPresets.muted_sm) if subtitulo else "",
                 A(p["email"], href=f"mailto:{p['email']}", cls="text-sm text-primary hover:underline"),
                 Div(A(UkIcon("pencil", height=14, width=14), "Editar mi perfil", href="/perfil",

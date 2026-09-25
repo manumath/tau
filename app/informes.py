@@ -133,7 +133,7 @@ def memoria(anio: int) -> dict:
         por_ambito[a["ambito"]] = por_ambito.get(a["ambito"], 0) + 1
 
     investigadores = get_db().q(
-        """SELECT u.id, u.nombres, u.apellidos FROM usuario u JOIN investigador i ON i.usuario_id = u.id
+        """SELECT u.id, u.nombres, u.apellidos, i.categoria FROM usuario u JOIN investigador i ON i.usuario_id = u.id
            WHERE u.activo = 1 ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""")
     resumen = []
     for inv in investigadores:
@@ -142,12 +142,26 @@ def memoria(anio: int) -> dict:
                             ON ap.actividad_id = a.id WHERE ap.investigador_id = ?
                             AND substr(a.fecha_inicio, 1, 4) = ?""", [inv["id"], str(anio)])[0]["n"]
         resumen.append({**inv, "productos": n_p, "actividades": n_a})
+
+    # Por categoría: cada producto o actividad cuenta una vez por categoría, aunque tenga varias
+    # personas de esa categoría (por eso no se suman las columnas de «por investigador»).
+    categoria_de = {inv["id"]: inv["categoria"] for inv in investigadores}
+    internos_act = [{x["id"] for x in actividades.participantes(a["id"]) if x["interno"]} for a in acts]
+    por_categoria = {}
+    for cat in (*perfiles.CATEGORIAS, None):
+        ids_cat = {i for i, c in categoria_de.items() if c == cat}
+        if not ids_cat:
+            continue
+        n_p = sum(any(a["interno"] and a["id"] in ids_cat for a in p["autores"]) for p in prods)
+        n_a = sum(bool(ids & ids_cat) for ids in internos_act)
+        por_categoria[perfiles.categoria_texto(cat)] = {"investigadores": len(ids_cat),
+                                                        "productos": n_p, "actividades": n_a}
     return {"anio": anio, "productos": prods, "actividades": acts, "proyectos": proys,
             "n_indexados": sum(p["revision"] == "indexado" for p in prods),
             "n_arbitrados": sum(p["revision"] == "arbitrado" for p in prods),
             "por_indice": dict(sorted(por_indice.items(), key=lambda x: -x[1])),
             "por_tipo_actividad": dict(sorted(por_tipo_act.items(), key=lambda x: -x[1])),
-            "por_ambito": por_ambito, "por_investigador": resumen}
+            "por_ambito": por_ambito, "por_investigador": resumen, "por_categoria": por_categoria}
 
 
 def anios_con_datos() -> list[int]:

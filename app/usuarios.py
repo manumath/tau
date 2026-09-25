@@ -17,7 +17,7 @@ def por_email(email: str) -> dict | None:
 def listar(texto: str = "") -> list[dict]:
     patron = f"%{sin_tildes(texto.strip())}%"
     return get_db().q(
-        """SELECT u.*, (i.usuario_id IS NOT NULL) AS es_investigador
+        """SELECT u.*, (i.usuario_id IS NOT NULL) AS es_investigador, i.categoria
            FROM usuario u LEFT JOIN investigador i ON i.usuario_id = u.id
            WHERE u.email LIKE :p OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
                  OR sin_tildes(u.apellidos || ' ' || u.nombres) LIKE :p
@@ -27,19 +27,20 @@ def listar(texto: str = "") -> list[dict]:
 
 def con_perfil(uid: int) -> dict | None:
     filas = get_db().q(
-        """SELECT u.*, (i.usuario_id IS NOT NULL) AS es_investigador
+        """SELECT u.*, (i.usuario_id IS NOT NULL) AS es_investigador, i.categoria
            FROM usuario u LEFT JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [uid])
     return filas[0] if filas else None
 
 
 def crear(email: str, nombres: str, apellidos: str, password: str, *,
-          es_admin=False, es_investigador=True, debe_cambiar_pass=True) -> dict:
+          es_admin=False, es_investigador=True, debe_cambiar_pass=True,
+          categoria: str | None = None) -> dict:
     db = get_db()
     u = db.t.usuario.insert(email=email.strip().lower(), nombres=nombres.strip(),
                             apellidos=apellidos.strip(), pass_hash=hash_password(password),
                             es_admin=int(es_admin), debe_cambiar_pass=int(debe_cambiar_pass))
     if es_investigador:
-        db.t.investigador.insert(usuario_id=u["id"])
+        db.t.investigador.insert(usuario_id=u["id"], categoria=categoria)
     return u
 
 

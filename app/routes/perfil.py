@@ -71,6 +71,7 @@ def vista_datos(p):
     return seccion("seccion-datos", "Datos básicos",
                    fila("Nombre", f"{p['nombres']} {p['apellidos']}"),
                    fila("Correo", p["email"]),
+                   fila("Categoría", perfiles.categoria_texto(p["categoria"])),
                    fila("Grado académico", p["grado"]),
                    fila("Cargo", p["cargo"]),
                    fila("Unidad o grupo", p["unidad"]),
@@ -84,7 +85,8 @@ def form_datos(d, errores=()):
         Div(LabelInput("Nombres", id="nombres", value=d["nombres"], required=True, maxlength=80),
             LabelInput("Apellidos", id="apellidos", value=d["apellidos"], required=True, maxlength=80),
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
-        P(f"Correo: {d['email']} (solo la administración puede cambiarlo).", cls=TextPresets.muted_sm),
+        P(f"Correo: {d['email']} · Categoría: {perfiles.categoria_texto(d['categoria'])} "
+          "(los cambia la administración).", cls=TextPresets.muted_sm),
         Div(FormLabel("Grado académico", fr="grado"),
             Select(Option("—", value=""),
                    *[Option(g, value=g, selected=g == d["grado"]) for g in perfiles.GRADOS],

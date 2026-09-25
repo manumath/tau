@@ -1,6 +1,7 @@
 """Carga masiva de cuentas desde CSV.
 
 Formato: una fila por persona con columnas `email`, `nombres`, `apellidos` y, opcionalmente,
+`categoria` (titular, contratado, interino, invitado o externo; solo para investigadores),
 `investigador` y `admin` (sí/no; por omisión investigador = sí, admin = no). Se aceptan coma,
 punto y coma o tabulador como separador, UTF-8 (con o sin BOM) o Latin-1, y encabezados con o
 sin tildes ni mayúsculas («Correo», «Nombre», «Apellido» también sirven).
@@ -13,7 +14,7 @@ import io
 import re
 import secrets
 
-from app import usuarios
+from app import perfiles, usuarios
 from app.db import auditar, sin_tildes
 from app.seguridad import password_temporal
 
@@ -24,14 +25,18 @@ ALIAS = {
     "email": ("email", "correo", "e-mail", "mail", "correo electronico", "correo institucional"),
     "nombres": ("nombres", "nombre"),
     "apellidos": ("apellidos", "apellido"),
+    "categoria": ("categoria", "categoria del investigador", "categoria investigador"),
     "investigador": ("investigador", "es investigador", "es_investigador"),
     "admin": ("admin", "administrador", "administradora", "es admin", "es_admin"),
 }
 SI = {"si", "s", "x", "1", "true", "verdadero", "yes", "y"}
 NO = {"no", "n", "0", "false", "falso", ""}
-PLANTILLA = ("email,nombres,apellidos,investigador,admin\n"
-             "sofia.kovalevskaya@instituto.cl,Sofía,Kovalévskaya,sí,no\n"
-             "carl.gauss@instituto.cl,Carl Friedrich,Gauss,sí,no\n")
+PLANTILLA = ("email,nombres,apellidos,categoria,investigador,admin\n"
+             "sofia.kovalevskaya@instituto.cl,Sofía,Kovalévskaya,titular,sí,no\n"
+             "carl.gauss@instituto.cl,Carl Friedrich,Gauss,invitado,sí,no\n")
+# «Contratada», «interina», etc. también sirven.
+_CATEGORIAS = {**{c: c for c in perfiles.CATEGORIAS},
+               **{c[:-1] + "a": c for c in perfiles.CATEGORIAS if c.endswith("o")}}
 
 
 def _decodificar(contenido: bytes) -> str:
@@ -57,9 +62,17 @@ def _booleano(valor: str, por_omision: bool) -> bool | None:
     return None
 
 
+def _categoria(valor: str) -> str | None | bool:
+    """→ código de categoría, None si viene vacía, o False si no es válida."""
+    v = sin_tildes(valor or "").strip()
+    if not v:
+        return None
+    return _CATEGORIAS.get(v, False)
+
+
 def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
     """→ (filas clasificadas, errores generales). Cada fila: linea, email, nombres, apellidos,
-    es_investigador, es_admin, estado ('nueva' | 'existe' | 'error') y mensaje."""
+    categoria, es_investigador, es_admin, estado ('nueva' | 'existe' | 'error') y mensaje."""
     if len(contenido) > MAX_BYTES:
         return [], ["El archivo supera 1 MB."]
     texto = _decodificar(contenido)
@@ -76,7 +89,7 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
     faltan = [c for c in ("email", "nombres", "apellidos") if c not in indice]
     if faltan:
         return [], [f"Faltan columnas: {', '.join(faltan)}. La primera fila debe tener los encabezados "
-                    "(email, nombres, apellidos, y opcionalmente investigador y admin)."]
+                    "(email, nombres, apellidos, y opcionalmente categoria, investigador y admin)."]
 
     filas, vistos = [], set()
     for n, registro in enumerate(lector, start=2):
@@ -90,7 +103,7 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
             return registro[i].strip() if i is not None and i < len(registro) else ""
 
         f = {"linea": n, "email": celda("email").lower(), "nombres": celda("nombres"),
-             "apellidos": celda("apellidos"),
+             "apellidos": celda("apellidos"), "categoria": _categoria(celda("categoria")),
              "es_investigador": _booleano(celda("investigador"), True),
              "es_admin": _booleano(celda("admin"), False)}
         problemas = []
@@ -102,6 +115,10 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
             problemas.append("use sí/no en investigador y admin")
         elif not f["es_investigador"] and not f["es_admin"]:
             problemas.append("debe ser investigador, admin o ambos")
+        if f["categoria"] is False:
+            problemas.append("categoría no válida (titular, contratado, interino, invitado o externo)")
+        elif f["categoria"] and f["es_investigador"] is False:
+            problemas.append("solo los investigadores tienen categoría")
         if f["email"] in vistos:
             problemas.append("correo repetido en el archivo")
         vistos.add(f["email"])
@@ -109,6 +126,8 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
             f.update(estado="error", mensaje="; ".join(problemas).capitalize() + ".")
         elif usuarios.por_email(f["email"]):
             f.update(estado="existe", mensaje="Ya tiene cuenta: se omite.")
+        elif f["es_investigador"] and not f["categoria"]:
+            f.update(estado="nueva", mensaje="Sin categoría: asígnela después desde el listado.")
         else:
             f.update(estado="nueva", mensaje="")
         filas.append(f)
@@ -125,7 +144,8 @@ def crear(filas: list[dict], invitar: bool, admin_id: int, enviar_invitacion) ->
         if f["estado"] != "nueva" or usuarios.por_email(f["email"]):
             continue
         datos = dict(email=f["email"], nombres=f["nombres"], apellidos=f["apellidos"],
-                     es_admin=f["es_admin"], es_investigador=f["es_investigador"])
+                     es_admin=f["es_admin"], es_investigador=f["es_investigador"],
+                     categoria=f["categoria"] if f["es_investigador"] else None)
         if invitar:
             u = usuarios.crear(password=secrets.token_urlsafe(24), debe_cambiar_pass=False, **datos)
             enviar_invitacion(u)

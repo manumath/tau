@@ -18,8 +18,8 @@ proyecto aparece a la vez en el proyecto y en el perfil de quien lo dictó.
 
 | Rol | Cómo se obtiene | Qué puede hacer |
 |---|---|---|
-| **Administración** | Indicador `es_admin` de la cuenta | Crea cuentas (una a una, por CSV o con invitación), activa, desactiva, desbloquea y restablece; crea proyectos y asigna responsables; ve la memoria anual, la auditoría y el CV de cualquier investigador |
-| **Investigador(a)** | La cuenta tiene fila en `investigador` | Edita su perfil; registra actividades y productos; participa en proyectos; genera su CV |
+| **Administración** | Indicador `es_admin` de la cuenta | Crea cuentas (una a una, por CSV o con invitación), asigna la categoría de cada investigador(a), activa, desactiva, desbloquea y restablece; crea proyectos y asigna responsables; ve la memoria anual, la auditoría y el CV de cualquier investigador |
+| **Investigador(a)** | La cuenta tiene fila en `investigador`, con una categoría: titular, contratado(a), interino(a), invitado(a) o externo(a) | Edita su perfil; registra actividades y productos; participa en proyectos; genera su CV |
 | **Responsable / co-responsable** | Rol dentro de un proyecto | Edita el proyecto y sus participantes; aprueba o rechaza propuestas; vincula registros directamente |
 | **Participante** | Rol dentro de un proyecto (co-investigador, postdoc, tesista, colaborador) | Ve el proyecto; propone sus actividades y productos |
 | **Persona externa** | Registro sin cuenta (`persona_externa`) | Figura como coautor, participante de actividades o de proyectos |
@@ -84,13 +84,13 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0007` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0008` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
         creado_en, ultimo_acceso, avisos_correo)
 investigador(usuario_id, grado, cargo, unidad, orcid, mr_id, zbmath_id, arxiv_id, scholar_url,
-             pagina_web, bio, foto, perfil_publico, actualizado_en)
+             pagina_web, bio, foto, perfil_publico, actualizado_en, categoria)
 investigador_msc(usuario_id, codigo, principal, orden)
 msc(codigo, nivel, texto, texto_plano, descripcion)              -- MSC2020, 6.603 códigos
 intento_login(id, email, ip, exito, fecha)
@@ -149,11 +149,13 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 | 6. Informes | CV, informe de proyecto, memoria anual; descargas XLSX, CSV y BibTeX | ✔ |
 | 7. Extras | Recuperación e invitación por correo, avisos, perfiles públicos, API JSON, auditoría | ✔ |
 
+**Ajustes tras las pruebas con usuarios:** en curso, ver la [sección 11](#11-ajustes-tras-las-pruebas-con-usuarios-en-curso).
+
 **Despliegue:** servidor propio (systemd + Caddy) o Fly.io (contenedor, volumen y réplica
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-200 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+212 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -212,3 +214,108 @@ repositorio institucional, proyectos públicos, cuartiles o factor de impacto de
    dimensionar el servidor y los respaldos.
 3. ¿El instituto quiere publicar los proyectos, además de los perfiles?
 4. ¿Hace falta registrar la tesis doctoral propia (hoy no hay un tipo de producto para eso)?
+
+## 11. Ajustes tras las pruebas con usuarios (en curso)
+
+Cambios pedidos por el instituto después de las primeras pruebas (septiembre de 2026). Se
+implementan por etapas; cada una termina con pruebas, datos de ejemplo y documentación al día.
+
+### Lo que pidió el instituto
+
+1. **Dos tipos de proyecto.** Los **individuales** se registran sin aprobación. Los
+   **institucionales** se proponen y pasan por revisión; la administración los acepta, los acepta
+   con condiciones o los rechaza. Además de los datos básicos, una propuesta institucional incluye
+   metodología, resultados esperados, actividades previstas y bibliografía. Sobre los proyectos
+   institucionales, la administración solo decide su aceptación.
+2. **Periodo anual.** Un proyecto institucional rige de octubre a septiembre (p. ej. oct/2026 –
+   sept/2027). Las propuestas se presentan durante septiembre y pueden ser de **continuidad** o de
+   un **proyecto nuevo**. Si el responsable no propone continuidad (ni un proyecto nuevo), el
+   proyecto concluye en septiembre. Quien propone queda como responsable.
+3. **Categorías de investigador:** Titular, Contratado(a), Interino(a), Invitado(a) y Externo(a).
+
+### Respuestas del instituto a las preguntas del plan
+
+| Tema | Respuesta |
+|---|---|
+| Categorías | Son cinco; la cuarta es «Invitado(a)». |
+| Categoría y permisos | Solo titulares y contratados proponen proyectos institucionales o son responsables; los interinos pueden ser co-responsables. |
+| Externos en la memoria | Figuran en la memoria del instituto si están ligados a un proyecto institucional. |
+| Aceptación condicional | El proyecto **queda en espera** hasta que el responsable corrija y la administración acepte. |
+| «Administrador principal» | Es la misma administración de siempre (no hay un rol aparte). |
+| Proyectos existentes | Pasan todos a individuales. En los datos de ejemplo, el FONDECYT queda como institucional. |
+| Propuesta de continuidad | Repite todas las secciones, precargadas desde el periodo anterior y editables (nuevos objetivos, nuevo plan de actividades). |
+| Memoria | Además del año calendario, por periodo de vigencia (octubre–septiembre) y por un rango de fechas que elija quien la genera. |
+
+### Interpretaciones propias (confirmar)
+
+- Las restricciones por categoría se aplican a los proyectos **institucionales**. Un proyecto
+  individual lo puede registrar cualquier investigador(a) y queda como responsable **(confirmar)**.
+- «Ligado a un proyecto institucional» significa que el producto o actividad está **aprobado** en
+  un proyecto institucional vigente en el periodo del informe **(confirmar)**.
+- La categoría la asigna y cambia solo la administración. No se guarda su historial: los informes
+  de años anteriores usan la categoría actual **(confirmar)**.
+- Una continuidad enviada que aún no se decide al 1 de octubre mantiene el proyecto vigente
+  («en renovación») hasta la decisión; si se rechaza, el proyecto concluye el 30 de septiembre.
+- Los borradores se preparan en cualquier momento; solo se **envían** dentro del plazo. La
+  administración puede ampliar o reabrir el plazo de una convocatoria.
+
+### Diseño
+
+**Categorías.** Columna `investigador.categoria` (`titular`, `contratado`, `interino`,
+`invitado`, `externo`; vacía = «sin categoría», que la administración debe completar). Se asigna
+al crear la cuenta, en la carga por CSV y desde el listado de usuarios. Se ve en el perfil, el
+directorio (con filtro) y la memoria.
+
+**Tipo de proyecto.** Columna `proyecto.tipo` (`individual` | `institucional`).
+
+- *Individual:* cualquier investigador(a) lo crea desde «Proyectos» y queda como responsable.
+  Participantes, propuestas de actividades y productos y su aprobación siguen como hoy.
+- *Institucional:* nace de una propuesta. La administración deja de crear proyectos y de asignar
+  responsables en el uso normal; conserva la posibilidad de reasignar al responsable (p. ej., si
+  alguien deja el instituto).
+
+**Propuestas institucionales.**
+
+```
+propuesta_institucional(id, proyecto_id, periodo, modalidad, metodologia, resultados_esperados,
+        bibliografia, estado, proponente_id, enviada_en, copia_enviada, decidida_por, decidida_en,
+        comentario, UNIQUE (proyecto_id, periodo))
+    periodo:   año de inicio (2026 = 1-oct-2026 a 30-sep-2027)
+    modalidad: nuevo | continuidad
+    estado:    borrador | enviada | aceptada | condicional | rechazada | retirada
+propuesta_actividad_prevista(id, propuesta_id, orden, descripcion, mes_previsto)
+convocatoria(periodo, abre, cierra)          -- por omisión, del 1 al 30 de septiembre
+```
+
+```
+borrador ──enviar──▶ enviada ──▶ aceptada ─────────▶ proyecto vigente en el periodo
+  ▲                    │   └──▶ rechazada (motivo)
+  │                    └──────▶ condicional (condiciones) ──responsable corrige y reenvía──┐
+  └────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- Al enviar se congela una copia (`copia_enviada`) de lo que revisa la administración.
+- *Nuevo:* crea el proyecto en estado «En formulación». *Continuidad:* solo la presenta un
+  responsable del proyecto, con todas las secciones precargadas del periodo anterior.
+- Proponer y ser responsable: titulares y contratados. Co-responsable: también interinos.
+- Vigencia: un proyecto institucional está vigente mientras una propuesta aceptada cubra la fecha
+  (o haya una continuidad enviada sin decidir). Se calcula por fechas, sin tareas programadas.
+- Bandeja «Propuestas institucionales» para la administración, por periodo, con contador en la
+  navegación. Avisos: a la administración al recibir una propuesta, al proponente con la decisión,
+  y a los responsables en septiembre si su proyecto termina y no han propuesto continuidad.
+
+**Memoria.** Periodo elegible: año calendario, periodo oct–sep o rango libre de fechas. Cuentan
+los productos con al menos un autor del instituto de categoría distinta de «Externo», o bien
+ligados a un proyecto institucional. Desglose por categoría y columna de categoría en «Por investigador».
+
+### Etapas
+
+| Etapa | Contenido | Estado |
+|---|---|---|
+| A | Categorías: migración, cuentas (alta, CSV, cambio desde el listado), perfil, directorio con filtro, memoria | ✔ |
+| B | Tipo de proyecto: individuales creados por investigadores, ajuste de permisos de la administración, listados; regla de externos en la memoria | Pendiente |
+| C | Propuestas institucionales: formulario, borrador y envío, convocatoria y plazos, bandeja de decisión, condiciones, continuidad, vigencia automática, avisos | Pendiente |
+| D | Informes: memoria por periodo oct–sep y por rango; exportar las propuestas de una convocatoria (XLSX); actividades previstas frente a realizadas | Pendiente |
+
+Nota: la convocatoria de septiembre de 2026 cierra el 30; lo realista es que el piloto use la
+de septiembre de 2027, o que la administración abra un plazo extraordinario.

@@ -12,7 +12,7 @@ from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, R
                              Span, Strong, Style, Table, Tbody, Td, Th, Thead, Tr, Ul)
 from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 
-from app import actividades, config, informes, productos, proyectos
+from app import actividades, config, informes, perfiles, productos, proyectos
 from app.components.layout import pagina
 from app.identificadores import IDENTIFICADORES
 
@@ -317,10 +317,19 @@ def documento_memoria(m):
             Div(H3("Actividades por tipo"),
                 _tabla_conteo("Tipo", m["por_tipo_actividad"]) if m["por_tipo_actividad"] else P("—", cls="apagado")),
             cls="grid grid-cols-2 gap-6"),
+        H2("Por categoría"),
+        P("Cada producto o actividad se cuenta una vez por categoría, aunque participen varias personas "
+          "de ella.", cls="apagado text-sm"),
+        Table(Thead(Tr(Th("Categoría"), Th("Investigadores", cls="text-right"),
+                       Th("Productos que cuentan", cls="text-right"), Th("Actividades", cls="text-right"))),
+              Tbody(*[Tr(Td(cat), Td(str(x["investigadores"]), cls="text-right"),
+                         Td(str(x["productos"]), cls="text-right"), Td(str(x["actividades"]), cls="text-right"))
+                      for cat, x in m["por_categoria"].items()])),
         H2("Por investigador"),
-        Table(Thead(Tr(Th("Investigador(a)"), Th("Productos que cuentan", cls="text-right"),
+        Table(Thead(Tr(Th("Investigador(a)"), Th("Categoría"), Th("Productos que cuentan", cls="text-right"),
                        Th("Actividades", cls="text-right"))),
-              Tbody(*[Tr(Td(f"{x['apellidos']}, {x['nombres']}"), Td(str(x["productos"]), cls="text-right"),
+              Tbody(*[Tr(Td(f"{x['apellidos']}, {x['nombres']}"), Td(perfiles.categoria_texto(x["categoria"])),
+                         Td(str(x["productos"]), cls="text-right"),
                          Td(str(x["actividades"]), cls="text-right")) for x in m["por_investigador"]])),
         H2(f"Productos ({len(m['productos'])})"),
         Ol(*[cita(x) for x in m["productos"]], cls="citas") if m["productos"]
@@ -362,7 +371,11 @@ def get(auth, anio: str = ""):
         "Productos": informes.filas_productos(m["productos"]),
         "Actividades": informes.filas_actividades(m["actividades"]),
         "Proyectos": informes.filas_proyectos(m["proyectos"]),
+        "Por categoría": [{"Categoría": cat, "Investigadores": x["investigadores"],
+                           "Productos que cuentan": x["productos"], "Actividades": x["actividades"]}
+                          for cat, x in m["por_categoria"].items()],
         "Por investigador": [{"Investigador(a)": f"{x['apellidos']}, {x['nombres']}",
+                              "Categoría": perfiles.categoria_texto(x["categoria"]),
                               "Productos que cuentan": x["productos"], "Actividades": x["actividades"]}
                              for x in m["por_investigador"]],
     })

@@ -22,10 +22,11 @@ ADMIN = dict(email="admin@instituto.test", nombres="Ada", apellidos="Administrad
 INVESTIGADORES = [
     # Contraseña temporal común: el portal obliga a cambiarla en el primer ingreso.
     dict(email="sofia.kovalevskaya@instituto.test", nombres="Sofía", apellidos="Kovalévskaya",
-         es_admin=True),
-    dict(email="emmy.noether@instituto.test", nombres="Emmy", apellidos="Noether"),
-    dict(email="alan.turing@instituto.test", nombres="Alan", apellidos="Turing"),
-    dict(email="srinivasa.ramanujan@instituto.test", nombres="Srinivasa", apellidos="Ramanujan"),
+         es_admin=True, categoria="titular"),
+    dict(email="emmy.noether@instituto.test", nombres="Emmy", apellidos="Noether", categoria="titular"),
+    dict(email="alan.turing@instituto.test", nombres="Alan", apellidos="Turing", categoria="contratado"),
+    dict(email="srinivasa.ramanujan@instituto.test", nombres="Srinivasa", apellidos="Ramanujan",
+         categoria="invitado"),
 ]
 PASS_TEMPORAL_DEMO = "Temporal-2026"
 
@@ -209,9 +210,19 @@ def main():
             creados.append((inv["email"], PASS_TEMPORAL_DEMO,
                             "investigador + admin" if inv.get("es_admin") else "investigador"))
 
+    # Bases creadas antes de las categorías: completa las de las cuentas de demostración.
+    categorias = 0
+    for inv in INVESTIGADORES:
+        u = usuarios.con_perfil(usuarios.por_email(inv["email"])["id"])
+        if not u["categoria"]:
+            perfiles.cambiar_categoria(u["id"], inv["categoria"])
+            categorias += 1
+
     produccion = _cargar_produccion()
     con_proyectos = _cargar_proyectos()
-    if not creados and not produccion and not con_proyectos:
+    if categorias and not creados:
+        print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
+    if not creados and not produccion and not con_proyectos and not categorias:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:
