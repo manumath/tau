@@ -1,5 +1,12 @@
 """Proyectos: datos, participantes, permisos y vínculos con actividades y productos.
 
+Tipos:
+  - Individual: lo registra cualquier investigador(a), que queda como responsable; no requiere
+    aprobación.
+  - Institucional: nace de una propuesta que decide la administración (etapa C del plan).
+La administración ve todos los proyectos, pero no los gestiona: solo reasigna al responsable
+(p. ej., si alguien deja el instituto).
+
 Flujo de vínculos (tablas actividad_proyecto y producto_proyecto):
   - Un participante vigente con cuenta *propone* un registro suyo → 'pendiente'.
     Si quien lo vincula es responsable del proyecto, queda 'aprobado' de inmediato.
@@ -13,6 +20,7 @@ from datetime import date
 from app import avisos, personas
 from app.db import get_db, sin_tildes
 
+TIPOS = {"individual": "Individual", "institucional": "Institucional"}
 ESTADOS = {"formulacion": "En formulación", "vigente": "Vigente", "finalizado": "Finalizado"}
 ROLES = {"responsable": "Responsable", "co_responsable": "Co-responsable",
          "co_investigador": "Co-investigador(a)", "postdoc": "Postdoctorado",
@@ -62,10 +70,12 @@ def validar(d: dict) -> list[str]:
     return errores
 
 
-def crear(d: dict, responsable_id: int, creado_por: int) -> int:
+def crear(d: dict, responsable_id: int, creado_por: int, tipo: str = "individual") -> int:
+    if tipo not in TIPOS:
+        raise ValueError(f"Tipo de proyecto no válido: {tipo}")
     db = get_db()
     with db.conn:
-        pid = db.t.proyecto.insert(**d, creado_por=creado_por)["id"]
+        pid = db.t.proyecto.insert(**d, tipo=tipo, creado_por=creado_por)["id"]
         db.t.proyecto_participante.insert(proyecto_id=pid, investigador_id=responsable_id,
                                           rol="responsable", fecha_desde=d.get("fecha_inicio"))
     return pid
@@ -176,6 +186,37 @@ def dar_de_baja(pid: int, part_id: int, es_admin: bool) -> str | None:
     return None
 
 
+def reasignar_responsable(pid: int, nuevo_uid: int, anterior: str) -> str | None:
+    """Solo la administración. El nuevo responsable reemplaza a los actuales, que pasan a
+    co-investigadores (`anterior='co_investigador'`) o dejan el proyecto (`anterior='baja'`).
+    Sus registros ya aprobados siguen en el proyecto."""
+    from app import usuarios
+    u = usuarios.con_perfil(nuevo_uid)
+    if not u or not u["es_investigador"] or not u["activo"]:
+        return "El responsable debe ser un investigador(a) con cuenta activa."
+    if anterior not in ("co_investigador", "baja"):
+        return "Indique qué pasa con el responsable anterior."
+    db = get_db()
+    actuales = [r for r in responsables(pid) if r["id"] != nuevo_uid]
+    if not actuales and rol_de(pid, nuevo_uid) == "responsable":
+        return "Esa persona ya es la responsable del proyecto."
+    with db.conn:
+        existente = db.q("SELECT id FROM proyecto_participante WHERE proyecto_id = ? AND investigador_id = ?",
+                         [pid, nuevo_uid])
+        if existente:
+            db.execute("UPDATE proyecto_participante SET rol = 'responsable', fecha_hasta = NULL WHERE id = ?",
+                       [existente[0]["id"]])
+        else:
+            db.t.proyecto_participante.insert(proyecto_id=pid, investigador_id=nuevo_uid,
+                                              rol="responsable", fecha_desde=_hoy())
+        for r in actuales:
+            # Deja de ser responsable de inmediato. Con «baja», además, hoy es su último día en el
+            # proyecto (como en dar_de_baja); el cambio queda en la auditoría.
+            db.execute("UPDATE proyecto_participante SET rol = 'co_investigador', fecha_hasta = ? WHERE id = ?",
+                       [_hoy() if anterior == "baja" else None, r["participante_id"]])
+    return None
+
+
 def reincorporar(pid: int, part_id: int):
     if participante(pid, part_id):
         get_db().execute("UPDATE proyecto_participante SET fecha_hasta = NULL WHERE id = ?", [part_id])
@@ -191,8 +232,19 @@ def puede_ver(pid: int, usuario: dict) -> bool:
 
 
 def puede_gestionar(pid: int, usuario: dict) -> bool:
-    """Editar datos, participantes y revisar propuestas: responsables vigentes y administración."""
-    return usuario["es_admin"] or rol_de(pid, usuario["id"]) in ROLES_RESPONSABLES
+    """Editar datos, participantes y revisar propuestas: solo responsables vigentes. La
+    administración no gestiona proyectos (ver `puede_reasignar`)."""
+    return rol_de(pid, usuario["id"]) in ROLES_RESPONSABLES
+
+
+def puede_reasignar(usuario: dict) -> bool:
+    """Reasignar al responsable de un proyecto: solo la administración."""
+    return bool(usuario["es_admin"])
+
+
+def puede_crear(usuario: dict) -> bool:
+    """Proyecto individual: cualquier investigador(a) con cuenta activa."""
+    return bool(usuario.get("es_investigador"))
 
 
 # --- Listados de proyectos -----------------------------------------------------------------------------------
@@ -209,13 +261,14 @@ def de_investigador(uid: int) -> list[dict]:
            ORDER BY p.estado = 'finalizado', p.fecha_inicio DESC, p.nombre""", [uid])
 
 
-def todos(texto: str = "") -> list[dict]:
+def todos(texto: str = "", tipo: str = "") -> list[dict]:
     patron = f"%{sin_tildes(texto.strip())}%"
     return get_db().q(
         """SELECT p.*, (SELECT COUNT(*) FROM proyecto_participante x WHERE x.proyecto_id = p.id
                          AND (x.fecha_hasta IS NULL OR x.fecha_hasta >= date('now'))) AS n_part
-           FROM proyecto p WHERE sin_tildes(p.nombre) LIKE :p OR sin_tildes(p.codigo) LIKE :p
-           ORDER BY p.estado = 'finalizado', p.fecha_inicio DESC, p.nombre""", {"p": patron})
+           FROM proyecto p WHERE (sin_tildes(p.nombre) LIKE :p OR sin_tildes(p.codigo) LIKE :p)
+             AND (:t = '' OR p.tipo = :t)
+           ORDER BY p.estado = 'finalizado', p.fecha_inicio DESC, p.nombre""", {"p": patron, "t": tipo})
 
 
 def responsables(pid: int) -> list[dict]:
@@ -233,6 +286,17 @@ def para_proponer(uid: int) -> list[dict]:
 
 
 # --- Vínculos ---------------------------------------------------------------------------------------------------
+
+def ligados_a_institucionales(tipo: str, desde: str, hasta: str) -> set[int]:
+    """Ids de actividades o productos aprobados en algún proyecto institucional (no en formulación)
+    cuya vigencia se cruza con [desde, hasta] (fechas ISO)."""
+    tabla, col = TABLAS[tipo]
+    return {r[col] for r in get_db().q(
+        f"""SELECT DISTINCT v.{col} FROM {tabla} v JOIN proyecto p ON p.id = v.proyecto_id
+            WHERE v.estado = 'aprobado' AND p.tipo = 'institucional' AND p.estado != 'formulacion'
+              AND (p.fecha_inicio IS NULL OR p.fecha_inicio <= :h)
+              AND (p.fecha_fin IS NULL OR p.fecha_fin >= :d)""", {"d": desde, "h": hasta})}
+
 
 def vinculos_de(tipo: str, registro_id: int) -> list[dict]:
     """Proyectos a los que está vinculado (o propuesto) un registro."""

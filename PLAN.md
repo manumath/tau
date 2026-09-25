@@ -18,8 +18,8 @@ proyecto aparece a la vez en el proyecto y en el perfil de quien lo dictó.
 
 | Rol | Cómo se obtiene | Qué puede hacer |
 |---|---|---|
-| **Administración** | Indicador `es_admin` de la cuenta | Crea cuentas (una a una, por CSV o con invitación), asigna la categoría de cada investigador(a), activa, desactiva, desbloquea y restablece; crea proyectos y asigna responsables; ve la memoria anual, la auditoría y el CV de cualquier investigador |
-| **Investigador(a)** | La cuenta tiene fila en `investigador`, con una categoría: titular, contratado(a), interino(a), invitado(a) o externo(a) | Edita su perfil; registra actividades y productos; participa en proyectos; genera su CV |
+| **Administración** | Indicador `es_admin` de la cuenta | Crea cuentas (una a una, por CSV o con invitación), asigna la categoría de cada investigador(a), activa, desactiva, desbloquea y restablece; ve todos los proyectos y reasigna su responsable (no los gestiona); ve la memoria anual, la auditoría y el CV de cualquier investigador |
+| **Investigador(a)** | La cuenta tiene fila en `investigador`, con una categoría: titular, contratado(a), interino(a), invitado(a) o externo(a) | Edita su perfil; registra actividades y productos; crea proyectos individuales y participa en proyectos; genera su CV |
 | **Responsable / co-responsable** | Rol dentro de un proyecto | Edita el proyecto y sus participantes; aprueba o rechaza propuestas; vincula registros directamente |
 | **Participante** | Rol dentro de un proyecto (co-investigador, postdoc, tesista, colaborador) | Ve el proyecto; propone sus actividades y productos |
 | **Persona externa** | Registro sin cuenta (`persona_externa`) | Figura como coautor, participante de actividades o de proyectos |
@@ -70,11 +70,17 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
   instituto; elimina el creador.
 
 **Proyectos**
-- Siempre queda al menos un responsable vigente. Solo la administración asigna o quita
-  responsables; las personas externas no pueden serlo.
+- Tipos: **individual** (lo crea cualquier investigador(a), que queda como responsable) e
+  **institucional** (nace de una propuesta que acepta la administración; ver la sección 11).
+- Siempre queda al menos un responsable vigente. El responsable no se cambia desde la pestaña
+  de participantes: lo reasigna la administración. Las personas externas no pueden serlo.
+- Gestionan el proyecto (datos, participantes, propuestas) solo sus responsables y
+  co-responsables vigentes; la administración lo ve, pero no lo gestiona.
 - Solo participantes vigentes proponen, y solo a proyectos no finalizados.
 - El responsable de una actividad debe ser participante del mismo proyecto.
 - Ven el proyecto sus participantes (actuales o anteriores) y la administración.
+- Memoria: la producción de investigadores de categoría «Externo» figura solo si está aprobada
+  en un proyecto institucional vigente en el periodo.
 
 **Cuentas y acceso**
 - Contraseñas con Argon2; mínimo 10 caracteres combinando letras con números o símbolos.
@@ -84,7 +90,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0008` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0009` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -113,7 +119,7 @@ producto_indice(producto_id, indice_id)
 adjunto(id, entidad, entidad_id, nombre, archivo, mime, tamano, subido_por, subido_en)
 
 proyecto(id, codigo, nombre, descripcion, objetivo_general, fuente_financiamiento, monto,
-         moneda, fecha_inicio, fecha_fin, estado, creado_por, creado_en, actualizado_en)
+         moneda, fecha_inicio, fecha_fin, estado, creado_por, creado_en, actualizado_en, tipo)
 proyecto_objetivo(id, proyecto_id, orden, texto)
 proyecto_participante(id, proyecto_id, investigador_id | externo_id, rol, fecha_desde, fecha_hasta)
 actividad_proyecto(actividad_id, proyecto_id, estado, responsable_participante_id,
@@ -155,7 +161,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-212 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+218 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -313,7 +319,7 @@ ligados a un proyecto institucional. Desglose por categoría y columna de catego
 | Etapa | Contenido | Estado |
 |---|---|---|
 | A | Categorías: migración, cuentas (alta, CSV, cambio desde el listado), perfil, directorio con filtro, memoria | ✔ |
-| B | Tipo de proyecto: individuales creados por investigadores, ajuste de permisos de la administración, listados; regla de externos en la memoria | Pendiente |
+| B | Tipo de proyecto: individuales creados por investigadores, ajuste de permisos de la administración, listados; regla de externos en la memoria | ✔ |
 | C | Propuestas institucionales: formulario, borrador y envío, convocatoria y plazos, bandeja de decisión, condiciones, continuidad, vigencia automática, avisos | Pendiente |
 | D | Informes: memoria por periodo oct–sep y por rango; exportar las propuestas de una convocatoria (XLSX); actividades previstas frente a realizadas | Pendiente |
 

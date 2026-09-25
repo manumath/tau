@@ -49,21 +49,30 @@ def _pid_producto(titulo):
 
 # --- Creación y acceso ---------------------------------------------------------------------------
 
-def test_solo_admin_crea_proyectos(client, gente):
-    entrar(client, "emmy")
-    assert client.get("/proyectos/nuevo", headers=HX).status_code == 403
-    entrar(client, "admin")
+def test_investigador_crea_proyecto_individual_y_queda_responsable(client, gente):
+    entrar(client, "alan")
+    assert "Nuevo proyecto individual" in client.get("/proyectos").text
     r = client.post("/proyectos", headers=HX, data=dict(nombre="Nuevo", estado="vigente",
                                                          responsable_id=str(gente["emmy"])))
     pid = int(r.headers["hx-redirect"].rsplit("/", 1)[1])
-    assert proyectos.rol_de(pid, gente["emmy"]) == "responsable"
+    # El responsable es quien lo crea (se ignora cualquier otro valor enviado).
+    assert proyectos.rol_de(pid, gente["alan"]) == "responsable"
+    assert proyectos.rol_de(pid, gente["emmy"]) is None
+    assert proyectos.obtener(pid)["tipo"] == "individual"
+
+
+def test_admin_sin_perfil_de_investigador_no_crea_proyectos(client, gente):
+    entrar(client, "admin")
+    assert "Nuevo proyecto" not in client.get("/proyectos").text
+    assert client.get("/proyectos/nuevo", headers=HX).status_code == 403
+    assert client.post("/proyectos", headers=HX, data=dict(nombre="X", estado="vigente")).status_code == 403
 
 
 def test_validacion_de_proyecto(client, gente):
-    entrar(client, "admin")
+    entrar(client, "emmy")
     r = client.post("/proyectos", headers=HX, data=dict(nombre="", estado="vigente", monto="12,5 millones",
                                                          fecha_inicio="2026-05-01", fecha_fin="2026-01-01"))
-    for texto in ("obligatorio", "número entero", "anterior", "Seleccione un responsable"):
+    for texto in ("obligatorio", "número entero", "anterior"):
         assert texto in r.text
 
 
@@ -75,7 +84,55 @@ def test_solo_participantes_ven_el_proyecto(client, proyecto):
     r = client.get(f"/proyectos/{proyecto}")
     assert "Álgebra y computación" in r.text and "Pendientes" not in r.text  # no es responsable
     entrar(client, "admin")
-    assert "Pendientes" in client.get(f"/proyectos/{proyecto}").text
+    r = client.get(f"/proyectos/{proyecto}")
+    # La administración lo ve, pero no lo gestiona: sin bandeja ni edición; sí puede reasignar.
+    assert "Álgebra y computación" in r.text and "Pendientes" not in r.text
+    assert "Reasignar responsable" in r.text
+
+
+def test_admin_no_gestiona_proyectos(client, gente, proyecto):
+    entrar(client, "admin")
+    assert client.get(f"/proyectos/{proyecto}/datos/editar", headers=HX).status_code == 403
+    assert client.post(f"/proyectos/{proyecto}/participantes", headers=HX,
+                       data={"ref": f"i:{gente['sofia']}"}).status_code == 403
+    assert client.post(f"/proyectos/{proyecto}/objetivos", headers=HX, data={"texto": "x"}).status_code == 403
+
+
+def test_reasignar_responsable(client, gente, proyecto):
+    entrar(client, "emmy")
+    assert "Reasignar responsable" not in client.get(f"/proyectos/{proyecto}").text
+    assert client.post(f"/proyectos/{proyecto}/responsable", headers=HX,
+                       data={"nuevo": gente["alan"]}).status_code == 403
+    entrar(client, "admin")
+    r = client.post(f"/proyectos/{proyecto}/responsable", headers=HX, data={"nuevo": ""})
+    assert "Seleccione al nuevo responsable" in r.text
+    # Alan ya participa: pasa a responsable; Emmy sigue como co-investigadora.
+    r = client.post(f"/proyectos/{proyecto}/responsable", headers=HX,
+                    data={"nuevo": gente["alan"], "anterior": "co_investigador"})
+    assert r.headers["hx-redirect"] == f"/proyectos/{proyecto}?tab=participantes"
+    assert proyectos.rol_de(proyecto, gente["alan"]) == "responsable"
+    assert proyectos.rol_de(proyecto, gente["emmy"]) == "co_investigador"
+    # Sofía no participa: entra como responsable y Alan queda dado de baja.
+    client.post(f"/proyectos/{proyecto}/responsable", headers=HX,
+                data={"nuevo": gente["sofia"], "anterior": "baja"})
+    assert proyectos.rol_de(proyecto, gente["sofia"]) == "responsable"
+    alan = next(x for x in proyectos.participantes(proyecto) if x["interno"] and x["id"] == gente["alan"])
+    assert alan["rol"] == "co_investigador" and alan["fecha_hasta"] is not None  # hoy es su último día
+    assert [r["apellidos"] for r in proyectos.responsables(proyecto)] == ["Kovalévskaya"]
+    assert get_db().q("SELECT COUNT(*) n FROM auditoria WHERE accion = 'reasignar_responsable'")[0]["n"] == 2
+
+
+def test_listado_de_admin_filtra_por_tipo(client, gente, proyecto):
+    inst = proyectos.crear(dict(nombre="Proyecto institucional", estado="vigente"), gente["sofia"],
+                           gente["sofia"], tipo="institucional")
+    entrar(client, "admin")
+    todos = client.get("/proyectos").text
+    assert "Álgebra y computación" in todos and "Proyecto institucional" in todos
+    solo = client.get("/proyectos?tipo=institucional").text
+    assert "Proyecto institucional" in solo and "Álgebra y computación" not in solo
+    assert proyectos.obtener(inst)["tipo"] == "institucional"
+    with pytest.raises(ValueError):
+        proyectos.crear(dict(nombre="X", estado="vigente"), gente["sofia"], gente["sofia"], tipo="otro")
 
 
 def test_pestanas_fijan_la_url(client, proyecto):

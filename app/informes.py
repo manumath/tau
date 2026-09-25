@@ -109,20 +109,51 @@ def informe_proyecto(pid: int, desde: int, hasta: int) -> dict:
 
 def memoria(anio: int) -> dict:
     """Productos que cuentan (del año), actividades con participación del instituto, proyectos
-    vigentes en el año y un resumen por investigador."""
+    vigentes en el año y resúmenes por categoría y por investigador.
+
+    Regla de los externos: la producción de investigadores de categoría «Externo» figura solo si
+    está aprobada en un proyecto institucional vigente en el periodo. Un producto o actividad
+    cuenta si tiene al menos un autor o participante del instituto que no sea externo, o si está
+    ligado a un proyecto institucional.
+    """
+    desde, hasta = f"{anio}-01-01", f"{anio}-12-31"
+    # Todas las cuentas de investigador (también inactivas): sus registros cuentan igual.
+    categoria_de = {r["usuario_id"]: r["categoria"]
+                    for r in get_db().q("SELECT usuario_id, categoria FROM investigador")}
+    ligados = {"producto": proyectos.ligados_a_institucionales("producto", desde, hasta),
+               "actividad": proyectos.ligados_a_institucionales("actividad", desde, hasta)}
+
+    def figura(uid, tipo, rid):
+        """¿Este investigador figura con este registro en la memoria?"""
+        return categoria_de.get(uid) != "externo" or rid in ligados[tipo]
+
     ids = [r["id"] for r in get_db().q(
         """SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
            WHERE p.anio = ? AND pa.investigador_id IS NOT NULL
              AND p.revision IN ('indexado', 'arbitrado')
              AND p.estado_publicacion IN ('aceptado', 'publicado')
            ORDER BY p.revision, p.id""", [anio])]
-    prods = [productos.obtener(i) for i in ids]
+    # Autores del instituto que figuran con cada producto (id → conjunto de usuarios).
+    autores = {}
+    for i in ids:
+        x = productos.obtener(i)
+        autores[i] = (x, {a["id"] for a in x["autores"] if a["interno"] and figura(a["id"], "producto", i)})
+    prods = [x for x, quienes in autores.values() if quienes]
     prods.sort(key=lambda p: (p["revision"] != "indexado", p["tipo"], p["titulo"]))
-    acts = [actividades.obtener(r["id"]) for r in get_db().q(
-        """SELECT DISTINCT a.id FROM actividad a JOIN actividad_participante ap ON ap.actividad_id = a.id
-           WHERE substr(a.fecha_inicio, 1, 4) = ? AND ap.investigador_id IS NOT NULL
-           ORDER BY a.fecha_inicio""", [str(anio)])]
+    internos_prod = {x["id"]: autores[x["id"]][1] for x in prods}
+
+    internos_act = {}
+    for r in get_db().q(
+            """SELECT DISTINCT a.id FROM actividad a JOIN actividad_participante ap ON ap.actividad_id = a.id
+               WHERE substr(a.fecha_inicio, 1, 4) = ? AND ap.investigador_id IS NOT NULL
+               ORDER BY a.fecha_inicio""", [str(anio)]):
+        quienes = {x["id"] for x in actividades.participantes(r["id"])
+                   if x["interno"] and figura(x["id"], "actividad", r["id"])}
+        if quienes:
+            internos_act[r["id"]] = quienes
+    acts = [actividades.obtener(i) for i in internos_act]
     proys = [p for p in proyectos.todos() if _en_periodo_proyecto(p, anio, anio) and p["estado"] != "formulacion"]
+    proys.sort(key=lambda p: p["tipo"] != "institucional")
 
     por_indice, por_tipo_act, por_ambito = {}, {}, {}
     for p in prods:
@@ -137,25 +168,23 @@ def memoria(anio: int) -> dict:
            WHERE u.activo = 1 ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""")
     resumen = []
     for inv in investigadores:
-        n_p = sum(any(a["interno"] and a["id"] == inv["id"] for a in p["autores"]) for p in prods)
-        n_a = get_db().q("""SELECT COUNT(DISTINCT a.id) n FROM actividad a JOIN actividad_participante ap
-                            ON ap.actividad_id = a.id WHERE ap.investigador_id = ?
-                            AND substr(a.fecha_inicio, 1, 4) = ?""", [inv["id"], str(anio)])[0]["n"]
-        resumen.append({**inv, "productos": n_p, "actividades": n_a})
+        n_p = sum(inv["id"] in q for q in internos_prod.values())
+        n_a = sum(inv["id"] in q for q in internos_act.values())
+        # Los externos figuran solo si tienen algo ligado a un proyecto institucional.
+        if inv["categoria"] != "externo" or n_p or n_a:
+            resumen.append({**inv, "productos": n_p, "actividades": n_a})
 
     # Por categoría: cada producto o actividad cuenta una vez por categoría, aunque tenga varias
     # personas de esa categoría (por eso no se suman las columnas de «por investigador»).
-    categoria_de = {inv["id"]: inv["categoria"] for inv in investigadores}
-    internos_act = [{x["id"] for x in actividades.participantes(a["id"]) if x["interno"]} for a in acts]
     por_categoria = {}
     for cat in (*perfiles.CATEGORIAS, None):
-        ids_cat = {i for i, c in categoria_de.items() if c == cat}
+        ids_cat = {x["id"] for x in resumen if x["categoria"] == cat}
         if not ids_cat:
             continue
-        n_p = sum(any(a["interno"] and a["id"] in ids_cat for a in p["autores"]) for p in prods)
-        n_a = sum(bool(ids & ids_cat) for ids in internos_act)
-        por_categoria[perfiles.categoria_texto(cat)] = {"investigadores": len(ids_cat),
-                                                        "productos": n_p, "actividades": n_a}
+        por_categoria[perfiles.categoria_texto(cat)] = {
+            "investigadores": len(ids_cat),
+            "productos": sum(bool(q & ids_cat) for q in internos_prod.values()),
+            "actividades": sum(bool(q & ids_cat) for q in internos_act.values())}
     return {"anio": anio, "productos": prods, "actividades": acts, "proyectos": proys,
             "n_indexados": sum(p["revision"] == "indexado" for p in prods),
             "n_arbitrados": sum(p["revision"] == "arbitrado" for p in prods),
@@ -209,7 +238,8 @@ def filas_actividades(acts: list[dict]) -> list[dict]:
 
 def filas_proyectos(proys: list[dict]) -> list[dict]:
     return [{
-        "Código": p["codigo"] or "", "Nombre": p["nombre"], "Estado": proyectos.ESTADOS[p["estado"]],
+        "Tipo": proyectos.TIPOS[p["tipo"]], "Código": p["codigo"] or "", "Nombre": p["nombre"],
+        "Estado": proyectos.ESTADOS[p["estado"]],
         "Inicio": p["fecha_inicio"] or "", "Término": p["fecha_fin"] or "",
         "Financiamiento": p["fuente_financiamiento"] or "",
         "Monto": p["monto"] if p["monto"] is not None else "", "Moneda": p["moneda"],

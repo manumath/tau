@@ -118,12 +118,12 @@ def _cargar_produccion():
 
 
 def _cargar_proyectos():
-    """Dos proyectos de ejemplo con vínculos aprobados, pendientes y rechazados."""
+    """Dos proyectos de ejemplo con vínculos aprobados, pendientes y rechazados: uno institucional
+    (FONDECYT 1260001, de Emmy) y uno individual (de Sofía)."""
     if get_db().q("SELECT 1 FROM proyecto LIMIT 1") or not get_db().q("SELECT 1 FROM producto LIMIT 1"):
         return False
     uid = {u["email"].split(".")[0]: u["id"] for u in usuarios.listar()}
-    emmy, alan, sofia, srini, admin = (uid["emmy"], uid["alan"], uid["sofia"], uid["srinivasa"],
-                                       usuarios.por_email(ADMIN["email"])["id"])
+    emmy, alan, sofia, srini = uid["emmy"], uid["alan"], uid["sofia"], uid["srinivasa"]
     weyl = get_db().q("SELECT id FROM persona_externa WHERE apellidos = 'Weyl'")[0]["id"]
 
     def id_de(tabla, titulo):
@@ -139,7 +139,7 @@ def _cargar_proyectos():
                                               "y de anillos noetherianos asociados.",
                                "objetivo_general": "Caracterizar algebraicamente clases de máquinas de "
                                                    "estados mediante sus anillos de invariantes."},
-                              emmy, admin)
+                              emmy, emmy, tipo="institucional")
     for texto in ("Construir el anillo de invariantes de una máquina de estados finitos.",
                   "Determinar cuándo dicho anillo es noetheriano.",
                   "Formar a un estudiante de doctorado en la línea."):
@@ -150,7 +150,7 @@ def _cargar_proyectos():
 
     rigido = proyectos.crear({**base, "codigo": "FONDECYT 1250042", "estado": "vigente",
                               "nombre": "Ecuaciones diferenciales y mecánica del sólido rígido",
-                              "fecha_inicio": "2025-03-01", "fecha_fin": "2028-02-29"}, sofia, admin)
+                              "fecha_inicio": "2025-03-01", "fecha_fin": "2028-02-29"}, sofia, sofia)
     proyectos.agregar_participante(rigido, f"i:{emmy}", "co_investigador", True)
 
     # En los datos de ejemplo, el equipo participa desde el inicio de cada proyecto.
@@ -220,9 +220,16 @@ def main():
 
     produccion = _cargar_produccion()
     con_proyectos = _cargar_proyectos()
+    # Bases creadas antes de los tipos de proyecto: el FONDECYT de ejemplo es institucional.
+    tipos = get_db().q("""SELECT id FROM proyecto WHERE codigo = 'FONDECYT 1260001'
+                          AND tipo = 'individual'""")
+    if tipos:
+        get_db().execute("UPDATE proyecto SET tipo = 'institucional' WHERE id = ?", [tipos[0]["id"]])
+    if tipos:
+        print("El proyecto de ejemplo FONDECYT 1260001 quedó como institucional.")
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
-    if not creados and not produccion and not con_proyectos and not categorias:
+    if not creados and not produccion and not con_proyectos and not categorias and not tipos:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:

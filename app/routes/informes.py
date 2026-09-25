@@ -223,7 +223,7 @@ def documento_proyecto(datos, desde, hasta):
     return hoja(
         P(f"Informe de avance · {desde}–{hasta}", cls="apagado text-sm uppercase tracking-wide"),
         H1(p["nombre"]),
-        P(" · ".join(x for x in (p["codigo"], p["fuente_financiamiento"],
+        P(" · ".join(x for x in (f"Proyecto {proyectos.TIPOS[p['tipo']].lower()}", p["codigo"], p["fuente_financiamiento"],
                                  f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}") if x), cls="apagado"),
         P(Strong("Responsable: "), resp, cls="text-sm mt-1") if resp else "",
         Div(_cifra(len(datos["productos_informe"]), "productos que cuentan"),
@@ -307,7 +307,8 @@ def documento_memoria(m):
         P(config.NOMBRE_INSTITUTO, cls="apagado text-sm uppercase tracking-wide"),
         H1(f"Memoria anual {m['anio']}"),
         P("Productos que cuentan: indexados o arbitrados, aceptados o publicados en el año, con al menos "
-          "un autor del instituto. Cada producto se cuenta una vez.", cls="apagado text-sm"),
+          "un autor del instituto. Cada producto se cuenta una vez. La producción de investigadores "
+          "externos figura solo si está ligada a un proyecto institucional.", cls="apagado text-sm"),
         Div(_cifra(m["n_indexados"], "indexados"), _cifra(m["n_arbitrados"], "arbitrados"),
             _cifra(len(m["actividades"]), "actividades"),
             _cifra(m["por_ambito"].get("internacional", 0), "internacionales"),
@@ -339,9 +340,13 @@ def documento_memoria(m):
                 Span(f" · {a['tipo']} · {actividades.AMBITOS[a['ambito']].lower()}", cls="apagado"))
              for a in m["actividades"]], cls="space-y-1") if m["actividades"] else P("—", cls="apagado"),
         H2(f"Proyectos vigentes ({len(m['proyectos'])})"),
-        Ul(*[Li(Strong(p["codigo"] + " — ") if p["codigo"] else "", p["nombre"],
-                Span(f" · {p['fuente_financiamiento']}" if p["fuente_financiamiento"] else "", cls="apagado"))
-             for p in m["proyectos"]], cls="space-y-1") if m["proyectos"] else P("—", cls="apagado"))
+        *[Div(H3(f"{titulo} ({len(lista)})"),
+              Ul(*[Li(Strong(p["codigo"] + " — ") if p["codigo"] else "", p["nombre"],
+                      Span(f" · {p['fuente_financiamiento']}" if p["fuente_financiamiento"] else "", cls="apagado"))
+                   for p in lista], cls="space-y-1"))
+          for titulo, lista in (("Institucionales", [p for p in m["proyectos"] if p["tipo"] == "institucional"]),
+                                ("Individuales", [p for p in m["proyectos"] if p["tipo"] == "individual"]))
+          if lista] or [P("—", cls="apagado")])
 
 
 def _anio(anio):

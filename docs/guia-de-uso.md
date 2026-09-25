@@ -104,6 +104,14 @@ de tipo «Presentación», vinculada a esa actividad.
 
 ## Proyectos
 
+Hay dos tipos de proyecto:
+
+- **Individual:** lo registra usted mismo con **«Nuevo proyecto individual»** y queda como
+  responsable. No necesita aprobación. Sirve, por ejemplo, para un proyecto con financiamiento
+  externo o una línea de trabajo propia.
+- **Institucional:** se propone en la convocatoria de septiembre y lo acepta la administración.
+  Rige de octubre a septiembre. *(La presentación de propuestas se habilitará próximamente.)*
+
 ### Si participa en un proyecto
 
 - En el formulario de un producto o una actividad, marque el proyecto en **«Vincular a
@@ -123,7 +131,8 @@ de tipo «Presentación», vinculada a esa actividad.
   lo que cae fuera del periodo del proyecto.
 - Lo que usted mismo vincula queda aprobado de inmediato.
 - En **Participantes** agregue personas del instituto o externas, cambie roles o dé de baja
-  (lo ya aprobado se conserva). Solo la administración asigna responsables.
+  (lo ya aprobado se conserva). Puede nombrar co-responsables; cambiar al responsable lo hace
+  la administración.
 - En **Resumen** edite los datos y los objetivos; ahí aparecen también los registros editados
   después de aprobados, por si quiere revisarlos.
 - El botón **«Informe»** genera el informe de avance del proyecto.
@@ -155,9 +164,13 @@ Menú «Informes»:
   - Activar o desactivar una cuenta; desactivarla cierra su sesión de inmediato.
   - **Categoría**: se cambia eligiéndola en la columna «Perfil» (queda en la auditoría). Las
     cuentas «Sin categoría» se destacan en ámbar; en el directorio hay un filtro para encontrarlas.
-- **Proyectos → Nuevo proyecto:** crea el proyecto y asigna su responsable.
+- **Proyectos:** la administración ve todos los proyectos (con filtro por tipo), pero no los
+  gestiona: los datos, participantes y propuestas son de sus responsables. En la ficha de un
+  proyecto, **«Reasignar responsable»** cambia al responsable (p. ej., si deja el instituto); el
+  anterior sigue como co-investigador(a) o se le da de baja.
 - **Informes → Memoria anual:** productos que cuentan (una vez cada uno), actividades, proyectos
-  vigentes, un resumen por categoría y otro por investigador; descarga en XLSX y CSV.
+  vigentes (institucionales e individuales), un resumen por categoría y otro por investigador; descarga en XLSX y CSV. La producción
+  de investigadores externos figura solo si está aprobada en un proyecto institucional.
 - **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
 
 ## Preguntas frecuentes

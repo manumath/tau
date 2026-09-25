@@ -181,3 +181,49 @@ def test_memoria_por_categoria(datos):
     assert m["por_categoria"]["Contratado(a)"] == {"investigadores": 1, "productos": 2, "actividades": 0}
     assert {x["apellidos"]: x["categoria"] for x in m["por_investigador"]} == \
         {"Noether": "titular", "Turing": "contratado"}
+
+
+def test_memoria_externos_solo_con_proyecto_institucional(datos):
+    """Un investigador de categoría «Externo» figura solo con lo ligado a un proyecto institucional."""
+    from app import perfiles
+    externo = usuarios.crear("ext@test.cl", "Hermann", "Minkowski", CLAVE, categoria="externo")["id"]
+    solo = _producto(externo, [f"i:{externo}"], "Solo del externo")
+    ligado = _producto(externo, [f"i:{externo}"], "Del externo en proyecto")
+    perfiles.cambiar_categoria(datos["emmy"], "titular")
+
+    m = informes.memoria(2026)
+    titulos = {p["titulo"] for p in m["productos"]}
+    assert "Solo del externo" not in titulos and "Del externo en proyecto" not in titulos
+    assert "Minkowski" not in {x["apellidos"] for x in m["por_investigador"]}
+
+    # Proyecto individual: no alcanza.
+    indiv = proyectos.crear(dict(nombre="Individual", estado="vigente", fecha_inicio="2026-01-01"),
+                            externo, externo)
+    proyectos.sincronizar("producto", ligado, [indiv], {"id": externo})
+    assert "Del externo en proyecto" not in {p["titulo"] for p in informes.memoria(2026)["productos"]}
+
+    # Proyecto institucional vigente en el año: figura (y el externo aparece en el resumen).
+    inst = proyectos.crear(dict(nombre="Institucional", estado="vigente", fecha_inicio="2025-10-01",
+                                fecha_fin="2026-09-30"), datos["emmy"], datos["emmy"], tipo="institucional")
+    proyectos.agregar_participante(inst, f"i:{externo}", "co_investigador", False)
+    proyectos.sincronizar("producto", ligado, [inst], {"id": externo})
+    assert proyectos.vinculo("producto", ligado, inst)["estado"] == "pendiente"
+    assert "Del externo en proyecto" not in {p["titulo"] for p in informes.memoria(2026)["productos"]}
+    proyectos.aprobar("producto", ligado, inst, datos["emmy"])
+    m = informes.memoria(2026)
+    titulos = {p["titulo"] for p in m["productos"]}
+    assert "Del externo en proyecto" in titulos and "Solo del externo" not in titulos
+    assert {x["apellidos"]: x["productos"] for x in m["por_investigador"]}["Minkowski"] == 1
+    assert m["por_categoria"]["Externo(a)"] == {"investigadores": 1, "productos": 1, "actividades": 0}
+    # El mismo proyecto no alcanza a otro año.
+    assert "Del externo en proyecto" not in {p["titulo"] for p in informes.memoria(2027)["productos"]}
+    assert [p["tipo"] for p in m["proyectos"]][0] == "institucional"
+
+
+def test_memoria_producto_mixto_cuenta_por_el_autor_no_externo(datos):
+    externo = usuarios.crear("ext@test.cl", "Hermann", "Minkowski", CLAVE, categoria="externo")["id"]
+    _producto(datos["emmy"], [f"i:{datos['emmy']}", f"i:{externo}"], "Mixto")
+    m = informes.memoria(2026)
+    assert "Mixto" in {p["titulo"] for p in m["productos"]}
+    # Cuenta para Emmy, no para el externo (no está ligado a un proyecto institucional).
+    assert "Minkowski" not in {x["apellidos"] for x in m["por_investigador"]}

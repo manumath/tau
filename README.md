@@ -19,7 +19,7 @@ memoria anual. Hecho con [FastHTML](https://fastht.ml), HTMX, MonsterUI y SQLite
   resumen con LaTeX; directorio interno y perfil público opcional.
 - **Productos y actividades:** autores del instituto y externos, nivel de revisión e índices,
   detección de duplicados, adjuntos; importación desde DOI (Crossref), arXiv y BibTeX.
-- **Proyectos:** participantes, objetivos y flujo *propuesta → aprobación* de actividades y
+- **Proyectos:** individuales (los crea cada investigador) e institucionales; participantes, objetivos y flujo *propuesta → aprobación* de actividades y
   productos, con bandeja de pendientes y avisos por correo.
 - **Informes:** CV, informe de proyecto y memoria anual imprimibles; descargas XLSX, CSV y BibTeX.
 - **Administración:** cuentas, proyectos, auditoría. **API JSON** de solo lectura para perfiles públicos.
@@ -32,7 +32,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 212 pruebas
+uv run pytest                            # 218 pruebas
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan

@@ -1,4 +1,5 @@
-"""Proyectos: lista, alta (administración), ficha con pestañas y bandeja de pendientes.
+"""Proyectos: lista, alta de proyectos individuales, ficha con pestañas, bandeja de pendientes y
+reasignación del responsable (administración).
 
 Patrones HTMX:
 - Pestañas: cada una se pide a /proyectos/{id}/tab/{nombre}; el servidor fija ?tab= en la URL
@@ -31,6 +32,12 @@ EVENTO_PENDIENTES = "pendientes-cambiados"
 TONO_ESTADO = {"formulacion": "ambar", "vigente": "verde", "finalizado": "gris"}
 
 
+def insignia_tipo(p):
+    if p["tipo"] == "institucional":
+        return insignia("Institucional", "azul", icono="landmark")
+    return insignia("Individual", "gris", icono="user-round")
+
+
 def _proyecto_o_error(pid, auth, gestionar=False):
     """(proyecto, None) si el usuario puede verlo (o gestionarlo); (None, respuesta) si no."""
     p = proyectos.obtener(pid)
@@ -58,7 +65,7 @@ def _periodo(p):
 # --- Lista de proyectos ---------------------------------------------------------------------------
 
 def tarjeta(p):
-    extra = [insignia(proyectos.ESTADOS[p["estado"]], TONO_ESTADO[p["estado"]])]
+    extra = [insignia_tipo(p), insignia(proyectos.ESTADOS[p["estado"]], TONO_ESTADO[p["estado"]])]
     if p.get("mi_rol"):
         extra.append(insignia(proyectos.ROLES[p["mi_rol"]] + ("" if p["vigente"] else " (anterior)"),
                               "azul", icono="user-round"))
@@ -96,25 +103,38 @@ def seccion_propuestas(uid):
                 Ul(*filas, cls="divide-y divide-border"), cls="mt-8")
 
 
+def _filtro_tipo(tipo):
+    opciones = [("", "Todos")] + list(proyectos.TIPOS.items())
+    return Div(*[A(t, href=f"/proyectos?tipo={v}#todos" if v else "/proyectos#todos",
+                   cls="text-sm px-3 py-1 rounded-full border " +
+                       ("border-primary bg-primary/10 text-primary" if v == tipo else "border-border hover:bg-muted"))
+                 for v, t in opciones], cls="flex gap-2 mb-4")
+
+
 @rt("/proyectos")
-def get(auth, q: str = ""):
+def get(auth, q: str = "", tipo: str = ""):
+    tipo = tipo if tipo in proyectos.TIPOS else ""
     mios = proyectos.de_investigador(auth["id"])
     bloques = [
         Div(Div(H2("Proyectos"),
                 P("Proyectos de investigación en que participa. Desde el formulario de una actividad o "
                   "un producto puede proponerlo a sus proyectos; el responsable lo aprueba.",
                   cls=TextPresets.muted_sm)),
-            Button(UkIcon("plus", height=16, width=16), "Nuevo proyecto", cls=ButtonT.primary,
-                   hx_get="/proyectos/nuevo", hx_target=f"#{ID_MODAL}") if auth["es_admin"] else "",
+            Button(UkIcon("plus", height=16, width=16), "Nuevo proyecto individual", cls=ButtonT.primary,
+                   hx_get="/proyectos/nuevo", hx_target=f"#{ID_MODAL}") if proyectos.puede_crear(auth) else "",
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
-        H3("Mis proyectos", cls="text-lg font-semibold mb-3") if auth["es_admin"] else "",
+        H3("Mis proyectos", cls="text-lg font-semibold mb-3") if auth["es_admin"] and auth["es_investigador"] else "",
         fh.Div(*[tarjeta(p) for p in mios], cls="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4")
-        if mios else P("No participa en proyectos todavía.", cls=TextPresets.muted_sm),
+        if mios else P("No participa en proyectos todavía.", cls=TextPresets.muted_sm)
+        if auth["es_investigador"] else "",
         seccion_propuestas(auth["id"]),
     ]
     if auth["es_admin"]:
-        todos = [p for p in proyectos.todos(q) if p["id"] not in {m["id"] for m in mios}]
-        bloques += [H3("Todos los proyectos del instituto", cls="text-lg font-semibold mt-10 mb-3"),
+        todos = [p for p in proyectos.todos(q, tipo) if p["id"] not in {m["id"] for m in mios}]
+        bloques += [H3("Todos los proyectos del instituto", id="todos", cls="text-lg font-semibold mt-10 mb-1"),
+                    P("La administración los ve todos, pero solo los gestionan sus responsables. Desde la "
+                      "ficha de un proyecto puede reasignar al responsable.", cls=(TextPresets.muted_sm, "mb-3")),
+                    _filtro_tipo(tipo),
                     fh.Div(*[tarjeta(p) for p in todos],
                            cls="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4")
                     if todos else P("No hay otros proyectos.", cls=TextPresets.muted_sm)]
@@ -139,12 +159,14 @@ def insignia_contador(n):
 
 # --- Alta y edición de datos -------------------------------------------------------------------------
 
-def form_datos(d, errores=(), pid=None, con_responsable=False):
+def form_datos(d, errores=(), pid=None):
     def campo(etiqueta, nombre, **kw):
         return LabelInput(etiqueta, id=nombre, value="" if d.get(nombre) is None else d.get(nombre), **kw)
 
-    investigadores = [u for u in usuarios.listar() if u["es_investigador"] and u["activo"]]
     return Form(
+        P("Usted quedará como responsable: podrá agregar participantes y aprobar sus propuestas. "
+          "Los proyectos institucionales no se crean aquí: se proponen en la convocatoria de septiembre.",
+          cls=TextPresets.muted_sm) if not pid else "",
         mensaje_error(*errores),
         Div(campo("Nombre del proyecto", "nombre", required=True), cls="sm:col-span-2"),
         Div(Div(campo("Código", "codigo", placeholder="FONDECYT 1260001"), cls="sm:col-span-2"),
@@ -152,15 +174,6 @@ def form_datos(d, errores=(), pid=None, con_responsable=False):
                 Select(*[Option(t, value=v, selected=v == d.get("estado")) for v, t in proyectos.ESTADOS.items()],
                        id="estado", name="estado", cls="uk-select"), cls="space-y-2"),
             cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
-        Div(FormLabel("Responsable", fr="responsable_id"),
-            Select(Option("— Seleccione —", value=""),
-                   *[Option(f"{u['apellidos']}, {u['nombres']}", value=str(u["id"]),
-                            selected=str(u["id"]) == str(d.get("responsable_id") or ""))
-                     for u in investigadores],
-                   id="responsable_id", name="responsable_id", cls="uk-select"),
-            P("Podrá gestionar el proyecto y aprobar las propuestas de los participantes.",
-              cls=TextPresets.muted_sm),
-            cls="space-y-2") if con_responsable else "",
         Div(campo("Inicio", "fecha_inicio", type="date"), campo("Término", "fecha_fin", type="date"),
             cls="grid grid-cols-2 gap-4"),
         Div(Div(campo("Fuente de financiamiento", "fuente_financiamiento"), cls="sm:col-span-2"),
@@ -188,27 +201,23 @@ def _datos(nombre, codigo, estado, fecha_inicio, fecha_fin, fuente_financiamient
 
 @rt("/proyectos/nuevo")
 def get(auth):
-    if not auth["es_admin"]:
+    if not proyectos.puede_crear(auth):
         return Response("No autorizado", status_code=403)
-    return modal("Nuevo proyecto", form_datos({"estado": "vigente"}, con_responsable=True), ancho="max-w-2xl")
+    return modal("Nuevo proyecto individual", form_datos({"estado": "vigente"}), ancho="max-w-2xl")
 
 
 @rt("/proyectos")
 def post(auth, sess, nombre: str = "", codigo: str = "", estado: str = "", fecha_inicio: str = "",
          fecha_fin: str = "", fuente_financiamiento: str = "", monto: str = "", descripcion: str = "",
-         objetivo_general: str = "", responsable_id: str = ""):
-    if not auth["es_admin"]:
+         objetivo_general: str = ""):
+    if not proyectos.puede_crear(auth):
         return Response("No autorizado", status_code=403)
     d = _datos(nombre, codigo, estado, fecha_inicio, fecha_fin, fuente_financiamiento, monto,
                descripcion, objetivo_general)
     errores = proyectos.validar(d)
-    resp = usuarios.con_perfil(int(responsable_id)) if responsable_id.isdigit() else None
-    if not resp or not resp["es_investigador"] or not resp["activo"]:
-        errores.append("Seleccione un responsable (investigador activo).")
     if errores:
-        return modal("Nuevo proyecto", form_datos({**d, "responsable_id": responsable_id}, errores,
-                                                  con_responsable=True), ancho="max-w-2xl")
-    pid = proyectos.crear(d, resp["id"], auth["id"])
+        return modal("Nuevo proyecto individual", form_datos(d, errores), ancho="max-w-2xl")
+    pid = proyectos.crear(d, auth["id"], auth["id"], tipo="individual")
     auditar(auth["id"], "crear_proyecto", "proyecto", pid, d["nombre"])
     add_toast(sess, "Proyecto creado.", "success")
     return Redirect(f"/proyectos/{pid}")
@@ -316,8 +325,9 @@ def tab_participantes(p, auth):
     gestiona = proyectos.puede_gestionar(pid, auth)
     filas = []
     for x in proyectos.participantes(pid):
+        # El rol «responsable» no se asigna ni se quita aquí: lo reasigna la administración.
         roles_permitidos = {k: v for k, v in proyectos.ROLES.items()
-                            if auth["es_admin"] or (k != "responsable" and x["rol"] != "responsable")}
+                            if k != "responsable" and x["rol"] != "responsable"}
         if not x["interno"]:
             roles_permitidos = {k: v for k, v in roles_permitidos.items()
                                 if k not in proyectos.ROLES_RESPONSABLES}
@@ -328,7 +338,7 @@ def tab_participantes(p, auth):
                      hx_trigger="change", hx_target=f"#{ID_TAB}") if editable_rol \
             else Span(proyectos.ROLES[x["rol"]], cls="text-sm")
         accion = ""
-        if gestiona and (x["rol"] != "responsable" or auth["es_admin"]):
+        if gestiona and x["rol"] != "responsable":
             accion = fh.Button(
                 "Dar de baja" if x["vigente"] else "Reincorporar", type="button",
                 cls="text-sm text-primary hover:underline",
@@ -409,7 +419,7 @@ def post(auth, sess, pid: int, ext_nombres: str = "", ext_apellidos: str = "", e
         return _con_error(sess, "Nombres y apellidos son obligatorios.", p, auth)
     externo = personas.externo_similar(ext_nombres, ext_apellidos) or personas.crear_externo(
         ext_nombres, ext_apellidos, ext_institucion, ext_pais, auth["id"])
-    error = proyectos.agregar_participante(pid, f"e:{externo['id']}", "colaborador", auth["es_admin"])
+    error = proyectos.agregar_participante(pid, f"e:{externo['id']}", "colaborador", False)
     return _con_error(sess, error, p, auth)
 
 
@@ -420,7 +430,7 @@ def post(auth, sess, pid: int, ref: str = "", rol: str = "co_investigador"):
         return error
     if ref.startswith("e:") and rol == "co_investigador":
         rol = "colaborador"
-    error = proyectos.agregar_participante(pid, ref, rol, auth["es_admin"])
+    error = proyectos.agregar_participante(pid, ref, rol, False)
     if not error:
         auditar(auth["id"], "agregar_participante", "proyecto", pid, ref)
     return _con_error(sess, error, p, auth)
@@ -431,7 +441,7 @@ def post(auth, sess, pid: int, part_id: int, rol: str = ""):
     p, error = _proyecto_o_error(pid, auth, gestionar=True)
     if error:
         return error
-    error = proyectos.cambiar_rol(pid, part_id, rol, auth["es_admin"])
+    error = proyectos.cambiar_rol(pid, part_id, rol, False)
     if not error:
         auditar(auth["id"], "cambiar_rol", "proyecto", pid, f"{part_id}:{rol}")
     return _con_error(sess, error, p, auth)
@@ -442,7 +452,7 @@ def post(auth, sess, pid: int, part_id: int):
     p, error = _proyecto_o_error(pid, auth, gestionar=True)
     if error:
         return error
-    error = proyectos.dar_de_baja(pid, part_id, auth["es_admin"])
+    error = proyectos.dar_de_baja(pid, part_id, False)
     if not error:
         auditar(auth["id"], "baja_participante", "proyecto", pid, str(part_id))
     return _con_error(sess, error, p, auth)
@@ -731,17 +741,70 @@ def get(auth, pid: int, tab: str = "resumen"):
         p["nombre"],
         A(UkIcon("arrow-left", height=14, width=14), "Proyectos", href="/proyectos",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
-        Div(Div(Div(insignia(proyectos.ESTADOS[p["estado"]], TONO_ESTADO[p["estado"]]),
+        Div(Div(Div(insignia_tipo(p), insignia(proyectos.ESTADOS[p["estado"]], TONO_ESTADO[p["estado"]]),
                     Span(p["codigo"] or "", cls="font-mono text-sm text-muted-foreground"),
                     cls="flex items-center gap-2"),
                 A(UkIcon("file-text", height=14, width=14), "Informe", href=f"/proyectos/{pid}/informe",
                   cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1"),
                 cls="flex items-center justify-between gap-2"),
             H2(p["nombre"], cls="mt-2"),
-            P("Responsable: " + ", ".join(f"{r['nombres']} {r['apellidos']}" for r in responsables)
-              if responsables else "", cls=TextPresets.muted_sm),
+            Div(P("Responsable: " + ", ".join(f"{r['nombres']} {r['apellidos']}" for r in responsables)
+                  if responsables else "Sin responsable vigente.", cls=TextPresets.muted_sm),
+                fh.Button(UkIcon("user-cog", height=14, width=14), "Reasignar responsable", type="button",
+                          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline",
+                          hx_get=f"/proyectos/{pid}/responsable", hx_target=f"#{ID_MODAL}")
+                if proyectos.puede_reasignar(auth) else "",
+                cls="flex flex-wrap items-center gap-x-4 gap-y-1"),
             cls="mb-6"),
         nav_pestanas(p, auth, tab),
         # Las pestañas de actividades/productos se refrescan si se registra algo desde el modal.
         Div(_contenido_pestana(p, auth, tab), id=ID_TAB),
         usuario=auth, seccion="proyectos")
+
+
+# --- Reasignar responsable (administración) --------------------------------------------------------------
+
+def form_reasignar(p, errores=(), nuevo="", anterior="co_investigador"):
+    actuales = {r["id"] for r in proyectos.responsables(p["id"])}
+    candidatos = [u for u in usuarios.listar() if u["es_investigador"] and u["activo"] and u["id"] not in actuales]
+    return modal(
+        "Reasignar responsable",
+        Form(mensaje_error(*errores),
+             P("Úselo cuando el responsable deja el instituto o el proyecto cambia de manos. Los registros "
+               "ya aprobados siguen en el proyecto.", cls=TextPresets.muted_sm),
+             Div(FormLabel("Nuevo responsable", fr="nuevo"),
+                 Select(Option("— Seleccione —", value=""),
+                        *[Option(f"{u['apellidos']}, {u['nombres']}", value=str(u["id"]),
+                                 selected=str(u["id"]) == nuevo) for u in candidatos],
+                        id="nuevo", name="nuevo", cls="uk-select"), cls="space-y-2"),
+             Div(FormLabel("El responsable actual"),
+                 *[fh.Label(Input(type="radio", name="anterior", value=v, checked=v == anterior, cls="uk-radio"),
+                            Span(t, cls="text-sm"), cls="flex items-center gap-2")
+                   for v, t in (("co_investigador", "sigue en el proyecto como co-investigador(a)"),
+                                ("baja", "deja el proyecto (se le da de baja con fecha de hoy)"))],
+                 cls="space-y-2"),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                 Button("Reasignar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
+             hx_post=f"/proyectos/{p['id']}/responsable", hx_target=f"#{ID_MODAL}", cls="space-y-4"))
+
+
+@rt("/proyectos/{pid}/responsable")
+def get(auth, pid: int):
+    p = proyectos.obtener(pid)
+    if not p or not proyectos.puede_reasignar(auth):
+        return Response("No autorizado", status_code=403)
+    return form_reasignar(p)
+
+
+@rt("/proyectos/{pid}/responsable")
+def post(auth, sess, pid: int, nuevo: str = "", anterior: str = "co_investigador"):
+    p = proyectos.obtener(pid)
+    if not p or not proyectos.puede_reasignar(auth):
+        return Response("No autorizado", status_code=403)
+    error = proyectos.reasignar_responsable(pid, int(nuevo), anterior) if nuevo.isdigit() \
+        else "Seleccione al nuevo responsable."
+    if error:
+        return form_reasignar(p, [error], nuevo, anterior)
+    auditar(auth["id"], "reasignar_responsable", "proyecto", pid, f"{nuevo} (anterior: {anterior})")
+    add_toast(sess, "Responsable reasignado.", "success")
+    return Redirect(f"/proyectos/{pid}?tab=participantes")
