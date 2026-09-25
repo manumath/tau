@@ -110,7 +110,35 @@ Hay dos tipos de proyecto:
   responsable. No necesita aprobación. Sirve, por ejemplo, para un proyecto con financiamiento
   externo o una línea de trabajo propia.
 - **Institucional:** se propone en la convocatoria de septiembre y lo acepta la administración.
-  Rige de octubre a septiembre. *(La presentación de propuestas se habilitará próximamente.)*
+  Rige de octubre a septiembre.
+
+### Proyectos institucionales
+
+- **Quién propone:** investigadores titulares y contratados. Quien propone un proyecto nuevo
+  queda como su responsable.
+- **Cuándo:** la convocatoria de cada periodo está abierta todo septiembre (la administración
+  puede ampliar el plazo). El borrador se puede preparar en cualquier momento; solo el envío
+  debe hacerse dentro del plazo. «Proyectos» muestra la convocatoria abierta o la próxima.
+- **Cómo:** «Proponer proyecto institucional» crea un borrador. Complete sus secciones: datos
+  básicos y objetivos específicos, metodología, resultados esperados, actividades programadas
+  (con el mes previsto de cada una) y bibliografía. «Guardar borrador» guarda sin enviar; abajo
+  se indica qué falta. Agregue al equipo desde «Gestionar participantes».
+- **Después de enviar** no se puede modificar. La administración puede:
+  - *aceptarla*: el proyecto rige de octubre a septiembre;
+  - *aceptarla con condiciones*: el proyecto queda en espera; corrija la propuesta según las
+    condiciones y reenvíela (el reenvío no depende del plazo);
+  - *rechazarla*, con el motivo.
+  Recibirá la decisión por correo. Mientras no se decide, puede retirarla.
+- **Continuidad:** en septiembre, el responsable de un proyecto que termina ve un aviso y el botón
+  **«Proponer continuidad»** en el resumen del proyecto (y recibe un correo). La propuesta viene
+  precargada con la anterior: actualice los objetivos y ubique las actividades en el nuevo
+  calendario. **Si no la presenta, el proyecto concluye el 30 de septiembre.** Si la envió y
+  aún no se decide, el proyecto sigue vigente («En renovación») hasta la decisión.
+- **Equipo:** el responsable debe ser titular o contratado(a); los co-responsables, además,
+  pueden ser interinos.
+- En un proyecto institucional, el nombre, la descripción y los objetivos vienen de la propuesta
+  aceptada: se cambian en la propuesta de continuidad. Los datos administrativos (código,
+  financiamiento, monto) se editan en el resumen.
 
 ### Si participa en un proyecto
 
@@ -164,6 +192,10 @@ Menú «Informes»:
   - Activar o desactivar una cuenta; desactivarla cierra su sesión de inmediato.
   - **Categoría**: se cambia eligiéndola en la columna «Perfil» (queda en la auditoría). Las
     cuentas «Sin categoría» se destacan en ámbar; en el directorio hay un filtro para encontrarlas.
+- **Propuestas:** la bandeja de propuestas institucionales por periodo, con filtro por estado y el
+  contador de las que esperan decisión. En cada propuesta: aceptar, aceptar con condiciones
+  (indicándolas) o rechazar (con el motivo). En la misma página se ajusta el **plazo** de la
+  convocatoria (por omisión, todo septiembre) o se abre uno extraordinario.
 - **Proyectos:** la administración ve todos los proyectos (con filtro por tipo), pero no los
   gestiona: los datos, participantes y propuestas son de sus responsables. En la ficha de un
   proyecto, **«Reasignar responsable»** cambia al responsable (p. ej., si deja el instituto); el

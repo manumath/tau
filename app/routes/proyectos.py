@@ -17,10 +17,11 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app import actividades, personas, productos, proyectos, usuarios
+from app import actividades, institucionales, personas, productos, proyectos, usuarios
 from app.components import personas as ui_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import dato, enlace_persona, insignia
+from app.routes import propuestas as ui_propuestas
 from app.db import auditar, get_db
 
 rt = APIRouter()
@@ -30,6 +31,13 @@ PESTANAS = {"resumen": "Resumen", "participantes": "Participantes", "actividades
 ID_TAB = "tab-contenido"
 EVENTO_PENDIENTES = "pendientes-cambiados"
 TONO_ESTADO = {"formulacion": "ambar", "vigente": "verde", "finalizado": "gris"}
+
+
+def insignia_estado(p):
+    if institucionales.en_renovacion(p):
+        return insignia("En renovación", "ambar", icono="refresh-cw",
+                        titulo="Su continuidad está en revisión: sigue vigente hasta la decisión.")
+    return insignia(proyectos.ESTADOS[p["estado"]], TONO_ESTADO[p["estado"]])
 
 
 def insignia_tipo(p):
@@ -65,7 +73,7 @@ def _periodo(p):
 # --- Lista de proyectos ---------------------------------------------------------------------------
 
 def tarjeta(p):
-    extra = [insignia_tipo(p), insignia(proyectos.ESTADOS[p["estado"]], TONO_ESTADO[p["estado"]])]
+    extra = [insignia_tipo(p), insignia_estado(p)]
     if p.get("mi_rol"):
         extra.append(insignia(proyectos.ROLES[p["mi_rol"]] + ("" if p["vigente"] else " (anterior)"),
                               "azul", icono="user-round"))
@@ -123,11 +131,13 @@ def get(auth, q: str = "", tipo: str = ""):
             Button(UkIcon("plus", height=16, width=16), "Nuevo proyecto individual", cls=ButtonT.primary,
                    hx_get="/proyectos/nuevo", hx_target=f"#{ID_MODAL}") if proyectos.puede_crear(auth) else "",
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
+        ui_propuestas.aviso_convocatoria(auth) if auth["es_investigador"] else "",
         H3("Mis proyectos", cls="text-lg font-semibold mb-3") if auth["es_admin"] and auth["es_investigador"] else "",
         fh.Div(*[tarjeta(p) for p in mios], cls="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4")
         if mios else P("No participa en proyectos todavía.", cls=TextPresets.muted_sm)
         if auth["es_investigador"] else "",
         seccion_propuestas(auth["id"]),
+        ui_propuestas.seccion_mis_propuestas(auth) if auth["es_investigador"] else "",
     ]
     if auth["es_admin"]:
         todos = [p for p in proyectos.todos(q, tipo) if p["id"] not in {m["id"] for m in mios}]
@@ -159,10 +169,31 @@ def insignia_contador(n):
 
 # --- Alta y edición de datos -------------------------------------------------------------------------
 
+def form_datos_institucional(d, errores, pid):
+    """En un proyecto institucional, el nombre, la descripción, los objetivos y el periodo vienen de
+    la propuesta aceptada; aquí solo se editan datos administrativos."""
+    def campo(etiqueta, nombre, **kw):
+        return LabelInput(etiqueta, id=nombre, value="" if d.get(nombre) is None else d.get(nombre), **kw)
+    return Form(
+        P("Nombre, descripción, objetivos y periodo vienen de la propuesta aceptada: se cambian en la "
+          "propuesta de continuidad.", cls=TextPresets.muted_sm),
+        mensaje_error(*errores),
+        campo("Código", "codigo", placeholder="Código interno o de la agencia"),
+        Div(Div(campo("Fuente de financiamiento", "fuente_financiamiento"), cls="sm:col-span-2"),
+            campo(f"Monto ({d.get('moneda') or 'CLP'})", "monto", inputmode="numeric"),
+            cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, hx_get=f"/proyectos/{pid}/tab/resumen",
+                   hx_target=f"#{ID_TAB}"),
+            Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
+        hx_put=f"/proyectos/{pid}/datos", hx_target=f"#{ID_TAB}", cls="space-y-4")
+
+
 def form_datos(d, errores=(), pid=None):
     def campo(etiqueta, nombre, **kw):
         return LabelInput(etiqueta, id=nombre, value="" if d.get(nombre) is None else d.get(nombre), **kw)
 
+    if pid and d.get("tipo") == "institucional":
+        return form_datos_institucional(d, errores, pid)
     return Form(
         P("Usted quedará como responsable: podrá agregar participantes y aprobar sus propuestas. "
           "Los proyectos institucionales no se crean aquí: se proponen en la convocatoria de septiembre.",
@@ -239,6 +270,11 @@ def put(auth, sess, pid: int, nombre: str = "", codigo: str = "", estado: str = 
         return error
     d = _datos(nombre, codigo, estado, fecha_inicio, fecha_fin, fuente_financiamiento, monto,
                descripcion, objetivo_general)
+    if p["tipo"] == "institucional":
+        # Solo datos administrativos; el resto lo fija la propuesta aceptada.
+        d = {**{k: p[k] for k in ("nombre", "estado", "fecha_inicio", "fecha_fin", "descripcion",
+                                  "objetivo_general")},
+             **{k: d[k] for k in ("codigo", "fuente_financiamiento", "monto")}}
     errores = proyectos.validar({**d, "id": pid})
     if errores:
         return Card(H3("Editar datos del proyecto", cls="text-base font-semibold mb-4"),
@@ -252,9 +288,43 @@ def put(auth, sess, pid: int, nombre: str = "", codigo: str = "", estado: str = 
 
 # --- Pestaña: resumen y objetivos -----------------------------------------------------------------------
 
+def tarjeta_propuestas(p, auth):
+    """Proyectos institucionales: propuestas por periodo, continuidad y aviso de término."""
+    pid = p["id"]
+    props = institucionales.de_proyecto(pid)
+    periodo = institucionales.periodo_de_continuidad(p)
+    es_responsable = proyectos.rol_de(pid, auth["id"]) == "responsable"
+    siguiente = institucionales.de_proyecto_y_periodo(pid, periodo) if periodo is not None else None
+    pendiente = institucionales.pendiente_de_continuidad(p)
+    aviso = ""
+    if pendiente is not None and proyectos.puede_gestionar(pid, auth):
+        cierre = institucionales.plazo(pendiente)["cierra"]
+        aviso = Div(UkIcon("alarm-clock", height=16, width=16, cls="shrink-0"),
+                    Span(f"El proyecto termina el {institucionales.fecha_texto(p['fecha_fin'])}. Si no envía la "
+                         f"propuesta de continuidad antes del {institucionales.fecha_texto(cierre)}, concluye en esa fecha."),
+                    cls="flex gap-2 rounded-md border border-amber-300 bg-amber-50 text-amber-900 "
+                        "dark:bg-amber-950 dark:text-amber-200 p-3 text-sm mb-3")
+    boton = ""
+    if periodo is not None and p["estado"] != "finalizado" and es_responsable:
+        if siguiente:
+            boton = A(UkIcon("file-pen", height=14, width=14),
+                      f"Propuesta de continuidad {institucionales.periodo_texto(periodo)}",
+                      href=f"/propuestas/{siguiente['id']}", cls="uk-btn uk-btn-default uk-btn-sm inline-flex gap-1")
+        elif institucionales.puede_proponer(auth):
+            boton = Button(UkIcon("refresh-cw", height=14, width=14),
+                           f"Proponer continuidad {institucionales.periodo_texto(periodo)}",
+                           cls=(ButtonT.primary, ButtonT.sm), hx_post=f"/proyectos/{pid}/continuidad")
+    return Card(Div(H3("Propuestas institucionales", cls="text-base font-semibold"), boton,
+                    cls="flex flex-wrap justify-between items-center gap-2 mb-2"),
+                aviso,
+                ui_propuestas.lista_propuestas(props) if props
+                else P("Este proyecto no tiene propuestas registradas en el portal.", cls=TextPresets.muted_sm))
+
+
 def tab_resumen(p, auth):
     pid = p["id"]
     gestiona = proyectos.puede_gestionar(pid, auth)
+    institucional = p["tipo"] == "institucional"
     objetivos = proyectos.objetivos(pid)
     editados = [r for r in proyectos.registros(pid, "producto") + proyectos.registros(pid, "actividad")
                 if r["editado_despues"]]
@@ -263,7 +333,7 @@ def tab_resumen(p, auth):
                                       cls="p-1 rounded hover:bg-muted hover:text-red-600",
                                       hx_delete=f"/proyectos/{pid}/objetivos/{o['id']}",
                                       hx_target=f"#{ID_TAB}", hx_confirm="¿Quitar este objetivo?",
-                                      aria_label="Quitar objetivo") if gestiona else "",
+                                      aria_label="Quitar objetivo") if gestiona and not institucional else "",
                             cls="flex gap-2 items-start")) for o in objetivos],
                    cls="list-decimal pl-5 space-y-1") if objetivos \
         else P("Sin objetivos específicos registrados.", cls=TextPresets.muted_sm)
@@ -272,8 +342,9 @@ def tab_resumen(p, auth):
               aria_label="Nuevo objetivo específico"),
         Button("Agregar", type="submit", cls=(ButtonT.default, ButtonT.sm)),
         hx_post=f"/proyectos/{pid}/objetivos", hx_target=f"#{ID_TAB}",
-        cls="flex gap-2 mt-3") if gestiona else ""
+        cls="flex gap-2 mt-3") if gestiona and not institucional else ""
     return Div(
+        tarjeta_propuestas(p, auth) if institucional else "",
         Card(Div(H3("Datos", cls="text-base font-semibold"),
                  Button(UkIcon("pencil", height=14, width=14), "Editar", cls=(ButtonT.ghost, ButtonT.sm),
                         hx_get=f"/proyectos/{pid}/datos/editar", hx_target=f"#{ID_TAB}")
@@ -304,6 +375,8 @@ def post(auth, pid: int, texto: str = ""):
     p, error = _proyecto_o_error(pid, auth, gestionar=True)
     if error:
         return error
+    if p["tipo"] == "institucional":
+        return Response("Los objetivos de un proyecto institucional se cambian en su propuesta.", status_code=403)
     if texto.strip():
         proyectos.agregar_objetivo(pid, texto)
     return tab_resumen(p, auth)
@@ -314,6 +387,8 @@ def delete(auth, pid: int, oid: int):
     p, error = _proyecto_o_error(pid, auth, gestionar=True)
     if error:
         return error
+    if p["tipo"] == "institucional":
+        return Response("Los objetivos de un proyecto institucional se cambian en su propuesta.", status_code=403)
     proyectos.quitar_objetivo(pid, oid)
     return tab_resumen(p, auth)
 
@@ -741,7 +816,7 @@ def get(auth, pid: int, tab: str = "resumen"):
         p["nombre"],
         A(UkIcon("arrow-left", height=14, width=14), "Proyectos", href="/proyectos",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
-        Div(Div(Div(insignia_tipo(p), insignia(proyectos.ESTADOS[p["estado"]], TONO_ESTADO[p["estado"]]),
+        Div(Div(Div(insignia_tipo(p), insignia_estado(p),
                     Span(p["codigo"] or "", cls="font-mono text-sm text-muted-foreground"),
                     cls="flex items-center gap-2"),
                 A(UkIcon("file-text", height=14, width=14), "Informe", href=f"/proyectos/{pid}/informe",

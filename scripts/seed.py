@@ -7,12 +7,15 @@ Las contraseñas de demostración son fijas para poder probar el portal; en
 producción las cuentas se crean desde Administración → Usuarios.
 """
 import shutil
+from datetime import date
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import actividades, config, perfiles, personas, productos, proyectos, usuarios  # noqa: E402
+import json  # noqa: E402
+
+from app import actividades, config, institucionales, perfiles, personas, productos, proyectos, usuarios  # noqa: E402
 from app.db import get_db  # noqa: E402
 from app.db import init_db  # noqa: E402
 
@@ -133,7 +136,7 @@ def _cargar_proyectos():
                 fecha_fin=None)
     algebra = proyectos.crear({**base, "codigo": "FONDECYT 1260001", "estado": "vigente",
                                "nombre": "Estructuras algebraicas y computación",
-                               "fecha_inicio": "2026-03-01", "fecha_fin": "2029-02-28",
+                               "fecha_inicio": "2025-10-01", "fecha_fin": "2026-09-30",
                                "fuente_financiamiento": "FONDECYT Regular", "monto": 180000000,
                                "descripcion": "Estudio de invariantes algebraicos de modelos de cómputo "
                                               "y de anillos noetherianos asociados.",
@@ -172,7 +175,75 @@ def _cargar_proyectos():
     reporte = id_de("producto", "Sobre números computables: notas del seminario")
     proyectos.sincronizar("producto", reporte, [algebra], {"id": alan})
     proyectos.rechazar("producto", reporte, algebra, emmy,
-                       "Es de 2025, anterior al inicio del proyecto: no corresponde incluirlo.")
+                       "Es un trabajo previo de lógica: no corresponde a los objetivos del proyecto.")
+    return True
+
+
+def _cargar_institucionales():
+    """Propuestas de ejemplo (solo si aún no hay ninguna). True si las cargó.
+
+    - FONDECYT 1260001 (Emmy): aceptado para el periodo 2025–2026, que termina el 30 de septiembre
+      de 2026: sirve para ver el aviso y la propuesta de continuidad.
+    - «Sistemas integrables…» (Sofía): propuesta nueva enviada, para decidir desde la
+      administración.
+    """
+    db = get_db()
+    if db.q("SELECT 1 FROM propuesta_institucional LIMIT 1"):
+        return False
+    algebra = db.q("SELECT * FROM proyecto WHERE codigo = 'FONDECYT 1260001' AND tipo = 'institucional'")
+    if not algebra:
+        return False
+    algebra = algebra[0]
+    emmy = usuarios.por_email("emmy.noether@instituto.test")["id"]
+    sofia = usuarios.por_email("sofia.kovalevskaya@instituto.test")["id"]
+    admin = usuarios.por_email(ADMIN["email"])["id"]
+
+    def propuesta(pid, periodo, proponente, contenido, objetivos, actividades, estado):
+        prop = db.t.propuesta_institucional.insert(proyecto_id=pid, periodo=periodo, modalidad="nuevo",
+                                                   proponente_id=proponente, **contenido)["id"]
+        for i, texto in enumerate(objetivos):
+            db.t.propuesta_objetivo.insert(propuesta_id=prop, orden=i, texto=texto)
+        for i, (mes, texto) in enumerate(actividades):
+            db.t.propuesta_actividad_prevista.insert(propuesta_id=prop, orden=i, descripcion=texto, mes_previsto=mes)
+        copia = json.dumps(institucionales.copia(institucionales.obtener(prop)), ensure_ascii=False)
+        db.execute("""UPDATE propuesta_institucional SET estado = 'enviada', envios = 1,
+                      enviada_en = datetime('now', '-3 days'), copia_enviada = ? WHERE id = ?""", [copia, prop])
+        db.t.propuesta_evento.insert(propuesta_id=prop, accion="enviada", usuario_id=proponente)
+        if estado == "aceptada":
+            db.execute("""UPDATE propuesta_institucional SET estado = 'aceptada', decidida_por = ?,
+                          decidida_en = datetime('now') WHERE id = ?""", [admin, prop])
+            db.t.propuesta_evento.insert(propuesta_id=prop, accion="aceptada", usuario_id=admin)
+        return prop
+
+    propuesta(algebra["id"], 2025, emmy,
+              dict(nombre=algebra["nombre"], descripcion=algebra["descripcion"],
+                   objetivo_general=algebra["objetivo_general"],
+                   metodologia="Asociamos a cada máquina de estados finitos un anillo de invariantes "
+                               "$R_M = k[x_1, \\dots, x_n]^{G_M}$ y estudiamos su estructura con técnicas de "
+                               "álgebra conmutativa (bases de Gröbner, series de Hilbert).",
+                   resultados_esperados="Dos artículos en revistas indexadas y una tesis doctoral en curso.",
+                   bibliografia="Noether, E. (1921). Idealtheorie in Ringbereichen. Math. Ann. 83.\n"
+                                "Turing, A. M. (1936). On computable numbers. Proc. London Math. Soc."),
+              [o["texto"] for o in proyectos.objetivos(algebra["id"])],
+              [("2025-10", "Seminario de lanzamiento del proyecto"), ("2026-01", "Escuela de verano de álgebra"),
+               ("2026-06", "Visita al grupo de Lógica")], "aceptada")
+    institucionales.refrescar_vigencias(algebra["id"])
+
+    periodo = institucionales.periodo_objetivo()
+    pid = db.t.proyecto.insert(nombre="Sistemas integrables y geometría de trompos", estado="formulacion",
+                               tipo="institucional", fecha_inicio=institucionales.inicio(periodo),
+                               fecha_fin=institucionales.fin(periodo), creado_por=sofia)["id"]
+    db.t.proyecto_participante.insert(proyecto_id=pid, investigador_id=sofia, rol="responsable",
+                                      fecha_desde=date.today().isoformat())
+    propuesta(pid, periodo, sofia,
+              dict(nombre="Sistemas integrables y geometría de trompos",
+                   descripcion="Clasificación de los casos integrables del movimiento de un sólido rígido.",
+                   objetivo_general="Describir geométricamente las soluciones del trompo de Kovalévskaya.",
+                   metodologia="Funciones theta hiperelípticas y métodos de Lax.",
+                   resultados_esperados="Un artículo y un curso de posgrado.",
+                   bibliografia="Kowalevski, S. (1889). Sur le problème de la rotation d'un corps solide. Acta Math. 12."),
+              ["Reobtener la cuarta integral con pares de Lax.", "Visualizar las soluciones."],
+              [(f"{periodo}-11", "Curso de posgrado"), (f"{periodo + 1}-05", "Taller internacional")], "enviada")
     return True
 
 
@@ -220,6 +291,7 @@ def main():
 
     produccion = _cargar_produccion()
     con_proyectos = _cargar_proyectos()
+    con_propuestas = _cargar_institucionales()
     # Bases creadas antes de los tipos de proyecto: el FONDECYT de ejemplo es institucional.
     tipos = get_db().q("""SELECT id FROM proyecto WHERE codigo = 'FONDECYT 1260001'
                           AND tipo = 'individual'""")
@@ -229,7 +301,7 @@ def main():
         print("El proyecto de ejemplo FONDECYT 1260001 quedó como institucional.")
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
-    if not creados and not produccion and not con_proyectos and not categorias and not tipos:
+    if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:
@@ -238,6 +310,9 @@ def main():
             print(f"  {email:40} {pw:20} {rol}")
     if produccion:
         print("Actividades y productos de ejemplo cargados (Emmy Noether y Alan Turing).")
+    if con_propuestas:
+        print("Propuestas institucionales de ejemplo: FONDECYT 1260001 aceptado (termina el 30 de septiembre) "
+              "y una propuesta nueva de Sofía por decidir.")
     if con_proyectos:
         print("Proyectos de ejemplo cargados: Emmy es responsable de uno (con propuestas pendientes "
               "de Alan) y co-investigadora en otro de Sofía.")

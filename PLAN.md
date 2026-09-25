@@ -18,7 +18,7 @@ proyecto aparece a la vez en el proyecto y en el perfil de quien lo dictó.
 
 | Rol | Cómo se obtiene | Qué puede hacer |
 |---|---|---|
-| **Administración** | Indicador `es_admin` de la cuenta | Crea cuentas (una a una, por CSV o con invitación), asigna la categoría de cada investigador(a), activa, desactiva, desbloquea y restablece; ve todos los proyectos y reasigna su responsable (no los gestiona); ve la memoria anual, la auditoría y el CV de cualquier investigador |
+| **Administración** | Indicador `es_admin` de la cuenta | Crea cuentas (una a una, por CSV o con invitación), asigna la categoría de cada investigador(a), activa, desactiva, desbloquea y restablece; decide las propuestas institucionales y fija el plazo de cada convocatoria; ve todos los proyectos y reasigna su responsable (no los gestiona); ve la memoria anual, la auditoría y el CV de cualquier investigador |
 | **Investigador(a)** | La cuenta tiene fila en `investigador`, con una categoría: titular, contratado(a), interino(a), invitado(a) o externo(a) | Edita su perfil; registra actividades y productos; crea proyectos individuales y participa en proyectos; genera su CV |
 | **Responsable / co-responsable** | Rol dentro de un proyecto | Edita el proyecto y sus participantes; aprueba o rechaza propuestas; vincula registros directamente |
 | **Participante** | Rol dentro de un proyecto (co-investigador, postdoc, tesista, colaborador) | Ve el proyecto; propone sus actividades y productos |
@@ -90,7 +90,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0009` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0010` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -121,6 +121,14 @@ adjunto(id, entidad, entidad_id, nombre, archivo, mime, tamano, subido_por, subi
 proyecto(id, codigo, nombre, descripcion, objetivo_general, fuente_financiamiento, monto,
          moneda, fecha_inicio, fecha_fin, estado, creado_por, creado_en, actualizado_en, tipo)
 proyecto_objetivo(id, proyecto_id, orden, texto)
+convocatoria(periodo, abre, cierra, actualizado_por, actualizado_en)
+propuesta_institucional(id, proyecto_id, periodo, modalidad, nombre, descripcion, objetivo_general,
+        metodologia, resultados_esperados, bibliografia, estado, proponente_id, creada_en,
+        actualizada_en, enviada_en, envios, copia_enviada, decidida_por, decidida_en, comentario)
+propuesta_objetivo(id, propuesta_id, orden, texto)
+propuesta_actividad_prevista(id, propuesta_id, orden, descripcion, mes_previsto)
+propuesta_evento(id, propuesta_id, accion, comentario, usuario_id, fecha)
+aviso_enviado(clave, fecha)
 proyecto_participante(id, proyecto_id, investigador_id | externo_id, rol, fecha_desde, fecha_hasta)
 actividad_proyecto(actividad_id, proyecto_id, estado, responsable_participante_id,
                    propuesto_por, propuesto_en, revisado_por, revisado_en, comentario)
@@ -161,7 +169,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-218 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+237 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -320,8 +328,24 @@ ligados a un proyecto institucional. Desglose por categoría y columna de catego
 |---|---|---|
 | A | Categorías: migración, cuentas (alta, CSV, cambio desde el listado), perfil, directorio con filtro, memoria | ✔ |
 | B | Tipo de proyecto: individuales creados por investigadores, ajuste de permisos de la administración, listados; regla de externos en la memoria | ✔ |
-| C | Propuestas institucionales: formulario, borrador y envío, convocatoria y plazos, bandeja de decisión, condiciones, continuidad, vigencia automática, avisos | Pendiente |
+| C | Propuestas institucionales: formulario, borrador y envío, convocatoria y plazos, bandeja de decisión, condiciones, continuidad, vigencia automática, avisos | ✔ |
 | D | Informes: memoria por periodo oct–sep y por rango; exportar las propuestas de una convocatoria (XLSX); actividades previstas frente a realizadas | Pendiente |
+
+**Detalles de la etapa C:**
+
+- Una propuesta nueva crea el proyecto «En formulación» y su responsable es quien propone. Si el
+  borrador se elimina y el proyecto no tiene otra historia, se elimina también.
+- La propuesta guarda su propio contenido (nombre, descripción, objetivos, etc.). Al aceptarse,
+  los datos básicos y los objetivos pasan al proyecto; en un proyecto institucional no se editan
+  directamente (sí el código, el financiamiento y el monto).
+- Al enviar se congela una copia (`copia_enviada`): si la propuesta queda condicional y se está
+  corrigiendo, la administración sigue viendo la última versión enviada.
+- Una propuesta rechazada de un proyecto nuevo deja el proyecto en formulación (se puede volver a
+  proponer en otra convocatoria).
+- La vigencia se recalcula al arrancar, a lo más una vez por hora (Beforeware) y tras cada
+  decisión. Los recordatorios de continuidad se envían una vez por proyecto y periodo.
+- Datos de ejemplo: el FONDECYT 1260001 (Emmy) aceptado para 2025–2026 (termina el 30 de
+  septiembre) y una propuesta nueva de Sofía por decidir.
 
 Nota: la convocatoria de septiembre de 2026 cierra el 30; lo realista es que el piloto use la
 de septiembre de 2027, o que la administración abra un plazo extraordinario.

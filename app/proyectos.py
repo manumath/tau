@@ -139,6 +139,21 @@ def _n_responsables(pid: int, excluir: int | None = None) -> int:
                          AND id IS NOT ?""", [pid, excluir])[0]["n"]
 
 
+def error_categoria(pid: int, uid: int | None, rol: str) -> str | None:
+    """En proyectos institucionales: responsables titulares o contratados; co-responsables,
+    además, interinos."""
+    from app import perfiles
+    proyecto = obtener(pid)
+    if not proyecto or proyecto["tipo"] != "institucional" or rol not in ROLES_RESPONSABLES or not uid:
+        return None
+    cat = (perfiles.obtener(uid) or {}).get("categoria")
+    if rol == "responsable" and cat not in perfiles.CATEGORIAS_RESPONSABLES:
+        return "En un proyecto institucional, el responsable debe ser titular o contratado(a)."
+    if rol == "co_responsable" and cat not in perfiles.CATEGORIAS_CO_RESPONSABLES:
+        return "En un proyecto institucional, los co-responsables deben ser titulares, contratados o interinos."
+    return None
+
+
 def agregar_participante(pid: int, ref: str, rol: str, es_admin: bool) -> str | None:
     """Devuelve un mensaje de error o None si se agregó."""
     if rol not in ROLES:
@@ -155,6 +170,8 @@ def agregar_participante(pid: int, ref: str, rol: str, es_admin: bool) -> str | 
         return "Esa persona ya participa en el proyecto."
     if rol in ROLES_RESPONSABLES and cols["externo_id"]:
         return "Los responsables deben tener cuenta en el portal."
+    if error := error_categoria(pid, cols["investigador_id"], rol):
+        return error
     get_db().t.proyecto_participante.insert(proyecto_id=pid, rol=rol, fecha_desde=_hoy(), **cols)
     return None
 
@@ -169,6 +186,8 @@ def cambiar_rol(pid: int, part_id: int, rol: str, es_admin: bool) -> str | None:
         return "El proyecto debe tener al menos un responsable. Asigne otro antes."
     if rol in ROLES_RESPONSABLES and p["externo_id"]:
         return "Los responsables deben tener cuenta en el portal."
+    if error := error_categoria(pid, p["investigador_id"], rol):
+        return error
     get_db().t.proyecto_participante.update(id=part_id, rol=rol)
     return None
 
@@ -196,6 +215,8 @@ def reasignar_responsable(pid: int, nuevo_uid: int, anterior: str) -> str | None
         return "El responsable debe ser un investigador(a) con cuenta activa."
     if anterior not in ("co_investigador", "baja"):
         return "Indique qué pasa con el responsable anterior."
+    if error := error_categoria(pid, nuevo_uid, "responsable"):
+        return error
     db = get_db()
     actuales = [r for r in responsables(pid) if r["id"] != nuevo_uid]
     if not actuales and rol_de(pid, nuevo_uid) == "responsable":

@@ -19,7 +19,8 @@ memoria anual. Hecho con [FastHTML](https://fastht.ml), HTMX, MonsterUI y SQLite
   resumen con LaTeX; directorio interno y perfil público opcional.
 - **Productos y actividades:** autores del instituto y externos, nivel de revisión e índices,
   detección de duplicados, adjuntos; importación desde DOI (Crossref), arXiv y BibTeX.
-- **Proyectos:** individuales (los crea cada investigador) e institucionales; participantes, objetivos y flujo *propuesta → aprobación* de actividades y
+- **Proyectos:** individuales (los crea cada investigador) e institucionales (propuesta anual en la
+  convocatoria de septiembre, con decisión de la administración y continuidad); participantes, objetivos y flujo *propuesta → aprobación* de actividades y
   productos, con bandeja de pendientes y avisos por correo.
 - **Informes:** CV, informe de proyecto y memoria anual imprimibles; descargas XLSX, CSV y BibTeX.
 - **Administración:** cuentas, proyectos, auditoría. **API JSON** de solo lectura para perfiles públicos.
@@ -32,7 +33,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 218 pruebas
+uv run pytest                            # 237 pruebas
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan
@@ -75,12 +76,13 @@ app/
   productos.py                 productos, autores, reglas de revisión e informe, DOI/arXiv, citas
   adjuntos.py                  adjuntos validados por contenido
   proyectos.py                 proyectos, permisos y flujo propuesta → aprobación
+  institucionales.py           proyectos institucionales: periodos, convocatorias, propuestas y vigencia
   importacion.py               importación desde Crossref y arXiv; reconocimiento de autores
   bibtex.py                    importar y exportar BibTeX
   informes.py                  datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
   components/                  layout (página, navegación, modal), perfil, personas, registros, errores
   routes/                      un APIRouter por área: inicio, perfil, investigadores, actividades,
-                               productos, bibtex, personas, adjuntos, proyectos, informes,
+                               productos, bibtex, personas, adjuntos, propuestas, proyectos, informes,
                                publico (+ API), admin_usuarios, admin_auditoria
 catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar

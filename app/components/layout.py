@@ -56,6 +56,10 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
     if usuario["es_investigador"] or usuario["es_admin"]:
         enlaces.append(_enlace("Informes", "/informes", "file-text", seccion == "informes"))
     if usuario["es_admin"]:
+        contador = Span(id="badge-propuestas", cls="hidden", hx_get="/admin/propuestas/contador",
+                        hx_trigger="load", hx_swap="outerHTML")
+        enlaces.append(_enlace("Propuestas", "/admin/propuestas", "landmark", seccion == "propuestas",
+                               extra=contador))
         enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
     enlaces.append(_menu_usuario(usuario))
     marca = A(DivHStacked(UkIcon("sigma", height=26, width=26),
