@@ -44,10 +44,20 @@ def categoria_texto(categoria: str | None) -> str:
 
 
 def cambiar_categoria(uid: int, categoria: str | None):
-    """Solo la administración (lo controla la ruta). `categoria` debe estar en CATEGORIAS o ser None."""
+    """Corrige la categoría del vínculo vigente (o crea uno con ingreso desconocido). None quita el
+    periodo vigente. Para un cambio con fecha (ascenso, término), use app.vinculos."""
+    from app import vinculos
     if categoria is not None and categoria not in CATEGORIAS:
         raise ValueError(f"Categoría no válida: {categoria}")
-    get_db().execute("UPDATE investigador SET categoria = ? WHERE usuario_id = ?", [categoria, uid])
+    actual = vinculos.vigente(uid)
+    if categoria is None:
+        if actual:
+            vinculos.eliminar(actual["id"])
+    elif actual:
+        get_db().execute("UPDATE vinculo SET categoria = ? WHERE id = ?", [categoria, actual["id"]])
+    else:
+        vinculos.agregar(uid, categoria)
+    vinculos.sincronizar_categoria(uid)
 
 
 def actualizar_identificadores(uid: int, valores: dict):

@@ -90,7 +90,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0011` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0012` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -98,6 +98,7 @@ usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar
 investigador(usuario_id, grado, cargo, unidad, orcid, mr_id, zbmath_id, arxiv_id, scholar_url,
              pagina_web, bio, foto, perfil_publico, actualizado_en, categoria)
 investigador_msc(usuario_id, codigo, principal, orden)
+vinculo(id, usuario_id, categoria, fecha_inicio, fecha_fin, jornada_horas, nota, creado_por, creado_en)
 msc(codigo, nivel, texto, texto_plano, descripcion)              -- MSC2020, 6.603 códigos
 intento_login(id, email, ip, exito, fecha)
 token_acceso(id, usuario_id, token_hash, proposito, expira_en, usado_en, creado_en)
@@ -169,7 +170,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-258 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+272 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -361,3 +362,59 @@ ligados a un proyecto institucional. Desglose por categoría y columna de catego
 
 Nota: la convocatoria de septiembre de 2026 cierra el 30; lo realista es que el piloto use la
 de septiembre de 2027, o que la administración abra un plazo extraordinario.
+
+## 12. Filiación y periodo de pertenencia (en curso)
+
+Para que las cifras institucionales resistan una revisión externa, un producto o actividad cuenta
+para el instituto solo si **al menos un autor o participante del instituto**:
+
+1. tenía **vínculo vigente** con el instituto en la fecha del producto (año y mes de publicación)
+   o de la actividad (fecha de inicio), y
+2. en productos, **firmó con la filiación del instituto**.
+
+La producción anterior al ingreso se registra en el perfil y el CV, pero no cuenta en los informes
+institucionales.
+
+### Respuestas del instituto
+
+| Tema | Respuesta |
+|---|---|
+| Institución | El Instituto de Investigación Matemática (IIMAT) es parte de la Carrera de Matemática (CMAT), de la Facultad de Ciencias Puras y Naturales (FCPN) de la Universidad Mayor de San Andrés (UMSA), Bolivia. |
+| Qué filiación vale | IIMAT o cualquiera de las instancias que lo contienen, incluida la UMSA. Vale la doble filiación. |
+| Producción anterior al ingreso | Se registra en el perfil, pero no cuenta en los informes institucionales. Cuenta si hay vínculo en la fecha **y** filiación. |
+| Invitados y externos | Como ahora: los externos figuran si están ligados a un proyecto institucional. |
+| Desactivar una cuenta | El portal pregunta si también termina el vínculo y en qué fecha. |
+| Datos históricos | Los tiene Recursos Humanos; hay varios periodos por persona (ingreso y cambios de categoría). |
+| Informes de proyecto | Los fondos exigen filiación **y** que la publicación agradezca al proyecto. |
+
+### Diseño
+
+- `vinculo(id, usuario_id, categoria, fecha_inicio, fecha_fin, jornada_horas, nota, …)`:
+  periodos sin superposición. `fecha_inicio` vacía = ingreso desconocido (se trata como «desde
+  siempre» y los informes lo advierten). `jornada_horas` queda lista para indicadores por jornada.
+  `investigador.categoria` pasa a ser la categoría del vínculo vigente (se recalcula sola).
+- Los informes usan la **categoría a la fecha** de cada producto o actividad.
+- Un producto sin mes cuyo año solo en parte cae dentro del vínculo del autor queda «por
+  confirmar», como en la memoria por periodo.
+- `producto_autor.filiacion_instituto` (sí / no / sin declarar), con detección al importar según
+  los nombres del instituto (IIMAT, CMAT, FCPN, UMSA y sus nombres completos).
+- `producto_proyecto.agradece` (sí / no / sin declarar): la publicación agradece al proyecto.
+
+**Detalles de E1:**
+
+- Las cuentas que ya tenían categoría recibieron un periodo vigente sin fecha de ingreso. La
+  memoria advierte quiénes no tienen fecha de ingreso y quiénes no tienen vínculo registrado (su
+  producción no cuenta).
+- En la memoria, el resumen por investigador incluye a quienes estuvieron vinculados en el periodo
+  aunque ya no lo estén (con «hasta …»), con su categoría al final del periodo. El desglose por
+  categoría cuenta cada registro con la categoría de sus autores a la fecha.
+- La carga de cuentas por CSV acepta además `fecha_ingreso`.
+- Pendiente de decidir: el cálculo por jornada (punto 3 del análisis) ya tiene el dato.
+
+### Etapas
+
+| Etapa | Contenido | Estado |
+|---|---|---|
+| E1 | Historial de vínculo: migración, ventana «Vínculo» en la administración, carga del historial por CSV (reemplaza el de cada persona del archivo), pregunta al desactivar, perfil, reglas de vínculo y categoría a la fecha en la memoria | ✔ |
+| E2 | Filiación: casilla por autor, detección al importar, filtro y confirmación masiva, «por confirmar» en la memoria | Pendiente |
+| E3 | Agradecimiento al proyecto, informe de proyecto con filiación y agradecimiento, datos de ejemplo y documentación | Pendiente |

@@ -511,6 +511,8 @@ def mantenimiento(forzar: bool = False):
     if not forzar and time.monotonic() - _ultimo_mantenimiento < 3600:
         return
     _ultimo_mantenimiento = time.monotonic()
+    from app import vinculos
+    vinculos.sincronizar_categoria()  # un vínculo con fecha de término deja de estar vigente
     refrescar_vigencias()
     recordatorios()
 

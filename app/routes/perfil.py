@@ -15,7 +15,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
 
-from app import fotos, msc, perfiles, usuarios
+from app import fotos, msc, perfiles, usuarios, vinculos
 from app.components.layout import mensaje_error, pagina
 from app.components.perfil import (avatar, chip_msc, lista_identificadores, seccion,
                                    texto_con_parrafos)
@@ -71,7 +71,7 @@ def vista_datos(p):
     return seccion("seccion-datos", "Datos básicos",
                    fila("Nombre", f"{p['nombres']} {p['apellidos']}"),
                    fila("Correo", p["email"]),
-                   fila("Categoría", perfiles.categoria_texto(p["categoria"])),
+                   fila("Vínculo", vinculos.resumen(p["id"]) or "Sin vínculo vigente con el instituto"),
                    fila("Grado académico", p["grado"]),
                    fila("Cargo", p["cargo"]),
                    fila("Unidad o grupo", p["unidad"]),

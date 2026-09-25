@@ -34,7 +34,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 258 pruebas
+uv run pytest                            # 272 pruebas
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan
@@ -69,6 +69,8 @@ app/
   correo.py                    envío de correo (archivo .eml, SMTP, memoria para pruebas)
   avisos.py                    avisos por correo del flujo de proyectos
   perfiles.py                  perfil, áreas MSC, completitud y directorio
+  vinculos.py                  historial de vínculo con el instituto (categoría por periodo)
+  importar_vinculos.py         carga del historial de vínculos desde un CSV de Recursos Humanos
   identificadores.py           ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
   msc.py                       búsqueda en el catálogo MSC2020
   fotos.py                     recorte y limpieza de fotos (Pillow)

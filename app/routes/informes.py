@@ -323,9 +323,13 @@ def documento_memoria(m):
         H1(m["titulo"]),
         P(f"Del {informes._fecha_corta(m['desde'])} al {informes._fecha_corta(m['hasta'])}.", cls="apagado text-sm")
         if "anio" not in m["params"] else "",
+        Div(*[P(a, cls="text-sm") for a in m["avisos"]],
+            cls="rounded-md border border-amber-300 bg-amber-50 text-amber-900 p-3 mt-3 space-y-1 no-imprimir")
+        if m["avisos"] else "",
         P("Productos que cuentan: indexados o arbitrados, aceptados o publicados en el periodo, con al menos "
-          "un autor del instituto. Cada producto se cuenta una vez. La producción de investigadores "
-          "externos figura solo si está ligada a un proyecto institucional.", cls="apagado text-sm"),
+          "un autor vinculado al instituto en la fecha de publicación (con la categoría de ese momento). "
+          "Cada producto se cuenta una vez. La producción de investigadores externos figura solo si está "
+          "ligada a un proyecto institucional.", cls="apagado text-sm"),
         Div(_cifra(m["n_indexados"], "indexados"), _cifra(m["n_arbitrados"], "arbitrados"),
             _cifra(len(m["actividades"]), "actividades"),
             _cifra(m["por_ambito"].get("internacional", 0), "internacionales"),
@@ -346,16 +350,18 @@ def documento_memoria(m):
         H2("Por investigador"),
         Table(Thead(Tr(Th("Investigador(a)"), Th("Categoría"), Th("Productos que cuentan", cls="text-right"),
                        Th("Actividades", cls="text-right"))),
-              Tbody(*[Tr(Td(f"{x['apellidos']}, {x['nombres']}"), Td(perfiles.categoria_texto(x["categoria"])),
+              Tbody(*[Tr(Td(f"{x['apellidos']}, {x['nombres']}",
+                            Span(f" (hasta {x['hasta']})", cls="apagado") if x.get("hasta") else ""),
+                         Td(perfiles.categoria_texto(x["categoria"])),
                          Td(str(x["productos"]), cls="text-right"),
                          Td(str(x["actividades"]), cls="text-right")) for x in m["por_investigador"]])),
         H2(f"Productos ({len(m['productos'])})"),
         Ol(*[cita(x) for x in m["productos"]], cls="citas") if m["productos"]
         else P("No hay productos que cuenten en el periodo.", cls="apagado"),
-        Div(H2(f"Por confirmar: productos sin mes de publicación ({len(m['por_confirmar'])})"),
-            P("Su año cae solo en parte dentro del periodo: no se cuentan hasta completar el mes de "
-              "publicación en cada producto.", cls="apagado text-sm"),
-            Ol(*[cita(x) for x in m["por_confirmar"]], cls="citas")) if m["por_confirmar"] else "",
+        Div(H2(f"Por confirmar ({len(m['por_confirmar'])})"),
+            P("No se cuentan hasta completar el mes de publicación de cada producto.", cls="apagado text-sm"),
+            Ol(*[Li(cita(x), Span(f" — {x['motivo']}", cls="apagado")) for x in m["por_confirmar"]], cls="citas"))
+        if m["por_confirmar"] else "",
         H2(f"Actividades ({len(m['actividades'])})"),
         Ul(*[Li(Span(actividades.fechas_texto(a), cls="apagado"), " — ", a["titulo"],
                 Span(f" · {a['tipo']} · {actividades.AMBITOS[a['ambito']].lower()}", cls="apagado"))

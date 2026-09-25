@@ -15,7 +15,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
-from app import actividades, institucionales, perfiles, productos, proyectos
+from app import actividades, institucionales, perfiles, productos, proyectos, vinculos
 from app.db import get_db
 
 # Categorías del CV, en orden de aparición. La primera que corresponde es la que se usa.
@@ -152,22 +152,28 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
     dentro del rango (p. ej., 2026 en el periodo oct 2026 – sept 2027) no se cuenta: queda en
     `por_confirmar`, para completar su mes.
 
-    Regla de los externos: la producción de investigadores de categoría «Externo» figura solo si
-    está aprobada en un proyecto institucional vigente en el periodo. Un producto o actividad
-    cuenta si tiene al menos un autor o participante del instituto que no sea externo, o si está
-    ligado a un proyecto institucional.
+    Un autor o participante del instituto figura con un registro si tenía **vínculo** en su fecha
+    (año y mes de publicación; inicio de la actividad), con la categoría de ese momento. Si era
+    «Externo», además el registro debe estar aprobado en un proyecto institucional vigente en el
+    periodo. Un registro cuenta si al menos una persona figura. Un producto sin mes cuyo año el
+    vínculo cubre solo en parte queda «por confirmar».
     """
     periodo_memoria = rango(anio, periodo, desde, hasta)
     desde, hasta = periodo_memoria["desde"], periodo_memoria["hasta"]
-    # Todas las cuentas de investigador (también inactivas): sus registros cuentan igual.
-    categoria_de = {r["usuario_id"]: r["categoria"]
-                    for r in get_db().q("SELECT usuario_id, categoria FROM investigador")}
     ligados = {"producto": proyectos.ligados_a_institucionales("producto", desde, hasta),
                "actividad": proyectos.ligados_a_institucionales("actividad", desde, hasta)}
+    # Autores sin ningún periodo de vínculo registrado (su producción no cuenta: se advierte).
+    sin_vinculo = set()
 
-    def figura(uid, tipo, rid):
-        """¿Este investigador figura con este registro en la memoria?"""
-        return categoria_de.get(uid) != "externo" or rid in ligados[tipo]
+    def situacion(uid, tipo, rid, estado_cat):
+        """(estado, categoría a la fecha) de un autor o participante del instituto:
+        'si' figura; 'dudoso' su vínculo cubre solo parte del año (producto sin mes); 'no'."""
+        estado, cat = estado_cat
+        if estado == "no" and not vinculos.listar(uid):
+            sin_vinculo.add(uid)
+        if estado == "si" and cat == "externo" and rid not in ligados[tipo]:
+            return "no", cat
+        return estado, cat
 
     ids = [f["id"] for f in get_db().q(
         """SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
@@ -175,27 +181,37 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
              AND p.revision IN ('indexado', 'arbitrado')
              AND p.estado_publicacion IN ('aceptado', 'publicado')
            ORDER BY p.revision, p.id""", [int(desde[:4]), int(hasta[:4])])]
-    # Autores del instituto que figuran con cada producto (id → conjunto de usuarios).
-    autores, por_confirmar = {}, []
+    # Autores del instituto que figuran con cada producto: id → {usuario: categoría a la fecha}.
+    internos_prod, prods, por_confirmar = {}, [], []
     for i in ids:
         x = productos.obtener(i)
         lugar = ubicar_producto(x, desde, hasta)
-        quienes = {a["id"] for a in x["autores"] if a["interno"] and figura(a["id"], "producto", i)}
-        if lugar == "dentro":
-            autores[i] = (x, quienes)
-        elif lugar == "dudoso" and quienes:
-            por_confirmar.append(x)
-    prods = [x for x, quienes in autores.values() if quienes]
+        if lugar == "fuera":
+            continue
+        estados = {a["id"]: situacion(a["id"], "producto", i, vinculos.en_fecha(a["id"], x["anio"], x["mes"]))
+                   for a in x["autores"] if a["interno"]}
+        figuran = {u: c for u, (e, c) in estados.items() if e == "si"}
+        dudosos = any(e == "dudoso" for e, _ in estados.values())
+        if lugar == "dentro" and figuran:
+            internos_prod[i] = figuran
+            prods.append(x)
+        elif figuran or dudosos:
+            por_confirmar.append({**x, "motivo": "sin mes de publicación" if lugar == "dudoso" else
+                                  "el vínculo del autor cubre solo parte del año: indique el mes"})
     prods.sort(key=lambda p: (p["revision"] != "indexado", p["tipo"], p["titulo"]))
-    internos_prod = {x["id"]: autores[x["id"]][1] for x in prods}
 
     internos_act = {}
     for r in get_db().q(
-            """SELECT DISTINCT a.id FROM actividad a JOIN actividad_participante ap ON ap.actividad_id = a.id
+            """SELECT DISTINCT a.id, a.fecha_inicio FROM actividad a
+               JOIN actividad_participante ap ON ap.actividad_id = a.id
                WHERE a.fecha_inicio BETWEEN ? AND ? AND ap.investigador_id IS NOT NULL
                ORDER BY a.fecha_inicio""", [desde, hasta]):
-        quienes = {x["id"] for x in actividades.participantes(r["id"])
-                   if x["interno"] and figura(x["id"], "actividad", r["id"])}
+        quienes = {}
+        for x in actividades.participantes(r["id"]):
+            if x["interno"]:
+                e, c = situacion(x["id"], "actividad", r["id"], vinculos.en_dia(x["id"], r["fecha_inicio"]))
+                if e == "si":
+                    quienes[x["id"]] = c
         if quienes:
             internos_act[r["id"]] = quienes
     acts = [actividades.obtener(i) for i in internos_act]
@@ -211,30 +227,46 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
         por_tipo_act[a["tipo"]] = por_tipo_act.get(a["tipo"], 0) + 1
         por_ambito[a["ambito"]] = por_ambito.get(a["ambito"], 0) + 1
 
-    investigadores = get_db().q(
-        """SELECT u.id, u.nombres, u.apellidos, i.categoria FROM usuario u JOIN investigador i ON i.usuario_id = u.id
-           WHERE u.activo = 1 ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""")
+    # Quienes estuvieron vinculados en algún momento del periodo (aunque ya no lo estén), con su
+    # categoría al final del periodo (o al término de su vínculo, si terminó antes).
     resumen = []
-    for inv in investigadores:
+    for inv in get_db().q(
+            """SELECT DISTINCT u.id, u.nombres, u.apellidos FROM usuario u JOIN vinculo v ON v.usuario_id = u.id
+               WHERE (v.fecha_inicio IS NULL OR v.fecha_inicio <= ?) AND (v.fecha_fin IS NULL OR v.fecha_fin >= ?)
+               ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""", [hasta, desde]):
+        periodos = [v for v in vinculos.listar(inv["id"])
+                    if (v["fecha_inicio"] or "0000") <= hasta and (v["fecha_fin"] or "9999") >= desde]
+        ultimo = periodos[-1]
         n_p = sum(inv["id"] in q for q in internos_prod.values())
         n_a = sum(inv["id"] in q for q in internos_act.values())
         # Los externos figuran solo si tienen algo ligado a un proyecto institucional.
-        if inv["categoria"] != "externo" or n_p or n_a:
-            resumen.append({**inv, "productos": n_p, "actividades": n_a})
+        if ultimo["categoria"] != "externo" or n_p or n_a:
+            resumen.append({**inv, "categoria": ultimo["categoria"], "productos": n_p, "actividades": n_a,
+                            "hasta": ultimo["fecha_fin"] if ultimo["fecha_fin"] and ultimo["fecha_fin"] < hasta else None,
+                            "ingreso_sin_fecha": any(not v["fecha_inicio"] for v in periodos)})
 
-    # Por categoría: cada producto o actividad cuenta una vez por categoría, aunque tenga varias
-    # personas de esa categoría (por eso no se suman las columnas de «por investigador»).
+    # Por categoría: cada producto o actividad cuenta una vez por categoría (la de sus autores a la
+    # fecha del registro), aunque tenga varias personas de esa categoría. Los investigadores se
+    # cuentan con su categoría al final del periodo.
     por_categoria = {}
-    for cat in (*perfiles.CATEGORIAS, None):
-        ids_cat = {x["id"] for x in resumen if x["categoria"] == cat}
-        if not ids_cat:
-            continue
-        por_categoria[perfiles.categoria_texto(cat)] = {
-            "investigadores": len(ids_cat),
-            "productos": sum(bool(q & ids_cat) for q in internos_prod.values()),
-            "actividades": sum(bool(q & ids_cat) for q in internos_act.values())}
+    for cat in perfiles.CATEGORIAS:
+        n_inv = sum(x["categoria"] == cat for x in resumen)
+        n_p = sum(cat in q.values() for q in internos_prod.values())
+        n_a = sum(cat in q.values() for q in internos_act.values())
+        if n_inv or n_p or n_a:
+            por_categoria[perfiles.CATEGORIAS[cat]] = {"investigadores": n_inv, "productos": n_p, "actividades": n_a}
+    avisos = []
+    sin_fecha = [x for x in resumen if x["ingreso_sin_fecha"]]
+    if sin_fecha:
+        avisos.append("Sin fecha de ingreso registrada (se asume vinculación desde siempre): "
+                      + ", ".join(f"{x['nombres']} {x['apellidos']}" for x in sin_fecha) + ".")
+    if sin_vinculo:
+        nombres = get_db().q(f"SELECT nombres, apellidos FROM usuario WHERE id IN ({','.join('?' * len(sin_vinculo))})"
+                             " ORDER BY apellidos", list(sin_vinculo))
+        avisos.append("Sin vínculo registrado (su producción no cuenta): "
+                      + ", ".join(f"{x['nombres']} {x['apellidos']}" for x in nombres) + ".")
     return {**periodo_memoria, "anio": anio, "productos": prods, "actividades": acts, "proyectos": proys,
-            "por_confirmar": sorted(por_confirmar, key=lambda p: (p["anio"], p["titulo"])),
+            "por_confirmar": sorted(por_confirmar, key=lambda p: (p["anio"], p["titulo"])), "avisos": avisos,
             "n_indexados": sum(p["revision"] == "indexado" for p in prods),
             "n_arbitrados": sum(p["revision"] == "arbitrado" for p in prods),
             "por_indice": dict(sorted(por_indice.items(), key=lambda x: -x[1])),

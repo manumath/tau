@@ -2,6 +2,7 @@
 
 Formato: una fila por persona con columnas `email`, `nombres`, `apellidos` y, opcionalmente,
 `categoria` (titular, contratado, interino, invitado o externo; solo para investigadores),
+`fecha_ingreso` (AAAA-MM-DD o DD/MM/AAAA; el historial completo se carga aparte),
 `investigador` y `admin` (sí/no; por omisión investigador = sí, admin = no). Se aceptan coma,
 punto y coma o tabulador como separador, UTF-8 (con o sin BOM) o Latin-1, y encabezados con o
 sin tildes ni mayúsculas («Correo», «Nombre», «Apellido» también sirven).
@@ -13,6 +14,7 @@ import csv
 import io
 import re
 import secrets
+from datetime import date
 
 from app import perfiles, usuarios
 from app.db import auditar, sin_tildes
@@ -26,6 +28,7 @@ ALIAS = {
     "nombres": ("nombres", "nombre"),
     "apellidos": ("apellidos", "apellido"),
     "categoria": ("categoria", "categoria del investigador", "categoria investigador"),
+    "fecha_ingreso": ("fecha ingreso", "fecha de ingreso", "ingreso", "fecha_ingreso"),
     "investigador": ("investigador", "es investigador", "es_investigador"),
     "admin": ("admin", "administrador", "administradora", "es admin", "es_admin"),
 }
@@ -60,6 +63,20 @@ def _booleano(valor: str, por_omision: bool) -> bool | None:
     if v in NO:
         return False
     return None
+
+
+def _fecha(texto: str) -> str | None | bool:
+    """→ ISO, None si viene vacía, o False si no se entiende."""
+    t = (texto or "").strip()
+    if not t:
+        return None
+    m = re.fullmatch(r"(\d{1,2})[/-](\d{1,2})[/-](\d{4})", t)
+    try:
+        if m:
+            return date(int(m.group(3)), int(m.group(2)), int(m.group(1))).isoformat()
+        return date.fromisoformat(t).isoformat()
+    except ValueError:
+        return False
 
 
 def _categoria(valor: str) -> str | None | bool:
@@ -104,6 +121,7 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
 
         f = {"linea": n, "email": celda("email").lower(), "nombres": celda("nombres"),
              "apellidos": celda("apellidos"), "categoria": _categoria(celda("categoria")),
+             "fecha_ingreso": _fecha(celda("fecha_ingreso")),
              "es_investigador": _booleano(celda("investigador"), True),
              "es_admin": _booleano(celda("admin"), False)}
         problemas = []
@@ -115,6 +133,8 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
             problemas.append("use sí/no en investigador y admin")
         elif not f["es_investigador"] and not f["es_admin"]:
             problemas.append("debe ser investigador, admin o ambos")
+        if f["fecha_ingreso"] is False:
+            problemas.append("fecha de ingreso no válida (use AAAA-MM-DD o DD/MM/AAAA)")
         if f["categoria"] is False:
             problemas.append("categoría no válida (titular, contratado, interino, invitado o externo)")
         elif f["categoria"] and f["es_investigador"] is False:
@@ -145,7 +165,8 @@ def crear(filas: list[dict], invitar: bool, admin_id: int, enviar_invitacion) ->
             continue
         datos = dict(email=f["email"], nombres=f["nombres"], apellidos=f["apellidos"],
                      es_admin=f["es_admin"], es_investigador=f["es_investigador"],
-                     categoria=f["categoria"] if f["es_investigador"] else None)
+                     categoria=f["categoria"] if f["es_investigador"] else None,
+                     fecha_ingreso=f["fecha_ingreso"] if f["es_investigador"] else None)
         if invitar:
             u = usuarios.crear(password=secrets.token_urlsafe(24), debe_cambiar_pass=False, **datos)
             enviar_invitacion(u)

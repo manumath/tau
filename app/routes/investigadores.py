@@ -3,7 +3,7 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, FtResponse, HtmxRe
                              Option, P, Response, Select, Span, Ul)
 from monsterui.all import H2, Card, Grid, Input, TextPresets, UkIcon
 
-from app import actividades, fotos, perfiles, productos
+from app import actividades, fotos, perfiles, productos, vinculos
 from app.components.layout import pagina
 from app.components.registros import url_filtrada
 from app.components.perfil import (avatar, chip_msc, lista_identificadores, seccion,
@@ -124,6 +124,7 @@ def get(auth, uid: int):
             Div(Div(H2(f"{p['nombres']} {p['apellidos']}"), etiqueta_categoria(p["categoria"]),
                     cls="flex flex-wrap items-center gap-3"),
                 P(subtitulo, cls=TextPresets.muted_sm) if subtitulo else "",
+                P(vinculos.resumen(uid) or "", cls=TextPresets.muted_sm),
                 A(p["email"], href=f"mailto:{p['email']}", cls="text-sm text-primary hover:underline"),
                 Div(A(UkIcon("pencil", height=14, width=14), "Editar mi perfil", href="/perfil",
                       cls="inline-flex items-center gap-1 text-sm text-primary hover:underline")

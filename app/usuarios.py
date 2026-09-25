@@ -34,13 +34,16 @@ def con_perfil(uid: int) -> dict | None:
 
 def crear(email: str, nombres: str, apellidos: str, password: str, *,
           es_admin=False, es_investigador=True, debe_cambiar_pass=True,
-          categoria: str | None = None) -> dict:
+          categoria: str | None = None, fecha_ingreso: str | None = None) -> dict:
     db = get_db()
     u = db.t.usuario.insert(email=email.strip().lower(), nombres=nombres.strip(),
                             apellidos=apellidos.strip(), pass_hash=hash_password(password),
                             es_admin=int(es_admin), debe_cambiar_pass=int(debe_cambiar_pass))
     if es_investigador:
         db.t.investigador.insert(usuario_id=u["id"], categoria=categoria)
+        if categoria:
+            from app import vinculos
+            vinculos.agregar(u["id"], categoria, fecha_ingreso or None)
     return u
 
 

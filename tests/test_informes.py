@@ -3,7 +3,7 @@ import io
 import pytest
 from openpyxl import load_workbook
 
-from app import informes, personas, productos, proyectos, usuarios
+from app import informes, perfiles, personas, productos, proyectos, usuarios
 from app.db import get_db
 from tests.conftest import PASS_ADMIN, PASS_TEMP, login
 
@@ -32,7 +32,10 @@ def _producto(creador, autores, titulo, anio=2026, tipo="Artículo en revista", 
 def datos(app):
     emmy = usuarios.por_email("inv@test.cl")["id"]
     usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
-    alan = usuarios.crear("alan@test.cl", "Alan", "Turing", CLAVE, debe_cambiar_pass=False)["id"]
+    alan = usuarios.crear("alan@test.cl", "Alan", "Turing", CLAVE, debe_cambiar_pass=False,
+                          categoria="contratado")["id"]
+    # Vínculo con el instituto (sin fecha de ingreso: «desde siempre»); sin él, nada cuenta.
+    perfiles.cambiar_categoria(emmy, "titular")
     weyl = personas.crear_externo("Hermann", "Weyl", "IAS", None, emmy)["id"]
     ids = {
         # Coautoría de dos investigadores: en la memoria debe contarse una sola vez.

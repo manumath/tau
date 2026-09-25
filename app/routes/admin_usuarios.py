@@ -2,15 +2,16 @@
 import base64
 import re
 import secrets
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from fasthtml.common import (A, APIRouter, Code, Div, Option, P, Response, Select, Span, Template, Thead, Tr,
-                             UploadFile)
+import fasthtml.common as fh
+from fasthtml.common import (A, APIRouter, Code, Div, HtmxResponseHeaders, Option, P, Response, Select, Span,
+                             Template, Thead, Tr, UploadFile)
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, Label, LabelCheckboxX, LabelInput, LabelT,
                            Table, Tbody, Td, Th, TextPresets, UkIcon)
 
-from app import config, correo, importar_usuarios, perfiles, tokens, usuarios
+from app import config, correo, importar_usuarios, importar_vinculos, perfiles, tokens, usuarios, vinculos
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.db import auditar
 from app.seguridad import password_temporal
@@ -37,14 +38,21 @@ def opciones_categoria(actual, vacia="Sin categoría"):
             *[Option(t, value=c, selected=c == actual) for c, t in perfiles.CATEGORIAS.items()]]
 
 
-def selector_categoria(u):
-    """Cambia la categoría al elegirla (la fila se reemplaza con el resultado)."""
-    return Select(*opciones_categoria(u["categoria"]), name="categoria",
-                  aria_label=f"Categoría de {u['nombres']} {u['apellidos']}",
-                  hx_post=f"{BASE}/{u['id']}/categoria", hx_trigger="change",
-                  hx_target=f"#usuario-{u['id']}", hx_swap="outerHTML",
-                  cls=("uk-select uk-form-small w-40",
-                       "text-amber-700 border-amber-400" if not u["categoria"] else ""))
+def resumen_vinculo(u):
+    """Categoría vigente, aviso si falta la fecha de ingreso y botón para abrir el historial."""
+    v = vinculos.vigente(u["id"])
+    if v:
+        texto = Span(perfiles.CATEGORIAS[v["categoria"]], cls="text-sm")
+        aviso = Span(" · ingreso sin fecha", cls="text-xs text-amber-700") if not v["fecha_inicio"] else ""
+    else:
+        texto = Span("Sin categoría" if not vinculos.listar(u["id"]) else "Sin vínculo vigente",
+                     cls="text-sm text-amber-700")
+        aviso = ""
+    return Div(texto, aviso,
+               fh.Button(UkIcon("id-card", height=14, width=14), "Vínculo", type="button",
+                         cls="inline-flex items-center gap-1 text-xs text-primary hover:underline ml-2",
+                         hx_get=f"{BASE}/{u["id"]}/vinculo", hx_target=f"#{ID_MODAL}"),
+               cls="flex flex-wrap items-center")
 
 
 def _etiquetas_perfil(u):
@@ -54,7 +62,7 @@ def _etiquetas_perfil(u):
     if u["es_admin"]:
         etiquetas.append(Label("Admin", cls=LabelT.primary))
     return Div(Div(*etiquetas, cls="flex gap-1 flex-wrap"),
-               selector_categoria(u) if u["es_investigador"] else "",
+               resumen_vinculo(u) if u["es_investigador"] else "",
                cls="space-y-1")
 
 
@@ -81,13 +89,16 @@ def fila(u, yo_id: int):
         aria_label="Desbloquear", title="Desbloquear (sin cambiar la contraseña)",
         hx_post=f"/admin/usuarios/{uid}/desbloquear", hx_target=f"#usuario-{uid}",
         hx_swap="outerHTML") if bloqueada else ""
+    # Si tiene vínculo vigente, desactivar abre una ventana que pregunta si también termina.
+    con_vinculo = u["activo"] and u["es_investigador"] and vinculos.vigente(uid)
     boton_activo = Button(
         UkIcon("user-x" if u["activo"] else "user-check", height=18, width=18),
         cls=(ButtonT.ghost, ButtonT.icon),
         aria_label="Desactivar cuenta" if u["activo"] else "Activar cuenta",
-        hx_post=f"/admin/usuarios/{uid}/activo", hx_target=f"#usuario-{uid}", hx_swap="outerHTML",
+        **({"hx_get": f"/admin/usuarios/{uid}/desactivar", "hx_target": f"#{ID_MODAL}"} if con_vinculo else
+           {"hx_post": f"/admin/usuarios/{uid}/activo", "hx_target": f"#usuario-{uid}", "hx_swap": "outerHTML"}),
         hx_confirm=(f"¿Desactivar la cuenta de {u['nombres']} {u['apellidos']}? "
-                    "No podrá ingresar hasta que se reactive.") if u["activo"] else None,
+                    "No podrá ingresar hasta que se reactive.") if u["activo"] and not con_vinculo else None,
         disabled=es_yo,
         title="No puede desactivar su propia cuenta" if es_yo else
               ("Desactivar cuenta" if u["activo"] else "Activar cuenta"))
@@ -134,6 +145,8 @@ def form_usuario(datos=None, errores=()):
             P("Titulares y contratados pueden proponer proyectos institucionales y ser sus responsables; "
               "los interinos pueden ser co-responsables.", cls=TextPresets.muted_sm),
             cls="space-y-2"),
+        LabelInput("Fecha de ingreso al instituto (si es investigador)", id="fecha_ingreso", type="date",
+                   value=d.get("fecha_ingreso") or ""),
         Div(LabelCheckboxX("Es investigador (tendrá perfil y registrará actividad)",
                            id="es_investigador", checked=d.get("es_investigador", True)),
             LabelCheckboxX("Administrador del portal", id="es_admin",
@@ -173,7 +186,7 @@ def modal_credenciales(titulo, u, password, nota):
 
 
 def enviar_invitacion(u):
-    enlace = f"{config.URL_BASE}/recuperar/{tokens.emitir(u['id'], 'invitacion')}"
+    enlace = f"{config.URL_BASE}/recuperar/{tokens.emitir(u["id"], 'invitacion')}"
     correo.enviar(u["email"], f"Invitación al Portal de Investigación · {config.NOMBRE_INSTITUTO}",
                   f"Hola, {u['nombres']}:\n\nSe creó su cuenta en el Portal de Investigación del instituto. "
                   f"Para definir su contraseña, abra este enlace (vale una vez y durante 3 días):\n\n{enlace}\n\n"
@@ -195,6 +208,9 @@ def get(auth, q: str = ""):
                 P("Cuentas con acceso al portal.", cls=TextPresets.muted_sm)),
             Div(Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
                        hx_get="/admin/usuarios/importar", hx_target=f"#{ID_MODAL}"),
+                Button(UkIcon("history", height=16, width=16), "Importar historial", cls=ButtonT.default,
+                       title="Periodos de vínculo y categorías desde Recursos Humanos",
+                       hx_get="/admin/usuarios/historial", hx_target=f"#{ID_MODAL}"),
                 Button(UkIcon("user-plus", height=16, width=16), "Nuevo usuario", cls=ButtonT.primary,
                        hx_get="/admin/usuarios/nuevo", hx_target=f"#{ID_MODAL}"),
                 cls="flex gap-2"),
@@ -223,11 +239,16 @@ def get():
 
 @rt(BASE)
 def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categoria: str = "",
-         es_investigador: bool = False, es_admin: bool = False, invitar: bool = False):
+         es_investigador: bool = False, es_admin: bool = False, invitar: bool = False, fecha_ingreso: str = ""):
     datos = dict(nombres=nombres.strip(), apellidos=apellidos.strip(),
                  email=email.strip().lower(), es_investigador=es_investigador, es_admin=es_admin,
-                 categoria=(categoria or None) if es_investigador else None)
+                 categoria=(categoria or None) if es_investigador else None,
+                 fecha_ingreso=(fecha_ingreso or None) if es_investigador else None)
     errores = []
+    try:
+        date.fromisoformat(fecha_ingreso) if fecha_ingreso else None
+    except ValueError:
+        errores.append("Fecha de ingreso no válida.")
     if not datos["nombres"] or not datos["apellidos"]:
         errores.append("Nombres y apellidos son obligatorios.")
     if not _RE_EMAIL.match(datos["email"]):
@@ -262,14 +283,52 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
             tabla)
 
 
+def modal_desactivar(u, errores=(), termina="si", fecha=""):
+    v = vinculos.vigente(u["id"])
+    return modal(
+        "Desactivar cuenta",
+        Form(mensaje_error(*errores),
+             P(f"{u['nombres']} {u['apellidos']} no podrá ingresar hasta que se reactive la cuenta. Su vínculo "
+               f"con el instituto ({perfiles.CATEGORIAS[v['categoria']]}, {vinculos.texto_periodo(v)}) está vigente."),
+             Div(fh.Label(fh.Input(type="radio", name="termina", value="si", checked=termina == "si", cls="uk-radio"),
+                          Span("Terminar también su vínculo el día", cls="text-sm"),
+                          Input(type="date", name="fecha", value=fecha or date.today().isoformat(),
+                                cls="uk-input w-44 ml-2", aria_label="Fecha de término"),
+                          cls="flex items-center gap-2"),
+                 fh.Label(fh.Input(type="radio", name="termina", value="no", checked=termina == "no", cls="uk-radio"),
+                          Span("Solo desactivar la cuenta (el vínculo sigue vigente)", cls="text-sm"),
+                          cls="flex items-center gap-2"),
+                 cls="space-y-2"),
+             P("El vínculo define qué producción cuenta para el instituto: lo publicado mientras estuvo vinculado "
+               "sigue contando después.", cls=TextPresets.muted_sm),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                 Button("Desactivar", type="submit", cls=ButtonT.destructive), cls="flex justify-end gap-2"),
+             hx_post=f"{BASE}/{u["id"]}/activo", hx_target=f"#usuario-{u["id"]}", hx_swap="outerHTML",
+             cls="space-y-4"))
+
+
+@rt(BASE + "/{uid}/desactivar")
+def get(uid: int, auth):
+    u = usuarios.con_perfil(uid)
+    if not u or uid == auth["id"] or not vinculos.vigente(uid):
+        return ""
+    return modal_desactivar(u)
+
+
 @rt(BASE + "/{uid}/activo")
-def post(uid: int, auth):
-    u = usuarios.por_id(uid)
-    if u and uid != auth["id"]:
-        usuarios.set_activo(uid, not u["activo"])
-        auditar(auth["id"], "desactivar_usuario" if u["activo"] else "activar_usuario",
-                "usuario", uid)
-    return fila(usuarios.con_perfil(uid), auth["id"]) if u else ""
+def post(uid: int, auth, termina: str = "", fecha: str = ""):
+    u = usuarios.con_perfil(uid)
+    if not u or uid == auth["id"]:
+        return fila(u, auth["id"]) if u else ""
+    if u["activo"] and termina == "si":
+        errores = vinculos.terminar(uid, fecha)
+        if errores:
+            return modal_desactivar(u, errores, termina, fecha), HtmxResponseHeaders(
+                retarget=f"#{ID_MODAL}", reswap="innerHTML")
+        auditar(auth["id"], "terminar_vinculo", "investigador", uid, fecha)
+    usuarios.set_activo(uid, not u["activo"])
+    auditar(auth["id"], "desactivar_usuario" if u["activo"] else "activar_usuario", "usuario", uid)
+    return fila(usuarios.con_perfil(uid), auth["id"]), Div(id=ID_MODAL, hx_swap_oob="true")
 
 
 @rt(BASE + "/{uid}/categoria")
@@ -421,3 +480,242 @@ def post(auth, sess, contenido: str = "", invitar: bool = False):
                   Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
                       cls="flex justify-end mt-4"), ancho="max-w-2xl"),
             tabla)
+
+
+# --- Historial de vínculo ---------------------------------------------------------------------------------
+
+def _campos_periodo(d, con_hasta=True, con_nota=True, sufijo=""):
+    return Div(
+        Div(FormLabel("Categoría"), Select(*opciones_categoria(d.get("categoria"), vacia="— Elija —"),
+                                           name="categoria", cls="uk-select"), cls="space-y-1"),
+        LabelInput("Desde", id=f"desde{sufijo}", name="desde", type="date", value=d.get("desde") or ""),
+        LabelInput("Hasta", id=f"hasta{sufijo}", name="hasta", type="date", value=d.get("hasta") or "")
+        if con_hasta else "",
+        LabelInput("Jornada (h/semana)", id=f"jornada{sufijo}", name="jornada", type="number", min=1, max=60,
+                   value=d.get("jornada") or ""),
+        LabelInput("Nota", id=f"nota{sufijo}", name="nota", value=d.get("nota") or "",
+                   placeholder="Resolución, contrato…") if con_nota else "",
+        cls="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end")
+
+
+def modal_vinculo(u, errores=(), editar=None, datos=None, yo_id=0):
+    """Historial de periodos y acciones: cambio de categoría, término, periodo histórico, corrección."""
+    uid = u["id"]
+    datos = datos or {}
+    periodos = vinculos.listar(uid)
+    vig = vinculos.vigente(uid)
+    filas = []
+    for v in periodos:
+        if editar == v["id"]:
+            filas.append(Tr(Td(Form(
+                _campos_periodo({"categoria": v["categoria"], "desde": v["fecha_inicio"], "hasta": v["fecha_fin"],
+                                 "jornada": v["jornada_horas"], "nota": v["nota"], **datos}, sufijo=f"-{v["id"]}"),
+                Div(Button("Cancelar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
+                           hx_get=f"{BASE}/{uid}/vinculo", hx_target=f"#{ID_MODAL}"),
+                    Button("Guardar", type="submit", cls=(ButtonT.primary, ButtonT.sm)),
+                    cls="flex justify-end gap-2 mt-2"),
+                hx_put=f"{BASE}/vinculo/{v["id"]}", hx_target=f"#{ID_MODAL}"), colspan=5)))
+            continue
+        filas.append(Tr(
+            Td(perfiles.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700") if vig and v["id"] == vig["id"] else ""),
+            Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700")),
+            Td(v["fecha_fin"] or "—"),
+            Td(f"{v['jornada_horas']} h" if v["jornada_horas"] else "—", Span(f" · {v['nota']}", cls=TextPresets.muted_sm) if v["nota"] else ""),
+            Td(Div(Button(UkIcon("pencil", height=14, width=14), cls=(ButtonT.ghost, ButtonT.icon), aria_label="Corregir",
+                          title="Corregir", hx_get=f"{BASE}/vinculo/{v["id"]}/editar", hx_target=f"#{ID_MODAL}"),
+                   Button(UkIcon("trash-2", height=14, width=14), cls=(ButtonT.ghost, ButtonT.icon), aria_label="Eliminar",
+                          title="Eliminar (solo para corregir errores)", hx_delete=f"{BASE}/vinculo/{v["id"]}",
+                          hx_target=f"#{ID_MODAL}", hx_confirm="¿Eliminar este periodo? Úselo solo para corregir errores."),
+                   cls="flex justify-end"))))
+    tabla = Table(Thead(Tr(Th("Categoría"), Th("Desde"), Th("Hasta"), Th("Jornada"), Th(""))),
+                  Tbody(*filas) if filas else Tbody(Tr(Td("Sin periodos registrados.", colspan=5,
+                                                          cls=TextPresets.muted_sm))),
+                  cls="uk-table-divider uk-table-small")
+
+    def accion(titulo, *campos, url, boton):
+        return fh.Details(fh.Summary(titulo, cls="cursor-pointer text-sm font-medium text-primary"),
+                          Form(*campos, Div(Button(boton, type="submit", cls=(ButtonT.primary, ButtonT.sm)),
+                                            cls="flex justify-end mt-2"),
+                               hx_post=url, hx_target=f"#{ID_MODAL}", cls="mt-2"),
+                          cls="rounded-md border border-border p-3")
+    acciones = [
+        accion("Cambiar de categoría (ascenso, nuevo contrato)",
+               P("Cierra el periodo vigente el día anterior y abre uno nuevo.", cls=TextPresets.muted_sm),
+               _campos_periodo(datos, con_hasta=False, con_nota=False, sufijo="-cambio"),
+               url=f"{BASE}/{uid}/vinculo/cambio", boton="Registrar cambio") if vig else "",
+        accion("Terminar el vínculo",
+               LabelInput("Último día", id="fecha-termino", name="fecha", type="date", value=date.today().isoformat()),
+               url=f"{BASE}/{uid}/vinculo/termino", boton="Terminar") if vig else "",
+        accion("Agregar un periodo (histórico o nuevo ingreso)",
+               _campos_periodo(datos, sufijo="-nuevo"), url=f"{BASE}/{uid}/vinculo/periodo", boton="Agregar"),
+    ]
+    return modal(
+        f"Vínculo de {u['nombres']} {u['apellidos']}",
+        mensaje_error(*errores),
+        P("Periodos de pertenencia al instituto con su categoría. Definen qué producción cuenta en los informes "
+          "institucionales y con qué categoría. Para cargar el historial de muchas personas, use «Importar "
+          "historial» en el listado.", cls=(TextPresets.muted_sm, "mb-3")),
+        Div(tabla, cls="overflow-x-auto mb-4"),
+        Div(*acciones, cls="space-y-2"),
+        Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
+        Template(fila(usuarios.con_perfil(uid), yo_id)(hx_swap_oob="true")),
+        ancho="max-w-4xl")
+
+
+def _investigador(uid):
+    u = usuarios.con_perfil(uid)
+    return u if u and u["es_investigador"] else None
+
+
+@rt(BASE + "/{uid}/vinculo")
+def get(auth, uid: int):
+    u = _investigador(uid)
+    return modal_vinculo(u, yo_id=auth["id"]) if u else Response("No encontrado", status_code=404)
+
+
+@rt(BASE + "/{uid}/vinculo/cambio")
+def post(auth, uid: int, categoria: str = "", desde: str = "", jornada: str = ""):
+    u = _investigador(uid)
+    if not u:
+        return Response("No encontrado", status_code=404)
+    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"])
+    if not errores:
+        auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{categoria} desde {desde}")
+    return modal_vinculo(u, errores, yo_id=auth["id"],
+                         datos={"categoria": categoria, "desde": desde, "jornada": jornada} if errores else None)
+
+
+@rt(BASE + "/{uid}/vinculo/termino")
+def post(auth, uid: int, fecha: str = ""):
+    u = _investigador(uid)
+    if not u:
+        return Response("No encontrado", status_code=404)
+    errores = vinculos.terminar(uid, fecha)
+    if not errores:
+        auditar(auth["id"], "terminar_vinculo", "investigador", uid, fecha)
+    return modal_vinculo(u, errores, yo_id=auth["id"])
+
+
+@rt(BASE + "/{uid}/vinculo/periodo")
+def post(auth, uid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "", nota: str = ""):
+    u = _investigador(uid)
+    if not u:
+        return Response("No encontrado", status_code=404)
+    errores = vinculos.agregar(uid, categoria, desde or None, hasta or None, jornada or None, nota, auth["id"])
+    if not errores:
+        auditar(auth["id"], "agregar_vinculo", "investigador", uid, f"{categoria} {desde or '?'} a {hasta or 'hoy'}")
+    datos = dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota) if errores else None
+    return modal_vinculo(u, errores, datos=datos, yo_id=auth["id"])
+
+
+@rt(BASE + "/vinculo/{vid}/editar")
+def get(auth, vid: int):
+    v = vinculos.obtener(vid)
+    if not v:
+        return Response("No encontrado", status_code=404)
+    return modal_vinculo(_investigador(v["usuario_id"]), editar=vid, yo_id=auth["id"])
+
+
+@rt(BASE + "/vinculo/{vid}")
+def put(auth, vid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "", nota: str = ""):
+    v = vinculos.obtener(vid)
+    if not v:
+        return Response("No encontrado", status_code=404)
+    errores = vinculos.editar(vid, categoria, desde or None, hasta or None, jornada or None, nota)
+    if not errores:
+        auditar(auth["id"], "corregir_vinculo", "investigador", v["usuario_id"],
+                f"{categoria} {desde or '?'} a {hasta or 'hoy'}")
+    u = _investigador(v["usuario_id"])
+    if errores:
+        return modal_vinculo(u, errores, editar=vid, yo_id=auth["id"],
+                             datos=dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota))
+    return modal_vinculo(u, yo_id=auth["id"])
+
+
+@rt(BASE + "/vinculo/{vid}")
+def delete(auth, vid: int):
+    v = vinculos.obtener(vid)
+    if not v:
+        return Response("No encontrado", status_code=404)
+    vinculos.eliminar(vid)
+    auditar(auth["id"], "eliminar_vinculo", "investigador", v["usuario_id"], vinculos.texto_periodo(v))
+    return modal_vinculo(_investigador(v["usuario_id"]), yo_id=auth["id"])
+
+
+# --- Historial de vínculos desde Recursos Humanos (CSV) -----------------------------------------------------
+
+def _form_historial(errores=()):
+    return Form(
+        mensaje_error(*errores),
+        P("Suba un CSV de Recursos Humanos con una fila por periodo: ", Code("email"), ", ", Code("categoria"), ", ",
+          Code("desde"), " y, si quiere, ", Code("hasta"), " (vacío = vigente), ", Code("jornada"), " (horas "
+          "semanales) y ", Code("nota"), ". Fechas como AAAA-MM-DD o DD/MM/AAAA.", cls="text-sm"),
+        P("El historial de cada persona del archivo se reemplaza por el del archivo; las demás no cambian. "
+          "Primero verá una vista previa.", cls=TextPresets.muted_sm),
+        A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/historial/plantilla",
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
+        Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+            Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
+        hx_post="/admin/usuarios/historial/revisar", hx_encoding="multipart/form-data",
+        hx_target=f"#{ID_MODAL}", cls="space-y-4")
+
+
+@rt(f"{BASE}/historial")
+def get():
+    return modal("Importar historial de vínculos", _form_historial(), ancho="max-w-2xl")
+
+
+@rt(f"{BASE}/historial/plantilla")
+def get():
+    return Response(importar_vinculos.PLANTILLA.encode("utf-8-sig"), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="plantilla-historial.csv"'})
+
+
+@rt(f"{BASE}/historial/revisar")
+async def post(archivo: UploadFile = None):
+    if archivo is None or not archivo.filename:
+        return modal("Importar historial de vínculos", _form_historial(["Seleccione un archivo."]), ancho="max-w-2xl")
+    contenido = await archivo.read(importar_vinculos.MAX_BYTES + 1)
+    personas, errores = importar_vinculos.leer(contenido)
+    if not personas:
+        return modal("Importar historial de vínculos", _form_historial(errores), ancho="max-w-2xl")
+    listas = [p for p in personas if not p["errores"]]
+    filas = []
+    for p in personas:
+        nombre = f"{p['usuario']['apellidos']}, {p['usuario']['nombres']}" if p["usuario"] else p["email"]
+        periodos = "; ".join(f"{perfiles.CATEGORIAS[x['categoria']]} {x['desde']} a {x['hasta'] or 'hoy'}"
+                             for x in p["periodos"])
+        filas.append(Tr(Td(Div(nombre, cls="font-medium"), Div(p["email"], cls=TextPresets.muted_sm)),
+                        Td(periodos or "—", cls="text-sm"),
+                        Td(Label("Error", cls=LabelT.destructive), Div(*[P(e, cls="text-sm") for e in p["errores"]])
+                           if p["errores"] else
+                           Span(f"Reemplaza {p['actuales']} periodo(s) actual(es)", cls="text-sm"))))
+    return modal(
+        "Vista previa del historial",
+        P(f"{len(listas)} persona(s) se actualizarán · {len(personas) - len(listas)} con errores, se omiten.",
+          cls="text-sm font-medium mb-3"),
+        Div(Table(Thead(Tr(Th("Persona"), Th("Periodos del archivo"), Th("Resultado"))), Tbody(*filas),
+                  cls="uk-table-divider uk-table-small"),
+            cls="max-h-96 overflow-y-auto border border-border rounded-md mb-4"),
+        Form(Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                 Button(f"Actualizar {len(listas)} persona(s)", type="submit", cls=ButtonT.primary,
+                        disabled=not listas), cls="flex justify-end gap-2"),
+             hx_post="/admin/usuarios/historial/confirmar", hx_target=f"#{ID_MODAL}"),
+        ancho="max-w-4xl")
+
+
+@rt(f"{BASE}/historial/confirmar")
+def post(auth, sess, contenido: str = ""):
+    try:
+        datos = base64.b64decode(contenido, validate=True)
+    except ValueError:
+        return modal("Importar historial de vínculos", _form_historial(["No se pudo leer el archivo. Súbalo otra vez."]))
+    personas, _ = importar_vinculos.leer(datos)
+    n = importar_vinculos.aplicar(personas, auth["id"])
+    add_toast(sess, f"Historial actualizado para {n} persona(s).", "success")
+    return (modal("Historial importado", P(f"Se actualizó el historial de {n} persona(s)."),
+                  Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+                      cls="flex justify-end mt-4")),
+            Template(cuerpo_tabla(usuarios.listar(), auth["id"], oob=True)))

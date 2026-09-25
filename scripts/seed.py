@@ -15,7 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import json  # noqa: E402
 
-from app import actividades, config, institucionales, perfiles, personas, productos, proyectos, usuarios  # noqa: E402
+from app import (actividades, config, institucionales, perfiles, personas, productos, proyectos,  # noqa: E402
+                 usuarios, vinculos)
 from app.db import get_db  # noqa: E402
 from app.db import init_db  # noqa: E402
 
@@ -247,6 +248,29 @@ def _cargar_institucionales():
     return True
 
 
+# Historial de vínculo de ejemplo (como lo entregaría Recursos Humanos).
+HISTORIAL = {
+    "sofia.kovalevskaya@instituto.test": [dict(categoria="titular", desde="2012-03-01", hasta=None, jornada=40)],
+    "emmy.noether@instituto.test": [dict(categoria="contratado", desde="2018-03-01", hasta="2021-12-31", jornada=40),
+                                    dict(categoria="titular", desde="2022-01-01", hasta=None, jornada=40)],
+    "alan.turing@instituto.test": [dict(categoria="contratado", desde="2024-08-01", hasta=None, jornada=40)],
+    "srinivasa.ramanujan@instituto.test": [dict(categoria="invitado", desde="2026-03-01", hasta="2026-12-31",
+                                                jornada=20, nota="Estadía de investigación")],
+}
+
+
+def _cargar_vinculos():
+    """Reemplaza el vínculo «sin fecha» de las cuentas de ejemplo por su historial. True si lo hizo."""
+    hecho = False
+    for email, periodos in HISTORIAL.items():
+        u = usuarios.por_email(email)
+        actuales = vinculos.listar(u["id"]) if u else []
+        if u and (not actuales or all(v["fecha_inicio"] is None for v in actuales)):
+            vinculos.reemplazar_historial(u["id"], periodos)
+            hecho = True
+    return hecho
+
+
 def _cargar_perfil(uid: int, datos: dict | None):
     if not datos:
         return
@@ -289,6 +313,7 @@ def main():
             perfiles.cambiar_categoria(u["id"], inv["categoria"])
             categorias += 1
 
+    con_vinculos = _cargar_vinculos()
     produccion = _cargar_produccion()
     con_proyectos = _cargar_proyectos()
     con_propuestas = _cargar_institucionales()
@@ -304,7 +329,8 @@ def main():
         print("El proyecto de ejemplo FONDECYT 1260001 quedó como institucional.")
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
-    if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas:
+    if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas \
+            and not con_vinculos:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:
@@ -313,6 +339,8 @@ def main():
             print(f"  {email:40} {pw:20} {rol}")
     if produccion:
         print("Actividades y productos de ejemplo cargados (Emmy Noether y Alan Turing).")
+    if con_vinculos and not creados:
+        print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular; Ramanujan es invitado).")
     if con_propuestas:
         print("Propuestas institucionales de ejemplo: FONDECYT 1260001 aceptado (termina el 30 de septiembre) "
               "y una propuesta nueva de Sofía por decidir.")

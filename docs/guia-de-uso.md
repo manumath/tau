@@ -45,8 +45,11 @@ Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Ed
 El indicador «Perfil completo» muestra qué falta. Los demás investigadores ven su perfil en
 «Investigadores», el directorio interno, que se puede filtrar por categoría.
 
-Su **categoría** (titular, contratado(a), interino(a), invitado(a) o externo(a)) figura en «Datos
-básicos». La asigna la administración: si no es la correcta, pídale que la cambie.
+Su **vínculo** con el instituto (desde cuándo y con qué categoría: titular, contratado(a),
+interino(a), invitado(a) o externo(a)) figura en «Datos básicos». Lo registra la administración
+con los datos de Recursos Humanos: si no es correcto, pídale que lo corrija. Puede registrar
+también su producción anterior al ingreso: aparece en su perfil y su CV, pero no en los informes
+institucionales.
 
 ## Productos
 
@@ -200,8 +203,16 @@ proyecto y ser del mismo periodo).
   - 🔓 **Desbloquear**: una cuenta bloqueada por intentos fallidos, sin cambiar su contraseña.
   - 🔑 **Restablecer**: genera una contraseña temporal nueva.
   - Activar o desactivar una cuenta; desactivarla cierra su sesión de inmediato.
-  - **Categoría**: se cambia eligiéndola en la columna «Perfil» (queda en la auditoría). Las
-    cuentas «Sin categoría» se destacan en ámbar; en el directorio hay un filtro para encontrarlas.
+  - **Vínculo**: el historial de pertenencia al instituto de cada investigador(a), con su
+    categoría y jornada por periodo. Desde ahí se registra un cambio de categoría (cierra el
+    periodo vigente el día anterior), se termina el vínculo o se agrega un periodo histórico. Los
+    informes institucionales solo cuentan lo producido **mientras la persona estaba vinculada**, con
+    la categoría de ese momento. Las cuentas sin fecha de ingreso se marcan en ámbar.
+  - **Importar historial:** carga el historial desde un CSV de Recursos Humanos (`email`,
+    `categoria`, `desde`, `hasta`, `jornada`, `nota`; una fila por periodo). El historial de cada
+    persona del archivo se reemplaza por el del archivo.
+  - Al **desactivar** una cuenta con vínculo vigente, el portal pregunta si también termina el
+    vínculo y en qué fecha. Lo publicado mientras estuvo vinculada sigue contando.
 - **Propuestas:** la bandeja de propuestas institucionales por periodo, con filtro por estado y el
   contador de las que esperan decisión. En cada propuesta: aceptar, aceptar con condiciones
   (indicándolas) o rechazar (con el motivo). En la misma página se ajusta el **plazo** de la
