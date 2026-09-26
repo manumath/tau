@@ -8,7 +8,7 @@ import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select, Span, Table, Tbody,
                              Td, Th, Thead, Tr, Ul)
 
-from app import acreditacion, actividades, config, informes, proyectos
+from app import acreditacion, actividades, config, estudiantes, informes, proyectos
 from app.components.layout import pagina
 from app.routes.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _tabla_conteo, barra, cita, descarga, hoja,
                                  seccion_metodo)
@@ -48,6 +48,40 @@ def _criterio(codigo, titulo, que, *contenido):
                cls="space-y-2")
 
 
+def _nombres(personas_):
+    return ", ".join(f"{x['nombres']} {x['apellidos']}" for x in personas_)
+
+
+def seccion_estudiantes(e):
+    """2.3.2 · 3.6.1 d · 2.3.4: tesis dirigidas y participación de estudiantes (y graduados)."""
+    tesis = Ul(*[Li(Span(f"{t['producto']['anio']} — ", cls="apagado"), t["producto"]["titulo"],
+                    Span(f" · {_nombres(t['tesistas']) or 'tesista sin registrar'}"
+                         f" ({estudiantes.NIVELES.get(t['nivel'], 'nivel sin registrar').lower()}, {t['estado']})"
+                         f" · dirige: {_nombres(t['directores'])}", cls="apagado"))
+                 for t in e["tesis"]], cls="space-y-1") if e["tesis"] else P("Sin tesis dirigidas en el periodo.", cls="apagado")
+    return _criterio(
+        "2.3.2 · 3.6.1 d · 2.3.4", "Estudiantes en la investigación",
+        "Tesis dirigidas por investigadores del instituto y participación de estudiantes (y graduados) en publicaciones, "
+        "proyectos y actividades, según sus periodos de estudio registrados.",
+        Div(_cifra(sum(t["estado"] == "defendida" for t in e["tesis"]), "tesis defendidas"),
+            _cifra(sum(t["estado"] == "en curso" for t in e["tesis"]), "tesis en curso"),
+            _cifra(len(e["productos"]), "productos con estudiantes"),
+            _cifra(len(e["proyectos"]), "proyectos con estudiantes"),
+            _cifra(len(e["graduados"]), "productos con graduados"), cls="grid grid-cols-5 gap-3"),
+        Div(Table(Thead(Tr(Th("Nivel"), Th("Estado"), Th("Tesis", cls="text-right"))),
+                  Tbody(*[Tr(Td(n), Td(est), _num(c)) for (n, est), c in sorted(e["tesis_por_nivel"].items())]))
+            if e["tesis_por_nivel"] else ""),
+        H3("Tesis dirigidas"), tesis,
+        H3("Productos con estudiantes coautores"), _lista_productos(e["productos"], detalle=False),
+        H3("Proyectos con estudiantes"),
+        Ul(*[Li(p["nombre"], Span(f" · {_nombres(p['estudiantes'])}", cls="apagado")) for p in e["proyectos"]],
+           cls="space-y-1") if e["proyectos"] else P("Sin registros en el periodo.", cls="apagado"),
+        H3("Actividades con estudiantes"),
+        Ul(*[Li(Span(actividades.fechas_texto(a), cls="apagado"), " — ", a["titulo"],
+                Span(f" · {_nombres(a['estudiantes'])}", cls="apagado")) for a in e["actividades"]],
+           cls="space-y-1") if e["actividades"] else P("Sin registros en el periodo.", cls="apagado"))
+
+
 def documento(a):
     m = a["memoria"]
     anios = a["anios"]
@@ -56,7 +90,8 @@ def documento(a):
             ("internacionales", "En revistas internacionales"), ("libros", "Libros y capítulos"),
             ("tecnicos", "Patentes, software, traducciones"), ("presentaciones", "Presentaciones"),
             ("estancias", "Estancias"), ("transferencia", "Transferencia"), ("redes", "Redes"),
-            ("proyectos", "Proyectos vigentes"), ("citas", "Citas")]
+            ("proyectos", "Proyectos vigentes"), ("tesis_defendidas", "Tesis defendidas"),
+            ("con_estudiantes", "Productos con estudiantes"), ("citas", "Citas")]
     resumen = Div(Table(Thead(Tr(Th("Indicador"), *[Th(str(x["anio"]), cls="text-right") for x in anios])),
                         Tbody(*[Tr(Td(t), *[_num(x[k]) for x in anios]) for k, t in cols])),
                   cls="overflow-x-auto")
@@ -116,6 +151,7 @@ def documento(a):
                                        Td(p["fuente_financiamiento"] or "—"), Td(p["responsables"] or "—"), _num(p["n_internos"]))
                                     for p in a["proyectos"]])), cls="overflow-x-auto")
                   if a["proyectos"] else P("Sin proyectos vigentes en el periodo.", cls="apagado")),
+        seccion_estudiantes(a["estudiantes"]),
         _criterio("3.6.3 i", "Presentaciones en congresos y eventos científicos",
                   f"{len(a['presentaciones'])} eventos con exposición de integrantes del instituto; "
                   f"{sum(x['ambito'] == 'internacional' for x in a['presentaciones'])} internacionales.",
@@ -134,8 +170,7 @@ def documento(a):
                     + (f", actualizadas el {m['impacto']['actualizadas']}." if m["impacto"]["actualizadas"] else "."),
                     cls="text-sm")),
         Div(H2("Aún no registrado en el portal"),
-            Ul(Li("Participación de estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d)."),
-               Li("Premios y distinciones; arbitraje de artículos (2.2.1 d)."),
+            Ul(Li("Premios y distinciones; arbitraje de artículos (2.2.1 d)."),
                Li("Asesorías y prestación de servicios (3.4.3); impacto de la vinculación (3.4.1)."),
                Li("Ámbito nacional o internacional de los proyectos (3.6.3 h)."),
                cls="list-disc pl-5 space-y-1 text-sm"),
@@ -183,7 +218,8 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
                "arbitrados": "Artículos arbitrados", "nacionales": "En revistas nacionales",
                "internacionales": "En revistas internacionales", "libros": "Libros y capítulos",
                "tecnicos": "Patentes, software, traducciones", "presentaciones": "Presentaciones", "estancias": "Estancias",
-               "transferencia": "Transferencia", "redes": "Redes", "proyectos": "Proyectos vigentes", "citas": "Citas"}
+               "transferencia": "Transferencia", "redes": "Redes", "proyectos": "Proyectos vigentes",
+               "tesis_defendidas": "Tesis defendidas", "con_estudiantes": "Productos con estudiantes", "citas": "Citas"}
     resumen = [{"Indicador": t, **{str(x["anio"]): x[k] for x in a["anios"]}} for k, t in nombres.items()]
     cuerpo = [{"Año": c["anio"], "Investigador(a)": f"{p['apellidos']}, {p['nombres']}", "Categoría": p["categoria"],
                "Jornada (h/semana)": p["jornada"] or ""} for c in a["cuerpo"] for p in c["personas"]]
@@ -210,6 +246,12 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
         "3.6.3 d-e Técnicos": informes.filas_productos(a["tecnicos"]),
         "Actividades por criterio": acts,
         "3.6.3 h Proyectos": informes.filas_proyectos(a["proyectos"]),
+        "Tesis dirigidas": [{"Año": t["producto"]["anio"], "Título": t["producto"]["titulo"],
+                             "Tesista(s)": _nombres(t["tesistas"]),
+                             "Nivel": estudiantes.NIVELES.get(t["nivel"], ""), "Estado": t["estado"],
+                             "Del programa": "Sí" if any(x["del_programa"] for x in t["tesistas"]) else "No",
+                             "Dirige": _nombres(t["directores"])} for t in a["estudiantes"]["tesis"]],
+        "Productos con estudiantes": informes.filas_productos(a["estudiantes"]["productos"]),
         "Por confirmar": informes.filas_productos(m["por_confirmar"]),
         "Método": metodo})
     return _archivo(contenido, f"anexo-idi-{d}-{h}.xlsx", XLSX)

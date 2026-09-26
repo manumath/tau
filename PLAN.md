@@ -95,7 +95,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0018` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0019` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -110,6 +110,7 @@ token_acceso(id, usuario_id, token_hash, proposito, expira_en, usado_en, creado_
 auditoria(id, usuario_id, accion, entidad, entidad_id, detalle, fecha)
 
 persona_externa(id, nombres, apellidos, institucion, pais, email, orcid, usuario_id, creado_por, creado_en)
+estudiante(id, externo_id, nivel, programa, del_programa, desde, hasta, titulado, registrado_por, creado_en)
 
 tipo_actividad(id, nombre, orden, activo)
 actividad(id, tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin, modalidad,
@@ -179,7 +180,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-344 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+350 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -551,14 +552,14 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
 - Base: criterios de pregrado de IAC-CINDA (junio 2025, v1.2), que aplican a la Carrera de
   Matemática. **Pendiente:** confirmar con IAC-CINDA qué conjunto de criterios corresponde al
   Instituto (el Modelo 2025 describe procesos para instituciones, carreras, maestrías y doctorados).
-- De 33 criterios revisados que tocan la investigación: 11 cubiertos, 18 parciales, 4 brechas; 12
+- De 33 criterios revisados que tocan la investigación: 13 cubiertos, 18 parciales, 2 brechas; 12
   más dependen de políticas o procesos fuera del portal.
 
 **Prioridades para el portal** (por aporte a la acreditación):
 
 1. Carga automática desde ORCID u OpenAlex, con citas (3.6.1, 3.6.3) — ✔ (ver sección 16).
 2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1) — ✔ (sección 17).
-3. Estudiantes en la investigación: tesistas y estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d).
+3. Estudiantes en la investigación: tesistas y estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d) — ✔ (sección 18).
 4. Internacionalización: ámbito de los proyectos e indicador de coautoría internacional (3.5.2 c, 3.6.3 h).
 5. Líneas prioritarias de investigación y su asignación (3.1.1, 3.6.1 a).
 6. Indicadores normalizados: jornada completa equivalente y conteo fraccionado (2.2.1, 2.2.2).
@@ -605,3 +606,21 @@ memoria (vínculo en la fecha, filiación, catálogo de revistas).
 - **Presentaciones (3.6.3 i):** eventos científicos con al menos un expositor del instituto.
 - La ventana usa años completos: un producto del año en curso sin mes cuenta; el cuerpo académico
   del año en curso se mira a la fecha de hoy.
+
+## 18. Estudiantes en la investigación
+
+- Los estudiantes y tesistas son personas externas con **periodos de estudio** (`estudiante`):
+  nivel (licenciatura, maestría, doctorado), programa, si es del programa propio (Matemática, UMSA),
+  años de ingreso y egreso, y titulación. Una persona era estudiante un año si cae en un periodo; es
+  graduada si egresó titulada antes de ese año. Puede tener varios periodos (licenciatura y luego
+  maestría).
+- **Página «Estudiantes y tesistas»** (desde Investigadores): lista con filtros por nivel y estado,
+  alta (eligiendo una persona externa existente o creándola), ficha con periodos y participación
+  (tesis, productos, proyectos, actividades). La registran investigadores y administración.
+- **Tesis dirigidas:** producto «Tesis dirigida» con el tesista entre los autores; los autores del
+  instituto son quienes dirigen (deben estar vinculados en la fecha). En curso = «en preparación»;
+  defendida = «publicado». El CV las agrupa.
+- **Anexo de acreditación:** sección «Estudiantes en la investigación» (2.3.2 · 3.6.1 d · 2.3.4):
+  tesis por nivel y estado, productos con estudiantes coautores, productos con graduados, proyectos y
+  actividades con estudiantes; filas en el resumen por año y hojas en el XLSX.
+- El selector de autores y participantes muestra «Estudiante de …» o «Graduado(a) de …».

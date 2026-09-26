@@ -7,7 +7,7 @@ omisión, exige revista verificada, como corresponde a la acreditación.
 """
 from datetime import date
 
-from app import actividades, config, informes, perfiles, proyectos, revistas, vinculos
+from app import actividades, config, estudiantes, informes, perfiles, proyectos, revistas, vinculos
 from app.db import get_db
 
 # Actividades por criterio (nombres del catálogo de tipos de actividad).
@@ -108,6 +108,8 @@ def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> d
             "estancias": sum(a["tipo"] in ESTANCIAS for a in acts_a),
             "transferencia": sum(a["tipo"] in TRANSFERENCIA for a in acts_a),
             "redes": sum(a["tipo"] in REDES for a in acts_a), "proyectos": len(ma["proyectos"]),
+            "tesis_defendidas": sum(x["estado"] == "defendida" for x in estudiantes.tesis(anio, anio)),
+            "con_estudiantes": sum(bool(estudiantes.es_estudiante_ref(p["autores"], p["anio"])) for p in ma["productos"]),
             "citas": ma["impacto"]["citas"]})
 
     con_int, completos = coautoria_internacional(articulos)
@@ -126,4 +128,5 @@ def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> d
         "divulgacion": por_tipo(DIVULGACION), "redes": por_tipo(REDES), "comites": por_tipo(COMITES),
         "movilidad_internacional": [a for a in por_tipo(ESTANCIAS) if _internacional(a)],
         "coautoria_internacional": con_int, "coautoria_con_pais": completos,
+        "estudiantes": estudiantes.indicadores(m),
     }

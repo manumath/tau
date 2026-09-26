@@ -34,7 +34,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 344 pruebas
+uv run pytest                            # 350 pruebas
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan
@@ -76,6 +76,7 @@ app/
   openalex.py                  consulta a OpenAlex: obras por ORCID y citas
   cosecha.py                   carga de la producción desde OpenAlex y actualización de citas
   acreditacion.py              anexo de I+D+i para la acreditación (IAC-CINDA), por criterio y año
+  estudiantes.py               periodos de estudio de estudiantes y tesistas; indicadores de participación
   importar_vinculos.py         carga del historial de vínculos desde un CSV de Recursos Humanos
   identificadores.py           ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
   msc.py                       búsqueda en el catálogo MSC2020
@@ -91,7 +92,7 @@ app/
   informes.py                  datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
   components/                  layout (página, navegación, modal), perfil, personas, registros, errores
   routes/                      un APIRouter por área: inicio, perfil, investigadores, actividades,
-                               productos, bibtex, personas, adjuntos, propuestas, proyectos, acreditacion, informes,
+                               productos, bibtex, personas, adjuntos, estudiantes, propuestas, proyectos, acreditacion, informes,
                                publico (+ API), admin_usuarios, admin_auditoria
 catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar

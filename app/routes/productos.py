@@ -148,6 +148,9 @@ def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False):
 AYUDA_TIPO = {
     "Patente": "Patente: en «Revista, editorial o medio» indique la oficina (p. ej., SENAPI) y en «Número» el número "
                "de solicitud o registro. Estado: «Enviado» = solicitada, «Publicado» = concedida.",
+    "Tesis dirigida": "Tesis dirigida: en «Autores» ponga primero al tesista y luego a quienes la dirigen. Registre "
+                      "al tesista como estudiante (Investigadores → Estudiantes y tesistas) para que cuente en los informes "
+                      "de acreditación. Estado: «En preparación» = en curso; «Publicado» = defendida.",
     "Traducción": "Traducción: en el título, el título traducido; en «Resumen», la obra original y su autor. En "
                   "«Revista, editorial o medio», la editorial.",
 }

@@ -27,6 +27,7 @@ CATEGORIAS = [
     ("reportes", "Reportes de investigación"),
     ("preprints", "Preprints"),
     ("presentaciones", "Presentaciones"),
+    ("tesis", "Tesis dirigidas"),
     ("patentes", "Patentes"),
     ("traducciones", "Traducciones"),
     ("otros", "Otros productos"),
@@ -36,6 +37,8 @@ CATEGORIAS = [
 def categoria(p: dict) -> str:
     if p["tipo"] in ("Patente", "Traducción"):  # la solicitud en trámite también es patente
         return "patentes" if p["tipo"] == "Patente" else "traducciones"
+    if p["tipo"] == "Tesis dirigida":  # en curso o defendida
+        return "tesis"
     if p["estado_publicacion"] in ("enviado", "en_preparacion"):
         return "en_curso"
     if p["tipo"] in ("Libro", "Capítulo de libro"):

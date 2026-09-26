@@ -12,6 +12,7 @@ import fasthtml.common as fh
 from fasthtml.common import Div, Input, Li, Option, P, Select, Span, Ul
 from monsterui.all import Button, ButtonT, TextPresets, UkIcon
 
+from app import estudiantes
 from app.actividades import ROLES
 from app.filiacion import OPCIONES as OPCIONES_FILIACION
 
@@ -51,7 +52,8 @@ def selector_filiacion(p: dict, valor):
 def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):
     """Una persona elegida. Si `campo` es 'participante' incluye el selector de rol; si es
     'autor', el de filiación."""
-    etiqueta = Span("Instituto" if p["interno"] else ("Externo · nuevo" if p.get("nueva") else "Externo"),
+    estudiante = estudiantes.etiqueta(p["id"]) if not p["interno"] and p.get("id") else None
+    etiqueta = Span("Instituto" if p["interno"] else ("Externo · nuevo" if p.get("nueva") else estudiante or "Externo"),
                     cls="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 "
                         + ("bg-primary/15 text-primary" if p["interno"] else "bg-muted"))
     selector_rol = Select(*[Option(t, value=v, selected=v == (rol or "asistente"))

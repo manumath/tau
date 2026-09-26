@@ -57,6 +57,17 @@ institucionales.
 autor(a) o que registró. Los filtros (texto, año, tipo, «solo los que cuentan para el informe»)
 quedan en la dirección de la página, para volver a ellos o compartirlos.
 
+### Estudiantes y tesistas
+
+En **Investigadores → Estudiantes y tesistas** registre a los estudiantes que participan en su
+investigación: tesistas, coautores, participantes de proyectos o actividades. Para cada uno indique
+sus estudios (nivel, programa, año de ingreso y, si ya egresó, año de egreso y si se tituló). Así los
+informes de acreditación cuentan su participación, y el portal sabe si alguien era estudiante o ya
+graduado en la fecha de cada producto.
+
+Registre las **tesis que dirige** como producto «Tesis dirigida»: primero el tesista y luego quienes
+la dirigen; «En preparación» si está en curso y «Publicado» cuando se defendió.
+
 ### Buscar su producción en OpenAlex
 
 **«Buscar en OpenAlex»** (en «Mis productos») usa el ORCID de su perfil para encontrar sus obras en

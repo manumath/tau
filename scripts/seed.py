@@ -15,8 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import json  # noqa: E402
 
-from app import (actividades, config, institucionales, perfiles, personas, productos, proyectos,  # noqa: E402
-                 revistas, usuarios, vinculos)
+from app import (actividades, config, estudiantes, institucionales, perfiles, personas, productos,  # noqa: E402
+                 proyectos, revistas, usuarios, vinculos)
 from app.db import get_db  # noqa: E402
 from app.db import init_db  # noqa: E402
 
@@ -272,6 +272,30 @@ def _cargar_vinculos():
     return hecho
 
 
+def _cargar_estudiantes():
+    """Estudiante de ejemplo (solo si no hay ninguno): una tesista de licenciatura que dirige Emmy y
+    participa en el proyecto IDH. True si la cargó."""
+    db = get_db()
+    if db.q("SELECT 1 FROM estudiante LIMIT 1"):
+        return False
+    emmy = usuarios.por_email("emmy.noether@instituto.test")
+    algebra = db.q("SELECT id FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01'")
+    if not emmy or not algebra:
+        return False
+    maria = personas.externo_similar("María", "Quispe") or personas.crear_externo(
+        "María", "Quispe", "Carrera de Matemática, UMSA", "Bolivia", emmy["id"])
+    estudiantes.agregar(maria["id"], {"nivel": "licenciatura", "desde": "2022", "del_programa": "1"}, emmy["id"])
+    tipo = db.q("SELECT id FROM tipo_producto WHERE nombre = 'Tesis dirigida'")[0]["id"]
+    d, errores = productos.preparar(dict(tipo_id=str(tipo), titulo="Anillos de invariantes de autómatas finitos",
+                                         anio="2026", estado_publicacion="en_preparacion", revision="sin_arbitraje",
+                                         medio="Tesis de licenciatura, Carrera de Matemática (UMSA)"),
+                                    [f"e:{maria['id']}", f"i:{emmy['id']}"], [])
+    assert not errores, errores
+    productos.guardar(d, [f"e:{maria['id']}", f"i:{emmy['id']}"], emmy["id"])
+    proyectos.agregar_participante(algebra[0]["id"], f"e:{maria['id']}", "tesista", False)
+    return True
+
+
 def _cargar_revistas():
     """Catálogo de ejemplo (solo si está vacío): una revista real verificada y la ficticia de los
     datos de ejemplo, pendiente de verificar. True si lo cargó."""
@@ -340,6 +364,7 @@ def main():
     con_proyectos = _cargar_proyectos()
     con_propuestas = _cargar_institucionales()
     con_revistas = _cargar_revistas()
+    con_estudiantes = _cargar_estudiantes()
     # Artículos de ejemplo sin revista del catálogo: se vinculan por el nombre de la revista.
     for g in revistas.sin_vincular():
         if g["sugerida"]:
@@ -385,7 +410,7 @@ def main():
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
     if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas \
-            and not con_vinculos and not con_revistas:
+            and not con_vinculos and not con_revistas and not con_estudiantes:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:
@@ -396,6 +421,8 @@ def main():
         print("Actividades y productos de ejemplo cargados (Emmy Noether y Alan Turing).")
     if con_vinculos and not creados:
         print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular; Ramanujan es invitado).")
+    if con_estudiantes:
+        print("Estudiante de ejemplo: María Quispe, tesista de licenciatura dirigida por Emmy.")
     if con_revistas:
         print("Catálogo de revistas de ejemplo: Journal of Symbolic Logic (verificada) y Revista de Álgebra (pendiente).")
     if con_propuestas:
