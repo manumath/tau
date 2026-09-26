@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import json  # noqa: E402
 
 from app import (actividades, config, institucionales, perfiles, personas, productos, proyectos,  # noqa: E402
-                 usuarios, vinculos)
+                 revistas, usuarios, vinculos)
 from app.db import get_db  # noqa: E402
 from app.db import init_db  # noqa: E402
 
@@ -272,6 +272,27 @@ def _cargar_vinculos():
     return hecho
 
 
+def _cargar_revistas():
+    """Catálogo de ejemplo (solo si está vacío): una revista real verificada y la ficticia de los
+    datos de ejemplo, pendiente de verificar. True si lo cargó."""
+    db = get_db()
+    if db.q("SELECT 1 FROM revista LIMIT 1"):
+        return False
+    admin = usuarios.por_email(ADMIN["email"])["id"]
+    jsl = revistas.crear({"titulo": "Journal of Symbolic Logic", "issn": "0022-4812", "eissn": "1943-5886",
+                          "pais": "Estados Unidos", "editorial": "Cambridge University Press", "arbitrada": 1,
+                          "acceso_abierto": 0, "url": "https://www.cambridge.org/core/journals/journal-of-symbolic-logic"},
+                         admin, verificada=True)
+    for indice in ("Web of Science (SCIE)", "Scopus", "MathSciNet", "zbMATH Open"):
+        iid = db.q("SELECT id FROM indice WHERE nombre = ?", [indice])[0]["id"]
+        revistas.agregar_indexacion(jsl, {"indice_id": iid, "desde": 1990,
+                                          "fuente": "Datos de demostración (verifique en la fuente oficial)"}, admin)
+    # Ficticia: sin ISSN (no debe coincidir con una revista real).
+    revistas.crear({"titulo": "Revista de Álgebra", "pais": "Bolivia", "arbitrada": 1, "acceso_abierto": 1,
+                    "nota": "Revista ficticia de los datos de demostración."}, admin)
+    return True
+
+
 def _cargar_perfil(uid: int, datos: dict | None):
     if not datos:
         return
@@ -318,6 +339,7 @@ def main():
     produccion = _cargar_produccion()
     con_proyectos = _cargar_proyectos()
     con_propuestas = _cargar_institucionales()
+    con_revistas = _cargar_revistas()
     # Filiación de ejemplo (solo si nadie la ha declarado aún en estos productos): Emmy firmó su
     # artículo con IIMAT/UMSA y Alan el suyo; Emmy aún no declara la suya en el de Alan (aviso en su inicio).
     db = get_db()
@@ -359,7 +381,7 @@ def main():
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
     if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas \
-            and not con_vinculos:
+            and not con_vinculos and not con_revistas:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:
@@ -370,6 +392,8 @@ def main():
         print("Actividades y productos de ejemplo cargados (Emmy Noether y Alan Turing).")
     if con_vinculos and not creados:
         print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular; Ramanujan es invitado).")
+    if con_revistas:
+        print("Catálogo de revistas de ejemplo: Journal of Symbolic Logic (verificada) y Revista de Álgebra (pendiente).")
     if con_propuestas:
         print("Propuestas institucionales de ejemplo: IIMAT-IDH-2025-01 aceptado (termina el 30 de septiembre) "
               "y una propuesta nueva de Sofía por decidir.")

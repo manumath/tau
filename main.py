@@ -30,6 +30,7 @@ from app.routes.actividades import rt as rutas_actividades
 from app.routes.adjuntos import rt as rutas_adjuntos
 from app.routes.bibtex import rt as rutas_bibtex
 from app.routes.admin_auditoria import rt as rutas_admin_auditoria
+from app.routes.admin_revistas import rt as rutas_admin_revistas
 from app.routes.admin_usuarios import rt as rutas_admin_usuarios
 from app.routes.informes import rt as rutas_informes
 from app.routes.inicio import rt as rutas_inicio
@@ -77,7 +78,7 @@ def create_app(db_path=config.DB_PATH):
     for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
                    rutas_adjuntos, rutas_propuestas, rutas_proyectos, rutas_informes, rutas_publico,
-                   rutas_admin_auditoria):
+                   rutas_admin_auditoria, rutas_admin_revistas):
         router.to_app(app)
     return app
 

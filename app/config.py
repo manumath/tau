@@ -14,6 +14,8 @@ UNIVERSIDAD = os.environ.get("PORTAL_UNIVERSIDAD", "Universidad Mayor de San And
 # Contexto local: zona horaria de las fechas (plazos, «hoy», horas mostradas) y moneda de los montos.
 ZONA_HORARIA = os.environ.get("PORTAL_ZONA_HORARIA", "America/La_Paz")
 MONEDA = os.environ.get("PORTAL_MONEDA", "BOB")
+# País del instituto: una revista de este país es «nacional» en los informes.
+PAIS = os.environ.get("PORTAL_PAIS", "Bolivia")
 SIMBOLOS_MONEDA = {"BOB": "Bs", "USD": "US$", "EUR": "€"}
 
 # Nombres que cuentan como filiación del instituto en una publicación (se comparan sin tildes ni

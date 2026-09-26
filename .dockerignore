@@ -8,3 +8,5 @@ data
 **/__pycache__
 tests
 *.tar.gz
+iac-cinda
+.DS_Store

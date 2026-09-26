@@ -95,7 +95,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0014` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0015` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -118,7 +118,11 @@ actividad_participante(actividad_id, orden, investigador_id | externo_id, rol)
 
 tipo_producto(id, nombre, admite_revision, orden, activo)
 indice(id, nombre, cuenta_como_indexado, orden, activo)
-producto(id, tipo_id, titulo, anio, mes, estado_publicacion, revision, medio, volumen, numero,
+revista(id, titulo, issn, eissn, pais, editorial, url, arbitrada, acceso_abierto, estado, nota,
+        propuesta_por, verificada_por, verificada_en, creado_en, actualizado_en)
+revista_indice(id, revista_id, indice_id, desde, hasta, cuartil, fuente, evidencia_url,
+               verificado_por, verificado_en)
+producto(id, tipo_id, titulo, anio, mes, revista_id, estado_publicacion, revision, medio, volumen, numero,
          paginas, doi, arxiv_id, url, resumen, actividad_id, creado_por, creado_en, actualizado_en)
 producto_autor(producto_id, orden, investigador_id | externo_id, filiacion_instituto)
 producto_indice(producto_id, indice_id)
@@ -175,7 +179,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-294 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+309 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -458,3 +462,52 @@ institucionales.
   manual de criterios vigente y hacer una tabla de correspondencia criterio → dato del portal →
   evidencia, para detectar lo que falta registrar y preparar un «informe para acreditación»
   (indicadores del periodo evaluado, normalmente varios años, con sus evidencias).
+
+## 14. Catálogo de revistas: indexación verificada por año (en curso)
+
+Hoy cada autor declara si su artículo es indexado y en qué índices. Eso produce inconsistencias
+(la misma revista indexada para uno y no para otro) y no resiste una revisión externa. Además, la
+indexación de una revista cambia con los años. IAC-CINDA (criterio 3.6.3) pide evidencia de los
+últimos 5 años de «publicaciones científicas en revistas indexadas tanto nacionales como
+internacionales», que el programa «exprese de manera abierta y transparente los datos, métodos y
+métricas» y que promueva la ciencia abierta.
+
+### Diseño
+
+- `revista(id, titulo, issn, eissn, pais, editorial, url, arbitrada, acceso_abierto, estado,
+  nota, propuesta_por, verificada_por, verificada_en, …)`. `estado`: `verificada` (la revisó la
+  administración) o `pendiente` (la propuso un investigador o se creó al importar).
+- `revista_indice(revista_id, indice_id, desde, hasta, cuartil, fuente, evidencia_url,
+  verificado_por, verificado_en)`: la revista figura en ese índice entre esos años (hasta vacío =
+  vigente), con la fuente consultada (p. ej., «Lista maestra de Scopus, junio 2026») y un enlace
+  de evidencia. Cuartil opcional (Q1–Q4), por si se requiere.
+- `producto.revista_id`: los artículos en revista eligen la revista del catálogo (autocompletar
+  por título o ISSN; al importar por DOI, se reconoce por el ISSN que trae Crossref).
+- **Revisión e índices derivados:** si la revista está verificada, el nivel de revisión y los
+  índices del artículo se calculan del catálogo **según el año de publicación** y no se editan a
+  mano. Sin revista verificada, rige lo declarado, marcado como «declarado, sin verificar».
+- Nacional o internacional según el país de la revista (Bolivia = nacional). Acceso abierto
+  para el indicador de ciencia abierta.
+- La administración mantiene el catálogo: alta y edición, periodos de indexación con su fuente,
+  verificación de revistas propuestas, carga por CSV (solo las revistas donde publica el
+  instituto; no hace falta cargar listas completas) y una lista de artículos sin revista del
+  catálogo, agrupados por el nombre declarado, para vincularlos.
+
+### Etapas
+
+| Etapa | Contenido | Estado |
+|---|---|---|
+| R1 | Catálogo: tablas, validación de ISSN, administración (lista, ficha, indexaciones con fuente y evidencia, verificación), carga por CSV | ✔ |
+| R2 | Productos: selector de revista, propuesta de revista nueva, reconocimiento por ISSN al importar, derivación de revisión e índices por año, vinculación de artículos existentes | Pendiente |
+| R3 | Informes: origen del dato (catálogo o declarado), revistas nacionales e internacionales, acceso abierto, cuartiles; fuente y fecha de verificación en las exportaciones | Pendiente |
+
+### Por confirmar con el instituto
+
+1. ¿Los artículos en revistas **sin verificar** cuentan en la memoria mientras tanto (marcados
+   como «declarado»), o quedan «por confirmar» hasta que la administración verifique la revista?
+   Propuesta: cuentan, marcados, durante el piloto; «por confirmar» al preparar la acreditación.
+2. ¿Qué índices cuentan como «indexado» en el contexto boliviano? Hoy: WoS (SCIE y ESCI), Scopus,
+   SciELO, MathSciNet y zbMATH sí; Latindex Catálogo no. ¿Se agrega SciELO Bolivia como índice
+   propio? ¿Latindex debería contar para revistas nacionales?
+3. ¿Quién mantiene el catálogo: la administración, o conviene un rol de «curador» (p. ej.,
+   bibliotecaria de la facultad) que solo gestione revistas?

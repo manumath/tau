@@ -246,6 +246,11 @@ proyecto y ser del mismo periodo).
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se
   envió (resumen, textos completos, objetivos y actividades previstas), para el comité.
 - **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
+- **Catálogo de revistas** (menú con su nombre): las revistas donde publica el instituto y los
+  índices en que figuran **cada año**, con la fuente consultada y un enlace de evidencia (lo pide
+  IAC-CINDA: datos y métodos transparentes). Una revista **verificada** define el nivel de revisión
+  y los índices de los artículos publicados en ella; una **pendiente** todavía no. Se cargan una a
+  una o por CSV (una fila por revista e índice; las existentes se completan).
 
 ## Preguntas frecuentes
 
