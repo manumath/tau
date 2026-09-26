@@ -271,6 +271,13 @@ proyecto y ser del mismo periodo).
   clasificaron por el catálogo o por lo declarado; **«Datos y método»** explica cómo se calcularon las
   cifras. El XLSX incluye, por producto, la revista, su ámbito, el origen de la clasificación y la
   fuente de cada indexación.
+- **Informes → Anexo de I+D+i para la acreditación:** la evidencia de los últimos 5 años (o de los
+  años que elija) ordenada según los criterios de IAC-CINDA: resumen por año; cuerpo académico por
+  categoría y jornada completa equivalente (2.2.1); publicaciones, libros, patentes, software y
+  traducciones (3.6.3 a–e); transferencia, estancias, proyectos, presentaciones y redes (3.6.3 f–j);
+  internacionalización (3.5.2) e impacto (3.6.1); lo que el portal aún no registra; y el método. Por
+  omisión solo cuenta artículos en revistas verificadas del catálogo; puede incluir las demás. El XLSX
+  trae una hoja por criterio.
 - **Citas:** en la memoria, «Actualizar citas» consulta en OpenAlex las citas de todos los productos
   con DOI. La sección «Impacto» las suma y el XLSX las trae por producto, con su fecha.
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se

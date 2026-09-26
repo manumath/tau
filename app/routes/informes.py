@@ -142,6 +142,11 @@ def get(auth):
                                      "proyectos de un año, un periodo octubre–septiembre o un rango de "
                                      "fechas. Descarga en XLSX y CSV.", cls=TextPresets.muted_sm))),
                           href="/informes/memoria", cls="block hover:shadow-md transition"))
+        tarjetas.append(A(Card(Div(UkIcon("award", height=22, width=22, cls="text-primary"),
+                                   H3("Anexo de I+D+i para la acreditación", cls="text-base font-semibold mt-2"),
+                                   P("Evidencia de los últimos 5 años ordenada según los criterios de IAC-CINDA, "
+                                     "con resumen por año. Descarga en XLSX.", cls=TextPresets.muted_sm))),
+                          href="/informes/acreditacion", cls="block hover:shadow-md transition"))
     return pagina("Informes",
                   Div(fh.H2("Informes", cls="uk-h2"),
                       P("Documentos generados a partir de lo registrado en el portal.", cls=TextPresets.muted_sm),

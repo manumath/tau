@@ -160,8 +160,22 @@ def ubicar_producto(p: dict, desde: str, hasta: str) -> str:
     return "fuera" if fin < desde or ini > hasta else "dudoso"
 
 
+def otros_resultados(desde: str, hasta: str, tipos=("Patente", "Traducción")) -> list[dict]:
+    """Otros resultados de I+D+i (IAC-CINDA 3.6.3 d, e) de autores vinculados en la fecha."""
+    marcas = ",".join("?" * len(tipos))
+    res = []
+    for f in get_db().q(f"""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
+                            WHERE t.nombre IN ({marcas}) AND p.anio BETWEEN ? AND ?
+                            ORDER BY t.nombre, p.anio""", [*tipos, int(desde[:4]), int(hasta[:4])]):
+        x = productos.obtener(f["id"])
+        if ubicar_producto(x, desde, hasta) == "dentro" and any(
+                a["interno"] and vinculos.en_fecha(a["id"], x["anio"], x["mes"])[0] == "si" for a in x["autores"]):
+            res.append(x)
+    return res
+
+
 def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str | None = None,
-            hasta: str | None = None) -> dict:
+            hasta: str | None = None, exigir_verificada: bool | None = None) -> dict:
     """Productos que cuentan, actividades con participación del instituto, proyectos vigentes y
     resúmenes por categoría y por investigador, en un año calendario, un periodo oct–sep o un
     rango de fechas.
@@ -178,6 +192,7 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
     completa un dato (mes, vínculo parcial, filiación sin declarar) queda «por confirmar».
     """
     periodo_memoria = rango(anio, periodo, desde, hasta)
+    exigir = config.EXIGIR_REVISTA_VERIFICADA if exigir_verificada is None else exigir_verificada
     desde, hasta = periodo_memoria["desde"], periodo_memoria["hasta"]
     ligados = {"producto": proyectos.ligados_a_institucionales("producto", desde, hasta),
                "actividad": proyectos.ligados_a_institucionales("actividad", desde, hasta)}
@@ -214,7 +229,7 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
         figuran = {u: c for u, (e, c, f) in estados.items() if e == "si" and f == 1}
         # Podría figurar si se completa un dato: el mes, el vínculo parcial o la filiación.
         posibles = [(e, f) for e, _, f in estados.values() if e in ("si", "dudoso") and f != 0]
-        sin_verificar = (config.EXIGIR_REVISTA_VERIFICADA and x["tipo"] == revistas.TIPO_ARTICULO
+        sin_verificar = (exigir and x["tipo"] == revistas.TIPO_ARTICULO
                          and not x["clasificacion_catalogo"])
         if lugar == "dentro" and figuran and not sin_verificar:
             internos_prod[i] = figuran
@@ -248,17 +263,9 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
     revistas_memoria = {"articulos": len(articulos), "por_ambito": por_ambito_revista,
                         "por_cuartil": dict(sorted(por_cuartil.items())), "acceso_abierto": n_abierto,
                         "declarados": n_declarados, "catalogo": len(articulos) - n_declarados,
-                        "exige_verificada": config.EXIGIR_REVISTA_VERIFICADA, "politica": revistas.politica_indices()}
+                        "exige_verificada": exigir, "politica": revistas.politica_indices()}
 
-    # Otros resultados de I+D+i (IAC-CINDA 3.6.3): patentes y traducciones de autores vinculados en la fecha.
-    otros_resultados = []
-    for f in get_db().q("""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
-                           WHERE t.nombre IN ('Patente', 'Traducción') AND p.anio BETWEEN ? AND ?
-                           ORDER BY t.nombre, p.anio""", [int(desde[:4]), int(hasta[:4])]):
-        x = productos.obtener(f["id"])
-        if ubicar_producto(x, desde, hasta) == "dentro" and any(
-                a["interno"] and vinculos.en_fecha(a["id"], x["anio"], x["mes"])[0] == "si" for a in x["autores"]):
-            otros_resultados.append(x)
+    otros = otros_resultados(desde, hasta)
 
     internos_act = {}
     for r in get_db().q(
@@ -325,7 +332,7 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
                              " ORDER BY apellidos", list(sin_vinculo))
         avisos.append("Sin vínculo registrado (su producción no cuenta): "
                       + ", ".join(f"{x['nombres']} {x['apellidos']}" for x in nombres) + ".")
-    return {**periodo_memoria, "anio": anio, "productos": prods, "otros_resultados": otros_resultados,
+    return {**periodo_memoria, "anio": anio, "productos": prods, "otros_resultados": otros,
             "revistas": revistas_memoria, "impacto": impacto, "actividades": acts, "proyectos": proys,
             "por_confirmar": sorted(por_confirmar, key=lambda p: (p["anio"], p["titulo"])), "avisos": avisos,
             "n_indexados": sum(p["revision"] == "indexado" for p in prods),

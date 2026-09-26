@@ -179,7 +179,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-340 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+344 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -557,7 +557,7 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
 **Prioridades para el portal** (por aporte a la acreditación):
 
 1. Carga automática desde ORCID u OpenAlex, con citas (3.6.1, 3.6.3) — ✔ (ver sección 16).
-2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1).
+2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1) — ✔ (sección 17).
 3. Estudiantes en la investigación: tesistas y estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d).
 4. Internacionalización: ámbito de los proyectos e indicador de coautoría internacional (3.5.2 c, 3.6.3 h).
 5. Líneas prioritarias de investigación y su asignación (3.1.1, 3.6.1 a).
@@ -587,3 +587,21 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
   obras de otras personas: el portal lo advierte cuando hay más de 40 obras por año.
 - **Pendiente:** búsqueda para quienes no tienen ORCID (por nombre y afiliación en OpenAlex, con
   más riesgo de errores); actualización periódica de citas sin intervención.
+
+## 17. Anexo de I+D+i para la acreditación
+
+«Informes → Anexo de I+D+i para la acreditación» (administración): documento imprimible y XLSX
+para la ventana de años elegida (por omisión los últimos 5; hasta 11 años), con las reglas de la
+memoria (vínculo en la fecha, filiación, catálogo de revistas).
+
+- **Resumen por año:** investigadores y JCE, artículos indexados y arbitrados, revistas nacionales e
+  internacionales, libros y capítulos, patentes/software/traducciones, presentaciones, estancias,
+  transferencia, redes, proyectos vigentes y citas.
+- **Por criterio:** 2.2.1 cuerpo académico (categoría al 31 de diciembre; JCE = horas/40), 3.6.3 a–j,
+  2.2.1 d comités, 3.5.2 c coautoría internacional (preliminar: depende del país de los coautores
+  externos), 3.6.1 impacto; lista de lo que el portal aún no registra; «Datos y método».
+- **Revistas:** por omisión solo cuentan artículos en revistas verificadas (lo que corresponde a la
+  acreditación); la opción «Incluir revistas sin verificar» sirve durante el piloto.
+- **Presentaciones (3.6.3 i):** eventos científicos con al menos un expositor del instituto.
+- La ventana usa años completos: un producto del año en curso sin mes cuenta; el cuerpo académico
+  del año en curso se mira a la fecha de hoy.
