@@ -334,6 +334,12 @@ def main():
             if not (f["titulo"].startswith("Invariantes") and f["investigador_id"] == emmy_id):
                 db.execute("UPDATE producto_autor SET filiacion_instituto = 1 WHERE producto_id = ? AND investigador_id = ?",
                            [f["producto_id"], f["investigador_id"]])
+    # Agradecimiento de ejemplo: el artículo de Emmy agradece al proyecto IDH (el de Alan, pendiente,
+    # queda sin declarar).
+    db.execute("""UPDATE producto_proyecto SET agradece = 1 WHERE agradece IS NULL
+                  AND producto_id = (SELECT id FROM producto WHERE titulo =
+                                     'Anillos con condición de cadena ascendente y sus ideales primarios')
+                  AND proyecto_id = (SELECT id FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01')""")
     # Bases creadas antes del mes de publicación: el artículo de Emmy es de marzo (el otro de 2026
     # queda sin mes, para ver «por confirmar» en la memoria del periodo 2025–2026).
     get_db().execute("""UPDATE producto SET mes = 3 WHERE doi = '10.5555/demo.2026.001' AND mes IS NULL""")

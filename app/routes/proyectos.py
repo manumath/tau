@@ -17,7 +17,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app import actividades, config, institucionales, personas, productos, proyectos, usuarios
+from app import actividades, config, filiacion, institucionales, personas, productos, proyectos, usuarios
 from app.components import personas as ui_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import dato, enlace_persona, insignia
@@ -622,6 +622,10 @@ def tab_productos(p, auth):
                 Div(insignias_producto(x),
                     insignia("editado después de aprobado", "ambar", icono="pencil") if v["editado_despues"] else "",
                     cls="flex flex-wrap gap-1.5"),
+                Div(*_requisitos(x, v),
+                    _selector_agradece(v["agradece"], hx_post=f"/proyectos/{pid}/producto/{x['id']}/agradece",
+                                       hx_trigger="change", hx_target=f"#{ID_TAB}") if gestiona else "",
+                    cls="flex flex-wrap items-center gap-1.5"),
                 cls="flex-1 min-w-0 space-y-1"),
             _desvincular(p, "producto", x["id"], gestiona),
             cls="flex items-start gap-3 py-3"))
@@ -632,6 +636,17 @@ def tab_productos(p, auth):
                     _boton_registrar(p, auth, "producto"), cls="flex justify-between items-center mb-2"),
                 Div(*filas, cls="divide-y divide-border") if filas
                 else P("Aún no hay productos aprobados.", cls=(TextPresets.muted_sm, "py-4")))
+
+
+@rt("/proyectos/{pid}/producto/{rid}/agradece")
+def post(auth, pid: int, rid: int, agradece: str = ""):
+    p, error = _proyecto_o_error(pid, auth, gestionar=True)
+    if error:
+        return error
+    if proyectos.vinculo("producto", rid, pid):
+        proyectos.marcar_agradece(rid, pid, filiacion.normalizar(agradece))
+        auditar(auth["id"], "marcar_agradecimiento", "producto", rid, f"proyecto {pid}: {agradece or 'sin declarar'}")
+    return tab_productos(p, auth)
 
 
 @rt("/proyectos/{pid}/actividad/{rid}/responsable")
@@ -658,6 +673,28 @@ def post(auth, sess, pid: int, tipo: str, rid: int):
 
 # --- Pestaña: pendientes -----------------------------------------------------------------------------------------
 
+OPCIONES_AGRADECE = (("", "Agradecimiento sin declarar"), ("1", "Agradece al proyecto"), ("0", "No agradece al proyecto"))
+
+
+def _selector_agradece(valor, **kw):
+    actual = "" if valor is None else str(valor)
+    return Div(FormLabel("¿La publicación agradece al proyecto?") if not kw else "",
+               Select(*[Option(t, value=v, selected=v == actual) for v, t in OPCIONES_AGRADECE],
+                      name="agradece", aria_label="¿La publicación agradece al proyecto?",
+                      cls="uk-select h-8 w-56 text-sm" + (" border-amber-400 text-amber-700" if actual == "" else ""),
+                      **kw),
+               cls="space-y-1")
+
+
+def _requisitos(x, v):
+    """Lo que exigen los fondos: filiación IIMAT/UMSA y agradecimiento al proyecto."""
+    fil, agr = filiacion.estado_producto(x), v.get("agradece")
+    return [insignia({1: "Filiación IIMAT/UMSA", 0: "Sin filiación del instituto", None: "Filiación sin declarar"}[fil],
+                     {1: "verde", 0: "rojo", None: "ambar"}[fil]),
+            insignia({1: "Agradece al proyecto", 0: "No agradece al proyecto", None: "Agradecimiento sin declarar"}[agr],
+                     {1: "verde", 0: "rojo", None: "ambar"}[agr])]
+
+
 def _tarjeta_pendiente(p, tipo, v, vigentes):
     pid, rid = p["id"], v["registro_id"]
     if tipo == "producto":
@@ -678,7 +715,7 @@ def _tarjeta_pendiente(p, tipo, v, vigentes):
                                       selected=y["id"] == v["propuesto_por"] and y["interno"])
                                for y in vigentes],
                              id=f"resp-{rid}", name="responsable", cls="uk-select h-9 text-sm"),
-                      cls="space-y-1 max-w-sm") if tipo == "actividad" else ""
+                      cls="space-y-1 max-w-sm") if tipo == "actividad" else _selector_agradece(v.get("agradece"))
     fuera = insignia("Fuera del periodo del proyecto", "ambar", icono="triangle-alert") \
         if proyectos.fuera_de_periodo(p, tipo, x) else ""
     return Card(
@@ -719,7 +756,7 @@ def _tras_revision(p, auth):
 
 
 @rt("/proyectos/{pid}/pendientes/{tipo}/{rid}/aprobar")
-def post(auth, sess, pid: int, tipo: str, rid: int, responsable: str = ""):
+def post(auth, sess, pid: int, tipo: str, rid: int, responsable: str = "", agradece: str = ""):
     p, error = _proyecto_o_error(pid, auth, gestionar=True)
     if error or tipo not in proyectos.TABLAS:
         return error or Response(status_code=404)
@@ -727,6 +764,8 @@ def post(auth, sess, pid: int, tipo: str, rid: int, responsable: str = ""):
     if error:
         add_toast(sess, error, "error")
     else:
+        if tipo == "producto":
+            proyectos.marcar_agradece(rid, pid, filiacion.normalizar(agradece))
         auditar(auth["id"], "aprobar", tipo, rid, f"proyecto {pid}")
         add_toast(sess, "Aprobado: ya forma parte del proyecto.", "success")
     return _tras_revision(p, auth)

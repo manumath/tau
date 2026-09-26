@@ -18,6 +18,7 @@ from monsterui.all import (H2, Button, ButtonT, Card, CheckboxX, Form, FormLabel
                            LabelTextArea, TextPresets, UkIcon)
 
 from app import actividades, filiacion, importacion, personas, productos, proyectos
+from app import filiacion as filiacion_mod
 from app.components import personas as selector_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import (casillas_proyectos, dato, enlace_persona, filtros, insignia,
@@ -286,7 +287,7 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
         campo("Enlace (URL)", "url", type="url", placeholder="https://…"),
         LabelTextArea("Resumen", id="resumen", value=d.get("resumen") or "", rows=4,
                       placeholder="Admite LaTeX: $\\zeta(s)$"),
-        casillas_proyectos("producto", pid, auth, proyectos_sel, preseleccion),
+        casillas_proyectos("producto", pid, auth, proyectos_sel, preseleccion, d.get("_agradece")),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
             Button("Guardar", type="submit", cls=ButtonT.primary),
             cls="flex justify-end gap-2"),
@@ -449,16 +450,21 @@ def aviso_duplicado(otro, uid):
             "dark:border-amber-800 p-3")
 
 
-def _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion=None):
+def _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion=None, agradece=None):
+    agradece = filiacion_mod.leer_agradece(agradece)
     d, errores = productos.preparar(datos, autor or [], indice or [], pid)
     if errores:
-        return _modal_form(auth, datos, _autores_de_refs(autor, filiacion), indice or [], errores, pid,
-                           proyecto or [])
+        return _modal_form(auth, {**datos, "_agradece": agradece}, _autores_de_refs(autor, filiacion),
+                           indice or [], errores, pid, proyecto or [])
     nuevo = pid is None
     autor = [personas.materializar(r, auth["id"]) for r in autor]  # externos importados
     pid = productos.guardar(d, autor, auth["id"], pid, filiacion)
     for aviso in proyectos.sincronizar("producto", pid, proyecto or [], auth):
         add_toast(sess, aviso, "warning")
+    # Agradecimiento: en los proyectos en que queda vinculado (o propuesto).
+    for v in proyectos.vinculos_de("producto", pid):
+        if v["proyecto_id"] in agradece:
+            proyectos.marcar_agradece(pid, v["proyecto_id"], agradece[v["proyecto_id"]])
     auditar(auth["id"], "crear_producto" if nuevo else "editar_producto", "producto", pid)
     add_toast(sess, "Producto registrado." if nuevo else "Cambios guardados.", "success")
     # Vacía el modal y avisa a la lista (o ficha) y al contador de pendientes que se recarguen.
@@ -470,10 +476,11 @@ def post(auth, sess, tipo_id: str = "", titulo: str = "", anio: str = "",
          estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
          numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
          resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
-         indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None):
+         indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
+         agradece: list[str] = None):
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
                         paginas, doi, arxiv_id, url, resumen, actividad_id, mes)
-    return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion)
+    return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion, agradece)
 
 
 @rt("/productos/{pid}/editar")
@@ -489,13 +496,14 @@ def put(auth, sess, pid: int, tipo_id: str = "", titulo: str = "", anio: str = "
         estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
         numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
         resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
-        indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None):
+        indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
+        agradece: list[str] = None):
     p = productos.obtener(pid)
     if not p or not productos.puede_editar(p, auth["id"]):
         return Response("No autorizado", status_code=403)
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
                         paginas, doi, arxiv_id, url, resumen, actividad_id, mes)
-    return _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion)
+    return _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion, agradece)
 
 
 @rt("/productos/{pid}/sumarme")

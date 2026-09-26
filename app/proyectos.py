@@ -380,6 +380,12 @@ def _ahora():
     return get_db().q("SELECT datetime('now') AS t")[0]["t"]
 
 
+def marcar_agradece(producto_id: int, pid: int, valor: int | None):
+    """¿La publicación agradece al proyecto? (1 / 0 / None = sin declarar)."""
+    get_db().execute("UPDATE producto_proyecto SET agradece = ? WHERE producto_id = ? AND proyecto_id = ?",
+                     [valor, producto_id, pid])
+
+
 def aprobar(tipo: str, registro_id: int, pid: int, revisor: int,
             responsable_participante_id: int | None = None) -> str | None:
     tabla, col = TABLAS[tipo]

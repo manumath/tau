@@ -241,16 +241,23 @@ def documento_proyecto(datos, desde, hasta):
                                  f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}") if x), cls="apagado"),
         P(Strong("Responsable: "), resp, cls="text-sm mt-1") if resp else "",
         Div(_cifra(len(datos["productos_informe"]), "productos que cuentan"),
+            _cifra(datos["n_cumplen"], "con filiación y agradecimiento"),
             _cifra(len(datos["productos_otros"]), "otros productos"),
             _cifra(len(datos["actividades"]), "actividades"),
             _cifra(sum(x["vigente"] for x in datos["participantes"]), "participantes vigentes"),
-            cls="grid grid-cols-4 gap-3 mt-6"),
+            cls="grid grid-cols-5 gap-3 mt-6"),
         *([H2("Objetivo general"), P(p["objetivo_general"])] if p["objetivo_general"] else []),
         *([H2("Objetivos específicos"), Ol(*[Li(o["texto"]) for o in datos["objetivos"]], cls="citas")]
           if datos["objetivos"] else []),
         H2("Equipo"), equipo,
         H2(f"Productos que cuentan para el informe ({len(datos['productos_informe'])})"),
-        Ol(*[cita(x) for x in datos["productos_informe"]], cls="citas") if datos["productos_informe"]
+        P("Los fondos exigen que cada publicación lleve la filiación del instituto (IIMAT/UMSA) y agradezca "
+          f"al proyecto: {datos['n_cumplen']} de {len(datos['productos_informe'])} lo cumplen.",
+          cls="apagado text-sm") if datos["productos_informe"] else "",
+        Ol(*[Li(cita(x), Span(" — " + ("filiación y agradecimiento ✓" if not x["requisitos_faltan"]
+                                       else "falta: " + ", ".join(x["requisitos_faltan"])),
+                             cls="apagado" if not x["requisitos_faltan"] else "text-amber-700"))
+             for x in datos["productos_informe"]], cls="citas") if datos["productos_informe"]
         else P("Ninguno en el periodo.", cls="apagado"),
         *([H2(f"Otros productos ({len(datos['productos_otros'])})"),
            Ol(*[cita(x) for x in datos["productos_otros"]], cls="citas")] if datos["productos_otros"] else []),
@@ -294,7 +301,11 @@ def get(auth, pid: int, desde: str = "", hasta: str = ""):
         return Response("No encontrado", status_code=404)
     d, h = _periodo_proyecto(p, desde, hasta)
     datos = informes.informe_proyecto(pid, d, h)
-    hojas = {"Productos": informes.filas_productos(datos["productos_informe"] + datos["productos_otros"]),
+    todos = datos["productos_informe"] + datos["productos_otros"]
+    marca = {1: "Sí", 0: "No", None: "Sin declarar"}
+    filas = [{**f, "Filiación IIMAT/UMSA": marca[x["filiacion_estado"]], "Agradece al proyecto": marca[x["agradece"]]}
+             for f, x in zip(informes.filas_productos(todos), todos)]
+    hojas = {"Productos": filas,
              "Actividades": informes.filas_actividades(datos["actividades"])}
     if datos["plan"]:
         hojas["Plan"] = [{"Periodo": f"{x['periodo']}–{x['periodo'] + 1}", "Mes": institucionales.mes_texto(f["mes_previsto"]),

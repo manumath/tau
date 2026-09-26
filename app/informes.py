@@ -15,7 +15,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
-from app import actividades, institucionales, perfiles, productos, proyectos, vinculos
+from app import actividades, filiacion, institucionales, perfiles, productos, proyectos, vinculos
 from app.db import get_db
 
 # Categorías del CV, en orden de aparición. La primera que corresponde es la que se usa.
@@ -94,7 +94,15 @@ def cv(uid: int, desde: int, hasta: int, solo_informe: bool = False, solo_filiac
 
 def informe_proyecto(pid: int, desde: int, hasta: int) -> dict:
     p = proyectos.obtener(pid)
-    prods = [productos.obtener(v["registro_id"]) for v in proyectos.registros(pid, "producto")]
+    prods = []
+    for v in proyectos.registros(pid, "producto"):
+        x = productos.obtener(v["registro_id"])
+        # Requisitos de los fondos: filiación IIMAT/UMSA y agradecimiento al proyecto.
+        fil, agr = filiacion.estado_producto(x), v["agradece"]
+        faltan = [t for ok, t in ((fil == 1, {0: "sin filiación del instituto", None: "filiación sin declarar"}.get(fil)),
+                                  (agr == 1, {0: "no agradece al proyecto", None: "agradecimiento sin declarar"}.get(agr)))
+                  if not ok]
+        prods.append({**x, "filiacion_estado": fil, "agradece": agr, "requisitos_faltan": faltan})
     prods = sorted((x for x in prods if desde <= x["anio"] <= hasta), key=lambda x: (-x["anio"], x["titulo"]))
     acts = []
     participantes = {x["participante_id"]: x for x in proyectos.participantes(pid)}
@@ -107,6 +115,7 @@ def informe_proyecto(pid: int, desde: int, hasta: int) -> dict:
             "participantes": proyectos.participantes(pid),
             "productos_informe": [x for x in prods if productos.cuenta_para_informe(x)],
             "productos_otros": [x for x in prods if not productos.cuenta_para_informe(x)],
+            "n_cumplen": sum(not x["requisitos_faltan"] for x in prods if productos.cuenta_para_informe(x)),
             "actividades": acts,
             "plan": institucionales.plan(pid, desde, hasta) if p["tipo"] == "institucional" else []}
 

@@ -34,7 +34,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 288 pruebas
+uv run pytest                            # 294 pruebas
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan

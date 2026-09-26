@@ -95,7 +95,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0013` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0014` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -139,7 +139,7 @@ proyecto_participante(id, proyecto_id, investigador_id | externo_id, rol, fecha_
 actividad_proyecto(actividad_id, proyecto_id, estado, responsable_participante_id,
                    propuesto_por, propuesto_en, revisado_por, revisado_en, comentario)
 producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
-                  revisado_por, revisado_en, comentario)
+                  revisado_por, revisado_en, comentario, agradece)
 ```
 
 `investigador_id | externo_id`: exactamente uno de los dos (restricción `CHECK`).
@@ -175,7 +175,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-288 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+294 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -368,7 +368,7 @@ ligados a un proyecto institucional. Desglose por categoría y columna de catego
 Nota: la convocatoria de septiembre de 2026 cierra el 30; lo realista es que el piloto use la
 de septiembre de 2027, o que la administración abra un plazo extraordinario.
 
-## 12. Filiación y periodo de pertenencia (en curso)
+## 12. Filiación y periodo de pertenencia
 
 Para que las cifras institucionales resistan una revisión externa, un producto o actividad cuenta
 para el instituto solo si **al menos un autor o participante del instituto**:
@@ -422,7 +422,7 @@ institucionales.
 |---|---|---|
 | E1 | Historial de vínculo: migración, ventana «Vínculo» en la administración, carga del historial por CSV (reemplaza el de cada persona del archivo), pregunta al desactivar, perfil, reglas de vínculo y categoría a la fecha en la memoria | ✔ |
 | E2 | Filiación: casilla por autor, detección al importar, filtro y confirmación masiva, «por confirmar» en la memoria | ✔ |
-| E3 | Agradecimiento al proyecto, informe de proyecto con filiación y agradecimiento, datos de ejemplo y documentación | Pendiente |
+| E3 | Agradecimiento al proyecto, informe de proyecto con filiación y agradecimiento, datos de ejemplo y documentación | ✔ |
 
 **Detalles de E2:**
 
@@ -435,6 +435,14 @@ institucionales.
 - Memoria: cuenta si al menos un autor vinculado en la fecha firmó con la filiación. «Por
   confirmar» indica el motivo (sin mes, vínculo parcial, filiación sin declarar). El CV admite
   «solo con filiación IIMAT/UMSA».
+
+**Detalles de E3:**
+
+- `producto_proyecto.agradece` (sí / no / sin declarar): se indica en el formulario del producto
+  (junto a cada proyecto), al aprobar la propuesta y en la pestaña Productos (responsables).
+- Informe de proyecto: cuántos productos que cuentan cumplen filiación **y** agradecimiento, y
+  qué le falta a cada uno; columnas nuevas en el XLSX. La filiación del producto es «sí» si algún
+  autor del instituto firmó con ella.
 
 ## 13. Contexto boliviano y acreditación IAC-CINDA
 

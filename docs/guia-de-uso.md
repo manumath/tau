@@ -175,6 +175,10 @@ Hay dos tipos de proyecto:
 - En **Participantes** agregue personas del instituto o externas, cambie roles o dé de baja
   (lo ya aprobado se conserva). Puede nombrar co-responsables; cambiar al responsable lo hace
   la administración.
+- **Agradecimiento:** los fondos exigen que cada publicación lleve la filiación del instituto y
+  **agradezca al proyecto**. Al aprobar un producto indique si lo agradece; en la pestaña
+  **Productos** cada uno muestra ambos requisitos y puede corregir el agradecimiento. Quien registra
+  el producto también puede indicarlo junto a cada proyecto en el formulario.
 - En **Resumen** edite los datos y los objetivos; ahí aparecen también los registros editados
   después de aprobados, por si quiere revisarlos.
 - El botón **«Informe»** genera el informe de avance del proyecto.
@@ -188,7 +192,9 @@ Menú «Informes»:
   productos por categoría y lista actividades y proyectos. Descárguelo con «Imprimir / Guardar
   PDF» (use «Guardar como PDF» en el diálogo del navegador) o en BibTeX.
 - **Informe de proyecto:** equipo, objetivos, productos y actividades aprobados en el periodo;
-  en los institucionales, además, el plan de actividades (previstas y realizadas). Descarga en XLSX.
+  en los institucionales, además, el plan de actividades (previstas y realizadas). Indica cuántos
+  productos cumplen los requisitos de los fondos (filiación y agradecimiento) y qué le falta a cada
+  uno. Descarga en XLSX.
 - **Memoria del instituto** (administración): ver abajo.
 
 ### Plan de actividades (proyectos institucionales)

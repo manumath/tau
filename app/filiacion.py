@@ -55,3 +55,22 @@ def declarar(uid: int, producto_ids: list[int], valor: int) -> int:
     get_db().execute(f"""UPDATE producto_autor SET filiacion_instituto = ? WHERE investigador_id = ?
                          AND producto_id IN ({marcas})""", [valor, uid, *producto_ids])
     return antes
+
+
+def estado_producto(p: dict) -> int | None:
+    """Filiación de un producto: 1 si algún autor del instituto firmó con ella, 0 si ninguno (y
+    todos lo declararon), None si falta declarar."""
+    valores = [a.get("filiacion") for a in p["autores"] if a["interno"]]
+    if 1 in valores:
+        return 1
+    return 0 if valores and all(v == 0 for v in valores) else None
+
+
+def leer_agradece(valores: list[str] | None) -> dict[int, int | None]:
+    """Campos «agradece» del formulario ('<proyecto>:1', '<proyecto>:0', '<proyecto>:') → {proyecto: valor}."""
+    res = {}
+    for v in valores or []:
+        pid, _, valor = str(v).partition(":")
+        if pid.isdigit():
+            res[int(pid)] = normalizar(valor)
+    return res

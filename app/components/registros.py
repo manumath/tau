@@ -105,15 +105,19 @@ ICONO_VINCULO = {"pendiente": "clock", "aprobado": "folder-check", "rechazado": 
 def insignias_proyectos(vinculos: list[dict]):
     """Una insignia por proyecto: «Proyecto X · pendiente». El motivo de rechazo va en el title."""
     from app.proyectos import ESTADOS_VINCULO
-    return [insignia(f"{v['proyecto']} · {ESTADOS_VINCULO[v['estado']].lower()}",
+    agradece = {1: " · agradece", 0: " · no agradece"}
+    return [insignia(f"{v['proyecto']} · {ESTADOS_VINCULO[v['estado']].lower()}{agradece.get(v.get('agradece'), '')}",
                      TONO_VINCULO[v["estado"]], icono=ICONO_VINCULO[v["estado"]],
                      titulo=f"Motivo: {v['comentario']}" if v.get("comentario") else None)
             for v in vinculos]
 
 
 def casillas_proyectos(tipo: str, registro_id: int | None, usuario: dict,
-                       marcados_form: list[int] | None = None, preseleccion: int | None = None):
-    """Casillas «Vincular a proyectos» para el formulario de una actividad o un producto."""
+                       marcados_form: list[int] | None = None, preseleccion: int | None = None,
+                       agradece_form: dict | None = None):
+    """Casillas «Vincular a proyectos» para el formulario de una actividad o un producto. En los
+    productos, cada proyecto lleva además «¿agradece al proyecto?» (campo `agradece` con valores
+    '<proyecto>:1', '<proyecto>:0' o '<proyecto>:')."""
     from app import proyectos
     disponibles = {p["id"]: p for p in proyectos.para_proponer(usuario["id"])}
     vinculos = {v["proyecto_id"]: v for v in proyectos.vinculos_de(tipo, registro_id)} \
@@ -143,11 +147,22 @@ def casillas_proyectos(tipo: str, registro_id: int | None, usuario: dict,
         else:
             nota = Span("quedará pendiente hasta que un responsable lo apruebe", cls=TextPresets.muted_sm)
         bloqueado = (v and v["estado"] == "aprobado") or not p
-        filas.append(fh.Label(
+        agradece = ""
+        if tipo == "producto":
+            actual = agradece_form.get(pid) if agradece_form is not None else (v or {}).get("agradece")
+            actual = "" if actual is None else str(actual)
+            agradece = Select(*[Option(t, value=f"{pid}:{val}", selected=val == actual) for val, t in
+                                (("", "Agradecimiento sin declarar"), ("1", "Agradece al proyecto"),
+                                 ("0", "No agradece al proyecto"))],
+                              name="agradece", aria_label=f"¿La publicación agradece a {nombre}?",
+                              title="Los fondos exigen que la publicación agradezca al proyecto.",
+                              cls="uk-select h-8 w-56 text-sm ml-auto shrink-0"
+                                  + (" border-amber-400 text-amber-700" if actual == "" else ""))
+        filas.append(Div(fh.Label(
             Input(type="checkbox", name="proyecto", value=str(pid), checked=marcado,
                   disabled=bloqueado, cls="uk-checkbox mt-0.5"),
             Div(Span(nombre, cls="font-medium text-sm"), nota, cls="flex flex-col"),
-            cls="flex items-start gap-2"))
+            cls="flex items-start gap-2"), agradece, cls="flex flex-wrap items-start gap-2"))
     return Div(Span("Vincular a proyectos", cls="uk-form-label"),
                Div(*filas, cls="space-y-2 rounded-md border border-border p-3"),
                cls="space-y-2")
