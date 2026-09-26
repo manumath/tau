@@ -95,7 +95,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0017` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0018` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -122,7 +122,7 @@ revista(id, titulo, issn, eissn, pais, editorial, url, arbitrada, acceso_abierto
         propuesta_por, verificada_por, verificada_en, creado_en, actualizado_en)
 revista_indice(id, revista_id, indice_id, desde, hasta, cuartil, fuente, evidencia_url,
                verificado_por, verificado_en)
-producto(id, tipo_id, titulo, anio, mes, revista_id, estado_publicacion, revision, medio, volumen, numero,
+producto(id, tipo_id, titulo, anio, mes, revista_id, openalex_id, citas, citas_actualizadas, estado_publicacion, revision, medio, volumen, numero,
          paginas, doi, arxiv_id, url, resumen, actividad_id, creado_por, creado_en, actualizado_en)
 producto_autor(producto_id, orden, investigador_id | externo_id, filiacion_instituto)
 producto_indice(producto_id, indice_id)
@@ -179,7 +179,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-324 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+340 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -556,7 +556,7 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
 
 **Prioridades para el portal** (por aporte a la acreditación):
 
-1. Carga automática desde ORCID u OpenAlex, con citas (3.6.1, 3.6.3) — en curso.
+1. Carga automática desde ORCID u OpenAlex, con citas (3.6.1, 3.6.3) — ✔ (ver sección 16).
 2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1).
 3. Estudiantes en la investigación: tesistas y estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d).
 4. Internacionalización: ámbito de los proyectos e indicador de coautoría internacional (3.5.2 c, 3.6.3 h).
@@ -565,3 +565,25 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
 7. Premios y distinciones, arbitraje de artículos, asesorías y prestación de servicios, impacto de
    la vinculación (2.2.1 d, 3.4.1, 3.4.3).
 8. Datos de diversidad (género, edad), solo si el instituto lo decide y con consentimiento (2.2.1 c).
+
+## 16. Carga automática desde OpenAlex y citas
+
+- **Fuente:** OpenAlex (abierto y gratuito), consultado por el ORCID del perfil. Se eligió frente a
+  la API pública de ORCID porque trae coautores con sus afiliaciones (sirve para detectar la
+  filiación IIMAT/UMSA), revista con ISSN, acceso abierto y citas. OpenAlex contabiliza el uso por
+  consulta; `PORTAL_OPENALEX_CLAVE` permite usar una clave si el cupo gratuito no alcanzara.
+- **Flujo:** «Mis productos → Buscar en OpenAlex» (últimos 5 años por omisión, hasta 200 obras por
+  búsqueda). Cada obra se clasifica como nueva, ya registrada (por id de OpenAlex, DOI, arXiv o
+  título y año), descartada o que no se importa (tesis propia, datos, erratas…). El investigador
+  elige qué registrar; nada entra sin su confirmación.
+- **Al registrar:** tipo según OpenAlex y su fuente; autores reconocidos por ORCID o nombre (el
+  investigador, siempre por su ORCID); revista del catálogo por ISSN o título, o propuesta como
+  pendiente; filiación marcada si la afiliación publicada menciona al instituto; citas y fecha.
+- **Descartar:** oculta una obra en las búsquedas siguientes (`cosecha_descartada`).
+- **Citas:** «Actualizar citas» (administración, en la memoria) consulta todos los productos con
+  DOI. La memoria tiene una sección «Impacto»; los XLSX, las citas por producto con su fecha.
+- **Calidad de los datos:** OpenAlex atribuye a veces obras ajenas. Un ORCID de relleno (el de
+  prueba 0000-0002-1825-0097, que usa un investigador de los datos de ejemplo) devuelve más de mil
+  obras de otras personas: el portal lo advierte cuando hay más de 40 obras por año.
+- **Pendiente:** búsqueda para quienes no tienen ORCID (por nombre y afiliación en OpenAlex, con
+  más riesgo de errores); actualización periódica de citas sin intervención.

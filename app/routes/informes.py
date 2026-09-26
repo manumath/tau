@@ -10,12 +10,15 @@ from datetime import date, datetime
 from urllib.parse import urlencode
 
 import fasthtml.common as fh
-from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select,
+from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, HtmxResponseHeaders, Li, Ol, Option, P, Response, Select,
                              Span, Strong, Style, Table, Tbody, Td, Th, Thead, Tr, Ul)
+from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 
-from app import actividades, config, informes, institucionales, perfiles, productos, proyectos, revistas
+from app import (actividades, config, cosecha, importacion, informes, institucionales, perfiles, productos,
+                 proyectos, revistas)
 from app.components.layout import pagina
+from app.db import auditar
 from app.identificadores import IDENTIFICADORES
 
 rt = APIRouter()
@@ -353,6 +356,20 @@ def seccion_revistas(rv):
           cls="text-sm text-amber-700") if rv["declarados"] else "")
 
 
+def seccion_impacto(imp):
+    """Citas de los productos que cuentan, según OpenAlex (IAC-CINDA 3.6.1: impacto con métricas)."""
+    if not imp["productos"]:
+        return ""
+    return Div(
+        H2("Impacto"),
+        Div(_cifra(imp["citas"], "citas (OpenAlex)"), _cifra(f"{imp['con_datos']} de {imp['productos']}",
+                                                            "productos con datos de citas"),
+            cls="grid grid-cols-2 gap-3 mt-2 max-w-md"),
+        P(f"Citas según OpenAlex, actualizadas el {imp['actualizadas']}. Las citas crecen con el tiempo: compárense "
+          "productos del mismo año." if imp["actualizadas"] else
+          "Aún no hay datos de citas: la administración puede actualizarlos desde OpenAlex.", cls="apagado text-sm"))
+
+
 def seccion_metodo(m):
     """Cómo se obtuvieron las cifras (IAC-CINDA 3.6.3: datos, métodos y métricas transparentes)."""
     pol = m["revistas"]["politica"]
@@ -373,6 +390,8 @@ def seccion_metodo(m):
               + ("Solo cuentan artículos en revistas verificadas." if m["revistas"]["exige_verificada"] else
                  "Durante el piloto, los artículos en revistas aún no verificadas cuentan con la clasificación declarada "
                  "por sus autores.")),
+           Li("Citas: las informa OpenAlex (catálogo abierto) para los productos con DOI o registrados desde OpenAlex, "
+              "en la fecha de actualización indicada."),
            Li("Revista nacional: publicada en " + config.PAIS + ". Categoría del investigador: la de su vínculo en la "
               "fecha de cada registro."),
            cls="list-disc pl-5 space-y-1 text-sm"))
@@ -402,6 +421,7 @@ def documento_memoria(m):
                 _tabla_conteo("Tipo", m["por_tipo_actividad"]) if m["por_tipo_actividad"] else P("—", cls="apagado")),
             cls="grid grid-cols-2 gap-6"),
         seccion_revistas(m["revistas"]),
+        seccion_impacto(m["impacto"]),
         H2("Por categoría"),
         P("Cada producto o actividad se cuenta una vez por categoría, aunque participen varias personas "
           "de ella.", cls="apagado text-sm"),
@@ -493,11 +513,29 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
     m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta, modo))
     anios = sorted(set(informes.anios_con_datos()) | {date.today().year}, reverse=True)
     q = urlencode(m["params"])
-    descargas = [descarga("XLSX", f"/informes/memoria/xlsx?{q}"),
+    descargas = [Button(UkIcon("refresh-cw", height=14, width=14), "Actualizar citas", type="button",
+                        cls=(ButtonT.default, ButtonT.sm), hx_post="/informes/citas/actualizar",
+                        hx_confirm="¿Consultar en OpenAlex las citas de todos los productos con DOI?",
+                        title="Consulta OpenAlex (puede tardar unos segundos)"),
+                 descarga("XLSX", f"/informes/memoria/xlsx?{q}"),
                  descarga("CSV productos", f"/informes/memoria/csv/productos?{q}"),
                  descarga("CSV actividades", f"/informes/memoria/csv/actividades?{q}")]
     return pagina(m["titulo"], ESTILO_IMPRESION, barra(selector_periodo(m, anios), descargas),
                   documento_memoria(m), usuario=auth, seccion="informes")
+
+
+@rt("/informes/citas/actualizar")
+def post(auth, sess, req):
+    if not auth["es_admin"]:
+        return Response("No autorizado", status_code=403)
+    try:
+        consultados, actualizados = cosecha.actualizar_citas()
+    except importacion.ErrorImportacion as e:
+        add_toast(sess, str(e), "error")
+    else:
+        auditar(auth["id"], "actualizar_citas", "producto", None, f"{actualizados} de {consultados}")
+        add_toast(sess, f"Citas actualizadas en {actualizados} de {consultados} producto(s) con DOI.", "success")
+    return HtmxResponseHeaders(refresh="true")
 
 
 @rt("/informes/memoria/xlsx")

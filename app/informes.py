@@ -242,6 +242,9 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
             por_cuartil[d["cuartil"]] = por_cuartil.get(d["cuartil"], 0) + 1
         n_abierto += d["acceso_abierto"] == 1
         n_declarados += not p["clasificacion_catalogo"]
+    con_citas = [p for p in prods if p.get("citas") is not None]
+    impacto = {"citas": sum(p["citas"] for p in con_citas), "con_datos": len(con_citas), "productos": len(prods),
+               "actualizadas": max((p["citas_actualizadas"] for p in con_citas if p.get("citas_actualizadas")), default=None)}
     revistas_memoria = {"articulos": len(articulos), "por_ambito": por_ambito_revista,
                         "por_cuartil": dict(sorted(por_cuartil.items())), "acceso_abierto": n_abierto,
                         "declarados": n_declarados, "catalogo": len(articulos) - n_declarados,
@@ -323,7 +326,7 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
         avisos.append("Sin vínculo registrado (su producción no cuenta): "
                       + ", ".join(f"{x['nombres']} {x['apellidos']}" for x in nombres) + ".")
     return {**periodo_memoria, "anio": anio, "productos": prods, "otros_resultados": otros_resultados,
-            "revistas": revistas_memoria, "actividades": acts, "proyectos": proys,
+            "revistas": revistas_memoria, "impacto": impacto, "actividades": acts, "proyectos": proys,
             "por_confirmar": sorted(por_confirmar, key=lambda p: (p["anio"], p["titulo"])), "avisos": avisos,
             "n_indexados": sum(p["revision"] == "indexado" for p in prods),
             "n_arbitrados": sum(p["revision"] == "arbitrado" for p in prods),
@@ -365,6 +368,8 @@ def filas_productos(prods: list[dict]) -> list[dict]:
             "Ámbito": r["ambito"] or "", "Acceso abierto": {1: "Sí", 0: "No"}.get(r["acceso_abierto"], ""),
             "Mejor cuartil": r["cuartil"] or "", "Origen de la clasificación": r["origen"] or "",
             "Fuente de la indexación": r["fuentes"] or "",
+            "Citas (OpenAlex)": p["citas"] if p.get("citas") is not None else "",
+            "Citas actualizadas": p.get("citas_actualizadas") or "",
         })
     return filas
 

@@ -28,6 +28,10 @@ FILIACIONES = [f.strip() for f in os.environ.get(
     "PORTAL_FILIACIONES",
     "IIMAT; Instituto de Investigación Matemática; CMAT; Carrera de Matemática; FCPN; "
     "Facultad de Ciencias Puras y Naturales; UMSA; Universidad Mayor de San Andrés").split(";") if f.strip()]
+# OpenAlex (carga automática de la producción y citas). La clave es opcional: OpenAlex contabiliza
+# el uso por consulta y la clave permite superar el cupo gratuito si hiciera falta.
+OPENALEX_URL = os.environ.get("PORTAL_OPENALEX_URL", "https://api.openalex.org")
+OPENALEX_CLAVE = os.environ.get("PORTAL_OPENALEX_CLAVE")
 # Correo de contacto que se envía a Crossref (su «polite pool» responde mejor si se identifica).
 CONTACTO = os.environ.get("PORTAL_CONTACTO")
 

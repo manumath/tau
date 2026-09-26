@@ -57,6 +57,16 @@ institucionales.
 autor(a) o que registró. Los filtros (texto, año, tipo, «solo los que cuentan para el informe»)
 quedan en la dirección de la página, para volver a ellos o compartirlos.
 
+### Buscar su producción en OpenAlex
+
+**«Buscar en OpenAlex»** (en «Mis productos») usa el ORCID de su perfil para encontrar sus obras en
+OpenAlex, un catálogo abierto de publicaciones. Muestra cuáles son nuevas, cuáles ya están en el
+portal y cuáles no se importan (p. ej., su tesis doctoral). Marque las que quiere registrar y
+presione **«Registrar las seleccionadas»**: se crean con sus coautores, la revista del catálogo (o
+propuesta, si no está), la filiación IIMAT/UMSA si la afiliación publicada la menciona, y sus citas.
+**Revise cada obra**: OpenAlex a veces atribuye obras por error. «Descartar» oculta una obra que no
+es suya en las próximas búsquedas. Por omisión se buscan los últimos 5 años.
+
 ### Registrar un producto
 
 El **mes de publicación** es opcional, pero conviene indicarlo: sin él, un producto no se puede
@@ -261,6 +271,8 @@ proyecto y ser del mismo periodo).
   clasificaron por el catálogo o por lo declarado; **«Datos y método»** explica cómo se calcularon las
   cifras. El XLSX incluye, por producto, la revista, su ámbito, el origen de la clasificación y la
   fuente de cada indexación.
+- **Citas:** en la memoria, «Actualizar citas» consulta en OpenAlex las citas de todos los productos
+  con DOI. La sección «Impacto» las suma y el XLSX las trae por producto, con su fecha.
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se
   envió (resumen, textos completos, objetivos y actividades previstas), para el comité.
 - **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
