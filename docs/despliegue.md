@@ -52,7 +52,8 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 
 | Variable | Por qué importa |
 |---|---|
-| `PORTAL_URL` | Con ella se arman los enlaces de los correos (recuperar contraseña, invitaciones, avisos). |
+| `PORTAL_URL` | Con ella se arman los enlaces de los correos (recuperar contraseña, invitaciones, avisos). También es un origen aceptado por la protección CSRF. |
+| `PORTAL_ORIGENES_EXTRA` | Solo si el portal se usa también desde otra dirección (p. ej. una IP interna): lista separada por comas. Si no, los cambios hechos desde esa dirección se rechazan con «Solicitud rechazada: no proviene del portal». |
 | `PORTAL_SECRET_KEY` | Firma la cookie de sesión. Si cambia, todas las sesiones se cierran. |
 | `PORTAL_HTTPS_ONLY=1` | La cookie de sesión solo viaja por HTTPS. |
 | `PORTAL_CONTACTO` | Crossref atiende mejor las consultas que se identifican. |
@@ -174,6 +175,9 @@ los cambios de esquema van en un archivo nuevo en `migrations/`.
 - [ ] «¿Olvidó su contraseña?» con una cuenta real hace llegar el correo, y el enlace apunta a
       `PORTAL_URL`.
 - [ ] Se sube una foto de perfil y un adjunto PDF, y se descargan.
+- [ ] Guardar cualquier cambio (p. ej. el perfil) funciona. Si aparece «Solicitud rechazada: no
+      proviene del portal», el proxy no está conservando el encabezado `Host` o se entra por una
+      dirección distinta de `PORTAL_URL` (agréguela a `PORTAL_ORIGENES_EXTRA`).
 - [ ] La importación por DOI funciona (el servidor necesita salida a `api.crossref.org` y
       `export.arxiv.org`).
 - [ ] El respaldo nocturno se genera, y una restauración de prueba funciona.

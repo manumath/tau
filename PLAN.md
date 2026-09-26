@@ -181,7 +181,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-371 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+382 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -640,3 +640,15 @@ memoria (vínculo en la fecha, filiación, catálogo de revistas).
   se conoce el país de todos los coautores externos, con aviso si falta), países de los coautores,
   proyectos internacionales con sus contrapartes y estancias internacionales; filas nuevas en el
   resumen por año y hoja de países en el XLSX. El informe de proyectos exporta ámbito y contrapartes.
+
+## 20. Protección CSRF
+
+La cookie de sesión es `SameSite=Lax`: protege de formularios de *otros sitios*, pero no de otros
+subdominios del mismo sitio (en un dominio universitario, cualquier página en `*.umsa.bo`). Desde
+el 26 de septiembre de 2026, toda petición que modifica datos debe venir del propio portal según
+`Origin` (o `Referer`, si falta): el host de la petición, `PORTAL_URL` o `PORTAL_ORIGENES_EXTRA`.
+Es la verificación de origen que recomienda OWASP; no requiere tokens ni cambiar formularios. Sin
+`Origin` ni `Referer` se admite (no es un navegador con la sesión de otra persona).
+
+Verificado con el servidor de desarrollo: un origen del propio portal se acepta (200) y uno de otro
+subdominio se rechaza (403).

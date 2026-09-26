@@ -84,7 +84,9 @@ fly certs add portal.iimat.umsa.bo
 Fly indica qué registros DNS crear. Con un dominio propio, **mudarse después es invisible para
 los usuarios**: la dirección no cambia y los enlaces ya enviados por correo siguen sirviendo. Con
 la dirección `NOMBRE.fly.dev`, en cambio, al mudarse habría que avisar la nueva dirección.
-`PORTAL_URL` debe coincidir con la dirección que usen las personas.
+`PORTAL_URL` debe coincidir con la dirección que usen las personas (también la usa la protección
+CSRF). Si además se entra por `NOMBRE.fly.dev`, agréguela con
+`fly secrets set PORTAL_ORIGENES_EXTRA=https://NOMBRE.fly.dev`.
 
 ## 4. Operación diaria
 

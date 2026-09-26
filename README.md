@@ -34,7 +34,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 371 pruebas
+uv run pytest                            # 382 pruebas
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan
@@ -114,7 +114,8 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | Variable | Por defecto | Uso |
 |---|---|---|
 | `PORTAL_DB` | `data/portal.db` | Base SQLite. Fotos, adjuntos y correos van en `fotos/`, `adjuntos/` y `correos/` junto a ella |
-| `PORTAL_URL` | `http://localhost:5001` | Dirección pública, para los enlaces de los correos |
+| `PORTAL_URL` | `http://localhost:5001` | Dirección pública, para los enlaces de los correos y la protección CSRF |
+| `PORTAL_ORIGENES_EXTRA` | — | Otras direcciones desde las que se usa el portal, separadas por coma (p. ej. una interna); protección CSRF |
 | `PORTAL_SECRET_KEY` | archivo `.sesskey` | Clave de firma de la cookie de sesión |
 | `PORTAL_HTTPS_ONLY` | `0` | `1` en producción: cookie solo por HTTPS |
 | `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre que muestra la interfaz |
@@ -171,6 +172,10 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
 - Sin sesión solo se accede a `/login`, `/recuperar…`, `/publico/…` y `/api/v1/…` (reglas exactas
   en `app/auth.py`).
 - Las exportaciones CSV/XLSX neutralizan fórmulas (`=`, `+`, `-`, `@`) para evitar su ejecución en Excel.
+- **CSRF:** toda petición que modifica datos (POST, PUT, PATCH, DELETE) debe venir del propio portal
+  según `Origin` (o `Referer`): el host de la petición, `PORTAL_URL` o `PORTAL_ORIGENES_EXTRA`
+  (`app/auth.py`, `beforeware_origen`). Complementa la cookie `SameSite=Lax`, que no protege de
+  otros subdominios del mismo sitio (p. ej. `*.umsa.bo`). Sin tokens: los formularios no cambian.
 
 ## Partes públicas y API
 
