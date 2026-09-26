@@ -542,3 +542,26 @@ métricas» y que promueva la ciencia abierta.
 1. (Resuelto: ver «Decisiones del instituto».)
 2. (Resuelto: ver «Decisiones del instituto», punto 3.)
 3. (Resuelto: la administración, durante el piloto.)
+
+## 15. Correspondencia con IAC-CINDA
+
+Tabla completa (criterio → qué registra el portal → brecha, con estado): 
+https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el menú de la página).
+
+- Base: criterios de pregrado de IAC-CINDA (junio 2025, v1.2), que aplican a la Carrera de
+  Matemática. **Pendiente:** confirmar con IAC-CINDA qué conjunto de criterios corresponde al
+  Instituto (el Modelo 2025 describe procesos para instituciones, carreras, maestrías y doctorados).
+- De 33 criterios revisados que tocan la investigación: 11 cubiertos, 18 parciales, 4 brechas; 12
+  más dependen de políticas o procesos fuera del portal.
+
+**Prioridades para el portal** (por aporte a la acreditación):
+
+1. Carga automática desde ORCID u OpenAlex, con citas (3.6.1, 3.6.3) — en curso.
+2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1).
+3. Estudiantes en la investigación: tesistas y estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d).
+4. Internacionalización: ámbito de los proyectos e indicador de coautoría internacional (3.5.2 c, 3.6.3 h).
+5. Líneas prioritarias de investigación y su asignación (3.1.1, 3.6.1 a).
+6. Indicadores normalizados: jornada completa equivalente y conteo fraccionado (2.2.1, 2.2.2).
+7. Premios y distinciones, arbitraje de artículos, asesorías y prestación de servicios, impacto de
+   la vinculación (2.2.1 d, 3.4.1, 3.4.3).
+8. Datos de diversidad (género, edad), solo si el instituto lo decide y con consentimiento (2.2.1 c).
