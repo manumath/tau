@@ -60,7 +60,8 @@ def buscar(texto: str = "", estado: str = "", limite: int = 200) -> list[dict]:
 
 def indexaciones(rid: int) -> list[dict]:
     return get_db().q(
-        """SELECT ri.*, i.nombre AS indice, i.cuenta_como_indexado, u.nombres || ' ' || u.apellidos AS verificador
+        """SELECT ri.*, i.nombre AS indice, i.cuenta_como_indexado, i.cuenta_como_arbitrado,
+                  u.nombres || ' ' || u.apellidos AS verificador
            FROM revista_indice ri JOIN indice i ON i.id = ri.indice_id
            LEFT JOIN usuario u ON u.id = ri.verificado_por
            WHERE ri.revista_id = ? ORDER BY i.orden, ri.desde""", [rid])
@@ -80,7 +81,7 @@ def clasificacion(rid: int, anio: int) -> dict | None:
     indices = indices_en(rid, anio)
     if any(x["cuenta_como_indexado"] for x in indices):
         revision = "indexado"
-    elif r["arbitrada"]:
+    elif r["arbitrada"] or any(x["cuenta_como_arbitrado"] for x in indices):  # p. ej., Latindex Catálogo
         revision = "arbitrado"
     else:
         revision = "sin_arbitraje"
@@ -273,3 +274,36 @@ def vincular(producto_ids: list[int], rid: int) -> int:
     get_db().execute(f"UPDATE producto SET revista_id = ?, medio = ? WHERE id IN ({marcas})", [rid, r["titulo"], *producto_ids])
     reclasificar(rid)
     return len(producto_ids)
+
+
+# --- Datos para informes ----------------------------------------------------------------------------------
+
+def detalle(p: dict) -> dict:
+    """Datos de la revista de un producto para informes y exportaciones: revista, ISSN, país,
+    ámbito (nacional / internacional), acceso abierto, mejor cuartil del año, origen de la
+    clasificación y fuentes de la indexación (transparencia del método; IAC-CINDA 3.6.3)."""
+    r = p.get("revista")
+    es_articulo = p.get("tipo") == TIPO_ARTICULO
+    if not r:
+        return {"revista": None, "issn": None, "pais": None, "acceso_abierto": None, "cuartil": None,
+                "ambito": "Sin revista del catálogo" if es_articulo else None,
+                "origen": "Declarada por los autores" if es_articulo else None, "fuentes": None}
+    verificada = r["estado"] == "verificada"
+    indices = indices_en(r["id"], p["anio"]) if verificada else []
+    cuartiles = sorted(x["cuartil"] for x in indices if x["cuartil"])
+    if not r["pais"]:
+        ambito = "País sin registrar"
+    else:
+        ambito = "Nacional" if sin_tildes(r["pais"]).lower() == sin_tildes(config.PAIS).lower() else "Internacional"
+    return {"revista": r["titulo"], "issn": r["issn"] or r["eissn"], "pais": r["pais"],
+            "acceso_abierto": r["acceso_abierto"], "cuartil": cuartiles[0] if cuartiles else None, "ambito": ambito,
+            "origen": "Catálogo (revista verificada)" if verificada else "Declarada (revista pendiente de verificar)",
+            "fuentes": "; ".join(f"{x['indice']}: {x['fuente'] or 'sin fuente registrada'} "
+                                 f"(verificado el {x['verificado_en'][:10]})" for x in indices) or None}
+
+
+def politica_indices() -> dict:
+    """Qué índices cuentan como indexado y cuáles como arbitrado (para explicar el método)."""
+    filas = get_db().q("SELECT * FROM indice WHERE activo = 1 ORDER BY orden")
+    return {"indexado": [i["nombre"] for i in filas if i["cuenta_como_indexado"]],
+            "arbitrado": [i["nombre"] for i in filas if not i["cuenta_como_indexado"] and i["cuenta_como_arbitrado"]]}

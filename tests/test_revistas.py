@@ -45,8 +45,11 @@ def test_clasificacion_por_anio(admin_id):
     assert c["nacional"]
     # 2024: ya no está en Scopus; Latindex no cuenta como indexado → arbitrada.
     assert revistas.clasificacion(rid, 2024)["revision"] == "arbitrado"
+    # Aunque la revista no declare revisión por pares, figurar en Latindex Catálogo la hace arbitrada
+    # (decisión del instituto); sin índices ese año, queda sin arbitraje.
     revistas.actualizar(rid, {"arbitrada": 0})
-    assert revistas.clasificacion(rid, 2024)["revision"] == "sin_arbitraje"
+    assert revistas.clasificacion(rid, 2024)["revision"] == "arbitrado"
+    assert revistas.clasificacion(rid, 2010)["revision"] == "sin_arbitraje"
 
 
 def test_validaciones(admin_id):

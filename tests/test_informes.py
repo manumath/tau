@@ -119,7 +119,7 @@ def test_memoria_solo_admin_y_descargas(client, datos):
     libro = load_workbook(io.BytesIO(r.content))
     assert libro.sheetnames == ["Productos", "Actividades", "Proyectos", "Por categoría", "Por investigador"]
     hoja = libro["Productos"]
-    assert [c.value for c in hoja[1]][:3] == ["Año", "Tipo", "Título"] and hoja.max_row == 3
+    assert [c.value for c in hoja[1]][:4] == ["Año", "Mes", "Tipo", "Título"] and hoja.max_row == 3
 
     r = client.get("/informes/memoria/csv/productos?anio=2026")
     assert r.content.startswith(b"\xef\xbb\xbf")  # BOM para Excel

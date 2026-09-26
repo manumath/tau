@@ -16,6 +16,9 @@ ZONA_HORARIA = os.environ.get("PORTAL_ZONA_HORARIA", "America/La_Paz")
 MONEDA = os.environ.get("PORTAL_MONEDA", "BOB")
 # País del instituto: una revista de este país es «nacional» en los informes.
 PAIS = os.environ.get("PORTAL_PAIS", "Bolivia")
+# Durante el piloto, los artículos en revistas aún no verificadas cuentan con lo declarado. Para la
+# acreditación, con «1» solo cuentan los de revistas verificadas (los demás quedan «por confirmar»).
+EXIGIR_REVISTA_VERIFICADA = os.environ.get("PORTAL_EXIGIR_REVISTA_VERIFICADA", "0") == "1"
 SIMBOLOS_MONEDA = {"BOB": "Bs", "USD": "US$", "EUR": "€"}
 
 # Nombres que cuentan como filiación del instituto en una publicación (se comparan sin tildes ni

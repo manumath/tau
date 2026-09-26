@@ -95,7 +95,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0016` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0017` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -117,7 +117,7 @@ actividad(id, tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin
 actividad_participante(actividad_id, orden, investigador_id | externo_id, rol)
 
 tipo_producto(id, nombre, admite_revision, orden, activo)
-indice(id, nombre, cuenta_como_indexado, orden, activo)
+indice(id, nombre, cuenta_como_indexado, cuenta_como_arbitrado, orden, activo)
 revista(id, titulo, issn, eissn, pais, editorial, url, arbitrada, acceso_abierto, estado, nota,
         propuesta_por, verificada_por, verificada_en, creado_en, actualizado_en)
 revista_indice(id, revista_id, indice_id, desde, hasta, cuartil, fuente, evidencia_url,
@@ -179,7 +179,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-320 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+324 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -463,7 +463,7 @@ institucionales.
   evidencia, para detectar lo que falta registrar y preparar un «informe para acreditación»
   (indicadores del periodo evaluado, normalmente varios años, con sus evidencias).
 
-## 14. Catálogo de revistas: indexación verificada por año (en curso)
+## 14. Catálogo de revistas: indexación verificada por año
 
 Hoy cada autor declara si su artículo es indexado y en qué índices. Eso produce inconsistencias
 (la misma revista indexada para uno y no para otro) y no resiste una revisión externa. Además, la
@@ -499,7 +499,7 @@ métricas» y que promueva la ciencia abierta.
 |---|---|---|
 | R1 | Catálogo: tablas, validación de ISSN, administración (lista, ficha, indexaciones con fuente y evidencia, verificación), carga por CSV | ✔ |
 | R2 | Productos: selector de revista, propuesta de revista nueva, reconocimiento por ISSN al importar, derivación de revisión e índices por año, vinculación de artículos existentes | ✔ |
-| R3 | Informes: origen del dato (catálogo o declarado), revistas nacionales e internacionales, acceso abierto, cuartiles; fuente y fecha de verificación en las exportaciones | Pendiente |
+| R3 | Informes: origen del dato (catálogo o declarado), revistas nacionales e internacionales, acceso abierto, cuartiles; fuente y fecha de verificación en las exportaciones | ✔ |
 
 **Detalles de R2:**
 
@@ -522,11 +522,23 @@ métricas» y que promueva la ciencia abierta.
 1. Artículos en revistas **sin verificar**: cuentan durante el piloto (marcados como declarados);
    al preparar la acreditación se exigirá revista verificada.
 2. El catálogo lo mantiene la administración durante el piloto.
+3. SciELO queda como un solo índice (sin separar SciELO Bolivia). **Latindex Catálogo cuenta como
+   arbitrado** (no como indexado): una revista que figura en él clasifica sus artículos como
+   arbitrados aunque no declare revisión por pares (`indice.cuenta_como_arbitrado`, migración 0017).
+
+**Detalles de R3:**
+
+- Memoria: sección «Revistas de los artículos» (nacionales / internacionales según el país de la
+  revista, acceso abierto, mejor cuartil del año, clasificados por el catálogo o declarados) y
+  sección final «Datos y método» con las reglas y la política de índices (IAC-CINDA 3.6.3).
+- Exportaciones de productos (memoria, informe de proyecto, CSV): mes, revista del catálogo, ISSN,
+  país, ámbito, acceso abierto, mejor cuartil, origen de la clasificación y fuente de cada
+  indexación con su fecha de verificación.
+- `PORTAL_EXIGIR_REVISTA_VERIFICADA=1` (para la acreditación): los artículos en revistas no
+  verificadas quedan «por confirmar».
 
 ### Por confirmar con el instituto
 
 1. (Resuelto: ver «Decisiones del instituto».)
-2. ¿Qué índices cuentan como «indexado» en el contexto boliviano? Hoy: WoS (SCIE y ESCI), Scopus,
-   SciELO, MathSciNet y zbMATH sí; Latindex Catálogo no. ¿Se agrega SciELO Bolivia como índice
-   propio? ¿Latindex debería contar para revistas nacionales?
+2. (Resuelto: ver «Decisiones del instituto», punto 3.)
 3. (Resuelto: la administración, durante el piloto.)

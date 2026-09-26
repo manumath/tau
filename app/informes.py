@@ -15,7 +15,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
-from app import actividades, filiacion, institucionales, perfiles, productos, proyectos, vinculos
+from app import actividades, config, filiacion, institucionales, perfiles, productos, proyectos, revistas, vinculos
 from app.db import get_db
 
 # Categorías del CV, en orden de aparición. La primera que corresponde es la que se usa.
@@ -214,9 +214,13 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
         figuran = {u: c for u, (e, c, f) in estados.items() if e == "si" and f == 1}
         # Podría figurar si se completa un dato: el mes, el vínculo parcial o la filiación.
         posibles = [(e, f) for e, _, f in estados.values() if e in ("si", "dudoso") and f != 0]
-        if lugar == "dentro" and figuran:
+        sin_verificar = (config.EXIGIR_REVISTA_VERIFICADA and x["tipo"] == revistas.TIPO_ARTICULO
+                         and not x["clasificacion_catalogo"])
+        if lugar == "dentro" and figuran and not sin_verificar:
             internos_prod[i] = figuran
             prods.append(x)
+        elif lugar == "dentro" and figuran:
+            por_confirmar.append({**x, "motivo": "revista sin verificar en el catálogo"})
         elif figuran or posibles:
             motivos = []
             if lugar == "dudoso":
@@ -227,6 +231,21 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
                 motivos.append("filiación sin declarar")
             por_confirmar.append({**x, "motivo": "; ".join(motivos)})
     prods.sort(key=lambda p: (p["revision"] != "indexado", p["tipo"], p["titulo"]))
+
+    # Revistas de los artículos que cuentan: ámbito, acceso abierto, cuartil y origen del dato.
+    articulos = [p for p in prods if p["tipo"] == revistas.TIPO_ARTICULO]
+    por_ambito_revista, por_cuartil, n_abierto, n_declarados = {}, {}, 0, 0
+    for p in articulos:
+        p["detalle_revista"] = d = revistas.detalle(p)
+        por_ambito_revista[d["ambito"]] = por_ambito_revista.get(d["ambito"], 0) + 1
+        if d["cuartil"]:
+            por_cuartil[d["cuartil"]] = por_cuartil.get(d["cuartil"], 0) + 1
+        n_abierto += d["acceso_abierto"] == 1
+        n_declarados += not p["clasificacion_catalogo"]
+    revistas_memoria = {"articulos": len(articulos), "por_ambito": por_ambito_revista,
+                        "por_cuartil": dict(sorted(por_cuartil.items())), "acceso_abierto": n_abierto,
+                        "declarados": n_declarados, "catalogo": len(articulos) - n_declarados,
+                        "exige_verificada": config.EXIGIR_REVISTA_VERIFICADA, "politica": revistas.politica_indices()}
 
     # Otros resultados de I+D+i (IAC-CINDA 3.6.3): patentes y traducciones de autores vinculados en la fecha.
     otros_resultados = []
@@ -303,7 +322,8 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
                              " ORDER BY apellidos", list(sin_vinculo))
         avisos.append("Sin vínculo registrado (su producción no cuenta): "
                       + ", ".join(f"{x['nombres']} {x['apellidos']}" for x in nombres) + ".")
-    return {**periodo_memoria, "anio": anio, "productos": prods, "otros_resultados": otros_resultados, "actividades": acts, "proyectos": proys,
+    return {**periodo_memoria, "anio": anio, "productos": prods, "otros_resultados": otros_resultados,
+            "revistas": revistas_memoria, "actividades": acts, "proyectos": proys,
             "por_confirmar": sorted(por_confirmar, key=lambda p: (p["anio"], p["titulo"])), "avisos": avisos,
             "n_indexados": sum(p["revision"] == "indexado" for p in prods),
             "n_arbitrados": sum(p["revision"] == "arbitrado" for p in prods),
@@ -327,17 +347,26 @@ def _autores_texto(p, solo_internos=False):
 
 
 def filas_productos(prods: list[dict]) -> list[dict]:
-    return [{
-        "Año": p["anio"], "Tipo": p["tipo"], "Título": p["titulo"], "Autores": _autores_texto(p),
-        "Autores del instituto": _autores_texto(p, solo_internos=True),
-        "Revista / medio": p["medio"] or "", "Volumen": p["volumen"] or "", "Número": p["numero"] or "",
-        "Páginas": p["paginas"] or "", "Revisión": productos.REVISIONES[p["revision"]],
-        "Índices": ", ".join(i["nombre"] for i in p["indices"]),
-        "Estado": productos.ESTADOS[p["estado_publicacion"]],
-        "DOI": p["doi"] or "", "arXiv": p["arxiv_id"] or "",
-        "Proyectos": ", ".join(v["proyecto"] for v in proyectos.vinculos_de("producto", p["id"])
-                               if v["estado"] == "aprobado"),
-    } for p in prods]
+    filas = []
+    for p in prods:
+        r = revistas.detalle(p)
+        filas.append({
+            "Año": p["anio"], "Mes": p.get("mes") or "", "Tipo": p["tipo"], "Título": p["titulo"],
+            "Autores": _autores_texto(p), "Autores del instituto": _autores_texto(p, solo_internos=True),
+            "Revista / medio": p["medio"] or "", "Volumen": p["volumen"] or "", "Número": p["numero"] or "",
+            "Páginas": p["paginas"] or "", "Revisión": productos.REVISIONES[p["revision"]],
+            "Índices": ", ".join(i["nombre"] for i in p["indices"]),
+            "Estado": productos.ESTADOS[p["estado_publicacion"]],
+            "DOI": p["doi"] or "", "arXiv": p["arxiv_id"] or "",
+            "Proyectos": ", ".join(v["proyecto"] for v in proyectos.vinculos_de("producto", p["id"])
+                                   if v["estado"] == "aprobado"),
+            # Revista y origen de la clasificación (transparencia del método).
+            "Revista (catálogo)": r["revista"] or "", "ISSN": r["issn"] or "", "País de la revista": r["pais"] or "",
+            "Ámbito": r["ambito"] or "", "Acceso abierto": {1: "Sí", 0: "No"}.get(r["acceso_abierto"], ""),
+            "Mejor cuartil": r["cuartil"] or "", "Origen de la clasificación": r["origen"] or "",
+            "Fuente de la indexación": r["fuentes"] or "",
+        })
+    return filas
 
 
 def filas_actividades(acts: list[dict]) -> list[dict]:

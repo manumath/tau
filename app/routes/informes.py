@@ -14,7 +14,7 @@ from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, R
                              Span, Strong, Style, Table, Tbody, Td, Th, Thead, Tr, Ul)
 from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 
-from app import actividades, config, informes, institucionales, perfiles, productos, proyectos
+from app import actividades, config, informes, institucionales, perfiles, productos, proyectos, revistas
 from app.components.layout import pagina
 from app.identificadores import IDENTIFICADORES
 
@@ -254,7 +254,7 @@ def documento_proyecto(datos, desde, hasta):
         P("Los fondos exigen que cada publicación lleve la filiación del instituto (IIMAT/UMSA) y agradezca "
           f"al proyecto: {datos['n_cumplen']} de {len(datos['productos_informe'])} lo cumplen.",
           cls="apagado text-sm") if datos["productos_informe"] else "",
-        Ol(*[Li(cita(x), Span(" — " + ("filiación y agradecimiento ✓" if not x["requisitos_faltan"]
+        Ol(*[cita(x)(Span(" — " + ("filiación y agradecimiento ✓" if not x["requisitos_faltan"]
                                        else "falta: " + ", ".join(x["requisitos_faltan"])),
                              cls="apagado" if not x["requisitos_faltan"] else "text-amber-700"))
              for x in datos["productos_informe"]], cls="citas") if datos["productos_informe"]
@@ -332,6 +332,52 @@ def _tabla_conteo(titulo_col, datos: dict, etiquetas=None):
                  Tbody(*[Tr(Td((etiquetas or {}).get(k, k)), Td(str(v), cls="text-right")) for k, v in datos.items()]))
 
 
+def seccion_revistas(rv):
+    """Artículos que cuentan según su revista: ámbito, acceso abierto, cuartiles y origen del dato."""
+    if not rv["articulos"]:
+        return ""
+    return Div(
+        H2("Revistas de los artículos"),
+        Div(_cifra(rv["por_ambito"].get("Nacional", 0), "en revistas nacionales"),
+            _cifra(rv["por_ambito"].get("Internacional", 0), "en revistas internacionales"),
+            _cifra(rv["acceso_abierto"], "en acceso abierto"),
+            _cifra(rv["catalogo"], "clasificados por el catálogo"),
+            _cifra(rv["declarados"], "con clasificación declarada"), cls="grid grid-cols-5 gap-3 mt-2"),
+        Div(Div(H3("Por ámbito de la revista"), _tabla_conteo("Ámbito", rv["por_ambito"])),
+            Div(H3("Por cuartil (mejor cuartil del año)"),
+                _tabla_conteo("Cuartil", rv["por_cuartil"]) if rv["por_cuartil"]
+                else P("Sin cuartiles registrados en el catálogo.", cls="apagado")),
+            cls="grid grid-cols-2 gap-6"),
+        P(f"{rv['declarados']} artículo(s) en revistas aún no verificadas en el catálogo: su clasificación es la "
+          "que declararon los autores." + (" Para la acreditación conviene verificarlas." if not rv["exige_verificada"] else ""),
+          cls="text-sm text-amber-700") if rv["declarados"] else "")
+
+
+def seccion_metodo(m):
+    """Cómo se obtuvieron las cifras (IAC-CINDA 3.6.3: datos, métodos y métricas transparentes)."""
+    pol = m["revistas"]["politica"]
+    return Div(
+        H2("Datos y método"),
+        Ul(Li("Fuente: registros del Portal de Investigación del instituto, mantenidos por cada investigador(a) y "
+              "revisados por la administración."),
+           Li(f"Periodo: del {informes._fecha_corta(m['desde'])} al {informes._fecha_corta(m['hasta'])}. Los productos "
+              "se ubican por año y mes de publicación; las actividades, por su fecha de inicio."),
+           Li("Cuenta un producto indexado o arbitrado, aceptado o publicado, si al menos un autor estaba vinculado al "
+              "instituto en la fecha de publicación y firmó con la filiación del instituto (IIMAT, CMAT, FCPN o UMSA). "
+              "Cada producto se cuenta una vez."),
+           Li("Indexado: la revista figuraba ese año en " + ", ".join(pol["indexado"]) + ". "
+              + (f"Arbitrado: revistas con revisión por pares o que figuran en {', '.join(pol['arbitrado'])}." if pol["arbitrado"]
+                 else "Arbitrado: revistas con revisión por pares.")),
+           Li("La indexación de cada revista por año se toma del catálogo de revistas, con la fuente consultada y la fecha "
+              "de verificación (ver la columna «Fuente de la indexación» del XLSX). "
+              + ("Solo cuentan artículos en revistas verificadas." if m["revistas"]["exige_verificada"] else
+                 "Durante el piloto, los artículos en revistas aún no verificadas cuentan con la clasificación declarada "
+                 "por sus autores.")),
+           Li("Revista nacional: publicada en " + config.PAIS + ". Categoría del investigador: la de su vínculo en la "
+              "fecha de cada registro."),
+           cls="list-disc pl-5 space-y-1 text-sm"))
+
+
 def documento_memoria(m):
     return hoja(
         P(config.NOMBRE_INSTITUTO, cls="apagado text-sm uppercase tracking-wide"),
@@ -342,18 +388,20 @@ def documento_memoria(m):
             cls="rounded-md border border-amber-300 bg-amber-50 text-amber-900 p-3 mt-3 space-y-1 no-imprimir")
         if m["avisos"] else "",
         P("Productos que cuentan: indexados o arbitrados, aceptados o publicados en el periodo, con al menos "
-          "un autor vinculado al instituto en la fecha de publicación (con la categoría de ese momento). "
+          "un autor vinculado al instituto en la fecha de publicación (con la categoría de ese momento) que firmó "
+          "con la filiación del instituto. "
           "Cada producto se cuenta una vez. La producción de investigadores externos figura solo si está "
           "ligada a un proyecto institucional.", cls="apagado text-sm"),
         Div(_cifra(m["n_indexados"], "indexados"), _cifra(m["n_arbitrados"], "arbitrados"),
             _cifra(len(m["actividades"]), "actividades"),
-            _cifra(m["por_ambito"].get("internacional", 0), "internacionales"),
+            _cifra(m["por_ambito"].get("internacional", 0), "actividades internacionales"),
             _cifra(len(m["proyectos"]), "proyectos vigentes"), cls="grid grid-cols-5 gap-3 mt-6"),
         Div(Div(H3("Productos indexados por índice"),
                 _tabla_conteo("Índice", m["por_indice"]) if m["por_indice"] else P("—", cls="apagado")),
             Div(H3("Actividades por tipo"),
                 _tabla_conteo("Tipo", m["por_tipo_actividad"]) if m["por_tipo_actividad"] else P("—", cls="apagado")),
             cls="grid grid-cols-2 gap-6"),
+        seccion_revistas(m["revistas"]),
         H2("Por categoría"),
         P("Cada producto o actividad se cuenta una vez por categoría, aunque participen varias personas "
           "de ella.", cls="apagado text-sm"),
@@ -371,14 +419,16 @@ def documento_memoria(m):
                          Td(str(x["productos"]), cls="text-right"),
                          Td(str(x["actividades"]), cls="text-right")) for x in m["por_investigador"]])),
         H2(f"Productos ({len(m['productos'])})"),
-        Ol(*[cita(x) for x in m["productos"]], cls="citas") if m["productos"]
+        Ol(*[cita(x)(Span(" — clasificación declarada (revista sin verificar)", cls="apagado")
+                if x["tipo"] == revistas.TIPO_ARTICULO and not x["clasificacion_catalogo"] else "")
+             for x in m["productos"]], cls="citas") if m["productos"]
         else P("No hay productos que cuenten en el periodo.", cls="apagado"),
         Div(H2(f"Por confirmar ({len(m['por_confirmar'])})"),
             P("No se cuentan hasta completar el mes de publicación de cada producto.", cls="apagado text-sm"),
-            Ol(*[Li(cita(x), Span(f" — {x['motivo']}", cls="apagado")) for x in m["por_confirmar"]], cls="citas"))
+            Ol(*[cita(x)(Span(f" — {x['motivo']}", cls="apagado")) for x in m["por_confirmar"]], cls="citas"))
         if m["por_confirmar"] else "",
         Div(H2(f"Patentes y traducciones ({len(m['otros_resultados'])})"),
-            Ol(*[Li(cita(x), Span(f" — {x['tipo'].lower()}", cls="apagado")) for x in m["otros_resultados"]],
+            Ol(*[cita(x)(Span(f" — {x['tipo'].lower()}", cls="apagado")) for x in m["otros_resultados"]],
                cls="citas")) if m["otros_resultados"] else "",
         H2(f"Actividades ({len(m['actividades'])})"),
         Ul(*[Li(Span(actividades.fechas_texto(a), cls="apagado"), " — ", a["titulo"],
@@ -391,7 +441,8 @@ def documento_memoria(m):
                    for p in lista], cls="space-y-1"))
           for titulo, lista in (("Institucionales", [p for p in m["proyectos"] if p["tipo"] == "institucional"]),
                                 ("Individuales", [p for p in m["proyectos"] if p["tipo"] == "individual"]))
-          if lista] or [P("—", cls="apagado")])
+          if lista] or [P("—", cls="apagado")],
+        seccion_metodo(m))
 
 
 def _anio(anio):

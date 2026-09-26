@@ -256,7 +256,11 @@ proyecto y ser del mismo periodo).
   XLSX y CSV. La producción de investigadores externos figura solo si está aprobada en un
   proyecto institucional. En un periodo que no coincide con el año calendario, los productos sin
   mes de publicación cuyo año cae solo en parte dentro del periodo aparecen **«por confirmar»**
-  y no se cuentan hasta completar el mes.
+  y no se cuentan hasta completar el mes. La sección **«Revistas de los artículos»** separa revistas
+  nacionales e internacionales, cuenta las de acceso abierto, los cuartiles y cuántos artículos se
+  clasificaron por el catálogo o por lo declarado; **«Datos y método»** explica cómo se calcularon las
+  cifras. El XLSX incluye, por producto, la revista, su ámbito, el origen de la clasificación y la
+  fuente de cada indexación.
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se
   envió (resumen, textos completos, objetivos y actividades previstas), para el comité.
 - **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
