@@ -365,6 +365,14 @@ def main():
     con_propuestas = _cargar_institucionales()
     con_revistas = _cargar_revistas()
     con_estudiantes = _cargar_estudiantes()
+    # Internacionalización de ejemplo (idempotente): países normalizados y ámbito de los proyectos.
+    personas.completar_paises()
+    db = get_db()
+    isp = db.q("SELECT id FROM proyecto WHERE codigo = 'ISP-BOL-2025' AND ambito IS NULL")
+    if isp and not proyectos.contrapartes(isp[0]["id"]):
+        db.execute("UPDATE proyecto SET ambito = 'internacional' WHERE id = ?", [isp[0]["id"]])
+        proyectos.agregar_contraparte(isp[0]["id"], "Uppsala University", "Suecia")
+    db.execute("UPDATE proyecto SET ambito = 'nacional' WHERE codigo = 'IIMAT-IDH-2025-01' AND ambito IS NULL")
     # Artículos de ejemplo sin revista del catálogo: se vinculan por el nombre de la revista.
     for g in revistas.sin_vincular():
         if g["sugerida"]:

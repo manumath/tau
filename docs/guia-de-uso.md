@@ -68,6 +68,13 @@ graduado en la fecha de cada producto.
 Registre las **tesis que dirige** como producto «Tesis dirigida»: primero el tesista y luego quienes
 la dirigen; «En preparación» si está en curso y «Publicado» cuando se defendió.
 
+### Coautores externos
+
+En **Investigadores → Coautores externos** se completa la institución y el **país** de las personas
+sin cuenta (coautores, participantes). Con eso los informes miden la colaboración internacional. Al
+importar desde OpenAlex el país se completa solo; «Completar países automáticamente» lo deduce de la
+institución y unifica variantes como «USA» o «EE. UU.».
+
 ### Buscar su producción en OpenAlex
 
 **«Buscar en OpenAlex»** (en «Mis productos») usa el ORCID de su perfil para encontrar sus obras en
@@ -214,6 +221,9 @@ Hay dos tipos de proyecto:
   **agradezca al proyecto**. Al aprobar un producto indique si lo agradece; en la pestaña
   **Productos** cada uno muestra ambos requisitos y puede corregir el agradecimiento. Quien registra
   el producto también puede indicarlo junto a cada proyecto en el formulario.
+- **Ámbito y contrapartes:** en **Resumen** indique si el proyecto es nacional o internacional y
+  agregue las instituciones con que colabora o que lo cofinancian, con su país. Sin ámbito indicado,
+  el portal lo deduce de las contrapartes.
 - En **Resumen** edite los datos y los objetivos; ahí aparecen también los registros editados
   después de aprobados, por si quiere revisarlos.
 - El botón **«Informe»** genera el informe de avance del proyecto.

@@ -95,7 +95,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0019` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0020` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -130,8 +130,9 @@ producto_indice(producto_id, indice_id)
 adjunto(id, entidad, entidad_id, nombre, archivo, mime, tamano, subido_por, subido_en)
 
 proyecto(id, codigo, nombre, descripcion, objetivo_general, fuente_financiamiento, monto,
-         moneda, fecha_inicio, fecha_fin, estado, creado_por, creado_en, actualizado_en, tipo)
+         moneda, fecha_inicio, fecha_fin, estado, creado_por, creado_en, actualizado_en, tipo, ambito)
 proyecto_objetivo(id, proyecto_id, orden, texto)
+proyecto_contraparte(id, proyecto_id, institucion, pais, creado_en)
 convocatoria(periodo, abre, cierra, actualizado_por, actualizado_en)
 propuesta_institucional(id, proyecto_id, periodo, modalidad, nombre, descripcion, objetivo_general,
         metodologia, resultados_esperados, bibliografia, estado, proponente_id, creada_en,
@@ -180,7 +181,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-350 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+371 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -552,7 +553,7 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
 - Base: criterios de pregrado de IAC-CINDA (junio 2025, v1.2), que aplican a la Carrera de
   Matemática. **Pendiente:** confirmar con IAC-CINDA qué conjunto de criterios corresponde al
   Instituto (el Modelo 2025 describe procesos para instituciones, carreras, maestrías y doctorados).
-- De 33 criterios revisados que tocan la investigación: 13 cubiertos, 18 parciales, 2 brechas; 12
+- De 33 criterios revisados que tocan la investigación: 15 cubiertos, 16 parciales, 2 brechas; 12
   más dependen de políticas o procesos fuera del portal.
 
 **Prioridades para el portal** (por aporte a la acreditación):
@@ -560,7 +561,7 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
 1. Carga automática desde ORCID u OpenAlex, con citas (3.6.1, 3.6.3) — ✔ (ver sección 16).
 2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1) — ✔ (sección 17).
 3. Estudiantes en la investigación: tesistas y estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d) — ✔ (sección 18).
-4. Internacionalización: ámbito de los proyectos e indicador de coautoría internacional (3.5.2 c, 3.6.3 h).
+4. Internacionalización: ámbito de los proyectos e indicador de coautoría internacional (3.5.2 c, 3.6.3 h) — ✔ (sección 19).
 5. Líneas prioritarias de investigación y su asignación (3.1.1, 3.6.1 a).
 6. Indicadores normalizados: jornada completa equivalente y conteo fraccionado (2.2.1, 2.2.2).
 7. Premios y distinciones, arbitraje de artículos, asesorías y prestación de servicios, impacto de
@@ -624,3 +625,18 @@ memoria (vínculo en la fecha, filiación, catálogo de revistas).
   tesis por nivel y estado, productos con estudiantes coautores, productos con graduados, proyectos y
   actividades con estudiantes; filas en el resumen por año y hojas en el XLSX.
 - El selector de autores y participantes muestra «Estudiante de …» o «Graduado(a) de …».
+
+## 19. Internacionalización
+
+- **País de las personas externas**, normalizado (`app/paises.py`: «USA», «EE. UU.» → «Estados
+  Unidos»): desde OpenAlex (código de país de las instituciones del autor), deducido del texto de
+  la afiliación al importar por DOI («…, Oxford, UK» → «Reino Unido») o de la institución al crear
+  la persona. Nunca se sobrescribe un país ya registrado.
+- **Página «Coautores externos»** (desde Investigadores): lista las personas sin país primero, para
+  completar institución y país; «Completar países automáticamente» normaliza y deduce.
+- **Proyectos:** ámbito nacional o internacional (también editable en los institucionales) e
+  instituciones contraparte con país. Sin ámbito declarado, se deduce de las contrapartes.
+- **Anexo de acreditación (3.5.2 c):** artículos con coautoría internacional, cobertura (en cuántos
+  se conoce el país de todos los coautores externos, con aviso si falta), países de los coautores,
+  proyectos internacionales con sus contrapartes y estancias internacionales; filas nuevas en el
+  resumen por año y hoja de países en el XLSX. El informe de proyectos exporta ámbito y contrapartes.

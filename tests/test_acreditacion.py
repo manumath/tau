@@ -71,7 +71,8 @@ def test_anexo(datos):
     assert [x["titulo"] for x in a["transferencia"]] == ["Asesoría al ministerio"]
     assert [x["titulo"] for x in a["redes"]] == ["Red andina"] and [x["titulo"] for x in a["comites"]] == ["Comité editorial"]
     assert [p["nombre"] for p in a["proyectos"]] == ["Proyecto IDH"] and a["proyectos"][0]["n_internos"] == 1
-    assert (a["coautoria_internacional"], a["coautoria_con_pais"]) == (1, 1)
+    assert (a["coautoria"]["internacionales"], a["coautoria"]["con_pais"], a["coautoria"]["por_pais"]) == (
+        1, 1, {"Estados Unidos": 1})
     anio = {x["anio"]: x for x in a["anios"]}
     assert (anio[2024]["indexados"], anio[2024]["arbitrados"], anio[2024]["nacionales"], anio[2024]["internacionales"]) \
         == (1, 1, 1, 1)

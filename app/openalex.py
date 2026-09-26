@@ -6,7 +6,7 @@ por muchas personas): por eso nada se registra sin que el investigador lo confir
 """
 import re
 
-from app import config, productos
+from app import config, paises, productos
 from app.importacion import ErrorImportacion, _dividir_nombre, _get, _limpiar
 
 CAMPOS = ("id,doi,title,publication_year,publication_date,type,primary_location,locations,authorships,"
@@ -125,9 +125,11 @@ def convertir(w: dict) -> dict:
     for a in w.get("authorships") or []:
         nombres, apellidos = _dividir_nombre((a.get("author") or {}).get("display_name") or a.get("raw_author_name") or "")
         afiliaciones = list(a.get("raw_affiliation_strings") or []) + [i.get("display_name") for i in a.get("institutions") or []]
+        codigos = list(a.get("countries") or []) + [i.get("country_code") for i in a.get("institutions") or []]
         autores.append({"nombres": nombres, "apellidos": apellidos,
                         "orcid": ((a.get("author") or {}).get("orcid") or "").rsplit("/", 1)[-1] or None,
-                        "afiliacion": "; ".join(x for x in afiliaciones if x) or None})
+                        "afiliacion": "; ".join(x for x in afiliaciones if x) or None,
+                        "pais": next((paises.por_codigo(c) for c in codigos if paises.por_codigo(c)), None)})
     try:
         doi = productos.normalizar_doi(w["doi"]) if w.get("doi") else None
     except ValueError:

@@ -82,6 +82,31 @@ def seccion_estudiantes(e):
            cls="space-y-1") if e["actividades"] else P("Sin registros en el periodo.", cls="apagado"))
 
 
+def seccion_internacionalizacion(a):
+    """3.5.2 c: coautoría internacional (con su cobertura) y proyectos internacionales."""
+    c = a["coautoria"]
+    faltan = c["con_externos"] - c["con_pais"]
+    internacionales = [p for p in a["proyectos"] if p["ambito_efectivo"] == "internacional"]
+    sin_ambito = sum(p["ambito_efectivo"] is None for p in a["proyectos"])
+    return _criterio(
+        "3.5.2 c", "Internacionalización de la investigación",
+        "Publicaciones con coautores de instituciones de otros países y proyectos internacionales (con contrapartes "
+        "o financiamiento de otros países).",
+        Div(_cifra(c["internacionales"], "artículos con coautoría internacional"),
+            _cifra(f"{c['con_pais']} de {c['con_externos']}", "artículos con país de todos sus coautores"),
+            _cifra(len(internacionales), "proyectos internacionales"),
+            _cifra(len(a["movilidad_internacional"]), "estancias internacionales"), cls="grid grid-cols-4 gap-3"),
+        P(f"Cobertura incompleta: en {faltan} artículo(s) falta el país de algún coautor externo, por lo que la coautoría "
+          "internacional puede estar subestimada (complételo en Investigadores → Coautores externos)." if faltan else
+          "El país de todos los coautores externos está registrado.", cls="text-sm" + (" text-amber-700" if faltan else "")),
+        P(f"{sin_ambito} proyecto(s) sin ámbito indicado ni contrapartes." if sin_ambito else "", cls="text-sm text-amber-700"),
+        Div(H3("Países de los coautores"), _tabla_conteo("País", c["por_pais"])) if c["por_pais"] else "",
+        Div(H3("Proyectos internacionales"),
+            Ul(*[Li(p["nombre"], Span(" · " + "; ".join(f"{x['institucion']} ({x['pais'] or '?'})" for x in p["contrapartes"]),
+                                      cls="apagado") if p["contrapartes"] else "") for p in internacionales],
+               cls="space-y-1")) if internacionales else "")
+
+
 def documento(a):
     m = a["memoria"]
     anios = a["anios"]
@@ -91,7 +116,8 @@ def documento(a):
             ("tecnicos", "Patentes, software, traducciones"), ("presentaciones", "Presentaciones"),
             ("estancias", "Estancias"), ("transferencia", "Transferencia"), ("redes", "Redes"),
             ("proyectos", "Proyectos vigentes"), ("tesis_defendidas", "Tesis defendidas"),
-            ("con_estudiantes", "Productos con estudiantes"), ("citas", "Citas")]
+            ("con_estudiantes", "Productos con estudiantes"), ("coautoria_internacional", "Artículos con coautoría internacional"),
+            ("proyectos_internacionales", "Proyectos internacionales"), ("citas", "Citas")]
     resumen = Div(Table(Thead(Tr(Th("Indicador"), *[Th(str(x["anio"]), cls="text-right") for x in anios])),
                         Tbody(*[Tr(Td(t), *[_num(x[k]) for x in anios]) for k, t in cols])),
                   cls="overflow-x-auto")
@@ -144,10 +170,15 @@ def documento(a):
                   _lista_actividades(a["estancias"])),
         _criterio("3.6.3 h", "Participación en proyectos de I+D+i",
                   "Proyectos vigentes en el periodo, con su fuente de financiamiento y participantes del instituto.",
-                  Div(Table(Thead(Tr(Th("Proyecto"), Th("Tipo"), Th("Periodo"), Th("Financiamiento"), Th("Responsable"),
+                  Div(Table(Thead(Tr(Th("Proyecto"), Th("Tipo"), Th("Ámbito"), Th("Periodo"), Th("Financiamiento"), Th("Responsable"),
                                      Th("Participantes del instituto", cls="text-right"))),
-                            Tbody(*[Tr(Td((p["codigo"] + " — " if p["codigo"] else "") + p["nombre"]),
-                                       Td(proyectos.TIPOS[p["tipo"]]), Td(f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}"),
+                            Tbody(*[Tr(Td((p["codigo"] + " — " if p["codigo"] else "") + p["nombre"],
+                                          Div("Contrapartes: " + "; ".join(f"{c['institucion']} ({c['pais'] or '?'})"
+                                                                           for c in p["contrapartes"]), cls="apagado text-xs")
+                                          if p["contrapartes"] else ""),
+                                       Td(proyectos.TIPOS[p["tipo"]]),
+                                       Td(proyectos.AMBITOS.get(p["ambito_efectivo"], "Sin indicar")),
+                                       Td(f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}"),
                                        Td(p["fuente_financiamiento"] or "—"), Td(p["responsables"] or "—"), _num(p["n_internos"]))
                                     for p in a["proyectos"]])), cls="overflow-x-auto")
                   if a["proyectos"] else P("Sin proyectos vigentes en el periodo.", cls="apagado")),
@@ -160,11 +191,7 @@ def documento(a):
                   _lista_actividades(a["redes"])),
         _criterio("2.2.1 d", "Reconocimiento de pares", "Participación en comités científicos o editoriales.",
                   _lista_actividades(a["comites"])),
-        _criterio("3.5.2 c", "Internacionalización de la investigación",
-                  "Indicador preliminar: depende de que se registre el país de los coautores externos.",
-                  P(f"{a['coautoria_internacional']} de {len(a['articulos'])} artículos tienen al menos un coautor externo "
-                    f"de otro país ({a['coautoria_con_pais']} con el país registrado para todos sus coautores externos).",
-                    cls="text-sm")),
+        seccion_internacionalizacion(a),
         _criterio("3.6.1", "Impacto", "Citas según OpenAlex de los productos que cuentan, por año de publicación.",
                   P(f"{m['impacto']['citas']} citas en {m['impacto']['con_datos']} de {m['impacto']['productos']} productos"
                     + (f", actualizadas el {m['impacto']['actualizadas']}." if m["impacto"]["actualizadas"] else "."),
@@ -172,7 +199,6 @@ def documento(a):
         Div(H2("Aún no registrado en el portal"),
             Ul(Li("Premios y distinciones; arbitraje de artículos (2.2.1 d)."),
                Li("Asesorías y prestación de servicios (3.4.3); impacto de la vinculación (3.4.1)."),
-               Li("Ámbito nacional o internacional de los proyectos (3.6.3 h)."),
                cls="list-disc pl-5 space-y-1 text-sm"),
             P("Estos criterios deben documentarse por otros medios hasta que el portal los registre.", cls="apagado text-sm")),
         seccion_metodo(m))
@@ -219,7 +245,9 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
                "internacionales": "En revistas internacionales", "libros": "Libros y capítulos",
                "tecnicos": "Patentes, software, traducciones", "presentaciones": "Presentaciones", "estancias": "Estancias",
                "transferencia": "Transferencia", "redes": "Redes", "proyectos": "Proyectos vigentes",
-               "tesis_defendidas": "Tesis defendidas", "con_estudiantes": "Productos con estudiantes", "citas": "Citas"}
+               "tesis_defendidas": "Tesis defendidas", "con_estudiantes": "Productos con estudiantes",
+               "coautoria_internacional": "Artículos con coautoría internacional",
+               "proyectos_internacionales": "Proyectos internacionales", "citas": "Citas"}
     resumen = [{"Indicador": t, **{str(x["anio"]): x[k] for x in a["anios"]}} for k, t in nombres.items()]
     cuerpo = [{"Año": c["anio"], "Investigador(a)": f"{p['apellidos']}, {p['nombres']}", "Categoría": p["categoria"],
                "Jornada (h/semana)": p["jornada"] or ""} for c in a["cuerpo"] for p in c["personas"]]
@@ -252,6 +280,7 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
                              "Del programa": "Sí" if any(x["del_programa"] for x in t["tesistas"]) else "No",
                              "Dirige": _nombres(t["directores"])} for t in a["estudiantes"]["tesis"]],
         "Productos con estudiantes": informes.filas_productos(a["estudiantes"]["productos"]),
+        "3.5.2 Países de coautores": [{"País": k, "Artículos": v} for k, v in a["coautoria"]["por_pais"].items()],
         "Por confirmar": informes.filas_productos(m["por_confirmar"]),
         "Método": metodo})
     return _archivo(contenido, f"anexo-idi-{d}-{h}.xlsx", XLSX)

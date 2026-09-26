@@ -7,7 +7,7 @@ omisión, exige revista verificada, como corresponde a la acreditación.
 """
 from datetime import date
 
-from app import actividades, config, estudiantes, informes, perfiles, proyectos, revistas, vinculos
+from app import actividades, config, estudiantes, informes, paises, perfiles, proyectos, revistas, vinculos
 from app.db import get_db
 
 # Actividades por criterio (nombres del catálogo de tipos de actividad).
@@ -61,20 +61,29 @@ def _internacional(a: dict) -> bool:
     return a.get("ambito") == "internacional"
 
 
-def coautoria_internacional(prods: list[dict]) -> tuple[int, int]:
-    """(productos con al menos un coautor externo de otro país, productos con país registrado en
-    todos sus coautores externos). Indicador preliminar: depende de que se registre el país."""
-    con, completos = 0, 0
-    pais = config.PAIS.strip().lower()
+def coautoria_internacional(prods: list[dict]) -> dict:
+    """Coautoría internacional de los artículos: cuántos tienen al menos un coautor externo de otro
+    país, cuántos tienen coautores externos, en cuántos se conoce el país de todos ellos (cobertura)
+    y con qué países se colabora (IAC-CINDA 3.5.2 c)."""
+    con_externos = con_pais = internacionales = 0
+    por_pais = {}
     for p in prods:
-        externos = [a for a in p["autores"] if not a["interno"]]
-        paises = [get_db().q("SELECT pais FROM persona_externa WHERE id = ?", [a["id"]])[0]["pais"]
-                  for a in externos if a.get("id")]
-        if externos and all(paises):
-            completos += 1
-        if any(x and x.strip().lower() != pais for x in paises):
-            con += 1
-    return con, completos
+        externos = [a for a in p["autores"] if not a["interno"] and a.get("id")]
+        if not externos:
+            continue
+        con_externos += 1
+        filas = get_db().q(f"SELECT pais FROM persona_externa WHERE id IN ({','.join('?' * len(externos))})",
+                           [a["id"] for a in externos])
+        lista = [paises.normalizar(f["pais"]) for f in filas]
+        if all(lista):
+            con_pais += 1
+        extranjeros = sorted({x for x in lista if x and paises.es_extranjero(x, config.PAIS)})
+        if extranjeros:
+            internacionales += 1
+            for x in extranjeros:
+                por_pais[x] = por_pais.get(x, 0) + 1
+    return {"internacionales": internacionales, "con_externos": con_externos, "con_pais": con_pais,
+            "por_pais": dict(sorted(por_pais.items(), key=lambda x: (-x[1], x[0])))}
 
 
 def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> dict:
@@ -110,13 +119,16 @@ def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> d
             "redes": sum(a["tipo"] in REDES for a in acts_a), "proyectos": len(ma["proyectos"]),
             "tesis_defendidas": sum(x["estado"] == "defendida" for x in estudiantes.tesis(anio, anio)),
             "con_estudiantes": sum(bool(estudiantes.es_estudiante_ref(p["autores"], p["anio"])) for p in ma["productos"]),
+            "coautoria_internacional": coautoria_internacional(
+                [p for p in ma["productos"] if p["tipo"] in TIPOS_ARTICULO])["internacionales"],
+            "proyectos_internacionales": sum(proyectos.ambito_efectivo(p) == "internacional" for p in ma["proyectos"]),
             "citas": ma["impacto"]["citas"]})
 
-    con_int, completos = coautoria_internacional(articulos)
     proys = []
     for p in m["proyectos"]:
         internos = [x for x in proyectos.participantes(p["id"]) if x["interno"]]
-        proys.append({**p, "n_internos": len(internos),
+        proys.append({**p, "n_internos": len(internos), "ambito_efectivo": proyectos.ambito_efectivo(p),
+                      "contrapartes": proyectos.contrapartes(p["id"]),
                       "responsables": ", ".join(f"{x['nombres']} {x['apellidos']}" for x in internos
                                                 if x["rol"] == "responsable")})
     return {
@@ -127,6 +139,6 @@ def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> d
         "presentaciones": presentaciones, "estancias": por_tipo(ESTANCIAS), "transferencia": por_tipo(TRANSFERENCIA),
         "divulgacion": por_tipo(DIVULGACION), "redes": por_tipo(REDES), "comites": por_tipo(COMITES),
         "movilidad_internacional": [a for a in por_tipo(ESTANCIAS) if _internacional(a)],
-        "coautoria_internacional": con_int, "coautoria_con_pais": completos,
+        "coautoria": coautoria_internacional(articulos),
         "estudiantes": estudiantes.indicadores(m),
     }

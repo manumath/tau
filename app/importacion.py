@@ -16,7 +16,7 @@ from urllib.parse import quote
 
 import httpx2
 
-from app import config, personas, productos, revistas
+from app import config, paises, personas, productos, revistas
 from app.db import get_db, sin_tildes
 
 TIMEOUT = 10
@@ -271,10 +271,12 @@ def resolver_autores(autores: list[dict]) -> tuple[list[str], dict]:
             continue
         existente = personas.externo_similar(a["nombres"] or "", a["apellidos"])
         if existente:
+            personas.completar_pais(existente, a.get("pais") or paises.desde_texto(a.get("afiliacion")))
             resumen["existentes"].append(nombre)
             refs.append(f"e:{existente['id']}")
         else:
             # Se registrará al guardar el producto (ver personas.materializar).
             resumen["nuevos"].append(nombre)
-            refs.append(personas.ref_nueva(a["nombres"], a["apellidos"], a.get("afiliacion")))
+            refs.append(personas.ref_nueva(a["nombres"], a["apellidos"], a.get("afiliacion"),
+                                           a.get("pais") or paises.desde_texto(a.get("afiliacion"))))
     return refs, resumen

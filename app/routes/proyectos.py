@@ -17,7 +17,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app import actividades, config, filiacion, institucionales, personas, productos, proyectos, usuarios
+from app import actividades, config, filiacion, institucionales, paises, personas, productos, proyectos, usuarios
 from app.components import personas as ui_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import dato, enlace_persona, insignia
@@ -169,6 +169,15 @@ def insignia_contador(n):
 
 # --- Alta y edición de datos -------------------------------------------------------------------------
 
+def _selector_ambito(d):
+    return Div(FormLabel("Ámbito", fr="ambito"),
+               Select(Option("— Sin indicar —", value=""),
+                      *[Option(t, value=v, selected=v == d.get("ambito")) for v, t in proyectos.AMBITOS.items()],
+                      id="ambito", name="ambito", cls="uk-select"),
+               P("Internacional: con instituciones o financiamiento de otros países.", cls=TextPresets.muted_sm),
+               cls="space-y-2")
+
+
 def form_datos_institucional(d, errores, pid):
     """En un proyecto institucional, el nombre, la descripción, los objetivos y el periodo vienen de
     la propuesta aceptada; aquí solo se editan datos administrativos."""
@@ -182,6 +191,7 @@ def form_datos_institucional(d, errores, pid):
         Div(Div(campo("Fuente de financiamiento", "fuente_financiamiento"), cls="sm:col-span-2"),
             campo(f"Monto ({d.get('moneda') or config.MONEDA})", "monto", inputmode="numeric"),
             cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
+        _selector_ambito(d),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, hx_get=f"/proyectos/{pid}/tab/resumen",
                    hx_target=f"#{ID_TAB}"),
             Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
@@ -210,6 +220,7 @@ def form_datos(d, errores=(), pid=None):
         Div(Div(campo("Fuente de financiamiento", "fuente_financiamiento"), cls="sm:col-span-2"),
             campo(f"Monto ({d.get('moneda') or config.MONEDA})", "monto", inputmode="numeric"),
             cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
+        _selector_ambito(d),
         LabelTextArea("Descripción", id="descripcion", value=d.get("descripcion") or "", rows=3),
         LabelTextArea("Objetivo general", id="objetivo_general", value=d.get("objetivo_general") or "",
                       rows=2),
@@ -223,10 +234,10 @@ def form_datos(d, errores=(), pid=None):
 
 
 def _datos(nombre, codigo, estado, fecha_inicio, fecha_fin, fuente_financiamiento, monto, descripcion,
-           objetivo_general):
+           objetivo_general, ambito=""):
     d = dict(nombre=nombre, codigo=codigo, estado=estado, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
              fuente_financiamiento=fuente_financiamiento, monto=monto, descripcion=descripcion,
-             objetivo_general=objetivo_general)
+             objetivo_general=objetivo_general, ambito=ambito if ambito in proyectos.AMBITOS else "")
     return {k: (v.strip() or None) if isinstance(v, str) else v for k, v in d.items()}
 
 
@@ -240,11 +251,11 @@ def get(auth):
 @rt("/proyectos")
 def post(auth, sess, nombre: str = "", codigo: str = "", estado: str = "", fecha_inicio: str = "",
          fecha_fin: str = "", fuente_financiamiento: str = "", monto: str = "", descripcion: str = "",
-         objetivo_general: str = ""):
+         objetivo_general: str = "", ambito: str = ""):
     if not proyectos.puede_crear(auth):
         return Response("No autorizado", status_code=403)
     d = _datos(nombre, codigo, estado, fecha_inicio, fecha_fin, fuente_financiamiento, monto,
-               descripcion, objetivo_general)
+               descripcion, objetivo_general, ambito)
     errores = proyectos.validar(d)
     if errores:
         return modal("Nuevo proyecto individual", form_datos(d, errores), ancho="max-w-2xl")
@@ -264,17 +275,17 @@ def get(auth, pid: int):
 @rt("/proyectos/{pid}/datos")
 def put(auth, sess, pid: int, nombre: str = "", codigo: str = "", estado: str = "",
         fecha_inicio: str = "", fecha_fin: str = "", fuente_financiamiento: str = "", monto: str = "",
-        descripcion: str = "", objetivo_general: str = ""):
+        descripcion: str = "", objetivo_general: str = "", ambito: str = ""):
     p, error = _proyecto_o_error(pid, auth, gestionar=True)
     if error:
         return error
     d = _datos(nombre, codigo, estado, fecha_inicio, fecha_fin, fuente_financiamiento, monto,
-               descripcion, objetivo_general)
+               descripcion, objetivo_general, ambito)
     if p["tipo"] == "institucional":
         # Solo datos administrativos; el resto lo fija la propuesta aceptada.
         d = {**{k: p[k] for k in ("nombre", "estado", "fecha_inicio", "fecha_fin", "descripcion",
                                   "objetivo_general")},
-             **{k: d[k] for k in ("codigo", "fuente_financiamiento", "monto")}}
+             **{k: d[k] for k in ("codigo", "fuente_financiamiento", "monto", "ambito")}}
     errores = proyectos.validar({**d, "id": pid})
     if errores:
         return Card(H3("Editar datos del proyecto", cls="text-base font-semibold mb-4"),
@@ -321,6 +332,52 @@ def tarjeta_propuestas(p, auth):
                 else P("Este proyecto no tiene propuestas registradas en el portal.", cls=TextPresets.muted_sm))
 
 
+def tarjeta_contrapartes(p, auth):
+    pid = p["id"]
+    gestiona = proyectos.puede_gestionar(pid, auth)
+    filas = [Li(Div(Span(c["institucion"], cls="font-medium"), Span(f" · {c['pais'] or 'país sin indicar'}",
+                                                                   cls=TextPresets.muted_sm)),
+                fh.Button(UkIcon("x", height=14, width=14), type="button", aria_label="Quitar contraparte",
+                          cls="p-1 rounded hover:bg-muted hover:text-red-600",
+                          hx_delete=f"/proyectos/{pid}/contrapartes/{c['id']}", hx_target=f"#{ID_TAB}")
+                if gestiona else "", cls="flex justify-between items-center py-1")
+             for c in proyectos.contrapartes(pid)]
+    agregar = fh.Form(Input(name="institucion", placeholder="Institución (p. ej., Universidad de Chile)", cls="uk-input",
+                            required=True, aria_label="Institución contraparte"),
+                      Input(name="pais", placeholder="País", cls="uk-input w-40", list="lista-paises", aria_label="País"),
+                      fh.Datalist(*[Option(value=x) for x in paises.nombres()], id="lista-paises"),
+                      Button("Agregar", type="submit", cls=(ButtonT.default, ButtonT.sm)),
+                      hx_post=f"/proyectos/{pid}/contrapartes", hx_target=f"#{ID_TAB}",
+                      cls="flex flex-wrap gap-2 mt-3") if gestiona else ""
+    return Card(H3("Instituciones contraparte", cls="text-base font-semibold mb-1"),
+                P("Instituciones con las que se colabora o que cofinancian (con su país): definen si el proyecto es "
+                  "internacional.", cls=(TextPresets.muted_sm, "mb-2")),
+                Ul(*filas, cls="divide-y divide-border") if filas else P("Sin contrapartes registradas.",
+                                                                         cls=TextPresets.muted_sm),
+                agregar)
+
+
+@rt("/proyectos/{pid}/contrapartes")
+def post(auth, sess, pid: int, institucion: str = "", pais: str = ""):
+    p, error = _proyecto_o_error(pid, auth, gestionar=True)
+    if error:
+        return error
+    if (error := proyectos.agregar_contraparte(pid, institucion, pais)):
+        add_toast(sess, error, "error")
+    else:
+        auditar(auth["id"], "agregar_contraparte", "proyecto", pid, institucion)
+    return tab_resumen(proyectos.obtener(pid), auth)
+
+
+@rt("/proyectos/{pid}/contrapartes/{cid}")
+def delete(auth, pid: int, cid: int):
+    p, error = _proyecto_o_error(pid, auth, gestionar=True)
+    if error:
+        return error
+    proyectos.quitar_contraparte(pid, cid)
+    return tab_resumen(p, auth)
+
+
 def tab_resumen(p, auth):
     pid = p["id"]
     gestiona = proyectos.puede_gestionar(pid, auth)
@@ -351,8 +408,11 @@ def tab_resumen(p, auth):
                  if gestiona else "", cls="flex justify-between items-center mb-2"),
              dato("Código", p["codigo"]), dato("Periodo", _periodo(p)),
              dato("Financiamiento", p["fuente_financiamiento"]), dato("Monto", _monto(p)),
+             dato("Ámbito", (proyectos.AMBITOS[amb] + ("" if p.get("ambito") else " (según sus contrapartes)"))
+                  if (amb := proyectos.ambito_efectivo(p)) else None),
              dato("Descripción", P(p["descripcion"], cls="whitespace-pre-line") if p["descripcion"] else None),
              dato("Objetivo general", p["objetivo_general"])),
+        tarjeta_contrapartes(p, auth),
         Card(H3("Objetivos específicos", cls="text-base font-semibold mb-2"), lista_obj, agregar_obj),
         Card(H3("Editados después de aprobados", cls="text-base font-semibold mb-2"),
              P("Registros ya aprobados que sus autores modificaron después. Revíselos si corresponde.",

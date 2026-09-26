@@ -96,7 +96,8 @@ def test_convertir():
     assert (d["titulo"], d["anio"], d["mes"], d["paginas"], d["doi"], d["medio"]) == (
         "Tipos y anillos", 2024, 5, "10–20", "10.5555/uno", "Journal of Symbolic Logic")
     assert d["resumen"] == "Probamos que sí."
-    assert c["autores"][1] == {"nombres": "Hermann", "apellidos": "Weyl", "orcid": None, "afiliacion": "IAS Princeton"}
+    assert c["autores"][1] == {"nombres": "Hermann", "apellidos": "Weyl", "orcid": None, "afiliacion": "IAS Princeton",
+                              "pais": None}
     p = openalex.convertir(OBRAS[1])
     assert (p["tipo"], p["datos"]["arxiv_id"], p["datos"]["medio"], p["datos"]["mes"]) == ("Preprint", "2401.01234",
                                                                                           "arXiv", None)

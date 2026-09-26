@@ -59,8 +59,11 @@ def get(auth, q: str = "", categoria: str = ""):
                    hx_swap="outerHTML", hx_include="#filtros-directorio")
     return pagina(
         "Investigadores",
-        Div(A(UkIcon("graduation-cap", height=14, width=14), "Estudiantes y tesistas", href="/estudiantes",
-              cls="float-right inline-flex items-center gap-1 text-sm text-primary hover:underline"),
+        Div(Div(A(UkIcon("graduation-cap", height=14, width=14), "Estudiantes y tesistas", href="/estudiantes",
+                  cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
+                A(UkIcon("globe", height=14, width=14), "Coautores externos", href="/personas/externos",
+                  cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
+                cls="float-right flex gap-4"),
             H2("Investigadores"),
             P("Directorio interno. Busque por nombre, unidad o área (código MSC como «11M» o tema "
               "como «graph»).", cls=TextPresets.muted_sm),

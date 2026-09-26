@@ -49,6 +49,10 @@ def validar(d: dict) -> list[str]:
         errores.append("El nombre del proyecto es obligatorio.")
     if d.get("estado") not in ESTADOS:
         errores.append("Estado no válido.")
+    if d.get("ambito") not in (None, "", *AMBITOS):
+        errores.append("Ámbito no válido.")
+    elif "ambito" in d:
+        d["ambito"] = d["ambito"] or None
     try:
         ini = date.fromisoformat(d["fecha_inicio"]) if d.get("fecha_inicio") else None
         fin = date.fromisoformat(d["fecha_fin"]) if d.get("fecha_fin") else None
@@ -495,3 +499,40 @@ def mis_propuestas(uid: int) -> list[dict]:
            JOIN proyecto p ON p.id = v.proyecto_id
            WHERE v.propuesto_por = :u AND v.estado != 'aprobado'
            ORDER BY estado DESC, propuesto_en DESC""", {"u": uid})
+
+
+# --- Ámbito y contrapartes (internacionalización) ---------------------------------------------------------
+
+AMBITOS = {"nacional": "Nacional", "internacional": "Internacional"}
+
+
+def contrapartes(pid: int) -> list[dict]:
+    return get_db().q("SELECT * FROM proyecto_contraparte WHERE proyecto_id = ? ORDER BY id", [pid])
+
+
+def agregar_contraparte(pid: int, institucion: str, pais: str | None) -> str | None:
+    from app import paises
+    institucion = (institucion or "").strip()
+    if not institucion:
+        return "Indique la institución contraparte."
+    pais = paises.normalizar(pais) or paises.desde_texto(institucion)
+    get_db().t.proyecto_contraparte.insert(proyecto_id=pid, institucion=institucion[:200], pais=pais)
+    return None
+
+
+def quitar_contraparte(pid: int, cid: int):
+    get_db().execute("DELETE FROM proyecto_contraparte WHERE id = ? AND proyecto_id = ?", [cid, pid])
+
+
+def ambito_efectivo(p: dict) -> str | None:
+    """El ámbito declarado; si no se declaró, «internacional» cuando alguna contraparte es de otro
+    país y «nacional» cuando todas son del país. None si no hay cómo saberlo."""
+    from app import config, paises
+    if p.get("ambito"):
+        return p["ambito"]
+    extranjeras = [paises.es_extranjero(c["pais"], config.PAIS) for c in contrapartes(p["id"])]
+    if any(extranjeras):
+        return "internacional"
+    if extranjeras and all(x is False for x in extranjeras):
+        return "nacional"
+    return None

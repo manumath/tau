@@ -407,6 +407,8 @@ def filas_proyectos(proys: list[dict]) -> list[dict]:
         "Financiamiento": p["fuente_financiamiento"] or "",
         "Monto": p["monto"] if p["monto"] is not None else "", "Moneda": p["moneda"],
         "Responsable": "; ".join(f"{r['apellidos']}, {r['nombres']}" for r in proyectos.responsables(p["id"])),
+        "Ámbito": proyectos.AMBITOS.get(proyectos.ambito_efectivo(p), ""),
+        "Contrapartes": "; ".join(f"{c['institucion']} ({c['pais'] or '?'})" for c in proyectos.contrapartes(p["id"])),
         "Participantes vigentes": p.get("n_part", ""),
     } for p in proys]
 
