@@ -13,7 +13,7 @@ def test_migraciones_idempotentes(tmp_path):
     ruta = tmp_path / "doble.db"
     init_db(ruta)
     init_db(ruta)  # la segunda vez no reaplica nada
-    assert get_db().q("SELECT COUNT(*) AS n FROM tipo_producto")[0]["n"] == 9
+    assert get_db().q("SELECT COUNT(*) AS n FROM tipo_producto")[0]["n"] == 11  # 9 iniciales + patente y traducción
 
 
 def test_catalogo_de_productos(app):

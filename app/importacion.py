@@ -16,7 +16,7 @@ from urllib.parse import quote
 
 import httpx2
 
-from app import config, personas, productos
+from app import config, personas, productos, revistas
 from app.db import get_db, sin_tildes
 
 TIMEOUT = 10
@@ -128,9 +128,24 @@ def desde_crossref(doi: str) -> dict:
     medio = (m.get("container-title") or [None])[0]
     if tipo == "Libro" and not medio:
         medio = m.get("publisher")
-    avisos = []
-    if tipo in ("Artículo en revista", "Artículo en actas de congreso", "Capítulo de libro", "Libro"):
-        avisos.append("Crossref no informa si la revista está indexada: indique el nivel de revisión y "
+    avisos, revista = [], {}
+    if tipo == "Artículo en revista":
+        # La revista se reconoce en el catálogo por ISSN (impreso o electrónico) o por el título.
+        issns = {x.get("type"): x.get("value") for x in m.get("issn-type") or []}
+        encontrada = revistas.coincidir([issns.get("print"), issns.get("electronic"), *(m.get("ISSN") or [])],
+                                        _limpiar(medio))
+        if encontrada:
+            revista = {"revista_id": encontrada["id"]}
+            avisos.append(f"Revista reconocida en el catálogo: «{encontrada['titulo']}»"
+                          + (" (verificada: la clasificación se toma del catálogo)." if encontrada["estado"] == "verificada"
+                             else " (pendiente de verificar: indique el nivel de revisión y los índices)."))
+        else:
+            revista = {"revista_nueva_titulo": _limpiar(medio), "revista_nueva_issn": issns.get("print"),
+                       "revista_nueva_eissn": issns.get("electronic")}
+            avisos.append("La revista no está en el catálogo: se propondrá al guardar. Indique el nivel de "
+                          "revisión y los índices (Crossref no informa si está indexada).")
+    elif tipo in ("Artículo en actas de congreso", "Capítulo de libro", "Libro"):
+        avisos.append("Crossref no informa si la publicación está indexada: indique el nivel de revisión y "
                       "los índices antes de guardar.")
     return {
         "fuente": "Crossref",
@@ -141,6 +156,7 @@ def desde_crossref(doi: str) -> dict:
             "medio": _limpiar(medio), "volumen": m.get("volume"), "numero": m.get("issue"),
             "paginas": (m.get("page") or "").replace("-", "–") or None,
             "doi": doi, "arxiv_id": None, "url": None, "resumen": _limpiar(m.get("abstract")),
+            **revista,
         },
         "autores": autores, "avisos": avisos, "doi_publicado": None,
     }

@@ -256,7 +256,7 @@ HISTORIAL = {
                                     dict(categoria="titular", desde="2022-01-01", hasta=None, jornada=40)],
     "alan.turing@instituto.test": [dict(categoria="contratado", desde="2024-08-01", hasta=None, jornada=40)],
     "srinivasa.ramanujan@instituto.test": [dict(categoria="invitado", desde="2026-03-01", hasta="2026-12-31",
-                                                jornada=20, nota="Estadía de investigación")],
+                                                jornada=20, nota="Estancia de investigación")],
 }
 
 
@@ -340,6 +340,10 @@ def main():
     con_proyectos = _cargar_proyectos()
     con_propuestas = _cargar_institucionales()
     con_revistas = _cargar_revistas()
+    # Artículos de ejemplo sin revista del catálogo: se vinculan por el nombre de la revista.
+    for g in revistas.sin_vincular():
+        if g["sugerida"]:
+            revistas.vincular([x["id"] for x in g["productos"]], g["sugerida"]["id"])
     # Filiación de ejemplo (solo si nadie la ha declarado aún en estos productos): Emmy firmó su
     # artículo con IIMAT/UMSA y Alan el suyo; Emmy aún no declara la suya en el de Alan (aviso en su inicio).
     db = get_db()

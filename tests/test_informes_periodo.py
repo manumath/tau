@@ -121,7 +121,7 @@ def test_rutas_de_memoria_por_periodo(client, emmy):
     assert "Memoria anual" in client.get("/informes/memoria?modo=rango&desde=2026-06-30&hasta=2026-01-01").text
     r = client.get("/informes/memoria/xlsx?periodo=2026")
     assert r.headers["content-disposition"] == 'attachment; filename="memoria-2026-2027.xlsx"'
-    assert "Sin mes (por confirmar)" in load_workbook(io.BytesIO(r.content)).sheetnames
+    assert "Por confirmar" in load_workbook(io.BytesIO(r.content)).sheetnames
 
 
 # --- Plan de actividades ---------------------------------------------------------------------------------------

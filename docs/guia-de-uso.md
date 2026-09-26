@@ -62,6 +62,16 @@ quedan en la dirección de la página, para volver a ellos o compartirlos.
 El **mes de publicación** es opcional, pero conviene indicarlo: sin él, un producto no se puede
 ubicar en los informes por periodo octubre–septiembre (queda «por confirmar»).
 
+**Revista (artículos en revista):** busque la revista en el **catálogo del instituto** por título
+o ISSN. Si la revista está **verificada**, el nivel de revisión y los índices se toman del catálogo
+según el año de publicación (no se declaran). Si no está en el catálogo, «Propóngala» con su título
+e ISSN: quedará pendiente hasta que la administración la verifique, y mientras tanto rige lo que
+usted declare. Al importar por DOI, la revista se reconoce sola por su ISSN.
+
+**Otros resultados:** registre también **patentes** (oficina en «medio», número en «Número»;
+«Enviado» = solicitada, «Publicado» = concedida) y **traducciones**. No cuentan como artículos,
+pero la memoria las informa aparte.
+
 **Filiación:** junto a cada autor del instituto se indica si **firmó la publicación con la
 filiación del instituto** (IIMAT, CMAT, FCPN o UMSA; vale la doble filiación). En los informes
 institucionales solo cuenta un producto si al menos un autor vinculado al instituto en esa fecha
@@ -107,6 +117,10 @@ IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar
 - «Exportar BibTeX» descarga lo que está viendo, con los filtros aplicados.
 
 ## Actividades
+
+Además de seminarios, congresos y escuelas, registre **estancias o pasantías de investigación**,
+**transferencia de conocimiento** (a la sociedad, el sector productivo o las políticas públicas) y su
+**participación en redes de investigación** (desde / hasta): IAC-CINDA las considera evidencia de I+D+i.
 
 «Actividades» reúne seminarios, congresos, escuelas, visitas y otras actividades. Al registrar
 una, indique el tipo, las fechas, el lugar, la modalidad y el ámbito, y los participantes (del
@@ -246,6 +260,8 @@ proyecto y ser del mismo periodo).
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se
   envió (resumen, textos completos, objetivos y actividades previstas), para el comité.
 - **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
+- **Artículos sin revista:** desde el catálogo, los artículos registrados sin revista del catálogo,
+  agrupados por el nombre declarado, para vincularlos a una revista o crearla.
 - **Catálogo de revistas** (menú con su nombre): las revistas donde publica el instituto y los
   índices en que figuran **cada año**, con la fuente consultada y un enlace de evidencia (lo pide
   IAC-CINDA: datos y métodos transparentes). Una revista **verificada** define el nivel de revisión

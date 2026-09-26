@@ -27,11 +27,15 @@ CATEGORIAS = [
     ("reportes", "Reportes de investigación"),
     ("preprints", "Preprints"),
     ("presentaciones", "Presentaciones"),
+    ("patentes", "Patentes"),
+    ("traducciones", "Traducciones"),
     ("otros", "Otros productos"),
 ]
 
 
 def categoria(p: dict) -> str:
+    if p["tipo"] in ("Patente", "Traducción"):  # la solicitud en trámite también es patente
+        return "patentes" if p["tipo"] == "Patente" else "traducciones"
     if p["estado_publicacion"] in ("enviado", "en_preparacion"):
         return "en_curso"
     if p["tipo"] in ("Libro", "Capítulo de libro"):
@@ -224,6 +228,16 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
             por_confirmar.append({**x, "motivo": "; ".join(motivos)})
     prods.sort(key=lambda p: (p["revision"] != "indexado", p["tipo"], p["titulo"]))
 
+    # Otros resultados de I+D+i (IAC-CINDA 3.6.3): patentes y traducciones de autores vinculados en la fecha.
+    otros_resultados = []
+    for f in get_db().q("""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
+                           WHERE t.nombre IN ('Patente', 'Traducción') AND p.anio BETWEEN ? AND ?
+                           ORDER BY t.nombre, p.anio""", [int(desde[:4]), int(hasta[:4])]):
+        x = productos.obtener(f["id"])
+        if ubicar_producto(x, desde, hasta) == "dentro" and any(
+                a["interno"] and vinculos.en_fecha(a["id"], x["anio"], x["mes"])[0] == "si" for a in x["autores"]):
+            otros_resultados.append(x)
+
     internos_act = {}
     for r in get_db().q(
             """SELECT DISTINCT a.id, a.fecha_inicio FROM actividad a
@@ -289,7 +303,7 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
                              " ORDER BY apellidos", list(sin_vinculo))
         avisos.append("Sin vínculo registrado (su producción no cuenta): "
                       + ", ".join(f"{x['nombres']} {x['apellidos']}" for x in nombres) + ".")
-    return {**periodo_memoria, "anio": anio, "productos": prods, "actividades": acts, "proyectos": proys,
+    return {**periodo_memoria, "anio": anio, "productos": prods, "otros_resultados": otros_resultados, "actividades": acts, "proyectos": proys,
             "por_confirmar": sorted(por_confirmar, key=lambda p: (p["anio"], p["titulo"])), "avisos": avisos,
             "n_indexados": sum(p["revision"] == "indexado" for p in prods),
             "n_arbitrados": sum(p["revision"] == "arbitrado" for p in prods),

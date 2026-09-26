@@ -95,7 +95,7 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0015` en `migrations/`):
+Esquema vigente (migraciones `0001` a `0016` en `migrations/`):
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -179,7 +179,7 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-309 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+320 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -498,16 +498,35 @@ métricas» y que promueva la ciencia abierta.
 | Etapa | Contenido | Estado |
 |---|---|---|
 | R1 | Catálogo: tablas, validación de ISSN, administración (lista, ficha, indexaciones con fuente y evidencia, verificación), carga por CSV | ✔ |
-| R2 | Productos: selector de revista, propuesta de revista nueva, reconocimiento por ISSN al importar, derivación de revisión e índices por año, vinculación de artículos existentes | Pendiente |
+| R2 | Productos: selector de revista, propuesta de revista nueva, reconocimiento por ISSN al importar, derivación de revisión e índices por año, vinculación de artículos existentes | ✔ |
 | R3 | Informes: origen del dato (catálogo o declarado), revistas nacionales e internacionales, acceso abierto, cuartiles; fuente y fecha de verificación en las exportaciones | Pendiente |
+
+**Detalles de R2:**
+
+- Al guardar un artículo con revista verificada, la revisión y los índices se toman del catálogo
+  (año de publicación) y el medio pasa a ser el título de la revista. Cualquier cambio del catálogo
+  (verificar, editar, indexaciones, carga por CSV, vinculación) reclasifica sus artículos.
+- Propuesta de revista desde el formulario (queda pendiente, con quien la propuso); si su ISSN o
+  título ya existen, se reutiliza la revista. Crossref: reconocimiento por ISSN o título; si no
+  está, se ofrece proponerla. BibTeX: reconocimiento por ISSN o título (sin crear revistas) y el
+  ISSN se exporta.
+- Administración: «Artículos sin revista», agrupados por el nombre declarado, con sugerencia por
+  título, para vincular o crear la revista.
+- Tipos nuevos (migración 0016, IAC-CINDA 3.6.3): productos «Patente» y «Traducción»; actividades
+  «Transferencia de conocimiento», «Participación en red de investigación» y «Estancia o pasantía
+  de investigación» (renombra «Estadía de investigación»). El CV los agrupa y la memoria informa
+  patentes y traducciones aparte.
+
+### Decisiones del instituto
+
+1. Artículos en revistas **sin verificar**: cuentan durante el piloto (marcados como declarados);
+   al preparar la acreditación se exigirá revista verificada.
+2. El catálogo lo mantiene la administración durante el piloto.
 
 ### Por confirmar con el instituto
 
-1. ¿Los artículos en revistas **sin verificar** cuentan en la memoria mientras tanto (marcados
-   como «declarado»), o quedan «por confirmar» hasta que la administración verifique la revista?
-   Propuesta: cuentan, marcados, durante el piloto; «por confirmar» al preparar la acreditación.
+1. (Resuelto: ver «Decisiones del instituto».)
 2. ¿Qué índices cuentan como «indexado» en el contexto boliviano? Hoy: WoS (SCIE y ESCI), Scopus,
    SciELO, MathSciNet y zbMATH sí; Latindex Catálogo no. ¿Se agrega SciELO Bolivia como índice
    propio? ¿Latindex debería contar para revistas nacionales?
-3. ¿Quién mantiene el catálogo: la administración, o conviene un rol de «curador» (p. ej.,
-   bibliotecaria de la facultad) que solo gestione revistas?
+3. (Resuelto: la administración, durante el piloto.)

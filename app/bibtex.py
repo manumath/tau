@@ -12,7 +12,7 @@ import re
 import bibtexparser
 from bibtexparser import middlewares as mw
 
-from app import importacion, personas, productos
+from app import importacion, personas, productos, revistas
 from app.db import get_db, sin_tildes
 
 MAX_BYTES = 2 * 1024 * 1024
@@ -127,8 +127,11 @@ def _a_producto(e) -> dict:
         tipo = get_db().q("SELECT id, admite_revision FROM tipo_producto WHERE nombre = 'Preprint'")[0]
     medio = _campo(e, "journal", "booktitle", "publisher", "institution", "school", "howpublished")
     doi = _campo(e, "doi")
+    # Artículos: revista del catálogo por ISSN o título (sin crearla: se vincula después si falta).
+    revista = revistas.coincidir([_campo(e, "issn")], medio) if nombre_tipo == revistas.TIPO_ARTICULO else None
     datos = {
         "tipo_id": str(tipo["id"]), "titulo": _campo(e, "title") or "", "anio": _anio(e), "mes": _mes(e),
+        "revista_id": revista["id"] if revista else None,
         "estado_publicacion": _estado(e, tipo_bib),
         "revision": "arbitrado" if tipo["admite_revision"] else "sin_arbitraje",
         "medio": medio, "volumen": _campo(e, "volume"), "numero": _campo(e, "number", "issue"),
@@ -242,7 +245,8 @@ def entrada(p: dict, usadas: set[str]) -> str:
               ("year", str(p["anio"])), ("month", str(p["mes"]) if p.get("mes") else None),
               ("volume", p["volumen"]), ("number", p["numero"]),
               ("pages", (p["paginas"] or "").replace("–", "--") or None),
-              ("doi", p["doi"])]
+              ("doi", p["doi"]),
+              ("issn", (p.get("revista") or {}).get("issn") or (p.get("revista") or {}).get("eissn"))]
     if p["arxiv_id"]:
         campos += [("eprint", p["arxiv_id"]), ("archiveprefix", "arXiv")]
     campos += [("url", p["url"]), ("note", NOTAS_ESTADO.get(p["estado_publicacion"]))]

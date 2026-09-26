@@ -6,7 +6,7 @@ arbitrado y ya fue aceptado o publicado (ver `cuenta_para_informe`).
 import re
 from datetime import date
 
-from app import adjuntos, personas
+from app import adjuntos, personas, revistas
 from app.db import get_db, sin_tildes
 
 ESTADOS = {"publicado": "Publicado", "aceptado": "Aceptado", "enviado": "Enviado",
@@ -60,6 +60,9 @@ def obtener(pid: int) -> dict | None:
         return None
     p = filas[0]
     p["autores"] = autores(pid)
+    # Revista del catálogo (si la tiene): si está verificada, la revisión y los índices vienen de ella.
+    p["revista"] = revistas.obtener(p["revista_id"]) if p.get("revista_id") else None
+    p["clasificacion_catalogo"] = bool(p["revista"] and p["revista"]["estado"] == "verificada")
     p["indices"] = get_db().q(
         """SELECT i.* FROM producto_indice pi JOIN indice i ON i.id = pi.indice_id
            WHERE pi.producto_id = ? ORDER BY i.orden""", [pid])
@@ -116,6 +119,25 @@ def preparar(datos: dict, autores_refs: list[str], indices_ids: list[int],
             d["mes"] = int(mes) if mes else None
     if d.get("estado_publicacion") not in ESTADOS:
         errores.append("Estado de publicación no válido.")
+
+    # Revista del catálogo: solo en artículos en revista. Si está verificada, fija el nivel de
+    # revisión y los índices según el año (no los declara el autor) y el nombre del medio.
+    rid = str(d.get("revista_id") or "")
+    if not t or t["nombre"] != revistas.TIPO_ARTICULO:
+        d["revista_id"] = None
+    elif rid:
+        r = revistas.obtener(int(rid)) if rid.isdigit() else None
+        if not r:
+            errores.append("La revista elegida no existe en el catálogo.")
+            d["revista_id"] = None
+        else:
+            d["revista_id"], d["medio"] = r["id"], r["titulo"]
+            c = revistas.clasificacion(r["id"], d["anio"]) if isinstance(d.get("anio"), int) else None
+            if c:
+                d["revision"] = c["revision"]
+                indices_ids = [x["indice_id"] for x in c["indices"]] if c["revision"] == "indexado" else []
+    else:
+        d["revista_id"] = None
 
     # Nivel de revisión según el tipo.
     if t and not t["admite_revision"]:

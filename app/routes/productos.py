@@ -11,13 +11,13 @@ import json
 from datetime import date
 
 import fasthtml.common as fh
-from fasthtml.common import (A, APIRouter, Div, H3, HtmxResponseHeaders, Input, Label, Option, P,
-                             Redirect, Response, Select, Span)
+from fasthtml.common import (A, APIRouter, Div, H3, HtmxResponseHeaders, Input, Label, Li, Option, P,
+                             Redirect, Response, Select, Span, Ul)
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, CheckboxX, Form, FormLabel, LabelInput,
                            LabelTextArea, TextPresets, UkIcon)
 
-from app import actividades, filiacion, importacion, personas, productos, proyectos
+from app import actividades, filiacion, importacion, personas, productos, proyectos, revistas
 from app import filiacion as filiacion_mod
 from app.components import personas as selector_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
@@ -139,14 +139,91 @@ def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False):
 
 # --- Formulario -----------------------------------------------------------------------
 
-def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id):
-    """Campos que dependen del tipo: nivel de revisión, índices y actividad asociada."""
+# Cómo usar los campos generales en tipos que no son publicaciones.
+AYUDA_TIPO = {
+    "Patente": "Patente: en «Revista, editorial o medio» indique la oficina (p. ej., SENAPI) y en «Número» el número "
+               "de solicitud o registro. Estado: «Enviado» = solicitada, «Publicado» = concedida.",
+    "Traducción": "Traducción: en el título, el título traducido; en «Resumen», la obra original y su autor. En "
+                  "«Revista, editorial o medio», la editorial.",
+}
+
+
+def insignia_estado_revista(r):
+    return insignia("verificada", "verde", icono="badge-check") if r["estado"] == "verificada" \
+        else insignia("pendiente de verificar", "ambar", icono="clock")
+
+
+RECARGAR = dict(hx_get="/productos/campos", hx_include="closest form", hx_target="#campos-dependientes",
+                hx_swap="outerHTML")
+
+
+def bloque_revista(revista_id, anio, nueva):
+    """Artículos en revista: la revista del catálogo (o la propuesta de una nueva). Devuelve
+    (bloque, clasificación según el catálogo o None)."""
+    r = revistas.obtener(int(revista_id)) if str(revista_id or "").isdigit() else None
+    if r:
+        verificada = r["estado"] == "verificada"
+        c = revistas.clasificacion(r["id"], int(anio)) if verificada and str(anio or "").isdigit() else None
+        bloque = Div(
+            FormLabel("Revista"),
+            Div(Input(type="hidden", name="revista_id", value=str(r["id"])),
+                Div(Span(r["titulo"], cls="font-medium"),
+                    Span(" · " + " / ".join(x for x in (r["issn"], r["eissn"]) if x), cls="font-mono text-xs")
+                    if r["issn"] or r["eissn"] else "", cls="min-w-0"),
+                insignia("Verificada en el catálogo", "verde", icono="badge-check") if verificada
+                else insignia("Pendiente de verificar", "ambar", icono="clock"),
+                fh.Button("Cambiar", type="button", cls="text-sm text-primary hover:underline ml-auto",
+                          hx_vals='{"revista_id": ""}', **RECARGAR),
+                cls="flex flex-wrap items-center gap-2 rounded-md border border-border px-3 py-2"),
+            P("La revista está verificada: el nivel de revisión y los índices se toman del catálogo según el año "
+              "de publicación." if verificada else
+              "La revista aún no está verificada por la administración: indique usted el nivel de revisión y los "
+              "índices; cuando se verifique, se aplicará el catálogo.", cls=TextPresets.muted_sm),
+            cls="space-y-2")
+        return bloque, c
+    buscador = Div(
+        Input(type="search", name="revista_q", placeholder="Buscar revista del catálogo por título o ISSN…",
+              autocomplete="off", cls="uk-input", aria_label="Buscar revista",
+              hx_get="/productos/revistas", hx_trigger="input changed delay:250ms, search",
+              hx_target="#resultados-revista", onkeydown="if(event.key==='Enter')event.preventDefault()"),
+        Div(id="resultados-revista"), cls="relative")
+    propuesta = fh.Details(
+        fh.Summary("¿No está en el catálogo? Propóngala", cls="cursor-pointer text-sm text-primary"),
+        Div(LabelInput("Título de la revista", id="revista_nueva_titulo", value=nueva.get("titulo") or ""),
+            Div(LabelInput("ISSN", id="revista_nueva_issn", value=nueva.get("issn") or ""),
+                LabelInput("ISSN electrónico", id="revista_nueva_eissn", value=nueva.get("eissn") or ""),
+                cls="grid grid-cols-2 gap-3"),
+            P("Se agregará al catálogo como pendiente; la administración la verificará.", cls=TextPresets.muted_sm),
+            cls="space-y-2 mt-2"),
+        open=bool(nueva.get("titulo")), cls="rounded-md border border-border p-3")
+    return Div(FormLabel("Revista"), buscador, propuesta, cls="space-y-2"), None
+
+
+def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revista_id=None, anio=None, nueva=None):
+    """Campos que dependen del tipo: revista (en artículos), nivel de revisión, índices y actividad
+    asociada."""
     t = productos.tipo(tipo_id) if str(tipo_id).isdigit() else None
     partes = []
+    if t and t["nombre"] == revistas.TIPO_ARTICULO:
+        bloque, c = bloque_revista(revista_id, anio, nueva or {})
+        partes.append(bloque)
+        if c:  # clasificación del catálogo: no se declara
+            nombres = ", ".join(x["indice"] for x in c["indices"]) or "ningún índice"
+            partes.append(Div(
+                Input(type="hidden", name="revision", value=c["revision"]),
+                *[Input(type="hidden", name="indice", value=str(x["indice_id"])) for x in c["indices"]],
+                P(Span("Según el catálogo", cls="font-medium"), f", en {anio} la revista figuraba en {nombres}: ",
+                  Span(productos.REVISIONES[c["revision"]].lower(), cls="font-medium"), ".", cls="text-sm"),
+                cls="rounded-md bg-muted/50 p-3"))
+            return Div(*partes, id="campos-dependientes", cls="space-y-4")
     if t and not t["admite_revision"]:
         partes.append(P(UkIcon("info", height=14, width=14, cls="inline mr-1"),
-                        f"«{t['nombre']}» se registra como sin arbitraje y no cuenta para el "
-                        "informe del instituto.", cls=TextPresets.muted_sm))
+                        f"«{t['nombre']}» se registra como sin arbitraje y no cuenta como artículo para el "
+                        "informe del instituto" + (" (se informa aparte, como resultado de I+D+i)."
+                                                   if t["nombre"] in AYUDA_TIPO else "."),
+                        cls=TextPresets.muted_sm))
+        if t["nombre"] in AYUDA_TIPO:
+            partes.append(P(AYUDA_TIPO[t["nombre"]], cls="text-sm"))
     else:
         radios = [Label(Input(type="radio", name="revision", value=v, checked=v == revision,
                               cls="uk-radio", hx_get="/productos/campos",
@@ -255,7 +332,8 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
                        hx_get="/productos/campos", hx_include="closest form",
                        hx_target="#campos-dependientes", hx_swap="outerHTML"),
                 cls="space-y-2 sm:col-span-2"),
-            campo("Año", "anio", type="number", min=1900, max=date.today().year + 1, required=True),
+            campo("Año", "anio", type="number", min=1900, max=date.today().year + 1, required=True,
+                  hx_trigger="change", **RECARGAR),  # el año cambia la clasificación según el catálogo
             Div(FormLabel("Mes (opcional)", fr="mes"),
                 Select(Option("—", value=""),
                        *[Option(t.capitalize(), value=str(i), selected=str(i) == str(d.get("mes") or ""))
@@ -275,7 +353,8 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
             campo("Revista, editorial o medio", "medio"),
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
         bloque_dependiente(uid, d.get("tipo_id"), d.get("revision"), indices_sel,
-                           d.get("actividad_id")),
+                           d.get("actividad_id"), d.get("revista_id"), d.get("anio"),
+                           {k: d.get(f"revista_nueva_{k}") for k in ("titulo", "issn", "eissn")}),
         Div(campo("Volumen", "volumen"), campo("Número", "numero"), campo("Páginas", "paginas"),
             cls="grid grid-cols-3 gap-4"),
         Div(campo("DOI", "doi", placeholder="10.1234/abcd", hx_post="/productos/verificar",
@@ -304,8 +383,9 @@ def _modal_form(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, pr
 
 
 def _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                paginas, doi, arxiv_id, url, resumen, actividad_id, mes=""):
-    return dict(tipo_id=tipo_id, titulo=titulo, anio=anio, mes=mes, estado_publicacion=estado_publicacion,
+                paginas, doi, arxiv_id, url, resumen, actividad_id, mes="", revista_id=""):
+    return dict(tipo_id=tipo_id, titulo=titulo, anio=anio, mes=mes, revista_id=revista_id,
+                estado_publicacion=estado_publicacion,
                 revision=revision, medio=medio, volumen=volumen, numero=numero, paginas=paginas,
                 doi=doi, arxiv_id=arxiv_id, url=url, resumen=resumen, actividad_id=actividad_id)
 
@@ -418,8 +498,28 @@ def post(auth, identificador: str = "", arxiv_asociado: str = "", proyecto: list
 
 @rt("/productos/campos")
 def get(auth, tipo_id: str = "", revision: str = "", indice: list[str] = None,
-        actividad_id: str = ""):
-    return bloque_dependiente(auth["id"], tipo_id, revision, indice or [], actividad_id)
+        actividad_id: str = "", revista_id: str = "", anio: str = "", revista_nueva_titulo: str = "",
+        revista_nueva_issn: str = "", revista_nueva_eissn: str = ""):
+    return bloque_dependiente(auth["id"], tipo_id, revision, indice or [], actividad_id, revista_id, anio,
+                              {"titulo": revista_nueva_titulo, "issn": revista_nueva_issn, "eissn": revista_nueva_eissn})
+
+
+@rt("/productos/revistas")
+def get(revista_q: str = ""):
+    """Autocompletar de revistas del catálogo (título o ISSN)."""
+    if len(revista_q.strip()) < 2:
+        return ""
+    encontradas = revistas.buscar(revista_q, limite=12)
+    opciones = [Li(fh.Button(
+        Span(r["titulo"], cls="font-medium"),
+        Span(" · ".join(x for x in (r["issn"], r["eissn"], revistas.ESTADOS[r["estado"]].lower()) if x),
+             cls=TextPresets.muted_sm),
+        type="button", cls="w-full text-left flex flex-col px-3 py-2 hover:bg-muted",
+        hx_vals=f'{{"revista_id": "{r["id"]}"}}', **RECARGAR)) for r in encontradas]
+    if not opciones:
+        opciones = [Li(P("No está en el catálogo: propóngala más abajo.", cls=(TextPresets.muted_sm, "px-3 py-2")))]
+    return Ul(*opciones, cls="absolute z-30 w-full mt-1 max-h-72 overflow-y-auto rounded-md border border-border "
+                            "bg-background shadow-lg divide-y divide-border")
 
 
 @rt("/productos/verificar")
@@ -450,11 +550,35 @@ def aviso_duplicado(otro, uid):
             "dark:border-amber-800 p-3")
 
 
-def _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion=None, agradece=None):
-    agradece = filiacion_mod.leer_agradece(agradece)
-    d, errores = productos.preparar(datos, autor or [], indice or [], pid)
+def _revista_propuesta(d, nueva, uid) -> str | None:
+    """Si el artículo no tiene revista del catálogo pero se propuso una, la busca por ISSN o título
+    y, si no existe, la agrega al catálogo como pendiente. → error o None."""
+    t = productos.tipo(d.get("tipo_id"))
+    if d.get("revista_id") or not (nueva.get("revista_nueva_titulo") or "").strip() or \
+            not t or t["nombre"] != revistas.TIPO_ARTICULO:
+        return None
+    datos, errores = revistas.validar({"titulo": nueva["revista_nueva_titulo"], "issn": nueva.get("revista_nueva_issn"),
+                                       "eissn": nueva.get("revista_nueva_eissn")})
+    existente = revistas.coincidir([datos.get("issn"), datos.get("eissn")], datos.get("titulo"))
+    if existente:
+        d["revista_id"], d["medio"] = existente["id"], existente["titulo"]
+        return None
     if errores:
-        return _modal_form(auth, {**datos, "_agradece": agradece}, _autores_de_refs(autor, filiacion),
+        return "Revista propuesta: " + " ".join(errores)
+    rid = revistas.crear(datos, uid)
+    auditar(uid, "proponer_revista", "revista", rid, datos["titulo"])
+    d["revista_id"], d["medio"] = rid, datos["titulo"]
+    return None
+
+
+def _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion=None, agradece=None, nueva=None):
+    agradece = filiacion_mod.leer_agradece(agradece)
+    nueva = nueva or {}
+    d, errores = productos.preparar(datos, autor or [], indice or [], pid)
+    if not errores and (error := _revista_propuesta(d, nueva, auth["id"])):
+        errores = [error]
+    if errores:
+        return _modal_form(auth, {**datos, **nueva, "_agradece": agradece}, _autores_de_refs(autor, filiacion),
                            indice or [], errores, pid, proyecto or [])
     nuevo = pid is None
     autor = [personas.materializar(r, auth["id"]) for r in autor]  # externos importados
@@ -477,10 +601,13 @@ def post(auth, sess, tipo_id: str = "", titulo: str = "", anio: str = "",
          numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
          resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
          indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
-         agradece: list[str] = None):
+         agradece: list[str] = None, revista_id: str = "", revista_nueva_titulo: str = "",
+         revista_nueva_issn: str = "", revista_nueva_eissn: str = ""):
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes)
-    return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion, agradece)
+                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id)
+    nueva = dict(revista_nueva_titulo=revista_nueva_titulo, revista_nueva_issn=revista_nueva_issn,
+                 revista_nueva_eissn=revista_nueva_eissn)
+    return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion, agradece, nueva)
 
 
 @rt("/productos/{pid}/editar")
@@ -497,13 +624,16 @@ def put(auth, sess, pid: int, tipo_id: str = "", titulo: str = "", anio: str = "
         numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
         resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
         indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
-        agradece: list[str] = None):
+        agradece: list[str] = None, revista_id: str = "", revista_nueva_titulo: str = "",
+        revista_nueva_issn: str = "", revista_nueva_eissn: str = ""):
     p = productos.obtener(pid)
     if not p or not productos.puede_editar(p, auth["id"]):
         return Response("No autorizado", status_code=403)
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes)
-    return _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion, agradece)
+                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id)
+    nueva = dict(revista_nueva_titulo=revista_nueva_titulo, revista_nueva_issn=revista_nueva_issn,
+                 revista_nueva_eissn=revista_nueva_eissn)
+    return _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion, agradece, nueva)
 
 
 @rt("/productos/{pid}/sumarme")
@@ -562,8 +692,16 @@ def ficha(p, auth):
             dato("Medio", ", ".join(x for x in (p["medio"], p["volumen"] and f"vol. {p['volumen']}",
                                                 p["numero"] and f"n.º {p['numero']}",
                                                 p["paginas"] and f"pp. {p['paginas']}") if x)),
-            dato("Nivel de revisión", productos.REVISIONES[p["revision"]]
-                 + (f" ({', '.join(i['nombre'] for i in p['indices'])})" if p["indices"] else "")),
+            dato("Revista del catálogo", Span(p["revista"]["titulo"],
+                                              Span(" · " + " / ".join(x for x in (p["revista"]["issn"], p["revista"]["eissn"]) if x),
+                                                   cls="font-mono text-xs") if p["revista"]["issn"] or p["revista"]["eissn"] else "",
+                                              " ", insignia_estado_revista(p["revista"]))
+                 if p["revista"] else None),
+            dato("Nivel de revisión", Span(productos.REVISIONES[p["revision"]]
+                                           + (f" ({', '.join(i['nombre'] for i in p['indices'])})" if p["indices"] else ""),
+                                           Span(" · según el catálogo" if p["clasificacion_catalogo"] else
+                                                " · declarado por los autores" if p["tipo"] == revistas.TIPO_ARTICULO else "",
+                                                cls=TextPresets.muted_sm))),
             dato("Presentada en", A(actividad["titulo"], href=f"/actividades/{actividad['id']}",
                                     cls="text-primary hover:underline") if actividad else None),
             dato("Identificadores", Div(*[e for e in enlaces if e], cls="flex gap-4 flex-wrap"))

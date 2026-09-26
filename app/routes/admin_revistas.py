@@ -58,7 +58,9 @@ def get(auth, q: str = "", estado: str = ""):
                 P("Revistas donde publica el instituto y los índices en que figuran cada año, con la fuente "
                   "consultada. Una revista verificada define el nivel de revisión y los índices de los "
                   "artículos publicados en ella.", cls=TextPresets.muted_sm)),
-            Div(Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
+            Div(A(UkIcon("link", height=16, width=16), f"Artículos sin revista ({sum(g['n'] for g in revistas.sin_vincular())})",
+                  href=f"{BASE}/sin-vincular", cls="uk-btn uk-btn-default inline-flex items-center gap-1"),
+                Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
                        hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}"),
                 Button(UkIcon("plus", height=16, width=16), "Nueva revista", cls=ButtonT.primary,
                        hx_get=f"{BASE}/nueva", hx_target=f"#{ID_MODAL}"),
@@ -80,6 +82,63 @@ def get(auth, q: str = "", estado: str = ""):
 def get(q: str = "", estado: str = ""):
     estado = estado if estado in revistas.ESTADOS else ""
     return lista(q, estado), HtmxResponseHeaders(replace_url=url_filtrada(BASE, q=q, estado=estado))
+
+
+# --- Artículos sin revista del catálogo -----------------------------------------------------------------------
+
+@rt(f"{BASE}/sin-vincular")
+def get(auth):
+    grupos = revistas.sin_vincular()
+    todas = revistas.buscar(limite=2000)
+    tarjetas = []
+    for g in grupos:
+        sugerida = g["sugerida"]
+        tarjetas.append(Card(
+            Div(Div(H3(g["medio"] or "(sin revista declarada)", cls="text-base font-semibold"),
+                    P(f"{g['n']} artículo(s): " + "; ".join(f"{p['titulo']} ({p['anio']})" for p in g["productos"][:3])
+                      + ("…" if g["n"] > 3 else ""), cls=TextPresets.muted_sm), cls="min-w-0"),
+                cls="mb-3"),
+            Form(Input(type="hidden", name="clave", value=g["clave"]),
+                 Select(Option("— Elija la revista del catálogo —", value=""),
+                        *[Option(f"{r['titulo']}" + (f" ({r['issn'] or r['eissn']})" if r["issn"] or r["eissn"] else ""),
+                                 value=str(r["id"]), selected=bool(sugerida and sugerida["id"] == r["id"]))
+                          for r in todas], name="revista_id", cls="uk-select max-w-md", aria_label="Revista"),
+                 Button("Vincular", type="submit", name="accion", value="vincular", cls=(ButtonT.primary, ButtonT.sm)),
+                 Button("Crear revista con este nombre", type="submit", name="accion", value="crear",
+                        cls=(ButtonT.ghost, ButtonT.sm)) if g["medio"] else "",
+                 hx_post=f"{BASE}/sin-vincular", cls="flex flex-wrap items-center gap-2")))
+    return pagina(
+        "Artículos sin revista",
+        A(UkIcon("arrow-left", height=14, width=14), "Catálogo de revistas", href=BASE,
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
+        H2("Artículos sin revista del catálogo"),
+        P("Artículos en revista registrados sin elegir una revista del catálogo, agrupados por el nombre que "
+          "declararon sus autores. Vincúlelos a una revista existente o cree la revista (quedará pendiente de "
+          "verificar). Al vincular, el artículo toma el nombre de la revista y, si está verificada, su "
+          "clasificación según el año.", cls=(TextPresets.muted_sm, "mb-6")),
+        Div(*tarjetas, cls="space-y-4") if tarjetas else P("Todos los artículos tienen revista del catálogo.",
+                                                          cls="text-sm text-green-700"),
+        usuario=auth, seccion="revistas")
+
+
+@rt(f"{BASE}/sin-vincular")
+def post(auth, sess, clave: str = "", revista_id: str = "", accion: str = "vincular"):
+    grupo = next((g for g in revistas.sin_vincular() if g["clave"] == clave), None)
+    if not grupo:
+        add_toast(sess, "Ese grupo ya no tiene artículos sin revista.", "warning")
+        return Redirect(f"{BASE}/sin-vincular")
+    if accion == "crear":
+        existente = revistas.coincidir([], grupo["medio"])
+        rid = existente["id"] if existente else revistas.crear({"titulo": grupo["medio"].strip()}, auth["id"])
+    elif revista_id.isdigit() and revistas.obtener(int(revista_id)):
+        rid = int(revista_id)
+    else:
+        add_toast(sess, "Elija la revista del catálogo.", "error")
+        return Redirect(f"{BASE}/sin-vincular")
+    n = revistas.vincular([p["id"] for p in grupo["productos"]], rid)
+    auditar(auth["id"], "vincular_revista", "revista", rid, f"{n} artículo(s) de «{grupo['medio']}»")
+    add_toast(sess, f"{n} artículo(s) vinculado(s) a «{revistas.obtener(rid)['titulo']}».", "success")
+    return Redirect(f"{BASE}/sin-vincular")
 
 
 # --- Alta y edición --------------------------------------------------------------------------------------
@@ -150,6 +209,7 @@ def put(auth, sess, rid: int, titulo: str = "", issn: str = "", eissn: str = "",
     if errores:
         return modal("Editar revista", _form(crudo, errores, rid), ancho="max-w-2xl")
     revistas.actualizar(rid, d)
+    revistas.reclasificar(rid)  # «revisión por pares» cambia la clasificación de sus artículos
     auditar(auth["id"], "editar_revista", "revista", rid, d["titulo"])
     add_toast(sess, "Revista guardada.", "success")
     return Redirect(f"{BASE}/{rid}")
@@ -175,8 +235,9 @@ def post(auth, sess, rid: int, verificada: str = "1"):
     if not r:
         return Response(status_code=404)
     revistas.verificar(rid, auth["id"], verificada == "1")
+    n = revistas.reclasificar(rid)
     auditar(auth["id"], "verificar_revista" if verificada == "1" else "desverificar_revista", "revista", rid, r["titulo"])
-    add_toast(sess, "Revista verificada: define la clasificación de sus artículos." if verificada == "1"
+    add_toast(sess, f"Revista verificada: se reclasificaron {n} artículo(s) según el catálogo." if verificada == "1"
               else "La revista volvió a «pendiente».", "success")
     return Redirect(f"{BASE}/{rid}")
 
@@ -241,6 +302,7 @@ def post(auth, rid: int, indice_id: str = "", desde: str = "", hasta: str = "", 
                  evidencia_url=evidencia_url)
     errores = revistas.agregar_indexacion(rid, datos, auth["id"])
     if not errores:
+        revistas.reclasificar(rid)
         auditar(auth["id"], "agregar_indexacion", "revista", rid, f"índice {indice_id} desde {desde}")
     return tarjeta_indexaciones(r, errores, datos if errores else None)
 
@@ -251,6 +313,7 @@ def delete(auth, rid: int, iid: int):
     if not r:
         return Response(status_code=404)
     revistas.quitar_indexacion(rid, iid)
+    revistas.reclasificar(rid)
     auditar(auth["id"], "quitar_indexacion", "revista", rid, str(iid))
     return tarjeta_indexaciones(r)
 

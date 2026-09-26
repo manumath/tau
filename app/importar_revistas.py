@@ -123,6 +123,7 @@ def aplicar(grupos: list[dict], admin_id: int) -> tuple[int, int, int]:
         for x in g["indexaciones"]:
             if not revistas.agregar_indexacion(rid, {k: v for k, v in x.items() if k != "indice"}, admin_id):
                 n_idx += 1
+        revistas.reclasificar(rid)
     if nuevas or completadas:
         auditar(admin_id, "importar_revistas", "revista", None,
                 f"{nuevas} nueva(s), {completadas} completada(s), {n_idx} indexación(es)")

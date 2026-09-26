@@ -199,3 +199,77 @@ def agregar_indexacion(rid: int, d: dict, uid: int) -> list[str]:
 
 def quitar_indexacion(rid: int, iid: int):
     get_db().execute("DELETE FROM revista_indice WHERE id = ? AND revista_id = ?", [iid, rid])
+
+
+# --- Artículos y revistas -------------------------------------------------------------------------------
+
+TIPO_ARTICULO = "Artículo en revista"
+
+
+def coincidir(issns: list[str | None], titulo: str | None) -> dict | None:
+    """Revista del catálogo que corresponde a un artículo: por ISSN (impreso o electrónico) y, si no
+    hay, por título idéntico (sin distinguir tildes ni mayúsculas)."""
+    for i in issns or []:
+        try:
+            r = por_issn(normalizar_issn(i))
+        except ValueError:
+            continue
+        if r:
+            return r
+    if titulo and titulo.strip():
+        filas = get_db().q("SELECT * FROM revista WHERE sin_tildes(titulo) = sin_tildes(?)", [titulo.strip()])
+        if len(filas) == 1:
+            return filas[0]
+    return None
+
+
+def reclasificar(rid: int) -> int:
+    """Aplica el catálogo a los artículos de la revista (nivel de revisión e índices según el año
+    de cada uno). Se llama tras verificar la revista o cambiar sus indexaciones. → cuántos
+    artículos cambió. Si la revista no está verificada no toca nada (rige lo declarado)."""
+    db = get_db()
+    cambiados = 0
+    for p in db.q("""SELECT p.id, p.anio, p.revision FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
+                     WHERE p.revista_id = ? AND t.nombre = ?""", [rid, TIPO_ARTICULO]):
+        c = clasificacion(rid, p["anio"])
+        if c is None:
+            return 0
+        actuales = {f["indice_id"] for f in db.q("SELECT indice_id FROM producto_indice WHERE producto_id = ?", [p["id"]])}
+        # Como al guardar: los índices se registran solo en los artículos indexados.
+        nuevos = {x["indice_id"] for x in c["indices"]} if c["revision"] == "indexado" else set()
+        if c["revision"] != p["revision"] or actuales != nuevos:
+            with db.conn:
+                db.execute("UPDATE producto SET revision = ? WHERE id = ?", [c["revision"], p["id"]])
+                db.execute("DELETE FROM producto_indice WHERE producto_id = ?", [p["id"]])
+                for i in nuevos:
+                    db.t.producto_indice.insert(producto_id=p["id"], indice_id=i)
+            cambiados += 1
+    return cambiados
+
+
+def sin_vincular() -> list[dict]:
+    """Artículos en revista sin revista del catálogo, agrupados por el nombre declarado
+    (sin distinguir tildes ni mayúsculas). Cada grupo: medio, n, productos (id, titulo, anio)."""
+    grupos = {}
+    for p in get_db().q("""SELECT p.id, p.titulo, p.anio, p.medio FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
+                           WHERE t.nombre = ? AND p.revista_id IS NULL ORDER BY p.anio DESC""", [TIPO_ARTICULO]):
+        clave = sin_tildes((p["medio"] or "").strip()) or "(sin revista declarada)"
+        g = grupos.setdefault(clave, {"clave": clave, "medio": p["medio"] or "", "productos": []})
+        g["productos"].append(p)
+    res = sorted(grupos.values(), key=lambda g: (-len(g["productos"]), g["clave"]))
+    for g in res:
+        g["n"] = len(g["productos"])
+        g["sugerida"] = coincidir([], g["medio"]) if g["medio"] else None
+    return res
+
+
+def vincular(producto_ids: list[int], rid: int) -> int:
+    """Vincula artículos a una revista del catálogo (el nombre del medio pasa a ser el de la revista)
+    y aplica su clasificación si está verificada."""
+    r = obtener(rid)
+    if not r or not producto_ids:
+        return 0
+    marcas = ",".join("?" * len(producto_ids))
+    get_db().execute(f"UPDATE producto SET revista_id = ?, medio = ? WHERE id IN ({marcas})", [rid, r["titulo"], *producto_ids])
+    reclasificar(rid)
+    return len(producto_ids)

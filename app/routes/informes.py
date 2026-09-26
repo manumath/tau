@@ -377,6 +377,9 @@ def documento_memoria(m):
             P("No se cuentan hasta completar el mes de publicación de cada producto.", cls="apagado text-sm"),
             Ol(*[Li(cita(x), Span(f" — {x['motivo']}", cls="apagado")) for x in m["por_confirmar"]], cls="citas"))
         if m["por_confirmar"] else "",
+        Div(H2(f"Patentes y traducciones ({len(m['otros_resultados'])})"),
+            Ol(*[Li(cita(x), Span(f" — {x['tipo'].lower()}", cls="apagado")) for x in m["otros_resultados"]],
+               cls="citas")) if m["otros_resultados"] else "",
         H2(f"Actividades ({len(m['actividades'])})"),
         Ul(*[Li(Span(actividades.fechas_texto(a), cls="apagado"), " — ", a["titulo"],
                 Span(f" · {a['tipo']} · {actividades.AMBITOS[a['ambito']].lower()}", cls="apagado"))
@@ -464,7 +467,9 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
                              for x in m["por_investigador"]],
     }
     if m["por_confirmar"]:
-        hojas["Sin mes (por confirmar)"] = informes.filas_productos(m["por_confirmar"])
+        hojas["Por confirmar"] = informes.filas_productos(m["por_confirmar"])
+    if m["otros_resultados"]:
+        hojas["Patentes y traducciones"] = informes.filas_productos(m["otros_resultados"])
     return _archivo(informes.a_xlsx(hojas), f"{m['nombre']}.xlsx", XLSX)
 
 
