@@ -37,6 +37,10 @@ CONTACTO = os.environ.get("PORTAL_CONTACTO")
 
 # Dirección pública del portal (para los enlaces de los correos).
 URL_BASE = os.environ.get("PORTAL_URL", "http://localhost:5001").rstrip("/")
+# Otras direcciones desde las que se accede al portal (separadas por coma), p. ej. una dirección
+# interna además del dominio público. Las peticiones que modifican datos deben venir de alguna de
+# ellas o del propio host (protección CSRF).
+ORIGENES_EXTRA = [x.strip() for x in os.environ.get("PORTAL_ORIGENES_EXTRA", "").split(",") if x.strip()]
 
 # Correo: "archivo" (desarrollo: guarda .eml en <datos>/correos), "smtp" (producción),
 # "memoria" (tests) o "desactivado".

@@ -56,6 +56,56 @@ def _solo_lectura(req):
 # Sin rutas excluidas: el modo solo lectura también protege las públicas (p. ej. /recuperar).
 beforeware_solo_lectura = Beforeware(_solo_lectura)
 
+
+# --- Protección CSRF ------------------------------------------------------------------------------
+#
+# La cookie de sesión es SameSite=Lax: el navegador no la envía en formularios de *otros sitios*.
+# Pero otro subdominio del mismo dominio (p. ej. una página cualquiera en *.umsa.bo) es el «mismo
+# sitio» y sí la recibiría. Por eso toda petición que modifica datos debe venir del propio portal,
+# según Origin (o Referer, si falta). Es la verificación recomendada por OWASP; no requiere tokens.
+
+METODOS_SEGUROS = ("GET", "HEAD", "OPTIONS")
+
+
+def _netloc(url: str | None) -> str | None:
+    from urllib.parse import urlsplit
+    if not url or url == "null":
+        return None
+    partes = urlsplit(url)
+    return partes.netloc.lower() if partes.scheme in ("http", "https") and partes.netloc else None
+
+
+def origenes_permitidos(req) -> set[str]:
+    """El propio portal: el host de la petición (lo fija el navegador, no la página que envía) y
+    la dirección pública configurada (PORTAL_URL), más PORTAL_ORIGENES_EXTRA si hiciera falta."""
+    permitidos = {req.url.netloc.lower()}
+    for url in (config.URL_BASE, *config.ORIGENES_EXTRA):
+        if (n := _netloc(url)):
+            permitidos.add(n)
+    return permitidos
+
+
+def _origen_valido(req):
+    if req.method in METODOS_SEGUROS:
+        return None
+    origen = req.headers.get("origin")
+    if origen is not None:
+        # «null» (iframes aislados, redirecciones entre sitios) tampoco se acepta.
+        valido = _netloc(origen) in origenes_permitidos(req)
+    elif (referer := req.headers.get("referer")):
+        valido = _netloc(referer) in origenes_permitidos(req)
+    else:
+        # Sin Origin ni Referer no es un navegador enviando la cookie de otra persona (los
+        # navegadores actuales envían Origin en todo POST); se admite (clientes, pruebas).
+        valido = True
+    if not valido:
+        return Response("Solicitud rechazada: no proviene del portal.", status_code=403)
+    return None
+
+
+# Sin rutas excluidas: también protege el ingreso (evita que otro sitio inicie sesión por la víctima).
+beforeware_origen = Beforeware(_origen_valido)
+
 rt = APIRouter()
 
 

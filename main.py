@@ -21,7 +21,7 @@ if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not 
           "se usa UTC.", flush=True)
 
 from app import institucionales  # noqa: E402
-from app.auth import beforeware, beforeware_solo_lectura
+from app.auth import beforeware, beforeware_origen, beforeware_solo_lectura
 from app.auth import rt as rutas_auth
 from app.components.errores import JS_AVISOS, no_encontrado, paginas_de_error
 from app.components.perfil import katex_headers
@@ -64,7 +64,7 @@ def create_app(db_path=config.DB_PATH):
               Meta(name="htmx-config", content=json.dumps({"disableInheritance": True})),
               JS_AVISOS),
         exception_handlers={404: no_encontrado},
-        before=[beforeware_solo_lectura, beforeware, Beforeware(_mantenimiento)],
+        before=[beforeware_origen, beforeware_solo_lectura, beforeware, Beforeware(_mantenimiento)],
         secret_key=config.SECRET_KEY,
         key_fname=str(config.RAIZ / ".sesskey"),
         session_cookie="portal_sesion",
