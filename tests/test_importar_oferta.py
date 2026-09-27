@@ -8,11 +8,11 @@ from app.comun import permisos, unidades, usuarios, vinculos
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 
-ARCHIVO = ("gestion;sigla;paralelo;inscritos;email;rol;horas\n"
-           "I-2021;MAT-111;A;45;inv@test.cl;titular;6\n"
-           "I-2021;MAT-111;A;45;alan@test.cl;auxiliar;2\n"
-           "I-2021;MAT-112;;40;;;\n"                       # paralelo A sin docente
-           "ver-2021;MAT-278;A;12;inv@test.cl;;\n")         # horas y rol por omisión
+ARCHIVO = ("gestion;sigla;paralelo;inscritos;email;rol\n"
+           "I-2021;MAT-111;A;45;inv@test.cl;titular\n"
+           "I-2021;MAT-111;A;45;alan@test.cl;auxiliar\n"
+           "I-2021;MAT-112;;40;;\n"                       # paralelo A sin docente
+           "ver-2021;MAT-278;A;12;inv@test.cl;\n")         # rol por omisión
 
 
 @pytest.fixture
@@ -20,6 +20,7 @@ def gente(app):
     emmy = usuarios.por_email("inv@test.cl")["id"]
     usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
     alan = usuarios.crear("alan@test.cl", "Alan", "Turing", None)["id"]  # registrado sin acceso
+    vinculos.agregar(emmy, "titular", "2010-01-01", unidad=unidades.id_de("CMAT"))  # puede dictar en verano
     return {"emmy": emmy, "alan": alan}
 
 
@@ -30,14 +31,15 @@ def test_leer_y_aplicar(gente):
     assert not i2021["existe"] and not i2021["errores"]
     assert len(i2021["paralelos"]) == 2 and i2021["paralelos"][("MAT-112", "A")]["docentes"] == []
     ver = lista[1]["paralelos"][("MAT-278", "A")]["docentes"][0]
-    assert (ver["rol"], ver["horas"]) == ("titular", 11)  # las horas del plan
-    assert any("Sin vínculo con la Carrera" in a for a in i2021["avisos"])
+    assert ver["rol"] == "titular"
+    assert i2021["avisos"] == ["Sin vínculo con la Carrera en esa gestión: alan@test.cl."]
     assert importar_oferta.aplicar(lista, gente["emmy"]) == 2
     g = gestiones.por_codigo("I-2021")
     assert [gestiones.codigo(x) for x in gestiones.crear_anio(2021)] == ["I-2021", "INV-2021", "II-2021", "VER-2021"]
     o = {(x["sigla"], x["paralelo"]): x for x in oferta.listar(g["id"])}
     assert o[("MAT-111", "A")]["inscritos"] == 45 and len(o[("MAT-111", "A")]["docentes"]) == 2
-    assert oferta.horas_de_docencia(gente["alan"], g["id"]) == 2
+    assert oferta.horas_de_docencia(gente["emmy"], g["id"]) == 32
+    assert oferta.horas_de_docencia(gente["alan"], g["id"]) == 0  # auxiliar
     # Volver a importar el mismo archivo no duplica: reemplaza.
     lista, _ = importar_oferta.leer(ARCHIVO.encode())
     assert lista[0]["actuales"] == 2
@@ -50,22 +52,23 @@ def test_errores_por_fila_y_todo_o_nada(gente):
     gestiones.crear_anio(2022)
     previa = gestiones.por_codigo("II-2022")
     oferta.agregar(previa["id"], "MAT-251", "A", "", gente["emmy"])  # oferta existente que no debe perderse
-    contenido = ("gestion,sigla,paralelo,inscritos,email,rol,horas\n"
-                 "II-2022,MAT-111,A,30,inv@test.cl,titular,6\n"
-                 "II-2022,FIS-137,A,,,,\n"                            # la dicta otra unidad
-                 "II-2022,MAT-111,A,31,,,\n"                          # otro número de inscritos
-                 "II-2022,MAT-112,A,,nadie@test.cl,,\n"               # persona no registrada
-                 "II-2022,MAT-113,A,,inv@test.cl,jefe,\n"             # rol no válido
-                 "II-2022,MAT-111,A,,inv@test.cl,titular,4\n"         # docente repetido
-                 "II-2022,MAT-412,A,,inv@test.cl,,\n"                 # maestría sin horas en el plan
-                 "III-2022,MAT-111,A,,,,\n"                           # gestión no válida
-                 "I-2022,MAT-999,A,,,,\n")                            # sigla desconocida
+    contenido = ("gestion,sigla,paralelo,inscritos,email,rol\n"
+                 "II-2022,MAT-111,A,30,inv@test.cl,titular\n"
+                 "II-2022,FIS-137,A,,,\n"                            # la dicta otra unidad
+                 "II-2022,MAT-111,A,31,,\n"                          # otro número de inscritos
+                 "II-2022,MAT-112,A,,nadie@test.cl,\n"               # persona no registrada
+                 "II-2022,MAT-113,A,,inv@test.cl,jefe\n"             # rol no válido
+                 "II-2022,MAT-111,A,,inv@test.cl,titular\n"          # docente repetido
+                 "INV-2022,MAT-278,A,,alan@test.cl,\n"               # temporada: solo titulares
+                 "III-2022,MAT-111,A,,,\n"                           # gestión no válida
+                 "I-2022,MAT-999,A,,,\n")                            # sigla desconocida
     lista, errores = importar_oferta.leer(contenido.encode())
     por = {g["codigo"]: g for g in lista}
     textos = " ".join(por["II-2022"]["errores"])
     for fragmento in ("FIS-137 la dicta otra unidad", "otro número de inscritos", "nadie@test.cl",
-                      "rol no válido", "figura dos veces", "indique las horas"):
+                      "rol no válido", "figura dos veces"):
         assert fragmento in textos, fragmento
+    assert "no puede dictar cursos de verano o invierno" in por["INV-2022"]["errores"][0]
     assert "III-2022" in " ".join(por["?"]["errores"]) and "MAT-999" in por["I-2022"]["errores"][0]
     assert importar_oferta.aplicar(lista, gente["emmy"]) == 0
     assert [o["sigla"] for o in oferta.listar(previa["id"])] == ["MAT-251"]  # intacta
@@ -79,7 +82,6 @@ def test_pantallas(client, gente):
     login(client, "inv@test.cl", PASS_TEMP)
     assert client.get("/docencia/oferta/importar").status_code == 403
     permisos.asignar(gente["emmy"], "direccion_carrera", unidades.id_de("CMAT"))
-    vinculos.agregar(gente["emmy"], "titular", "2010-01-01", unidad=unidades.id_de("CMAT"))
     assert "Descargar plantilla" in client.get("/docencia/oferta/importar").text
     assert client.get("/docencia/oferta/plantilla").text.startswith("﻿gestion,sigla")
     r = client.post("/docencia/oferta/importar/revisar", headers=HX,

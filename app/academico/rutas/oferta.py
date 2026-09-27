@@ -39,13 +39,14 @@ def _docente(d, g, puede):
                        cls="p-0.5 rounded hover:text-red-600", hx_delete=f"{BASE}/docentes/{d['id']}",
                        hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
                        hx_confirm=f"¿Quitar a {d['nombres']} {d['apellidos']} de este paralelo?") if puede else ""
+    carga = (f" · {oferta.HORAS_POR_MATERIA} h/mes" if d["rol"] == "titular" and g["tipo"] not in oferta.TEMPORADA
+             else "")
     return Li(Span(f"{d['nombres']} {d['apellidos']}", cls="text-sm"),
-              Span(f" · {oferta.ROLES[d['rol']].lower()} · {d['horas_semanales']} h/sem", cls=TextPresets.muted_sm),
+              Span(f" · {oferta.ROLES[d['rol']].lower()}{carga}", cls=TextPresets.muted_sm),
               aviso, quitar, cls="flex items-center gap-1")
 
 
 def _form_docente(o, g):
-    sugeridas = oferta.horas_sugeridas(o["asignatura_id"])
     return fh.Details(fh.Summary("+ Asignar docente", cls="cursor-pointer text-xs text-primary mt-1"), fh.Form(
         Select(Option("Docente…", value=""),
                *[Option(f"{p['apellidos']}, {p['nombres']}" + ("" if p["con_vinculo"] else " (sin vínculo con la Carrera)"),
@@ -53,8 +54,6 @@ def _form_docente(o, g):
                name="usuario", cls="uk-select h-8 text-sm w-64", aria_label="Docente", required=True),
         Select(*[Option(t, value=k) for k, t in oferta.ROLES.items()], name="rol", cls="uk-select h-8 text-sm w-28",
                aria_label="Rol"),
-        Input(name="horas", value=str(sugeridas or ""), cls="uk-input h-8 text-sm w-20", aria_label="Horas semanales",
-              placeholder="h/sem", inputmode="numeric", title="Horas semanales (sugeridas: las del plan)"),
         Button("Asignar", type="submit", cls=(ButtonT.default, ButtonT.sm)),
         hx_post=f"{BASE}/{o['id']}/docentes", hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
         cls="flex flex-wrap gap-2 mt-2"))
@@ -106,13 +105,16 @@ def seccion_oferta(g, auth, errores=()):
 def get(auth, gestion: str = ""):
     g = gestiones.obtener(int(gestion)) if gestion.isdigit() else gestiones.actual()
     if not g:
-        return pagina("Oferta y docentes", pestanas("oferta"),
+        return pagina("Oferta y docentes", pestanas("oferta", auth),
                       P("Todavía no hay gestiones registradas. ", A("Crear las gestiones de un año", href="/docencia/gestiones",
                                                                     cls="text-primary hover:underline"),
                         cls="text-sm"), usuario=auth, seccion="docencia")
+    temporada = P("Curso de temporada: solo lo dictan docentes titulares y no suma a la carga horaria del semestre "
+                  "(cuenta como docencia dictada).", cls="text-sm text-amber-700 mb-4") \
+        if g["tipo"] in oferta.TEMPORADA else ""
     return pagina(
         "Oferta y docentes",
-        pestanas("oferta"),
+        pestanas("oferta", auth),
         Div(Div(H2(gestiones.codigo(g)), P(f"{gestiones.nombre(g)} · del {g['fecha_inicio']} al {g['fecha_fin']}",
                                            cls=TextPresets.muted_sm)),
             Div(_selector(g),
@@ -120,6 +122,7 @@ def get(auth, gestion: str = ""):
                        hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if _puede(auth) else "",
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
+        temporada,
         seccion_oferta(g, auth),
         usuario=auth, seccion="docencia")
 
@@ -157,17 +160,17 @@ def delete(auth, oid: int):
 
 
 @rt(f"{BASE}/{{oid}}/docentes")
-def post(auth, sess, oid: int, usuario: str = "", rol: str = "titular", horas: str = ""):
+def post(auth, sess, oid: int, usuario: str = "", rol: str = "titular"):
     if not _puede(auth):
         return Response("No autorizado", status_code=403)
     o = oferta.obtener(oid)
     if not o:
         return Response("No encontrado", status_code=404)
     g = gestiones.obtener(o["gestion_id"])
-    errores = oferta.asignar(oid, int(usuario) if usuario.isdigit() else 0, rol, horas)
+    errores = oferta.asignar(oid, int(usuario) if usuario.isdigit() else 0, rol)
     if not errores:
         auditar(auth["id"], "asignar_docente", "oferta", oid, f"{gestiones.codigo(g)} {o['sigla']} {o['paralelo']}: "
-                                                              f"usuario {usuario}, {horas} h")
+                                                              f"usuario {usuario} ({rol})")
         add_toast(sess, "Docente asignado.", "success")
     return seccion_oferta(g, auth, errores)
 
@@ -215,7 +218,7 @@ def seccion_gestiones(auth, errores=()):
 
 @rt("/docencia/gestiones")
 def get(auth):
-    return pagina("Gestiones académicas", pestanas("gestiones"), H2("Gestiones académicas"),
+    return pagina("Gestiones académicas", pestanas("gestiones", auth), H2("Gestiones académicas"),
                   P("Semestres (I, II) y cursos de temporada (INV en julio; VER en enero del año siguiente, que se "
                     "cuenta con la gestión anterior). Las fechas propuestas se ajustan al calendario aprobado.",
                     cls=(TextPresets.muted_sm, "mb-6")),
@@ -253,8 +256,8 @@ def _form_importar(errores=()):
         mensaje_error(*errores),
         P("Una fila por docente de cada paralelo: ", Code("gestion"), " (I-2021, INV-2021, II-2021, VER-2021), ",
           Code("sigla"), " y, si quiere, ", Code("paralelo"), " (vacío = A), ", Code("inscritos"), ", ",
-          Code("email"), " del docente (vacío si no tuvo), ", Code("rol"), " (titular o auxiliar) y ", Code("horas"),
-          " semanales (vacío = las del plan).", cls="text-sm"),
+          Code("email"), " del docente (vacío si no tuvo) y ", Code("rol"), " (titular o auxiliar; vacío = titular). "
+          "Cada materia de un titular en un semestre cuenta 32 h/mes de carga.", cls="text-sm"),
         P("La oferta de cada gestión del archivo se reemplaza por la del archivo; las demás no cambian. Una gestión "
           "con errores no se importa. Los docentes deben estar registrados (aunque sea sin acceso). Primero verá una "
           "vista previa.", cls=TextPresets.muted_sm),

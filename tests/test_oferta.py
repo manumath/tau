@@ -45,9 +45,9 @@ def test_oferta_valida(g2026):
     assert "paralelo" in oferta.agregar(gid, "MAT-112", "A-1234", "", 1)[1][0]
     assert "inscritos" in oferta.agregar(gid, "MAT-112", "B", "muchos", 1)[1][0]
     assert oferta.agregar(gid, "MAT-111", "B", "", 1)[1] == []  # otro paralelo
-    assert oferta.horas_sugeridas(_asig("MAT-278")) == 11          # 4+3+4 y 4+4+3 según el plan
-    assert oferta.horas_sugeridas(_asig("MAT-399")) == 34
-    assert oferta.horas_sugeridas(_asig("MAT-412")) is None        # maestría: créditos
+    assert oferta.horas_del_plan(_asig("MAT-278")) == 11           # 4+3+4 y 4+4+3 según el plan
+    assert oferta.horas_del_plan(_asig("MAT-399")) == 34
+    assert oferta.horas_del_plan(_asig("MAT-412")) is None         # maestría: créditos
     assert oferta.programas_de(_asig("MAT-111")) == ["Licenciatura en Matemática",
                                                      "Licenciatura en Matemática Aplicada"]
 
@@ -55,21 +55,37 @@ def test_oferta_valida(g2026):
 def test_asignacion_docente(g2026):
     emmy = usuarios.por_email("inv@test.cl")["id"]
     oid, _ = oferta.agregar(g2026["I"]["id"], "MAT-251", "A", "", 1)
-    assert oferta.asignar(oid, emmy, "titular", "0") == ["Las horas semanales son un número entre 1 y 40."]
-    assert oferta.asignar(oid, emmy, "jefe", "7") == ["Rol no válido."]
-    assert oferta.asignar(oid, emmy, "titular", "7") == []
-    assert oferta.asignar(oid, emmy, "auxiliar", "3") == ["Esa persona ya está asignada a este paralelo."]
+    assert oferta.asignar(oid, emmy, "jefe") == ["Rol no válido."]
+    assert oferta.asignar(oid, emmy, "titular") == []
+    assert oferta.asignar(oid, emmy, "auxiliar") == ["Esa persona ya está asignada a este paralelo."]
     # Sin vínculo con la Carrera: se avisa, no se impide.
     assert oferta.sin_vinculo_con_la_carrera(emmy, g2026["I"])
     vinculos.agregar(emmy, "titular", "2015-01-01", unidad=unidades.id_de("CMAT"))
     assert not oferta.sin_vinculo_con_la_carrera(emmy, g2026["I"])
     otra, _ = oferta.agregar(g2026["I"]["id"], "MAT-252", "A", "", 1)
-    oferta.asignar(otra, emmy, "titular", "7")
-    assert oferta.horas_de_docencia(emmy, g2026["I"]["id"]) == 14
+    oferta.asignar(otra, emmy, "titular")
+    assert oferta.horas_de_docencia(emmy, g2026["I"]["id"]) == 64  # 32 h/mes por materia
     assert oferta.horas_de_docencia(emmy, g2026["II"]["id"]) == 0
     d = oferta.docentes(otra)[0]
     oferta.quitar_docente(d["id"])
-    assert oferta.horas_de_docencia(emmy, g2026["I"]["id"]) == 7
+    assert oferta.horas_de_docencia(emmy, g2026["I"]["id"]) == 32
+    # Los auxiliares no suman carga.
+    alan = usuarios.crear("alan@test.cl", "Alan", "Turing", None)["id"]
+    oferta.asignar(oid, alan, "auxiliar")
+    assert oferta.horas_de_docencia(alan, g2026["I"]["id"]) == 0
+
+
+def test_cursos_de_temporada_solo_titulares(g2026):
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    alan = usuarios.crear("alan@test.cl", "Alan", "Turing", None)["id"]
+    oid, _ = oferta.agregar(g2026["VER"]["id"], "MAT-278", "A", "", 1)
+    assert "titulares" in oferta.asignar(oid, emmy, "titular")[0]         # sin vínculo con la Carrera
+    vinculos.agregar(alan, "interino", "2020-01-01", unidad=unidades.id_de("CMAT"))
+    assert "titulares" in oferta.asignar(oid, alan, "titular")[0]         # interino: contrato semestral
+    assert oferta.asignar(oid, alan, "auxiliar") == []                    # el auxiliar no tiene esa restricción
+    vinculos.agregar(emmy, "titular", "2015-01-01", unidad=unidades.id_de("CMAT"))
+    assert oferta.asignar(oid, emmy, "titular") == []
+    assert oferta.horas_de_docencia(emmy, g2026["VER"]["id"]) == 0       # no forma parte de la carga
 
 
 def test_pantallas_y_permisos(client, g2026):
@@ -84,10 +100,9 @@ def test_pantallas_y_permisos(client, g2026):
     permisos.asignar(emmy, "coordinacion_academica", unidades.id_de("CMAT"))
     r = client.post(f"/docencia/oferta/{g2026['I']['id']}", headers=HX,
                     data={"asignatura": "MAT-111 · Algebra I", "paralelo": "A", "inscritos": "40"})
-    assert "MAT-111" in r.text and "Sin docente" in r.text and 'value="6"' in r.text  # horas sugeridas: 4+2
+    assert "MAT-111" in r.text and "Sin docente" in r.text
     oid = oferta.listar(g2026["I"]["id"])[0]["id"]
-    r = client.post(f"/docencia/oferta/{oid}/docentes", headers=HX, data={"usuario": str(emmy), "rol": "titular",
-                                                                          "horas": "6"})
+    r = client.post(f"/docencia/oferta/{oid}/docentes", headers=HX, data={"usuario": str(emmy), "rol": "titular"})
     assert "Emmy Noether" in r.text and "sin vínculo con la Carrera" in r.text
     assert get_db().q("SELECT accion FROM auditoria WHERE accion = 'asignar_docente'")
     r = client.post("/docencia/gestiones", headers=HX, data={"anio": "2027"})

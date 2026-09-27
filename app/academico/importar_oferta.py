@@ -2,7 +2,8 @@
 
 Formato: una fila por docente de cada paralelo: `gestion` (I-2021, INV-2021, II-2021, VER-2021),
 `sigla`, `paralelo` (vacío = A), `inscritos`, `email` del docente (vacío si el paralelo no tuvo
-docente), `rol` (titular o auxiliar; vacío = titular) y `horas` semanales (vacío = las del plan).
+docente) y `rol` (titular o auxiliar; vacío = titular). Cada materia de un titular en un semestre
+cuenta 32 h/mes de carga; los cursos de verano e invierno solo los dictan titulares.
 
 - El archivo es la fuente para las gestiones que incluye: su oferta se **reemplaza** entera (así,
   volver a importar un archivo corregido no duplica nada). Las demás gestiones no cambian.
@@ -28,13 +29,12 @@ ALIAS = {
     "inscritos": ("inscritos", "estudiantes", "matriculados"),
     "email": ("email", "correo", "correo docente", "email docente", "docente"),
     "rol": ("rol",),
-    "horas": ("horas", "horas semanales", "carga"),
 }
-PLANTILLA = ("gestion,sigla,paralelo,inscritos,email,rol,horas\n"
-             "I-2021,MAT-111,A,45,emmy.noether@umsa.bo,titular,6\n"
-             "I-2021,MAT-111,A,45,alan.turing@umsa.bo,auxiliar,2\n"
-             "I-2021,MAT-112,A,40,,,\n"
-             "VER-2021,MAT-278,A,12,emmy.noether@umsa.bo,,\n")
+PLANTILLA = ("gestion,sigla,paralelo,inscritos,email,rol\n"
+             "I-2021,MAT-111,A,45,emmy.noether@umsa.bo,titular\n"
+             "I-2021,MAT-111,A,45,alan.turing@umsa.bo,auxiliar\n"
+             "I-2021,MAT-112,A,40,,\n"
+             "VER-2021,MAT-278,A,12,emmy.noether@umsa.bo,\n")
 
 
 def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
@@ -51,7 +51,7 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
     faltan = [c for c in ("gestion", "sigla") if indice[c] is None]
     if faltan:
         return [], [f"Faltan columnas: {', '.join(faltan)}. La primera fila debe tener los encabezados "
-                    "(gestion, sigla y, si quiere, paralelo, inscritos, email, rol y horas)."]
+                    "(gestion, sigla y, si quiere, paralelo, inscritos, email y rol)."]
     por_gestion, n = {}, 0
     for linea, registro in enumerate(lector, start=2):
         if not any(c.strip() for c in registro):
@@ -103,7 +103,7 @@ def _fila(g, linea, celda):
     inscritos = celda("inscritos")
     if inscritos and not inscritos.isdigit():
         problemas.append("inscritos debe ser un número")
-    email, rol, horas = celda("email").lower(), (celda("rol").lower() or "titular"), celda("horas")
+    email, rol = celda("email").lower(), (celda("rol").lower() or "titular")
     persona = None
     if email:
         persona = usuarios.por_email(email)
@@ -111,10 +111,9 @@ def _fila(g, linea, celda):
             problemas.append(f"no hay una persona registrada con el correo {email} (regístrela, aunque sea sin acceso)")
         if rol not in oferta.ROLES:
             problemas.append("rol no válido (titular o auxiliar)")
-        if horas and (not horas.isdigit() or not 1 <= int(horas) <= 40):
-            problemas.append("horas: número entre 1 y 40")
-        elif not horas and fila and not oferta.horas_sugeridas(fila[0]["id"]):
-            problemas.append("indique las horas (la asignatura no tiene horas en el plan)")
+        elif persona and g["tipo"] in oferta.TEMPORADA and rol == "titular" and not oferta.es_titular(
+                persona["id"], _referencia(g)):
+            problemas.append(f"{email} no es docente titular de la Carrera: no puede dictar cursos de verano o invierno")
     if problemas:
         g["errores"].append(f"Fila {linea}: " + "; ".join(problemas) + ".")
         return
@@ -130,15 +129,18 @@ def _fila(g, linea, celda):
         if any(d["usuario_id"] == persona["id"] for d in p["docentes"]):
             g["errores"].append(f"Fila {linea}: {email} figura dos veces en {sigla} {paralelo}.")
             return
-        p["docentes"].append({"usuario_id": persona["id"], "email": email, "rol": rol,
-                              "horas": int(horas) if horas else oferta.horas_sugeridas(fila[0]["id"])})
+        p["docentes"].append({"usuario_id": persona["id"], "email": email, "rol": rol})
+
+
+def _referencia(g) -> dict:
+    """La gestión existente o, si aún no existe, sus fechas por omisión (para mirar el vínculo)."""
+    return gestiones.por_codigo(g["codigo"]) or {"fecha_inicio": gestiones.fechas_por_omision(g["anio"], g["tipo"])[0],
+                                                 "tipo": g["tipo"]}
 
 
 def _avisos(g):
     """Docentes sin vínculo con la Carrera al inicio de la gestión (se importa igual)."""
-    inicio = gestiones.fechas_por_omision(g["anio"], g["tipo"])[0]
-    existente = gestiones.por_codigo(g["codigo"])
-    referencia = existente or {"fecha_inicio": inicio}
+    referencia = _referencia(g)
     sin = sorted({d["email"] for p in g["paralelos"].values() for d in p["docentes"]
                   if oferta.sin_vinculo_con_la_carrera(d["usuario_id"], referencia)})
     if sin:
@@ -159,8 +161,7 @@ def aplicar(lista: list[dict], uid: int) -> int:
                 oid = get_db().t.oferta.insert(gestion_id=gid, asignatura_id=p["asignatura_id"], paralelo=p["paralelo"],
                                                inscritos=p["inscritos"], creado_por=uid)["id"]
                 for d in p["docentes"]:
-                    get_db().t.oferta_docente.insert(oferta_id=oid, usuario_id=d["usuario_id"], rol=d["rol"],
-                                                     horas_semanales=d["horas"])
+                    get_db().t.oferta_docente.insert(oferta_id=oid, usuario_id=d["usuario_id"], rol=d["rol"])
         auditar(uid, "importar_oferta", "gestion_academica", gid,
                 f"{g['codigo']}: {len(g['paralelos'])} paralelo(s)")
         n += 1

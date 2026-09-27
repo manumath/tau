@@ -39,7 +39,7 @@ def get(auth):
              for p in planes.listar()]
     return pagina(
         "Planes de estudio",
-        pestanas("planes"),
+        pestanas("planes", auth),
         H2("Planes de estudio"),
         P("Programas de la Carrera de Matemática y sus planes vigentes. Las inconsistencias de los documentos "
           "quedan marcadas para revisión de la Dirección Académica.", cls=(TextPresets.muted_sm, "mb-6")),

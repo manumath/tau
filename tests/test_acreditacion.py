@@ -86,7 +86,7 @@ def test_anexo(datos):
 def test_cuerpo_academico(datos):
     c = {x["anio"]: x for x in acreditacion.anexo(2022, 2026)["cuerpo"]}
     assert c[2022]["por_categoria"] == {"Contratado(a)": 1} and c[2022]["jce"] == 1.0
-    assert c[2024]["por_categoria"] == {"Titular": 1, "Invitado(a)": 1} and (c[2024]["horas"], c[2024]["jce"]) == (60, 1.5)
+    assert c[2024]["por_categoria"] == {"Titular": 1, "Invitado(a)": 1} and (c[2024]["horas"], c[2024]["jce"]) == (240, 1.5)  # jornada × 4 (h/mes)
     assert c[2025]["total"] == 1  # el invitado terminó en 2024
 
 

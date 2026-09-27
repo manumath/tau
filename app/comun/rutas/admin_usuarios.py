@@ -744,11 +744,9 @@ def _campos_periodo(d, con_hasta=True, con_nota=True, sufijo=""):
         LabelInput("Desde", id=f"desde{sufijo}", name="desde", type="date", value=d.get("desde") or ""),
         LabelInput("Hasta", id=f"hasta{sufijo}", name="hasta", type="date", value=d.get("hasta") or "")
         if con_hasta else "",
-        LabelInput("Jornada (h/semana)", id=f"jornada{sufijo}", name="jornada", type="number", min=1, max=60,
-                   value=d.get("jornada") or ""),
         LabelInput("Nota", id=f"nota{sufijo}", name="nota", value=d.get("nota") or "",
                    placeholder="Resolución, contrato…") if con_nota else "",
-        cls="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end")
+        cls="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end")
 
 
 def _selector_unidad(uid, actual, permitidas):
@@ -787,14 +785,16 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
             Td(vinculos.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700") if vig and v["id"] == vig["id"] else ""),
             Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700")),
             Td(v["fecha_fin"] or "—"),
-            Td(f"{v['jornada_horas']} h" if v["jornada_horas"] else "—", Span(f" · {v['nota']}", cls=TextPresets.muted_sm) if v["nota"] else ""),
+            Td(Span(v["nota"] or "—", cls="text-sm"),
+               Span(f" · jornada según RR. HH.: {v['jornada_horas']} h/semana", cls=TextPresets.muted_sm)
+               if v["jornada_horas"] else ""),
             Td(Div(Button(UkIcon("pencil", height=14, width=14), cls=(ButtonT.ghost, ButtonT.icon), aria_label="Corregir",
                           title="Corregir", hx_get=f"{BASE}/vinculo/{v["id"]}/editar", hx_target=f"#{ID_MODAL}"),
                    Button(UkIcon("trash-2", height=14, width=14), cls=(ButtonT.ghost, ButtonT.icon), aria_label="Eliminar",
                           title="Eliminar (solo para corregir errores)", hx_delete=f"{BASE}/vinculo/{v["id"]}",
                           hx_target=f"#{ID_MODAL}", hx_confirm="¿Eliminar este periodo? Úselo solo para corregir errores."),
                    cls="flex justify-end"))))
-    tabla = Table(Thead(Tr(Th("Categoría"), Th("Desde"), Th("Hasta"), Th("Jornada"), Th(""))),
+    tabla = Table(Thead(Tr(Th("Categoría"), Th("Desde"), Th("Hasta"), Th("Nota"), Th(""))),
                   Tbody(*filas) if filas else Tbody(Tr(Td("Sin periodos registrados.", colspan=5,
                                                           cls=TextPresets.muted_sm))),
                   cls="uk-table-divider uk-table-small")
@@ -820,7 +820,8 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
     return modal(
         f"Vínculo de {u['nombres']} {u['apellidos']}",
         mensaje_error(*errores),
-        P("Periodos de pertenencia a cada unidad con su categoría y jornada. El vínculo con el Instituto define "
+        P("Periodos de pertenencia a cada unidad con su categoría (la carga horaria se asigna por semestre en "
+          "Docencia → Carga horaria). El vínculo con el Instituto define "
           "qué producción cuenta en los informes de investigación y con qué categoría; el de la Carrera, la "
           "docencia. Para cargar el historial de muchas personas, use «Importar historial» en el listado.",
           cls=(TextPresets.muted_sm, "mb-3")),

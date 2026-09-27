@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import json  # noqa: E402
 
-from app.academico import gestiones, oferta  # noqa: E402
+from app.academico import carga, gestiones, oferta  # noqa: E402
 from app.investigacion import actividades, institucionales, lineas, perfiles, productos, proyectos, revistas
 from app.comun import academicos, config, estudiantes, personas, unidades, usuarios, vinculos  # noqa: E402
 from app.comun.db import AHORA, get_db, marca_tiempo  # noqa: E402
@@ -368,11 +368,18 @@ def _cargar_docencia() -> bool:
     por = {g["tipo"]: g for g in gestiones.crear_anio(2026)}
     emmy = usuarios.por_email("emmy.noether@instituto.test")
     alan = usuarios.por_email("alan.turing@instituto.test")
-    for sigla, paralelo, inscritos, docente, horas in (("MAT-111", "A", 42, emmy, 6), ("MAT-111", "B", 38, alan, 6),
-                                                       ("MAT-251", "A", 15, emmy, 7), ("MAT-278", "A", 12, None, None)):
+    for sigla, paralelo, inscritos, docente in (("MAT-111", "A", 42, emmy), ("MAT-111", "B", 38, alan),
+                                                ("MAT-251", "A", 15, emmy), ("MAT-278", "A", 12, None)):
         oid, _ = oferta.agregar(por["II"]["id"], sigla, paralelo, inscritos, emmy["id"] if emmy else None)
         if oid and docente:
-            oferta.asignar(oid, docente["id"], "titular", horas)
+            oferta.asignar(oid, docente["id"], "titular")
+    # Carga horaria de II-2026: Emmy, 2 materias + investigación (128); Alan, 1 materia + extensión (64).
+    for persona, contratada, actividades in ((emmy, 128, (("investigacion", 64, "Proyecto de álgebra"),)),
+                                             (alan, 64, (("extension", 32, "Olimpiadas de matemática"),))):
+        if persona:
+            carga.fijar_contratada(persona["id"], por["II"], contratada, persona["id"])
+            for tipo, horas, detalle in actividades:
+                carga.agregar_actividad(persona["id"], por["II"], tipo, horas, detalle)
     return True
 
 

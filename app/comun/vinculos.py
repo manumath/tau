@@ -175,6 +175,8 @@ def editar(vid: int, categoria: str, desde, hasta, jornada=None, nota=None) -> l
     errores = validar(v["usuario_id"], categoria, desde, hasta, jornada, excluir=vid, unidad=v["unidad_id"])
     if errores:
         return errores
+    # Sin jornada (ya no se pide en el formulario) se conserva la registrada: dato histórico de RR. HH.
+    jornada = jornada if jornada not in (None, "") else v["jornada_horas"]
     get_db().execute("""UPDATE vinculo SET categoria = ?, fecha_inicio = ?, fecha_fin = ?, jornada_horas = ?,
                         nota = ? WHERE id = ?""",
                      [categoria, _fecha(desde), _fecha(hasta), int(jornada) if jornada else None,

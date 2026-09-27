@@ -8,6 +8,7 @@ omisión, exige revista verificada, como corresponde a la acreditación.
 from datetime import date
 
 from app.investigacion import actividades, perfiles, proyectos, revistas
+from app.academico import carga
 from app.acreditacion import estudiantes as ind_estudiantes
 from app.comun import config, estudiantes, paises, vinculos
 from app.acreditacion import informes
@@ -20,7 +21,7 @@ TRANSFERENCIA = ("Transferencia de conocimiento",)
 DIVULGACION = ("Charla de divulgación",)
 REDES = ("Participación en red de investigación",)
 COMITES = ("Comité científico o editorial",)
-JORNADA_COMPLETA = 40  # horas semanales
+JORNADA_COMPLETA = 160  # h/mes: tiempo completo (5 cargas de 32 h/mes)
 TIPOS_ARTICULO = (revistas.TIPO_ARTICULO, "Artículo en actas de congreso")
 
 
@@ -41,7 +42,10 @@ def _presentaciones(acts: list[dict]) -> list[dict]:
 
 def cuerpo_academico(anio: int, hasta: str) -> dict:
     """Personas vinculadas al 31 de diciembre del año (o a hoy, en el año en curso): por categoría,
-    jornada total y jornada completa equivalente (JCE = horas / 40)."""
+    carga total y jornada completa equivalente (JCE = h/mes / 160).
+
+    La carga es la contratada del semestre (app.academico.carga); para años sin carga registrada, la
+    jornada del vínculo (dato de RR. HH. en h/semana) × 4."""
     corte = min(f"{anio}-12-31", hasta, date.today().isoformat())
     por_categoria, horas, sin_jornada, personas = {}, 0, 0, []
     for u in vinculos.personas_en_rango("0000-01-01", corte):
@@ -50,11 +54,12 @@ def cuerpo_academico(anio: int, hasta: str) -> dict:
             continue
         nombre = perfiles.CATEGORIAS[v["categoria"]]
         por_categoria[nombre] = por_categoria.get(nombre, 0) + 1
-        if v["jornada_horas"]:
-            horas += v["jornada_horas"]
+        h = carga.contratada_en(u["id"], corte) or (v["jornada_horas"] * 4 if v["jornada_horas"] else None)
+        if h:
+            horas += h
         else:
             sin_jornada += 1
-        personas.append({**u, "categoria": nombre, "jornada": v["jornada_horas"]})
+        personas.append({**u, "categoria": nombre, "jornada": h})
     return {"anio": anio, "corte": corte, "total": len(personas), "por_categoria": por_categoria, "horas": horas,
             "jce": round(horas / JORNADA_COMPLETA, 1), "sin_jornada": sin_jornada, "personas": personas}
 

@@ -127,8 +127,8 @@ def documento(a):
     cuerpo = Div(Table(Thead(Tr(Th("Categoría (al 31 de diciembre)"), *[Th(str(x["anio"]), cls="text-right") for x in a["cuerpo"]])),
                        Tbody(*[Tr(Td(c), *[_num(x["por_categoria"].get(c, 0)) for x in a["cuerpo"]]) for c in categorias],
                              Tr(Td("Total", cls="font-semibold"), *[_num(x["total"]) for x in a["cuerpo"]]),
-                             Tr(Td("Jornada completa equivalente (40 h)"), *[_num(x["jce"]) for x in a["cuerpo"]]),
-                             Tr(Td("Sin jornada registrada"), *[_num(x["sin_jornada"]) for x in a["cuerpo"]]))),
+                             Tr(Td("Jornada completa equivalente (160 h/mes)"), *[_num(x["jce"]) for x in a["cuerpo"]]),
+                             Tr(Td("Sin carga registrada"), *[_num(x["sin_jornada"]) for x in a["cuerpo"]]))),
                  cls="overflow-x-auto")
     rv = m["revistas"]
     avisos = [*m["avisos"]]
@@ -242,7 +242,7 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
     d, h = _ventana(desde, hasta)
     a = acreditacion.anexo(d, h, revistas != "todas")
     m = a["memoria"]
-    nombres = {"investigadores": "Investigadores", "jce": "JCE (40 h)", "indexados": "Artículos indexados",
+    nombres = {"investigadores": "Investigadores", "jce": "JCE (160 h/mes)", "indexados": "Artículos indexados",
                "arbitrados": "Artículos arbitrados", "nacionales": "En revistas nacionales",
                "internacionales": "En revistas internacionales", "libros": "Libros y capítulos",
                "tecnicos": "Patentes, software, traducciones", "presentaciones": "Presentaciones", "estancias": "Estancias",
@@ -252,7 +252,7 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
                "proyectos_internacionales": "Proyectos internacionales", "citas": "Citas"}
     resumen = [{"Indicador": t, **{str(x["anio"]): x[k] for x in a["anios"]}} for k, t in nombres.items()]
     cuerpo = [{"Año": c["anio"], "Investigador(a)": f"{p['apellidos']}, {p['nombres']}", "Categoría": p["categoria"],
-               "Jornada (h/semana)": p["jornada"] or ""} for c in a["cuerpo"] for p in c["personas"]]
+               "Carga (h/mes)": p["jornada"] or ""} for c in a["cuerpo"] for p in c["personas"]]
 
     def actividades_con(criterio, acts):
         return [{"Criterio": criterio, **f} for f in informes.filas_actividades(acts)]
@@ -267,7 +267,7 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
               {"Tema": "Regla de conteo", "Descripción": "Al menos un autor vinculado al instituto en la fecha de publicación "
                "que firmó con la filiación IIMAT/UMSA; cada producto se cuenta una vez."},
               {"Tema": "Cuerpo académico", "Descripción": "Personas con vínculo vigente al 31 de diciembre de cada año; "
-               "JCE = horas semanales / 40."},
+               "JCE = carga contratada (h/mes) / 160; sin carga registrada, jornada del vínculo × 4."},
               {"Tema": "Citas", "Descripción": "OpenAlex, en la fecha de actualización de cada producto."}]
     contenido = informes.a_xlsx({
         "Resumen por año": resumen, "2.2.1 Cuerpo académico": cuerpo,

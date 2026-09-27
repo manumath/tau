@@ -1027,7 +1027,7 @@ docente · equivalencias cuando llegue el plan nuevo.
   Nota: cada base de prueba carga los planes; la suite tarda ~10 s más.
 - 3.2 y 3.3 hechos (27-sep-2026): `gestion_academica` (año, tipo, fechas; fechas por omisión que la
   Dirección ajusta), `oferta` (asignatura de la Carrera, gestión, paralelo, inscritos) y
-  `oferta_docente` (titular o auxiliar, horas semanales; se sugieren las del plan) — migración 0029.
+  `oferta_docente` (titular o auxiliar; las horas semanales se quitaron en 3.4) — migración 0029.
   Pantallas /docencia/oferta y /docencia/gestiones con pestañas de la sección; acción
   `gestionar_oferta` (Dirección de Carrera y Coordinación académica). Aviso (no bloqueo) si el
   docente no tiene vínculo con la Carrera en la gestión. `oferta.horas_de_docencia` alimentará la
@@ -1036,3 +1036,15 @@ docente · equivalencias cuando llegue el plan nuevo.
   paralelo; reemplaza la oferta de las gestiones incluidas (reimportar no duplica), todo o nada por
   gestión, crea las gestiones del año si faltan, horas y rol por omisión, avisos de docentes sin
   vínculo con la Carrera. Vista previa y confirmación en «Oferta y docentes».
+- 3.4 hecho (27-sep-2026). Reglas acordadas: la carga se cuenta en unidades de 32 h/mes; cada
+  persona tiene **una** carga contratada por semestre (I o II) de 32, 64, 96, 128 o 160 h/mes,
+  que registra y distribuye la Dirección de Carrera; cada materia como titular (grado o maestría)
+  son 32 h/mes; investigación, extensión, gestión y otras, múltiplos de 32 h/mes. Los auxiliares
+  van aparte (sin carga, por ahora). Los cursos de verano e invierno no forman parte de la carga
+  (docencia dictada) y solo los dictan titulares de la Carrera (los interinos tienen contratos por
+  semestre). Migración 0030: `carga_semestral` y `carga_actividad`; se quitan las horas semanales
+  de `oferta_docente` (y la columna `horas` del CSV de oferta). `app/academico/carga.py` (resumen
+  con avisos, copia del semestre anterior) y pestaña /docencia/carga (acciones `ver_carga` y
+  `asignar_carga`). El anexo calcula la JCE como carga contratada / 160 (sin carga registrada,
+  jornada del vínculo × 4); el formulario de vínculos ya no pide la jornada (se conserva la
+  histórica). Pendiente si hace falta: importar por CSV la carga de semestres pasados.

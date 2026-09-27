@@ -256,16 +256,29 @@ enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la 
 las gestiones del año» propone fechas que se ajustan al calendario aprobado.
 
 **Oferta y docentes** (pestaña «Oferta y docentes»): para cada gestión, las asignaturas de la Carrera
-que se dictan, por paralelo, con sus inscritos y docentes (titular o auxiliar, con horas semanales;
-se sugieren las del plan). Las asignaturas de otras carreras no se ofertan desde aquí. Si un docente
-no tiene vínculo con la Carrera al inicio de la gestión, se avisa. La editan la Dirección de Carrera
+que se dictan, por paralelo, con sus inscritos y docentes (titular o auxiliar). En los semestres,
+cada materia de un titular cuenta 32 h/mes de carga; los auxiliares no suman carga. Los cursos de
+verano e invierno solo los dictan docentes titulares (de planta) de la Carrera y no forman parte de
+la carga: cuentan como docencia dictada. Las asignaturas de otras carreras no se ofertan desde aquí.
+Si un docente no tiene vínculo con la Carrera al inicio de la gestión, se avisa. La editan la Dirección de Carrera
 y la Coordinación académica; todos la consultan.
 
 **Importar CSV** (en «Oferta y docentes»): carga la oferta de gestiones pasadas, una fila por
-docente de cada paralelo (`gestion`, `sigla`, `paralelo`, `inscritos`, `email`, `rol`, `horas`; hay
+docente de cada paralelo (`gestion`, `sigla`, `paralelo`, `inscritos`, `email`, `rol`; hay
 plantilla). La oferta de cada gestión del archivo se reemplaza por la del archivo, así que puede
 corregir el archivo y volver a importarlo. Una gestión con algún error no se importa (la vista
 previa dice por qué). Los docentes deben estar registrados en «Usuarios», aunque sea sin acceso.
+
+**Carga horaria** (pestaña «Carga horaria»; la registra la Dirección de Carrera y la consultan la
+Coordinación académica, la Dirección del Instituto y el Comité de acreditación): cada persona tiene
+una carga contratada por semestre de 32, 64, 96, 128 o 160 h/mes (160 = tiempo completo). La
+Dirección de Carrera la distribuye: la docencia se calcula de la oferta (32 h/mes por materia como
+titular, de grado o maestría) y se agregan investigación, extensión y servicios, gestión u otras,
+en múltiplos de 32 h/mes con un detalle. Por ejemplo, 160 h/mes = dos materias + 64 de
+investigación + 32 de extensión. La tabla avisa si faltan horas por asignar o si la distribución
+supera la carga contratada. «Copiar del semestre anterior» trae la carga contratada y las
+actividades de quienes aún no la tienen (la docencia no se copia: sale de la oferta). La jornada
+completa equivalente del anexo de acreditación es la carga contratada / 160.
 
 ## Informes
 
