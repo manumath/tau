@@ -6,7 +6,7 @@ from fasthtml.common import APIRouter, FileResponse, Response, UploadFile
 
 from app.comun import permisos
 from app.investigacion import actividades, adjuntos, productos
-from app.comun.componentes.registros import seccion_adjuntos
+from app.investigacion.componentes.registros import seccion_adjuntos
 from app.comun.db import auditar
 
 rt = APIRouter()

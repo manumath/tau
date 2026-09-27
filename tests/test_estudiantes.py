@@ -5,6 +5,7 @@ import pytest
 from openpyxl import load_workbook
 
 from app.acreditacion import anexo as acreditacion, informes
+from app.acreditacion import estudiantes as ind_estudiantes
 from app.comun import estudiantes, personas, usuarios, vinculos
 from app.investigacion import productos, proyectos, revistas
 from app.comun.db import get_db
@@ -122,4 +123,4 @@ def test_solo_con_director_vinculado(emmy, maria):
     d, _ = productos.preparar(dict(tipo_id=_tipo("Tesis dirigida"), titulo="Ajena", anio="2024", estado_publicacion="publicado",
                                    revision="sin_arbitraje"), [f"e:{maria}", f"i:{otro}"], [])
     productos.guardar(d, [f"e:{maria}", f"i:{otro}"], otro)
-    assert estudiantes.tesis(2020, 2026) == []
+    assert ind_estudiantes.tesis(2020, 2026) == []

@@ -8,7 +8,7 @@ from app.comun import fotos, permisos, vinculos
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.comun.componentes.layout import pagina
 from app.comun.componentes.registros import url_filtrada
-from app.comun.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
+from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
 
 rt = APIRouter()
 

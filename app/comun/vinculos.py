@@ -5,17 +5,19 @@
   el Instituto, que es el vínculo que cuenta para los informes de investigación.
 - Periodos sin superposición dentro de una misma unidad. fecha_inicio None = ingreso desconocido («desde siempre»);
   fecha_fin None = vigente.
-- `investigador.categoria` es la categoría del vínculo vigente hoy con el Instituto: la mantiene
-  `sincronizar_categoria` (tras cada cambio y en el mantenimiento horario, porque un periodo con
-  fecha de término deja de estar vigente con el paso de los días).
+- La categoría vigente de una persona es la de su vínculo vigente hoy con el Instituto; en SQL,
+  `sql_categoria_vigente` (se calcula siempre: no hay copia que sincronizar).
 - Los informes usan la categoría **a la fecha** de cada producto o actividad (`en_fecha`).
 """
 import calendar
 from datetime import date, timedelta
 
 from app.comun import unidades
-from app.comun.db import DISTINTO_DE, get_db, transaccion
-from app.investigacion import perfiles
+from app.comun.db import get_db, transaccion
+
+# Categoría del vínculo (la asigna la administración con los datos de RR. HH.).
+CATEGORIAS = {"titular": "Titular", "contratado": "Contratado(a)", "interino": "Interino(a)",
+              "invitado": "Invitado(a)", "externo": "Externo(a)"}
 
 INICIO_DESCONOCIDO = "0000-01-01"
 SIN_FIN = "9999-12-31"
@@ -114,9 +116,9 @@ def resumen(uid: int) -> str | None:
         inicio = periodos[i]["fecha_inicio"]
     partes = [f"En el instituto desde {inicio[:4]}" if inicio else "En el instituto (fecha de ingreso sin registrar)"]
     if actual["fecha_inicio"] and actual["fecha_inicio"] != inicio:
-        partes.append(f"{perfiles.CATEGORIAS[actual['categoria']]} desde {actual['fecha_inicio'][:4]}")
+        partes.append(f"{CATEGORIAS[actual['categoria']]} desde {actual['fecha_inicio'][:4]}")
     else:
-        partes.append(perfiles.CATEGORIAS[actual["categoria"]])
+        partes.append(CATEGORIAS[actual["categoria"]])
     return " · ".join(partes)
 
 
@@ -131,7 +133,7 @@ def _fecha(valor) -> str | None:
 def validar(uid: int, categoria: str, desde, hasta, jornada=None, excluir: int | None = None,
             unidad: int | None = None) -> list[str]:
     errores = []
-    if categoria not in perfiles.CATEGORIAS:
+    if categoria not in CATEGORIAS:
         errores.append("Categoría no válida.")
     try:
         d, h = _fecha(desde), _fecha(hasta)
@@ -146,7 +148,7 @@ def validar(uid: int, categoria: str, desde, hasta, jornada=None, excluir: int |
         if v["id"] == excluir:
             continue
         if ini <= (v["fecha_fin"] or SIN_FIN) and fin >= (v["fecha_inicio"] or INICIO_DESCONOCIDO):
-            errores.append(f"Se superpone con el periodo {texto_periodo(v)} ({perfiles.CATEGORIAS[v['categoria']]}).")
+            errores.append(f"Se superpone con el periodo {texto_periodo(v)} ({CATEGORIAS[v['categoria']]}).")
             break
     return errores
 
@@ -163,7 +165,6 @@ def agregar(uid: int, categoria: str, desde=None, hasta=None, jornada=None, nota
     get_db().t.vinculo.insert(usuario_id=uid, unidad_id=_unidad(unidad), categoria=categoria, fecha_inicio=_fecha(desde),
                               fecha_fin=_fecha(hasta), jornada_horas=int(jornada) if jornada else None,
                               nota=(nota or "").strip() or None, creado_por=creado_por)
-    sincronizar_categoria(uid)
     return []
 
 
@@ -178,7 +179,6 @@ def editar(vid: int, categoria: str, desde, hasta, jornada=None, nota=None) -> l
                         nota = ? WHERE id = ?""",
                      [categoria, _fecha(desde), _fecha(hasta), int(jornada) if jornada else None,
                       (nota or "").strip() or None, vid])
-    sincronizar_categoria(v["usuario_id"])
     return []
 
 
@@ -186,7 +186,21 @@ def eliminar(vid: int):
     v = obtener(vid)
     if v:
         get_db().execute("DELETE FROM vinculo WHERE id = ?", [vid])
-        sincronizar_categoria(v["usuario_id"])
+
+
+def corregir_categoria_vigente(uid: int, categoria: str | None):
+    """Corrige la categoría del vínculo vigente (o crea uno con ingreso desconocido). None quita el
+    periodo vigente. Para un cambio con fecha (ascenso, término), use cambiar_categoria."""
+    if categoria is not None and categoria not in CATEGORIAS:
+        raise ValueError(f"Categoría no válida: {categoria}")
+    actual = vigente(uid)
+    if categoria is None:
+        if actual:
+            eliminar(actual["id"])
+    elif actual:
+        get_db().execute("UPDATE vinculo SET categoria = ? WHERE id = ?", [categoria, actual["id"]])
+    else:
+        agregar(uid, categoria)
 
 
 def cambiar_categoria(uid: int, categoria: str, desde, jornada=None, creado_por: int | None = None,
@@ -227,7 +241,6 @@ def terminar(uid: int, fecha, unidad: int | None = None) -> list[str]:
     if actual["fecha_inicio"] and f < actual["fecha_inicio"]:
         return ["La fecha de término no puede ser anterior al inicio del periodo."]
     get_db().execute("UPDATE vinculo SET fecha_fin = ? WHERE id = ?", [f, actual["id"]])
-    sincronizar_categoria(uid)
     return []
 
 
@@ -242,15 +255,17 @@ def reemplazar_historial(uid: int, periodos: list[dict], creado_por: int | None 
             db.t.vinculo.insert(usuario_id=uid, unidad_id=_unidad(unidad), categoria=p["categoria"], fecha_inicio=p["desde"],
                                 fecha_fin=p["hasta"], jornada_horas=p.get("jornada"), nota=p.get("nota"),
                                 creado_por=creado_por)
-    sincronizar_categoria(uid)
 
 
-def sincronizar_categoria(uid: int | None = None):
-    """investigador.categoria = categoría del vínculo vigente hoy con el Instituto (o de todos, sin uid)."""
-    db = get_db()
-    ids = [uid] if uid else [f["usuario_id"] for f in db.q("SELECT usuario_id FROM investigador")]
-    for i in ids:
-        v = vigente(i)
-        cat = v["categoria"] if v else None
-        db.execute(f"UPDATE investigador SET categoria = ? WHERE usuario_id = ? AND categoria {DISTINTO_DE} ?",
-                   [cat, i, cat])
+def categoria_texto(categoria: str | None) -> str:
+    return CATEGORIAS.get(categoria or "", "Sin categoría")
+
+
+def sql_categoria_vigente(alias: str = "u") -> str:
+    """Expresión SQL: categoría del vínculo vigente hoy con el Instituto de la fila `alias` de
+    usuario (NULL si no tiene). «Hoy» es `hoy()`, igual que en `vigente` (una sola fuente)."""
+    f = hoy().isoformat()  # una fecha ISO, nunca un dato del usuario
+    return (f"(SELECT v.categoria FROM vinculo v WHERE v.usuario_id = {alias}.id AND v.unidad_id = "
+            f"(SELECT id FROM unidad WHERE sigla = '{unidades.INSTITUTO}') "
+            f"AND (v.fecha_inicio IS NULL OR v.fecha_inicio <= '{f}') AND (v.fecha_fin IS NULL OR v.fecha_fin >= '{f}') "
+            f"ORDER BY v.fecha_inicio DESC LIMIT 1)")

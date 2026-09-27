@@ -1,7 +1,7 @@
 """Acceso a datos de cuentas de usuario."""
 from datetime import timedelta
 
-from app.comun import config, permisos, unidades
+from app.comun import config, permisos, unidades, vinculos
 from app.comun.db import AHORA, get_db, marca_tiempo, sin_tildes
 from app.comun.seguridad import hash_password
 
@@ -21,7 +21,8 @@ def por_email(email: str) -> dict | None:
 def listar(texto: str = "") -> list[dict]:
     patron = f"%{sin_tildes(texto.strip())}%"
     return get_db().q(
-        f"""SELECT {_COLUMNAS}, (i.usuario_id IS NOT NULL) AS es_investigador, i.categoria
+        f"""SELECT {_COLUMNAS}, (i.usuario_id IS NOT NULL) AS es_investigador,
+                   {vinculos.sql_categoria_vigente('u')} AS categoria
            FROM usuario u LEFT JOIN investigador i ON i.usuario_id = u.id
            WHERE u.email LIKE :p OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
                  OR sin_tildes(u.apellidos || ' ' || u.nombres) LIKE :p
@@ -31,7 +32,8 @@ def listar(texto: str = "") -> list[dict]:
 
 def con_perfil(uid: int) -> dict | None:
     filas = get_db().q(
-        f"""SELECT {_COLUMNAS}, (i.usuario_id IS NOT NULL) AS es_investigador, i.categoria
+        f"""SELECT {_COLUMNAS}, (i.usuario_id IS NOT NULL) AS es_investigador,
+                   {vinculos.sql_categoria_vigente('u')} AS categoria
            FROM usuario u LEFT JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [uid])
     return filas[0] if filas else None
 
@@ -49,9 +51,8 @@ def crear(email: str, nombres: str, apellidos: str, password: str, *,
         permisos.asignar(u["id"], "administracion_sistema", unidades.id_de("UMSA"))
         permisos.asignar(u["id"], "direccion_instituto", unidades.instituto())
     if es_investigador:
-        db.t.investigador.insert(usuario_id=u["id"], categoria=categoria)
+        db.t.investigador.insert(usuario_id=u["id"])
         if categoria:
-            from app.comun import vinculos
             vinculos.agregar(u["id"], categoria, fecha_ingreso or None)
     return u
 

@@ -76,8 +76,9 @@ app/
     estudiantes.py             periodos de estudio de estudiantes y tesistas; indicadores de participación
     paises.py                  países normalizados: variantes, códigos ISO y deducción desde afiliaciones
     fotos.py                   recorte y limpieza de fotos (Pillow)
-    componentes/               layout (página, navegación, modal), perfil, registros, errores
-    rutas/                     inicio, admin_usuarios, admin_auditoria, personas, estudiantes
+    componentes/               layout (página, navegación, modal), registros (insignias, filtros, datos),
+                               recursos (static), errores
+    rutas/                     admin_usuarios (cuentas, vínculos, roles), admin_auditoria, estudiantes
   investigacion/               producción y proyectos de investigación
     perfiles.py                perfil, áreas MSC, completitud y directorio
     identificadores.py         ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
@@ -96,21 +97,23 @@ app/
     openalex.py                consulta a OpenAlex: obras por ORCID y citas
     cosecha.py                 carga de la producción desde OpenAlex y actualización de citas
     bibtex.py                  importar y exportar BibTeX
-    componentes/               selector de autores y participantes, líneas de investigación
+    componentes/               perfil, selector de autores y participantes, líneas, registros (adjuntos y
+                               vinculación a proyectos)
     rutas/                     perfil, investigadores, actividades, bibtex, adjuntos, propuestas, publico (+ API),
-                               admin_revistas, admin_lineas
+                               personas (coautores externos), admin_revistas, admin_lineas
       proyectos/               un módulo por pestaña: lista, datos, resumen, participantes, registros,
                                pendientes, plan, reasignar y ficha (registrada al final)
       productos/               lista, formulario, carga_openalex y ficha (registrada al final)
   acreditacion/                evidencia para IAC-CINDA
     informes.py                datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
     anexo.py                   anexo de I+D+i para la acreditación, por criterio y año
+    estudiantes.py             tesis e indicadores de participación de estudiantes
     rutas/                     informes, anexo
   academico/                   docencia y currículo (fase 3 del plan; aún vacío)
+  inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 
-Dependencias: `comun` no debería depender de los demás paquetes. Quedan excepciones que la fase 2
-resuelve (persona académica separada del perfil de investigación): `vinculos` e `importar_usuarios`
-usan `perfiles`, y `componentes/registros.py` y `rutas/inicio.py` conocen proyectos y productos.
+Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion` y
+`academico` pueden usar `comun`. `app/inicio.py` y `main.py` reúnen todo.
 static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
 static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
 catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)

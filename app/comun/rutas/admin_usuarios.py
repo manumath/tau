@@ -13,7 +13,6 @@ from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, Label, L
 
 from app.comun import (config, correo, importar_usuarios, importar_vinculos, permisos, tokens, unidades, usuarios,
                        vinculos)
-from app.investigacion import perfiles
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.comun.db import auditar
 from app.comun.seguridad import password_temporal
@@ -37,7 +36,7 @@ def fecha_local(iso_utc: str | None) -> str:
 
 def opciones_categoria(actual, vacia="Sin categoría"):
     return [Option(vacia, value="", selected=not actual),
-            *[Option(t, value=c, selected=c == actual) for c, t in perfiles.CATEGORIAS.items()]]
+            *[Option(t, value=c, selected=c == actual) for c, t in vinculos.CATEGORIAS.items()]]
 
 
 def unidades_vinculo(auth) -> list[dict]:
@@ -49,7 +48,7 @@ def resumen_vinculo(u, con_boton=True):
     """Categoría vigente, aviso si falta la fecha de ingreso y botón para abrir el historial."""
     v = vinculos.vigente(u["id"])
     if v:
-        texto = Span(perfiles.CATEGORIAS[v["categoria"]], cls="text-sm")
+        texto = Span(vinculos.CATEGORIAS[v["categoria"]], cls="text-sm")
         aviso = Span(" · ingreso sin fecha", cls="text-xs text-amber-700") if not v["fecha_inicio"] else ""
     else:
         texto = Span("Sin categoría" if not vinculos.listar(u["id"]) else "Sin vínculo vigente",
@@ -280,7 +279,7 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
         errores.append("Ya existe una cuenta con ese correo.")
     if not es_investigador and not es_admin:
         errores.append("La cuenta debe ser de investigador, de administrador o ambas.")
-    if es_investigador and categoria not in perfiles.CATEGORIAS:
+    if es_investigador and categoria not in vinculos.CATEGORIAS:
         errores.append("Elija la categoría del investigador(a).")
     if errores:
         return modal("Nuevo usuario", form_usuario({**datos, "invitar": invitar}, errores))
@@ -312,7 +311,7 @@ def modal_desactivar(u, errores=(), termina="si", fecha=""):
         "Desactivar cuenta",
         Form(mensaje_error(*errores),
              P(f"{u['nombres']} {u['apellidos']} no podrá ingresar hasta que se reactive la cuenta. Su vínculo "
-               f"con el instituto ({perfiles.CATEGORIAS[v['categoria']]}, {vinculos.texto_periodo(v)}) está vigente."),
+               f"con el instituto ({vinculos.CATEGORIAS[v['categoria']]}, {vinculos.texto_periodo(v)}) está vigente."),
              Div(fh.Label(fh.Input(type="radio", name="termina", value="si", checked=termina == "si", cls="uk-radio"),
                           Span("Terminar también su vínculo el día", cls="text-sm"),
                           Input(type="date", name="fecha", value=fecha or date.today().isoformat(),
@@ -361,14 +360,14 @@ def post(uid: int, auth, sess, categoria: str = ""):
     u = usuarios.con_perfil(uid)
     if not u or not u["es_investigador"]:
         return ""
-    if categoria and categoria not in perfiles.CATEGORIAS:
+    if categoria and categoria not in vinculos.CATEGORIAS:
         return Response("Categoría no válida", status_code=400)
     if not permisos.puede(auth, "gestionar_vinculos", unidades.instituto()):
         return SIN_PERMISO_UNIDAD
-    perfiles.cambiar_categoria(uid, categoria or None)
+    vinculos.corregir_categoria_vigente(uid, categoria or None)
     auditar(auth["id"], "cambiar_categoria", "investigador", uid,
-            f"{perfiles.categoria_texto(u['categoria'])} → {perfiles.categoria_texto(categoria)}")
-    add_toast(sess, f"{u['nombres']} {u['apellidos']}: {perfiles.categoria_texto(categoria)}.", "success")
+            f"{vinculos.categoria_texto(u['categoria'])} → {vinculos.categoria_texto(categoria)}")
+    add_toast(sess, f"{u['nombres']} {u['apellidos']}: {vinculos.categoria_texto(categoria)}.", "success")
     return fila(usuarios.con_perfil(uid), auth)
 
 
@@ -454,7 +453,7 @@ async def post(auth, archivo: UploadFile = None):
         Tbody(*[Tr(Td(str(f["linea"]), cls=TextPresets.muted_sm), Td(f["email"]),
                    Td(f"{f['apellidos']}, {f['nombres']}"),
                    Td(", ".join(x for x, ok in (("investigador", f["es_investigador"]), ("admin", f["es_admin"])) if ok)),
-                   Td(perfiles.CATEGORIAS.get(f["categoria"], "—") if f["categoria"] else "—"),
+                   Td(vinculos.CATEGORIAS.get(f["categoria"], "—") if f["categoria"] else "—"),
                    Td(_etiqueta_estado(f), Span(f" {f['mensaje']}", cls="text-sm") if f["mensaje"] else ""))
                 for f in filas]),
         cls="uk-table-divider uk-table-small")
@@ -665,7 +664,7 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
                 hx_put=f"{BASE}/vinculo/{v["id"]}", hx_target=f"#{ID_MODAL}"), colspan=5)))
             continue
         filas.append(Tr(
-            Td(perfiles.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700") if vig and v["id"] == vig["id"] else ""),
+            Td(vinculos.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700") if vig and v["id"] == vig["id"] else ""),
             Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700")),
             Td(v["fecha_fin"] or "—"),
             Td(f"{v['jornada_horas']} h" if v["jornada_horas"] else "—", Span(f" · {v['nota']}", cls=TextPresets.muted_sm) if v["nota"] else ""),
@@ -887,7 +886,7 @@ async def post(auth, archivo: UploadFile = None):
     filas = []
     for p in personas:
         nombre = f"{p['usuario']['apellidos']}, {p['usuario']['nombres']}" if p["usuario"] else p["email"]
-        periodos = "; ".join(f"{perfiles.CATEGORIAS[x['categoria']]} {x['desde']} a {x['hasta'] or 'hoy'}"
+        periodos = "; ".join(f"{vinculos.CATEGORIAS[x['categoria']]} {x['desde']} a {x['hasta'] or 'hoy'}"
                              for x in p["periodos"])
         filas.append(Tr(Td(Div(nombre, cls="font-medium"), Div(p["email"], cls=TextPresets.muted_sm)),
                         Td(p["unidad"], cls="text-sm"),

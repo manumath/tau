@@ -8,6 +8,7 @@ omisión, exige revista verificada, como corresponde a la acreditación.
 from datetime import date
 
 from app.investigacion import actividades, perfiles, proyectos, revistas
+from app.acreditacion import estudiantes as ind_estudiantes
 from app.comun import config, estudiantes, paises, vinculos
 from app.acreditacion import informes
 from app.comun.db import get_db
@@ -118,7 +119,7 @@ def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> d
             "estancias": sum(a["tipo"] in ESTANCIAS for a in acts_a),
             "transferencia": sum(a["tipo"] in TRANSFERENCIA for a in acts_a),
             "redes": sum(a["tipo"] in REDES for a in acts_a), "proyectos": len(ma["proyectos"]),
-            "tesis_defendidas": sum(x["estado"] == "defendida" for x in estudiantes.tesis(anio, anio)),
+            "tesis_defendidas": sum(x["estado"] == "defendida" for x in ind_estudiantes.tesis(anio, anio)),
             "con_estudiantes": sum(bool(estudiantes.es_estudiante_ref(p["autores"], p["anio"])) for p in ma["productos"]),
             "coautoria_internacional": coautoria_internacional(
                 [p for p in ma["productos"] if p["tipo"] in TIPOS_ARTICULO])["internacionales"],
@@ -141,5 +142,5 @@ def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> d
         "divulgacion": por_tipo(DIVULGACION), "redes": por_tipo(REDES), "comites": por_tipo(COMITES),
         "movilidad_internacional": [a for a in por_tipo(ESTANCIAS) if _internacional(a)],
         "coautoria": coautoria_internacional(articulos),
-        "estudiantes": estudiantes.indicadores(m),
+        "estudiantes": ind_estudiantes.indicadores(m),
     }

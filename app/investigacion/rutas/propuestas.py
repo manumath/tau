@@ -20,7 +20,7 @@ from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
 from app.investigacion.componentes.lineas import casillas_lineas
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.comun.componentes.perfil import texto_con_parrafos
+from app.investigacion.componentes.perfil import texto_con_parrafos
 from app.comun.componentes.registros import dato, insignia
 from app.comun.db import auditar
 from app.comun.rutas.admin_usuarios import fecha_local

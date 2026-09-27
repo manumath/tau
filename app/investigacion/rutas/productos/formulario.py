@@ -14,7 +14,8 @@ from app.comun import personas
 from app.investigacion import filiacion as filiacion_mod
 from app.investigacion.componentes import personas as selector_personas
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
-from app.comun.componentes.registros import casillas_proyectos, insignia
+from app.comun.componentes.registros import insignia
+from app.investigacion.componentes.registros import casillas_proyectos
 from app.comun.db import auditar
 from app.investigacion.rutas.productos.lista import EVENTO
 

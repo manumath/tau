@@ -16,8 +16,7 @@ import re
 import secrets
 from datetime import date
 
-from app.investigacion import perfiles
-from app.comun import usuarios
+from app.comun import usuarios, vinculos
 from app.comun.db import auditar, sin_tildes
 from app.comun.seguridad import password_temporal
 
@@ -39,8 +38,8 @@ PLANTILLA = ("email,nombres,apellidos,categoria,investigador,admin\n"
              "sofia.kovalevskaya@umsa.bo,Sofía,Kovalévskaya,titular,sí,no\n"
              "carl.gauss@umsa.bo,Carl Friedrich,Gauss,invitado,sí,no\n")
 # «Contratada», «interina», etc. también sirven.
-_CATEGORIAS = {**{c: c for c in perfiles.CATEGORIAS},
-               **{c[:-1] + "a": c for c in perfiles.CATEGORIAS if c.endswith("o")}}
+_CATEGORIAS = {**{c: c for c in vinculos.CATEGORIAS},
+               **{c[:-1] + "a": c for c in vinculos.CATEGORIAS if c.endswith("o")}}
 
 
 def _decodificar(contenido: bytes) -> str:

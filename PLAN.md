@@ -962,3 +962,10 @@ Estimación: 3 a 4 semanas (sin el paso 5).
   Menú y botones según el rol. Memoria y anexo son informes del IIMAT: los ven la Dirección del
   Instituto y el Comité, no la Dirección de Carrera ni Administración del sistema. Matriz por rol
   en `tests/test_permisos_rutas.py`.
+- Paso 4a hecho (27-sep-2026): `comun` ya no importa nada de `investigacion`. La categoría vigente
+  se calcula del vínculo (`vinculos.sql_categoria_vigente`, migración 0024 elimina
+  `investigador.categoria` y su sincronización horaria); CATEGORIAS y la corrección de la
+  categoría pasan a `vinculos`. Se mueven a su paquete el componente de perfil, la parte de
+  `registros` propia de investigación (adjuntos y vinculación a proyectos), la página de coautores
+  externos y los indicadores de estudiantes (a `acreditacion`); la página de inicio pasa a
+  `app/inicio.py`.

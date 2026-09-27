@@ -69,8 +69,8 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
   | `app/acreditacion` | Memoria, CV, informes y anexo de I+D+i para IAC-CINDA |
   | `app/academico` | Vacío: docencia y currículo (fase 3 del plan de ampliación) |
 
-  `comun` no debería importar de los demás. Quedan cuatro excepciones que la fase 2 resuelve
-  (están en el README).
+  `comun` no importa de los demás paquetes (desde la fase 2); `app/inicio.py` reúne las tarjetas de
+  todos los módulos en la página de inicio.
 - **Dónde buscar una regla:**
 
   | Pregunta | Dónde |
@@ -111,7 +111,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0023). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0024). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.
@@ -259,9 +259,6 @@ o una restauración). No ejecuta las tareas horarias.
 
 ## 7. Deuda conocida
 
-- **Dependencias de `comun` hacia `investigacion`** (vínculos, importación de usuarios, dos
-  componentes y la página de inicio): se resuelven en la fase 2, al separar la persona académica
-  de su perfil de investigación.
 - **CSP no del todo estricta:** admite scripts en línea y `eval` por unos 50 manejadores `onclick`
   y `hx-on` en el HTML. Reemplazarlos por un script propio permitiría una política estricta.
 - **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se

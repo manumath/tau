@@ -19,7 +19,7 @@ from app.comun import fotos, usuarios, vinculos
 from app.investigacion import lineas, msc, perfiles
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.investigacion.componentes.lineas import casillas_lineas, insignias_lineas
-from app.comun.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
+from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
 from app.comun.db import auditar, get_db
 from app.investigacion.identificadores import IDENTIFICADORES, normalizar_todos
 

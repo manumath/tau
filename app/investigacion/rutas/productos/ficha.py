@@ -6,7 +6,8 @@ from app.comun import permisos
 from app.investigacion import actividades, lineas, productos, proyectos, revistas
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.comun.componentes.layout import ID_MODAL, pagina
-from app.comun.componentes.registros import dato, enlace_persona, insignias_proyectos, seccion_adjuntos
+from app.comun.componentes.registros import dato, enlace_persona
+from app.investigacion.componentes.registros import insignias_proyectos, seccion_adjuntos
 from app.investigacion.rutas.productos.lista import EVENTO, _confirmacion_eliminar, insignias
 from app.investigacion.rutas.productos.formulario import insignia_estado_revista
 

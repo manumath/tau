@@ -69,7 +69,6 @@ def test_termino_futuro_deja_de_estar_vigente_con_el_tiempo(emmy, hoy):
     vinculos.agregar(emmy, "invitado", "2026-01-01", "2026-12-31")
     assert perfiles.obtener(emmy)["categoria"] == "invitado"
     hoy("2027-01-02")
-    vinculos.sincronizar_categoria()
     assert perfiles.obtener(emmy)["categoria"] is None
 
 

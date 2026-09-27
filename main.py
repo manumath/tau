@@ -37,10 +37,10 @@ from app.acreditacion.rutas.anexo import rt as rutas_acreditacion
 from app.comun.rutas.estudiantes import rt as rutas_estudiantes
 from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
 from app.acreditacion.rutas.informes import rt as rutas_informes
-from app.comun.rutas.inicio import rt as rutas_inicio
+from app.inicio import rt as rutas_inicio
 from app.investigacion.rutas.investigadores import rt as rutas_investigadores
 from app.investigacion.rutas.perfil import rt as rutas_perfil
-from app.comun.rutas.personas import rt as rutas_personas
+from app.investigacion.rutas.personas import rt as rutas_personas
 from app.investigacion.rutas.productos import rt as rutas_productos
 from app.investigacion.rutas.propuestas import rt as rutas_propuestas
 from app.investigacion.rutas.proyectos import rt as rutas_proyectos

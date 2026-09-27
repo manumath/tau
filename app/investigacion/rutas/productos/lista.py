@@ -6,7 +6,8 @@ from monsterui.all import H2, Button, ButtonT, Card, CheckboxX, TextPresets, UkI
 
 from app.investigacion import filiacion, productos, proyectos
 from app.comun.componentes.layout import ID_MODAL, pagina
-from app.comun.componentes.registros import enlace_persona, filtros, insignia, insignias_proyectos, url_filtrada
+from app.comun.componentes.registros import enlace_persona, filtros, insignia, url_filtrada
+from app.investigacion.componentes.registros import insignias_proyectos
 from app.comun.db import auditar
 
 rt = APIRouter()

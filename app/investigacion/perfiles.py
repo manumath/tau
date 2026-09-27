@@ -1,12 +1,12 @@
 """Acceso a datos del perfil del investigador y sus áreas MSC."""
+from app.comun import vinculos
 from app.comun.db import AHORA, IGUAL_A, get_db, sin_tildes
 
 MAX_AREAS = 10
 LARGO_BIO = 3000
 
-# Categoría institucional (la asigna la administración; None = sin categoría).
-CATEGORIAS = {"titular": "Titular", "contratado": "Contratado(a)", "interino": "Interino(a)",
-              "invitado": "Invitado(a)", "externo": "Externo(a)"}
+# Categoría del vínculo con el Instituto (definida en app.comun.vinculos; None = sin categoría).
+CATEGORIAS = vinculos.CATEGORIAS
 # Quiénes pueden proponer proyectos institucionales y ser sus responsables; los interinos pueden
 # además ser co-responsables.
 CATEGORIAS_RESPONSABLES = ("titular", "contratado")
@@ -21,8 +21,9 @@ CARGOS_SUGERIDOS = ["Investigador(a) titular", "Investigador(a) asociado(a)",
 def obtener(uid: int) -> dict | None:
     """Usuario + investigador en un solo dict (None si la cuenta no es de investigador)."""
     filas = get_db().q(
-        """SELECT u.id, u.email, u.nombres, u.apellidos, u.activo, i.*
-           FROM usuario u JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [uid])
+        f"""SELECT u.id, u.email, u.nombres, u.apellidos, u.activo, i.*,
+                   {vinculos.sql_categoria_vigente('u')} AS categoria
+            FROM usuario u JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [uid])
     return filas[0] if filas else None
 
 
@@ -39,25 +40,10 @@ def actualizar_campos(uid: int, **campos):
         "WHERE usuario_id = :uid", {**campos, "uid": uid})
 
 
-def categoria_texto(categoria: str | None) -> str:
-    return CATEGORIAS.get(categoria or "", "Sin categoría")
+categoria_texto = vinculos.categoria_texto
 
 
-def cambiar_categoria(uid: int, categoria: str | None):
-    """Corrige la categoría del vínculo vigente (o crea uno con ingreso desconocido). None quita el
-    periodo vigente. Para un cambio con fecha (ascenso, término), use app.vinculos."""
-    from app.comun import vinculos
-    if categoria is not None and categoria not in CATEGORIAS:
-        raise ValueError(f"Categoría no válida: {categoria}")
-    actual = vinculos.vigente(uid)
-    if categoria is None:
-        if actual:
-            vinculos.eliminar(actual["id"])
-    elif actual:
-        get_db().execute("UPDATE vinculo SET categoria = ? WHERE id = ?", [categoria, actual["id"]])
-    else:
-        vinculos.agregar(uid, categoria)
-    vinculos.sincronizar_categoria(uid)
+cambiar_categoria = vinculos.corregir_categoria_vigente
 
 
 def actualizar_identificadores(uid: int, valores: dict):
@@ -141,19 +127,21 @@ def directorio(texto: str = "", solo_publicos: bool = False, categoria: str = ""
     texto = texto.strip()
     patron = f"%{sin_tildes(texto)}%"
     filas = get_db().q(
-        f"""SELECT u.id, u.nombres, u.apellidos, i.cargo, i.unidad, i.foto, i.categoria,
-                  (SELECT m.codigo || char(31) || m.texto FROM investigador_msc im
-                     JOIN msc m ON m.codigo = im.codigo
-                    WHERE im.usuario_id = u.id AND im.principal = 1) AS area_principal
-           FROM usuario u JOIN investigador i ON i.usuario_id = u.id
-           WHERE u.activo = 1 AND (:pub = 0 OR i.perfil_publico = 1)
-             AND (:cat = '' OR i.categoria {IGUAL_A} :cat OR (:cat = 'sin' AND i.categoria IS NULL)) AND (
-                 :t = '' OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
-                 OR sin_tildes(i.cargo) LIKE :p OR sin_tildes(i.unidad) LIKE :p
-                 OR EXISTS (SELECT 1 FROM investigador_msc im JOIN msc m ON m.codigo = im.codigo
-                             WHERE im.usuario_id = u.id
-                               AND (m.codigo LIKE :c OR m.texto_plano LIKE :p)))
-           ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""",
+        f"""SELECT * FROM (
+               SELECT u.id, u.nombres, u.apellidos, i.cargo, i.unidad, i.foto,
+                      {vinculos.sql_categoria_vigente('u')} AS categoria,
+                      (SELECT m.codigo || char(31) || m.texto FROM investigador_msc im
+                         JOIN msc m ON m.codigo = im.codigo
+                        WHERE im.usuario_id = u.id AND im.principal = 1) AS area_principal
+               FROM usuario u JOIN investigador i ON i.usuario_id = u.id
+               WHERE u.activo = 1 AND (:pub = 0 OR i.perfil_publico = 1) AND (
+                     :t = '' OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
+                     OR sin_tildes(i.cargo) LIKE :p OR sin_tildes(i.unidad) LIKE :p
+                     OR EXISTS (SELECT 1 FROM investigador_msc im JOIN msc m ON m.codigo = im.codigo
+                                 WHERE im.usuario_id = u.id
+                                   AND (m.codigo LIKE :c OR m.texto_plano LIKE :p))))
+           WHERE :cat = '' OR categoria {IGUAL_A} :cat OR (:cat = 'sin' AND categoria IS NULL)
+           ORDER BY sin_tildes(apellidos), sin_tildes(nombres)""",
         {"t": texto, "p": patron, "c": texto.replace("x", "_").replace("X", "_") + "%",
          "pub": int(solo_publicos), "cat": categoria})
     for f in filas:

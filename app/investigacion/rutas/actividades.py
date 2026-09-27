@@ -15,8 +15,8 @@ from app.comun import permisos, personas
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes import personas as selector_personas
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.comun.componentes.registros import (casillas_proyectos, dato, enlace_persona, filtros, insignia,
-                                             insignias_proyectos, seccion_adjuntos, url_filtrada)
+from app.comun.componentes.registros import dato, enlace_persona, filtros, insignia, url_filtrada
+from app.investigacion.componentes.registros import casillas_proyectos, insignias_proyectos, seccion_adjuntos
 from app.comun.db import auditar, get_db
 
 rt = APIRouter()
