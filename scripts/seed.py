@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import json  # noqa: E402
 
-from app.academico import carga, gestiones, oferta  # noqa: E402
+from app.academico import gestiones, oferta  # noqa: E402
 from app.investigacion import actividades, institucionales, lineas, perfiles, productos, proyectos, revistas
 from app.comun import academicos, config, estudiantes, personas, unidades, usuarios, vinculos  # noqa: E402
 from app.comun.db import AHORA, get_db, marca_tiempo  # noqa: E402
@@ -283,7 +283,19 @@ def _cargar_vinculos():
     emmy = usuarios.por_email("emmy.noether@instituto.test")
     cmat = unidades.id_de(unidades.CARRERA)
     if emmy and not vinculos.listar(emmy["id"], cmat):
-        vinculos.agregar(emmy["id"], "titular", "2012-03-01", jornada=20, nota="Docente de la Carrera", unidad=cmat)
+        # Carga contratada: 128 h/mes = dos materias (64) + investigación (64).
+        vinculos.agregar(emmy["id"], "titular", "2012-03-01", jornada=20, nota="Docente de la Carrera", unidad=cmat,
+                         carga={"horas": 128, "detalle": "Proyecto de álgebra",
+                                "actividades": {"docencia": 64, "investigacion": 64, "extension": 0, "gestion": 0,
+                                                "otras": 0}})
+        hecho = True
+    # Alan, docente interino de la Carrera en II-2026: 64 h/mes = una materia (32) + extensión (32).
+    alan = usuarios.por_email("alan.turing@instituto.test")
+    if alan and not vinculos.listar(alan["id"], cmat):
+        vinculos.agregar(alan["id"], "interino", "2026-08-01", "2026-12-31", nota="Contrato II-2026", unidad=cmat,
+                         carga={"horas": 64, "detalle": "Olimpiadas de matemática",
+                                "actividades": {"docencia": 32, "investigacion": 0, "extension": 32, "gestion": 0,
+                                                "otras": 0}})
         hecho = True
     return hecho
 
@@ -382,13 +394,6 @@ def _cargar_docencia() -> bool:
             oid, _ = oferta.agregar(por["II"]["id"], sigla, paralelo, inscritos, emmy["id"] if emmy else None)
         if oid and docente:
             oferta.asignar(oid, docente["id"], "titular")
-    # Carga horaria de II-2026: Emmy, 2 materias + investigación (128); Alan, 1 materia + extensión (64).
-    for persona, contratada, actividades in ((emmy, 128, (("investigacion", 64, "Proyecto de álgebra"),)),
-                                             (alan, 64, (("extension", 32, "Olimpiadas de matemática"),))):
-        if persona:
-            carga.fijar_contratada(persona["id"], por["II"], contratada, persona["id"])
-            for tipo, horas, detalle in actividades:
-                carga.agregar_actividad(persona["id"], por["II"], tipo, horas, detalle)
     return True
 
 

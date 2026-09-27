@@ -276,16 +276,17 @@ plantilla). La oferta de cada gestión del archivo se reemplaza por la del archi
 corregir el archivo y volver a importarlo. Una gestión con algún error no se importa (la vista
 previa dice por qué). Los docentes deben estar registrados en «Usuarios», aunque sea sin acceso.
 
-**Carga horaria** (pestaña «Carga horaria»; la registra la Dirección de Carrera y la consultan la
-Coordinación académica, la Dirección del Instituto y el Comité de acreditación): cada persona tiene
-una carga contratada por semestre de 32, 64, 96, 128 o 160 h/mes (160 = tiempo completo). La
-Dirección de Carrera la distribuye: la docencia se calcula de la oferta (32 h/mes por materia como
-titular, de grado o maestría) y se agregan investigación, extensión y servicios, gestión u otras,
-en múltiplos de 32 h/mes con un detalle. Por ejemplo, 160 h/mes = dos materias + 64 de
-investigación + 32 de extensión. La tabla avisa si faltan horas por asignar o si la distribución
-supera la carga contratada. «Copiar del semestre anterior» trae la carga contratada y las
-actividades de quienes aún no la tienen (la docencia no se copia: sale de la oferta). La jornada
-completa equivalente del anexo de acreditación es la carga contratada / 160.
+**Carga horaria:** cada persona tiene una carga contratada de 32, 64, 96, 128 o 160 h/mes (160 =
+tiempo completo), distribuida por actividad en múltiplos de 32 h/mes: docencia, investigación,
+extensión y servicios, gestión y otras. Por ejemplo, 160 h/mes = docencia 64 (dos materias) +
+investigación 64 + extensión 32. La Dirección de Carrera la **registra en el vínculo con la
+Carrera** (Usuarios → Vínculo, pestaña CMAT; ver abajo). La pestaña «Carga horaria» la muestra por
+semestre, según el vínculo vigente al inicio del semestre, y compara la docencia prevista con la
+asignada en la oferta (32 h/mes por materia como titular, de grado o maestría; no suman los
+auxiliares ni los cursos de verano e invierno). Avisa si faltan materias por asignar o si hay más
+de las previstas. La consultan la Dirección de Carrera, la Coordinación académica, la Dirección
+del Instituto y el Comité de acreditación. La jornada completa equivalente del anexo de
+acreditación es la carga contratada / 160.
 
 ## Informes
 
@@ -342,9 +343,12 @@ proyecto y ser del mismo periodo).
   - 🔑 **Restablecer**: genera una contraseña temporal nueva.
   - Activar o desactivar una cuenta; desactivarla cierra su sesión de inmediato.
   - **Vínculo**: el historial de pertenencia de cada persona al **Instituto (IIMAT)** y a la
-    **Carrera (CMAT)**, con su categoría y jornada por periodo; una persona puede estar vinculada a
+    **Carrera (CMAT)**, con su categoría por periodo; una persona puede estar vinculada a
     ambos a la vez. Elija la unidad arriba. Desde ahí se registra un cambio de categoría (cierra el
-    periodo vigente el día anterior), se termina el vínculo o se agrega un periodo histórico. Los
+    periodo vigente el día anterior), se termina el vínculo o se agrega un periodo histórico. En la
+    **Carrera**, cada periodo lleva además la **carga horaria contratada** (total y distribución por
+    actividad, que debe sumar el total); un cambio de carga (nuevo contrato, más horas) se registra
+    con «Cambiar de categoría o de carga», que abre un periodo nuevo. Los
     informes de investigación solo cuentan lo producido **mientras la persona estaba vinculada al
     Instituto**, con la categoría de ese momento; el vínculo con la Carrera es para la docencia. Las cuentas sin fecha de ingreso se marcan en ámbar.
   - **Importar historial:** carga el historial desde un CSV de Recursos Humanos (`email`,

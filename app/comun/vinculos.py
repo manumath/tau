@@ -8,6 +8,10 @@
 - La categoría vigente de una persona es la de su vínculo vigente hoy con el Instituto; en SQL,
   `sql_categoria_vigente` (se calcula siempre: no hay copia que sincronizar).
 - Los informes usan la categoría **a la fecha** de cada producto o actividad (`en_fecha`).
+- Carga horaria contratada: cada periodo con la **Carrera** lleva la carga total (32, 64, 96, 128 o
+  160 h/mes) y su distribución por actividad en múltiplos de 32 h/mes, que suma la carga total. La
+  registra quien gestiona los vínculos de la Carrera (la Dirección de Carrera). Un cambio de carga
+  es un periodo nuevo («Registrar cambio»). Ver app.academico.carga para la vista por semestre.
 """
 import calendar
 from datetime import date, timedelta
@@ -18,6 +22,12 @@ from app.comun.db import get_db, transaccion
 # Categoría del vínculo (la asigna la administración con los datos de RR. HH.).
 CATEGORIAS = {"titular": "Titular", "contratado": "Contratado(a)", "interino": "Interino(a)",
               "invitado": "Invitado(a)", "externo": "Externo(a)"}
+
+# Carga horaria (h/mes, unidades de 32). Cada actividad es una columna carga_<clave> del vínculo.
+UNIDAD_CARGA = 32
+CARGAS = (32, 64, 96, 128, 160)
+ACTIVIDADES = {"docencia": "Docencia", "investigacion": "Investigación", "extension": "Extensión y servicios",
+               "gestion": "Gestión", "otras": "Otras"}
 
 INICIO_DESCONOCIDO = "0000-01-01"
 SIN_FIN = "9999-12-31"
@@ -153,34 +163,95 @@ def validar(uid: int, categoria: str, desde, hasta, jornada=None, excluir: int |
     return errores
 
 
+def _horas(valor) -> int | None | bool:
+    """'' → None; '64' → 64; cualquier otra cosa → False."""
+    v = str(valor if valor is not None else "").strip()
+    return None if not v else (int(v) if v.isdigit() else False)
+
+
+def leer_carga(datos: dict) -> dict | None:
+    """Carga del formulario (horas, docencia, investigacion, extension, gestion, otras,
+    carga_detalle) → {horas, actividades: {clave: h}, detalle}, o None si no se indicó nada."""
+    horas = _horas(datos.get("horas"))
+    acts = {k: _horas(datos.get(k)) for k in ACTIVIDADES}
+    detalle = (datos.get("carga_detalle") or "").strip()[:300] or None
+    if horas is None and not any(acts.values()) and not detalle:
+        return None
+    return {"horas": horas, "actividades": {k: (0 if h is None else h) for k, h in acts.items()}, "detalle": detalle}
+
+
+def validar_carga(carga: dict | None, unidad: int | None) -> list[str]:
+    if carga is None:
+        return []
+    if _unidad(unidad) != unidades.id_de(unidades.CARRERA):
+        return ["La carga horaria se registra en el vínculo con la Carrera."]
+    errores = []
+    if carga["horas"] not in CARGAS:
+        errores.append("La carga contratada es de 32, 64, 96, 128 o 160 h/mes.")
+    acts = carga["actividades"]
+    if any(h is False or h % UNIDAD_CARGA or h > CARGAS[-1] for h in acts.values()):
+        errores.append("Cada actividad es múltiplo de 32 h/mes (0, 32, 64…).")
+    elif carga["horas"] in CARGAS and sum(acts.values()) != carga["horas"]:
+        errores.append(f"La distribución por actividad suma {sum(acts.values())} h/mes y debe sumar la carga "
+                       f"contratada ({carga['horas']} h/mes).")
+    return errores
+
+
+def _columnas_carga(carga: dict | None) -> dict:
+    if carga is None:
+        return {"horas_contratadas": None, **{f"carga_{k}": 0 for k in ACTIVIDADES}, "carga_detalle": None}
+    return {"horas_contratadas": carga["horas"], **{f"carga_{k}": h for k, h in carga["actividades"].items()},
+            "carga_detalle": carga["detalle"]}
+
+
+def carga_de(v: dict | None) -> dict | None:
+    """La carga registrada en un periodo (None si no tiene)."""
+    if not v or not v.get("horas_contratadas"):
+        return None
+    return {"horas": v["horas_contratadas"], "actividades": {k: v[f"carga_{k}"] for k in ACTIVIDADES},
+            "detalle": v["carga_detalle"]}
+
+
+def texto_carga(v: dict | None) -> str:
+    """«128 h/mes: docencia 64, investigación 64» (vacío si el periodo no tiene carga)."""
+    c = carga_de(v)
+    if not c:
+        return ""
+    partes = [f"{ACTIVIDADES[k].split(' ')[0].lower()} {h}" for k, h in c["actividades"].items() if h]
+    return f"{c['horas']} h/mes" + (": " + ", ".join(partes) if partes else "")
+
+
 def texto_periodo(v: dict) -> str:
     return f"{v['fecha_inicio'] or 'ingreso sin registrar'} a {v['fecha_fin'] or 'hoy'}"
 
 
 def agregar(uid: int, categoria: str, desde=None, hasta=None, jornada=None, nota=None,
-            creado_por: int | None = None, unidad: int | None = None) -> list[str]:
-    errores = validar(uid, categoria, desde, hasta, jornada, unidad=unidad)
+            creado_por: int | None = None, unidad: int | None = None, carga: dict | None = None) -> list[str]:
+    errores = validar(uid, categoria, desde, hasta, jornada, unidad=unidad) + validar_carga(carga, unidad)
     if errores:
         return errores
     get_db().t.vinculo.insert(usuario_id=uid, unidad_id=_unidad(unidad), categoria=categoria, fecha_inicio=_fecha(desde),
                               fecha_fin=_fecha(hasta), jornada_horas=int(jornada) if jornada else None,
-                              nota=(nota or "").strip() or None, creado_por=creado_por)
+                              nota=(nota or "").strip() or None, creado_por=creado_por, **_columnas_carga(carga))
     return []
 
 
-def editar(vid: int, categoria: str, desde, hasta, jornada=None, nota=None) -> list[str]:
+def editar(vid: int, categoria: str, desde, hasta, jornada=None, nota=None, carga: dict | None = None) -> list[str]:
+    """Corrige un periodo. Sin carga (None) el periodo queda sin carga registrada."""
     v = obtener(vid)
     if not v:
         return ["Periodo no encontrado."]
-    errores = validar(v["usuario_id"], categoria, desde, hasta, jornada, excluir=vid, unidad=v["unidad_id"])
+    errores = validar(v["usuario_id"], categoria, desde, hasta, jornada, excluir=vid, unidad=v["unidad_id"]) \
+        + validar_carga(carga, v["unidad_id"])
     if errores:
         return errores
     # Sin jornada (ya no se pide en el formulario) se conserva la registrada: dato histórico de RR. HH.
     jornada = jornada if jornada not in (None, "") else v["jornada_horas"]
-    get_db().execute("""UPDATE vinculo SET categoria = ?, fecha_inicio = ?, fecha_fin = ?, jornada_horas = ?,
-                        nota = ? WHERE id = ?""",
+    columnas = _columnas_carga(carga)
+    get_db().execute(f"""UPDATE vinculo SET categoria = ?, fecha_inicio = ?, fecha_fin = ?, jornada_horas = ?,
+                         nota = ?, {", ".join(f"{c} = ?" for c in columnas)} WHERE id = ?""",
                      [categoria, _fecha(desde), _fecha(hasta), int(jornada) if jornada else None,
-                      (nota or "").strip() or None, vid])
+                      (nota or "").strip() or None, *columnas.values(), vid])
     return []
 
 
@@ -206,8 +277,9 @@ def corregir_categoria_vigente(uid: int, categoria: str | None):
 
 
 def cambiar_categoria(uid: int, categoria: str, desde, jornada=None, creado_por: int | None = None,
-                      unidad: int | None = None) -> list[str]:
-    """Cierra el periodo vigente el día anterior a `desde` y abre uno nuevo con la categoría."""
+                      unidad: int | None = None, carga: dict | None = None) -> list[str]:
+    """Cierra el periodo vigente el día anterior a `desde` y abre uno nuevo con la categoría (y la
+    carga, en la Carrera: un cambio de carga también es un periodo nuevo)."""
     try:
         d = _fecha(desde)
     except ValueError:
@@ -223,7 +295,7 @@ def cambiar_categoria(uid: int, categoria: str, desde, jornada=None, creado_por:
         cierre = (date.fromisoformat(d) - timedelta(days=1)).isoformat()
         get_db().execute("UPDATE vinculo SET fecha_fin = ? WHERE id = ?", [cierre, actual["id"]])
     errores = agregar(uid, categoria, d, None, jornada if jornada not in ("", None) else
-                      (actual or {}).get("jornada_horas"), None, creado_por, unidad)
+                      (actual or {}).get("jornada_horas"), None, creado_por, unidad, carga)
     if errores and actual:  # deshace el cierre
         get_db().execute("UPDATE vinculo SET fecha_fin = NULL WHERE id = ?", [actual["id"]])
     return errores

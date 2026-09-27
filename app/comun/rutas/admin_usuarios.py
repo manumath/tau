@@ -749,6 +749,40 @@ def _campos_periodo(d, con_hasta=True, con_nota=True, sufijo=""):
         cls="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end")
 
 
+CAMPOS_CARGA = ("horas", *vinculos.ACTIVIDADES, "carga_detalle")
+
+
+def _datos_carga(v) -> dict:
+    """Valores del formulario a partir de un periodo (o {} si no tiene carga)."""
+    c = vinculos.carga_de(v)
+    if not c:
+        return {}
+    return {"horas": str(c["horas"]), **{k: str(h) for k, h in c["actividades"].items()},
+            "carga_detalle": c["detalle"] or ""}
+
+
+def _campos_carga(d, sufijo=""):
+    """Carga contratada y su distribución por actividad (solo en el vínculo con la Carrera)."""
+    def horas(nombre, etiqueta, opciones, vacia):
+        actual = str(d.get(nombre) or "")
+        return Div(FormLabel(etiqueta, fr=f"{nombre}{sufijo}"),
+                   Select(Option(vacia, value=""),
+                          *[Option(f"{h} h/mes", value=str(h), selected=str(h) == actual) for h in opciones],
+                          name=nombre, id=f"{nombre}{sufijo}", cls="uk-select"), cls="space-y-1")
+    return fh.Fieldset(
+        fh.Legend("Carga horaria contratada", cls="text-sm font-medium px-1"),
+        P("Total contratado y su distribución por actividad, en múltiplos de 32 h/mes; la distribución debe sumar "
+          "el total (por ejemplo, 160 = docencia 64 + investigación 64 + extensión 32). Cada materia asignada como "
+          "titular son 32 h/mes de docencia. Déjelo en blanco en periodos sin carga registrada.",
+          cls=(TextPresets.muted_sm, "mb-2")),
+        Div(horas("horas", "Total contratado", vinculos.CARGAS, "— Sin registrar —"),
+            *[horas(k, t, vinculos.CARGAS, "0") for k, t in vinculos.ACTIVIDADES.items()],
+            cls="grid grid-cols-2 sm:grid-cols-3 gap-3 items-end"),
+        LabelInput("Detalle", id=f"carga_detalle{sufijo}", name="carga_detalle", value=d.get("carga_detalle") or "",
+                   placeholder="Proyecto, cargo de gestión, programa de extensión…", cls="mt-3"),
+        cls="rounded-md border border-border p-3 mt-3")
+
+
 def _selector_unidad(uid, actual, permitidas):
     """Pestañas IIMAT / CMAT (las que quien mira puede gestionar): el historial y las acciones son
     de la unidad elegida."""
@@ -769,22 +803,25 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
     datos = datos or {}
     periodos = vinculos.listar(uid, unidad)
     vig = vinculos.vigente(uid, unidad=unidad)
+    es_carrera = unidad == unidades.id_de(unidades.CARRERA)
     filas = []
     for v in periodos:
         if editar == v["id"]:
             filas.append(Tr(Td(Form(
                 _campos_periodo({"categoria": v["categoria"], "desde": v["fecha_inicio"], "hasta": v["fecha_fin"],
                                  "jornada": v["jornada_horas"], "nota": v["nota"], **datos}, sufijo=f"-{v["id"]}"),
+                _campos_carga(datos or _datos_carga(v), sufijo=f"-{v["id"]}") if es_carrera else "",
                 Div(Button("Cancelar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
                            hx_get=f"{BASE}/{uid}/vinculo?unidad={unidad}", hx_target=f"#{ID_MODAL}"),
                     Button("Guardar", type="submit", cls=(ButtonT.primary, ButtonT.sm)),
                     cls="flex justify-end gap-2 mt-2"),
-                hx_put=f"{BASE}/vinculo/{v["id"]}", hx_target=f"#{ID_MODAL}"), colspan=5)))
+                hx_put=f"{BASE}/vinculo/{v["id"]}", hx_target=f"#{ID_MODAL}"), colspan=6 if es_carrera else 5)))
             continue
         filas.append(Tr(
             Td(vinculos.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700") if vig and v["id"] == vig["id"] else ""),
-            Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700")),
-            Td(v["fecha_fin"] or "—"),
+            Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700"), cls="whitespace-nowrap"),
+            Td(v["fecha_fin"] or "—", cls="whitespace-nowrap"),
+            Td(Span(vinculos.texto_carga(v) or "—", cls="text-sm")) if es_carrera else "",
             Td(Span(v["nota"] or "—", cls="text-sm"),
                Span(f" · jornada según RR. HH.: {v['jornada_horas']} h/semana", cls=TextPresets.muted_sm)
                if v["jornada_horas"] else ""),
@@ -794,8 +831,9 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
                           title="Eliminar (solo para corregir errores)", hx_delete=f"{BASE}/vinculo/{v["id"]}",
                           hx_target=f"#{ID_MODAL}", hx_confirm="¿Eliminar este periodo? Úselo solo para corregir errores."),
                    cls="flex justify-end"))))
-    tabla = Table(Thead(Tr(Th("Categoría"), Th("Desde"), Th("Hasta"), Th("Nota"), Th(""))),
-                  Tbody(*filas) if filas else Tbody(Tr(Td("Sin periodos registrados.", colspan=5,
+    tabla = Table(Thead(Tr(Th("Categoría"), Th("Desde"), Th("Hasta"), Th("Carga (h/mes)") if es_carrera else "",
+                           Th("Nota"), Th(""))),
+                  Tbody(*filas) if filas else Tbody(Tr(Td("Sin periodos registrados.", colspan=6,
                                                           cls=TextPresets.muted_sm))),
                   cls="uk-table-divider uk-table-small")
 
@@ -807,21 +845,25 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
                                hx_post=url, hx_target=f"#{ID_MODAL}", cls="mt-2"),
                           cls="rounded-md border border-border p-3")
     acciones = [
-        accion("Cambiar de categoría (ascenso, nuevo contrato)",
+        accion("Cambiar de categoría o de carga (ascenso, nuevo contrato)" if es_carrera
+               else "Cambiar de categoría (ascenso, nuevo contrato)",
                P("Cierra el periodo vigente el día anterior y abre uno nuevo.", cls=TextPresets.muted_sm),
-               _campos_periodo(datos, con_hasta=False, con_nota=False, sufijo="-cambio"),
+               _campos_periodo(datos or {"categoria": vig["categoria"]} if vig else datos, con_hasta=False,
+                               con_nota=False, sufijo="-cambio"),
+               _campos_carga(datos or _datos_carga(vig), sufijo="-cambio") if es_carrera else "",
                url=f"{BASE}/{uid}/vinculo/cambio", boton="Registrar cambio") if vig else "",
         accion("Terminar el vínculo",
                LabelInput("Último día", id="fecha-termino", name="fecha", type="date", value=date.today().isoformat()),
                url=f"{BASE}/{uid}/vinculo/termino", boton="Terminar") if vig else "",
         accion("Agregar un periodo (histórico o nuevo ingreso)",
-               _campos_periodo(datos, sufijo="-nuevo"), url=f"{BASE}/{uid}/vinculo/periodo", boton="Agregar"),
+               _campos_periodo(datos, sufijo="-nuevo"), _campos_carga(datos, sufijo="-nuevo") if es_carrera else "",
+               url=f"{BASE}/{uid}/vinculo/periodo", boton="Agregar"),
     ]
     return modal(
         f"Vínculo de {u['nombres']} {u['apellidos']}",
         mensaje_error(*errores),
-        P("Periodos de pertenencia a cada unidad con su categoría (la carga horaria se asigna por semestre en "
-          "Docencia → Carga horaria). El vínculo con el Instituto define "
+        P("Periodos de pertenencia a cada unidad con su categoría; los de la Carrera llevan además la carga horaria "
+          "contratada y su distribución por actividad. El vínculo con el Instituto define "
           "qué producción cuenta en los informes de investigación y con qué categoría; el de la Carrera, la "
           "docencia. Para cargar el historial de muchas personas, use «Importar historial» en el listado.",
           cls=(TextPresets.muted_sm, "mb-3")),
@@ -863,19 +905,26 @@ def get(auth, uid: int, unidad: str = ""):
     return modal_vinculo(u, auth, unidad=un) if un else SIN_PERMISO_UNIDAD
 
 
+def _form_carga(req_form) -> dict:
+    return {k: req_form.get(k, "") for k in CAMPOS_CARGA}
+
+
 @rt(BASE + "/{uid}/vinculo/cambio")
-def post(auth, uid: int, categoria: str = "", desde: str = "", jornada: str = "", unidad: str = ""):
+async def post(auth, req, uid: int, categoria: str = "", desde: str = "", jornada: str = "", unidad: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
     un = _unidad_valida(unidad, auth)
     if un is None:
         return SIN_PERMISO_UNIDAD
-    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"], unidad=un)
+    fc = _form_carga(await req.form())
+    carga = vinculos.leer_carga(fc)
+    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"], unidad=un, carga=carga)
     if not errores:
-        auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{_sigla(un)}: {categoria} desde {desde}")
+        auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{_sigla(un)}: {categoria} desde {desde}"
+                + (f"; carga {vinculos.texto_carga(vinculos.vigente(uid, desde, un))}" if carga else ""))
     return modal_vinculo(u, auth, errores, unidad=un,
-                         datos={"categoria": categoria, "desde": desde, "jornada": jornada} if errores else None)
+                         datos={"categoria": categoria, "desde": desde, "jornada": jornada, **fc} if errores else None)
 
 
 @rt(BASE + "/{uid}/vinculo/termino")
@@ -893,20 +942,23 @@ def post(auth, uid: int, fecha: str = "", unidad: str = ""):
 
 
 @rt(BASE + "/{uid}/vinculo/periodo")
-def post(auth, uid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "", nota: str = "",
-         unidad: str = ""):
+async def post(auth, req, uid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "",
+               nota: str = "", unidad: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
     un = _unidad_valida(unidad, auth)
     if un is None:
         return SIN_PERMISO_UNIDAD
+    fc = _form_carga(await req.form())
+    carga = vinculos.leer_carga(fc)
     errores = vinculos.agregar(uid, categoria, desde or None, hasta or None, jornada or None, nota, auth["id"],
-                               unidad=un)
+                               unidad=un, carga=carga)
     if not errores:
         auditar(auth["id"], "agregar_vinculo", "investigador", uid,
-                f"{_sigla(un)}: {categoria} {desde or '?'} a {hasta or 'hoy'}")
-    datos = dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota) if errores else None
+                f"{_sigla(un)}: {categoria} {desde or '?'} a {hasta or 'hoy'}"
+                + (f"; carga {carga['horas']} h/mes" if carga else ""))
+    datos = dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota, **fc) if errores else None
     return modal_vinculo(u, auth, errores, datos=datos, unidad=un)
 
 
@@ -929,18 +981,22 @@ def get(auth, vid: int):
 
 
 @rt(BASE + "/vinculo/{vid}")
-def put(auth, vid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "", nota: str = ""):
+async def put(auth, req, vid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "",
+              nota: str = ""):
     v, error = _periodo_o_error(vid, auth)
     if error:
         return error
-    errores = vinculos.editar(vid, categoria, desde or None, hasta or None, jornada or None, nota)
+    fc = _form_carga(await req.form())
+    # Fuera de la Carrera el formulario no lleva carga: se conserva la registrada (normalmente ninguna).
+    carga = vinculos.leer_carga(fc) if v["unidad_id"] == unidades.id_de(unidades.CARRERA) else vinculos.carga_de(v)
+    errores = vinculos.editar(vid, categoria, desde or None, hasta or None, jornada or None, nota, carga=carga)
     if not errores:
         auditar(auth["id"], "corregir_vinculo", "investigador", v["usuario_id"],
-                f"{categoria} {desde or '?'} a {hasta or 'hoy'}")
+                f"{categoria} {desde or '?'} a {hasta or 'hoy'}" + (f"; carga {carga['horas']} h/mes" if carga else ""))
     u = _investigador(v["usuario_id"])
     if errores:
         return modal_vinculo(u, auth, errores, editar=vid, unidad=v["unidad_id"],
-                             datos=dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota))
+                             datos=dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota, **fc))
     return modal_vinculo(u, auth, unidad=v["unidad_id"])
 
 

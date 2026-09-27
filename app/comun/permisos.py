@@ -62,7 +62,6 @@ ACCIONES = {
     # Docencia (Carrera)
     "revisar_planes": {"direccion_carrera", "coordinacion_academica"},
     "gestionar_oferta": {"direccion_carrera", "coordinacion_academica"},
-    "asignar_carga": {"direccion_carrera"},
     "ver_carga": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comite_acreditacion"},
     # Lectura
     "ver_todos_los_proyectos": {"direccion_instituto", "comite_acreditacion"},
