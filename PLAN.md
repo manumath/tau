@@ -996,8 +996,10 @@ semanales teóricas/prácticas/laboratorio, semestres de 20 semanas, nota mínim
 4 semestres en créditos (1 crédito = 40 horas académicas), nota mínima 66 %.
 
 **Decidido:**
-1. Gestiones: I-2026 y II-2026 (semestres), V-2026 (verano, enero) e INV-2026 (invierno, julio).
-   Orden en el año: V → I → INV → II. (V-2026 por analogía con INV-2026: confirmar.)
+1. Gestiones: I-2026 y II-2026 (semestres), INV-2026 (invierno, julio) y **VER-2026** (verano, enero;
+   «VER» y no «V» para no leerlo como el número romano 5). El verano se cuenta con la gestión
+   anterior: VER-2026 se dicta en enero de 2027. Orden de la gestión 2026: I → INV → II → VER. El
+   portal guarda tipo, año y fechas; el código solo se muestra, y el orden sale de las fechas.
 2. El plan 2017 y el nuevo (desde 2027) coexisten mientras haya estudiantes en el antiguo, con una
    tabla de equivalencias entre asignaturas.
 3. Las asignaturas de otras carreras (FIS, QMF, QMI, QMC, INF, BIO, ECO) figuran en el plan, sin
