@@ -48,3 +48,20 @@ def login(client, email, password):
 def admin(client):
     assert login(client, "admin@test.cl", PASS_ADMIN).headers["hx-redirect"] == "/"
     return client
+
+
+# --- Pruebas en navegador (tests/navegador) -----------------------------------------------------
+# Son opcionales: necesitan Chrome (o el Chromium de Playwright) y levantan un servidor aparte.
+
+def pytest_addoption(parser):
+    parser.addoption("--navegador", action="store_true",
+                     help="Ejecuta también las pruebas en navegador (tests/navegador).")
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--navegador"):
+        return
+    omitir = pytest.mark.skip(reason="prueba en navegador: use pytest --navegador")
+    for item in items:
+        if "navegador" in item.path.parts:
+            item.add_marker(omitir)

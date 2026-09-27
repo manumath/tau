@@ -155,6 +155,16 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 memoria (`app.correo.ENVIADOS`, fixture `buzon`) y las consultas a Crossref y arXiv se simulan
 (`tests/test_importacion.py`), así que las pruebas no necesitan red.
 
+**Pruebas en navegador** (`tests/navegador/`, Playwright): `uv run pytest --navegador`. Recorren
+en Chrome los flujos críticos (ingreso y salida, registrar un producto, proponer y decidir una
+propuesta institucional, generar y descargar el anexo) y fallan si la página registra errores de
+JavaScript, recursos que no cargan o violaciones de la CSP. Sin `--navegador` se omiten.
+- Levantan el portal en un puerto libre con una base temporal (`tests/navegador/preparar.py`); no
+  tocan `data/portal.db` ni el servidor de desarrollo.
+- Usan Google Chrome instalado. Sin Chrome: `uv run playwright install chromium` y
+  `PLAYWRIGHT_CANAL= uv run pytest --navegador`.
+- Para ver el navegador: `--headed --slowmo 300`.
+
 ## Migraciones
 
 Para cambiar el esquema, agregue `migrations/000N-descripcion.sql` (o `.py` para cargar datos,

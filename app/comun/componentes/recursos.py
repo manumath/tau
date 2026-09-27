@@ -73,6 +73,7 @@ def encabezados():
     return [
         Meta(charset="utf-8"),
         Meta(name="viewport", content="width=device-width, initial-scale=1, viewport-fit=cover"),
+        Link(rel="icon", type="image/svg+xml", href=url("favicon.svg")),
         Script(src=url("vendor/htmx/htmx.min.js")),
         Script(src=url("vendor/fasthtml/fasthtml.js")),
         Link(rel="stylesheet", href=url("vendor/franken-ui/core.min.css")),
