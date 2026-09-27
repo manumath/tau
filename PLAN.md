@@ -1048,3 +1048,10 @@ docente · equivalencias cuando llegue el plan nuevo.
   `asignar_carga`). El anexo calcula la JCE como carga contratada / 160 (sin carga registrada,
   jornada del vínculo × 4); el formulario de vínculos ya no pide la jornada (se conserva la
   histórica). Pendiente si hace falta: importar por CSV la carga de semestres pasados.
+- Oferta inicial de troncales (27-sep-2026): al crear las gestiones de un año, los semestres I y II
+  se ofertan con las troncales de las licenciaturas (obligatorias y trabajo final de la Carrera; 34
+  del plan 2017) en el paralelo A, sin docente. Un plan se considera mientras tenga estudiantes: del
+  primer ingreso al último ingreso + su duración. Las electivas, otros paralelos y los docentes se
+  agregan a mano; una troncal se puede quitar y volver a crear el año no la repone. Botón «Agregar
+  las troncales» para completar semestres ya creados. La importación de gestiones pasadas no agrega
+  troncales (el archivo manda).

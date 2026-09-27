@@ -362,15 +362,24 @@ def _cargar_lineas() -> bool:
 
 
 def _cargar_docencia() -> bool:
-    """Gestiones 2026 y una oferta de ejemplo en II-2026 (solo si no hay gestiones)."""
+    """Gestiones 2026 (los semestres con las troncales) y docentes de ejemplo en II-2026 (solo si no
+    hay gestiones)."""
     if gestiones.listar():
         return False
     por = {g["tipo"]: g for g in gestiones.crear_anio(2026)}
     emmy = usuarios.por_email("emmy.noether@instituto.test")
     alan = usuarios.por_email("alan.turing@instituto.test")
+    for tipo in ("I", "II"):
+        oferta.ofertar_troncales(por[tipo], emmy["id"] if emmy else None)
+    ofertadas = {(o["sigla"], o["paralelo"]): o["id"] for o in oferta.listar(por["II"]["id"])}
+    # Troncales con docente, un segundo paralelo y una electiva.
     for sigla, paralelo, inscritos, docente in (("MAT-111", "A", 42, emmy), ("MAT-111", "B", 38, alan),
-                                                ("MAT-251", "A", 15, emmy), ("MAT-278", "A", 12, None)):
-        oid, _ = oferta.agregar(por["II"]["id"], sigla, paralelo, inscritos, emmy["id"] if emmy else None)
+                                                ("MAT-251", "A", 15, emmy), ("MAT-392", "A", 8, None)):
+        oid = ofertadas.get((sigla, paralelo))
+        if oid:
+            get_db().execute("UPDATE oferta SET inscritos = ? WHERE id = ?", [inscritos, oid])
+        else:
+            oid, _ = oferta.agregar(por["II"]["id"], sigla, paralelo, inscritos, emmy["id"] if emmy else None)
         if oid and docente:
             oferta.asignar(oid, docente["id"], "titular")
     # Carga horaria de II-2026: Emmy, 2 materias + investigación (128); Alan, 1 materia + extensión (64).

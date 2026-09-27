@@ -8,6 +8,9 @@
 - Los cursos de verano e invierno solo los dictan docentes titulares (de planta); los interinos
   tienen contratos por semestre.
 - Asignar a alguien sin vínculo vigente con la Carrera en la gestión no se impide: se avisa.
+- Al crear las gestiones de un año, los semestres (I y II) se ofertan con las troncales de las
+  licenciaturas (paralelo A, sin docente); las electivas se agregan a mano y una troncal se puede
+  quitar (por ejemplo, si se cierra por falta de inscritos).
 """
 import re
 
@@ -21,6 +24,38 @@ TEMPORADA = ("INV", "VER")
 
 def asignaturas_ofertables() -> list[dict]:
     return get_db().q("SELECT * FROM asignatura WHERE de_la_carrera = 1 ORDER BY sigla")
+
+
+def troncales(anio: int) -> list[dict]:
+    """Asignaturas obligatorias (y el trabajo final) de la Carrera en los planes de licenciatura que
+    tienen estudiantes en el año: desde su primer ingreso hasta que egrese el último (último ingreso
+    + la duración del plan)."""
+    return get_db().q(
+        """SELECT DISTINCT a.* FROM plan_asignatura pa JOIN asignatura a ON a.id = pa.asignatura_id
+           JOIN plan_estudios p ON p.id = pa.plan_id JOIN programa pr ON pr.id = p.programa_id
+           WHERE pr.nivel = 'licenciatura' AND pa.tipo IN ('obligatoria', 'trabajo_final') AND a.de_la_carrera = 1
+             AND p.vigente_desde <= :anio
+             AND (p.vigente_hasta IS NULL OR :anio <= p.vigente_hasta
+                  + (SELECT (MAX(semestre) + 1) / 2 FROM plan_asignatura WHERE plan_id = p.id))
+           ORDER BY a.sigla""", {"anio": anio})
+
+
+def ofertar_troncales(gestion: dict, uid: int) -> int:
+    """Agrega a la oferta del semestre las troncales que aún no están (en ningún paralelo), en el
+    paralelo A. En los cursos de temporada no hace nada. → cuántas agregó."""
+    if gestion["tipo"] in TEMPORADA:
+        return 0
+    ya = {f["asignatura_id"] for f in get_db().q("SELECT asignatura_id FROM oferta WHERE gestion_id = ?", [gestion["id"]])}
+    n = 0
+    for a in troncales(gestion["anio"]):
+        if a["id"] not in ya:
+            get_db().t.oferta.insert(gestion_id=gestion["id"], asignatura_id=a["id"], paralelo="A", creado_por=uid)
+            n += 1
+    return n
+
+
+def es_troncal(asignatura_id: int, anio: int) -> bool:
+    return any(a["id"] == asignatura_id for a in troncales(anio))
 
 
 def horas_del_plan(asignatura_id: int) -> int | None:

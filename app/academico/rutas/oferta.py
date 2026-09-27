@@ -13,7 +13,7 @@ from app.academico.componentes import pestanas
 from app.comun import permisos
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
-from app.comun.db import auditar
+from app.comun.db import auditar, transaccion
 
 rt = APIRouter()
 BASE = "/docencia/oferta"
@@ -61,6 +61,7 @@ def _form_docente(o, g):
 
 def seccion_oferta(g, auth, errores=()):
     puede = _puede(auth)
+    troncales = {a["id"] for a in oferta.troncales(g["anio"])}
     filas = []
     for o in oferta.listar(g["id"]):
         quitar = fh.Button(UkIcon("trash-2", height=14, width=14), type="button", aria_label="Quitar de la oferta",
@@ -70,7 +71,8 @@ def seccion_oferta(g, auth, errores=()):
         filas.append(fh.Tr(
             fh.Td(o["sigla"], cls="font-mono text-sm whitespace-nowrap"),
             fh.Td(Div(o["nombre"], cls="text-sm"),
-                  Div(", ".join(oferta.programas_de(o["asignatura_id"])), cls=TextPresets.muted_sm)),
+                  Div(", ".join(oferta.programas_de(o["asignatura_id"]))
+                      + (" · troncal" if o["asignatura_id"] in troncales else ""), cls=TextPresets.muted_sm)),
             fh.Td(o["paralelo"], cls="text-sm"),
             fh.Td(str(o["inscritos"]) if o["inscritos"] is not None else "—", cls="text-sm tabular-nums"),
             fh.Td(Ul(*[_docente(d, g, puede) for d in o["docentes"]]) if o["docentes"]
@@ -118,6 +120,10 @@ def get(auth, gestion: str = ""):
         Div(Div(H2(gestiones.codigo(g)), P(f"{gestiones.nombre(g)} · del {g['fecha_inicio']} al {g['fecha_fin']}",
                                            cls=TextPresets.muted_sm)),
             Div(_selector(g),
+                Button(UkIcon("list-plus", height=16, width=16), "Agregar las troncales", cls=ButtonT.default,
+                       hx_post=f"{BASE}/{g['id']}/troncales", hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
+                       hx_confirm="¿Agregar a la oferta las troncales de las licenciaturas que aún no están "
+                                  "(paralelo A)?") if _puede(auth) and g["tipo"] not in oferta.TEMPORADA else "",
                 Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
                        hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if _puede(auth) else "",
                 cls="flex flex-wrap gap-2"),
@@ -144,6 +150,20 @@ def post(auth, gid: int, asignatura: str = "", paralelo: str = "A", inscritos: s
         o = oferta.obtener(oid)
         auditar(auth["id"], "agregar_oferta", "oferta", oid, f"{gestiones.codigo(g)} {o['sigla']} {o['paralelo']}")
     return seccion_oferta(g, auth, errores)
+
+
+@rt(f"{BASE}/{{gid}}/troncales")
+def post(auth, sess, gid: int):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    g, error = _gestion_o_404(gid)
+    if error:
+        return error
+    n = oferta.ofertar_troncales(g, auth["id"])
+    auditar(auth["id"], "ofertar_troncales", "gestion_academica", gid, f"{gestiones.codigo(g)}: {n}")
+    add_toast(sess, f"{n} troncal(es) agregada(s)." if n else "Todas las troncales ya estaban en la oferta.",
+              "success" if n else "info")
+    return seccion_oferta(g, auth)
 
 
 @rt(f"{BASE}/{{oid}}")
@@ -220,19 +240,26 @@ def seccion_gestiones(auth, errores=()):
 def get(auth):
     return pagina("Gestiones académicas", pestanas("gestiones", auth), H2("Gestiones académicas"),
                   P("Semestres (I, II) y cursos de temporada (INV en julio; VER en enero del año siguiente, que se "
-                    "cuenta con la gestión anterior). Las fechas propuestas se ajustan al calendario aprobado.",
+                    "cuenta con la gestión anterior). Las fechas propuestas se ajustan al calendario aprobado. Al "
+                    "crear las gestiones, los semestres se ofertan con las troncales de las licenciaturas "
+                    "(paralelo A); las electivas y los docentes se agregan en «Oferta y docentes».",
                     cls=(TextPresets.muted_sm, "mb-6")),
                   seccion_gestiones(auth), usuario=auth, seccion="docencia")
 
 
 @rt("/docencia/gestiones")
-def post(auth, anio: str = ""):
+def post(auth, sess, anio: str = ""):
     if not _puede(auth):
         return Response("No autorizado", status_code=403)
     if not anio.isdigit() or not 2000 <= int(anio) <= 2100:
         return seccion_gestiones(auth, ["Indique un año entre 2000 y 2100."])
-    gestiones.crear_anio(int(anio))
-    auditar(auth["id"], "crear_gestiones", "gestion_academica", None, anio)
+    with transaccion():
+        creadas = gestiones.crear_anio_con_nuevas(int(anio))
+        n = sum(oferta.ofertar_troncales(g, auth["id"]) for g, nueva in creadas if nueva)
+    auditar(auth["id"], "crear_gestiones", "gestion_academica", None, f"{anio}: {n} troncal(es) ofertada(s)")
+    if n:
+        add_toast(sess, f"Gestiones {anio} creadas; los semestres se ofertaron con las troncales de las "
+                        "licenciaturas. Agregue las electivas y asigne los docentes.", "success")
     return seccion_gestiones(auth)
 
 

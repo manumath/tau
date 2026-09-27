@@ -253,14 +253,19 @@ académica las marcan como resueltas indicando cómo se resolvió.
 
 **Gestiones** (pestaña «Gestiones»): I y II (semestres), INV (invierno, julio) y VER (verano, en
 enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la gestión 2026). «Crear
-las gestiones del año» propone fechas que se ajustan al calendario aprobado.
+las gestiones del año» propone fechas que se ajustan al calendario aprobado y oferta ambos
+semestres (I y II) con todas las troncales de las licenciaturas (obligatorias y proyecto de grado de
+la Carrera), en el paralelo A y sin docente.
 
 **Oferta y docentes** (pestaña «Oferta y docentes»): para cada gestión, las asignaturas de la Carrera
 que se dictan, por paralelo, con sus inscritos y docentes (titular o auxiliar). En los semestres,
 cada materia de un titular cuenta 32 h/mes de carga; los auxiliares no suman carga. Los cursos de
 verano e invierno solo los dictan docentes titulares (de planta) de la Carrera y no forman parte de
 la carga: cuentan como docencia dictada. Las asignaturas de otras carreras no se ofertan desde aquí.
-Si un docente no tiene vínculo con la Carrera al inicio de la gestión, se avisa. La editan la Dirección de Carrera
+Si un docente no tiene vínculo con la Carrera al inicio de la gestión, se avisa. Sobre la oferta
+inicial de troncales se agregan a mano las electivas y otros paralelos, se asignan los docentes y se
+quita la troncal que se cierre (por ejemplo, por falta de inscritos). En semestres creados antes,
+«Agregar las troncales» completa las que falten. La editan la Dirección de Carrera
 y la Coordinación académica; todos la consultan.
 
 **Importar CSV** (en «Oferta y docentes»): carga la oferta de gestiones pasadas, una fila por

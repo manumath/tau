@@ -108,3 +108,40 @@ def test_pantallas_y_permisos(client, g2026):
     r = client.post("/docencia/gestiones", headers=HX, data={"anio": "2027"})
     assert "VER-2027" in r.text
     assert "Oferta y docentes" in client.get("/docencia/planes").text  # pestañas de la sección
+
+
+# --- Troncales ---------------------------------------------------------------------------------------------
+
+def test_troncales_de_las_licenciaturas(app):
+    siglas = {a["sigla"] for a in oferta.troncales(2026)}
+    assert {"MAT-111", "MAT-251", "MAT-278", "MAT-399"} <= siglas     # obligatorias de alguno y el proyecto de grado
+    assert "MAT-392" not in siglas and "MAT-499" not in siglas        # electiva; tesis de maestría
+    assert not any(s.startswith(("FIS", "QMC", "INF")) for s in siglas)  # las dicta otra unidad
+    assert len(siglas) == 34
+    assert oferta.troncales(2016) == []                                # antes del plan 2017
+    # Plan cerrado en 2026 (último ingreso): se sigue ofertando mientras egresa el último ingreso.
+    get_db().execute("UPDATE plan_estudios SET vigente_hasta = 2026")
+    assert len(oferta.troncales(2030)) == 34 and oferta.troncales(2031) == []
+
+
+def test_crear_gestiones_oferta_las_troncales(client):
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    login(client, "inv@test.cl", PASS_TEMP)
+    permisos.asignar(emmy, "direccion_carrera", unidades.id_de("CMAT"))
+    client.post("/docencia/gestiones", headers=HX, data={"anio": "2026"})
+    por = {g["tipo"]: g for g in gestiones.crear_anio(2026)}
+    assert len(oferta.listar(por["I"]["id"])) == len(oferta.listar(por["II"]["id"])) == 34
+    assert oferta.listar(por["INV"]["id"]) == [] and oferta.listar(por["VER"]["id"]) == []
+    assert {o["paralelo"] for o in oferta.listar(por["I"]["id"])} == {"A"}
+    # Una troncal se puede quitar (se cerró por falta de inscritos) y volver a crear el año no la repone.
+    cerrada = next(o for o in oferta.listar(por["I"]["id"]) if o["sigla"] == "MAT-278")
+    client.delete(f"/docencia/oferta/{cerrada['id']}", headers=HX)
+    client.post("/docencia/gestiones", headers=HX, data={"anio": "2026"})
+    assert len(oferta.listar(por["I"]["id"])) == 33
+    # El botón «Agregar las troncales» completa las que falten (gestiones creadas antes, o para reponer).
+    r = client.post(f"/docencia/oferta/{por['I']['id']}/troncales", headers=HX)
+    assert "troncal" in r.text and len(oferta.listar(por["I"]["id"])) == 34
+    assert oferta.ofertar_troncales(por["VER"], emmy) == 0
+    assert "Agregar las troncales" in client.get(f"/docencia/oferta?gestion={por['I']['id']}").text
+    assert "Agregar las troncales" not in client.get(f"/docencia/oferta?gestion={por['VER']['id']}").text

@@ -44,14 +44,22 @@ def por_codigo(texto: str) -> dict | None:
 
 
 def crear_anio(anio: int) -> list[dict]:
-    """Crea las cuatro gestiones del año que falten, con las fechas por omisión."""
+    """Crea las cuatro gestiones del año que falten, con las fechas por omisión (sin oferta; la
+    oferta inicial de los semestres la agrega app.academico.oferta.ofertar_troncales)."""
+    return [g for g, _ in crear_anio_con_nuevas(anio)]
+
+
+def crear_anio_con_nuevas(anio: int) -> list[tuple[dict, bool]]:
+    """Como crear_anio, pero indica cuáles gestiones se crearon ahora: [(gestión, nueva)]."""
     if not 2000 <= anio <= 2100:
         raise ValueError("Año fuera de rango.")
+    antes = {f["tipo"] for f in get_db().q("SELECT tipo FROM gestion_academica WHERE anio = ?", [anio])}
     for tipo in TIPOS:
         ini, fin = fechas_por_omision(anio, tipo)
         get_db().execute("""INSERT INTO gestion_academica (anio, tipo, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)
                             ON CONFLICT (anio, tipo) DO NOTHING""", [anio, tipo, ini, fin])
-    return get_db().q("SELECT * FROM gestion_academica WHERE anio = ? ORDER BY fecha_inicio", [anio])
+    return [(g, g["tipo"] not in antes)
+            for g in get_db().q("SELECT * FROM gestion_academica WHERE anio = ? ORDER BY fecha_inicio", [anio])]
 
 
 def actualizar_fechas(gid: int, inicio: str, fin: str) -> str | None:
