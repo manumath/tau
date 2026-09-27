@@ -2,7 +2,8 @@
 proyectos."""
 import pytest
 
-from app import acreditacion, importacion, openalex, paises, personas, productos, proyectos, revistas, usuarios, vinculos
+from app.acreditacion import anexo as acreditacion
+from app import importacion, openalex, paises, personas, productos, proyectos, revistas, usuarios, vinculos
 from app.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 

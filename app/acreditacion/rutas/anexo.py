@@ -8,10 +8,11 @@ import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select, Span, Table, Tbody,
                              Td, Th, Thead, Tr, Ul)
 
-from app import acreditacion, actividades, config, estudiantes, informes, proyectos
+from app.acreditacion import anexo as acreditacion, informes
+from app import actividades, config, estudiantes, proyectos
 from app.components.layout import pagina
-from app.routes.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _tabla_conteo, barra, cita, descarga, hoja,
-                                 seccion_metodo)
+from app.acreditacion.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _tabla_conteo, barra, cita,
+                                             descarga, hoja, seccion_metodo)
 
 rt = APIRouter()
 

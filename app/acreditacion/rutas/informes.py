@@ -15,8 +15,9 @@ from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, HtmxResponseHeaders,
 from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 
-from app import (actividades, config, cosecha, importacion, informes, institucionales, perfiles, productos,
-                 proyectos, revistas)
+from app import (actividades, config, cosecha, importacion, institucionales, perfiles, productos, proyectos,
+                 revistas)
+from app.acreditacion import informes
 from app.components.layout import pagina
 from app.db import auditar
 from app.identificadores import IDENTIFICADORES

@@ -3,7 +3,8 @@ import io
 import pytest
 from openpyxl import load_workbook
 
-from app import informes, perfiles, personas, productos, proyectos, usuarios
+from app.acreditacion import informes
+from app import perfiles, personas, productos, proyectos, usuarios
 from app.db import get_db
 from tests.conftest import PASS_ADMIN, PASS_TEMP, login
 

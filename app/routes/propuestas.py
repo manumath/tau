@@ -554,7 +554,7 @@ def get(auth, periodo: str = "", estado: str = ""):
 @rt("/admin/propuestas/{periodo}/xlsx")
 def get(auth, periodo: int):
     # Sin extensión en la URL: la ruta de archivos estáticos capturaría «….xlsx».
-    from app.informes import a_xlsx
+    from app.acreditacion.informes import a_xlsx
     return Response(a_xlsx(inst.hojas_convocatoria(periodo)),
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"Content-Disposition": f'attachment; filename="propuestas-{periodo}-{periodo + 1}.xlsx"',

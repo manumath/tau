@@ -32,10 +32,10 @@ from app.routes.bibtex import rt as rutas_bibtex
 from app.routes.admin_auditoria import rt as rutas_admin_auditoria
 from app.routes.admin_revistas import rt as rutas_admin_revistas
 from app.routes.admin_lineas import rt as rutas_admin_lineas
-from app.routes.acreditacion import rt as rutas_acreditacion
+from app.acreditacion.rutas.anexo import rt as rutas_acreditacion
 from app.routes.estudiantes import rt as rutas_estudiantes
 from app.routes.admin_usuarios import rt as rutas_admin_usuarios
-from app.routes.informes import rt as rutas_informes
+from app.acreditacion.rutas.informes import rt as rutas_informes
 from app.routes.inicio import rt as rutas_inicio
 from app.routes.investigadores import rt as rutas_investigadores
 from app.routes.perfil import rt as rutas_perfil

@@ -6,7 +6,8 @@ from datetime import date
 import pytest
 from openpyxl import load_workbook
 
-from app import actividades, bibtex, importacion, informes
+from app import actividades, bibtex, importacion
+from app.acreditacion import informes
 from app import institucionales as inst
 from app import perfiles, productos, proyectos, usuarios
 from app.db import get_db

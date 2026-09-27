@@ -5,7 +5,8 @@ import io
 import pytest
 from openpyxl import load_workbook
 
-from app import config, informes, productos, revistas, usuarios, vinculos
+from app import config, productos, revistas, usuarios, vinculos
+from app.acreditacion import informes
 from app.db import get_db
 from tests.conftest import PASS_ADMIN, PASS_TEMP, login
 

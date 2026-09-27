@@ -142,7 +142,8 @@ def test_administracion(client, gente):
 
 
 def test_productos_y_actividades_heredan_la_linea_del_proyecto(client, app):
-    from app import informes, productos, vinculos
+    from app.acreditacion import informes
+    from app import productos, vinculos
     from tests.conftest import PASS_TEMP, login
     uid = get_db().q("SELECT id FROM usuario WHERE email = 'inv@test.cl'")[0]["id"]
     vinculos.agregar(uid, "titular", "2015-01-01")

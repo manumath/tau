@@ -10,7 +10,8 @@ from fasthtml.common import (A, APIRouter, Code, Div, HtmxResponseHeaders, Input
 from fasthtml.toaster import add_toast
 from monsterui.all import (Button, ButtonT, Form, Label, LabelT, LabelTextArea, Table, TextPresets, UkIcon)
 
-from app import bibtex, informes, productos
+from app import bibtex, productos
+from app.acreditacion import informes
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
 from app.db import auditar, sin_tildes
 
