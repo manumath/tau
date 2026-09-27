@@ -762,6 +762,11 @@ Criterio de término: todas las pruebas en verde y el piloto sigue sin notar cam
   XLSX. Fallan ante errores de consola, de JavaScript o de CSP (verificado provocándolos). Servidor
   aparte con base temporal. Opcionales: `pytest --navegador`. Se agrega un favicon (evitaba un 404
   en cada página).
+- 1.6 hecho (26-sep-2026): `docs/mantenimiento.md` (primer día, arquitectura, convenciones,
+  recetas, política de actualización de dependencias, operación, problemas frecuentes y deuda).
+  Restauración ensayada con `scripts/paquete.py`: exportar en marcha, importar en vacío, negarse
+  sin `--reemplazar`, reemplazar moviendo lo anterior e importar un paquete de esquema v20 con el
+  código actual (aplica la migración 21). **Fase 1 completa.**
 
 ### Fase 2 — Personas, unidades y permisos (3–4 semanas)
 

@@ -119,7 +119,7 @@ scripts/paquete.py             exportar e importar todos los datos (base, fotos,
 scripts/iniciar.sh             arranque en contenedor (con Litestream si hay réplica configurada)
 Dockerfile, fly.toml,
 litestream.yml                 imagen de contenedor y configuración para Fly.io
-docs/                          guía de uso y guías de despliegue (servidor propio y Fly.io)
+docs/                          guía de uso, guía de mantenimiento y guías de despliegue (servidor propio y Fly.io)
 tests/                         pytest con el TestClient de Starlette
 ```
 
