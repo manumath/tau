@@ -270,14 +270,16 @@ proyecto y ser del mismo periodo).
   - 🔓 **Desbloquear**: una cuenta bloqueada por intentos fallidos, sin cambiar su contraseña.
   - 🔑 **Restablecer**: genera una contraseña temporal nueva.
   - Activar o desactivar una cuenta; desactivarla cierra su sesión de inmediato.
-  - **Vínculo**: el historial de pertenencia al instituto de cada investigador(a), con su
-    categoría y jornada por periodo. Desde ahí se registra un cambio de categoría (cierra el
+  - **Vínculo**: el historial de pertenencia de cada persona al **Instituto (IIMAT)** y a la
+    **Carrera (CMAT)**, con su categoría y jornada por periodo; una persona puede estar vinculada a
+    ambos a la vez. Elija la unidad arriba. Desde ahí se registra un cambio de categoría (cierra el
     periodo vigente el día anterior), se termina el vínculo o se agrega un periodo histórico. Los
-    informes institucionales solo cuentan lo producido **mientras la persona estaba vinculada**, con
-    la categoría de ese momento. Las cuentas sin fecha de ingreso se marcan en ámbar.
+    informes de investigación solo cuentan lo producido **mientras la persona estaba vinculada al
+    Instituto**, con la categoría de ese momento; el vínculo con la Carrera es para la docencia. Las cuentas sin fecha de ingreso se marcan en ámbar.
   - **Importar historial:** carga el historial desde un CSV de Recursos Humanos (`email`,
-    `categoria`, `desde`, `hasta`, `jornada`, `nota`; una fila por periodo). El historial de cada
-    persona del archivo se reemplaza por el del archivo.
+    `categoria`, `desde`, `hasta`, `jornada`, `nota` y `unidad`: IIMAT o CMAT, vacío = IIMAT; una
+    fila por periodo). El historial de cada persona con cada unidad del archivo se reemplaza por el
+    del archivo.
   - Al **desactivar** una cuenta con vínculo vigente, el portal pregunta si también termina el
     vínculo y en qué fecha. Lo publicado mientras estuvo vinculada sigue contando.
 - **Propuestas:** la bandeja de propuestas institucionales por periodo, con filtro por estado y el

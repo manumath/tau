@@ -68,7 +68,8 @@ app/
     importar_usuarios.py       carga masiva de cuentas desde CSV
     tokens.py                  enlaces de un solo uso (recuperar contraseña, invitación)
     correo.py                  envío de correo (archivo .eml, SMTP, memoria para pruebas)
-    vinculos.py                historial de vínculo con el instituto (categoría y jornada por periodo)
+    unidades.py                jerarquía UMSA › FCPN › CMAT › IIMAT
+    vinculos.py                historial de vínculo con el Instituto o la Carrera (categoría y jornada por periodo)
     importar_vinculos.py       carga del historial de vínculos desde un CSV de Recursos Humanos
     personas.py                autores y participantes: 'i:<id>', 'e:<id>' y provisionales 'n:…'
     estudiantes.py             periodos de estudio de estudiantes y tesistas; indicadores de participación

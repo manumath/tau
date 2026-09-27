@@ -43,8 +43,7 @@ def cuerpo_academico(anio: int, hasta: str) -> dict:
     jornada total y jornada completa equivalente (JCE = horas / 40)."""
     corte = min(f"{anio}-12-31", hasta, date.today().isoformat())
     por_categoria, horas, sin_jornada, personas = {}, 0, 0, []
-    for u in get_db().q("""SELECT DISTINCT u.id, u.nombres, u.apellidos FROM usuario u JOIN vinculo v ON v.usuario_id = u.id
-                           ORDER BY u.apellidos, u.nombres"""):
+    for u in vinculos.personas_en_rango("0000-01-01", corte):
         v = vinculos.vigente(u["id"], corte)
         if not v:
             continue

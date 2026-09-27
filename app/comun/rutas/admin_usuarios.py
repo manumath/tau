@@ -11,7 +11,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, Label, LabelCheckboxX, LabelInput, LabelT,
                            Table, Tbody, Td, Th, TextPresets, UkIcon)
 
-from app.comun import config, correo, importar_usuarios, importar_vinculos, tokens, usuarios, vinculos
+from app.comun import config, correo, importar_usuarios, importar_vinculos, tokens, unidades, usuarios, vinculos
 from app.investigacion import perfiles
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.comun.db import auditar
@@ -499,12 +499,24 @@ def _campos_periodo(d, con_hasta=True, con_nota=True, sufijo=""):
         cls="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end")
 
 
-def modal_vinculo(u, errores=(), editar=None, datos=None, yo_id=0):
-    """Historial de periodos y acciones: cambio de categoría, término, periodo histórico, corrección."""
+def _selector_unidad(uid, actual):
+    """Pestañas IIMAT / CMAT: el historial y las acciones son de la unidad elegida."""
+    return Div(*[Button(f"{x['nombre']} ({x['sigla']})", type="button",
+                        cls=(ButtonT.primary if x["id"] == actual else ButtonT.default, ButtonT.sm),
+                        hx_get=f"{BASE}/{uid}/vinculo?unidad={x['id']}", hx_target=f"#{ID_MODAL}",
+                        aria_pressed="true" if x["id"] == actual else "false")
+                 for x in unidades.con_vinculo()],
+               cls="flex flex-wrap gap-2 mb-3", role="group", aria_label="Unidad")
+
+
+def modal_vinculo(u, errores=(), editar=None, datos=None, yo_id=0, unidad=None):
+    """Historial de periodos con una unidad y acciones: cambio de categoría, término, periodo
+    histórico, corrección."""
     uid = u["id"]
+    unidad = unidad or unidades.instituto()
     datos = datos or {}
-    periodos = vinculos.listar(uid)
-    vig = vinculos.vigente(uid)
+    periodos = vinculos.listar(uid, unidad)
+    vig = vinculos.vigente(uid, unidad=unidad)
     filas = []
     for v in periodos:
         if editar == v["id"]:
@@ -512,7 +524,7 @@ def modal_vinculo(u, errores=(), editar=None, datos=None, yo_id=0):
                 _campos_periodo({"categoria": v["categoria"], "desde": v["fecha_inicio"], "hasta": v["fecha_fin"],
                                  "jornada": v["jornada_horas"], "nota": v["nota"], **datos}, sufijo=f"-{v["id"]}"),
                 Div(Button("Cancelar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
-                           hx_get=f"{BASE}/{uid}/vinculo", hx_target=f"#{ID_MODAL}"),
+                           hx_get=f"{BASE}/{uid}/vinculo?unidad={unidad}", hx_target=f"#{ID_MODAL}"),
                     Button("Guardar", type="submit", cls=(ButtonT.primary, ButtonT.sm)),
                     cls="flex justify-end gap-2 mt-2"),
                 hx_put=f"{BASE}/vinculo/{v["id"]}", hx_target=f"#{ID_MODAL}"), colspan=5)))
@@ -535,7 +547,8 @@ def modal_vinculo(u, errores=(), editar=None, datos=None, yo_id=0):
 
     def accion(titulo, *campos, url, boton):
         return fh.Details(fh.Summary(titulo, cls="cursor-pointer text-sm font-medium text-primary"),
-                          Form(*campos, Div(Button(boton, type="submit", cls=(ButtonT.primary, ButtonT.sm)),
+                          Form(*campos, Input(type="hidden", name="unidad", value=str(unidad)),
+                               Div(Button(boton, type="submit", cls=(ButtonT.primary, ButtonT.sm)),
                                             cls="flex justify-end mt-2"),
                                hx_post=url, hx_target=f"#{ID_MODAL}", cls="mt-2"),
                           cls="rounded-md border border-border p-3")
@@ -553,9 +566,11 @@ def modal_vinculo(u, errores=(), editar=None, datos=None, yo_id=0):
     return modal(
         f"Vínculo de {u['nombres']} {u['apellidos']}",
         mensaje_error(*errores),
-        P("Periodos de pertenencia al instituto con su categoría. Definen qué producción cuenta en los informes "
-          "institucionales y con qué categoría. Para cargar el historial de muchas personas, use «Importar "
-          "historial» en el listado.", cls=(TextPresets.muted_sm, "mb-3")),
+        P("Periodos de pertenencia a cada unidad con su categoría y jornada. El vínculo con el Instituto define "
+          "qué producción cuenta en los informes de investigación y con qué categoría; el de la Carrera, la "
+          "docencia. Para cargar el historial de muchas personas, use «Importar historial» en el listado.",
+          cls=(TextPresets.muted_sm, "mb-3")),
+        _selector_unidad(uid, unidad),
         Div(tabla, cls="overflow-x-auto mb-4"),
         Div(*acciones, cls="space-y-2"),
         Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
@@ -568,45 +583,62 @@ def _investigador(uid):
     return u if u and u["es_investigador"] else None
 
 
+def _unidad_valida(valor) -> int | None:
+    """Id de una unidad con vínculo (IIMAT o CMAT); None si no lo es (se usa el Instituto)."""
+    ids = {x["id"] for x in unidades.con_vinculo()}
+    return int(valor) if str(valor).isdigit() and int(valor) in ids else None
+
+
+def _sigla(unidad):
+    return unidades.obtener(unidad or unidades.instituto())["sigla"]
+
+
 @rt(BASE + "/{uid}/vinculo")
-def get(auth, uid: int):
+def get(auth, uid: int, unidad: str = ""):
     u = _investigador(uid)
-    return modal_vinculo(u, yo_id=auth["id"]) if u else Response("No encontrado", status_code=404)
+    return modal_vinculo(u, yo_id=auth["id"], unidad=_unidad_valida(unidad)) if u \
+        else Response("No encontrado", status_code=404)
 
 
 @rt(BASE + "/{uid}/vinculo/cambio")
-def post(auth, uid: int, categoria: str = "", desde: str = "", jornada: str = ""):
+def post(auth, uid: int, categoria: str = "", desde: str = "", jornada: str = "", unidad: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"])
+    un = _unidad_valida(unidad)
+    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"], unidad=un)
     if not errores:
-        auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{categoria} desde {desde}")
-    return modal_vinculo(u, errores, yo_id=auth["id"],
+        auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{_sigla(un)}: {categoria} desde {desde}")
+    return modal_vinculo(u, errores, yo_id=auth["id"], unidad=un,
                          datos={"categoria": categoria, "desde": desde, "jornada": jornada} if errores else None)
 
 
 @rt(BASE + "/{uid}/vinculo/termino")
-def post(auth, uid: int, fecha: str = ""):
+def post(auth, uid: int, fecha: str = "", unidad: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    errores = vinculos.terminar(uid, fecha)
+    un = _unidad_valida(unidad)
+    errores = vinculos.terminar(uid, fecha, unidad=un)
     if not errores:
-        auditar(auth["id"], "terminar_vinculo", "investigador", uid, fecha)
-    return modal_vinculo(u, errores, yo_id=auth["id"])
+        auditar(auth["id"], "terminar_vinculo", "investigador", uid, f"{_sigla(un)}: {fecha}")
+    return modal_vinculo(u, errores, yo_id=auth["id"], unidad=un)
 
 
 @rt(BASE + "/{uid}/vinculo/periodo")
-def post(auth, uid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "", nota: str = ""):
+def post(auth, uid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "", nota: str = "",
+         unidad: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    errores = vinculos.agregar(uid, categoria, desde or None, hasta or None, jornada or None, nota, auth["id"])
+    un = _unidad_valida(unidad)
+    errores = vinculos.agregar(uid, categoria, desde or None, hasta or None, jornada or None, nota, auth["id"],
+                               unidad=un)
     if not errores:
-        auditar(auth["id"], "agregar_vinculo", "investigador", uid, f"{categoria} {desde or '?'} a {hasta or 'hoy'}")
+        auditar(auth["id"], "agregar_vinculo", "investigador", uid,
+                f"{_sigla(un)}: {categoria} {desde or '?'} a {hasta or 'hoy'}")
     datos = dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota) if errores else None
-    return modal_vinculo(u, errores, datos=datos, yo_id=auth["id"])
+    return modal_vinculo(u, errores, datos=datos, yo_id=auth["id"], unidad=un)
 
 
 @rt(BASE + "/vinculo/{vid}/editar")
@@ -614,7 +646,7 @@ def get(auth, vid: int):
     v = vinculos.obtener(vid)
     if not v:
         return Response("No encontrado", status_code=404)
-    return modal_vinculo(_investigador(v["usuario_id"]), editar=vid, yo_id=auth["id"])
+    return modal_vinculo(_investigador(v["usuario_id"]), editar=vid, yo_id=auth["id"], unidad=v["unidad_id"])
 
 
 @rt(BASE + "/vinculo/{vid}")
@@ -628,9 +660,9 @@ def put(auth, vid: int, categoria: str = "", desde: str = "", hasta: str = "", j
                 f"{categoria} {desde or '?'} a {hasta or 'hoy'}")
     u = _investigador(v["usuario_id"])
     if errores:
-        return modal_vinculo(u, errores, editar=vid, yo_id=auth["id"],
+        return modal_vinculo(u, errores, editar=vid, yo_id=auth["id"], unidad=v["unidad_id"],
                              datos=dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota))
-    return modal_vinculo(u, yo_id=auth["id"])
+    return modal_vinculo(u, yo_id=auth["id"], unidad=v["unidad_id"])
 
 
 @rt(BASE + "/vinculo/{vid}")
@@ -639,8 +671,9 @@ def delete(auth, vid: int):
     if not v:
         return Response("No encontrado", status_code=404)
     vinculos.eliminar(vid)
-    auditar(auth["id"], "eliminar_vinculo", "investigador", v["usuario_id"], vinculos.texto_periodo(v))
-    return modal_vinculo(_investigador(v["usuario_id"]), yo_id=auth["id"])
+    auditar(auth["id"], "eliminar_vinculo", "investigador", v["usuario_id"],
+            f"{_sigla(v['unidad_id'])}: {vinculos.texto_periodo(v)}")
+    return modal_vinculo(_investigador(v["usuario_id"]), yo_id=auth["id"], unidad=v["unidad_id"])
 
 
 # --- Historial de vínculos desde Recursos Humanos (CSV) -----------------------------------------------------
@@ -650,9 +683,10 @@ def _form_historial(errores=()):
         mensaje_error(*errores),
         P("Suba un CSV de Recursos Humanos con una fila por periodo: ", Code("email"), ", ", Code("categoria"), ", ",
           Code("desde"), " y, si quiere, ", Code("hasta"), " (vacío = vigente), ", Code("jornada"), " (horas "
-          "semanales) y ", Code("nota"), ". Fechas como AAAA-MM-DD o DD/MM/AAAA.", cls="text-sm"),
-        P("El historial de cada persona del archivo se reemplaza por el del archivo; las demás no cambian. "
-          "Primero verá una vista previa.", cls=TextPresets.muted_sm),
+          "semanales), ", Code("nota"), " y ", Code("unidad"), " (IIMAT o CMAT; vacío = IIMAT). Fechas como "
+          "AAAA-MM-DD o DD/MM/AAAA.", cls="text-sm"),
+        P("El historial de cada persona con cada unidad del archivo se reemplaza por el del archivo; lo demás no "
+          "cambia. Primero verá una vista previa.", cls=TextPresets.muted_sm),
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/historial/plantilla",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
         Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
@@ -688,6 +722,7 @@ async def post(archivo: UploadFile = None):
         periodos = "; ".join(f"{perfiles.CATEGORIAS[x['categoria']]} {x['desde']} a {x['hasta'] or 'hoy'}"
                              for x in p["periodos"])
         filas.append(Tr(Td(Div(nombre, cls="font-medium"), Div(p["email"], cls=TextPresets.muted_sm)),
+                        Td(p["unidad"], cls="text-sm"),
                         Td(periodos or "—", cls="text-sm"),
                         Td(Label("Error", cls=LabelT.destructive), Div(*[P(e, cls="text-sm") for e in p["errores"]])
                            if p["errores"] else
@@ -696,7 +731,7 @@ async def post(archivo: UploadFile = None):
         "Vista previa del historial",
         P(f"{len(listas)} persona(s) se actualizarán · {len(personas) - len(listas)} con errores, se omiten.",
           cls="text-sm font-medium mb-3"),
-        Div(Table(Thead(Tr(Th("Persona"), Th("Periodos del archivo"), Th("Resultado"))), Tbody(*filas),
+        Div(Table(Thead(Tr(Th("Persona"), Th("Unidad"), Th("Periodos del archivo"), Th("Resultado"))), Tbody(*filas),
                   cls="uk-table-divider uk-table-small"),
             cls="max-h-96 overflow-y-auto border border-border rounded-md mb-4"),
         Form(Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),

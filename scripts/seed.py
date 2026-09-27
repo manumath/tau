@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import json  # noqa: E402
 
 from app.investigacion import actividades, institucionales, lineas, perfiles, productos, proyectos, revistas
-from app.comun import config, estudiantes, personas, usuarios, vinculos
+from app.comun import config, estudiantes, personas, unidades, usuarios, vinculos  # noqa: E402
 from app.comun.db import AHORA, get_db, marca_tiempo  # noqa: E402
 from app.comun.db import init_db  # noqa: E402
 
@@ -270,6 +270,12 @@ def _cargar_vinculos():
         if u and (not actuales or all(v["fecha_inicio"] is None for v in actuales)):
             vinculos.reemplazar_historial(u["id"], periodos)
             hecho = True
+    # Emmy es además docente de la Carrera (vínculo con otra unidad, simultáneo).
+    emmy = usuarios.por_email("emmy.noether@instituto.test")
+    cmat = unidades.id_de(unidades.CARRERA)
+    if emmy and not vinculos.listar(emmy["id"], cmat):
+        vinculos.agregar(emmy["id"], "titular", "2012-03-01", jornada=20, nota="Docente de la Carrera", unidad=cmat)
+        hecho = True
     return hecho
 
 
@@ -458,7 +464,7 @@ def main():
     if produccion:
         print("Actividades y productos de ejemplo cargados (Emmy Noether y Alan Turing).")
     if con_vinculos and not creados:
-        print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular; Ramanujan es invitado).")
+        print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular, y es docente de la Carrera; Ramanujan es invitado).")
     if con_estudiantes:
         print("Estudiante de ejemplo: María Quispe, tesista de licenciatura dirigida por Emmy.")
     if con_lineas:

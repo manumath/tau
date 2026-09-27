@@ -933,3 +933,14 @@ Estimación: 3 a 4 semanas (sin el paso 5).
 2. Los roles los asigna **solo Administración del sistema**, a pedido de las direcciones.
 3. Cada académico **ve su propia fecha de nacimiento** en su perfil, sin poder editarla.
 4. La DTIC ofrece inicio de sesión institucional: el paso 5 se hace (falta saber el proveedor).
+
+**Avance:**
+- Paso 1 hecho (27-sep-2026): tabla `unidad` (UMSA › FCPN › CMAT › IIMAT, migración 0022) y
+  `vinculo.unidad_id` obligatorio (tabla reconstruida; los vínculos existentes quedan con el IIMAT,
+  verificado sobre una copia de la base de desarrollo). `app/comun/unidades.py`. Todas las
+  funciones de `vinculos` reciben la unidad (por omisión el IIMAT, así los informes de
+  investigación no cambian); la superposición se valida por unidad. Ninguna consulta a `vinculo`
+  queda fuera del módulo (`personas_en_rango` reemplaza dos que no filtraban por unidad: una
+  docente solo de la Carrera hacía fallar la memoria). Pantalla de vínculos con selector
+  IIMAT/CMAT e importación de RR. HH. con columna `unidad`. Las categorías de la Carrera son, por
+  ahora, las mismas del Instituto: revisar cuando se defina la «jerarquía académica» de la hoja 10.

@@ -302,10 +302,7 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
     # Quienes estuvieron vinculados en algún momento del periodo (aunque ya no lo estén), con su
     # categoría al final del periodo (o al término de su vínculo, si terminó antes).
     resumen = []
-    for inv in get_db().q(
-            """SELECT DISTINCT u.id, u.nombres, u.apellidos FROM usuario u JOIN vinculo v ON v.usuario_id = u.id
-               WHERE (v.fecha_inicio IS NULL OR v.fecha_inicio <= ?) AND (v.fecha_fin IS NULL OR v.fecha_fin >= ?)
-               ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""", [hasta, desde]):
+    for inv in vinculos.personas_en_rango(desde, hasta):
         periodos = [v for v in vinculos.listar(inv["id"])
                     if (v["fecha_inicio"] or "0000") <= hasta and (v["fecha_fin"] or "9999") >= desde]
         ultimo = periodos[-1]
