@@ -95,8 +95,11 @@ app/
     cosecha.py                 carga de la producción desde OpenAlex y actualización de citas
     bibtex.py                  importar y exportar BibTeX
     componentes/               selector de autores y participantes, líneas de investigación
-    rutas/                     perfil, investigadores, actividades, productos, bibtex, adjuntos, propuestas,
-                               proyectos, publico (+ API), admin_revistas, admin_lineas
+    rutas/                     perfil, investigadores, actividades, bibtex, adjuntos, propuestas, publico (+ API),
+                               admin_revistas, admin_lineas
+      proyectos/               un módulo por pestaña: lista, datos, resumen, participantes, registros,
+                               pendientes, plan, reasignar y ficha (registrada al final)
+      productos/               lista, formulario, carga_openalex y ficha (registrada al final)
   acreditacion/                evidencia para IAC-CINDA
     informes.py                datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
     anexo.py                   anexo de I+D+i para la acreditación, por criterio y año

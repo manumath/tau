@@ -4,7 +4,7 @@ Sigue los mismos patrones que productos (evento `actividades-cambiadas` vía HX-
 """
 from datetime import date
 
-from fasthtml.common import (A, APIRouter, Div, H3, HtmxResponseHeaders, Input, Option, P,
+from fasthtml.common import (A, APIRouter, Div, H3, HtmxResponseHeaders, Option, P,
                              Redirect, Response, Select, Span)
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,

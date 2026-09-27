@@ -8,7 +8,7 @@ import base64
 from fasthtml.common import (A, APIRouter, Code, Div, HtmxResponseHeaders, Input, P, Response, Span,
                              Tbody, Td, Th, Thead, Tr, UploadFile)
 from fasthtml.toaster import add_toast
-from monsterui.all import (Button, ButtonT, Form, Label, LabelT, LabelTextArea, Table, TextPresets, UkIcon)
+from monsterui.all import (Button, ButtonT, Form, Label, LabelT, LabelTextArea, Table, TextPresets)
 
 from app.investigacion import bibtex, productos
 from app.acreditacion import informes

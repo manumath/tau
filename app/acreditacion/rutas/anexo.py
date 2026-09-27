@@ -5,7 +5,7 @@ from datetime import date
 from urllib.parse import urlencode
 
 import fasthtml.common as fh
-from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select, Span, Table, Tbody,
+from fasthtml.common import (APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select, Span, Table, Tbody,
                              Td, Th, Thead, Tr, Ul)
 
 from app.acreditacion import anexo as acreditacion, informes

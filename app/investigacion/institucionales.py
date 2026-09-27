@@ -20,7 +20,7 @@ import time
 from datetime import date
 
 from app.investigacion import avisos, lineas, perfiles, proyectos
-from app.comun import config, personas
+from app.comun import config
 from app.comun.db import get_db
 
 ESTADOS = {"borrador": "Borrador", "enviada": "Enviada", "aceptada": "Aceptada",

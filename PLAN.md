@@ -737,6 +737,10 @@ Criterio de término: todas las pruebas en verde y el piloto sigue sin notar cam
   sintáctico. Dependencias de `comun` hacia `investigacion` que quedan (a resolver en la fase 2):
   `vinculos`/`importar_usuarios` → `perfiles`; `componentes/registros.py` y `rutas/inicio.py` →
   proyectos y productos.
+- 1.2 hecho (26-sep-2026): las rutas de proyectos (1.094 líneas) y productos (890) son paquetes
+  con un módulo por pestaña o flujo (el mayor, `productos/formulario.py`, 484). El `__init__`
+  registra los módulos en orden, con la ficha al final. Verificado: las mismas 211 rutas antes y
+  después, sin ciclos entre módulos y sin imports sobrantes en `app/` (pyflakes).
 
 ### Fase 2 — Personas, unidades y permisos (3–4 semanas)
 

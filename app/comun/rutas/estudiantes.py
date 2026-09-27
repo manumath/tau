@@ -1,6 +1,5 @@
 """Estudiantes y tesistas: lista, alta, ficha con periodos de estudio y participación en la
 investigación. Los registran investigadores y administración (quedan en la auditoría)."""
-import json
 from datetime import date
 
 import fasthtml.common as fh
