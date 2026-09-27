@@ -116,6 +116,7 @@ app/
     importar_planes.py         carga de planes desde datos/planes/ (la usa la migración 0028)
     gestiones.py               gestiones académicas: I, INV, II y VER de cada año
     oferta.py                  oferta por gestión y paralelo, asignación docente y horas
+    importar_oferta.py         carga de la oferta de gestiones pasadas desde CSV
     rutas/                     planes, oferta y gestiones (/docencia/…)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 

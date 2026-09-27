@@ -1,14 +1,17 @@
 """Oferta por gestión y asignación docente; gestiones académicas. La consultan todos; la editan la
 Dirección de Carrera y la Coordinación académica (acción `gestionar_oferta`)."""
+import base64
+
 import fasthtml.common as fh
-from fasthtml.common import A, APIRouter, Datalist, Div, Input, Li, Option, P, Response, Select, Span, Ul
+from fasthtml.common import (A, APIRouter, Code, Datalist, Div, Input, Li, Option, P, Redirect, Response, Select, Span,
+                             Ul, UploadFile)
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, TextPresets, UkIcon
 
-from app.academico import gestiones, oferta
+from app.academico import gestiones, importar_oferta, oferta
 from app.academico.componentes import pestanas
 from app.comun import permisos
-from app.comun.componentes.layout import mensaje_error, pagina
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
 
@@ -112,7 +115,11 @@ def get(auth, gestion: str = ""):
         pestanas("oferta"),
         Div(Div(H2(gestiones.codigo(g)), P(f"{gestiones.nombre(g)} · del {g['fecha_inicio']} al {g['fecha_fin']}",
                                            cls=TextPresets.muted_sm)),
-            _selector(g), cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
+            Div(_selector(g),
+                Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
+                       hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if _puede(auth) else "",
+                cls="flex flex-wrap gap-2"),
+            cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         seccion_oferta(g, auth),
         usuario=auth, seccion="docencia")
 
@@ -237,3 +244,98 @@ def put(auth, gid: int, inicio: str = "", fin: str = ""):
     if not e:
         auditar(auth["id"], "fechas_gestion", "gestion_academica", gid, f"{gestiones.codigo(g)}: {inicio} a {fin}")
     return seccion_gestiones(auth, [e] if e else [])
+
+
+# --- Importación de la oferta de gestiones pasadas ------------------------------------------------------
+
+def _form_importar(errores=()):
+    return Div(
+        mensaje_error(*errores),
+        P("Una fila por docente de cada paralelo: ", Code("gestion"), " (I-2021, INV-2021, II-2021, VER-2021), ",
+          Code("sigla"), " y, si quiere, ", Code("paralelo"), " (vacío = A), ", Code("inscritos"), ", ",
+          Code("email"), " del docente (vacío si no tuvo), ", Code("rol"), " (titular o auxiliar) y ", Code("horas"),
+          " semanales (vacío = las del plan).", cls="text-sm"),
+        P("La oferta de cada gestión del archivo se reemplaza por la del archivo; las demás no cambian. Una gestión "
+          "con errores no se importa. Los docentes deben estar registrados (aunque sea sin acceso). Primero verá una "
+          "vista previa.", cls=TextPresets.muted_sm),
+        A(UkIcon("download", height=14, width=14), "Descargar plantilla", href=f"{BASE}/plantilla",
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
+        fh.Form(Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
+                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                    Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
+                hx_post=f"{BASE}/importar/revisar", hx_encoding="multipart/form-data", hx_target=f"#{ID_MODAL}",
+                cls="space-y-4"),
+        cls="space-y-4")
+
+
+@rt(f"{BASE}/importar")
+def get(auth):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    return modal("Importar oferta", _form_importar(), ancho="max-w-2xl")
+
+
+@rt(f"{BASE}/plantilla")
+def get(auth):
+    return Response(importar_oferta.PLANTILLA.encode("utf-8-sig"), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="plantilla-oferta.csv"'})
+
+
+@rt(f"{BASE}/importar/revisar")
+async def post(auth, archivo: UploadFile = None):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    if archivo is None or not archivo.filename:
+        return modal("Importar oferta", _form_importar(["Seleccione un archivo."]), ancho="max-w-2xl")
+    contenido = await archivo.read(importar_oferta.MAX_BYTES + 1)
+    lista, errores = importar_oferta.leer(contenido)
+    if not lista:
+        return modal("Importar oferta", _form_importar(errores), ancho="max-w-2xl")
+    listas = [g for g in lista if not g["errores"] and g["anio"] is not None]
+    filas = []
+    for g in lista:
+        paralelos = len(g["paralelos"])
+        docentes = sum(len(p["docentes"]) for p in g["paralelos"].values())
+        sin_doc = sum(not p["docentes"] for p in g["paralelos"].values())
+        if g["errores"]:
+            resultado = Div(insignia("No se importa", "rojo", icono="circle-x"),
+                            *[P(e, cls="text-sm") for e in g["errores"][:8]],
+                            P(f"… y {len(g['errores']) - 8} más.", cls=TextPresets.muted_sm) if len(g["errores"]) > 8
+                            else "")
+        else:
+            resultado = Div(Span(("Reemplaza " + str(g["actuales"]) + " paralelo(s) actual(es)") if g["actuales"] else
+                                 ("Gestión nueva: se crearán las del año" if not g["existe"] else "Sin oferta previa"),
+                                 cls="text-sm"),
+                            *[P(a, cls="text-sm text-amber-700") for a in g["avisos"]])
+        filas.append(fh.Tr(fh.Td(g["codigo"], cls="font-mono whitespace-nowrap"),
+                           fh.Td(f"{paralelos} paralelo(s), {docentes} docente(s)" +
+                                 (f", {sin_doc} sin docente" if sin_doc else ""), cls="text-sm"),
+                           fh.Td(resultado)))
+    return modal(
+        "Vista previa de la oferta",
+        P(f"{len(listas)} gestión(es) se importarán · {len(lista) - len(listas)} con errores, se omiten.",
+          cls="text-sm font-medium mb-3"),
+        Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Gestión"), fh.Th("Contenido"), fh.Th("Resultado"))), fh.Tbody(*filas),
+                     cls="uk-table uk-table-divider uk-table-small"),
+            cls="max-h-96 overflow-y-auto border border-border rounded-md mb-4"),
+        fh.Form(Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),
+                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                    Button(f"Importar {len(listas)} gestión(es)", type="submit", cls=ButtonT.primary,
+                           disabled=not listas), cls="flex justify-end gap-2"),
+                hx_post=f"{BASE}/importar/confirmar", hx_target=f"#{ID_MODAL}"),
+        ancho="max-w-4xl")
+
+
+@rt(f"{BASE}/importar/confirmar")
+def post(auth, sess, contenido: str = ""):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    try:
+        datos = base64.b64decode(contenido, validate=True)
+    except ValueError:
+        return modal("Importar oferta", _form_importar(["No se pudo leer el archivo. Súbalo otra vez."]))
+    lista, _ = importar_oferta.leer(datos)
+    n = importar_oferta.aplicar(lista, auth["id"])
+    add_toast(sess, f"Oferta importada: {n} gestión(es).", "success")
+    ultima = next((gestiones.por_codigo(g["codigo"]) for g in reversed(lista) if not g["errores"] and g["anio"]), None)
+    return Redirect(f"{BASE}?gestion={ultima['id']}" if ultima else BASE)

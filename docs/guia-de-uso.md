@@ -261,6 +261,12 @@ se sugieren las del plan). Las asignaturas de otras carreras no se ofertan desde
 no tiene vínculo con la Carrera al inicio de la gestión, se avisa. La editan la Dirección de Carrera
 y la Coordinación académica; todos la consultan.
 
+**Importar CSV** (en «Oferta y docentes»): carga la oferta de gestiones pasadas, una fila por
+docente de cada paralelo (`gestion`, `sigla`, `paralelo`, `inscritos`, `email`, `rol`, `horas`; hay
+plantilla). La oferta de cada gestión del archivo se reemplaza por la del archivo, así que puede
+corregir el archivo y volver a importarlo. Una gestión con algún error no se importa (la vista
+previa dice por qué). Los docentes deben estar registrados en «Usuarios», aunque sea sin acceso.
+
 ## Informes
 
 Menú «Informes»:
