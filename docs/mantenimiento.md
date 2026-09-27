@@ -98,8 +98,10 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 - **Transacciones:** varias escrituras que van juntas, dentro de `with transaccion():`.
 - **Auditoría:** toda acción que cambia datos de otros o de configuración llama a
   `auditar(usuario_id, accion, entidad, id, detalle)`.
-- **Permisos en el servidor:** ocultar un botón no basta; la ruta verifica. Todo `/admin/*` exige
-  administración (Beforeware).
+- **Permisos en el servidor:** ocultar un botón no basta; la ruta verifica. Cada ruta `/admin/*`
+  necesita una regla en `REGLAS_ADMIN` (`app/comun/auth.py`), o queda cerrada para todos
+  (`tests/test_permisos_rutas.py` lo comprueba). Dentro de las rutas y reglas de negocio se usa
+  `permisos.puede(usuario, accion, unidad)`; no hay otra marca de administración.
 - **Estilos:** clases de Tailwind y de Franken UI (`uk-…`). Una clase de Tailwind nueva exige
   recompilar (sección 4.4).
 - **Cada cambio con su prueba.** Una regla nueva, una prueba en `tests/`; un flujo nuevo de
@@ -131,7 +133,9 @@ solas al arrancar el portal.
    ficha se registra al final (ver su `__init__.py`).
 3. La lógica en el módulo del paquete, no en la ruta. Valide y devuelva el formulario con los
    errores (`mensaje_error`) o redirija (`Redirect`) y avise (`add_toast`).
-4. Si la página es pública, agregue su patrón exacto a `RUTAS_PUBLICAS`.
+4. Si la página es pública, agregue su patrón exacto a `RUTAS_PUBLICAS`. Si es de administración,
+   agregue su regla a `REGLAS_ADMIN` y, si hace falta, una acción nueva a `permisos.ACCIONES` (con
+   una fila en la matriz de `tests/test_permisos_rutas.py`).
 5. Pruebe con `TestClient` (fixtures `app`, `client`, `login`, `HX` y `buzon` de `tests/conftest.py`).
 
 ### 4.3 Agregar un campo a un registro
@@ -263,7 +267,4 @@ o una restauración). No ejecuta las tareas horarias.
 - **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se
   usa (`q`, `execute`, `t.<tabla>.insert/update`); el resto de lo propio de SQLite está en
   `app/comun/db.py` (ver su docstring).
-- **Permisos en transición:** los roles ya existen (fase 2, paso 2), pero el código todavía pregunta
-  `usuario["es_admin"]` en unos 50 lugares; esa marca se calcula de Administración del sistema o
-  Dirección del Instituto. El paso 3 los reemplaza por acciones de `permisos.ACCIONES`.
 - El mayor archivo de rutas es `app/investigacion/rutas/productos/formulario.py` (unas 480 líneas).

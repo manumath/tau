@@ -1,6 +1,6 @@
 import re
 
-from app.comun import usuarios
+from app.comun import permisos, usuarios
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 
@@ -34,7 +34,7 @@ def test_crear_usuario_muestra_password_temporal_y_actualiza_tabla(admin, client
     password = _password_mostrada(r.text)
 
     u = usuarios.con_perfil(usuarios.por_email("carl@test.cl")["id"])
-    assert u["es_investigador"] and not u["es_admin"] and u["debe_cambiar_pass"]
+    assert u["es_investigador"] and not permisos.roles_vigentes(u["id"]) and u["debe_cambiar_pass"]
     assert get_db().q("SELECT accion FROM auditoria WHERE entidad_id = ? AND accion = 'crear_usuario'",
                       [u["id"]])
 

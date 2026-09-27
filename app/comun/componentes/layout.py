@@ -4,7 +4,7 @@ from fasthtml.common import A, Div, Form, Main, Span, Title
 from monsterui.all import (H3, Button, ButtonT, Container, ContainerT, DivHStacked, NavBar,
                            TextPresets, UkIcon)
 
-from app.comun import config
+from app.comun import config, permisos
 
 ID_MODAL = "modal"
 
@@ -21,9 +21,10 @@ def _menu_usuario(usuario: dict):
     if usuario["es_investigador"]:
         opciones.append(A(UkIcon("user-round", height=16, width=16), "Mi perfil", href="/perfil",
                           cls=item))
-    if usuario["es_admin"]:
+    if permisos.puede(usuario, "ver_auditoria"):
         opciones.append(A(UkIcon("scroll-text", height=16, width=16), "Auditoría", href="/admin/auditoria",
                           cls=item))
+    if permisos.puede(usuario, "gestionar_catalogos"):
         opciones.append(A(UkIcon("library", height=16, width=16), "Catálogo de revistas", href="/admin/revistas",
                           cls=item))
         opciones.append(A(UkIcon("route", height=16, width=16), "Líneas de investigación", href="/admin/lineas",
@@ -48,7 +49,7 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
     if usuario["es_investigador"]:
         enlaces += [_enlace("Actividades", "/actividades", "calendar-days", seccion == "actividades"),
                     _enlace("Productos", "/productos", "book-open", seccion == "productos")]
-    if usuario["es_investigador"] or usuario["es_admin"]:
+    if usuario["es_investigador"] or permisos.puede(usuario, "ver_todos_los_proyectos"):
         # Contador de propuestas por revisar: se carga aparte y se refresca solo (ver
         # /proyectos/pendientes/contador), para no consultar la BD en cada página.
         contador = Span(id="badge-pendientes", cls="hidden", hx_get="/proyectos/pendientes/contador",
@@ -57,13 +58,15 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
                                extra=contador))
     enlaces.append(_enlace("Investigadores", "/investigadores", "book-user",
                            seccion == "investigadores"))
-    if usuario["es_investigador"] or usuario["es_admin"]:
+    if (usuario["es_investigador"] or permisos.puede(usuario, "ver_informes_institucionales")
+            or permisos.puede(usuario, "ver_cv_ajeno")):
         enlaces.append(_enlace("Informes", "/informes", "file-text", seccion == "informes"))
-    if usuario["es_admin"]:
+    if permisos.puede(usuario, "decidir_propuestas"):
         contador = Span(id="badge-propuestas", cls="hidden", hx_get="/admin/propuestas/contador",
                         hx_trigger="load", hx_swap="outerHTML")
         enlaces.append(_enlace("Propuestas", "/admin/propuestas", "landmark", seccion == "propuestas",
                                extra=contador))
+    if permisos.puede(usuario, "ver_usuarios"):
         enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
     enlaces.append(_menu_usuario(usuario))
     marca = A(DivHStacked(UkIcon("sigma", height=26, width=26),

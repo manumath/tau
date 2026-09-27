@@ -40,7 +40,12 @@ def opciones_categoria(actual, vacia="Sin categoría"):
             *[Option(t, value=c, selected=c == actual) for c, t in perfiles.CATEGORIAS.items()]]
 
 
-def resumen_vinculo(u):
+def unidades_vinculo(auth) -> list[dict]:
+    """Unidades cuyos vínculos puede gestionar quien mira (IIMAT, CMAT o ambas)."""
+    return [x for x in unidades.con_vinculo() if permisos.puede(auth, "gestionar_vinculos", x["id"])]
+
+
+def resumen_vinculo(u, con_boton=True):
     """Categoría vigente, aviso si falta la fecha de ingreso y botón para abrir el historial."""
     v = vinculos.vigente(u["id"])
     if v:
@@ -53,7 +58,7 @@ def resumen_vinculo(u):
     return Div(texto, aviso,
                fh.Button(UkIcon("id-card", height=14, width=14), "Vínculo", type="button",
                          cls="inline-flex items-center gap-1 text-xs text-primary hover:underline ml-2",
-                         hx_get=f"{BASE}/{u["id"]}/vinculo", hx_target=f"#{ID_MODAL}"),
+                         hx_get=f"{BASE}/{u["id"]}/vinculo", hx_target=f"#{ID_MODAL}") if con_boton else "",
                cls="flex flex-wrap items-center")
 
 
@@ -62,7 +67,7 @@ CORTO = {"administracion_sistema": "Adm. del sistema", "direccion_instituto": "D
          "comite_acreditacion": "Comité de acreditación", "gestion_datos": "Gestión de datos"}
 
 
-def _etiquetas_perfil(u, gestiona_roles=False):
+def _etiquetas_perfil(u, gestiona_roles=False, gestiona_vinculos=False):
     etiquetas = []
     if u["es_investigador"]:
         etiquetas.append(Label("Investigador", cls=LabelT.secondary))
@@ -73,7 +78,7 @@ def _etiquetas_perfil(u, gestiona_roles=False):
                             cls="inline-flex items-center gap-1 text-xs text-primary hover:underline",
                             hx_get=f"{BASE}/{u['id']}/roles", hx_target=f"#{ID_MODAL}") if gestiona_roles else ""
     return Div(Div(*etiquetas, boton_roles, cls="flex gap-1 flex-wrap items-center"),
-               resumen_vinculo(u) if u["es_investigador"] else "",
+               resumen_vinculo(u, gestiona_vinculos) if u["es_investigador"] else "",
                cls="space-y-1")
 
 
@@ -91,9 +96,12 @@ def _estado(u, bloqueada=False):
                 cls="inline-flex items-center gap-1 text-green-600 text-sm")
 
 
-def fila(u, yo_id: int):
+def fila(u, auth: dict):
+    """Fila de una persona. Muestra solo las acciones que quien mira (`auth`) puede hacer."""
     uid = u["id"]
+    yo_id = auth["id"]
     es_yo = uid == yo_id
+    cuentas = permisos.puede(auth, "administrar_cuentas")
     bloqueada = usuarios.bloqueado(u["email"])
     boton_desbloquear = Button(
         UkIcon("lock-open", height=18, width=18), cls=(ButtonT.ghost, ButtonT.icon),
@@ -101,7 +109,8 @@ def fila(u, yo_id: int):
         hx_post=f"/admin/usuarios/{uid}/desbloquear", hx_target=f"#usuario-{uid}",
         hx_swap="outerHTML") if bloqueada else ""
     # Si tiene vínculo vigente, desactivar abre una ventana que pregunta si también termina.
-    con_vinculo = u["activo"] and u["es_investigador"] and vinculos.vigente(uid)
+    con_vinculo = (u["activo"] and u["es_investigador"] and vinculos.vigente(uid)
+                   and permisos.puede(auth, "gestionar_vinculos", unidades.instituto()))
     boton_activo = Button(
         UkIcon("user-x" if u["activo"] else "user-check", height=18, width=18),
         cls=(ButtonT.ghost, ButtonT.icon),
@@ -126,16 +135,16 @@ def fila(u, yo_id: int):
         Td(Div(f"{u['apellidos']}, {u['nombres']}", cls="font-medium"),
            Div("(usted)", cls=TextPresets.muted_sm) if es_yo else ""),
         Td(u["email"]),
-        Td(_etiquetas_perfil(u, permisos.puede({"id": yo_id}, "asignar_roles"))),
+        Td(_etiquetas_perfil(u, permisos.puede(auth, "asignar_roles"), bool(unidades_vinculo(auth)))),
         Td(_estado(u, bloqueada)),
         Td(fecha_local(u["ultimo_acceso"]),
            cls=(TextPresets.muted_sm, "whitespace-nowrap hidden lg:table-cell")),
-        Td(Div(boton_desbloquear, boton_activo, boton_reset, cls="flex gap-1 justify-end")),
+        Td(Div(boton_desbloquear, boton_activo, boton_reset, cls="flex gap-1 justify-end") if cuentas else ""),
         id=f"usuario-{uid}")
 
 
-def cuerpo_tabla(lista, yo_id, oob=False):
-    filas = [fila(u, yo_id) for u in lista] or [
+def cuerpo_tabla(lista, auth, oob=False):
+    filas = [fila(u, auth) for u in lista] or [
         Tr(Td("No hay usuarios que coincidan con la búsqueda.", colspan=6,
               cls=(TextPresets.muted_sm, "text-center py-6")))]
     return Tbody(*filas, id=ID_TBODY, hx_swap_oob="true" if oob else None)
@@ -209,6 +218,7 @@ def enviar_invitacion(u):
 
 @rt(BASE)
 def get(auth, q: str = ""):
+    cuentas = permisos.puede(auth, "administrar_cuentas")
     buscador = Input(
         type="search", name="q", value=q, placeholder="Buscar por nombre o correo…",
         hx_get="/admin/usuarios/filas", hx_target=f"#{ID_TBODY}", hx_swap="outerHTML",
@@ -219,12 +229,13 @@ def get(auth, q: str = ""):
         Div(Div(H2("Usuarios"),
                 P("Cuentas con acceso al portal.", cls=TextPresets.muted_sm)),
             Div(Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
-                       hx_get="/admin/usuarios/importar", hx_target=f"#{ID_MODAL}"),
+                       hx_get="/admin/usuarios/importar", hx_target=f"#{ID_MODAL}") if cuentas else "",
                 Button(UkIcon("history", height=16, width=16), "Importar historial", cls=ButtonT.default,
                        title="Periodos de vínculo y categorías desde Recursos Humanos",
-                       hx_get="/admin/usuarios/historial", hx_target=f"#{ID_MODAL}"),
+                       hx_get="/admin/usuarios/historial", hx_target=f"#{ID_MODAL}")
+                if unidades_vinculo(auth) else "",
                 Button(UkIcon("user-plus", height=16, width=16), "Nuevo usuario", cls=ButtonT.primary,
-                       hx_get="/admin/usuarios/nuevo", hx_target=f"#{ID_MODAL}"),
+                       hx_get="/admin/usuarios/nuevo", hx_target=f"#{ID_MODAL}") if cuentas else "",
                 cls="flex gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         Div(buscador,
@@ -233,7 +244,7 @@ def get(auth, q: str = ""):
             cls="flex items-center gap-2 mb-4"),
         Div(Table(Thead(Tr(Th("Nombre"), Th("Correo"), Th("Perfil"), Th("Estado"),
                            Th("Último acceso", cls="hidden lg:table-cell"), Th(""))),
-                  cuerpo_tabla(usuarios.listar(q), auth["id"]),
+                  cuerpo_tabla(usuarios.listar(q), auth),
                   cls="uk-table-middle uk-table-divider uk-table-hover"),
             cls="overflow-x-auto"),
         usuario=auth, seccion="usuarios")
@@ -241,7 +252,7 @@ def get(auth, q: str = ""):
 
 @rt(f"{BASE}/filas")
 def get(auth, q: str = ""):
-    return cuerpo_tabla(usuarios.listar(q), auth["id"])
+    return cuerpo_tabla(usuarios.listar(q), auth)
 
 
 @rt(f"{BASE}/nuevo")
@@ -274,7 +285,7 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
     if errores:
         return modal("Nuevo usuario", form_usuario({**datos, "invitar": invitar}, errores))
 
-    tabla = Template(cuerpo_tabla(usuarios.listar(), auth["id"], oob=True))
+    tabla = Template(cuerpo_tabla(usuarios.listar(), auth, oob=True))
     if invitar:
         # Contraseña aleatoria que nadie conoce: la persona define la suya con el enlace.
         u = usuarios.crear(password=secrets.token_urlsafe(24), debe_cambiar_pass=False, **datos)
@@ -331,8 +342,10 @@ def get(uid: int, auth):
 def post(uid: int, auth, termina: str = "", fecha: str = ""):
     u = usuarios.con_perfil(uid)
     if not u or uid == auth["id"]:
-        return fila(u, auth["id"]) if u else ""
+        return fila(u, auth) if u else ""
     if u["activo"] and termina == "si":
+        if not permisos.puede(auth, "gestionar_vinculos", unidades.instituto()):
+            return SIN_PERMISO_UNIDAD
         errores = vinculos.terminar(uid, fecha)
         if errores:
             return modal_desactivar(u, errores, termina, fecha), HtmxResponseHeaders(
@@ -340,7 +353,7 @@ def post(uid: int, auth, termina: str = "", fecha: str = ""):
         auditar(auth["id"], "terminar_vinculo", "investigador", uid, fecha)
     usuarios.set_activo(uid, not u["activo"])
     auditar(auth["id"], "desactivar_usuario" if u["activo"] else "activar_usuario", "usuario", uid)
-    return fila(usuarios.con_perfil(uid), auth["id"]), Div(id=ID_MODAL, hx_swap_oob="true")
+    return fila(usuarios.con_perfil(uid), auth), Div(id=ID_MODAL, hx_swap_oob="true")
 
 
 @rt(BASE + "/{uid}/categoria")
@@ -350,11 +363,13 @@ def post(uid: int, auth, sess, categoria: str = ""):
         return ""
     if categoria and categoria not in perfiles.CATEGORIAS:
         return Response("Categoría no válida", status_code=400)
+    if not permisos.puede(auth, "gestionar_vinculos", unidades.instituto()):
+        return SIN_PERMISO_UNIDAD
     perfiles.cambiar_categoria(uid, categoria or None)
     auditar(auth["id"], "cambiar_categoria", "investigador", uid,
             f"{perfiles.categoria_texto(u['categoria'])} → {perfiles.categoria_texto(categoria)}")
     add_toast(sess, f"{u['nombres']} {u['apellidos']}: {perfiles.categoria_texto(categoria)}.", "success")
-    return fila(usuarios.con_perfil(uid), auth["id"])
+    return fila(usuarios.con_perfil(uid), auth)
 
 
 @rt(BASE + "/{uid}/desbloquear")
@@ -365,7 +380,7 @@ def post(uid: int, auth, sess):
     usuarios.desbloquear(u["email"])
     auditar(auth["id"], "desbloquear_usuario", "usuario", uid)
     add_toast(sess, f"Cuenta de {u['nombres']} {u['apellidos']} desbloqueada. Su contraseña no cambió.", "success")
-    return fila(u, auth["id"])
+    return fila(u, auth)
 
 
 @rt(BASE + "/{uid}/restablecer")
@@ -381,7 +396,7 @@ def post(uid: int, auth):
     return (modal_credenciales("Contraseña restablecida", u, password,
                                "La contraseña anterior dejó de funcionar. El usuario deberá "
                                "definir una nueva al ingresar."),
-            Template(fila(u, auth["id"])(hx_swap_oob="true")))
+            Template(fila(u, auth)(hx_swap_oob="true")))
 
 
 # --- Carga masiva desde CSV ------------------------------------------------------------------
@@ -392,7 +407,8 @@ def _form_archivo(errores=()):
         P("Suba un archivo CSV (se puede exportar desde Excel) con una fila por persona y las columnas ",
           Code("email"), ", ", Code("nombres"), ", ", Code("apellidos"), " y, si quiere, ", Code("categoria"),
           " (titular, contratado, interino, invitado o externo), ", Code("investigador"),
-          " y ", Code("admin"), " (sí/no). Primero verá una vista previa: no se crea nada hasta confirmar.",
+          " y ", Code("admin"), " (sí/no: asigna Administración del sistema y Dirección del Instituto; otros roles, "
+          "después en «Roles»). Primero verá una vista previa: no se crea nada hasta confirmar.",
           cls="text-sm"),
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/plantilla",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
@@ -423,7 +439,7 @@ def _etiqueta_estado(f):
 
 
 @rt(f"{BASE}/importar/revisar")
-async def post(archivo: UploadFile = None):
+async def post(auth, archivo: UploadFile = None):
     if archivo is None or not archivo.filename:
         return modal("Importar cuentas desde CSV", _form_archivo(["Seleccione un archivo."]), ancho="max-w-2xl")
     contenido = await archivo.read(importar_usuarios.MAX_BYTES + 1)
@@ -470,7 +486,7 @@ def post(auth, sess, contenido: str = "", invitar: bool = False):
         return modal("Importar cuentas desde CSV", _form_archivo(["No se pudo leer el archivo. Súbalo otra vez."]))
     filas, _ = importar_usuarios.leer(datos)
     creadas = importar_usuarios.crear(filas, invitar, auth["id"], enviar_invitacion)
-    tabla = Template(cuerpo_tabla(usuarios.listar(), auth["id"], oob=True))
+    tabla = Template(cuerpo_tabla(usuarios.listar(), auth, oob=True))
     add_toast(sess, f"{len(creadas)} cuenta(s) creada(s).", "success")
     if invitar or not creadas:
         cuerpo = P(f"Se crearon {len(creadas)} cuenta(s)" + (" y se enviaron las invitaciones por correo (válidas 3 días)."
@@ -552,7 +568,7 @@ def modal_roles(u, auth, errores=(), datos=None):
         Div(tabla, cls="overflow-x-auto mb-4"),
         formulario,
         Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
-        Template(fila(usuarios.con_perfil(uid), auth["id"])(hx_swap_oob="true")),
+        Template(fila(usuarios.con_perfil(uid), auth)(hx_swap_oob="true")),
         ancho="max-w-4xl")
 
 
@@ -616,21 +632,23 @@ def _campos_periodo(d, con_hasta=True, con_nota=True, sufijo=""):
         cls="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end")
 
 
-def _selector_unidad(uid, actual):
-    """Pestañas IIMAT / CMAT: el historial y las acciones son de la unidad elegida."""
+def _selector_unidad(uid, actual, permitidas):
+    """Pestañas IIMAT / CMAT (las que quien mira puede gestionar): el historial y las acciones son
+    de la unidad elegida."""
     return Div(*[Button(f"{x['nombre']} ({x['sigla']})", type="button",
                         cls=(ButtonT.primary if x["id"] == actual else ButtonT.default, ButtonT.sm),
                         hx_get=f"{BASE}/{uid}/vinculo?unidad={x['id']}", hx_target=f"#{ID_MODAL}",
                         aria_pressed="true" if x["id"] == actual else "false")
-                 for x in unidades.con_vinculo()],
+                 for x in permitidas],
                cls="flex flex-wrap gap-2 mb-3", role="group", aria_label="Unidad")
 
 
-def modal_vinculo(u, errores=(), editar=None, datos=None, yo_id=0, unidad=None):
+def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
     """Historial de periodos con una unidad y acciones: cambio de categoría, término, periodo
-    histórico, corrección."""
+    histórico, corrección. `unidad` debe ser una que `auth` pueda gestionar."""
     uid = u["id"]
-    unidad = unidad or unidades.instituto()
+    permitidas = unidades_vinculo(auth)
+    unidad = unidad or permitidas[0]["id"]
     datos = datos or {}
     periodos = vinculos.listar(uid, unidad)
     vig = vinculos.vigente(uid, unidad=unidad)
@@ -687,11 +705,11 @@ def modal_vinculo(u, errores=(), editar=None, datos=None, yo_id=0, unidad=None):
           "qué producción cuenta en los informes de investigación y con qué categoría; el de la Carrera, la "
           "docencia. Para cargar el historial de muchas personas, use «Importar historial» en el listado.",
           cls=(TextPresets.muted_sm, "mb-3")),
-        _selector_unidad(uid, unidad),
+        _selector_unidad(uid, unidad, permitidas),
         Div(tabla, cls="overflow-x-auto mb-4"),
         Div(*acciones, cls="space-y-2"),
         Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
-        Template(fila(usuarios.con_perfil(uid), yo_id)(hx_swap_oob="true")),
+        Template(fila(usuarios.con_perfil(uid), auth)(hx_swap_oob="true")),
         ancho="max-w-4xl")
 
 
@@ -700,10 +718,16 @@ def _investigador(uid):
     return u if u and u["es_investigador"] else None
 
 
-def _unidad_valida(valor) -> int | None:
-    """Id de una unidad con vínculo (IIMAT o CMAT); None si no lo es (se usa el Instituto)."""
-    ids = {x["id"] for x in unidades.con_vinculo()}
-    return int(valor) if str(valor).isdigit() and int(valor) in ids else None
+def _unidad_valida(valor, auth) -> int | None:
+    """Unidad pedida, si quien pide puede gestionar sus vínculos; sin unidad, la primera que puede.
+    None si pide una que no puede (la ruta responde 403)."""
+    permitidas = [x["id"] for x in unidades_vinculo(auth)]
+    if not str(valor).isdigit():
+        return permitidas[0] if permitidas else None
+    return int(valor) if int(valor) in permitidas else None
+
+
+SIN_PERMISO_UNIDAD = Response("No puede gestionar los vínculos de esa unidad.", status_code=403)
 
 
 def _sigla(unidad):
@@ -713,8 +737,10 @@ def _sigla(unidad):
 @rt(BASE + "/{uid}/vinculo")
 def get(auth, uid: int, unidad: str = ""):
     u = _investigador(uid)
-    return modal_vinculo(u, yo_id=auth["id"], unidad=_unidad_valida(unidad)) if u \
-        else Response("No encontrado", status_code=404)
+    if not u:
+        return Response("No encontrado", status_code=404)
+    un = _unidad_valida(unidad, auth)
+    return modal_vinculo(u, auth, unidad=un) if un else SIN_PERMISO_UNIDAD
 
 
 @rt(BASE + "/{uid}/vinculo/cambio")
@@ -722,11 +748,13 @@ def post(auth, uid: int, categoria: str = "", desde: str = "", jornada: str = ""
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    un = _unidad_valida(unidad)
+    un = _unidad_valida(unidad, auth)
+    if un is None:
+        return SIN_PERMISO_UNIDAD
     errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"], unidad=un)
     if not errores:
         auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{_sigla(un)}: {categoria} desde {desde}")
-    return modal_vinculo(u, errores, yo_id=auth["id"], unidad=un,
+    return modal_vinculo(u, auth, errores, unidad=un,
                          datos={"categoria": categoria, "desde": desde, "jornada": jornada} if errores else None)
 
 
@@ -735,11 +763,13 @@ def post(auth, uid: int, fecha: str = "", unidad: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    un = _unidad_valida(unidad)
+    un = _unidad_valida(unidad, auth)
+    if un is None:
+        return SIN_PERMISO_UNIDAD
     errores = vinculos.terminar(uid, fecha, unidad=un)
     if not errores:
         auditar(auth["id"], "terminar_vinculo", "investigador", uid, f"{_sigla(un)}: {fecha}")
-    return modal_vinculo(u, errores, yo_id=auth["id"], unidad=un)
+    return modal_vinculo(u, auth, errores, unidad=un)
 
 
 @rt(BASE + "/{uid}/vinculo/periodo")
@@ -748,49 +778,61 @@ def post(auth, uid: int, categoria: str = "", desde: str = "", hasta: str = "", 
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    un = _unidad_valida(unidad)
+    un = _unidad_valida(unidad, auth)
+    if un is None:
+        return SIN_PERMISO_UNIDAD
     errores = vinculos.agregar(uid, categoria, desde or None, hasta or None, jornada or None, nota, auth["id"],
                                unidad=un)
     if not errores:
         auditar(auth["id"], "agregar_vinculo", "investigador", uid,
                 f"{_sigla(un)}: {categoria} {desde or '?'} a {hasta or 'hoy'}")
     datos = dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota) if errores else None
-    return modal_vinculo(u, errores, datos=datos, yo_id=auth["id"], unidad=un)
+    return modal_vinculo(u, auth, errores, datos=datos, unidad=un)
+
+
+def _periodo_o_error(vid, auth):
+    """(periodo, None) si existe y quien pide puede gestionar su unidad; (None, respuesta) si no."""
+    v = vinculos.obtener(vid)
+    if not v:
+        return None, Response("No encontrado", status_code=404)
+    if not permisos.puede(auth, "gestionar_vinculos", v["unidad_id"]):
+        return None, SIN_PERMISO_UNIDAD
+    return v, None
 
 
 @rt(BASE + "/vinculo/{vid}/editar")
 def get(auth, vid: int):
-    v = vinculos.obtener(vid)
-    if not v:
-        return Response("No encontrado", status_code=404)
-    return modal_vinculo(_investigador(v["usuario_id"]), editar=vid, yo_id=auth["id"], unidad=v["unidad_id"])
+    v, error = _periodo_o_error(vid, auth)
+    if error:
+        return error
+    return modal_vinculo(_investigador(v["usuario_id"]), auth, editar=vid, unidad=v["unidad_id"])
 
 
 @rt(BASE + "/vinculo/{vid}")
 def put(auth, vid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "", nota: str = ""):
-    v = vinculos.obtener(vid)
-    if not v:
-        return Response("No encontrado", status_code=404)
+    v, error = _periodo_o_error(vid, auth)
+    if error:
+        return error
     errores = vinculos.editar(vid, categoria, desde or None, hasta or None, jornada or None, nota)
     if not errores:
         auditar(auth["id"], "corregir_vinculo", "investigador", v["usuario_id"],
                 f"{categoria} {desde or '?'} a {hasta or 'hoy'}")
     u = _investigador(v["usuario_id"])
     if errores:
-        return modal_vinculo(u, errores, editar=vid, yo_id=auth["id"], unidad=v["unidad_id"],
+        return modal_vinculo(u, auth, errores, editar=vid, unidad=v["unidad_id"],
                              datos=dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota))
-    return modal_vinculo(u, yo_id=auth["id"], unidad=v["unidad_id"])
+    return modal_vinculo(u, auth, unidad=v["unidad_id"])
 
 
 @rt(BASE + "/vinculo/{vid}")
 def delete(auth, vid: int):
-    v = vinculos.obtener(vid)
-    if not v:
-        return Response("No encontrado", status_code=404)
+    v, error = _periodo_o_error(vid, auth)
+    if error:
+        return error
     vinculos.eliminar(vid)
     auditar(auth["id"], "eliminar_vinculo", "investigador", v["usuario_id"],
             f"{_sigla(v['unidad_id'])}: {vinculos.texto_periodo(v)}")
-    return modal_vinculo(_investigador(v["usuario_id"]), yo_id=auth["id"], unidad=v["unidad_id"])
+    return modal_vinculo(_investigador(v["usuario_id"]), auth, unidad=v["unidad_id"])
 
 
 # --- Historial de vínculos desde Recursos Humanos (CSV) -----------------------------------------------------
@@ -813,6 +855,15 @@ def _form_historial(errores=()):
         hx_target=f"#{ID_MODAL}", cls="space-y-4")
 
 
+def _leer_historial(contenido, auth):
+    """Lee el CSV y marca con error las filas de unidades cuyos vínculos quien importa no gestiona."""
+    personas, errores = importar_vinculos.leer(contenido)
+    for p in personas:
+        if p.get("unidad_id") and not permisos.puede(auth, "gestionar_vinculos", p["unidad_id"]):
+            p["errores"].insert(0, f"No puede gestionar los vínculos de {p['unidad']}.")
+    return personas, errores
+
+
 @rt(f"{BASE}/historial")
 def get():
     return modal("Importar historial de vínculos", _form_historial(), ancho="max-w-2xl")
@@ -825,11 +876,11 @@ def get():
 
 
 @rt(f"{BASE}/historial/revisar")
-async def post(archivo: UploadFile = None):
+async def post(auth, archivo: UploadFile = None):
     if archivo is None or not archivo.filename:
         return modal("Importar historial de vínculos", _form_historial(["Seleccione un archivo."]), ancho="max-w-2xl")
     contenido = await archivo.read(importar_vinculos.MAX_BYTES + 1)
-    personas, errores = importar_vinculos.leer(contenido)
+    personas, errores = _leer_historial(contenido, auth)
     if not personas:
         return modal("Importar historial de vínculos", _form_historial(errores), ancho="max-w-2xl")
     listas = [p for p in personas if not p["errores"]]
@@ -865,10 +916,10 @@ def post(auth, sess, contenido: str = ""):
         datos = base64.b64decode(contenido, validate=True)
     except ValueError:
         return modal("Importar historial de vínculos", _form_historial(["No se pudo leer el archivo. Súbalo otra vez."]))
-    personas, _ = importar_vinculos.leer(datos)
+    personas, _ = _leer_historial(datos, auth)
     n = importar_vinculos.aplicar(personas, auth["id"])
     add_toast(sess, f"Historial actualizado para {n} persona(s).", "success")
     return (modal("Historial importado", P(f"Se actualizó el historial de {n} persona(s)."),
                   Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
                       cls="flex justify-end mt-4")),
-            Template(cuerpo_tabla(usuarios.listar(), auth["id"], oob=True)))
+            Template(cuerpo_tabla(usuarios.listar(), auth, oob=True)))

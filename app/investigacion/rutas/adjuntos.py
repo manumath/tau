@@ -4,6 +4,7 @@ from urllib.parse import quote
 
 from fasthtml.common import APIRouter, FileResponse, Response, UploadFile
 
+from app.comun import permisos
 from app.investigacion import actividades, adjuntos, productos
 from app.comun.componentes.registros import seccion_adjuntos
 from app.comun.db import auditar
@@ -42,7 +43,7 @@ async def post(auth, entidad: str, entidad_id: int, archivo: UploadFile = None):
 @rt("/adjuntos/{adj_id}")
 def get(auth, adj_id: int):
     adj = adjuntos.obtener(adj_id)
-    if not adj or not (auth["es_admin"] or _puede_editar(auth, adj["entidad"], adj["entidad_id"])):
+    if not adj or not (permisos.puede(auth, "ver_evidencias") or _puede_editar(auth, adj["entidad"], adj["entidad_id"])):
         return Response("No encontrado", status_code=404)
     # Los PDF e imágenes se muestran en el navegador; el nombre original se conserva al guardar.
     return FileResponse(adjuntos.ruta(adj), media_type=adj["mime"], headers={

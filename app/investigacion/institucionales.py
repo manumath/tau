@@ -20,7 +20,7 @@ import time
 from datetime import date
 
 from app.investigacion import avisos, lineas, perfiles, proyectos
-from app.comun import config
+from app.comun import config, permisos
 from app.comun.db import AHORA, get_db, transaccion, vigente_hasta
 
 ESTADOS = {"borrador": "Borrador", "enviada": "Enviada", "aceptada": "Aceptada",
@@ -138,7 +138,7 @@ def puede_proponer(usuario: dict) -> bool:
 
 
 def puede_ver(prop: dict, usuario: dict) -> bool:
-    return (usuario["es_admin"] or prop["proponente_id"] == usuario["id"]
+    return (permisos.puede(usuario, "ver_propuestas") or prop["proponente_id"] == usuario["id"]
             or proyectos.puede_ver(prop["proyecto_id"], usuario))
 
 
@@ -424,8 +424,8 @@ DECISIONES = {"aceptada": "Aceptar", "condicional": "Aceptar con condiciones", "
 
 
 def decidir(prop: dict, decision: str, comentario: str, admin: dict) -> str | None:
-    if not admin["es_admin"]:
-        return "Solo la administración decide las propuestas."
+    if not permisos.puede(admin, "decidir_propuestas"):
+        return "Solo la Dirección del Instituto decide las propuestas."
     if decision not in DECISIONES:
         return "Decisión no válida."
     if prop["estado"] != "enviada":

@@ -10,10 +10,8 @@
 - Los roles derivados (investigador, docente, responsable de un proyecto) no se asignan: se
   deducen de los datos, como antes.
 
-Transición (fase 2, pasos 2 y 3): el código que aún pregunta `usuario["es_admin"]` recibe
-`es_admin` calculado a partir de Administración del sistema o Dirección del Instituto, los dos
-roles que reciben quienes antes eran administradores. El paso 3 reemplaza esas preguntas por
-acciones de ACCIONES.
+Las rutas /admin se autorizan con REGLAS_ADMIN (app/comun/auth.py); el resto, con `puede()` en cada
+ruta o regla de negocio. No hay otra marca de administración.
 """
 from datetime import date, timedelta
 
@@ -41,32 +39,32 @@ DESCRIPCIONES = {
     "gestion_datos": "Carga vínculos de RR. HH., estudiantes e importaciones de su unidad.",
 }
 
-# acción → roles que la permiten (tabla inicial; el paso 3 la completa al reemplazar es_admin).
+# acción → roles que la permiten. Las acciones con unidad se consultan con ella (p. ej., vínculos
+# de la Carrera: puede(u, "gestionar_vinculos", CMAT)).
 ACCIONES = {
+    # Cuentas y sistema
     "asignar_roles": {"administracion_sistema"},
     "administrar_cuentas": {"administracion_sistema"},
     "ver_auditoria": {"administracion_sistema"},
     "ver_datos_personales": {"administracion_sistema"},
+    "ver_usuarios": {"administracion_sistema", "direccion_instituto", "direccion_carrera", "gestion_datos"},
+    # Datos de personas (por unidad)
     "gestionar_vinculos": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
+    "gestionar_estudiantes": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
+    "gestionar_personas_externas": {"direccion_instituto", "gestion_datos"},
+    # Investigación (Instituto)
     "decidir_propuestas": {"direccion_instituto"},
     "gestionar_convocatoria": {"direccion_instituto"},
     "gestionar_catalogos": {"direccion_instituto"},
     "reasignar_responsable": {"direccion_instituto"},
     "actualizar_citas": {"direccion_instituto"},
-    "gestionar_estudiantes": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
-    "ver_informes_institucionales": {"direccion_instituto", "direccion_carrera", "comite_acreditacion"},
+    # Lectura
     "ver_todos_los_proyectos": {"direccion_instituto", "comite_acreditacion"},
+    "ver_propuestas": {"direccion_instituto", "comite_acreditacion"},
+    "ver_evidencias": {"direccion_instituto", "comite_acreditacion"},
+    "ver_cv_ajeno": {"direccion_instituto", "direccion_carrera", "comite_acreditacion"},
+    "ver_informes_institucionales": {"direccion_instituto", "direccion_carrera", "comite_acreditacion"},
 }
-
-# Transición: estos roles equivalen a la antigua marca de administración.
-ROLES_ADMIN_TRANSITORIO = ("administracion_sistema", "direccion_instituto")
-
-
-def sql_es_admin(alias: str = "u") -> str:
-    """Expresión SQL (0/1) de la marca transitoria es_admin para la fila `alias` de usuario."""
-    roles = ", ".join(f"'{r}'" for r in ROLES_ADMIN_TRANSITORIO)
-    return (f"EXISTS (SELECT 1 FROM rol_asignado ra WHERE ra.usuario_id = {alias}.id AND ra.rol IN ({roles}) "
-            f"AND ra.desde <= {HOY} AND (ra.hasta IS NULL OR ra.hasta >= {HOY}))")
 
 
 def nombre(rol: str) -> str:

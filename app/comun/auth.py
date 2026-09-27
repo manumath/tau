@@ -1,4 +1,6 @@
 """Autenticación: Beforeware de sesión, login, logout y cambio de contraseña."""
+import re
+
 from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon)
@@ -19,6 +21,29 @@ RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico",
 RUTAS_CAMBIO_PASS = {"/cambiar-password", "/logout"}
 
 
+# Rutas /admin: la primera regla cuyo patrón coincide con la ruta completa decide qué acción se
+# exige (basta una de las indicadas). Lo que no está aquí se deniega. Las acciones por unidad
+# (vínculos del IIMAT o de la CMAT) se verifican además dentro de la ruta.
+REGLAS_ADMIN = [
+    (r"/admin/usuarios/(\d+/roles|roles/\d+/terminar)", ("asignar_roles",)),
+    (r"/admin/usuarios/(\d+/vinculo(/\w+)?|\d+/categoria|vinculo/\d+(/editar)?|historial(/\w+)?)",
+     ("gestionar_vinculos",)),
+    (r"/admin/usuarios(/lista|/filas)?", ("administrar_cuentas", "gestionar_vinculos")),
+    (r"/admin/usuarios/.+", ("administrar_cuentas",)),
+    (r"/admin/auditoria(/.+)?", ("ver_auditoria",)),
+    (r"/admin/(revistas|lineas)(/.+)?", ("gestionar_catalogos",)),
+    (r"/admin/propuestas/\d+/plazo(/.+)?", ("gestionar_convocatoria",)),
+    (r"/admin/propuestas(/.+)?", ("decidir_propuestas",)),
+]
+
+
+def acceso_admin(usuario: dict, ruta: str) -> bool:
+    for patron, acciones in REGLAS_ADMIN:
+        if re.fullmatch(patron, ruta):
+            return any(permisos.puede(usuario, a) for a in acciones)
+    return False
+
+
 def _cargar_usuario(req, sess):
     """Carga el usuario de la sesión en `req.scope['auth']` o redirige al login.
 
@@ -34,7 +59,7 @@ def _cargar_usuario(req, sess):
     ruta = req.url.path
     if usuario["debe_cambiar_pass"] and ruta not in RUTAS_CAMBIO_PASS:
         return Redirect("/cambiar-password")
-    if ruta.startswith("/admin") and not usuario["es_admin"]:
+    if ruta.startswith("/admin") and not acceso_admin(usuario, ruta):
         return Response("No autorizado", status_code=403)
     if ruta.startswith("/perfil") and not usuario["es_investigador"]:
         return Response("Esta cuenta no tiene perfil de investigador.", status_code=403)

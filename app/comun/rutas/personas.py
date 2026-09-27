@@ -4,7 +4,7 @@ from fasthtml.common import APIRouter, Div, HtmxResponseHeaders, Input, P, Respo
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Table, Tbody, Td, TextPresets, Th, UkIcon
 
-from app.comun import paises, personas
+from app.comun import paises, permisos, personas
 from app.investigacion.componentes import personas as ui
 from app.comun.componentes.layout import pagina
 from app.comun.db import auditar
@@ -58,7 +58,7 @@ def post(auth, campo: str = "autor", ext_nombres: str = "", ext_apellidos: str =
 # --- Coautores externos: completar país e institución ------------------------------------------------------------
 
 def _permitido(auth):
-    return auth["es_investigador"] or auth["es_admin"]
+    return auth["es_investigador"] or permisos.puede(auth, "gestionar_personas_externas")
 
 
 def fila_externo(e):

@@ -3,7 +3,7 @@ import base64
 
 import pytest
 
-from app.comun import importar_usuarios, usuarios
+from app.comun import importar_usuarios, permisos, usuarios
 from app.investigacion import perfiles
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
@@ -38,7 +38,7 @@ def test_alta_de_solo_admin_no_lleva_categoria(admin):
                                                     "email": "ada@test.cl", "es_admin": "on",
                                                     "categoria": "titular"})
     u = usuarios.con_perfil(_uid("ada@test.cl"))
-    assert u["es_admin"] and not u["es_investigador"] and u["categoria"] is None
+    assert permisos.tiene_rol(u, "administracion_sistema") and not u["es_investigador"] and u["categoria"] is None
 
 
 def test_cambiar_categoria_desde_el_listado(admin):

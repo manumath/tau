@@ -11,7 +11,7 @@ from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInpu
                            TextPresets, UkIcon)
 
 from app.investigacion import actividades, lineas, productos, proyectos
-from app.comun import personas
+from app.comun import permisos, personas
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes import personas as selector_personas
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
@@ -266,7 +266,7 @@ def ficha(a, auth):
              P(a["descripcion"], cls="whitespace-pre-line")) if a["descripcion"] else "",
         Card(H3("Archivos adjuntos", cls="text-base font-semibold mb-2"),
              P("Certificados de participación, afiches, programas…", cls=(TextPresets.muted_sm, "mb-2")),
-             seccion_adjuntos("actividad", a["id"], editable)) if editable or auth["es_admin"] else "",
+             seccion_adjuntos("actividad", a["id"], editable)) if editable or permisos.puede(auth, "ver_evidencias") else "",
         id="ficha-actividad", hx_get=f"/actividades/{a['id']}/ficha",
         hx_trigger=f"{EVENTO} from:body", hx_swap="outerHTML", cls="space-y-6")
 

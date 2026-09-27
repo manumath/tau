@@ -954,3 +954,11 @@ Estimación: 3 a 4 semanas (sin el paso 5).
   anula). Pantalla «Roles» en Usuarios, solo para Administración del sistema, con la dirección que
   lo pidió. `es_admin` se calcula de los roles mientras el paso 3 reemplaza sus ~50 usos. Los
   avisos de propuestas van a la Dirección del Instituto. Matriz de permisos en `tests/test_roles.py`.
+- Paso 3 hecho (27-sep-2026): ninguna comprobación usa ya `es_admin` (desaparece también el cálculo
+  transitorio). Las 64 rutas `/admin` se autorizan con `REGLAS_ADMIN` (lo no previsto se deniega;
+  una prueba verifica que cada ruta tenga regla). Dentro, `puede()` con acciones nuevas:
+  `ver_usuarios`, `gestionar_personas_externas`, `ver_propuestas`, `ver_evidencias`,
+  `ver_cv_ajeno`. Vínculos por unidad (pantalla, periodos, importación, desactivar con término).
+  Menú y botones según el rol. Memoria y anexo son informes del IIMAT: los ven la Dirección del
+  Instituto y el Comité, no la Dirección de Carrera ni Administración del sistema. Matriz por rol
+  en `tests/test_permisos_rutas.py`.

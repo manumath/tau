@@ -18,7 +18,7 @@ Flujo de vínculos (tablas actividad_proyecto y producto_proyecto):
 from datetime import date
 
 from app.investigacion import avisos
-from app.comun import personas
+from app.comun import permisos, personas
 from app.comun.db import AHORA, DISTINTO_DE, get_db, sin_tildes, transaccion, vigente_hasta
 
 TIPOS = {"individual": "Individual", "institucional": "Institucional"}
@@ -160,11 +160,11 @@ def error_categoria(pid: int, uid: int | None, rol: str) -> str | None:
     return None
 
 
-def agregar_participante(pid: int, ref: str, rol: str, es_admin: bool) -> str | None:
+def agregar_participante(pid: int, ref: str, rol: str, forzar: bool = False) -> str | None:
     """Devuelve un mensaje de error o None si se agregó."""
     if rol not in ROLES:
         return "Rol no válido."
-    if rol == "responsable" and not es_admin:
+    if rol == "responsable" and not forzar:
         return "Solo la administración puede asignar responsables."
     if not personas.parsear_ref(ref) or not personas.por_ref(ref):
         return "Persona no válida."
@@ -182,11 +182,11 @@ def agregar_participante(pid: int, ref: str, rol: str, es_admin: bool) -> str | 
     return None
 
 
-def cambiar_rol(pid: int, part_id: int, rol: str, es_admin: bool) -> str | None:
+def cambiar_rol(pid: int, part_id: int, rol: str, forzar: bool = False) -> str | None:
     p = participante(pid, part_id)
     if not p or rol not in ROLES:
         return "Datos no válidos."
-    if (rol == "responsable" or p["rol"] == "responsable") and not es_admin:
+    if (rol == "responsable" or p["rol"] == "responsable") and not forzar:
         return "Solo la administración puede asignar o quitar responsables."
     if p["rol"] == "responsable" and rol != "responsable" and _n_responsables(pid, part_id) == 0:
         return "El proyecto debe tener al menos un responsable. Asigne otro antes."
@@ -198,12 +198,12 @@ def cambiar_rol(pid: int, part_id: int, rol: str, es_admin: bool) -> str | None:
     return None
 
 
-def dar_de_baja(pid: int, part_id: int, es_admin: bool) -> str | None:
+def dar_de_baja(pid: int, part_id: int, forzar: bool = False) -> str | None:
     """Marca la fecha de término. Sus registros ya aprobados siguen en el proyecto."""
     p = participante(pid, part_id)
     if not p:
         return "Participante no válido."
-    if p["rol"] == "responsable" and not es_admin:
+    if p["rol"] == "responsable" and not forzar:
         return "Solo la administración puede dar de baja a un responsable."
     if p["rol"] == "responsable" and _n_responsables(pid, part_id) == 0:
         return "El proyecto debe tener al menos un responsable. Asigne otro antes."
@@ -252,8 +252,8 @@ def reincorporar(pid: int, part_id: int):
 # --- Permisos ----------------------------------------------------------------------------------------------
 
 def puede_ver(pid: int, usuario: dict) -> bool:
-    """Participantes (también los que ya dejaron el proyecto) y administración."""
-    return usuario["es_admin"] or bool(get_db().q(
+    """Participantes (también los que ya dejaron el proyecto) y quien puede ver todos los proyectos."""
+    return permisos.puede(usuario, "ver_todos_los_proyectos") or bool(get_db().q(
         "SELECT 1 FROM proyecto_participante WHERE proyecto_id = ? AND investigador_id = ?",
         [pid, usuario["id"]]))
 
@@ -265,8 +265,8 @@ def puede_gestionar(pid: int, usuario: dict) -> bool:
 
 
 def puede_reasignar(usuario: dict) -> bool:
-    """Reasignar al responsable de un proyecto: solo la administración."""
-    return bool(usuario["es_admin"])
+    """Reasignar al responsable de un proyecto: Dirección del Instituto."""
+    return permisos.puede(usuario, "reasignar_responsable")
 
 
 def puede_crear(usuario: dict) -> bool:

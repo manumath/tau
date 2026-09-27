@@ -269,10 +269,12 @@ proyecto y ser del mismo periodo).
   (propuestas, catálogos, vínculos del IIMAT, memoria y anexo), Dirección de Carrera, Coordinación
   académica, Comité de acreditación (ve todo, no modifica) y Gestión de datos (carga de vínculos y
   estudiantes de su unidad). El sistema no permite quedarse sin Administración del sistema.
-  Mientras se completa la transición, quien tiene Administración del sistema o Dirección del
-  Instituto ve todas las opciones de administración.
+  Cada rol ve solo lo suyo: Administración del sistema, cuentas, roles y auditoría; la Dirección
+  del Instituto, propuestas, catálogos, vínculos del IIMAT, memoria y anexo; la Dirección de
+  Carrera y Gestión de datos, los vínculos de su unidad; el Comité, los informes.
 - **Usuarios → Importar CSV:** alta masiva desde una planilla con `email`, `nombres`,
-  `apellidos` y, opcionalmente, `categoria`, `investigador` y `admin` (sí/no). Las filas sin
+  `apellidos` y, opcionalmente, `categoria`, `investigador` y `admin` (sí/no; «sí» asigna Administración
+  del sistema y Dirección del Instituto). Las filas sin
   categoría se crean igual y quedan como «Sin categoría». Hay una plantilla. La vista
   previa marca cada fila como nueva, ya existente o con error antes de crear nada.
 - En la tabla de usuarios:

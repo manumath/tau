@@ -3,7 +3,7 @@ import base64
 
 import pytest
 
-from app.comun import config, importar_usuarios, usuarios
+from app.comun import config, importar_usuarios, permisos, usuarios
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 
 
@@ -82,7 +82,7 @@ def test_leer_csv(app):
     resumen = [(f["linea"], f["estado"]) for f in filas]
     assert resumen == [(2, "nueva"), (3, "existe"), (4, "error"), (5, "error"), (6, "error"), (8, "nueva")]
     assert "sí/no" in filas[3]["mensaje"] and "repetido" in filas[4]["mensaje"]
-    assert filas[-1]["es_admin"] and not filas[-1]["es_investigador"]
+    assert filas[-1]["es_admin"] and not filas[-1]["es_investigador"]  # opción del CSV
 
 
 def test_leer_csv_latin1_y_coma(app):
@@ -106,7 +106,7 @@ def test_importar_con_vista_previa_y_contrasenas(client, admin):
     assert "Importación terminada" in r.text and r.text.count('class="font-mono"') == 2
     sofia = usuarios.con_perfil(usuarios.por_email("sofia@test.cl")["id"])
     assert sofia["es_investigador"] and sofia["debe_cambiar_pass"]
-    assert usuarios.por_email("ada@test.cl")["es_admin"]
+    assert permisos.tiene_rol(usuarios.por_email("ada@test.cl"), "direccion_instituto")
 
 
 def test_importar_con_invitaciones(client, admin, buzon):

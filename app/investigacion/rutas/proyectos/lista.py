@@ -3,6 +3,7 @@ import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, H3, Li, P, Span, Ul
 from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
+from app.comun import permisos
 from app.investigacion import proyectos
 from app.comun.componentes.layout import ID_MODAL, pagina
 from app.comun.componentes.registros import insignia
@@ -63,6 +64,7 @@ def _filtro_tipo(tipo):
 
 @rt("/proyectos")
 def get(auth, q: str = "", tipo: str = ""):
+    todos = permisos.puede(auth, "ver_todos_los_proyectos")
     tipo = tipo if tipo in proyectos.TIPOS else ""
     mios = proyectos.de_investigador(auth["id"])
     bloques = [
@@ -74,18 +76,19 @@ def get(auth, q: str = "", tipo: str = ""):
                    hx_get="/proyectos/nuevo", hx_target=f"#{ID_MODAL}") if proyectos.puede_crear(auth) else "",
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         ui_propuestas.aviso_convocatoria(auth) if auth["es_investigador"] else "",
-        H3("Mis proyectos", cls="text-lg font-semibold mb-3") if auth["es_admin"] and auth["es_investigador"] else "",
+        H3("Mis proyectos", cls="text-lg font-semibold mb-3") if todos and auth["es_investigador"] else "",
         fh.Div(*[tarjeta(p) for p in mios], cls="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4")
         if mios else P("No participa en proyectos todavía.", cls=TextPresets.muted_sm)
         if auth["es_investigador"] else "",
         seccion_propuestas(auth["id"]),
         ui_propuestas.seccion_mis_propuestas(auth) if auth["es_investigador"] else "",
     ]
-    if auth["es_admin"]:
+    if todos:
         todos = [p for p in proyectos.todos(q, tipo) if p["id"] not in {m["id"] for m in mios}]
         bloques += [H3("Todos los proyectos del instituto", id="todos", cls="text-lg font-semibold mt-10 mb-1"),
-                    P("La administración los ve todos, pero solo los gestionan sus responsables. Desde la "
-                      "ficha de un proyecto puede reasignar al responsable.", cls=(TextPresets.muted_sm, "mb-3")),
+                    P("Se ven todos, pero solo los gestionan sus responsables."
+                      + (" Desde la ficha de un proyecto puede reasignar al responsable."
+                         if proyectos.puede_reasignar(auth) else ""), cls=(TextPresets.muted_sm, "mb-3")),
                     _filtro_tipo(tipo),
                     fh.Div(*[tarjeta(p) for p in todos],
                            cls="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4")

@@ -21,11 +21,10 @@ def gente(app):
 
 def test_administradores_reciben_los_dos_roles(gente):
     """La transición: quien era administrador tiene Administración del sistema y Dirección del
-    Instituto; `es_admin` se calcula de esos roles."""
+    Instituto. No queda ninguna marca de administración aparte de los roles."""
     roles = {(r["rol"], r["sigla"]) for r in permisos.roles_vigentes(gente["admin"])}
     assert roles == {("administracion_sistema", "UMSA"), ("direccion_instituto", "IIMAT")}
-    assert usuarios.por_id(gente["admin"])["es_admin"] == 1
-    assert usuarios.con_perfil(gente["emmy"])["es_admin"] == 0
+    assert "es_admin" not in usuarios.por_id(gente["admin"])
     columnas = {c["name"] for c in get_db().q("PRAGMA table_info(usuario)")}
     assert "es_admin" not in columnas  # la marca vieja ya no existe
 

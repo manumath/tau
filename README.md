@@ -205,6 +205,9 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
 - La autorización se verifica en el servidor en cada ruta; ocultar un botón no basta.
 - Sin sesión solo se accede a `/login`, `/recuperar…`, `/publico/…` y `/api/v1/…` (reglas exactas
   en `app/comun/auth.py`).
+- **Roles y permisos** (`app/comun/permisos.py`): cada acción la permiten ciertos roles, en su unidad
+  (`puede(usuario, accion, unidad)`); las rutas `/admin` se autorizan con `REGLAS_ADMIN` en
+  `app/comun/auth.py`, y lo que no está ahí se deniega.
 - Las exportaciones CSV/XLSX neutralizan fórmulas (`=`, `+`, `-`, `@`) para evitar su ejecución en Excel.
 - **CSRF:** toda petición que modifica datos (POST, PUT, PATCH, DELETE) debe venir del propio portal
   según `Origin` (o `Referer`): el host de la petición, `PORTAL_URL` o `PORTAL_ORIGENES_EXTRA`

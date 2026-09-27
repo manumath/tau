@@ -4,7 +4,7 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, FtResponse, HtmxRe
 from monsterui.all import H2, Card, Grid, Input, TextPresets, UkIcon
 
 from app.investigacion import actividades, lineas, perfiles, productos
-from app.comun import fotos, vinculos
+from app.comun import fotos, permisos, vinculos
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.comun.componentes.layout import pagina
 from app.comun.componentes.registros import url_filtrada
@@ -75,7 +75,7 @@ def get(auth, q: str = "", categoria: str = ""):
             Select(Option("Todas las categorías", value=""),
                    *[Option(t, value=c, selected=c == categoria) for c, t in perfiles.CATEGORIAS.items()],
                    *([Option("Sin categoría", value="sin", selected=categoria == "sin")]
-                     if auth["es_admin"] else []),
+                     if permisos.puede(auth, "ver_usuarios") else []),
                    name="categoria", aria_label="Filtrar por categoría", cls="uk-select w-56",
                    hx_trigger="change", **filtros),
             id="filtros-directorio", cls="flex flex-wrap gap-3 mb-6"),
@@ -138,7 +138,7 @@ def get(auth, uid: int):
                     A(UkIcon("file-user", height=14, width=14), "Ver CV",
                       href="/informes/cv" if propio else f"/informes/cv?uid={uid}",
                       cls="inline-flex items-center gap-1 text-sm text-primary hover:underline")
-                    if propio or auth["es_admin"] else "",
+                    if propio or permisos.puede(auth, "ver_cv_ajeno") else "",
                     cls="flex gap-4 mt-2"),
                 cls="flex flex-col"),
             cls="flex flex-col sm:flex-row gap-6 items-center sm:items-start mb-8"),

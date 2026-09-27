@@ -2,6 +2,7 @@
 from fasthtml.common import A, APIRouter, Div, H3, P, Redirect, Span
 from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
+from app.comun import permisos
 from app.investigacion import actividades, lineas, productos, proyectos, revistas
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.comun.componentes.layout import ID_MODAL, pagina
@@ -70,7 +71,7 @@ def ficha(p, auth):
         Card(H3("Resumen", cls="text-base font-semibold mb-2"),
              P(p["resumen"], cls="whitespace-pre-line leading-relaxed")) if p["resumen"] else "",
         Card(H3("Archivos adjuntos", cls="text-base font-semibold mb-2"),
-             seccion_adjuntos("producto", p["id"], editable)) if editable or auth["es_admin"] else "",
+             seccion_adjuntos("producto", p["id"], editable)) if editable or permisos.puede(auth, "ver_evidencias") else "",
         id="ficha-producto", hx_get=f"/productos/{p['id']}/ficha", hx_select="#ficha-producto",
         hx_trigger=f"{EVENTO} from:body", hx_swap="outerHTML", cls="space-y-6")
 

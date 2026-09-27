@@ -10,6 +10,7 @@ from fasthtml.common import (A, APIRouter, Code, Div, HtmxResponseHeaders, Input
 from fasthtml.toaster import add_toast
 from monsterui.all import (Button, ButtonT, Form, Label, LabelT, LabelTextArea, Table, TextPresets)
 
+from app.comun import permisos
 from app.investigacion import bibtex, productos
 from app.acreditacion import informes
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
@@ -36,7 +37,7 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
 
 @rt("/informes/cv/bibtex")
 def get(auth, desde: str = "", hasta: str = "", informe: bool = False, uid: int = None, filiacion: bool = False):
-    uid = uid if (uid and auth["es_admin"]) else auth["id"]
+    uid = uid if (uid and permisos.puede(auth, "ver_cv_ajeno")) else auth["id"]
     d, h = informes.periodo_valido(desde, hasta)
     datos = informes.cv(uid, d, h, informe, filiacion)
     if not datos["perfil"]:

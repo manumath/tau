@@ -10,7 +10,7 @@ from fasthtml.common import (APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Resp
 
 from app.acreditacion import anexo as acreditacion, informes
 from app.investigacion import actividades, proyectos
-from app.comun import config, estudiantes
+from app.comun import config, estudiantes, permisos, unidades
 from app.comun.componentes.layout import pagina
 from app.acreditacion.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _tabla_conteo, barra, cita,
                                              descarga, hoja, seccion_metodo)
@@ -216,7 +216,7 @@ def _ventana(desde, hasta):
 
 @rt("/informes/acreditacion")
 def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
-    if not auth["es_admin"]:
+    if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         return Response("No autorizado", status_code=403)
     d, h = _ventana(desde, hasta)
     estricto = revistas != "todas"
@@ -237,7 +237,7 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
 
 @rt("/informes/acreditacion/xlsx")
 def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
-    if not auth["es_admin"]:
+    if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         return Response("No autorizado", status_code=403)
     d, h = _ventana(desde, hasta)
     a = acreditacion.anexo(d, h, revistas != "todas")

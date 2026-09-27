@@ -15,6 +15,7 @@ from fasthtml.common import (A, APIRouter, Div, H3, Input, Li, Option, P, Redire
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, TextPresets, UkIcon
 
+from app.comun import permisos
 from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
 from app.investigacion.componentes.lineas import casillas_lineas
@@ -338,10 +339,11 @@ def get(auth, prop_id: int):
     prop, error = _prop_o_error(prop_id, auth)
     if error:
         return pagina("No encontrado", P("La propuesta no existe o no tiene acceso a ella."), usuario=auth)
+    decide = permisos.puede(auth, "decidir_propuestas")
     editable = inst.puede_editar(prop, auth)
     if editable:
         cuerpo = editor(prop, auth)
-    elif auth["es_admin"] and prop["estado"] in inst.EDITABLES and prop["copia_enviada"]:
+    elif decide and prop["estado"] in inst.EDITABLES and prop["copia_enviada"]:
         cuerpo = Div(P("El responsable está corrigiendo la propuesta. Esta es la última versión enviada.",
                        cls=(TextPresets.muted_sm, "mb-4")), contenido(json.loads(prop["copia_enviada"])))
     else:
@@ -349,8 +351,8 @@ def get(auth, prop_id: int):
                            else json.loads(prop["copia_enviada"]))
     return pagina(
         prop["nombre"],
-        A(UkIcon("arrow-left", height=14, width=14), "Propuestas" if auth["es_admin"] else "Proyectos",
-          href=f"/admin/propuestas?periodo={prop['periodo']}" if auth["es_admin"] else "/proyectos",
+        A(UkIcon("arrow-left", height=14, width=14), "Propuestas" if decide else "Proyectos",
+          href=f"/admin/propuestas?periodo={prop['periodo']}" if decide else "/proyectos",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         Div(Div(insignia_estado(prop["estado"]),
                 insignia(inst.MODALIDADES[prop["modalidad"]], "gris"),
@@ -368,9 +370,9 @@ def get(auth, prop_id: int):
             cls="flex gap-2 rounded-md border border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-950 "
                 "dark:text-amber-200 p-3 text-sm mb-6")
         if prop["estado"] in ("condicional", "rechazada") and not editable else "",
-        _con_lateral(cuerpo, [panel_decision(prop) if auth["es_admin"] and prop["estado"] == "enviada" else "",
+        _con_lateral(cuerpo, [panel_decision(prop) if decide and prop["estado"] == "enviada" else "",
                               historial(prop)]),
-        usuario=auth, seccion="propuestas" if auth["es_admin"] else "proyectos")
+        usuario=auth, seccion="propuestas" if decide else "proyectos")
 
 
 def _con_lateral(cuerpo, laterales):
@@ -472,7 +474,7 @@ def post(auth, sess, prop_id: int, decision: str = "", comentario: str = ""):
     prop, error = _prop_o_error(prop_id, auth)
     if error:
         return error
-    if not auth["es_admin"]:
+    if not permisos.puede(auth, "decidir_propuestas"):
         return Response("No autorizado", status_code=403)
     error = inst.decidir(prop, decision, comentario, auth)
     if error:

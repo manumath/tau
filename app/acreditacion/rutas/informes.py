@@ -17,7 +17,7 @@ from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.investigacion import (actividades, cosecha, importacion, institucionales, perfiles, productos, proyectos,
                                revistas)
-from app.comun import config
+from app.comun import config, permisos, unidades
 from app.acreditacion import informes
 from app.comun.componentes.layout import pagina
 from app.comun.db import auditar
@@ -137,7 +137,7 @@ def get(auth):
                                  Ul(*[Li(A(p["nombre"], href=f"/proyectos/{p['id']}/informe",
                                            cls="text-primary hover:underline text-sm")) for p in mios],
                                     cls="space-y-1 mt-1"))))
-    if auth["es_admin"]:
+    if permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         tarjetas.append(A(Card(Div(UkIcon("landmark", height=22, width=22, cls="text-primary"),
                                    H3("Memoria del instituto", cls="text-base font-semibold mt-2"),
                                    P("Productos que cuentan (indexados y arbitrados), actividades y "
@@ -199,7 +199,7 @@ def documento_cv(datos, uid, desde, hasta):
 @rt("/informes/cv")
 def get(auth, desde: str = "", hasta: str = "", informe: bool = False, uid: int = None,
         filiacion: bool = False):
-    uid = uid if (uid and auth["es_admin"]) else auth["id"]
+    uid = uid if (uid and permisos.puede(auth, "ver_cv_ajeno")) else auth["id"]
     d, h = informes.periodo_valido(desde, hasta)
     datos = informes.cv(uid, d, h, informe, filiacion)
     if not datos["perfil"]:
@@ -515,7 +515,7 @@ def selector_periodo(r, anios):
 
 @rt("/informes/memoria")
 def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "", modo: str = ""):
-    if not auth["es_admin"]:
+    if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         return Response("No autorizado", status_code=403)
     m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta, modo))
     anios = sorted(set(informes.anios_con_datos()) | {date.today().year}, reverse=True)
@@ -533,7 +533,7 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
 
 @rt("/informes/citas/actualizar")
 def post(auth, sess, req):
-    if not auth["es_admin"]:
+    if not permisos.puede(auth, "actualizar_citas"):
         return Response("No autorizado", status_code=403)
     try:
         consultados, actualizados = cosecha.actualizar_citas()
@@ -547,7 +547,7 @@ def post(auth, sess, req):
 
 @rt("/informes/memoria/xlsx")
 def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = ""):
-    if not auth["es_admin"]:
+    if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         return Response("No autorizado", status_code=403)
     m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta))
     hojas = {
@@ -571,7 +571,7 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
 
 @rt("/informes/memoria/csv/{hoja}")
 def get(auth, hoja: str, anio: str = "", periodo: str = "", desde: str = "", hasta: str = ""):
-    if not auth["es_admin"]:
+    if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         return Response("No autorizado", status_code=403)
     m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta))
     filas = {"productos": lambda: informes.filas_productos(m["productos"]),

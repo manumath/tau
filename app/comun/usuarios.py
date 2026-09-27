@@ -5,8 +5,7 @@ from app.comun import config, permisos, unidades
 from app.comun.db import AHORA, get_db, marca_tiempo, sin_tildes
 from app.comun.seguridad import hash_password
 
-# Toda fila de usuario lleva `es_admin` calculado de sus roles (transición: ver app.comun.permisos).
-_COLUMNAS = f"u.*, {permisos.sql_es_admin('u')} AS es_admin"
+_COLUMNAS = "u.*"
 
 
 def por_id(uid: int) -> dict | None:
@@ -45,10 +44,10 @@ def crear(email: str, nombres: str, apellidos: str, password: str, *,
                             apellidos=apellidos.strip(), pass_hash=hash_password(password),
                             debe_cambiar_pass=int(debe_cambiar_pass))
     if es_admin:
-        # Transición: «administrador» = Administración del sistema + Dirección del Instituto.
+        # «Administración» al crear la cuenta = Administración del sistema + Dirección del Instituto
+        # (otros roles se asignan después, en «Roles»).
         permisos.asignar(u["id"], "administracion_sistema", unidades.id_de("UMSA"))
         permisos.asignar(u["id"], "direccion_instituto", unidades.instituto())
-        u["es_admin"] = 1
     if es_investigador:
         db.t.investigador.insert(usuario_id=u["id"], categoria=categoria)
         if categoria:

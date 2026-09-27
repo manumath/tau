@@ -4,6 +4,7 @@ from datetime import date
 from fasthtml.common import A, APIRouter, Div, P, Span
 from monsterui.all import H2, H4, Card, Grid, Label, LabelT, Progress, TextPresets, UkIcon
 
+from app.comun import permisos
 from app.investigacion import actividades, filiacion, perfiles, productos, proyectos
 from app.comun.componentes.layout import pagina
 
@@ -92,7 +93,7 @@ def get(auth):
         tarjetas += [_tarjeta_proyectos(auth), *_tarjetas_produccion(auth["id"]),
                      _tarjeta_perfil(auth["id"])]
     tarjetas.append(_tarjeta(*MODULO_DIRECTORIO))
-    if auth["es_admin"]:
+    if permisos.puede(auth, "ver_usuarios"):
         tarjetas.append(_tarjeta(*MODULO_USUARIOS))
     return pagina(
         "Inicio",
