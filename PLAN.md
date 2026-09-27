@@ -820,3 +820,109 @@ semestre real y ajuste.
 
 **Total orientativo:** 5 a 6 meses. Las fases 1 y 2 son útiles aunque luego se decida migrar;
 si en la fase 0 se decide ir a Django, se omiten los puntos 1.1 a 1.4.
+
+## 23. Diseño de la fase 2: personas, unidades y roles (propuesta, 27-sep-2026)
+
+### Punto de partida
+
+- **La persona es la fila de `usuario`.** Autorías (`producto_autor.investigador_id`),
+  participaciones, vínculos, líneas, áreas MSC y estudiantes dirigidos apuntan a `usuario.id`.
+  Los de fuera están en `persona_externa`.
+- **El perfil de investigación** (`investigador`) guarda datos académicos (grado, ORCID…) y una
+  copia de la categoría vigente del vínculo.
+- **El vínculo** (`vinculo`) es con «el instituto»: no dice si es con el IIMAT o con la Carrera.
+- **Permisos:** dos marcas, `es_admin` (56 usos) y `es_investigador` (47), la regla «todo
+  `/admin/*` exige `es_admin`» (56 rutas) y los roles dentro de cada proyecto (responsable…).
+  La marca de administración no se puede cambiar después de crear la cuenta.
+
+### 1. Persona académica: la cuenta pasa a ser una capacidad de la persona
+
+**Opción A (recomendada): la fila de `usuario` sigue siendo la persona.** Se agrega:
+
+- `academico` (1 a 1 con `usuario`): lo que es de la persona y no de su investigación: fecha de
+  nacimiento, sexo solo si el instituto lo decide más adelante, y datos de la hoja 10 de la Guía
+  (sistema nacional de investigación, etc.).
+- `grado_academico` (1 a n): nivel, título, institución, país y año. Reemplaza el campo único
+  `investigador.grado` (se migra como primer grado).
+- **Personas sin acceso:** un docente de la Carrera que no usa el portal existe como persona,
+  sin contraseña utilizable (`pass_hash = '!'`, que nunca coincide), y se le puede habilitar el
+  ingreso después (invitación).
+- `investigador` queda como **perfil de investigación opcional**: solo quien investiga lo tiene.
+
+Ventaja: no cambia ninguna clave foránea (autorías, participaciones, vínculos siguen igual) ni
+las ~200 consultas que usan `investigador_id`. Costo: el nombre `usuario` queda corto para lo que
+representa; se documenta («usuario = persona; la cuenta es opcional») sin renombrar.
+
+**Opción B: tabla `persona` nueva** a la que apuntan todas las relaciones, y `usuario` con
+`persona_id`. Conceptualmente más limpia, pero toca todas las tablas de autoría, participación y
+vínculo y buena parte de las consultas: el mayor riesgo de toda la ampliación, sin beneficio
+visible para los usuarios. Descartada salvo que aparezca una razón fuerte.
+
+### 2. Unidades
+
+Tabla `unidad` (nombre, sigla, tipo, unidad superior): UMSA › FCPN › CMAT › IIMAT, cargada en la
+migración. Se usa para:
+
+- el **vínculo**, que pasa a tener `unidad_id` (los actuales, IIMAT): una persona puede estar
+  vinculada a la Carrera, al Instituto o a ambos, con categoría y jornada propias en cada uno;
+- el **alcance de los roles** (abajo) y de los informes (memoria del IIMAT, datos de la Carrera);
+- la **filiación** (hoy la lista fija `FILIACIONES` de config), que se deriva de la jerarquía.
+
+### 3. Roles con alcance y vigencia
+
+Tabla `rol_asignado`: persona, rol, unidad, desde, hasta, asignado por. Se asignan y quitan desde
+«Usuarios» (lo que hoy no se puede hacer con la administración) y quedan en la auditoría.
+
+| Rol | Alcance | Qué puede |
+|---|---|---|
+| Administración del sistema | global | cuentas y roles, auditoría, configuración, catálogos técnicos; no decide sobre contenido académico |
+| Dirección del Instituto | IIMAT | decidir propuestas y plazos de convocatoria, catálogo de revistas y de líneas, vínculos del IIMAT, reasignar responsables, memoria y anexo de I+D+i |
+| Dirección de Carrera | CMAT | plan de estudios, asignación docente y aprobación de programas (fase 3), vínculos de la Carrera, informes de la Carrera |
+| Coordinación académica | CMAT | preparar asignaciones y revisar programas, sin aprobar |
+| Comité de acreditación | UMSA (todo) | ver todos los informes, anexos y exportaciones; no modifica nada |
+| Gestión de datos | una unidad | cargar vínculos (RR. HH.), estudiantes e importaciones de su unidad |
+
+Los roles **derivados** no se asignan: *investigador* (tiene perfil de investigación y vínculo
+con el IIMAT), *docente* (vínculo con la Carrera o asignaciones), *responsable de proyecto*
+(como hoy, por proyecto).
+
+**Transición sin sorpresas:** quienes hoy tienen `es_admin` reciben Administración del sistema y
+Dirección del Instituto, así nadie pierde lo que hoy puede hacer. Luego la dirección decide a
+quién le quita cuál.
+
+### 4. Un solo punto de decisión: `puede(usuario, accion, unidad=None)`
+
+- Tabla de acciones → roles en un módulo (`app/comun/permisos.py`), p. ej.
+  `"decidir_propuestas": {"direccion_instituto"}`, `"ver_informes": {"direccion_instituto",
+  "direccion_carrera", "comite_acreditacion"}`.
+- Los roles vigentes se cargan al validar la sesión (Beforeware), una consulta por petición.
+- Se reemplazan los 56 `es_admin` y la regla del prefijo `/admin` módulo por módulo, con una
+  prueba por acción y rol (matriz de permisos). Mientras dure la transición, `es_admin` se deriva
+  de los roles, para que el código aún no migrado siga funcionando igual.
+- Resuelve la deuda de la fase 1: `vinculos` e `importar_usuarios` dejan de escribir en
+  `investigador` (la categoría vigente se calcula del vínculo) y `componentes/registros.py` e
+  `inicio` se reparten según el paquete.
+
+### 5. Fecha de nacimiento
+
+En `academico`. La carga la administración (formulario o CSV de RR. HH., junto al historial de
+vínculos). Solo la ven quienes tengan el permiso `ver_datos_personales` y los informes usan solo
+tramos de edad (hoja 11). Se avisa a cada académico en su perfil que el instituto la registra
+para la acreditación.
+
+### 6. Acceso con cuentas de la UMSA (opcional)
+
+Solo si la DTIC ofrece un proveedor (Google Workspace para @umsa.bo, LDAP u OIDC). No bloquea lo
+demás: se evalúa al final de la fase.
+
+### Orden de ejecución (cada paso se puede desplegar solo)
+
+1. **Unidades** y `vinculo.unidad_id` (los existentes pasan al IIMAT).
+2. **Roles**: `rol_asignado`, `puede()`, carga en la sesión, pantalla para asignarlos y migración
+   de `es_admin`. Matriz de permisos en las pruebas.
+3. **Reemplazo de `es_admin`** por acciones, módulo por módulo.
+4. **Persona académica**: `academico`, `grado_academico`, personas sin acceso, fecha de nacimiento,
+   y fin de las dependencias de `comun` hacia `investigacion`.
+5. Acceso con cuentas de la UMSA, si corresponde.
+
+Estimación: 3 a 4 semanas (sin el paso 5).
