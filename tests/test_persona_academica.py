@@ -114,7 +114,69 @@ def test_ficha_academica_segun_el_rol(client, emmy):
     assert get_db().q("SELECT accion FROM auditoria WHERE accion = 'agregar_grado'")
     como("sistema")  # ve la ficha (datos personales), pero no edita los grados
     r = client.get(f"/admin/usuarios/{emmy}/ficha")
-    assert r.status_code == 200 and "Doctorado · UMSA" in r.text and 'hx-post' not in r.text.split("Grados")[1]
+    assert r.status_code == 200 and "Doctorado · UMSA" in r.text
+    assert f'hx-post="/admin/usuarios/{emmy}/grados"' not in r.text  # sin formulario de grados
     assert client.post(f"/admin/usuarios/{emmy}/grados", headers=HX, data={"nivel": "otro"}).status_code == 403
     como("comite")
     assert client.get(f"/admin/usuarios/{emmy}/ficha").status_code == 403
+
+
+# --- Fecha de nacimiento (paso 4c) ------------------------------------------------------------------------
+
+def test_fecha_de_nacimiento_y_tramos(emmy):
+    assert academicos.fijar_fecha_nacimiento(emmy, "1882-03-23") != []  # más de 100 años
+    assert academicos.fijar_fecha_nacimiento(emmy, "23/03/1982") == ["Indique una fecha válida."]
+    assert academicos.fijar_fecha_nacimiento(emmy, "1982-03-23") == []
+    assert academicos.edad("1982-03-23", "2026-03-22") == 43 and academicos.edad("1982-03-23", "2026-03-23") == 44
+    assert academicos.tramo_edad(emmy, "2026-09-27") == "40 a 49 años"
+    assert academicos.tramo_edad(emmy, "2012-01-01") == "Hasta 29 años"
+    assert academicos.fijar_fecha_nacimiento(emmy, None) == [] and academicos.tramo_edad(emmy) is None
+
+
+def test_quien_ve_la_fecha_de_nacimiento(client, emmy):
+    academicos.fijar_fecha_nacimiento(emmy, "1982-03-23")
+    clave = "Clave-datos-1"
+    for email, rol, sigla in (("sistema@test.cl", "administracion_sistema", "UMSA"),
+                              ("direccion@test.cl", "direccion_instituto", "IIMAT")):
+        uid = usuarios.crear(email, "X", "Y", clave, debe_cambiar_pass=False, es_investigador=False)["id"]
+        permisos.asignar(uid, rol, unidades.id_de(sigla))
+
+    def como(email, pw=clave):
+        client.post("/logout")
+        login(client, email, pw)
+    # La propia persona: en «Mi perfil», sin poder editarla.
+    como("inv@test.cl", PASS_TEMP)
+    r = client.get("/perfil")
+    assert "23/03/1982" in r.text and "Solo la ven usted y la Administración del sistema" in r.text
+    assert client.post(f"/admin/usuarios/{emmy}/fecha-nacimiento", headers=HX,
+                       data={"fecha_nacimiento": "1990-01-01"}).status_code == 403
+    assert academicos.fecha_nacimiento(emmy) == "1982-03-23"
+    # La Dirección del Instituto (ficha de grados) no la ve.
+    como("direccion@test.cl")
+    r = client.get(f"/admin/usuarios/{emmy}/ficha")
+    assert r.status_code == 200 and "1982" not in r.text and "Datos personales" not in r.text
+    assert client.post(f"/admin/usuarios/{emmy}/fecha-nacimiento", headers=HX,
+                       data={"fecha_nacimiento": "1990-01-01"}).status_code == 403
+    # Administración del sistema la ve y la corrige; la auditoría no guarda la fecha.
+    como("sistema@test.cl")
+    assert 'value="1982-03-23"' in client.get(f"/admin/usuarios/{emmy}/ficha").text
+    r = client.post(f"/admin/usuarios/{emmy}/fecha-nacimiento", headers=HX, data={"fecha_nacimiento": "1982-03-24"})
+    assert 'value="1982-03-24"' in r.text
+    detalle = get_db().q("SELECT detalle FROM auditoria WHERE accion = 'datos_personales'")[0]["detalle"]
+    assert detalle == "fecha de nacimiento corregida" and "1982" not in detalle
+    # Nunca en el perfil público ni en la API.
+    perfiles.actualizar_campos(emmy, perfil_publico=1)
+    client.post("/logout")
+    assert "1982" not in client.get(f"/publico/investigadores/{emmy}").text
+    assert "1982" not in client.get(f"/api/v1/investigadores/{emmy}").text
+
+
+def test_mis_datos_para_quien_no_investiga(client):
+    uid = usuarios.crear("docente@test.cl", "Karl", "Weierstrass", "Clave-docente-1", debe_cambiar_pass=False,
+                         es_investigador=False)["id"]
+    academicos.fijar_fecha_nacimiento(uid, "1975-10-31")
+    academicos.agregar_grado(uid, {"nivel": "doctorado", "institucion": "UMSA"})
+    login(client, "docente@test.cl", "Clave-docente-1")
+    assert 'href="/mis-datos"' in client.get("/").text
+    r = client.get("/mis-datos")
+    assert "31/10/1975" in r.text and "Doctorado · UMSA" in r.text

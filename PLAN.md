@@ -978,3 +978,11 @@ Estimación: 3 a 4 semanas (sin el paso 5).
   sea de investigador o de administración (docentes). Vínculos para cualquier persona, con resumen
   por unidad en el listado. De paso: la tabla que se devolvía al crear una cuenta se armaba antes
   de crearla (la nueva no aparecía hasta recargar).
+- Paso 4c hecho (27-sep-2026): fecha de nacimiento en `datos_personales` (migración 0026, tabla
+  aparte para que ninguna consulta general la arrastre). La registra y la ve solo Administración
+  del sistema (ficha académica); la persona la ve en «Mi perfil» o en «Mis datos personales», sin
+  editarla, con el aviso. `academicos.tramo_edad` para los informes (hasta 29, 30–39, 40–49, 50–59,
+  60 o más). No aparece en perfiles públicos, API ni en el detalle de la auditoría.
+  **Pendiente:** carga masiva de fechas de nacimiento desde RR. HH., si hace falta (hoy, una por una).
+- **Fase 2: pasos 1 a 4 completos.** El paso 5 (acceso con cuentas de la UMSA) espera que la DTIC
+  confirme el proveedor.

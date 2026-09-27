@@ -6,11 +6,14 @@ investigación. Sirven a la Carrera y al Instituto por igual.
   ninguna contraseña. Se le habilita el acceso con «Restablecer contraseña» o una invitación.
 - Grados académicos: varios por persona, con título, institución, país y año (hoja 10 de la Guía).
   El «grado» que se muestra en perfiles y directorios es el de mayor nivel.
+- Fecha de nacimiento (hoja 11): la registra y la ve Administración del sistema (permiso
+  `ver_datos_personales`) y la propia persona, sin editarla. Los informes usan `tramo_edad`, nunca
+  la fecha. No aparece en perfiles públicos, API, exportaciones ni en el detalle de la auditoría.
 """
 from datetime import date
 
 from app.comun import paises
-from app.comun.db import get_db
+from app.comun.db import AHORA, get_db
 
 SIN_ACCESO = "!"
 
@@ -93,3 +96,50 @@ def quitar_grado(uid: int, gid: int) -> dict | None:
     if filas:
         get_db().execute("DELETE FROM grado_academico WHERE id = ?", [gid])
     return filas[0] if filas else None
+
+
+# --- Datos personales ------------------------------------------------------------------------------------
+
+EDAD_MINIMA, EDAD_MAXIMA = 18, 100
+# (desde, hasta, nombre) en años cumplidos; None = sin límite.
+TRAMOS_EDAD = [(None, 29, "Hasta 29 años"), (30, 39, "30 a 39 años"), (40, 49, "40 a 49 años"),
+               (50, 59, "50 a 59 años"), (60, None, "60 años o más")]
+
+
+def fecha_nacimiento(uid: int) -> str | None:
+    filas = get_db().q("SELECT fecha_nacimiento FROM datos_personales WHERE usuario_id = ?", [uid])
+    return filas[0]["fecha_nacimiento"] if filas else None
+
+
+def fijar_fecha_nacimiento(uid: int, fecha: str | None, por: int | None = None) -> list[str]:
+    """Registra o corrige la fecha (None o vacía la borra)."""
+    if fecha:
+        try:
+            d = date.fromisoformat(fecha)
+        except ValueError:
+            return ["Indique una fecha válida."]
+        if not EDAD_MINIMA <= edad(d.isoformat()) <= EDAD_MAXIMA:
+            return [f"La fecha no corresponde a una edad entre {EDAD_MINIMA} y {EDAD_MAXIMA} años."]
+        fecha = d.isoformat()
+    get_db().execute(f"""INSERT INTO datos_personales (usuario_id, fecha_nacimiento, actualizado_por)
+                         VALUES (?, ?, ?)
+                         ON CONFLICT (usuario_id) DO UPDATE SET fecha_nacimiento = excluded.fecha_nacimiento,
+                         actualizado_por = excluded.actualizado_por, actualizado_en = {AHORA}""",
+                     [uid, fecha or None, por])
+    return []
+
+
+def edad(nacimiento: str, a_fecha: str | None = None) -> int:
+    n = date.fromisoformat(nacimiento)
+    f = date.fromisoformat(a_fecha) if a_fecha else date.today()
+    return f.year - n.year - ((f.month, f.day) < (n.month, n.day))
+
+
+def tramo_edad(uid: int, a_fecha: str | None = None) -> str | None:
+    """Tramo de edad de la persona a la fecha (None si no hay fecha de nacimiento registrada)."""
+    nacimiento = fecha_nacimiento(uid)
+    if not nacimiento:
+        return None
+    anios = edad(nacimiento, a_fecha)
+    return next(nombre for desde, hasta, nombre in TRAMOS_EDAD
+                if (desde is None or anios >= desde) and (hasta is None or anios <= hasta))

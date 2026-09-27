@@ -17,6 +17,7 @@ from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, LabelInput,
 
 from app.comun import academicos, fotos, usuarios, vinculos
 from app.investigacion import lineas, msc, perfiles
+from app.comun.componentes import datos_personales
 from app.comun.componentes import grados as grados_ui
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.investigacion.componentes.lineas import casillas_lineas, insignias_lineas
@@ -501,8 +502,8 @@ def get(auth):
         Div(
             Div(Card(seccion_foto(p), Hr(cls="my-4 border-border"), tarjeta_completitud(p)),
                 cls="lg:col-span-1 space-y-6"),
-            Div(vista_datos(p), seccion_grados(p["id"]), vista_identificadores(p), vista_lineas(p["id"]),
-                seccion_areas(p["id"]), vista_bio(p),
+            Div(vista_datos(p), seccion_grados(p["id"]), datos_personales.tarjeta(p["id"]),
+                vista_identificadores(p), vista_lineas(p["id"]), seccion_areas(p["id"]), vista_bio(p),
                 seccion_preferencias(p, usuarios.por_id(auth["id"])["avisos_correo"]),
                 cls="lg:col-span-2 space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"),

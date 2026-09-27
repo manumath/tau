@@ -79,7 +79,8 @@ app/
     fotos.py                   recorte y limpieza de fotos (Pillow)
     componentes/               layout (página, navegación, modal), registros (insignias, filtros, datos),
                                grados, recursos (static), errores
-    rutas/                     admin_usuarios (cuentas, vínculos, roles), admin_auditoria, estudiantes
+    rutas/                     admin_usuarios (cuentas, vínculos, roles, ficha), admin_auditoria, estudiantes,
+                               mis_datos
   investigacion/               producción y proyectos de investigación
     perfiles.py                perfil, áreas MSC, completitud y directorio
     identificadores.py         ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces

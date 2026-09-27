@@ -21,6 +21,9 @@ def _menu_usuario(usuario: dict):
     if usuario["es_investigador"]:
         opciones.append(A(UkIcon("user-round", height=16, width=16), "Mi perfil", href="/perfil",
                           cls=item))
+    if not usuario["es_investigador"]:
+        opciones.append(A(UkIcon("id-card", height=16, width=16), "Mis datos personales", href="/mis-datos",
+                          cls=item))
     if permisos.puede(usuario, "ver_auditoria"):
         opciones.append(A(UkIcon("scroll-text", height=16, width=16), "Auditoría", href="/admin/auditoria",
                           cls=item))
