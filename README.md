@@ -111,13 +111,17 @@ app/
     anexo.py                   anexo de I+D+i para la acreditación, por criterio y año
     estudiantes.py             tesis e indicadores de participación de estudiantes
     rutas/                     informes, anexo
-  academico/                   docencia y currículo (fase 3 del plan; aún vacío)
+  academico/                   docencia y currículo (fase 3)
+    planes.py                  programas, planes de estudio, asignaturas, electivas, requisitos, observaciones
+    importar_planes.py         carga de planes desde datos/planes/ (la usa la migración 0028)
+    rutas/                     planes (/docencia/planes)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 
 Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion` y
 `academico` pueden usar `comun`. `app/inicio.py` y `main.py` reúnen todo.
 static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
 static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
+datos/planes/                  planes de estudio en CSV (formato en su README)
 catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar
 scripts/seed.py                datos de ejemplo

@@ -1009,3 +1009,17 @@ semanales teóricas/prácticas/laboratorio, semestres de 20 semanas, nota mínim
 **Pasos:** 3.1 catálogo curricular y carga de los planes 2017 · 3.2 gestiones académicas · 3.3
 oferta y asignación docente · 3.4 carga horaria · 3.5 programas analíticos · 3.6 perfeccionamiento
 docente · equivalencias cuando llegue el plan nuevo.
+
+**Avance:**
+- 3.1 hecho (27-sep-2026): tablas programa, plan_estudios (con vigencia), asignatura (catálogo único
+  por sigla; `de_la_carrera` = 0 para FIS, QMF, QMI, QMC, INF, BIO, ECO), plan_asignatura (semestre,
+  ciclo, tipo, horas o créditos; casillas de electiva sin asignatura), requisito (sigla o
+  «egresado») y observacion_plan (migración 0027). Los cuatro planes 2017 en `datos/planes/`
+  (transcritos de los PDF por la posición de las columnas y verificados contra los totales) y
+  cargados por la migración 0028: 123 asignaturas (92 de la Carrera). Observaciones marcadas:
+  horas de laboratorio que no cuadran en ambas licenciaturas (720/680 y 1.080/1.160), MAT-241 y
+  MAT-242 inexistentes, MAT-278 repetida, requisito probable FIS-377 en FIS-387, MAT-382, erratas
+  «Cientítica» e «Intiligencia», «Algebra» sin tilde en la maestría aplicada. Pantallas
+  /docencia/planes (consulta para todos; resolver observaciones: Dirección de Carrera y Coordinación
+  académica).
+  Nota: cada base de prueba carga los planes; la suite tarda ~10 s más.

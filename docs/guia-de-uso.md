@@ -241,6 +241,16 @@ Hay dos tipos de proyecto:
   después de aprobados, por si quiere revisarlos.
 - El botón **«Informe»** genera el informe de avance del proyecto.
 
+## Docencia
+
+**Planes de estudio** («Docencia» en la barra): los programas de la Carrera (Licenciatura en
+Matemática, Licenciatura en Matemática Aplicada, Maestría en Matemática y Maestría en Matemática
+Aplicada) con su plan vigente. La ficha de cada plan muestra las asignaturas por semestre y ciclo,
+con sus horas (teóricas, prácticas y de laboratorio) o créditos y sus requisitos; las listas de
+electivas; los totales del documento frente a la suma del plan; y las **observaciones**: lo que no
+cuadra en el documento (se cargó tal como está). La Dirección de Carrera y la Coordinación
+académica las marcan como resueltas indicando cómo se resolvió.
+
 ## Informes
 
 Menú «Informes»:
