@@ -926,3 +926,10 @@ demás: se evalúa al final de la fase.
 5. Acceso con cuentas de la UMSA, si corresponde.
 
 Estimación: 3 a 4 semanas (sin el paso 5).
+
+**Decidido (27-sep-2026):**
+1. La tabla de roles refleja el trabajo de ambas direcciones (incluidas Coordinación académica y
+   Gestión de datos; el Comité de acreditación ve todo, también lo de la Carrera).
+2. Los roles los asigna **solo Administración del sistema**, a pedido de las direcciones.
+3. Cada académico **ve su propia fecha de nacimiento** en su perfil, sin poder editarla.
+4. La DTIC ofrece inicio de sesión institucional: el paso 5 se hace (falta saber el proveedor).
