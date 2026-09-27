@@ -1,5 +1,5 @@
 """Acceso a datos del perfil del investigador y sus áreas MSC."""
-from app.comun.db import get_db, sin_tildes
+from app.comun.db import AHORA, IGUAL_A, get_db, sin_tildes
 
 MAX_AREAS = 10
 LARGO_BIO = 3000
@@ -35,7 +35,7 @@ def actualizar_datos(uid: int, *, nombres, apellidos, grado, cargo, unidad):
 def actualizar_campos(uid: int, **campos):
     asignaciones = ", ".join(f"{c} = :{c}" for c in campos)
     get_db().execute(
-        f"UPDATE investigador SET {asignaciones}, actualizado_en = datetime('now') "
+        f"UPDATE investigador SET {asignaciones}, actualizado_en = {AHORA} "
         "WHERE usuario_id = :uid", {**campos, "uid": uid})
 
 
@@ -141,13 +141,13 @@ def directorio(texto: str = "", solo_publicos: bool = False, categoria: str = ""
     texto = texto.strip()
     patron = f"%{sin_tildes(texto)}%"
     filas = get_db().q(
-        """SELECT u.id, u.nombres, u.apellidos, i.cargo, i.unidad, i.foto, i.categoria,
+        f"""SELECT u.id, u.nombres, u.apellidos, i.cargo, i.unidad, i.foto, i.categoria,
                   (SELECT m.codigo || char(31) || m.texto FROM investigador_msc im
                      JOIN msc m ON m.codigo = im.codigo
                     WHERE im.usuario_id = u.id AND im.principal = 1) AS area_principal
            FROM usuario u JOIN investigador i ON i.usuario_id = u.id
            WHERE u.activo = 1 AND (:pub = 0 OR i.perfil_publico = 1)
-             AND (:cat = '' OR i.categoria IS :cat OR (:cat = 'sin' AND i.categoria IS NULL)) AND (
+             AND (:cat = '' OR i.categoria {IGUAL_A} :cat OR (:cat = 'sin' AND i.categoria IS NULL)) AND (
                  :t = '' OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
                  OR sin_tildes(i.cargo) LIKE :p OR sin_tildes(i.unidad) LIKE :p
                  OR EXISTS (SELECT 1 FROM investigador_msc im JOIN msc m ON m.codigo = im.codigo

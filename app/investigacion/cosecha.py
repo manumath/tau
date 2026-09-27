@@ -11,7 +11,7 @@ from datetime import date
 
 from app.investigacion import filiacion, importacion, openalex, perfiles, productos, revistas
 from app.comun import personas
-from app.comun.db import auditar, get_db, sin_tildes
+from app.comun.db import HOY, auditar, get_db, sin_tildes
 
 
 def _normal(titulo: str) -> str:
@@ -123,7 +123,7 @@ def registrar(uid: int, seleccion: list[dict]) -> tuple[int, list[str]]:
             continue
         refs = [personas.materializar(r, uid) for r in refs]
         pid = productos.guardar(d, refs, uid, filiaciones=filiaciones)
-        get_db().execute("""UPDATE producto SET openalex_id = ?, citas = ?, citas_actualizadas = date('now', 'localtime')
+        get_db().execute(f"""UPDATE producto SET openalex_id = ?, citas = ?, citas_actualizadas = {HOY}
                             WHERE id = ?""", [c["openalex_id"], c["citas"], pid])
         creados += 1
     if creados:
@@ -132,7 +132,8 @@ def registrar(uid: int, seleccion: list[dict]) -> tuple[int, list[str]]:
 
 
 def descartar(uid: int, openalex_id: str, titulo: str | None = None):
-    get_db().execute("""INSERT OR IGNORE INTO cosecha_descartada (usuario_id, openalex_id, titulo) VALUES (?, ?, ?)""",
+    get_db().execute("""INSERT INTO cosecha_descartada (usuario_id, openalex_id, titulo) VALUES (?, ?, ?)
+                        ON CONFLICT DO NOTHING""",
                      [uid, openalex_id, titulo])
 
 
@@ -151,7 +152,7 @@ def actualizar_citas() -> tuple[int, int]:
         if f["doi"] in citas:
             n, oid = citas[f["doi"]]
             # El id de OpenAlex solo se fija si ningún otro producto lo tiene (evita choques del índice único).
-            get_db().execute("""UPDATE producto SET citas = ?, citas_actualizadas = date('now', 'localtime'),
+            get_db().execute(f"""UPDATE producto SET citas = ?, citas_actualizadas = {HOY},
                                 openalex_id = COALESCE(openalex_id, CASE WHEN NOT EXISTS
                                     (SELECT 1 FROM producto x WHERE x.openalex_id = ?) THEN ? END)
                                 WHERE id = ?""", [n, oid, oid, f["id"]])

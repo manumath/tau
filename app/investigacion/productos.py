@@ -8,7 +8,7 @@ from datetime import date
 
 from app.investigacion import adjuntos, revistas
 from app.comun import personas
-from app.comun.db import get_db, sin_tildes
+from app.comun.db import AHORA, DISTINTO_DE, get_db, sin_tildes, transaccion
 
 ESTADOS = {"publicado": "Publicado", "aceptado": "Aceptado", "enviado": "Enviado",
            "en_preparacion": "En preparación"}
@@ -88,7 +88,7 @@ def existente(doi: str | None, arxiv_id: str | None, excluir: int | None = None)
     """Producto ya registrado con el mismo DOI o arXiv (para no duplicar)."""
     for campo, valor in (("doi", doi), ("arxiv_id", arxiv_id)):
         if valor:
-            filas = get_db().q(f"SELECT id FROM producto WHERE {campo} = ? AND id IS NOT ?",
+            filas = get_db().q(f"SELECT id FROM producto WHERE {campo} = ? AND id {DISTINTO_DE} ?",
                                [valor, excluir])
             if filas:
                 return obtener(filas[0]["id"])
@@ -187,12 +187,12 @@ def guardar(d: dict, autores_refs: list[str], usuario_id: int, pid: int | None =
     filiaciones += [None] * (len(autores_refs) - len(filiaciones))
     db = get_db()
     indices_ids = d.pop("_indices", [])
-    with db.conn:
+    with transaccion():
         if pid is None:
             pid = db.t.producto.insert(**d, creado_por=usuario_id)["id"]
         else:
             db.t.producto.update(id=pid, **d)
-            db.execute("UPDATE producto SET actualizado_en = datetime('now') WHERE id = ?", [pid])
+            db.execute(f"UPDATE producto SET actualizado_en = {AHORA} WHERE id = ?", [pid])
             db.execute("DELETE FROM producto_autor WHERE producto_id = ?", [pid])
             db.execute("DELETE FROM producto_indice WHERE producto_id = ?", [pid])
         for orden, (r, fil) in enumerate(zip(autores_refs, filiaciones)):
@@ -217,7 +217,7 @@ def sumar_autor(pid: int, uid: int):
 def eliminar(pid: int):
     db = get_db()
     adjuntos.eliminar_de("producto", pid)
-    with db.conn:
+    with transaccion():
         db.execute("DELETE FROM adjunto WHERE entidad = 'producto' AND entidad_id = ?", [pid])
         db.execute("DELETE FROM producto WHERE id = ?", [pid])
 

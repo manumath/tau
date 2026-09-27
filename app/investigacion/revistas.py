@@ -9,7 +9,7 @@
 import re
 
 from app.comun import config
-from app.comun.db import get_db, sin_tildes
+from app.comun.db import AHORA, get_db, sin_tildes, transaccion
 
 ESTADOS = {"pendiente": "Pendiente de verificar", "verificada": "Verificada"}
 CUARTILES = ("Q1", "Q2", "Q3", "Q4")
@@ -136,19 +136,19 @@ def crear(d: dict, uid: int, verificada: bool = False) -> int:
     extra = {"estado": "verificada", "verificada_por": uid} if verificada else {"estado": "pendiente"}
     rid = get_db().t.revista.insert(**d, propuesta_por=uid, **extra)["id"]
     if verificada:
-        get_db().execute("UPDATE revista SET verificada_en = datetime('now') WHERE id = ?", [rid])
+        get_db().execute(f"UPDATE revista SET verificada_en = {AHORA} WHERE id = ?", [rid])
     return rid
 
 
 def actualizar(rid: int, d: dict):
     get_db().t.revista.update(id=rid, **d)
-    get_db().execute("UPDATE revista SET actualizado_en = datetime('now') WHERE id = ?", [rid])
+    get_db().execute(f"UPDATE revista SET actualizado_en = {AHORA} WHERE id = ?", [rid])
 
 
 def verificar(rid: int, uid: int, verificada: bool = True):
     if verificada:
-        get_db().execute("""UPDATE revista SET estado = 'verificada', verificada_por = ?,
-                            verificada_en = datetime('now') WHERE id = ?""", [uid, rid])
+        get_db().execute(f"""UPDATE revista SET estado = 'verificada', verificada_por = ?,
+                            verificada_en = {AHORA} WHERE id = ?""", [uid, rid])
     else:
         get_db().execute("""UPDATE revista SET estado = 'pendiente', verificada_por = NULL,
                             verificada_en = NULL WHERE id = ?""", [rid])
@@ -239,7 +239,7 @@ def reclasificar(rid: int) -> int:
         # Como al guardar: los índices se registran solo en los artículos indexados.
         nuevos = {x["indice_id"] for x in c["indices"]} if c["revision"] == "indexado" else set()
         if c["revision"] != p["revision"] or actuales != nuevos:
-            with db.conn:
+            with transaccion():
                 db.execute("UPDATE producto SET revision = ? WHERE id = ?", [c["revision"], p["id"]])
                 db.execute("DELETE FROM producto_indice WHERE producto_id = ?", [p["id"]])
                 for i in nuevos:

@@ -14,7 +14,7 @@ Reglas (ver PLAN.md, sección 21):
 """
 from datetime import date
 
-from app.comun.db import get_db
+from app.comun.db import AHORA, DISTINTO_DE, get_db, transaccion
 
 LARGO_NOMBRE = 200
 LARGO_DESCRIPCION = 2000
@@ -142,7 +142,7 @@ def _adscribir(tabla, columna, valor, ids, actuales) -> str | None:
     malas = no_vigentes(nuevas)
     if malas:
         return "Solo puede adscribirse a líneas vigentes: " + ", ".join(malas) + "."
-    with get_db().conn:
+    with transaccion():
         _reemplazar(tabla, columna, valor, ids)
     return None
 
@@ -173,7 +173,7 @@ def validar(d: dict, lid: int | None = None) -> tuple[dict, list[str]]:
         errores.append("Indique el nombre de la línea.")
     elif len(d["nombre"]) > LARGO_NOMBRE:
         errores.append(f"El nombre admite hasta {LARGO_NOMBRE} caracteres.")
-    elif get_db().q("SELECT 1 FROM linea_investigacion WHERE lower(nombre) = lower(?) AND id IS NOT ?",
+    elif get_db().q(f"SELECT 1 FROM linea_investigacion WHERE lower(nombre) = lower(?) AND id {DISTINTO_DE} ?",
                     [d["nombre"], lid]):
         errores.append("Ya existe una línea con ese nombre.")
     if d.get("descripcion") and len(d["descripcion"]) > LARGO_DESCRIPCION:
@@ -197,7 +197,7 @@ def crear(d: dict, uid: int) -> int:
 
 def actualizar(lid: int, d: dict):
     get_db().execute(f"""UPDATE linea_investigacion SET {', '.join(f'{k} = :{k}' for k in d)},
-                         actualizado_en = datetime('now') WHERE id = :id""", {**d, "id": lid})
+                         actualizado_en = {AHORA} WHERE id = :id""", {**d, "id": lid})
 
 
 def cerrar(lid: int, fecha: str) -> str | None:
@@ -241,6 +241,6 @@ def mover(lid: int, delta: int):
     j = i + delta
     if 0 <= j < len(ids):
         ids[i], ids[j] = ids[j], ids[i]
-    with get_db().conn:
+    with transaccion():
         for n, x in enumerate(ids, start=1):
             get_db().execute("UPDATE linea_investigacion SET orden = ? WHERE id = ?", [n, x])

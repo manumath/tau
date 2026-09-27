@@ -7,7 +7,7 @@ vinculado en la fecha firmó con ella.
 import re
 
 from app.comun import config
-from app.comun.db import get_db, sin_tildes
+from app.comun.db import DISTINTO_DE, get_db, sin_tildes
 
 OPCIONES = {"": "Filiación sin declarar", "1": "Firmó con IIMAT/UMSA", "0": "Sin filiación del instituto"}
 
@@ -50,7 +50,7 @@ def declarar(uid: int, producto_ids: list[int], valor: int) -> int:
         return 0
     marcas = ",".join("?" * len(producto_ids))
     antes = get_db().q(f"""SELECT COUNT(*) n FROM producto_autor WHERE investigador_id = ?
-                           AND producto_id IN ({marcas}) AND filiacion_instituto IS NOT ?""",
+                           AND producto_id IN ({marcas}) AND filiacion_instituto {DISTINTO_DE} ?""",
                        [uid, *producto_ids, valor])[0]["n"]
     get_db().execute(f"""UPDATE producto_autor SET filiacion_instituto = ? WHERE investigador_id = ?
                          AND producto_id IN ({marcas})""", [valor, uid, *producto_ids])

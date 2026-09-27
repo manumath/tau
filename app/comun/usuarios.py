@@ -1,6 +1,8 @@
 """Acceso a datos de cuentas de usuario."""
+from datetime import timedelta
+
 from app.comun import config
-from app.comun.db import get_db, sin_tildes
+from app.comun.db import AHORA, get_db, marca_tiempo, sin_tildes
 from app.comun.seguridad import hash_password
 
 
@@ -57,7 +59,7 @@ def set_activo(uid: int, activo: bool):
 
 
 def registrar_acceso(uid: int):
-    get_db().execute("UPDATE usuario SET ultimo_acceso = datetime('now') WHERE id = ?", [uid])
+    get_db().execute(f"UPDATE usuario SET ultimo_acceso = {AHORA} WHERE id = ?", [uid])
 
 
 # --- Límite de intentos de login ---------------------------------------------
@@ -68,13 +70,12 @@ def registrar_intento(email: str, ip: str | None, exito: bool):
 
 def bloqueado(email: str) -> bool:
     """True si hay demasiados fallos recientes desde el último ingreso exitoso."""
-    ventana = f"-{config.LOGIN_VENTANA_MIN} minutes"
     fila = get_db().q(
         """SELECT COUNT(*) AS n FROM intento_login
-           WHERE email = :e AND exito = 0 AND fecha >= datetime('now', :v)
+           WHERE email = :e AND exito = 0 AND fecha >= :desde
              AND fecha > COALESCE((SELECT MAX(fecha) FROM intento_login
                                    WHERE email = :e AND exito = 1), '')""",
-        {"e": email.strip().lower(), "v": ventana})[0]
+        {"e": email.strip().lower(), "desde": marca_tiempo(-timedelta(minutes=config.LOGIN_VENTANA_MIN))})[0]
     return fila["n"] >= config.LOGIN_MAX_FALLOS
 
 

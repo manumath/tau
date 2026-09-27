@@ -741,6 +741,12 @@ Criterio de término: todas las pruebas en verde y el piloto sigue sin notar cam
   con un módulo por pestaña o flujo (el mayor, `productos/formulario.py`, 484). El `__init__`
   registra los módulos en orden, con la ficha al final. Verificado: las mismas 211 rutas antes y
   después, sin ciclos entre módulos y sin imports sobrantes en `app/` (pyflakes).
+- 1.3 hecho (26-sep-2026): lo propio de SQLite queda en `app/comun/db.py` (sección «Dialecto
+  SQL»): `HOY` (fecha local), `AHORA` (marca UTC), `DISTINTO_DE`/`IGUAL_A` (comparación con NULL),
+  `vigente_hasta(col)` (antes repetida 10 veces), `marca_tiempo(delta)` para vencimientos y
+  ventanas calculados en Python, y `transaccion()` en lugar de `with db.conn:`. `INSERT OR IGNORE`
+  pasa a `ON CONFLICT DO NOTHING`. El docstring de `db.py` enumera qué tocaría un cambio a
+  PostgreSQL (incluidos fastlite, migraciones y `LIKE`).
 
 ### Fase 2 — Personas, unidades y permisos (3–4 semanas)
 

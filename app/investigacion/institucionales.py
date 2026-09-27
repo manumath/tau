@@ -21,7 +21,7 @@ from datetime import date
 
 from app.investigacion import avisos, lineas, perfiles, proyectos
 from app.comun import config
-from app.comun.db import get_db
+from app.comun.db import AHORA, get_db, transaccion, vigente_hasta
 
 ESTADOS = {"borrador": "Borrador", "enviada": "Enviada", "aceptada": "Aceptada",
            "condicional": "Aceptada con condiciones", "rechazada": "Rechazada", "retirada": "Retirada"}
@@ -114,9 +114,9 @@ def guardar_plazo(periodo: int, abre: str, cierra: str, uid: int) -> str | None:
         return "Indique fechas válidas."
     if c < a:
         return "El cierre no puede ser anterior a la apertura."
-    get_db().execute("""INSERT INTO convocatoria (periodo, abre, cierra, actualizado_por) VALUES (?, ?, ?, ?)
+    get_db().execute(f"""INSERT INTO convocatoria (periodo, abre, cierra, actualizado_por) VALUES (?, ?, ?, ?)
                         ON CONFLICT (periodo) DO UPDATE SET abre = excluded.abre, cierra = excluded.cierra,
-                        actualizado_por = excluded.actualizado_por, actualizado_en = datetime('now')""",
+                        actualizado_por = excluded.actualizado_por, actualizado_en = {AHORA}""",
                      [periodo, a.isoformat(), c.isoformat(), uid])
     return None
 
@@ -189,12 +189,12 @@ def eventos(prop_id: int) -> list[dict]:
 def mis_propuestas(uid: int) -> list[dict]:
     """Propuestas que presentó o de proyectos en que es responsable vigente."""
     return get_db().q(
-        """SELECT pi.*, p.estado AS estado_proyecto FROM propuesta_institucional pi
+        f"""SELECT pi.*, p.estado AS estado_proyecto FROM propuesta_institucional pi
            JOIN proyecto p ON p.id = pi.proyecto_id
            WHERE pi.proponente_id = :u OR pi.proyecto_id IN (
                  SELECT proyecto_id FROM proyecto_participante WHERE investigador_id = :u
                    AND rol IN ('responsable', 'co_responsable')
-                   AND (fecha_hasta IS NULL OR fecha_hasta >= date('now', 'localtime')))
+                   AND {vigente_hasta('fecha_hasta')})
            ORDER BY pi.periodo DESC, pi.estado = 'aceptada', pi.nombre""", {"u": uid})
 
 
@@ -233,7 +233,7 @@ def crear_nuevo(usuario: dict, nombre: str) -> tuple[int | None, str | None]:
         return None, "Indique el nombre del proyecto."
     periodo = periodo_objetivo()
     db = get_db()
-    with db.conn:
+    with transaccion():
         pid = db.t.proyecto.insert(nombre=nombre, estado="formulacion", tipo="institucional", moneda=config.MONEDA,
                                    fecha_inicio=inicio(periodo), fecha_fin=fin(periodo),
                                    creado_por=usuario["id"])["id"]
@@ -268,7 +268,7 @@ def crear_continuidad(pid: int, usuario: dict) -> tuple[int | None, str | None]:
                              ORDER BY periodo DESC LIMIT 1""", [pid])
     base = obtener(anterior[0]["id"]) if anterior else None
     db = get_db()
-    with db.conn:
+    with transaccion():
         campos = {k: (base or p).get(k) for k in ("nombre", "descripcion", "objetivo_general")}
         if base:
             campos.update({k: base[k] for k in ("metodologia", "resultados_esperados", "bibliografia")})
@@ -313,9 +313,9 @@ def guardar(prop: dict, datos: dict, objetivos: list[str], actividades: list[tup
     if errores:
         return errores
     db = get_db()
-    with db.conn:
+    with transaccion():
         db.execute(f"""UPDATE propuesta_institucional SET {', '.join(f'{k} = :{k}' for k in datos)},
-                       actualizada_en = datetime('now') WHERE id = :id""", {**datos, "id": prop["id"]})
+                       actualizada_en = {AHORA} WHERE id = :id""", {**datos, "id": prop["id"]})
         db.execute("DELETE FROM propuesta_objetivo WHERE propuesta_id = ?", [prop["id"]])
         for i, texto in enumerate(t.strip() for t in objetivos if t.strip()):
             db.t.propuesta_objetivo.insert(propuesta_id=prop["id"], orden=i, texto=texto)
@@ -383,7 +383,7 @@ def enviar(prop: dict, usuario: dict) -> str | None:
     if falta:
         return "Antes de enviar, complete: " + ", ".join(falta) + "."
     reenvio = prop["estado"] == "condicional"
-    get_db().execute("""UPDATE propuesta_institucional SET estado = 'enviada', enviada_en = datetime('now'),
+    get_db().execute(f"""UPDATE propuesta_institucional SET estado = 'enviada', enviada_en = {AHORA},
                         envios = envios + 1, copia_enviada = ? WHERE id = ?""",
                      [json.dumps(copia(prop), ensure_ascii=False), prop["id"]])
     _evento(prop["id"], "enviada", usuario["id"], "Reenvío tras las condiciones" if reenvio else None)
@@ -407,7 +407,7 @@ def eliminar_borrador(prop: dict, usuario: dict) -> str | None:
     if prop["estado"] != "borrador" or not puede_editar(prop, usuario):
         return "Solo se pueden eliminar borradores."
     db = get_db()
-    with db.conn:
+    with transaccion():
         db.execute("DELETE FROM propuesta_institucional WHERE id = ?", [prop["id"]])
         otras = db.q("SELECT 1 FROM propuesta_institucional WHERE proyecto_id = ?", [prop["proyecto_id"]])
         vinculos = db.q("""SELECT 1 FROM actividad_proyecto WHERE proyecto_id = :p
@@ -436,8 +436,8 @@ def decidir(prop: dict, decision: str, comentario: str, admin: dict) -> str | No
     if decision == "rechazada" and not comentario:
         return "Indique el motivo del rechazo."
     db = get_db()
-    with db.conn:
-        db.execute("""UPDATE propuesta_institucional SET estado = ?, decidida_por = ?, decidida_en = datetime('now'),
+    with transaccion():
+        db.execute(f"""UPDATE propuesta_institucional SET estado = ?, decidida_por = ?, decidida_en = {AHORA},
                       comentario = ? WHERE id = ?""", [decision, admin["id"], comentario or None, prop["id"]])
         _evento(prop["id"], decision, admin["id"], comentario or None)
         if decision == "aceptada":
@@ -450,8 +450,8 @@ def decidir(prop: dict, decision: str, comentario: str, admin: dict) -> str | No
 def _aplicar(prop: dict):
     """Una propuesta aceptada pasa sus datos básicos, objetivos y líneas al proyecto."""
     db = get_db()
-    db.execute("""UPDATE proyecto SET nombre = ?, descripcion = ?, objetivo_general = ?,
-                  actualizado_en = datetime('now') WHERE id = ?""",
+    db.execute(f"""UPDATE proyecto SET nombre = ?, descripcion = ?, objetivo_general = ?,
+                  actualizado_en = {AHORA} WHERE id = ?""",
                [prop["nombre"], prop["descripcion"], prop["objetivo_general"], prop["proyecto_id"]])
     db.execute("DELETE FROM proyecto_objetivo WHERE proyecto_id = ?", [prop["proyecto_id"]])
     for i, o in enumerate(prop["objetivos"]):

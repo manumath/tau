@@ -7,7 +7,7 @@ Las contraseñas de demostración son fijas para poder probar el portal; en
 producción las cuentas se crean desde Administración → Usuarios.
 """
 import shutil
-from datetime import date
+from datetime import date, timedelta
 import sys
 from pathlib import Path
 
@@ -17,7 +17,7 @@ import json  # noqa: E402
 
 from app.investigacion import actividades, institucionales, lineas, perfiles, productos, proyectos, revistas
 from app.comun import config, estudiantes, personas, usuarios, vinculos
-from app.comun.db import get_db  # noqa: E402
+from app.comun.db import AHORA, get_db, marca_tiempo  # noqa: E402
 from app.comun.db import init_db  # noqa: E402
 
 ADMIN = dict(email="admin@instituto.test", nombres="Ada", apellidos="Administradora",
@@ -209,11 +209,12 @@ def _cargar_institucionales():
             db.t.propuesta_actividad_prevista.insert(propuesta_id=prop, orden=i, descripcion=texto, mes_previsto=mes)
         copia = json.dumps(institucionales.copia(institucionales.obtener(prop)), ensure_ascii=False)
         db.execute("""UPDATE propuesta_institucional SET estado = 'enviada', envios = 1,
-                      enviada_en = datetime('now', '-3 days'), copia_enviada = ? WHERE id = ?""", [copia, prop])
+                      enviada_en = ?, copia_enviada = ? WHERE id = ?""",
+                   [marca_tiempo(-timedelta(days=3)), copia, prop])
         db.t.propuesta_evento.insert(propuesta_id=prop, accion="enviada", usuario_id=proponente)
         if estado == "aceptada":
-            db.execute("""UPDATE propuesta_institucional SET estado = 'aceptada', decidida_por = ?,
-                          decidida_en = datetime('now') WHERE id = ?""", [admin, prop])
+            db.execute(f"""UPDATE propuesta_institucional SET estado = 'aceptada', decidida_por = ?,
+                          decidida_en = {AHORA} WHERE id = ?""", [admin, prop])
             db.t.propuesta_evento.insert(propuesta_id=prop, accion="aceptada", usuario_id=admin)
         return prop
 

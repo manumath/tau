@@ -1,7 +1,7 @@
 """Avisos por correo del flujo de proyectos. Respetan la preferencia `avisos_correo` y nunca
 avisan a quien hizo la acción (no tiene sentido avisarse a uno mismo)."""
 from app.comun import config, correo
-from app.comun.db import get_db
+from app.comun.db import get_db, vigente_hasta
 
 
 def _titulo(tipo: str, registro_id: int) -> str:
@@ -28,9 +28,9 @@ def nueva_propuesta(tipo: str, registro_id: int, pid: int, propuesto_por: int):
     proyecto = get_db().q("SELECT nombre FROM proyecto WHERE id = ?", [pid])[0]["nombre"]
     quien = _usuario(propuesto_por)
     responsables = get_db().q(
-        """SELECT u.* FROM proyecto_participante pp JOIN usuario u ON u.id = pp.investigador_id
+        f"""SELECT u.* FROM proyecto_participante pp JOIN usuario u ON u.id = pp.investigador_id
            WHERE pp.proyecto_id = ? AND pp.rol IN ('responsable', 'co_responsable')
-             AND (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now', 'localtime'))""", [pid])
+             AND {vigente_hasta('pp.fecha_hasta')}""", [pid])
     for r in responsables:
         if r["id"] == propuesto_por or not _quiere(r):
             continue
@@ -74,9 +74,9 @@ def _url_propuesta(prop_id: int) -> str:
 
 def _responsables(pid: int) -> list[dict]:
     return get_db().q(
-        """SELECT u.* FROM proyecto_participante pp JOIN usuario u ON u.id = pp.investigador_id
+        f"""SELECT u.* FROM proyecto_participante pp JOIN usuario u ON u.id = pp.investigador_id
            WHERE pp.proyecto_id = ? AND pp.rol IN ('responsable', 'co_responsable')
-             AND (pp.fecha_hasta IS NULL OR pp.fecha_hasta >= date('now', 'localtime'))""", [pid])
+             AND {vigente_hasta('pp.fecha_hasta')}""", [pid])
 
 
 def propuesta_enviada(prop: dict, reenvio: bool):

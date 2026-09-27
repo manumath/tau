@@ -11,7 +11,7 @@ import calendar
 from datetime import date, timedelta
 
 from app.investigacion import perfiles
-from app.comun.db import get_db
+from app.comun.db import DISTINTO_DE, get_db, transaccion
 
 INICIO_DESCONOCIDO = "0000-01-01"
 SIN_FIN = "9999-12-31"
@@ -208,7 +208,7 @@ def reemplazar_historial(uid: int, periodos: list[dict], creado_por: int | None 
     """Reemplaza todo el historial de una persona (carga desde Recursos Humanos). Los periodos
     deben venir validados (ver importar_vinculos)."""
     db = get_db()
-    with db.conn:
+    with transaccion():
         db.execute("DELETE FROM vinculo WHERE usuario_id = ?", [uid])
         for p in periodos:
             db.t.vinculo.insert(usuario_id=uid, categoria=p["categoria"], fecha_inicio=p["desde"],
@@ -224,5 +224,5 @@ def sincronizar_categoria(uid: int | None = None):
     for i in ids:
         v = vigente(i)
         cat = v["categoria"] if v else None
-        db.execute("UPDATE investigador SET categoria = ? WHERE usuario_id = ? AND categoria IS NOT ?",
+        db.execute(f"UPDATE investigador SET categoria = ? WHERE usuario_id = ? AND categoria {DISTINTO_DE} ?",
                    [cat, i, cat])

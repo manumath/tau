@@ -3,7 +3,7 @@ from datetime import date
 
 from app.investigacion import adjuntos
 from app.comun import personas
-from app.comun.db import get_db, sin_tildes
+from app.comun.db import AHORA, get_db, sin_tildes, transaccion
 
 MODALIDADES = {"presencial": "Presencial", "virtual": "Virtual", "hibrida": "Híbrida"}
 AMBITOS = {"local": "Local", "nacional": "Nacional", "internacional": "Internacional"}
@@ -61,12 +61,12 @@ def validar(d: dict, participantes_: list[tuple[str, str]]) -> list[str]:
 def guardar(d: dict, participantes_: list[tuple[str, str]], usuario_id: int, aid: int | None = None):
     """Crea (aid=None) o actualiza una actividad y reemplaza su lista de participantes."""
     db = get_db()
-    with db.conn:  # transacción: o se guarda todo o nada
+    with transaccion():  # transacción: o se guarda todo o nada
         if aid is None:
             aid = db.t.actividad.insert(**d, creado_por=usuario_id)["id"]
         else:
             db.t.actividad.update(id=aid, **d)
-            db.execute("UPDATE actividad SET actualizado_en = datetime('now') WHERE id = ?", [aid])
+            db.execute(f"UPDATE actividad SET actualizado_en = {AHORA} WHERE id = ?", [aid])
             db.execute("DELETE FROM actividad_participante WHERE actividad_id = ?", [aid])
         for orden, (r, rol) in enumerate(participantes_):
             db.t.actividad_participante.insert(actividad_id=aid, orden=orden, rol=rol,
@@ -77,7 +77,7 @@ def guardar(d: dict, participantes_: list[tuple[str, str]], usuario_id: int, aid
 def eliminar(aid: int):
     db = get_db()
     adjuntos.eliminar_de("actividad", aid)
-    with db.conn:
+    with transaccion():
         db.execute("DELETE FROM adjunto WHERE entidad = 'actividad' AND entidad_id = ?", [aid])
         db.execute("DELETE FROM actividad WHERE id = ?", [aid])
 
