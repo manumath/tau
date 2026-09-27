@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import json  # noqa: E402
 
+from app.academico import gestiones, oferta  # noqa: E402
 from app.investigacion import actividades, institucionales, lineas, perfiles, productos, proyectos, revistas
 from app.comun import academicos, config, estudiantes, personas, unidades, usuarios, vinculos  # noqa: E402
 from app.comun.db import AHORA, get_db, marca_tiempo  # noqa: E402
@@ -360,6 +361,21 @@ def _cargar_lineas() -> bool:
     return True
 
 
+def _cargar_docencia() -> bool:
+    """Gestiones 2026 y una oferta de ejemplo en II-2026 (solo si no hay gestiones)."""
+    if gestiones.listar():
+        return False
+    por = {g["tipo"]: g for g in gestiones.crear_anio(2026)}
+    emmy = usuarios.por_email("emmy.noether@instituto.test")
+    alan = usuarios.por_email("alan.turing@instituto.test")
+    for sigla, paralelo, inscritos, docente, horas in (("MAT-111", "A", 42, emmy, 6), ("MAT-111", "B", 38, alan, 6),
+                                                       ("MAT-251", "A", 15, emmy, 7), ("MAT-278", "A", 12, None, None)):
+        oid, _ = oferta.agregar(por["II"]["id"], sigla, paralelo, inscritos, emmy["id"] if emmy else None)
+        if oid and docente:
+            oferta.asignar(oid, docente["id"], "titular", horas)
+    return True
+
+
 def _cargar_perfil(uid: int, datos: dict | None):
     if not datos:
         return
@@ -411,6 +427,7 @@ def main():
     con_revistas = _cargar_revistas()
     con_estudiantes = _cargar_estudiantes()
     con_lineas = _cargar_lineas()
+    con_docencia = _cargar_docencia()
     # Internacionalización de ejemplo (idempotente): países normalizados y ámbito de los proyectos.
     personas.completar_paises()
     db = get_db()
@@ -464,7 +481,8 @@ def main():
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
     if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas \
-            and not con_vinculos and not con_revistas and not con_estudiantes and not con_lineas:
+            and not con_vinculos and not con_revistas and not con_estudiantes and not con_lineas \
+            and not con_docencia:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:
@@ -477,6 +495,8 @@ def main():
         print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular, y es docente de la Carrera; Ramanujan es invitado).")
     if con_estudiantes:
         print("Estudiante de ejemplo: María Quispe, tesista de licenciatura dirigida por Emmy.")
+    if con_docencia:
+        print("Docencia de ejemplo: gestiones 2026 y oferta de II-2026 (una asignatura sin docente).")
     if con_lineas:
         print("Líneas de investigación de ejemplo: investigadores y proyectos adscritos a las líneas del programa.")
     if con_revistas:

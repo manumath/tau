@@ -1025,3 +1025,11 @@ docente · equivalencias cuando llegue el plan nuevo.
   /docencia/planes (consulta para todos; resolver observaciones: Dirección de Carrera y Coordinación
   académica).
   Nota: cada base de prueba carga los planes; la suite tarda ~10 s más.
+- 3.2 y 3.3 hechos (27-sep-2026): `gestion_academica` (año, tipo, fechas; fechas por omisión que la
+  Dirección ajusta), `oferta` (asignatura de la Carrera, gestión, paralelo, inscritos) y
+  `oferta_docente` (titular o auxiliar, horas semanales; se sugieren las del plan) — migración 0029.
+  Pantallas /docencia/oferta y /docencia/gestiones con pestañas de la sección; acción
+  `gestionar_oferta` (Dirección de Carrera y Coordinación académica). Aviso (no bloqueo) si el
+  docente no tiene vínculo con la Carrera en la gestión. `oferta.horas_de_docencia` alimentará la
+  carga horaria (3.4). **Pendiente:** importar la oferta de gestiones pasadas desde CSV (para los
+  5 años que pide la acreditación).

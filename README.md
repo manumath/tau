@@ -114,7 +114,9 @@ app/
   academico/                   docencia y currículo (fase 3)
     planes.py                  programas, planes de estudio, asignaturas, electivas, requisitos, observaciones
     importar_planes.py         carga de planes desde datos/planes/ (la usa la migración 0028)
-    rutas/                     planes (/docencia/planes)
+    gestiones.py               gestiones académicas: I, INV, II y VER de cada año
+    oferta.py                  oferta por gestión y paralelo, asignación docente y horas
+    rutas/                     planes, oferta y gestiones (/docencia/…)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 
 Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion` y

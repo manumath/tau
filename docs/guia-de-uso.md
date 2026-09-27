@@ -251,6 +251,16 @@ electivas; los totales del documento frente a la suma del plan; y las **observac
 cuadra en el documento (se cargó tal como está). La Dirección de Carrera y la Coordinación
 académica las marcan como resueltas indicando cómo se resolvió.
 
+**Gestiones** (pestaña «Gestiones»): I y II (semestres), INV (invierno, julio) y VER (verano, en
+enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la gestión 2026). «Crear
+las gestiones del año» propone fechas que se ajustan al calendario aprobado.
+
+**Oferta y docentes** (pestaña «Oferta y docentes»): para cada gestión, las asignaturas de la Carrera
+que se dictan, por paralelo, con sus inscritos y docentes (titular o auxiliar, con horas semanales;
+se sugieren las del plan). Las asignaturas de otras carreras no se ofertan desde aquí. Si un docente
+no tiene vínculo con la Carrera al inicio de la gestión, se avisa. La editan la Dirección de Carrera
+y la Coordinación académica; todos la consultan.
+
 ## Informes
 
 Menú «Informes»:

@@ -61,6 +61,7 @@ ACCIONES = {
     "actualizar_citas": {"direccion_instituto"},
     # Docencia (Carrera)
     "revisar_planes": {"direccion_carrera", "coordinacion_academica"},
+    "gestionar_oferta": {"direccion_carrera", "coordinacion_academica"},
     # Lectura
     "ver_todos_los_proyectos": {"direccion_instituto", "comite_acreditacion"},
     "ver_propuestas": {"direccion_instituto", "comite_acreditacion"},
