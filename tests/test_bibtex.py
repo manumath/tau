@@ -2,7 +2,8 @@ import base64
 
 import pytest
 
-from app import bibtex, productos, usuarios
+from app.investigacion import bibtex, productos
+from app import usuarios
 from app.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 

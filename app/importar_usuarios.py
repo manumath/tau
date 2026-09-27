@@ -16,7 +16,8 @@ import re
 import secrets
 from datetime import date
 
-from app import perfiles, usuarios
+from app.investigacion import perfiles
+from app import usuarios
 from app.db import auditar, sin_tildes
 from app.seguridad import password_temporal
 

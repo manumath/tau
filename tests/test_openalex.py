@@ -6,7 +6,8 @@ import json
 import httpx2
 import pytest
 
-from app import cosecha, openalex, perfiles, productos, revistas, usuarios, vinculos
+from app.investigacion import cosecha, openalex, perfiles, productos, revistas
+from app import usuarios, vinculos
 from app.acreditacion import informes
 from app.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login

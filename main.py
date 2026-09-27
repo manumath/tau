@@ -20,30 +20,30 @@ if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not 
     print(f"AVISO: no se pudo aplicar la zona horaria {config.ZONA_HORARIA} (¿falta tzdata?); "
           "se usa UTC.", flush=True)
 
-from app import institucionales  # noqa: E402
+from app.investigacion import institucionales  # noqa: E402
 from app.auth import beforeware, beforeware_origen, beforeware_solo_lectura
 from app.auth import rt as rutas_auth
 from app.components.errores import JS_AVISOS, no_encontrado, paginas_de_error
 from app.components.perfil import katex_headers
 from app.db import init_db
-from app.routes.actividades import rt as rutas_actividades
-from app.routes.adjuntos import rt as rutas_adjuntos
-from app.routes.bibtex import rt as rutas_bibtex
+from app.investigacion.rutas.actividades import rt as rutas_actividades
+from app.investigacion.rutas.adjuntos import rt as rutas_adjuntos
+from app.investigacion.rutas.bibtex import rt as rutas_bibtex
 from app.routes.admin_auditoria import rt as rutas_admin_auditoria
-from app.routes.admin_revistas import rt as rutas_admin_revistas
-from app.routes.admin_lineas import rt as rutas_admin_lineas
+from app.investigacion.rutas.admin_revistas import rt as rutas_admin_revistas
+from app.investigacion.rutas.admin_lineas import rt as rutas_admin_lineas
 from app.acreditacion.rutas.anexo import rt as rutas_acreditacion
 from app.routes.estudiantes import rt as rutas_estudiantes
 from app.routes.admin_usuarios import rt as rutas_admin_usuarios
 from app.acreditacion.rutas.informes import rt as rutas_informes
 from app.routes.inicio import rt as rutas_inicio
-from app.routes.investigadores import rt as rutas_investigadores
-from app.routes.perfil import rt as rutas_perfil
+from app.investigacion.rutas.investigadores import rt as rutas_investigadores
+from app.investigacion.rutas.perfil import rt as rutas_perfil
 from app.routes.personas import rt as rutas_personas
-from app.routes.productos import rt as rutas_productos
-from app.routes.propuestas import rt as rutas_propuestas
-from app.routes.proyectos import rt as rutas_proyectos
-from app.routes.publico import rt as rutas_publico
+from app.investigacion.rutas.productos import rt as rutas_productos
+from app.investigacion.rutas.propuestas import rt as rutas_propuestas
+from app.investigacion.rutas.proyectos import rt as rutas_proyectos
+from app.investigacion.rutas.publico import rt as rutas_publico
 
 
 def _mantenimiento(req):

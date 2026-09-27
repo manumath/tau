@@ -4,7 +4,7 @@ from fasthtml.common import A, APIRouter, Div, Li, P, Redirect, Response, Span, 
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelInput, LabelTextArea, TextPresets, UkIcon
 
-from app import lineas
+from app.investigacion import lineas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import insignia
 from app.db import auditar

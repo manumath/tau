@@ -4,7 +4,8 @@ import pytest
 from openpyxl import load_workbook
 
 from app.acreditacion import informes
-from app import perfiles, personas, productos, proyectos, usuarios
+from app.investigacion import perfiles, productos, proyectos
+from app import personas, usuarios
 from app.db import get_db
 from tests.conftest import PASS_ADMIN, PASS_TEMP, login
 
@@ -174,7 +175,7 @@ def test_indice_de_informes(client, datos):
 
 
 def test_memoria_por_categoria(datos):
-    from app import actividades, perfiles
+    from app.investigacion import actividades, perfiles
     perfiles.cambiar_categoria(datos["emmy"], "titular")
     perfiles.cambiar_categoria(datos["alan"], "contratado")
     tipo = get_db().q("SELECT id FROM tipo_actividad ORDER BY orden LIMIT 1")[0]["id"]
@@ -190,7 +191,7 @@ def test_memoria_por_categoria(datos):
 
 def test_memoria_externos_solo_con_proyecto_institucional(datos):
     """Un investigador de categoría «Externo» figura solo con lo ligado a un proyecto institucional."""
-    from app import perfiles
+    from app.investigacion import perfiles
     externo = usuarios.crear("ext@test.cl", "Hermann", "Minkowski", CLAVE, categoria="externo")["id"]
     solo = _producto(externo, [f"i:{externo}"], "Solo del externo")
     ligado = _producto(externo, [f"i:{externo}"], "Del externo en proyecto")

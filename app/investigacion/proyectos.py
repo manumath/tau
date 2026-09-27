@@ -17,7 +17,8 @@ Flujo de vínculos (tablas actividad_proyecto y producto_proyecto):
 """
 from datetime import date
 
-from app import avisos, personas
+from app.investigacion import avisos
+from app import personas
 from app.db import get_db, sin_tildes
 
 TIPOS = {"individual": "Individual", "institucional": "Institucional"}
@@ -147,7 +148,7 @@ def _n_responsables(pid: int, excluir: int | None = None) -> int:
 def error_categoria(pid: int, uid: int | None, rol: str) -> str | None:
     """En proyectos institucionales: responsables titulares o contratados; co-responsables,
     además, interinos."""
-    from app import perfiles
+    from app.investigacion import perfiles
     proyecto = obtener(pid)
     if not proyecto or proyecto["tipo"] != "institucional" or rol not in ROLES_RESPONSABLES or not uid:
         return None

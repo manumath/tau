@@ -6,10 +6,11 @@ from datetime import date
 import pytest
 from openpyxl import load_workbook
 
-from app import actividades, bibtex, importacion
+from app.investigacion import actividades, bibtex, importacion
 from app.acreditacion import informes
-from app import institucionales as inst
-from app import perfiles, productos, proyectos, usuarios
+from app.investigacion import institucionales as inst
+from app.investigacion import perfiles, productos, proyectos
+from app import usuarios
 from app.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 from tests.test_importacion import red  # noqa: F401  (fixture con respuestas simuladas)

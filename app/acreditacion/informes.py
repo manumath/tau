@@ -15,7 +15,9 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
-from app import actividades, config, filiacion, institucionales, lineas, perfiles, productos, proyectos, revistas, vinculos
+from app.investigacion import (actividades, filiacion, institucionales, lineas, perfiles, productos, proyectos,
+                               revistas)
+from app import config, vinculos
 from app.db import get_db
 
 # Categorías del CV, en orden de aparición. La primera que corresponde es la que se usa.

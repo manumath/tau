@@ -162,7 +162,8 @@ def es_estudiante_ref(autores: list[dict], anio: int) -> list[dict]:
 def tesis(desde_anio: int, hasta_anio: int) -> list[dict]:
     """Tesis dirigidas del periodo con al menos un director del instituto vinculado en la fecha.
     Cada una: producto, tesistas (con nivel), directores y estado (defendida / en curso)."""
-    from app import productos, vinculos
+    from app.investigacion import productos
+    from app import vinculos
     res = []
     for f in get_db().q("""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
                            WHERE t.nombre = ? AND p.anio BETWEEN ? AND ? ORDER BY p.anio, p.id""",
@@ -185,7 +186,7 @@ def tesis(desde_anio: int, hasta_anio: int) -> list[dict]:
 
 def indicadores(m: dict) -> dict:
     """Participación de estudiantes y graduados en lo que cuenta la memoria o el anexo `m`."""
-    from app import actividades, proyectos
+    from app.investigacion import actividades, proyectos
     a0, a1 = int(m["desde"][:4]), int(m["hasta"][:4])
     con_estudiantes = [p for p in m["productos"] if es_estudiante_ref(p["autores"], p["anio"])]
     con_graduados = [p for p in m["productos"]

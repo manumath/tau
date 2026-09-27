@@ -9,7 +9,7 @@ indexaciones nuevas. Lo cargado por la administración queda verificado.
 import csv
 import io
 
-from app import revistas
+from app.investigacion import revistas
 from app.db import auditar, get_db, sin_tildes
 from app.importar_usuarios import MAX_BYTES, SI, NO, _decodificar, _separador
 

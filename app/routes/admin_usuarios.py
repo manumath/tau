@@ -11,7 +11,8 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, Label, LabelCheckboxX, LabelInput, LabelT,
                            Table, Tbody, Td, Th, TextPresets, UkIcon)
 
-from app import config, correo, importar_usuarios, importar_vinculos, perfiles, tokens, usuarios, vinculos
+from app import config, correo, importar_usuarios, importar_vinculos, tokens, usuarios, vinculos
+from app.investigacion import perfiles
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.db import auditar
 from app.seguridad import password_temporal

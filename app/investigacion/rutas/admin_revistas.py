@@ -9,7 +9,8 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, Input, LabelInput, Table, Tbody, Td, Th,
                            TextPresets, UkIcon)
 
-from app import config, importar_revistas, revistas
+from app import config
+from app.investigacion import importar_revistas, revistas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import insignia, url_filtrada
 from app.db import auditar

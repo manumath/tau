@@ -1,7 +1,8 @@
 """Actividades de investigación (seminarios, congresos, visitas…) y sus participantes."""
 from datetime import date
 
-from app import adjuntos, personas
+from app.investigacion import adjuntos
+from app import personas
 from app.db import get_db, sin_tildes
 
 MODALIDADES = {"presencial": "Presencial", "virtual": "Virtual", "hibrida": "Híbrida"}

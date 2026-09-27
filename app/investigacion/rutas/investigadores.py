@@ -3,7 +3,8 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, FtResponse, HtmxRe
                              Option, P, Response, Select, Span, Ul)
 from monsterui.all import H2, Card, Grid, Input, TextPresets, UkIcon
 
-from app import actividades, fotos, lineas, perfiles, productos, vinculos
+from app.investigacion import actividades, lineas, perfiles, productos
+from app import fotos, vinculos
 from app.components.lineas import insignias_lineas
 from app.components.layout import pagina
 from app.components.registros import url_filtrada

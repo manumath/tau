@@ -6,8 +6,9 @@ por muchas personas): por eso nada se registra sin que el investigador lo confir
 """
 import re
 
-from app import config, paises, productos
-from app.importacion import ErrorImportacion, _dividir_nombre, _get, _limpiar
+from app import config, paises
+from app.investigacion import productos
+from app.investigacion.importacion import ErrorImportacion, _dividir_nombre, _get, _limpiar
 
 CAMPOS = ("id,doi,title,publication_year,publication_date,type,primary_location,locations,authorships,"
           "cited_by_count,open_access,biblio,abstract_inverted_index")

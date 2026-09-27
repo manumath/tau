@@ -9,11 +9,12 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, Footer, Form, Head
                              Li, Main, P, Redirect, Response, Span, Title, Ul)
 from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets, UkIcon
 
-from app import config, fotos, lineas, perfiles, productos
+from app import config, fotos
+from app.investigacion import lineas, perfiles, productos
 from app.components.lineas import insignias_lineas
 from app.components.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
 from app.db import get_db
-from app.identificadores import IDENTIFICADORES
+from app.investigacion.identificadores import IDENTIFICADORES
 
 rt = APIRouter()
 

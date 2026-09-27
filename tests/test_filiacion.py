@@ -3,7 +3,8 @@ import os
 
 import pytest
 
-from app import filiacion, importacion, personas, productos, proyectos, usuarios, vinculos
+from app.investigacion import filiacion, importacion, productos, proyectos
+from app import personas, usuarios, vinculos
 from app.acreditacion import informes
 from app.db import get_db
 from app.routes.admin_usuarios import fecha_local

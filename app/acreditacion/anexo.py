@@ -7,7 +7,8 @@ omisión, exige revista verificada, como corresponde a la acreditación.
 """
 from datetime import date
 
-from app import actividades, config, estudiantes, paises, perfiles, proyectos, revistas, vinculos
+from app.investigacion import actividades, perfiles, proyectos, revistas
+from app import config, estudiantes, paises, vinculos
 from app.acreditacion import informes
 from app.db import get_db
 

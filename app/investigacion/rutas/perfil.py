@@ -15,13 +15,14 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
 
-from app import fotos, lineas, msc, perfiles, usuarios, vinculos
+from app import fotos, usuarios, vinculos
+from app.investigacion import lineas, msc, perfiles
 from app.components.layout import mensaje_error, pagina
 from app.components.lineas import casillas_lineas, insignias_lineas
 from app.components.perfil import (avatar, chip_msc, lista_identificadores, seccion,
                                    texto_con_parrafos)
 from app.db import auditar, get_db
-from app.identificadores import IDENTIFICADORES, normalizar_todos
+from app.investigacion.identificadores import IDENTIFICADORES, normalizar_todos
 
 rt = APIRouter()
 

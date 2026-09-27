@@ -1,6 +1,7 @@
 import pytest
 
-from app import adjuntos, personas, productos, usuarios
+from app.investigacion import adjuntos, productos
+from app import personas, usuarios
 from app.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 

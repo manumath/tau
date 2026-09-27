@@ -2,7 +2,8 @@ import re
 
 import pytest
 
-from app import actividades, personas, productos, proyectos, usuarios
+from app.investigacion import actividades, productos, proyectos
+from app import personas, usuarios
 from app.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 

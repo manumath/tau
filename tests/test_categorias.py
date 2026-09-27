@@ -3,7 +3,8 @@ import base64
 
 import pytest
 
-from app import importar_usuarios, perfiles, usuarios
+from app import importar_usuarios, usuarios
+from app.investigacion import perfiles
 from app.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 

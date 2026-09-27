@@ -17,13 +17,13 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app import (actividades, config, filiacion, institucionales, lineas, paises, personas, productos, proyectos,
-                 usuarios)
+from app.investigacion import actividades, filiacion, institucionales, lineas, productos, proyectos
+from app import config, paises, personas, usuarios
 from app.components import personas as ui_personas
 from app.components.lineas import casillas_lineas, insignias_lineas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import dato, enlace_persona, insignia
-from app.routes import propuestas as ui_propuestas
+from app.investigacion.rutas import propuestas as ui_propuestas
 from app.db import auditar, get_db
 
 rt = APIRouter()
@@ -724,7 +724,7 @@ def tab_actividades(p, auth):
 def tab_productos(p, auth):
     pid = p["id"]
     gestiona = proyectos.puede_gestionar(pid, auth)
-    from app.routes.productos import insignias as insignias_producto
+    from app.investigacion.rutas.productos import insignias as insignias_producto
     filas, n_informe = [], 0
     for v in proyectos.registros(pid, "producto"):
         x = productos.obtener(v["registro_id"])

@@ -2,7 +2,7 @@
 from fasthtml.common import A, Div, Img, P, Script, Span
 from monsterui.all import Card, TextPresets, UkIcon
 
-from app.identificadores import IDENTIFICADORES
+from app.investigacion.identificadores import IDENTIFICADORES
 
 # KaTeX: renderiza \( \), $ $ y $$ $$ en todo contenido nuevo (carga inicial y swaps de HTMX).
 KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"

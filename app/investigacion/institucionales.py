@@ -19,7 +19,8 @@ import json
 import time
 from datetime import date
 
-from app import avisos, config, lineas, perfiles, personas, proyectos
+from app.investigacion import avisos, lineas, perfiles, proyectos
+from app import config, personas
 from app.db import get_db
 
 ESTADOS = {"borrador": "Borrador", "enviada": "Enviada", "aceptada": "Aceptada",

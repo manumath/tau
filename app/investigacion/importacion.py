@@ -16,7 +16,8 @@ from urllib.parse import quote
 
 import httpx2
 
-from app import config, paises, personas, productos, revistas
+from app import config, paises, personas
+from app.investigacion import productos, revistas
 from app.db import get_db, sin_tildes
 
 TIMEOUT = 10
@@ -253,7 +254,7 @@ def resolver_autores(autores: list[dict]) -> tuple[list[str], dict]:
     """→ (referencias en orden, resumen {'internos': [...], 'existentes': [...], 'nuevos': [...],
     'filiacion': {ref: '1'}}). 'filiacion' marca a los autores del instituto cuya afiliación
     publicada menciona al instituto o a la UMSA (ver app.filiacion.detecta)."""
-    from app.filiacion import detecta
+    from app.investigacion.filiacion import detecta
     investigadores = _investigadores()
     refs, resumen = [], {"internos": [], "existentes": [], "nuevos": [], "filiacion": {}}
     for a in autores:

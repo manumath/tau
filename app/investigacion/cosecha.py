@@ -9,7 +9,8 @@ filiación IIMAT/UMSA se marca si la afiliación publicada la menciona.
 import re
 from datetime import date
 
-from app import filiacion, importacion, openalex, perfiles, personas, productos, revistas
+from app.investigacion import filiacion, importacion, openalex, perfiles, productos, revistas
+from app import personas
 from app.db import auditar, get_db, sin_tildes
 
 

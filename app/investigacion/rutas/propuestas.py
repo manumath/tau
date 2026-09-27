@@ -15,8 +15,8 @@ from fasthtml.common import (A, APIRouter, Div, H3, Input, Li, Option, P, Redire
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, TextPresets, UkIcon
 
-from app import institucionales as inst
-from app import lineas, proyectos
+from app.investigacion import institucionales as inst
+from app.investigacion import lineas, proyectos
 from app.components.lineas import casillas_lineas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.perfil import texto_con_parrafos

@@ -4,7 +4,7 @@ from urllib.parse import quote
 
 from fasthtml.common import APIRouter, FileResponse, Response, UploadFile
 
-from app import actividades, adjuntos, productos
+from app.investigacion import actividades, adjuntos, productos
 from app.components.registros import seccion_adjuntos
 from app.db import auditar
 

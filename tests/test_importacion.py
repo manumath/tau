@@ -6,7 +6,8 @@ import re
 import httpx2
 import pytest
 
-from app import importacion, personas, productos, usuarios
+from app.investigacion import importacion, productos
+from app import personas, usuarios
 from app.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 

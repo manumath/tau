@@ -10,7 +10,8 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app import actividades, lineas, personas, productos, proyectos
+from app.investigacion import actividades, lineas, productos, proyectos
+from app import personas
 from app.components.lineas import insignias_lineas
 from app.components import personas as selector_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina

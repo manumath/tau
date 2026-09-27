@@ -1,8 +1,8 @@
 import pytest
 
-from app.identificadores import (digito_control_orcid, normalizar_arxiv, normalizar_mr,
-                                 normalizar_orcid, normalizar_scholar, normalizar_todos,
-                                 normalizar_url, normalizar_zbmath)
+from app.investigacion.identificadores import (digito_control_orcid, normalizar_arxiv, normalizar_mr,
+                                               normalizar_orcid, normalizar_scholar, normalizar_todos,
+                                               normalizar_url, normalizar_zbmath)
 
 
 @pytest.mark.parametrize("entrada", [

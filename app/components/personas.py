@@ -13,8 +13,8 @@ from fasthtml.common import Div, Input, Li, Option, P, Select, Span, Ul
 from monsterui.all import Button, ButtonT, TextPresets, UkIcon
 
 from app import estudiantes
-from app.actividades import ROLES
-from app.filiacion import OPCIONES as OPCIONES_FILIACION
+from app.investigacion.actividades import ROLES
+from app.investigacion.filiacion import OPCIONES as OPCIONES_FILIACION
 
 JS_SUBIR = ("const li=this.closest('li');"
             "if(li.previousElementSibling)li.parentNode.insertBefore(li,li.previousElementSibling)")

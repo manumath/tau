@@ -3,7 +3,7 @@ import fasthtml.common as fh
 from fasthtml.common import A, Div, Input, Li, Option, P, Select, Span, Ul
 from monsterui.all import Button, ButtonT, TextPresets, UkIcon
 
-from app import adjuntos
+from app.investigacion import adjuntos
 from app.components.layout import mensaje_error
 
 
@@ -104,7 +104,7 @@ ICONO_VINCULO = {"pendiente": "clock", "aprobado": "folder-check", "rechazado": 
 
 def insignias_proyectos(vinculos: list[dict]):
     """Una insignia por proyecto: «Proyecto X · pendiente». El motivo de rechazo va en el title."""
-    from app.proyectos import ESTADOS_VINCULO
+    from app.investigacion.proyectos import ESTADOS_VINCULO
     agradece = {1: " · agradece", 0: " · no agradece"}
     return [insignia(f"{v['proyecto']} · {ESTADOS_VINCULO[v['estado']].lower()}{agradece.get(v.get('agradece'), '')}",
                      TONO_VINCULO[v["estado"]], icono=ICONO_VINCULO[v["estado"]],
@@ -118,7 +118,7 @@ def casillas_proyectos(tipo: str, registro_id: int | None, usuario: dict,
     """Casillas «Vincular a proyectos» para el formulario de una actividad o un producto. En los
     productos, cada proyecto lleva además «¿agradece al proyecto?» (campo `agradece` con valores
     '<proyecto>:1', '<proyecto>:0' o '<proyecto>:')."""
-    from app import proyectos
+    from app.investigacion import proyectos
     disponibles = {p["id"]: p for p in proyectos.para_proponer(usuario["id"])}
     vinculos = {v["proyecto_id"]: v for v in proyectos.vinculos_de(tipo, registro_id)} \
         if registro_id else {}

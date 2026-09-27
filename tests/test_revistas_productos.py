@@ -4,7 +4,8 @@ import copy
 
 import pytest
 
-from app import bibtex, importacion, productos, revistas, usuarios, vinculos
+from app.investigacion import bibtex, importacion, productos, revistas
+from app import usuarios, vinculos
 from app.acreditacion import informes
 from app.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login

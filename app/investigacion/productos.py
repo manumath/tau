@@ -6,7 +6,8 @@ arbitrado y ya fue aceptado o publicado (ver `cuenta_para_informe`).
 import re
 from datetime import date
 
-from app import adjuntos, personas, revistas
+from app.investigacion import adjuntos, revistas
+from app import personas
 from app.db import get_db, sin_tildes
 
 ESTADOS = {"publicado": "Publicado", "aceptado": "Aceptado", "enviado": "Enviado",
@@ -181,7 +182,7 @@ def guardar(d: dict, autores_refs: list[str], usuario_id: int, pid: int | None =
             filiaciones: list | None = None) -> int:
     """`filiaciones`: en el orden de los autores, 1 / 0 / None (sin declarar) para los del
     instituto; se ignora en los externos."""
-    from app.filiacion import normalizar
+    from app.investigacion.filiacion import normalizar
     filiaciones = list(filiaciones or [])
     filiaciones += [None] * (len(autores_refs) - len(filiaciones))
     db = get_db()

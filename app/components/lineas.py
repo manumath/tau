@@ -2,7 +2,7 @@
 from fasthtml.common import Div, Input, Label, P, Span
 from monsterui.all import TextPresets
 
-from app import lineas
+from app.investigacion import lineas
 from app.components.registros import insignia
 
 

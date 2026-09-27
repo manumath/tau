@@ -10,7 +10,7 @@
 import calendar
 from datetime import date, timedelta
 
-from app import perfiles
+from app.investigacion import perfiles
 from app.db import get_db
 
 INICIO_DESCONOCIDO = "0000-01-01"
