@@ -1,6 +1,6 @@
 """Avisos por correo del flujo de proyectos. Respetan la preferencia `avisos_correo` y nunca
 avisan a quien hizo la acción (no tiene sentido avisarse a uno mismo)."""
-from app.comun import config, correo
+from app.comun import config, correo, permisos
 from app.comun.db import get_db, vigente_hasta
 
 
@@ -80,9 +80,9 @@ def _responsables(pid: int) -> list[dict]:
 
 
 def propuesta_enviada(prop: dict, reenvio: bool):
-    """A la administración: hay una propuesta institucional por decidir."""
+    """A la Dirección del Instituto: hay una propuesta institucional por decidir."""
     periodo = f"{prop['periodo']}–{prop['periodo'] + 1}"
-    for u in get_db().q("SELECT * FROM usuario WHERE es_admin = 1 AND activo = 1"):
+    for u in permisos.con_rol("direccion_instituto"):
         if u["id"] == prop["proponente_id"] or not _quiere(u):
             continue
         correo.enviar(

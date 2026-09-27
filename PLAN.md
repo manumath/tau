@@ -944,3 +944,13 @@ Estimación: 3 a 4 semanas (sin el paso 5).
   docente solo de la Carrera hacía fallar la memoria). Pantalla de vínculos con selector
   IIMAT/CMAT e importación de RR. HH. con columna `unidad`. Las categorías de la Carrera son, por
   ahora, las mismas del Instituto: revisar cuando se defina la «jerarquía académica» de la hoja 10.
+- Paso 2 hecho (27-sep-2026): tabla `rol_asignado` (migración 0023); quienes eran administradores
+  reciben Administración del sistema (UMSA) y Dirección del Instituto (IIMAT); se elimina la
+  columna `usuario.es_admin` (verificado en la base de desarrollo, que el servidor migró solo).
+  `app/comun/permisos.py`: ROLES, ACCIONES (tabla inicial), `puede()`, asignar, quitar y el
+  resguardo de no quedarse sin Administración del sistema. Alcance: los roles de la UMSA cubren
+  todo; los demás, solo su unidad (el IIMAT está dentro de la CMAT, pero la Dirección de Carrera no
+  decide sobre el Instituto). «Quitar» = deja de regir hoy (último día, ayer; si empezó hoy, se
+  anula). Pantalla «Roles» en Usuarios, solo para Administración del sistema, con la dirección que
+  lo pidió. `es_admin` se calcula de los roles mientras el paso 3 reemplaza sus ~50 usos. Los
+  avisos de propuestas van a la Dirección del Instituto. Matriz de permisos en `tests/test_roles.py`.

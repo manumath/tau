@@ -262,6 +262,15 @@ proyecto y ser del mismo periodo).
   contraseña. Sin invitación, el portal muestra una contraseña temporal para entregar a mano.
   Las cuentas de investigador llevan **categoría** (titular, contratado, interino, invitado o
   externo): de ella depende quién puede proponer proyectos institucionales y ser responsable.
+- **Roles** (en la tabla de usuarios, botón «Roles»; solo Administración del sistema): cada rol se
+  asigna a una persona para una unidad, desde una fecha y, si corresponde, hasta otra, anotando qué
+  dirección lo pidió. «Quitar» hace que el rol deje de regir desde hoy; queda en el historial.
+  Roles: Administración del sistema (cuentas, roles, auditoría), Dirección del Instituto
+  (propuestas, catálogos, vínculos del IIMAT, memoria y anexo), Dirección de Carrera, Coordinación
+  académica, Comité de acreditación (ve todo, no modifica) y Gestión de datos (carga de vínculos y
+  estudiantes de su unidad). El sistema no permite quedarse sin Administración del sistema.
+  Mientras se completa la transición, quien tiene Administración del sistema o Dirección del
+  Instituto ve todas las opciones de administración.
 - **Usuarios → Importar CSV:** alta masiva desde una planilla con `email`, `nombres`,
   `apellidos` y, opcionalmente, `categoria`, `investigador` y `admin` (sí/no). Las filas sin
   categoría se crean igual y quedan como «Sin categoría». Hay una plantilla. La vista

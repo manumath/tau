@@ -69,6 +69,7 @@ app/
     tokens.py                  enlaces de un solo uso (recuperar contraseña, invitación)
     correo.py                  envío de correo (archivo .eml, SMTP, memoria para pruebas)
     unidades.py                jerarquía UMSA › FCPN › CMAT › IIMAT
+    permisos.py                roles con alcance y vigencia; puede(usuario, accion, unidad)
     vinculos.py                historial de vínculo con el Instituto o la Carrera (categoría y jornada por periodo)
     importar_vinculos.py       carga del historial de vínculos desde un CSV de Recursos Humanos
     personas.py                autores y participantes: 'i:<id>', 'e:<id>' y provisionales 'n:…'

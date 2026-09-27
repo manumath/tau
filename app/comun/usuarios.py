@@ -1,25 +1,28 @@
 """Acceso a datos de cuentas de usuario."""
 from datetime import timedelta
 
-from app.comun import config
+from app.comun import config, permisos, unidades
 from app.comun.db import AHORA, get_db, marca_tiempo, sin_tildes
 from app.comun.seguridad import hash_password
 
+# Toda fila de usuario lleva `es_admin` calculado de sus roles (transición: ver app.comun.permisos).
+_COLUMNAS = f"u.*, {permisos.sql_es_admin('u')} AS es_admin"
+
 
 def por_id(uid: int) -> dict | None:
-    filas = get_db().q("SELECT * FROM usuario WHERE id = ?", [uid])
+    filas = get_db().q(f"SELECT {_COLUMNAS} FROM usuario u WHERE u.id = ?", [uid])
     return filas[0] if filas else None
 
 
 def por_email(email: str) -> dict | None:
-    filas = get_db().q("SELECT * FROM usuario WHERE email = ?", [email.strip()])
+    filas = get_db().q(f"SELECT {_COLUMNAS} FROM usuario u WHERE u.email = ?", [email.strip()])
     return filas[0] if filas else None
 
 
 def listar(texto: str = "") -> list[dict]:
     patron = f"%{sin_tildes(texto.strip())}%"
     return get_db().q(
-        """SELECT u.*, (i.usuario_id IS NOT NULL) AS es_investigador, i.categoria
+        f"""SELECT {_COLUMNAS}, (i.usuario_id IS NOT NULL) AS es_investigador, i.categoria
            FROM usuario u LEFT JOIN investigador i ON i.usuario_id = u.id
            WHERE u.email LIKE :p OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
                  OR sin_tildes(u.apellidos || ' ' || u.nombres) LIKE :p
@@ -29,7 +32,7 @@ def listar(texto: str = "") -> list[dict]:
 
 def con_perfil(uid: int) -> dict | None:
     filas = get_db().q(
-        """SELECT u.*, (i.usuario_id IS NOT NULL) AS es_investigador, i.categoria
+        f"""SELECT {_COLUMNAS}, (i.usuario_id IS NOT NULL) AS es_investigador, i.categoria
            FROM usuario u LEFT JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [uid])
     return filas[0] if filas else None
 
@@ -40,7 +43,12 @@ def crear(email: str, nombres: str, apellidos: str, password: str, *,
     db = get_db()
     u = db.t.usuario.insert(email=email.strip().lower(), nombres=nombres.strip(),
                             apellidos=apellidos.strip(), pass_hash=hash_password(password),
-                            es_admin=int(es_admin), debe_cambiar_pass=int(debe_cambiar_pass))
+                            debe_cambiar_pass=int(debe_cambiar_pass))
+    if es_admin:
+        # Transición: «administrador» = Administración del sistema + Dirección del Instituto.
+        permisos.asignar(u["id"], "administracion_sistema", unidades.id_de("UMSA"))
+        permisos.asignar(u["id"], "direccion_instituto", unidades.instituto())
+        u["es_admin"] = 1
     if es_investigador:
         db.t.investigador.insert(usuario_id=u["id"], categoria=categoria)
         if categoria:

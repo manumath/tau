@@ -80,6 +80,7 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
   | ¿Cuándo rige un proyecto institucional? | `institucionales.refrescar_vigencias` |
   | ¿Cómo se clasifica un artículo por su revista? | `revistas.clasificacion` |
   | ¿Con qué unidad está vinculada una persona? | `app/comun/vinculos.py` (siempre con `unidad`; sin ella, el IIMAT), `app/comun/unidades.py` |
+  | ¿Quién puede hacer qué? | `ROLES` y `ACCIONES` en `app/comun/permisos.py`; se decide con `puede(usuario, accion, unidad)` |
   | ¿Qué rutas son públicas? | `RUTAS_PUBLICAS` en `app/comun/auth.py` |
   | ¿Qué cifras lleva la memoria o el anexo? | `app/acreditacion/informes.py`, `app/acreditacion/anexo.py` |
 
@@ -108,7 +109,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0022). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0023). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.
@@ -248,7 +249,7 @@ o una restauración). No ejecuta las tareas horarias.
 | Nadie puede guardar nada | Modo solo lectura activo | Revise `PORTAL_SOLO_LECTURA` |
 | Una cuenta no puede ingresar aunque la contraseña es correcta | Bloqueo por intentos fallidos (15 minutos) | «Usuarios» → desbloquear |
 | El portal no arranca tras actualizar | Falló una migración | Lea el error; restaure el respaldo previo (5.2) y corrija la migración en una nueva |
-| Una página de administración responde 403 | La cuenta no es administradora | La marca se fija al crear la cuenta y hoy no hay pantalla para cambiarla (sección 7). Con respaldo previo: `sqlite3 portal.db "UPDATE usuario SET es_admin = 1 WHERE email = '…'"` |
+| Una página de administración responde 403 | A la cuenta le falta el rol | «Usuarios» → «Roles» (lo hace Administración del sistema) |
 | Los correos no llegan | `PORTAL_CORREO_MODO` no es `smtp`, o credenciales SMTP | Revise `data/correos/` y la configuración SMTP |
 | Una prueba en navegador falla solo en su equipo | Chrome no instalado o muy antiguo | `uv run playwright install chromium` y `PLAYWRIGHT_CANAL=` |
 
@@ -262,6 +263,7 @@ o una restauración). No ejecuta las tareas horarias.
 - **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se
   usa (`q`, `execute`, `t.<tabla>.insert/update`); el resto de lo propio de SQLite está en
   `app/comun/db.py` (ver su docstring).
-- **Rol de administración:** solo se asigna al crear la cuenta; no hay pantalla para darlo o
-  quitarlo después. Lo resuelve el modelo de roles de la fase 2.
+- **Permisos en transición:** los roles ya existen (fase 2, paso 2), pero el código todavía pregunta
+  `usuario["es_admin"]` en unos 50 lugares; esa marca se calcula de Administración del sistema o
+  Dirección del Instituto. El paso 3 los reemplaza por acciones de `permisos.ACCIONES`.
 - El mayor archivo de rutas es `app/investigacion/rutas/productos/formulario.py` (unas 480 líneas).

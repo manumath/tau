@@ -3,7 +3,7 @@ from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon)
 
-from app.comun import config, correo, tokens, usuarios
+from app.comun import config, correo, permisos, tokens, usuarios
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.comun.db import auditar
 from app.comun.seguridad import errores_password, verificar_password
@@ -29,6 +29,7 @@ def _cargar_usuario(req, sess):
     if not usuario or not usuario["activo"]:
         sess.clear()
         return Redirect("/login")
+    usuario["roles"] = permisos.roles_vigentes(uid)
     req.scope["auth"] = usuario
     ruta = req.url.path
     if usuario["debe_cambiar_pass"] and ruta not in RUTAS_CAMBIO_PASS:

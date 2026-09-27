@@ -11,7 +11,8 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, Label, LabelCheckboxX, LabelInput, LabelT,
                            Table, Tbody, Td, Th, TextPresets, UkIcon)
 
-from app.comun import config, correo, importar_usuarios, importar_vinculos, tokens, unidades, usuarios, vinculos
+from app.comun import (config, correo, importar_usuarios, importar_vinculos, permisos, tokens, unidades, usuarios,
+                       vinculos)
 from app.investigacion import perfiles
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.comun.db import auditar
@@ -56,13 +57,22 @@ def resumen_vinculo(u):
                cls="flex flex-wrap items-center")
 
 
-def _etiquetas_perfil(u):
+CORTO = {"administracion_sistema": "Adm. del sistema", "direccion_instituto": "Dir. Instituto",
+         "direccion_carrera": "Dir. Carrera", "coordinacion_academica": "Coord. académica",
+         "comite_acreditacion": "Comité de acreditación", "gestion_datos": "Gestión de datos"}
+
+
+def _etiquetas_perfil(u, gestiona_roles=False):
     etiquetas = []
     if u["es_investigador"]:
         etiquetas.append(Label("Investigador", cls=LabelT.secondary))
-    if u["es_admin"]:
-        etiquetas.append(Label("Admin", cls=LabelT.primary))
-    return Div(Div(*etiquetas, cls="flex gap-1 flex-wrap"),
+    for r in permisos.roles_vigentes(u["id"]):
+        sigla = f" · {r['sigla']}" if r["rol"] == "gestion_datos" else ""
+        etiquetas.append(Label(CORTO[r["rol"]] + sigla, cls=LabelT.primary, title=permisos.nombre(r["rol"])))
+    boton_roles = fh.Button(UkIcon("shield-check", height=14, width=14), "Roles", type="button",
+                            cls="inline-flex items-center gap-1 text-xs text-primary hover:underline",
+                            hx_get=f"{BASE}/{u['id']}/roles", hx_target=f"#{ID_MODAL}") if gestiona_roles else ""
+    return Div(Div(*etiquetas, boton_roles, cls="flex gap-1 flex-wrap items-center"),
                resumen_vinculo(u) if u["es_investigador"] else "",
                cls="space-y-1")
 
@@ -116,7 +126,7 @@ def fila(u, yo_id: int):
         Td(Div(f"{u['apellidos']}, {u['nombres']}", cls="font-medium"),
            Div("(usted)", cls=TextPresets.muted_sm) if es_yo else ""),
         Td(u["email"]),
-        Td(_etiquetas_perfil(u)),
+        Td(_etiquetas_perfil(u, permisos.puede({"id": yo_id}, "asignar_roles"))),
         Td(_estado(u, bloqueada)),
         Td(fecha_local(u["ultimo_acceso"]),
            cls=(TextPresets.muted_sm, "whitespace-nowrap hidden lg:table-cell")),
@@ -150,7 +160,8 @@ def form_usuario(datos=None, errores=()):
                    value=d.get("fecha_ingreso") or ""),
         Div(LabelCheckboxX("Es investigador (tendrá perfil y registrará actividad)",
                            id="es_investigador", checked=d.get("es_investigador", True)),
-            LabelCheckboxX("Administrador del portal", id="es_admin",
+            LabelCheckboxX("Administración (Adm. del sistema y Dirección del Instituto; otros roles, después en «Roles»)",
+                           id="es_admin",
                            checked=d.get("es_admin", False)),
             cls="space-y-2"),
         Div(LabelCheckboxX("Enviar invitación por correo", id="invitar",
@@ -481,6 +492,112 @@ def post(auth, sess, contenido: str = "", invitar: bool = False):
                   Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
                       cls="flex justify-end mt-4"), ancho="max-w-2xl"),
             tabla)
+
+
+# --- Roles --------------------------------------------------------------------------------------------------
+
+def _opciones_rol(elegido=""):
+    """Un valor por combinación de rol y unidad permitida: 'direccion_instituto:4'."""
+    opciones = [Option("— Elija un rol —", value="")]
+    for rol, (nombre, siglas) in permisos.ROLES.items():
+        for sigla in siglas:
+            valor = f"{rol}:{unidades.id_de(sigla)}"
+            opciones.append(Option(f"{nombre} · {sigla}", value=valor, selected=valor == elegido))
+    return opciones
+
+
+def modal_roles(u, auth, errores=(), datos=None):
+    uid = u["id"]
+    datos = datos or {}
+    hoy = date.today().isoformat()
+    filas = []
+    for r in permisos.historial(uid):
+        vigente = r["desde"] <= hoy and (r["hasta"] is None or r["hasta"] >= hoy)
+        abierta = r["hasta"] is None or r["hasta"] >= hoy
+        filas.append(Tr(
+            Td(permisos.nombre(r["rol"]), Span(" · vigente", cls="text-xs text-green-700") if vigente else ""),
+            Td(r["sigla"]), Td(r["desde"], cls="whitespace-nowrap"), Td(r["hasta"] or "—", cls="whitespace-nowrap"),
+            Td(Div(r["nota"] or "", cls="text-sm"),
+               Div(f"Asignado por {r['asignado_por_nombre']}" if r["asignado_por_nombre"] else "",
+                   cls=TextPresets.muted_sm)),
+            Td(Button("Quitar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
+                      hx_post=f"{BASE}/roles/{r['id']}/terminar", hx_target=f"#{ID_MODAL}",
+                      hx_confirm=f"¿Quitar el rol {permisos.nombre(r['rol'])} ({r['sigla']}) a "
+                                 f"{u['nombres']} {u['apellidos']}? Deja de regir desde hoy.") if abierta else "")))
+    tabla = Table(Thead(Tr(Th("Rol"), Th("Unidad"), Th("Desde"), Th("Hasta"), Th("Nota"), Th(""))),
+                  Tbody(*filas) if filas else Tbody(Tr(Td("Sin roles asignados.", colspan=6, cls=TextPresets.muted_sm))),
+                  cls="uk-table-divider uk-table-small")
+    ayuda = fh.Details(fh.Summary("Qué puede hacer cada rol", cls="cursor-pointer text-sm text-primary"),
+                       fh.Dl(*[x for rol, d in permisos.DESCRIPCIONES.items()
+                               for x in (fh.Dt(permisos.nombre(rol), cls="text-sm font-medium mt-2"),
+                                         fh.Dd(d, cls=TextPresets.muted_sm))]), cls="mb-3")
+    formulario = Form(
+        Div(Div(FormLabel("Rol y unidad", fr="rol_unidad"),
+                Select(*_opciones_rol(datos.get("rol_unidad", "")), id="rol_unidad", name="rol_unidad", cls="uk-select"),
+                cls="space-y-1 sm:col-span-2"),
+            LabelInput("Desde", id="rol-desde", name="desde", type="date", value=datos.get("desde") or hoy),
+            LabelInput("Hasta (opcional)", id="rol-hasta", name="hasta", type="date", value=datos.get("hasta") or ""),
+            cls="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end"),
+        LabelInput("Pedido de", id="rol-nota", name="nota", value=datos.get("nota") or "",
+                   placeholder="Dirección que lo pide y documento (nota, resolución)…"),
+        Div(Button("Asignar rol", type="submit", cls=(ButtonT.primary, ButtonT.sm)), cls="flex justify-end"),
+        hx_post=f"{BASE}/{uid}/roles", hx_target=f"#{ID_MODAL}", cls="space-y-3 rounded-md border border-border p-3")
+    return modal(
+        f"Roles de {u['nombres']} {u['apellidos']}",
+        mensaje_error(*errores),
+        P("Los asigna Administración del sistema, a pedido de las direcciones. Un rol que termina queda en el "
+          "historial. Investigador, docente y responsable de proyecto no se asignan: se deducen de los datos.",
+          cls=(TextPresets.muted_sm, "mb-3")),
+        ayuda,
+        Div(tabla, cls="overflow-x-auto mb-4"),
+        formulario,
+        Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
+        Template(fila(usuarios.con_perfil(uid), auth["id"])(hx_swap_oob="true")),
+        ancho="max-w-4xl")
+
+
+def _puede_roles(auth):
+    return permisos.puede(auth, "asignar_roles")
+
+
+@rt(BASE + "/{uid}/roles")
+def get(auth, uid: int):
+    if not _puede_roles(auth):
+        return Response("Solo Administración del sistema asigna roles.", status_code=403)
+    u = usuarios.con_perfil(uid)
+    return modal_roles(u, auth) if u else Response("No encontrado", status_code=404)
+
+
+@rt(BASE + "/{uid}/roles")
+def post(auth, uid: int, rol_unidad: str = "", desde: str = "", hasta: str = "", nota: str = ""):
+    if not _puede_roles(auth):
+        return Response("Solo Administración del sistema asigna roles.", status_code=403)
+    u = usuarios.con_perfil(uid)
+    if not u:
+        return Response("No encontrado", status_code=404)
+    rol, _, unidad = rol_unidad.partition(":")
+    errores = permisos.asignar(uid, rol, int(unidad) if unidad.isdigit() else 0, desde or None, hasta or None,
+                               nota, auth["id"]) if rol else ["Elija un rol."]
+    if not errores:
+        auditar(auth["id"], "asignar_rol", "usuario", uid,
+                f"{permisos.nombre(rol)} ({unidades.obtener(int(unidad))['sigla']}) desde {desde or 'hoy'}"
+                + (f" hasta {hasta}" if hasta else "") + (f" · {nota.strip()}" if nota.strip() else ""))
+    datos = dict(rol_unidad=rol_unidad, desde=desde, hasta=hasta, nota=nota) if errores else None
+    return modal_roles(u, auth, errores, datos)
+
+
+@rt(BASE + "/roles/{aid}/terminar")
+def post(auth, aid: int):
+    if not _puede_roles(auth):
+        return Response("Solo Administración del sistema asigna roles.", status_code=403)
+    a = permisos.obtener(aid)
+    if not a:
+        return Response("No encontrado", status_code=404)
+    errores = permisos.terminar(aid)
+    if not errores:
+        auditar(auth["id"], "terminar_rol", "usuario", a["usuario_id"],
+                f"{permisos.nombre(a['rol'])} ({unidades.obtener(a['unidad_id'])['sigla']})")
+    return modal_roles(usuarios.con_perfil(a["usuario_id"]), auth, errores)
 
 
 # --- Historial de vínculo ---------------------------------------------------------------------------------
