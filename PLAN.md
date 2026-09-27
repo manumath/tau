@@ -699,6 +699,21 @@ Las estimaciones suponen una persona a medio tiempo con asistencia de IA; son or
 - Fecha de nacimiento (tramos de edad, hoja 11): decisión explícita y aviso a los académicos.
 - Nombre del sistema. Una segunda persona que acompañe desde la fase 1 (continuidad).
 
+**Decidido (26 de septiembre de 2026):**
+
+- Mantienen el sistema la Dirección del IIMAT y personal de TI propio (no la DTIC, aunque
+  coordinan con ella). La DTIC no impone software: **se conserva el stack** (FastHTML + HTMX,
+  SQLite) y la fase 1 va completa.
+- La Dirección de Carrera participa en la gestión del sistema junto con la Dirección del IIMAT y
+  el personal de TI: la gobernanza es compartida (roles de ambas direcciones en la fase 2).
+- Fecha de nacimiento: se registra, con aviso a los académicos, y **solo la ve la
+  administración**. Los informes usan tramos de edad, nunca la fecha. Va en la persona académica
+  (fase 2).
+- Una segunda persona acompaña la implementación desde la fase 1.
+
+**Pendiente de la fase 0:** qué datos entrega el sistema académico de la UMSA (condiciona la
+fase 4), la «jerarquía académica» de la hoja 10 y el nombre del sistema. No bloquean las fases 1 a 3.
+
 ### Fase 1 — Saneamiento sin cambios visibles (3–4 semanas)
 
 1. Paquetes: `app/comun` (db, auth, config, seguridad, correo, auditoría, componentes),
