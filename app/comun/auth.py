@@ -11,7 +11,8 @@ from app.comun.seguridad import errores_password, verificar_password
 # Rutas accesibles sin sesión.
 # Ojo: los patrones deben ser estrictos. Uno como r".*\.png" dejaría pasar sin sesión
 # cualquier ruta que termine en .png.
-RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico", r"/[\w\-]+\.(css|js|png|svg|ico|woff2?)",
+# Los archivos estáticos (/static) no pasan por aquí: están montados aparte (componentes/recursos.py).
+RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico",
                   r"/recuperar", r"/recuperar/[\w\-]+",
                   r"/publico", r"/publico/.*", r"/api/v1/.*"]
 # Rutas permitidas mientras la contraseña es temporal.

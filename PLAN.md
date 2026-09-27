@@ -747,6 +747,15 @@ Criterio de término: todas las pruebas en verde y el piloto sigue sin notar cam
   ventanas calculados en Python, y `transaccion()` en lugar de `with db.conn:`. `INSERT OR IGNORE`
   pasa a `ON CONFLICT DO NOTHING`. El docstring de `db.py` enumera qué tocaría un cambio a
   PostgreSQL (incluidos fastlite, migraciones y `LIKE`).
+- 1.4 hecho (26-sep-2026): sin CDN. htmx 2.0.7, fasthtml.js, Franken UI 2.0.0 y KaTeX 0.16.21 en
+  `static/vendor/`; Tailwind 3.4.17 compilado (28 KB) con los colores del tema de Franken, en lugar
+  del compilador en el navegador. Se quitan daisyUI (2,9 MB por página), surreal y css-scope-inline.
+  `/static` montado con StaticFiles (sin la ruta estática genérica de FastHTML). Cabeceras de
+  seguridad y CSP con solo recursos propios. Verificado en el navegador: 14 páginas, modo claro y
+  oscuro, estilo calculado de cada elemento antes y después (solo cambian clases del código que
+  antes no tenían efecto: barra translúcida, fondos tenues, divisores con el color del tema).
+  **Pendiente:** CSP estricta (sin 'unsafe-inline' ni 'unsafe-eval') requiere reemplazar unos 50
+  manejadores en el HTML (onclick, hx-on) y los scripts en línea por un script propio.
 
 ### Fase 2 — Personas, unidades y permisos (3–4 semanas)
 

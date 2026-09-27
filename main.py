@@ -8,7 +8,6 @@ import time
 
 from fasthtml.common import Beforeware, Meta, fast_app, serve
 from fasthtml.toaster import setup_toasts
-from monsterui.all import Theme
 
 from app.comun import config
 
@@ -24,7 +23,9 @@ from app.investigacion import institucionales  # noqa: E402
 from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
 from app.comun.auth import rt as rutas_auth
 from app.comun.componentes.errores import JS_AVISOS, no_encontrado, paginas_de_error
-from app.comun.componentes.perfil import katex_headers
+from app.comun.cabeceras import CabecerasSeguridad
+from app.comun.componentes.recursos import encabezados
+from app.comun.componentes.recursos import montar as montar_estaticos
 from app.comun.db import init_db
 from app.investigacion.rutas.actividades import rt as rutas_actividades
 from app.investigacion.rutas.adjuntos import rt as rutas_adjuntos
@@ -58,7 +59,9 @@ def create_app(db_path=config.DB_PATH):
         institucionales.mantenimiento(forzar=True)
     app, _ = fast_app(
         pico=False,
-        hdrs=(*Theme.blue.headers(), *katex_headers(),
+        # Encabezados propios (sin CDN): ver app/comun/componentes/recursos.py.
+        default_hdrs=False,
+        hdrs=(*encabezados(),
               # Sin herencia de atributos hx-*: cada elemento declara su propio destino y swap.
               # Evita que, p. ej., un botón dentro de un contenedor con hx-swap="outerHTML"
               # herede ese swap sin querer (es además el comportamiento por defecto en htmx 4).
@@ -77,6 +80,8 @@ def create_app(db_path=config.DB_PATH):
     )
     setup_toasts(app)
     app.after.append(paginas_de_error)
+    montar_estaticos(app)
+    app.add_middleware(CabecerasSeguridad)
     # rutas_bibtex va antes que rutas_productos: /productos/bibtex coincidiría con /productos/{pid}.
     for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,

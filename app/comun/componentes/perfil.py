@@ -1,31 +1,8 @@
 """Piezas visuales del perfil, compartidas por «Mi perfil» y el directorio."""
-from fasthtml.common import A, Div, Img, P, Script, Span
+from fasthtml.common import A, Div, Img, P, Span
 from monsterui.all import Card, TextPresets, UkIcon
 
 from app.investigacion.identificadores import IDENTIFICADORES
-
-# KaTeX: renderiza \( \), $ $ y $$ $$ en todo contenido nuevo (carga inicial y swaps de HTMX).
-KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
-KATEX_JS = """
-import renderMathInElement from 'https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.mjs';
-const opciones = {
-  delimiters: [
-    {left: '$$', right: '$$', display: true},
-    {left: '\\\\(', right: '\\\\)', display: false},
-    {left: '$', right: '$', display: false},
-  ],
-  ignoredClasses: ['nomath'],
-  throwOnError: false,
-};
-const render = el => renderMathInElement(el || document.body, opciones);
-render(document.body);
-document.addEventListener('htmx:load', e => render(e.detail.elt));
-"""
-
-
-def katex_headers():
-    from fasthtml.common import Link
-    return [Link(rel="stylesheet", href=KATEX_CSS), Script(KATEX_JS, type="module")]
 
 
 def iniciales(nombres: str, apellidos: str) -> str:
@@ -50,9 +27,9 @@ def chip_msc(area: dict, *acciones, principal=False):
         Span(area["texto"], cls="text-sm"),
         *acciones,
         title=area.get("texto_plano") or "",
-        cls="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 "
+        cls="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 "
             + ("bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800" if principal
-               else "bg-muted/40"))
+               else "border-border bg-muted/40"))
 
 
 def lista_identificadores(p: dict):

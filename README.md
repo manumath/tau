@@ -109,6 +109,8 @@ app/
 Dependencias: `comun` no debería depender de los demás paquetes. Quedan excepciones que la fase 2
 resuelve (persona académica separada del perfil de investigación): `vinculos` e `importar_usuarios`
 usan `perfiles`, y `componentes/registros.py` y `rutas/inicio.py` conocen proyectos y productos.
+static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
+static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
 catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar
 scripts/seed.py                datos de ejemplo
@@ -174,8 +176,14 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
   (`app/comun/componentes/errores.py`). A las peticiones normales, una página con el estilo del portal.
 
 **Rutas y archivos**
-- **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): la ruta de
-  archivos estáticos de FastHTML captura cualquier URL terminada en extensiones conocidas.
+- **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): convención de
+  cuando la ruta estática de FastHTML capturaba las URL terminadas en extensiones conocidas. Esa
+  ruta ya no existe: los archivos estáticos se sirven solo en `/static`.
+- **Estilos:** Tailwind está compilado en `static/css/tailwind.css`. Al usar una clase nueva, ejecute
+  `scripts/estilos.sh` (instrucciones en el propio script) y confirme el CSS; `tests/test_estilos.py`
+  falla si falta. Las clases que MonsterUI arma en tiempo de ejecución van en
+  `estilos/clases_dinamicas.txt`. Librerías de terceros en `static/vendor/`, con versión fija
+  (`app/comun/componentes/recursos.py`).
 - Rutas con segmento literal que choca con `{id}` (p. ej. `/productos/bibtex` frente a
   `/productos/{pid}`) se registran antes: ver el orden de routers en `main.py`.
 - Fotos y adjuntos se guardan fuera de `static/`, con nombre aleatorio, y se sirven por rutas que
@@ -190,6 +198,9 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
   según `Origin` (o `Referer`): el host de la petición, `PORTAL_URL` o `PORTAL_ORIGENES_EXTRA`
   (`app/comun/auth.py`, `beforeware_origen`). Complementa la cookie `SameSite=Lax`, que no protege de
   otros subdominios del mismo sitio (p. ej. `*.umsa.bo`). Sin tokens: los formularios no cambian.
+- **Cabeceras y CSP** (`app/comun/cabeceras.py`): solo recursos del propio portal, sin conexiones a
+  otros sitios ni incrustación en marcos. `script-src` aún admite scripts en línea y `eval` (los
+  manejadores `onclick`/`hx-on` los necesitan); quitarlos permitiría una política estricta.
 
 ## Partes públicas y API
 

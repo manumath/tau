@@ -7,3 +7,6 @@ data/
 .DS_Store
 # Documentos de la agencia acreditadora (de terceros; se consultan en local, no se versionan).
 iac-cinda/
+
+# Herramientas locales de desarrollo (p. ej., el compilador de Tailwind).
+.herramientas/

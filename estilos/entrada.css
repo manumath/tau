@@ -1,0 +1,12 @@
+/* Estilos de Tailwind del portal. Se compilan a static/css/tailwind.css con scripts/estilos.sh. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fondo y texto del documento según el tema de Franken UI (claro u oscuro). */
+@layer base {
+  html {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}

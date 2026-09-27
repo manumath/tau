@@ -183,8 +183,10 @@ los cambios de esquema van en un archivo nuevo en `migrations/`.
 - [ ] El respaldo nocturno se genera, y una restauración de prueba funciona.
 - [ ] `PORTAL_HTTPS_ONLY=1` y `PORTAL_SECRET_KEY` están definidos; `/etc/portal.env` tiene permisos 600.
 
-## Pendiente recomendado antes del piloto
+## Recursos de las páginas y política de contenido
 
-Hoy Tailwind, FrankenUI, htmx y KaTeX se cargan desde CDN. Funciona, pero conviene servirlos
-desde el propio servidor (Tailwind compilado con su CLI), para no depender de terceros ni de
-la conexión de cada usuario a esos servicios.
+Desde el 26 de septiembre de 2026 las páginas no dependen de ningún CDN: htmx, Franken UI, KaTeX
+y los estilos de Tailwind (ya compilados) se sirven desde `/static` del propio portal, con versión
+por contenido y caché de un año. Cada respuesta lleva una política de seguridad de contenido (CSP)
+que solo admite recursos del portal. Si un proxy inverso agrega su propia CSP, no debe ser más
+permisiva; si agrega otra más estricta, compruebe que las páginas siguen funcionando.
