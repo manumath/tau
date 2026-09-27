@@ -17,8 +17,10 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app import actividades, config, filiacion, institucionales, paises, personas, productos, proyectos, usuarios
+from app import (actividades, config, filiacion, institucionales, lineas, paises, personas, productos, proyectos,
+                 usuarios)
 from app.components import personas as ui_personas
+from app.components.lineas import casillas_lineas, insignias_lineas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.registros import dato, enlace_persona, insignia
 from app.routes import propuestas as ui_propuestas
@@ -357,6 +359,57 @@ def tarjeta_contrapartes(p, auth):
                 agregar)
 
 
+def lineas_editables(p) -> bool:
+    """En un proyecto institucional con propuesta aceptada, las líneas vienen de ella."""
+    return p["tipo"] != "institucional" or not any(x["estado"] == "aceptada"
+                                                   for x in institucionales.de_proyecto(p["id"]))
+
+
+def tarjeta_lineas(p, auth, editar=False, error=None):
+    pid = p["id"]
+    actuales = lineas.de_proyecto(pid)
+    puede = proyectos.puede_gestionar(pid, auth) and lineas_editables(p)
+    if editar and puede:
+        cuerpo = fh.Form(mensaje_error(error) if error else "",
+                         casillas_lineas([x["id"] for x in actuales], actuales=actuales),
+                         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, hx_get=f"/proyectos/{pid}/lineas",
+                                    hx_target="#tarjeta-lineas", hx_swap="outerHTML"),
+                             Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
+                         hx_put=f"/proyectos/{pid}/lineas", hx_target="#tarjeta-lineas", hx_swap="outerHTML",
+                         cls="space-y-3")
+    else:
+        cuerpo = insignias_lineas(actuales, vacio="Sin líneas de investigación registradas.")
+    ayuda = ("Vienen de la propuesta aceptada: se cambian en la propuesta de continuidad."
+             if not lineas_editables(p) else "Líneas institucionales vigentes a las que se adscribe el proyecto.")
+    return Card(Div(H3("Líneas de investigación", cls="text-base font-semibold"),
+                    Button(UkIcon("pencil", height=14, width=14), "Editar", cls=(ButtonT.ghost, ButtonT.sm),
+                           hx_get=f"/proyectos/{pid}/lineas?editar=1", hx_target="#tarjeta-lineas",
+                           hx_swap="outerHTML") if puede and not editar else "",
+                    cls="flex justify-between items-center mb-1"),
+                P(ayuda, cls=(TextPresets.muted_sm, "mb-2")), cuerpo, id="tarjeta-lineas")
+
+
+@rt("/proyectos/{pid}/lineas")
+def get(auth, pid: int, editar: bool = False):
+    p, error = _proyecto_o_error(pid, auth)
+    return error or tarjeta_lineas(p, auth, editar)
+
+
+@rt("/proyectos/{pid}/lineas")
+def put(auth, sess, pid: int, linea: list[str] = None):
+    p, error = _proyecto_o_error(pid, auth, gestionar=True)
+    if error:
+        return error
+    if not lineas_editables(p):
+        return Response("Las líneas de este proyecto vienen de su propuesta aceptada.", status_code=403)
+    ids = lineas.ids_validos(linea)
+    if (error := lineas.adscribir_proyecto(pid, ids)):
+        return tarjeta_lineas(p, auth, editar=True, error=error)
+    auditar(auth["id"], "lineas_proyecto", "proyecto", pid, lineas.nombres(lineas.de_proyecto(pid)))
+    add_toast(sess, "Líneas de investigación guardadas.", "success")
+    return tarjeta_lineas(p, auth)
+
+
 @rt("/proyectos/{pid}/contrapartes")
 def post(auth, sess, pid: int, institucion: str = "", pais: str = ""):
     p, error = _proyecto_o_error(pid, auth, gestionar=True)
@@ -412,6 +465,7 @@ def tab_resumen(p, auth):
                   if (amb := proyectos.ambito_efectivo(p)) else None),
              dato("Descripción", P(p["descripcion"], cls="whitespace-pre-line") if p["descripcion"] else None),
              dato("Objetivo general", p["objetivo_general"])),
+        tarjeta_lineas(p, auth),
         tarjeta_contrapartes(p, auth),
         Card(H3("Objetivos específicos", cls="text-base font-semibold mb-2"), lista_obj, agregar_obj),
         Card(H3("Editados después de aprobados", cls="text-base font-semibold mb-2"),

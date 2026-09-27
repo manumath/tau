@@ -15,8 +15,9 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
 
-from app import fotos, msc, perfiles, usuarios, vinculos
+from app import fotos, lineas, msc, perfiles, usuarios, vinculos
 from app.components.layout import mensaje_error, pagina
+from app.components.lineas import casillas_lineas, insignias_lineas
 from app.components.perfil import (avatar, chip_msc, lista_identificadores, seccion,
                                    texto_con_parrafos)
 from app.db import auditar, get_db
@@ -231,6 +232,48 @@ def put(auth, sess, bio: str = ""):
     return _respuesta(auth["id"], vista_bio(perfiles.obtener(auth["id"])))
 
 
+# --- Líneas de investigación institucionales -----------------------------------
+
+AYUDA_LINEAS = ("Opcional: las líneas institucionales vigentes en las que usted investiga. Las define la "
+                "administración del instituto.")
+
+
+def vista_lineas(uid):
+    return seccion("seccion-lineas", "Líneas de investigación del instituto",
+                   P(AYUDA_LINEAS, cls=(TextPresets.muted_sm, "mb-3")),
+                   insignias_lineas(lineas.de_investigador(uid), vacio="No se adscribe a ninguna línea."),
+                   accion=_boton_editar("lineas"))
+
+
+def form_lineas(uid, elegidas=None, errores=()):
+    actuales = lineas.de_investigador(uid)
+    elegidas = [x["id"] for x in actuales] if elegidas is None else elegidas
+    return seccion("seccion-lineas", "Líneas de investigación del instituto",
+                   _form("lineas", mensaje_error(*errores), P(AYUDA_LINEAS, cls=TextPresets.muted_sm),
+                         casillas_lineas(elegidas, actuales=actuales)))
+
+
+@rt("/perfil/lineas")
+def get(auth):
+    return vista_lineas(auth["id"])
+
+
+@rt("/perfil/lineas/editar")
+def get(auth):
+    return form_lineas(auth["id"])
+
+
+@rt("/perfil/lineas")
+def put(auth, sess, linea: list[str] = None):
+    ids = lineas.ids_validos(linea)
+    error = lineas.adscribir_investigador(auth["id"], ids)
+    if error:
+        return form_lineas(auth["id"], ids, [error])
+    auditar(auth["id"], "editar_perfil", "investigador", auth["id"], "líneas de investigación")
+    add_toast(sess, "Líneas de investigación guardadas.", "success")
+    return vista_lineas(auth["id"])
+
+
 # --- Áreas MSC2020 -----------------------------------------------------------
 
 def seccion_areas(uid, error=None):
@@ -431,7 +474,7 @@ def get(auth):
         Div(
             Div(Card(seccion_foto(p), Hr(cls="my-4 border-border"), tarjeta_completitud(p)),
                 cls="lg:col-span-1 space-y-6"),
-            Div(vista_datos(p), vista_identificadores(p), seccion_areas(p["id"]), vista_bio(p),
+            Div(vista_datos(p), vista_identificadores(p), vista_lineas(p["id"]), seccion_areas(p["id"]), vista_bio(p),
                 seccion_preferencias(p, usuarios.por_id(auth["id"])["avisos_correo"]),
                 cls="lg:col-span-2 space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"),

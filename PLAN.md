@@ -562,7 +562,7 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
 2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1) — ✔ (sección 17).
 3. Estudiantes en la investigación: tesistas y estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d) — ✔ (sección 18).
 4. Internacionalización: ámbito de los proyectos e indicador de coautoría internacional (3.5.2 c, 3.6.3 h) — ✔ (sección 19).
-5. Líneas prioritarias de investigación y su asignación (3.1.1, 3.6.1 a).
+5. Líneas prioritarias de investigación y su asignación (3.1.1, 3.6.1 a) — ✔ (sección 21).
 6. Indicadores normalizados: jornada completa equivalente y conteo fraccionado (2.2.1, 2.2.2).
 7. Premios y distinciones, arbitraje de artículos, asesorías y prestación de servicios, impacto de
    la vinculación (2.2.1 d, 3.4.1, 3.4.3).
@@ -652,3 +652,30 @@ Es la verificación de origen que recomienda OWASP; no requiere tokens ni cambia
 
 Verificado con el servidor de desarrollo: un origen del propio portal se acepta (200) y uno de otro
 subdominio se rechaza (403).
+
+## 21. Líneas de investigación institucionales
+
+La Guía de Antecedentes de IAC-CINDA pide la línea de investigación en proyectos, desarrollo
+académico, publicaciones, libros y patentes (hojas 19–23 y 25), y su hoja 2 fija las seis líneas del
+programa: Sistemas Dinámicos, Estructuras Algebraicas Ordenadas, Teoría de Control, Modelos
+Matemáticos y Computación, Optimización Matemática y Áreas Fundamentales Complementarias (cargadas
+por la migración 0021).
+
+- **Las líneas cambian:** cada una tiene vigencia (`vigente_desde`, vacío = desde antes del portal;
+  `vigente_hasta`, vacío = sigue vigente). Una línea que deja de regir no se borra: se le pone fecha
+  de término y quien ya la usaba la conserva en su historia. Solo se elimina una línea sin uso.
+  Corregir la redacción se hace editándola; reformularla o dividirla, cerrándola y creando las nuevas.
+- **Catálogo:** lo mantiene la administración (menú con su nombre → «Líneas de investigación»):
+  alta, edición, vigencia, orden y ficha con los proyectos e investigadores de cada línea.
+- **Propuestas institucionales:** al formularla se eligen **explícitamente** las líneas vigentes al
+  inicio del periodo (1 de octubre); al menos una para enviarla. Si una línea elegida deja de regir
+  antes del envío, queda marcada y hay que quitarla. Al aceptarse, sus líneas pasan al proyecto; en
+  un proyecto institucional con propuesta aceptada no se editan (cambian en la continuidad, que
+  las precarga si siguen vigentes). La copia enviada y el XLSX de la convocatoria las incluyen.
+- **Proyectos individuales:** adscripción opcional desde el resumen, a líneas vigentes hoy.
+- **Investigadores:** adscripción opcional desde «Mi perfil», a líneas vigentes. Se muestra en su
+  perfil interno y en el público (solo las vigentes; también en la API).
+- **Productos y actividades** (hojas 19, 22, 23 y 25) no eligen línea: la heredan de los proyectos
+  en que están **aprobados** (sin repetir; lo pendiente o rechazado no cuenta). Sin proyecto
+  aprobado no tienen línea. Se ve en su ficha y en los XLSX de la memoria (también en proyectos).
+

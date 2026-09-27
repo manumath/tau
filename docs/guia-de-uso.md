@@ -32,6 +32,9 @@ Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Ed
 - **Datos básicos:** grado, cargo y unidad o grupo.
 - **Identificadores:** ORCID, MathSciNet, zbMATH, arXiv, Google Scholar y página web. Puede pegar
   la dirección de su perfil: el portal guarda solo el identificador y verifica el ORCID.
+- **Líneas de investigación del instituto** (opcional): marque las líneas institucionales vigentes
+  en las que investiga. Si una línea deja de regir, su perfil la muestra como «ya no rige» hasta
+  que la desmarque.
 - **Áreas de investigación:** escriba un código MSC2020 (`11M`) o un tema en inglés (`zeta`,
   `graph coloring`) y elija de la lista. La marcada con ★ es su área principal.
 - **Resumen de investigación:** admite fórmulas en LaTeX (`$\zeta(s)$`, `$$…$$`), con vista previa.
@@ -176,7 +179,8 @@ Hay dos tipos de proyecto:
   puede ampliar el plazo). El borrador se puede preparar en cualquier momento; solo el envío
   debe hacerse dentro del plazo. «Proyectos» muestra la convocatoria abierta o la próxima.
 - **Cómo:** «Proponer proyecto institucional» crea un borrador. Complete sus secciones: datos
-  básicos y objetivos específicos, metodología, resultados esperados, actividades programadas
+  básicos (incluidas las **líneas de investigación** vigentes a las que se adscribe el proyecto:
+  al menos una) y objetivos específicos, metodología, resultados esperados, actividades programadas
   (con el mes previsto de cada una) y bibliografía. «Guardar borrador» guarda sin enviar; abajo
   se indica qué falta. Agregue al equipo desde «Gestionar participantes».
 - **Después de enviar** no se puede modificar. La administración puede:
@@ -195,6 +199,9 @@ Hay dos tipos de proyecto:
 - En un proyecto institucional, el nombre, la descripción y los objetivos vienen de la propuesta
   aceptada: se cambian en la propuesta de continuidad. Los datos administrativos (código,
   financiamiento, monto) se editan en el resumen.
+- Las **líneas de investigación** de un proyecto individual se eligen (opcionalmente) en su
+  resumen; las de uno institucional vienen de su propuesta aceptada. Los productos y actividades
+  aprobados en un proyecto heredan sus líneas (no se eligen al registrarlos).
 
 ### Si participa en un proyecto
 
@@ -306,6 +313,10 @@ proyecto y ser del mismo periodo).
 - **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
 - **Artículos sin revista:** desde el catálogo, los artículos registrados sin revista del catálogo,
   agrupados por el nombre declarado, para vincularlos a una revista o crearla.
+- **Líneas de investigación** (menú con su nombre): el catálogo de líneas institucionales, con su
+  vigencia. Cuando una línea deja de regir, póngale **fecha de término** en lugar de eliminarla: ya
+  no se podrá elegir, pero los proyectos, propuestas y perfiles que la usaban la conservan. Solo se
+  elimina una línea que nadie ha usado. La ficha de cada línea muestra sus proyectos e investigadores.
 - **Catálogo de revistas** (menú con su nombre): las revistas donde publica el instituto y los
   índices en que figuran **cada año**, con la fuente consultada y un enlace de evidencia (lo pide
   IAC-CINDA: datos y métodos transparentes). Una revista **verificada** define el nivel de revisión

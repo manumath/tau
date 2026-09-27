@@ -19,7 +19,9 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, CheckboxX, Form, FormLabel, LabelInput,
                            LabelTextArea, TextPresets, UkIcon)
 
-from app import actividades, cosecha, filiacion, importacion, perfiles, personas, productos, proyectos, revistas
+from app import (actividades, cosecha, filiacion, importacion, lineas, perfiles, personas, productos, proyectos,
+                 revistas)
+from app.components.lineas import insignias_lineas
 from app import filiacion as filiacion_mod
 from app.components import personas as selector_personas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
@@ -859,6 +861,8 @@ def ficha(p, auth):
             dato("Proyectos", Div(*insignias_proyectos(proyectos.vinculos_de("producto", p["id"])),
                                   cls="flex flex-wrap gap-1.5")
                  if proyectos.vinculos_de("producto", p["id"]) else None),
+            dato("Líneas de investigación", insignias_lineas(lin) if (lin := lineas.de_registro("producto", p["id"]))
+                 else None),
             dato("Cita", P(productos.cita(p), cls="text-sm")),
         ),
         Card(H3("Resumen", cls="text-base font-semibold mb-2"),

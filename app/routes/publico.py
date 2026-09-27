@@ -1,7 +1,7 @@
 """Perfiles públicos (sin sesión) y API JSON de solo lectura.
 
 Solo se publica a quien activó «Perfil público» en «Mi perfil» y tiene la cuenta activa. De ellos
-se muestran nombre, grado, cargo, unidad, áreas MSC, resumen, identificadores, foto y productos
+se muestran nombre, grado, cargo, unidad, líneas de investigación vigentes, áreas MSC, resumen, identificadores, foto y productos
 aceptados o publicados (sin presentaciones). Nunca: correo, actividades, proyectos, adjuntos ni
 productos en curso.
 """
@@ -9,7 +9,8 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, Footer, Form, Head
                              Li, Main, P, Redirect, Response, Span, Title, Ul)
 from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets, UkIcon
 
-from app import config, fotos, perfiles, productos
+from app import config, fotos, lineas, perfiles, productos
+from app.components.lineas import insignias_lineas
 from app.components.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
 from app.db import get_db
 from app.identificadores import IDENTIFICADORES
@@ -17,6 +18,10 @@ from app.identificadores import IDENTIFICADORES
 rt = APIRouter()
 
 # --- Datos públicos ---------------------------------------------------------------------------------
+
+def _lineas_vigentes(uid: int) -> list[dict]:
+    return [x for x in lineas.de_investigador(uid) if lineas.vigente(x)]
+
 
 def perfil_publico(uid: int) -> dict | None:
     p = perfiles.obtener(uid)
@@ -125,7 +130,9 @@ def get(uid: int):
             Div(H2(f"{p['nombres']} {p['apellidos']}"),
                 P(" · ".join(x for x in (p["grado"], p["cargo"], p["unidad"]) if x), cls=TextPresets.muted_sm)),
             cls="flex flex-col sm:flex-row gap-6 items-center sm:items-start mb-8"),
-        Div(seccion("pub-areas", "Áreas de investigación (MSC2020)",
+        Div(seccion("pub-lineas", "Líneas de investigación del instituto",
+                    insignias_lineas(_lineas_vigentes(uid), vacio="—")) if _lineas_vigentes(uid) else "",
+            seccion("pub-areas", "Áreas de investigación (MSC2020)",
                     Div(*[chip_msc(a, principal=bool(a["principal"])) for a in areas], cls="flex flex-wrap gap-2")
                     if areas else P("—", cls=TextPresets.muted_sm)),
             seccion("pub-bio", "Investigación", texto_con_parrafos(p["bio"], vacio="—")),
@@ -163,6 +170,7 @@ def _investigador_json(p, completo=False):
         d["identificadores"] = {c: p[c] for c in IDENTIFICADORES if p.get(c)}
         d["areas_msc"] = [{"codigo": a["codigo"], "texto": a["texto_plano"], "principal": bool(a["principal"])}
                           for a in perfiles.areas(p["id"])]
+        d["lineas_investigacion"] = [x["nombre"] for x in _lineas_vigentes(p["id"])]
         d["foto"] = f"{config.URL_BASE}/publico/fotos/{p['id']}" if p["foto"] else None
     return d
 

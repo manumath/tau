@@ -19,7 +19,7 @@ import json
 import time
 from datetime import date
 
-from app import avisos, config, perfiles, personas, proyectos
+from app import avisos, config, lineas, perfiles, personas, proyectos
 from app.db import get_db
 
 ESTADOS = {"borrador": "Borrador", "enviada": "Enviada", "aceptada": "Aceptada",
@@ -163,6 +163,7 @@ def obtener(prop_id: int) -> dict | None:
     prop["actividades"] = get_db().q(
         """SELECT * FROM propuesta_actividad_prevista WHERE propuesta_id = ?
            ORDER BY mes_previsto IS NULL, mes_previsto, orden, id""", [prop_id])
+    prop["lineas"] = lineas.de_propuesta(prop_id)
     return prop
 
 
@@ -280,12 +281,25 @@ def crear_continuidad(pid: int, usuario: dict) -> tuple[int | None, str | None]:
         for i, a in enumerate(base["actividades"] if base else []):
             db.t.propuesta_actividad_prevista.insert(propuesta_id=prop, orden=i, descripcion=a["descripcion"],
                                                      mes_previsto=None)
+        # Las líneas se precargan solo si siguen vigentes en el nuevo periodo.
+        rigen = {x["id"] for x in lineas.vigentes(inicio(periodo))}
+        lineas.fijar_propuesta(prop, [x["id"] for x in (base["lineas"] if base else lineas.de_proyecto(pid))
+                                      if x["id"] in rigen])
     return prop, None
 
 
-def guardar(prop: dict, datos: dict, objetivos: list[str], actividades: list[tuple[str, str]]) -> list[str]:
-    """Guarda el contenido editable. → errores (vacío si se guardó)."""
+def guardar(prop: dict, datos: dict, objetivos: list[str], actividades: list[tuple[str, str]],
+            ids_lineas: list[int] | None = None) -> list[str]:
+    """Guarda el contenido editable. → errores (vacío si se guardó). `ids_lineas` None: no las cambia.
+
+    Solo se agregan líneas vigentes al inicio del periodo; una ya elegida que dejó de regir puede
+    quedar guardada, pero impide el envío (ver `faltantes`)."""
     errores = []
+    if ids_lineas is not None:
+        previas = {x["id"] for x in prop.get("lineas", [])}
+        malas = lineas.no_vigentes([i for i in ids_lineas if i not in previas], inicio(prop["periodo"]))
+        if malas:
+            errores.append(f"Líneas que no rigen en el periodo {periodo_texto(prop['periodo'])}: {', '.join(malas)}.")
     datos = {k: (v or "").strip() or None for k, v in datos.items()}
     if not datos.get("nombre"):
         errores.append("El nombre del proyecto es obligatorio.")
@@ -308,6 +322,8 @@ def guardar(prop: dict, datos: dict, objetivos: list[str], actividades: list[tup
         for i, (desc, mes) in enumerate(actividades):
             db.t.propuesta_actividad_prevista.insert(propuesta_id=prop["id"], orden=i, descripcion=desc,
                                                      mes_previsto=mes)
+        if ids_lineas is not None:
+            lineas.fijar_propuesta(prop["id"], ids_lineas)
         if prop["modalidad"] == "nuevo" and prop["estado_proyecto"] == "formulacion":
             # Mientras está en formulación, el nombre del proyecto sigue al de su propuesta.
             db.execute("UPDATE proyecto SET nombre = ? WHERE id = ?", [datos["nombre"], prop["proyecto_id"]])
@@ -320,6 +336,12 @@ def faltantes(prop: dict) -> list[str]:
                   ("metodologia", "metodología"), ("resultados_esperados", "resultados esperados"),
                   ("bibliografia", "bibliografía")]
     falta = [texto for campo, texto in requeridos if not (prop[campo] or "").strip()]
+    if not prop["lineas"]:
+        falta.append("al menos una línea de investigación")
+    else:
+        cerradas = lineas.no_vigentes([x["id"] for x in prop["lineas"]], inicio(prop["periodo"]))
+        if cerradas:
+            falta.append("quitar las líneas que no rigen en el periodo (" + ", ".join(cerradas) + ")")
     if not prop["objetivos"]:
         falta.append("al menos un objetivo específico")
     if not prop["actividades"]:
@@ -340,7 +362,8 @@ def copia(prop: dict) -> dict:
                "categoria": perfiles.categoria_texto(categoria(x["id"])) if x["interno"] else None}
               for x in proyectos.participantes(prop["proyecto_id"], solo_vigentes=True)]
     return {"nombre": prop["nombre"], "periodo": prop["periodo"], "modalidad": prop["modalidad"],
-            "proponente": prop["proponente"], "descripcion": prop["descripcion"],
+            "proponente": prop["proponente"], "lineas": [x["nombre"] for x in prop["lineas"]],
+            "descripcion": prop["descripcion"],
             "objetivo_general": prop["objetivo_general"],
             "objetivos": [o["texto"] for o in prop["objetivos"]],
             "metodologia": prop["metodologia"], "resultados_esperados": prop["resultados_esperados"],
@@ -424,7 +447,7 @@ def decidir(prop: dict, decision: str, comentario: str, admin: dict) -> str | No
 
 
 def _aplicar(prop: dict):
-    """Una propuesta aceptada pasa sus datos básicos y objetivos al proyecto."""
+    """Una propuesta aceptada pasa sus datos básicos, objetivos y líneas al proyecto."""
     db = get_db()
     db.execute("""UPDATE proyecto SET nombre = ?, descripcion = ?, objetivo_general = ?,
                   actualizado_en = datetime('now') WHERE id = ?""",
@@ -432,6 +455,7 @@ def _aplicar(prop: dict):
     db.execute("DELETE FROM proyecto_objetivo WHERE proyecto_id = ?", [prop["proyecto_id"]])
     for i, o in enumerate(prop["objetivos"]):
         db.t.proyecto_objetivo.insert(proyecto_id=prop["proyecto_id"], orden=i + 1, texto=o["texto"])
+    lineas.fijar_proyecto(prop["proyecto_id"], [x["id"] for x in prop["lineas"]])
 
 
 # --- Vigencia ----------------------------------------------------------------------------------------------
@@ -578,7 +602,8 @@ def hojas_convocatoria(periodo: int) -> dict[str, list[dict]]:
         c = json.loads(p["copia_enviada"]) if p["copia_enviada"] else copia(obtener(p["id"]))
         clave = {"Proyecto": p["nombre"]}
         resumen.append({**clave, "Modalidad": MODALIDADES[p["modalidad"]], "Proponente": p["proponente"],
-                        "Estado": ESTADOS[p["estado"]], "Enviada": (p["enviada_en"] or "")[:10],
+                        "Estado": ESTADOS[p["estado"]],
+                        "Líneas de investigación": "; ".join(c.get("lineas", [])), "Enviada": (p["enviada_en"] or "")[:10],
                         "Envíos": p["envios"], "Decisión": (p["decidida_en"] or "")[:10],
                         "Condiciones o motivo": p["comentario"] or "",
                         "Equipo": "; ".join(f"{x['nombre']} ({x['rol']})" for x in c.get("equipo", [])),

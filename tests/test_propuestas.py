@@ -46,7 +46,8 @@ COMPLETA = dict(nombre="Anillos y autómatas", descripcion="Estudio de anillos a
                 metodologia="Métodos de álgebra conmutativa: $R[x]$.", resultados_esperados="Dos artículos.",
                 bibliografia="Noether, E. (1921). Idealtheorie in Ringbereichen.",
                 objetivo=["Construir el anillo.", "Probar que es noetheriano."],
-                act_desc=["Seminario de lanzamiento", "Visita a Gotinga"], act_mes=["2026-10", "2027-03"])
+                act_desc=["Seminario de lanzamiento", "Visita a Gotinga"], act_mes=["2026-10", "2027-03"],
+                linea=["2", "4"])
 
 
 def _crear(client, nombre="Anillos y autómatas"):

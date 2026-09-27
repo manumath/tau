@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import json  # noqa: E402
 
-from app import (actividades, config, estudiantes, institucionales, perfiles, personas, productos,  # noqa: E402
+from app import (actividades, config, estudiantes, institucionales, lineas, perfiles, personas, productos,  # noqa: E402
                  proyectos, revistas, usuarios, vinculos)
 from app.db import get_db  # noqa: E402
 from app.db import init_db  # noqa: E402
@@ -317,6 +317,34 @@ def _cargar_revistas():
     return True
 
 
+def _cargar_lineas() -> bool:
+    """Adscripción de ejemplo a las líneas institucionales (solo si nadie se ha adscrito aún)."""
+    db = get_db()
+    if db.q("SELECT 1 FROM investigador_linea UNION ALL SELECT 1 FROM proyecto_linea LIMIT 1"):
+        return False
+    por_email = {"emmy.noether@instituto.test": [2], "alan.turing@instituto.test": [4],
+                 "sofia.kovalevskaya@instituto.test": [1], "srinivasa.ramanujan@instituto.test": [6]}
+    for email, ids in por_email.items():
+        u = usuarios.por_email(email)
+        if u:
+            lineas.adscribir_investigador(u["id"], ids)
+    por_proyecto = {"Estructuras algebraicas y computación": [2, 4],
+                    "Ecuaciones diferenciales y mecánica del sólido rígido": [1],
+                    "Sistemas integrables y geometría de trompos": [1]}
+    for nombre, ids in por_proyecto.items():
+        for f in db.q("SELECT id FROM proyecto WHERE nombre = ?", [nombre]):
+            lineas.fijar_proyecto(f["id"], ids)
+            for prop in db.q("SELECT id, copia_enviada FROM propuesta_institucional WHERE proyecto_id = ?",
+                             [f["id"]]):
+                lineas.fijar_propuesta(prop["id"], ids)
+                if prop["copia_enviada"]:  # lo que revisa la administración también las muestra
+                    copia = {**json.loads(prop["copia_enviada"]),
+                             "lineas": [x["nombre"] for x in lineas.de_propuesta(prop["id"])]}
+                    db.execute("UPDATE propuesta_institucional SET copia_enviada = ? WHERE id = ?",
+                               [json.dumps(copia, ensure_ascii=False), prop["id"]])
+    return True
+
+
 def _cargar_perfil(uid: int, datos: dict | None):
     if not datos:
         return
@@ -365,6 +393,7 @@ def main():
     con_propuestas = _cargar_institucionales()
     con_revistas = _cargar_revistas()
     con_estudiantes = _cargar_estudiantes()
+    con_lineas = _cargar_lineas()
     # Internacionalización de ejemplo (idempotente): países normalizados y ámbito de los proyectos.
     personas.completar_paises()
     db = get_db()
@@ -418,7 +447,7 @@ def main():
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
     if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas \
-            and not con_vinculos and not con_revistas and not con_estudiantes:
+            and not con_vinculos and not con_revistas and not con_estudiantes and not con_lineas:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
     if creados:
@@ -431,6 +460,8 @@ def main():
         print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular; Ramanujan es invitado).")
     if con_estudiantes:
         print("Estudiante de ejemplo: María Quispe, tesista de licenciatura dirigida por Emmy.")
+    if con_lineas:
+        print("Líneas de investigación de ejemplo: investigadores y proyectos adscritos a las líneas del programa.")
     if con_revistas:
         print("Catálogo de revistas de ejemplo: Journal of Symbolic Logic (verificada) y Revista de Álgebra (pendiente).")
     if con_propuestas:

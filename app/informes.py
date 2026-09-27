@@ -15,7 +15,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
-from app import actividades, config, filiacion, institucionales, perfiles, productos, proyectos, revistas, vinculos
+from app import actividades, config, filiacion, institucionales, lineas, perfiles, productos, proyectos, revistas, vinculos
 from app.db import get_db
 
 # Categorías del CV, en orden de aparición. La primera que corresponde es la que se usa.
@@ -373,6 +373,7 @@ def filas_productos(prods: list[dict]) -> list[dict]:
             "DOI": p["doi"] or "", "arXiv": p["arxiv_id"] or "",
             "Proyectos": ", ".join(v["proyecto"] for v in proyectos.vinculos_de("producto", p["id"])
                                    if v["estado"] == "aprobado"),
+            "Líneas de investigación": lineas.nombres(lineas.de_registro("producto", p["id"])),
             # Revista y origen de la clasificación (transparencia del método).
             "Revista (catálogo)": r["revista"] or "", "ISSN": r["issn"] or "", "País de la revista": r["pais"] or "",
             "Ámbito": r["ambito"] or "", "Acceso abierto": {1: "Sí", 0: "No"}.get(r["acceso_abierto"], ""),
@@ -395,6 +396,7 @@ def filas_actividades(acts: list[dict]) -> list[dict]:
             "Modalidad": actividades.MODALIDADES[a["modalidad"]],
             "Participantes del instituto": "; ".join(
                 f"{p['apellidos']}, {p['nombres']} ({actividades.ROLES[p['rol']]})" for p in parts if p["interno"]),
+            "Líneas de investigación": lineas.nombres(lineas.de_registro("actividad", a["id"])),
         })
     return filas
 
@@ -408,6 +410,7 @@ def filas_proyectos(proys: list[dict]) -> list[dict]:
         "Monto": p["monto"] if p["monto"] is not None else "", "Moneda": p["moneda"],
         "Responsable": "; ".join(f"{r['apellidos']}, {r['nombres']}" for r in proyectos.responsables(p["id"])),
         "Ámbito": proyectos.AMBITOS.get(proyectos.ambito_efectivo(p), ""),
+        "Líneas de investigación": lineas.nombres(lineas.de_proyecto(p["id"])),
         "Contrapartes": "; ".join(f"{c['institucion']} ({c['pais'] or '?'})" for c in proyectos.contrapartes(p["id"])),
         "Participantes vigentes": p.get("n_part", ""),
     } for p in proys]

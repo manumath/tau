@@ -16,7 +16,8 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, TextPresets, UkIcon
 
 from app import institucionales as inst
-from app import proyectos
+from app import lineas, proyectos
+from app.components.lineas import casillas_lineas
 from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.components.perfil import texto_con_parrafos
 from app.components.registros import dato, insignia
@@ -209,6 +210,12 @@ def editor(prop, auth, errores=()):
                 "dark:text-amber-200 p-3 text-sm") if prop["estado"] == "condicional" else "",
         _seccion("Datos básicos",
                  LabelInput("Nombre del proyecto", id="nombre", value=prop["nombre"], required=True, maxlength=300),
+                 Div(FormLabel("Líneas de investigación institucionales"),
+                     P(f"Seleccione las líneas vigentes en el periodo {inst.periodo_texto(periodo)} a las que se "
+                       "adscribe el proyecto (al menos una).", cls=TextPresets.muted_sm),
+                     casillas_lineas([x["id"] for x in prop["lineas"]], inst.inicio(periodo),
+                                     actuales=prop["lineas"]),
+                     cls="space-y-2"),
                  _area("Descripción", "descripcion", prop["descripcion"], 4),
                  _area("Objetivo general", "objetivo_general", prop["objetivo_general"], 2),
                  Div(FormLabel("Objetivos específicos"),
@@ -260,6 +267,7 @@ def contenido(c: dict):
     """Muestra una propuesta en el formato de `inst.copia` (la enviada o la actual)."""
     return Div(
         _seccion("Datos básicos",
+                 dato("Líneas de investigación", "; ".join(c.get("lineas", [])) or None),
                  dato("Descripción", texto_con_parrafos(c["descripcion"], "—")),
                  dato("Objetivo general", c["objetivo_general"]),
                  dato("Objetivos específicos", fh.Ol(*[Li(o) for o in c["objetivos"]], cls="list-decimal pl-5 space-y-1")
@@ -380,29 +388,32 @@ def _listas_del_form(objetivo, act_desc, act_mes):
 
 
 def _guardar_form(prop, nombre, descripcion, objetivo_general, metodologia, resultados_esperados, bibliografia,
-                  objetivo, act_desc, act_mes):
+                  objetivo, act_desc, act_mes, linea):
     """Guarda lo enviado. → (errores, propuesta para volver a mostrar el editor con lo escrito)."""
     objetivos, actividades = _listas_del_form(objetivo, act_desc, act_mes)
     datos = dict(nombre=nombre, descripcion=descripcion, objetivo_general=objetivo_general,
                  metodologia=metodologia, resultados_esperados=resultados_esperados, bibliografia=bibliografia)
-    errores = inst.guardar(prop, datos, objetivos, actividades)
+    ids = lineas.ids_validos(linea)
+    errores = inst.guardar(prop, datos, objetivos, actividades, ids)
     if not errores:
         return [], inst.obtener(prop["id"])
-    return errores, {**prop, **datos, "objetivos": [{"texto": t} for t in objetivos],
+    marcadas = [x for x in (lineas.obtener(i) for i in ids) if x]
+    return errores, {**prop, **datos, "lineas": marcadas, "objetivos": [{"texto": t} for t in objetivos],
                      "actividades": [{"descripcion": d, "mes_previsto": m} for d, m in actividades]}
 
 
 @rt("/propuestas/{prop_id}")
 def put(auth, sess, prop_id: int, nombre: str = "", descripcion: str = "", objetivo_general: str = "",
         metodologia: str = "", resultados_esperados: str = "", bibliografia: str = "",
-        objetivo: list[str] = None, act_desc: list[str] = None, act_mes: list[str] = None):
+        objetivo: list[str] = None, act_desc: list[str] = None, act_mes: list[str] = None,
+        linea: list[str] = None):
     prop, error = _prop_o_error(prop_id, auth)
     if error:
         return error
     if not inst.puede_editar(prop, auth):
         return Response("No autorizado", status_code=403)
     errores, prop = _guardar_form(prop, nombre, descripcion, objetivo_general, metodologia, resultados_esperados,
-                                  bibliografia, objetivo, act_desc, act_mes)
+                                  bibliografia, objetivo, act_desc, act_mes, linea)
     if not errores:
         add_toast(sess, "Cambios guardados.", "success")
     return editor(prop, auth, errores)
@@ -411,14 +422,15 @@ def put(auth, sess, prop_id: int, nombre: str = "", descripcion: str = "", objet
 @rt("/propuestas/{prop_id}/enviar")
 def post(auth, sess, prop_id: int, nombre: str = "", descripcion: str = "", objetivo_general: str = "",
          metodologia: str = "", resultados_esperados: str = "", bibliografia: str = "",
-         objetivo: list[str] = None, act_desc: list[str] = None, act_mes: list[str] = None):
+         objetivo: list[str] = None, act_desc: list[str] = None, act_mes: list[str] = None,
+        linea: list[str] = None):
     prop, error = _prop_o_error(prop_id, auth)
     if error:
         return error
     if not inst.puede_editar(prop, auth):
         return Response("No autorizado", status_code=403)
     errores, guardada = _guardar_form(prop, nombre, descripcion, objetivo_general, metodologia,
-                                      resultados_esperados, bibliografia, objetivo, act_desc, act_mes)
+                                      resultados_esperados, bibliografia, objetivo, act_desc, act_mes, linea)
     if errores:
         return editor(guardada, auth, errores)
     error = inst.enviar(inst.obtener(prop_id), auth)

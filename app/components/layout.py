@@ -26,6 +26,8 @@ def _menu_usuario(usuario: dict):
                           cls=item))
         opciones.append(A(UkIcon("library", height=16, width=16), "Catálogo de revistas", href="/admin/revistas",
                           cls=item))
+        opciones.append(A(UkIcon("route", height=16, width=16), "Líneas de investigación", href="/admin/lineas",
+                          cls=item))
     opciones += [
         A(UkIcon("key-round", height=16, width=16), "Cambiar contraseña", href="/cambiar-password",
           cls=item),

@@ -3,7 +3,8 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, FtResponse, HtmxRe
                              Option, P, Response, Select, Span, Ul)
 from monsterui.all import H2, Card, Grid, Input, TextPresets, UkIcon
 
-from app import actividades, fotos, perfiles, productos, vinculos
+from app import actividades, fotos, lineas, perfiles, productos, vinculos
+from app.components.lineas import insignias_lineas
 from app.components.layout import pagina
 from app.components.registros import url_filtrada
 from app.components.perfil import (avatar, chip_msc, lista_identificadores, seccion,
@@ -141,7 +142,10 @@ def get(auth, uid: int):
                     cls="flex gap-4 mt-2"),
                 cls="flex flex-col"),
             cls="flex flex-col sm:flex-row gap-6 items-center sm:items-start mb-8"),
-        Div(seccion("pub-areas", "Áreas de investigación (MSC2020)",
+        Div(seccion("pub-lineas", "Líneas de investigación del instituto",
+                    insignias_lineas([x for x in lineas.de_investigador(uid) if lineas.vigente(x)],
+                                     vacio="No se adscribe a ninguna línea.")),
+            seccion("pub-areas", "Áreas de investigación (MSC2020)",
                     Div(*[chip_msc(a, principal=bool(a["principal"])) for a in areas],
                         cls="flex flex-wrap gap-2") if areas
                     else P("Sin áreas declaradas.", cls=TextPresets.muted_sm)),

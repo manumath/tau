@@ -284,7 +284,7 @@ def test_baja_conserva_lo_aprobado_e_impide_nuevas_propuestas(client, gente, pro
     proyectos.aprobar("producto", pid, proyecto, gente["emmy"])
     part_alan = next(x["participante_id"] for x in proyectos.participantes(proyecto)
                      if x["interno"] and x["id"] == gente["alan"])
-    get_db().execute("UPDATE proyecto_participante SET fecha_hasta = date('now', '-1 day') WHERE id = ?",
+    get_db().execute("UPDATE proyecto_participante SET fecha_hasta = date('now', 'localtime', '-1 day') WHERE id = ?",
                      [part_alan])
     assert proyectos.registros(proyecto, "producto")[0]["registro_id"] == pid
     client.post("/productos", headers=HX, data=_producto(gente["alan"], titulo="Otro", proyecto=[str(proyecto)]))

@@ -134,7 +134,7 @@ def aceptada(client, emmy, monkeypatch):
     prop = inst.obtener(prop_id)
     inst.guardar(prop, {k: COMPLETA[k] for k in ("nombre", "descripcion", "objetivo_general", "metodologia",
                                                  "resultados_esperados", "bibliografia")},
-                 COMPLETA["objetivo"], list(zip(COMPLETA["act_desc"], COMPLETA["act_mes"])))
+                 COMPLETA["objetivo"], list(zip(COMPLETA["act_desc"], COMPLETA["act_mes"])), [1])
     assert inst.enviar(inst.obtener(prop_id), {"id": emmy, "es_admin": False}) is None
     admin = usuarios.por_email("admin@test.cl")
     assert inst.decidir(inst.obtener(prop_id), "aceptada", "", {**admin, "es_admin": True}) is None
