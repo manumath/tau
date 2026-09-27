@@ -77,6 +77,9 @@ def test_pantallas_y_permisos(client, g, emmy):
     cmat = unidades.id_de("CMAT")
     permisos.asignar(emmy, "coordinacion_academica", cmat)  # ve, pero no asigna
     assert "Carga horaria" in client.get("/docencia/planes").text
+    r = client.get(f"/docencia/carga?gestion={g['I']['id']}")
+    assert "la registra la Dirección de Carrera" in r.text and "Registrar carga contratada" not in r.text
+    assert "la registra la Dirección de Carrera" in client.get(f"/docencia/carga/{g['I']['id']}/{emmy}", headers=HX).text
     assert client.post(f"/docencia/carga/{g['I']['id']}", headers=HX,
                        data={"usuario": str(emmy), "horas": "64"}).status_code == 403
     permisos.asignar(emmy, "direccion_carrera", cmat)
@@ -85,6 +88,7 @@ def test_pantallas_y_permisos(client, g, emmy):
                 data={"tipo": "investigacion", "horas": "32", "detalle": "Proyecto IDH"})
     assert carga.resumen(emmy, g["I"])["total"] == 32
     r = client.get(f"/docencia/carga?gestion={g['I']['id']}")
+    assert "Registrar carga contratada" in r.text and "la registra la Dirección de Carrera" not in r.text
     assert "Emmy" in r.text and "Faltan 32 h/mes por asignar." in r.text
     assert "Proyecto IDH" in client.get(f"/docencia/carga/{g['I']['id']}/{emmy}", headers=HX).text
     aid = carga.resumen(emmy, g["I"])["actividades"][0]["id"]

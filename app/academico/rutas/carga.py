@@ -64,7 +64,7 @@ def get(auth, gestion: str = ""):
         Select(*[Option(f"{h} h/mes", value=str(h), selected=h == carga.TIEMPO_COMPLETO) for h in carga.CARGAS],
                name="horas", cls="uk-select w-36", aria_label="Carga contratada"),
         Button(UkIcon("plus", height=14, width=14), "Registrar carga contratada", type="submit", cls=ButtonT.primary),
-        hx_post=f"{BASE}/{g['id']}", hx_target=f"#{ID_MODAL}", cls="flex flex-wrap gap-2") if edita else ""
+        hx_post=f"{BASE}/{g['id']}", hx_target=f"#{ID_MODAL}", cls="flex flex-wrap gap-2") if edita else _SOLO_CONSULTA
     copiar = Button(UkIcon("copy", height=14, width=14), "Copiar del semestre anterior", cls=ButtonT.default,
                     hx_post=f"{BASE}/{g['id']}/copiar",
                     hx_confirm="Copia la carga contratada y las actividades (no la docencia, que sale de la oferta) "
@@ -94,6 +94,11 @@ def _gestion_semestre(gid):
     return g, None
 
 
+_SOLO_CONSULTA = P(UkIcon("info", height=14, width=14, cls="inline mr-1"),
+                   "La carga horaria la registra la Dirección de Carrera; usted puede consultarla.",
+                   cls=(TextPresets.muted_sm, "flex items-center"))
+
+
 def modal_persona(g, uid, auth, errores=()):
     persona = get_db().q("SELECT id, nombres, apellidos FROM usuario WHERE id = ?", [uid])[0]
     r = carga.resumen(uid, g)
@@ -119,10 +124,12 @@ def modal_persona(g, uid, auth, errores=()):
         fh.Input(name="detalle", cls="uk-input", placeholder="Detalle (proyecto, cargo, programa…)", aria_label="Detalle"),
         Button("Agregar", type="submit", cls=(ButtonT.default, ButtonT.sm)),
         hx_post=f"{base}/actividades", hx_target=f"#{ID_MODAL}", cls="grid grid-cols-1 sm:grid-cols-4 gap-2") \
-        if edita and r["carga"] else ""
+        if edita and r["carga"] else \
+        P("Registre primero la carga contratada para agregar actividades.", cls=TextPresets.muted_sm) if edita else ""
     return modal(
         f"{persona['nombres']} {persona['apellidos']} · {gestiones.codigo(g)}",
         mensaje_error(*errores),
+        "" if edita else Div(_SOLO_CONSULTA, cls="mb-3"),
         Div(Div(Span("Carga contratada", cls=(TextPresets.muted_sm, "w-40 shrink-0")), contratada,
                 cls="flex flex-wrap items-center gap-2"),
             H3("Docencia", cls="text-base font-semibold mt-4"),
