@@ -986,3 +986,26 @@ Estimación: 3 a 4 semanas (sin el paso 5).
   **Pendiente:** carga masiva de fechas de nacimiento desde RR. HH., si hace falta (hoy, una por una).
 - **Fase 2: pasos 1 a 4 completos.** El paso 5 (acceso con cuentas de la UMSA) espera que la DTIC
   confirme el proveedor.
+
+## 24. Fase 3: módulo curricular y docente (27-sep-2026)
+
+Fuente: planes de estudio 2017 (Resolución HCU 041/2017) de la Licenciatura en Matemática, la
+Licenciatura en Matemática Aplicada, la Maestría en Matemática y la Maestría en Matemática
+Aplicada (PDF de la Dirección Académica). Licenciaturas: 8 semestres, tres ciclos, horas
+semanales teóricas/prácticas/laboratorio, semestres de 20 semanas, nota mínima 51 %. Maestrías:
+4 semestres en créditos (1 crédito = 40 horas académicas), nota mínima 66 %.
+
+**Decidido:**
+1. Gestiones: I-2026 y II-2026 (semestres), V-2026 (verano, enero) e INV-2026 (invierno, julio).
+   Orden en el año: V → I → INV → II. (V-2026 por analogía con INV-2026: confirmar.)
+2. El plan 2017 y el nuevo (desde 2027) coexisten mientras haya estudiantes en el antiguo, con una
+   tabla de equivalencias entre asignaturas.
+3. Las asignaturas de otras carreras (FIS, QMF, QMI, QMC, INF, BIO, ECO) figuran en el plan, sin
+   asignación docente (las dicta otra unidad).
+4. Carga horaria: docencia (se calcula de la asignación), investigación, gestión (cargos),
+   extensión y servicios, y otras.
+5. Las inconsistencias de los PDF se cargan tal como están y quedan marcadas para revisión.
+
+**Pasos:** 3.1 catálogo curricular y carga de los planes 2017 · 3.2 gestiones académicas · 3.3
+oferta y asignación docente · 3.4 carga horaria · 3.5 programas analíticos · 3.6 perfeccionamiento
+docente · equivalencias cuando llegue el plan nuevo.

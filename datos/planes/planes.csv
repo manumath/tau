@@ -1,0 +1,5 @@
+archivo,programa,nivel,plan,resolucion,vigente_desde,sistema,semanas_semestre,horas_por_credito,nota_minima,total_teoricas,total_practicas,total_laboratorio,total_creditos
+licenciatura-matematica-2017.csv,Licenciatura en Matemática,licenciatura,Plan 2017,HCU 041/2017,2017,horas,20,,51,2560,2040,720,
+licenciatura-matematica-aplicada-2017.csv,Licenciatura en Matemática Aplicada,licenciatura,Plan 2017,HCU 041/2017,2017,horas,20,,51,2560,2040,1080,
+maestria-matematica-2017.csv,Maestría en Matemática,maestria,Plan 2017,HCU 041/2017,2017,creditos,,40,66,,,,
+maestria-matematica-aplicada-2017.csv,Maestría en Matemática Aplicada,maestria,Plan 2017,HCU 041/2017,2017,creditos,,40,66,,,,

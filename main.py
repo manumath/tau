@@ -42,6 +42,7 @@ from app.investigacion.rutas.investigadores import rt as rutas_investigadores
 from app.investigacion.rutas.perfil import rt as rutas_perfil
 from app.investigacion.rutas.personas import rt as rutas_personas
 from app.comun.rutas.mis_datos import rt as rutas_mis_datos
+from app.academico.rutas.planes import rt as rutas_planes
 from app.investigacion.rutas.productos import rt as rutas_productos
 from app.investigacion.rutas.propuestas import rt as rutas_propuestas
 from app.investigacion.rutas.proyectos import rt as rutas_proyectos
@@ -87,7 +88,8 @@ def create_app(db_path=config.DB_PATH):
     for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
                    rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_acreditacion, rutas_informes, rutas_publico,
-                   rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_mis_datos):
+                   rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_mis_datos,
+                   rutas_planes):
         router.to_app(app)
     return app
 

@@ -1,0 +1,100 @@
+sigla,nombre,tipo,semestre,ciclo,horas_teoricas,horas_practicas,horas_laboratorio,creditos,requisitos
+MAT-111,Algebra I,obligatoria,1,básico,4,2,,,
+MAT-112,Cálculo Diferencial e Integral I,obligatoria,1,básico,4,2,,,
+MAT-113,Geometría I,obligatoria,1,básico,4,2,,,
+MAT-114,Heurística Matemática,obligatoria,1,básico,4,2,,,
+MAT-117,Computación Científica I,obligatoria,1,básico,4,2,2,,
+MAT-131,Algebra Lineal I,obligatoria,2,básico,4,2,,,MAT-111
+MAT-122,Cálculo Diferencial e Integral II,obligatoria,2,básico,4,2,,,MAT-112
+MAT-123,Geometría II,obligatoria,2,básico,4,2,,,MAT-113
+MAT-120,Teoría de Números,obligatoria,2,básico,4,2,,,MAT-114
+MAT-127,Computación Científica II,obligatoria,2,básico,4,2,2,,MAT-117
+MAT-121,Algebra II,obligatoria,3,básico,4,2,,,MAT-111
+MAT-132,Análisis Real,obligatoria,3,básico,4,2,,,MAT-122
+MAT-134,Análisis Combinatorio,obligatoria,3,básico,4,2,,,MAT-111
+FIS-137,Física I,obligatoria,3,básico,4,2,2,,MAT-112
+MAT-135,Ecuaciones Diferenciales,obligatoria,3,básico,4,3,,,MAT-122
+MAT-141,Algebra Lineal II,obligatoria,4,básico,4,2,,,MAT-131
+MAT-142,Análisis en Rⁿ,obligatoria,4,básico,4,2,,,MAT-132
+MAT-147,Probabilidades y Estadística,obligatoria,4,básico,4,2,,,MAT-122
+MAT-151,Lógica Matemática y Teoría de Conjuntos,obligatoria,4,básico,4,3,,,MAT-121
+MAT-258,Teoría de Optimización Lineal,obligatoria,5,intermedio,4,3,3,,MAT-142
+MAT-278,Análisis Numérico,obligatoria,5,intermedio,4,4,3,,MAT-132
+MAT-254,Modelización Matemática,obligatoria,5,intermedio,4,3,3,,MAT-141
+,,casilla_electiva_a,5,intermedio,4,3,3,,
+MAT-268,Teoría de Optimización no Lineal,obligatoria,6,intermedio,4,3,3,,MAT-258
+MAT-264,Teoría de Grafos,obligatoria,6,intermedio,4,3,4,,MAT-134
+,,casilla_electiva_a,6,intermedio,4,3,3,,
+MAT-378,Optimización Dinámica Aplicada,obligatoria,7,orientación,4,4,4,,MAT-258
+MAT-396,Teoría de Juegos,obligatoria,7,orientación,4,4,4,,MAT-147
+,,casilla_electiva_b,7,orientación,4,4,4,,
+MAT-394,Modelos Matemáticos,obligatoria,8,orientación,4,4,4,,MAT-254
+,,casilla_electiva_b,8,orientación,4,4,4,,
+MAT-399,Proyecto de Grado,trabajo_final,8,orientación,4,20,10,,egresado
+MAT-253,Topología General,electiva_a,,,4,3,,,MAT-151
+MAT-262,Análisis Complejo I,electiva_a,,,4,3,,,MAT-252
+FIS-147,Física II,electiva_a,,,4,3,2,,FIS-137
+FIS-257,Física III,electiva_a,,,4,3,2,,FIS-147
+FIS-267,Mecánica Clásica,electiva_a,,,4,3,2,,FIS-147
+QMF-111,Físicoquímica I,electiva_a,,,4,2,,,MAT-112
+QMF-121,Laboratorio Físicoquímica I,electiva_a,,,1,,3,,MAT-112
+QMF-212,Físicoquímica II,electiva_a,,,4,2,,,MAT-122
+QMF-222,Laboratorio Físicoquímica II,electiva_a,,,1,,3,,MAT-122
+QMI-211,Química Inorgánica I,electiva_a,,,4,2,,,MAT-122
+QMI-221,Laboratorio Química Inorgánica I,electiva_a,,,1,,3,,MAT-122
+INF-144,Lógica para la Ciencias de la Computación,electiva_a,,,4,3,,,MAT-111
+INF-154,Lenguajes Formales y Automatas,electiva_a,,,4,3,,,MAT-121
+INF-164,Teoría de la Información y Codificación,electiva_a,,,4,3,,,MAT-132
+BIO-223,Genética General,electiva_a,,,4,3,,,MAT-122
+MAT-284,Biomatemática,electiva_a,,,4,3,3,,MAT-132
+MAT-204,Matemática Actuarial,electiva_a,,,4,3,3,,MAT-132
+MAT-294,Matemática Financiera,electiva_a,,,4,3,3,,MAT-132
+MAT-274,Teoría de Grafos Aplicada,electiva_a,,,4,3,3,,MAT-141
+MAT-283,Algebra Abstracta Aplicada,electiva_a,,,4,3,2,,MAT-151
+MAT-263,Geometría no Euclidiana,electiva_a,,,4,3,,,MAT-123
+MAT-273,Geometría Proyectiva,electiva_a,,,4,3,,,MAT-123
+MAT-250,Historia de la Matemática,electiva_a,,,4,3,,,MAT-142
+MAT-260,El Análisis por su Historia,electiva_a,,,4,3,,,MAT-142
+MAT-270,Didáctica de la Matemática,electiva_a,,,4,3,4,,MAT-142
+MAT-280,Teoría de la Educación Matemática,electiva_a,,,4,3,4,,MAT-142
+MAT-290,Lógica Matemática,electiva_a,,,4,3,,,MAT-151
+MAT-267,Teoría de la Computación,electiva_a,,,4,3,4,,MAT-141
+MAT-252,Análisis I,electiva_a,,,4,3,,,MAT-142
+MAT-251,Algebra Abstracta I,electiva_a,,,4,3,,,MAT-151
+MAT-261,Algebra Abstracta II,electiva_a,,,4,4,,,MAT-251
+MAT-386,Economía Matemática,electiva_b,,,4,4,4,,MAT-254
+MAT-377,Criptografía,electiva_b,,,4,4,4,,MAT-252
+MAT-382,Teoría de la Medida en Espacios Euclidianos,electiva_b,,,4,4,,,MAT-252
+MAT-374,Análisis Matricial,electiva_b,,,4,4,4,,MAT-241
+MAT-308,Tópicos de Optimización,electiva_b,,,4,4,,,MAT-258
+MAT-304,Tópicos de Modelos Matemáticos,electiva_b,,,4,4,4,,MAT-254
+MAT-373,Geometría Diferencial,electiva_b,,,4,4,,,MAT-253
+MAT-392,Análisis Funcional,electiva_b,,,4,4,,,MAT-252
+MAT-371,Algebra Conmutativa,electiva_b,,,4,4,,,MAT-251
+MAT-381,Algebra Homológica,electiva_b,,,4,4,,,MAT-251
+MAT-363,Topología Algebraica,electiva_b,,,4,4,,,MAT-253
+MAT-372,Análisis Complejo II,electiva_b,,,4,4,,,MAT-262
+MAT-375,Ecuaciones Diferenciales Parciales,electiva_b,,,4,4,4,,MAT-135
+MAT-385,Sistemas Dinámicos,electiva_b,,,4,4,2,,MAT-242
+MAT-383,Variedades Diferenciables,electiva_b,,,4,4,,,MAT-252
+MAT-393,Topología Diferencial,electiva_b,,,4,4,,,MAT-253
+FIS-377,Física Moderna,electiva_b,,,4,4,2,,MAT-147
+FIS-387,Mecánica Cuántica,electiva_b,,,4,4,2,,MAT-377
+FIS-307,Tópicos de Física Matemática,electiva_b,,,4,4,,,MAT-142
+QMI-212,Química Inorgánica II,electiva_b,,,4,2,,,MAT-122
+QMI-222,Laboratorio Química Inorgánica II,electiva_b,,,1,,3,,MAT-122
+QMF-313,Físicoquímica III,electiva_b,,,4,2,,,MAT-122
+QMF-323,Laboratorio Físicoquímica III,electiva_b,,,1,,3,,MAT-122
+QMC-305,Tópicos de Química Matemática,electiva_b,,,4,4,,,MAT-142
+INF-271,Teoría de Sistemas y Modelos,electiva_b,,,4,4,,,MAT-132
+INF-282,Especificaciones Formales y Verificación,electiva_b,,,4,4,,,MAT-151
+INF-315,Planificación y Seguridad de los Sistemas Informáticos,electiva_b,,,4,4,,,MAT-132
+INF-351,Sistemas Expertos,electiva_b,,,4,4,,,MAT-142
+INF-354,Intiligencia Artificial,electiva_b,,,4,4,,,MAT-142
+INF-306,Tópicos de Computación Cientítica,electiva_b,,,4,4,,,MAT-142
+ECO-224,Ecología I,electiva_b,,,4,4,,,MAT-132
+ECO-241,Ecología II,electiva_b,,,4,4,,,ECO-224
+BIO-308,Tópicos de Biomatemática,electiva_b,,,4,4,,,MAT-142
+MAT-301,Tópicos de Algebra,electiva_b,,,4,4,,,MAT-251
+MAT-302,Tópicos de Análisis,electiva_b,,,4,4,,,MAT-252
+MAT-303,Tópicos de Geometría y Topología,electiva_b,,,4,4,,,MAT-253
