@@ -52,6 +52,7 @@ ACCIONES = {
     "gestionar_vinculos": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
     "gestionar_estudiantes": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
     "gestionar_personas_externas": {"direccion_instituto", "gestion_datos"},
+    "gestionar_fichas": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
     # Investigación (Instituto)
     "decidir_propuestas": {"direccion_instituto"},
     "gestionar_convocatoria": {"direccion_instituto"},

@@ -969,3 +969,12 @@ Estimación: 3 a 4 semanas (sin el paso 5).
   `registros` propia de investigación (adjuntos y vinculación a proyectos), la página de coautores
   externos y los indicadores de estudiantes (a `acreditacion`); la página de inicio pasa a
   `app/inicio.py`.
+- Paso 4b hecho (27-sep-2026): `app/comun/academicos.py`. Varios grados por persona
+  (`grado_academico`, migración 0025; el grado único se migra como primer grado y desaparece
+  `investigador.grado`); el que se muestra es el de mayor nivel. Se editan en «Mi perfil» y en la
+  ficha académica de Usuarios (direcciones y Gestión de datos; Administración del sistema la ve).
+  Personas sin acceso (`pass_hash = '!'`): no ingresan ni se habilitan solas con «¿Olvidó su
+  contraseña?»; «Habilitar acceso» les da una contraseña temporal. Ya no se exige que una cuenta
+  sea de investigador o de administración (docentes). Vínculos para cualquier persona, con resumen
+  por unidad en el listado. De paso: la tabla que se devolvía al crear una cuenta se armaba antes
+  de crearla (la nueva no aparecía hasta recargar).

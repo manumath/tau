@@ -131,8 +131,6 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
             problemas.append("faltan nombres o apellidos")
         if f["es_investigador"] is None or f["es_admin"] is None:
             problemas.append("use sí/no en investigador y admin")
-        elif not f["es_investigador"] and not f["es_admin"]:
-            problemas.append("debe ser investigador, admin o ambos")
         if f["fecha_ingreso"] is False:
             problemas.append("fecha de ingreso no válida (use AAAA-MM-DD o DD/MM/AAAA)")
         if f["categoria"] is False:

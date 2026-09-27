@@ -29,7 +29,10 @@ memoria anual.
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».
 
-- **Datos básicos:** grado, cargo y unidad o grupo.
+- **Datos básicos:** cargo y unidad o grupo. El grado que se muestra es el de mayor nivel de sus
+  grados académicos.
+- **Grados académicos:** todos sus grados (doctorado, maestría, licenciatura…), con el título, la
+  institución que lo otorgó, el país y el año. Los pide la acreditación.
 - **Identificadores:** ORCID, MathSciNet, zbMATH, arXiv, Google Scholar y página web. Puede pegar
   la dirección de su perfil: el portal guarda solo el identificador y verifica el ORCID.
 - **Líneas de investigación del instituto** (opcional): marque las líneas institucionales vigentes
@@ -262,6 +265,13 @@ proyecto y ser del mismo periodo).
   contraseña. Sin invitación, el portal muestra una contraseña temporal para entregar a mano.
   Las cuentas de investigador llevan **categoría** (titular, contratado, interino, invitado o
   externo): de ella depende quién puede proponer proyectos institucionales y ser responsable.
+- **Personas sin acceso:** en «Nuevo usuario», «Sin acceso al portal» registra a una persona solo por
+  sus datos (p. ej., un docente de la Carrera que no usa el portal): tiene vínculo y ficha, pero no
+  puede ingresar ni pedir una contraseña por su cuenta. «Habilitar acceso» (llave) le genera una
+  contraseña temporal. Las cuentas ya no necesitan ser de investigador o de administración: un
+  docente puede no ser ninguna de las dos.
+- **Ficha académica** (botón con el birrete, en la fila de cada persona): los grados académicos de la
+  persona. La editan las direcciones y Gestión de datos; Administración del sistema la consulta.
 - **Roles** (en la tabla de usuarios, botón «Roles»; solo Administración del sistema): cada rol se
   asigna a una persona para una unidad, desde una fecha y, si corresponde, hasta otra, anotando qué
   dirección lo pidió. «Quitar» hace que el rol deje de regir desde hoy; queda en el historial.

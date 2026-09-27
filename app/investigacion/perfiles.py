@@ -1,5 +1,5 @@
 """Acceso a datos del perfil del investigador y sus áreas MSC."""
-from app.comun import vinculos
+from app.comun import academicos, vinculos
 from app.comun.db import AHORA, IGUAL_A, get_db, sin_tildes
 
 MAX_AREAS = 10
@@ -12,7 +12,6 @@ CATEGORIAS = vinculos.CATEGORIAS
 CATEGORIAS_RESPONSABLES = ("titular", "contratado")
 CATEGORIAS_CO_RESPONSABLES = ("titular", "contratado", "interino")
 
-GRADOS = ["Doctorado", "Magíster", "Licenciatura o título profesional", "Otro"]
 CARGOS_SUGERIDOS = ["Investigador(a) titular", "Investigador(a) asociado(a)",
                     "Investigador(a) adjunto(a)", "Investigador(a) postdoctoral",
                     "Estudiante de doctorado", "Profesor(a) emérito(a)", "Investigador(a) visitante"]
@@ -22,15 +21,15 @@ def obtener(uid: int) -> dict | None:
     """Usuario + investigador en un solo dict (None si la cuenta no es de investigador)."""
     filas = get_db().q(
         f"""SELECT u.id, u.email, u.nombres, u.apellidos, u.activo, i.*,
-                   {vinculos.sql_categoria_vigente('u')} AS categoria
+                   {vinculos.sql_categoria_vigente('u')} AS categoria, {academicos.sql_grado_principal('u')} AS grado
             FROM usuario u JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [uid])
     return filas[0] if filas else None
 
 
-def actualizar_datos(uid: int, *, nombres, apellidos, grado, cargo, unidad):
+def actualizar_datos(uid: int, *, nombres, apellidos, cargo, unidad):
     db = get_db()
     db.t.usuario.update(id=uid, nombres=nombres, apellidos=apellidos)
-    actualizar_campos(uid, grado=grado, cargo=cargo, unidad=unidad)
+    actualizar_campos(uid, cargo=cargo, unidad=unidad)
 
 
 def actualizar_campos(uid: int, **campos):

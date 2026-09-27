@@ -31,6 +31,7 @@ def test_crear_usuario_muestra_password_temporal_y_actualiza_tabla(admin, client
     r = admin.post("/admin/usuarios", data=NUEVO, headers=HX)
     assert "Cuenta creada" in r.text
     assert 'id="tabla-usuarios"' in r.text and 'hx-swap-oob="true"' in r.text
+    assert "carl@test.cl" in r.text.split('hx-swap-oob="true"')[1]  # la tabla ya incluye la cuenta nueva
     password = _password_mostrada(r.text)
 
     u = usuarios.con_perfil(usuarios.por_email("carl@test.cl")["id"])
@@ -45,7 +46,7 @@ def test_crear_usuario_muestra_password_temporal_y_actualiza_tabla(admin, client
 def test_crear_usuario_valida_datos(admin):
     r = admin.post("/admin/usuarios", headers=HX,
                    data={"nombres": "", "apellidos": "X", "email": "inv@test.cl"})
-    assert "obligatorios" in r.text and "Ya existe" in r.text and "debe ser de investigador" in r.text
+    assert "obligatorios" in r.text and "Ya existe" in r.text
     assert 'value="X"' in r.text  # conserva lo ingresado
     r = admin.post("/admin/usuarios", headers=HX, data={**NUEVO, "email": "no-es-correo"})
     assert "correo válido" in r.text

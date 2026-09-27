@@ -3,7 +3,7 @@ import io
 import pytest
 from PIL import Image
 
-from app.comun import fotos, usuarios
+from app.comun import academicos, fotos, usuarios
 from app.investigacion import msc, perfiles
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
@@ -59,18 +59,16 @@ def test_editar_datos_basicos(inv):
     r = inv.get("/perfil/datos/editar", headers=HX)
     assert r.text.lstrip().startswith("<div") and 'hx-put="/perfil/datos"' in r.text
     r = inv.put("/perfil/datos", headers=HX, data=dict(
-        nombres="Amalie Emmy", apellidos="Noether", grado="Doctorado", cargo="Investigadora",
-        unidad="Álgebra"))
-    assert "Amalie Emmy Noether" in r.text and "Doctorado" in r.text
+        nombres="Amalie Emmy", apellidos="Noether", cargo="Investigadora", unidad="Álgebra"))
+    assert "Amalie Emmy Noether" in r.text and "Sin grados registrados" in r.text
     assert 'id="perfil-completitud"' in r.text and 'hx-swap-oob="true"' in r.text
     p = perfiles.obtener(inv.uid)
-    assert (p["nombres"], p["grado"], p["unidad"]) == ("Amalie Emmy", "Doctorado", "Álgebra")
+    assert (p["nombres"], p["grado"], p["unidad"]) == ("Amalie Emmy", None, "Álgebra")
 
 
 def test_datos_invalidos_no_se_guardan(inv):
-    r = inv.put("/perfil/datos", headers=HX, data=dict(nombres="", apellidos="Noether",
-                                                       grado="Emperatriz"))
-    assert "obligatorios" in r.text and "Grado académico no válido" in r.text
+    r = inv.put("/perfil/datos", headers=HX, data=dict(nombres="", apellidos="Noether"))
+    assert "obligatorios" in r.text
     assert perfiles.obtener(inv.uid)["nombres"] == "Emmy"
 
 
@@ -188,7 +186,8 @@ def test_fotos_requieren_sesion(inv, app):
 def test_completitud(app):
     uid = usuarios.por_email("inv@test.cl")["id"]
     assert perfiles.completitud(perfiles.obtener(uid), 0)[0] == 0
-    perfiles.actualizar_campos(uid, grado="Doctorado", orcid="0000-0002-1825-0097")
+    academicos.agregar_grado(uid, {"nivel": "doctorado"})
+    perfiles.actualizar_campos(uid, orcid="0000-0002-1825-0097")
     pct, faltan = perfiles.completitud(perfiles.obtener(uid), 1)
     assert pct == 38 and "ORCID" not in faltan and "áreas MSC" not in faltan
 

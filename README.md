@@ -71,13 +71,14 @@ app/
     unidades.py                jerarquía UMSA › FCPN › CMAT › IIMAT
     permisos.py                roles con alcance y vigencia; puede(usuario, accion, unidad)
     vinculos.py                historial de vínculo con el Instituto o la Carrera (categoría y jornada por periodo)
+    academicos.py              la persona académica: grados, personas sin acceso
     importar_vinculos.py       carga del historial de vínculos desde un CSV de Recursos Humanos
     personas.py                autores y participantes: 'i:<id>', 'e:<id>' y provisionales 'n:…'
     estudiantes.py             periodos de estudio de estudiantes y tesistas; indicadores de participación
     paises.py                  países normalizados: variantes, códigos ISO y deducción desde afiliaciones
     fotos.py                   recorte y limpieza de fotos (Pillow)
     componentes/               layout (página, navegación, modal), registros (insignias, filtros, datos),
-                               recursos (static), errores
+                               grados, recursos (static), errores
     rutas/                     admin_usuarios (cuentas, vínculos, roles), admin_auditoria, estudiantes
   investigacion/               producción y proyectos de investigación
     perfiles.py                perfil, áreas MSC, completitud y directorio

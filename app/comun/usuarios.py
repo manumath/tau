@@ -1,7 +1,7 @@
 """Acceso a datos de cuentas de usuario."""
 from datetime import timedelta
 
-from app.comun import config, permisos, unidades, vinculos
+from app.comun import academicos, config, permisos, unidades, vinculos
 from app.comun.db import AHORA, get_db, marca_tiempo, sin_tildes
 from app.comun.seguridad import hash_password
 
@@ -38,13 +38,16 @@ def con_perfil(uid: int) -> dict | None:
     return filas[0] if filas else None
 
 
-def crear(email: str, nombres: str, apellidos: str, password: str, *,
+def crear(email: str, nombres: str, apellidos: str, password: str | None, *,
           es_admin=False, es_investigador=True, debe_cambiar_pass=True,
           categoria: str | None = None, fecha_ingreso: str | None = None) -> dict:
     db = get_db()
+    # Sin contraseña: persona registrada sin acceso al portal (ver app.comun.academicos).
+    sin_acceso = password is None
     u = db.t.usuario.insert(email=email.strip().lower(), nombres=nombres.strip(),
-                            apellidos=apellidos.strip(), pass_hash=hash_password(password),
-                            debe_cambiar_pass=int(debe_cambiar_pass))
+                            apellidos=apellidos.strip(),
+                            pass_hash=academicos.SIN_ACCESO if sin_acceso else hash_password(password),
+                            debe_cambiar_pass=0 if sin_acceso else int(debe_cambiar_pass))
     if es_admin:
         # «Administración» al crear la cuenta = Administración del sistema + Dirección del Instituto
         # (otros roles se asignan después, en «Roles»).

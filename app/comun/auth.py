@@ -5,7 +5,7 @@ from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon)
 
-from app.comun import config, correo, permisos, tokens, usuarios
+from app.comun import academicos, config, correo, permisos, tokens, usuarios
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.comun.db import auditar
 from app.comun.seguridad import errores_password, verificar_password
@@ -28,7 +28,8 @@ REGLAS_ADMIN = [
     (r"/admin/usuarios/(\d+/roles|roles/\d+/terminar)", ("asignar_roles",)),
     (r"/admin/usuarios/(\d+/vinculo(/\w+)?|\d+/categoria|vinculo/\d+(/editar)?|historial(/\w+)?)",
      ("gestionar_vinculos",)),
-    (r"/admin/usuarios(/lista|/filas)?", ("administrar_cuentas", "gestionar_vinculos")),
+    (r"/admin/usuarios/\d+/(ficha|grados(/\d+)?)", ("gestionar_fichas", "ver_datos_personales")),
+    (r"/admin/usuarios(/lista|/filas)?", ("administrar_cuentas", "gestionar_vinculos", "gestionar_fichas")),
     (r"/admin/usuarios/.+", ("administrar_cuentas",)),
     (r"/admin/auditoria(/.+)?", ("ver_auditoria",)),
     (r"/admin/(revistas|lineas)(/.+)?", ("gestionar_catalogos",)),
@@ -288,7 +289,8 @@ def post(req, htmx, email: str = ""):
     email = email.strip().lower()
     u = usuarios.por_email(email) if email else None
     # Misma respuesta exista o no la cuenta: así no se puede averiguar quién está registrado.
-    if u and u["activo"] and not tokens.demasiados_pedidos(u["id"]):
+    # Una persona sin acceso (registrada solo por sus datos) no se habilita sola: lo hace la administración.
+    if u and u["activo"] and not academicos.sin_acceso(u) and not tokens.demasiados_pedidos(u["id"]):
         enlace = f"{config.URL_BASE}/recuperar/{tokens.emitir(u['id'], 'recuperar')}"
         correo.enviar(u["email"], "Recuperar su contraseña del Portal de Investigación",
                       f"Hola, {u['nombres']}:\n\nPara definir una nueva contraseña, abra este enlace "

@@ -5,14 +5,15 @@ import secrets
 from datetime import date, datetime, timezone
 
 import fasthtml.common as fh
-from fasthtml.common import (A, APIRouter, Code, Div, HtmxResponseHeaders, Option, P, Response, Select, Span,
-                             Template, Thead, Tr, UploadFile)
+from fasthtml.common import (A, APIRouter, Code, Div, HtmxResponseHeaders, Li, Option, P, Response, Select,
+                             Span, Template, Thead, Tr, UploadFile, Ul)
 from fasthtml.toaster import add_toast
-from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, Label, LabelCheckboxX, LabelInput, LabelT,
+from monsterui.all import (H2, H3, Button, ButtonT, Form, FormLabel, Input, Label, LabelCheckboxX, LabelInput, LabelT,
                            Table, Tbody, Td, Th, TextPresets, UkIcon)
 
-from app.comun import (config, correo, importar_usuarios, importar_vinculos, permisos, tokens, unidades, usuarios,
-                       vinculos)
+from app.comun import (academicos, config, correo, importar_usuarios, importar_vinculos, permisos, tokens,
+                       unidades, usuarios, vinculos)
+from app.comun.componentes import grados as grados_ui
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
 from app.comun.db import auditar
 from app.comun.seguridad import password_temporal
@@ -45,16 +46,20 @@ def unidades_vinculo(auth) -> list[dict]:
 
 
 def resumen_vinculo(u, con_boton=True):
-    """Categoría vigente, aviso si falta la fecha de ingreso y botón para abrir el historial."""
-    v = vinculos.vigente(u["id"])
-    if v:
-        texto = Span(vinculos.CATEGORIAS[v["categoria"]], cls="text-sm")
-        aviso = Span(" · ingreso sin fecha", cls="text-xs text-amber-700") if not v["fecha_inicio"] else ""
-    else:
-        texto = Span("Sin categoría" if not vinculos.listar(u["id"]) else "Sin vínculo vigente",
-                     cls="text-sm text-amber-700")
-        aviso = ""
-    return Div(texto, aviso,
+    """Categoría vigente con cada unidad (IIMAT, CMAT), aviso si falta la fecha de ingreso y botón
+    para abrir el historial."""
+    partes = []
+    for x in unidades.con_vinculo():
+        v = vinculos.vigente(u["id"], unidad=x["id"])
+        if v:
+            partes.append(Span(f"{x['sigla']}: {vinculos.CATEGORIAS[v['categoria']]}", cls="text-sm"))
+            if not v["fecha_inicio"]:
+                partes.append(Span(" · ingreso sin fecha", cls="text-xs text-amber-700"))
+            partes.append(Span(" ", cls="mr-1"))
+    if not partes:
+        partes = [Span("Sin categoría" if not vinculos.listar_todos(u["id"]) else "Sin vínculo vigente",
+                       cls="text-sm text-amber-700")]
+    return Div(*partes,
                fh.Button(UkIcon("id-card", height=14, width=14), "Vínculo", type="button",
                          cls="inline-flex items-center gap-1 text-xs text-primary hover:underline ml-2",
                          hx_get=f"{BASE}/{u["id"]}/vinculo", hx_target=f"#{ID_MODAL}") if con_boton else "",
@@ -64,6 +69,11 @@ def resumen_vinculo(u, con_boton=True):
 CORTO = {"administracion_sistema": "Adm. del sistema", "direccion_instituto": "Dir. Instituto",
          "direccion_carrera": "Dir. Carrera", "coordinacion_academica": "Coord. académica",
          "comite_acreditacion": "Comité de acreditación", "gestion_datos": "Gestión de datos"}
+
+
+def _personal_academico(u) -> bool:
+    """Investigadores, docentes y quien tenga vínculos (no las cuentas solo de administración)."""
+    return bool(u["es_investigador"] or vinculos.listar_todos(u["id"]) or not permisos.roles_vigentes(u["id"]))
 
 
 def _etiquetas_perfil(u, gestiona_roles=False, gestiona_vinculos=False):
@@ -77,13 +87,17 @@ def _etiquetas_perfil(u, gestiona_roles=False, gestiona_vinculos=False):
                             cls="inline-flex items-center gap-1 text-xs text-primary hover:underline",
                             hx_get=f"{BASE}/{u['id']}/roles", hx_target=f"#{ID_MODAL}") if gestiona_roles else ""
     return Div(Div(*etiquetas, boton_roles, cls="flex gap-1 flex-wrap items-center"),
-               resumen_vinculo(u, gestiona_vinculos) if u["es_investigador"] else "",
+               resumen_vinculo(u, gestiona_vinculos) if _personal_academico(u) else "",
                cls="space-y-1")
 
 
 def _estado(u, bloqueada=False):
     if not u["activo"]:
         return Label("Inactiva", cls=LabelT.destructive)
+    if academicos.sin_acceso(u):
+        return Span(UkIcon("user-round-x", height=14, width=14), "Sin acceso",
+                    title="Registrada solo por sus datos. Se le da acceso con «Habilitar acceso» (contraseña temporal).",
+                    cls="inline-flex items-center gap-1 text-muted-foreground text-sm whitespace-nowrap")
     if bloqueada:
         return Span(UkIcon("lock", height=14, width=14), "Bloqueada por intentos fallidos",
                     title=f"Se desbloquea sola a los {config.LOGIN_VENTANA_MIN} minutos, o con el botón del candado.",
@@ -121,15 +135,22 @@ def fila(u, auth: dict):
         disabled=es_yo,
         title="No puede desactivar su propia cuenta" if es_yo else
               ("Desactivar cuenta" if u["activo"] else "Activar cuenta"))
+    sin_acceso = academicos.sin_acceso(u)
     boton_reset = Button(
         UkIcon("key-round", height=18, width=18),
-        cls=(ButtonT.ghost, ButtonT.icon), aria_label="Restablecer contraseña",
+        cls=(ButtonT.ghost, ButtonT.icon),
+        aria_label="Habilitar acceso" if sin_acceso else "Restablecer contraseña",
         hx_post=f"/admin/usuarios/{uid}/restablecer", hx_target=f"#{ID_MODAL}",
-        hx_confirm=f"¿Generar una nueva contraseña temporal para {u['email']}? "
-                   "La actual dejará de funcionar.",
+        hx_confirm=(f"¿Habilitar el acceso de {u['email']} con una contraseña temporal?" if sin_acceso else
+                    f"¿Generar una nueva contraseña temporal para {u['email']}? La actual dejará de funcionar."),
         disabled=es_yo,
         title="Use «Contraseña» en el menú para cambiar la suya" if es_yo else
-              "Restablecer contraseña")
+              ("Habilitar acceso (contraseña temporal)" if sin_acceso else "Restablecer contraseña"))
+    boton_ficha = Button(
+        UkIcon("graduation-cap", height=18, width=18), cls=(ButtonT.ghost, ButtonT.icon),
+        aria_label="Ficha académica", title="Ficha académica (grados)",
+        hx_get=f"{BASE}/{uid}/ficha", hx_target=f"#{ID_MODAL}") \
+        if permisos.puede(auth, "gestionar_fichas") or permisos.puede(auth, "ver_datos_personales") else ""
     return Tr(
         Td(Div(f"{u['apellidos']}, {u['nombres']}", cls="font-medium"),
            Div("(usted)", cls=TextPresets.muted_sm) if es_yo else ""),
@@ -138,7 +159,8 @@ def fila(u, auth: dict):
         Td(_estado(u, bloqueada)),
         Td(fecha_local(u["ultimo_acceso"]),
            cls=(TextPresets.muted_sm, "whitespace-nowrap hidden lg:table-cell")),
-        Td(Div(boton_desbloquear, boton_activo, boton_reset, cls="flex gap-1 justify-end") if cuentas else ""),
+        Td(Div(boton_ficha, *([boton_desbloquear, boton_activo, boton_reset] if cuentas else []),
+               cls="flex gap-1 justify-end")),
         id=f"usuario-{uid}")
 
 
@@ -168,6 +190,8 @@ def form_usuario(datos=None, errores=()):
                    value=d.get("fecha_ingreso") or ""),
         Div(LabelCheckboxX("Es investigador (tendrá perfil y registrará actividad)",
                            id="es_investigador", checked=d.get("es_investigador", True)),
+            LabelCheckboxX("Sin acceso al portal (se registran solo sus datos, p. ej., un docente que no lo usa)",
+                           id="sin_acceso", checked=d.get("sin_acceso", False)),
             LabelCheckboxX("Administración (Adm. del sistema y Dirección del Instituto; otros roles, después en «Roles»)",
                            id="es_admin",
                            checked=d.get("es_admin", False)),
@@ -261,7 +285,8 @@ def get():
 
 @rt(BASE)
 def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categoria: str = "",
-         es_investigador: bool = False, es_admin: bool = False, invitar: bool = False, fecha_ingreso: str = ""):
+         es_investigador: bool = False, es_admin: bool = False, invitar: bool = False, fecha_ingreso: str = "",
+         sin_acceso: bool = False):
     datos = dict(nombres=nombres.strip(), apellidos=apellidos.strip(),
                  email=email.strip().lower(), es_investigador=es_investigador, es_admin=es_admin,
                  categoria=(categoria or None) if es_investigador else None,
@@ -277,14 +302,25 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
         errores.append("Ingrese un correo válido.")
     elif usuarios.por_email(datos["email"]):
         errores.append("Ya existe una cuenta con ese correo.")
-    if not es_investigador and not es_admin:
-        errores.append("La cuenta debe ser de investigador, de administrador o ambas.")
+    if sin_acceso and es_admin:
+        errores.append("Una persona sin acceso no puede tener roles de administración.")
     if es_investigador and categoria not in vinculos.CATEGORIAS:
         errores.append("Elija la categoría del investigador(a).")
     if errores:
-        return modal("Nuevo usuario", form_usuario({**datos, "invitar": invitar}, errores))
+        return modal("Nuevo usuario", form_usuario({**datos, "invitar": invitar, "sin_acceso": sin_acceso}, errores))
 
-    tabla = Template(cuerpo_tabla(usuarios.listar(), auth, oob=True))
+    def tabla():
+        """La tabla actualizada (con la persona recién creada), fuera de banda."""
+        return Template(cuerpo_tabla(usuarios.listar(), auth, oob=True))
+    if sin_acceso:
+        u = usuarios.crear(password=None, **datos)
+        auditar(auth["id"], "crear_usuario", "usuario", u["id"], f"{datos['email']} (sin acceso)")
+        return (modal("Persona registrada",
+                      P(f"{u['nombres']} {u['apellidos']} quedó registrada sin acceso al portal. Para darle acceso, "
+                        "use «Habilitar acceso» en su fila."),
+                      Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+                          cls="flex justify-end mt-4")),
+                tabla())
     if invitar:
         # Contraseña aleatoria que nadie conoce: la persona define la suya con el enlace.
         u = usuarios.crear(password=secrets.token_urlsafe(24), debe_cambiar_pass=False, **datos)
@@ -295,14 +331,14 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
                         "Vale 3 días; si vence, use «Restablecer» o pídale que use «¿Olvidó su contraseña?»."),
                       Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
                           cls="flex justify-end mt-4")),
-                tabla)
+                tabla())
     password = password_temporal()
     u = usuarios.crear(password=password, **datos)
     auditar(auth["id"], "crear_usuario", "usuario", u["id"], datos["email"])
     return (modal_credenciales("Cuenta creada", u, password,
                                "Entréguela al usuario por un canal seguro. No se volverá a mostrar."),
             # Los elementos de tabla OOB deben ir en <template>: sueltos, el parser HTML los descarta.
-            tabla)
+            tabla())
 
 
 def modal_desactivar(u, errores=(), termina="si", fecha=""):
@@ -615,6 +651,58 @@ def post(auth, aid: int):
     return modal_roles(usuarios.con_perfil(a["usuario_id"]), auth, errores)
 
 
+# --- Ficha académica (grados) -----------------------------------------------------------------------------
+
+def _bloque(id_, *contenido):
+    return Div(H3("Grados académicos", cls="text-base font-semibold mb-2"), *contenido, id=id_)
+
+
+def _grados_ficha(uid, errores=(), datos=None):
+    return grados_ui.seccion_grados(uid, f"{BASE}/{uid}/grados", "ficha-grados", _bloque, errores, datos)
+
+
+def modal_ficha(u, auth):
+    uid = u["id"]
+    return modal(
+        f"Ficha académica de {u['nombres']} {u['apellidos']}",
+        P("Datos de la persona que pide la acreditación (Guía de Antecedentes, hojas 10 y 11). Los investigadores "
+          "también pueden completar sus grados en «Mi perfil».", cls=(TextPresets.muted_sm, "mb-3")),
+        _grados_ficha(uid) if permisos.puede(auth, "gestionar_fichas") else
+        Div(H3("Grados académicos", cls="text-base font-semibold mb-2"),
+            Ul(*[Li(academicos.texto_grado(g), cls="text-sm py-1") for g in academicos.grados(uid)])
+            if academicos.grados(uid) else P("Sin grados registrados.", cls=TextPresets.muted_sm)),
+        Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
+        ancho="max-w-3xl")
+
+
+@rt(BASE + "/{uid}/ficha")
+def get(auth, uid: int):
+    u = usuarios.con_perfil(uid)
+    return modal_ficha(u, auth) if u else Response("No encontrado", status_code=404)
+
+
+@rt(BASE + "/{uid}/grados")
+def post(auth, uid: int, nivel: str = "", titulo: str = "", institucion: str = "", pais: str = "", anio: str = ""):
+    if not permisos.puede(auth, "gestionar_fichas") or not usuarios.por_id(uid):
+        return Response("No autorizado", status_code=403)
+    datos = dict(nivel=nivel, titulo=titulo, institucion=institucion, pais=pais, anio=anio)
+    errores = academicos.agregar_grado(uid, datos)
+    if errores:
+        return _grados_ficha(uid, errores, datos)
+    auditar(auth["id"], "agregar_grado", "usuario", uid, academicos.texto_grado({**datos, "anio": anio or None}))
+    return _grados_ficha(uid)
+
+
+@rt(BASE + "/{uid}/grados/{gid}")
+def delete(auth, uid: int, gid: int):
+    if not permisos.puede(auth, "gestionar_fichas"):
+        return Response("No autorizado", status_code=403)
+    g = academicos.quitar_grado(uid, gid)
+    if g:
+        auditar(auth["id"], "quitar_grado", "usuario", uid, academicos.texto_grado(g))
+    return _grados_ficha(uid)
+
+
 # --- Historial de vínculo ---------------------------------------------------------------------------------
 
 def _campos_periodo(d, con_hasta=True, con_nota=True, sufijo=""):
@@ -713,8 +801,8 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
 
 
 def _investigador(uid):
-    u = usuarios.con_perfil(uid)
-    return u if u and u["es_investigador"] else None
+    """La persona (con o sin perfil de investigación: los docentes también tienen vínculo)."""
+    return usuarios.con_perfil(uid)
 
 
 def _unidad_valida(valor, auth) -> int | None:

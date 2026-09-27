@@ -90,8 +90,8 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
         p["unidad_id"] = unidades.id_de(p["unidad"])
         u = usuarios.por_email(p["email"])
         perfil = usuarios.con_perfil(u["id"]) if u else None
-        if not perfil or not perfil["es_investigador"]:
-            p["errores"].insert(0, "No hay una cuenta de investigador con ese correo.")
+        if not perfil:
+            p["errores"].insert(0, "No hay una persona registrada con ese correo.")
             p["usuario"], p["actuales"] = None, 0
             continue
         p["usuario"] = perfil

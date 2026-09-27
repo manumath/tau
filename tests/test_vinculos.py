@@ -155,7 +155,7 @@ def test_leer_historial(emmy):
     p = {x["email"]: x for x in personas}
     assert p["inv@test.cl"]["errores"] == [] and [x["desde"] for x in p["inv@test.cl"]["periodos"]] == [
         "2018-03-01", "2022-01-01"]
-    assert "No hay una cuenta" in p["otro@test.cl"]["errores"][0]
+    assert "No hay una persona registrada" in p["otro@test.cl"]["errores"][0]
     assert any("categoría no válida" in e and "fecha no válida" in e and "jornada" in e for e in p["alan@test.cl"]["errores"])
     assert any("se superponen" in e for e in p["alan@test.cl"]["errores"])
 

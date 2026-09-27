@@ -10,13 +10,14 @@ import json
 
 import fasthtml.common as fh
 
-from fasthtml.common import A, APIRouter, Datalist, Div, Hr, Li, Option, P, Select, Span, Ul, UploadFile
+from fasthtml.common import A, APIRouter, Datalist, Div, Hr, Li, Option, P, Span, Ul, UploadFile
 from fasthtml.toaster import add_toast
-from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, Input, LabelInput,
+from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
 
-from app.comun import fotos, usuarios, vinculos
+from app.comun import academicos, fotos, usuarios, vinculos
 from app.investigacion import lineas, msc, perfiles
+from app.comun.componentes import grados as grados_ui
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.investigacion.componentes.lineas import casillas_lineas, insignias_lineas
 from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
@@ -73,7 +74,7 @@ def vista_datos(p):
                    fila("Nombre", f"{p['nombres']} {p['apellidos']}"),
                    fila("Correo", p["email"]),
                    fila("Vínculo", vinculos.resumen(p["id"]) or "Sin vínculo vigente con el instituto"),
-                   fila("Grado académico", p["grado"]),
+                   fila("Grado académico", p["grado"] or "Sin grados registrados (ver «Grados académicos»)"),
                    fila("Cargo", p["cargo"]),
                    fila("Unidad o grupo", p["unidad"]),
                    accion=_boton_editar("datos"))
@@ -88,11 +89,6 @@ def form_datos(d, errores=()):
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
         P(f"Correo: {d['email']} · Categoría: {perfiles.categoria_texto(d['categoria'])} "
           "(los cambia la administración).", cls=TextPresets.muted_sm),
-        Div(FormLabel("Grado académico", fr="grado"),
-            Select(Option("—", value=""),
-                   *[Option(g, value=g, selected=g == d["grado"]) for g in perfiles.GRADOS],
-                   id="grado", name="grado", cls="uk-select"),
-            cls="space-y-2"),
         LabelInput("Cargo", id="cargo", value=d["cargo"] or "", list="cargos", maxlength=100,
                    placeholder="Investigador(a) asociado(a)"),
         Datalist(*[Option(value=c) for c in perfiles.CARGOS_SUGERIDOS], id="cargos"),
@@ -112,16 +108,13 @@ def get(auth):
 
 
 @rt("/perfil/datos")
-def put(auth, sess, nombres: str = "", apellidos: str = "", grado: str = "", cargo: str = "",
-        unidad: str = ""):
+def put(auth, sess, nombres: str = "", apellidos: str = "", cargo: str = "", unidad: str = ""):
     p = perfiles.obtener(auth["id"])
-    d = dict(nombres=nombres.strip(), apellidos=apellidos.strip(), grado=grado.strip() or None,
-             cargo=cargo.strip() or None, unidad=unidad.strip() or None)
+    d = dict(nombres=nombres.strip(), apellidos=apellidos.strip(), cargo=cargo.strip() or None,
+             unidad=unidad.strip() or None)
     errores = []
     if not d["nombres"] or not d["apellidos"]:
         errores.append("Nombres y apellidos son obligatorios.")
-    if d["grado"] and d["grado"] not in perfiles.GRADOS:
-        errores.append("Grado académico no válido.")
     for campo, maximo in (("nombres", 80), ("apellidos", 80), ("cargo", 100), ("unidad", 120)):
         if d[campo] and len(d[campo]) > maximo:
             errores.append(f"«{campo.capitalize()}» admite hasta {maximo} caracteres.")
@@ -131,6 +124,40 @@ def put(auth, sess, nombres: str = "", apellidos: str = "", grado: str = "", car
     auditar(auth["id"], "editar_perfil", "investigador", auth["id"], "datos")
     add_toast(sess, "Datos guardados.", "success")
     return _respuesta(auth["id"], vista_datos(perfiles.obtener(auth["id"])))
+
+
+# --- Grados académicos ----------------------------------------------------------
+
+def _tarjeta_grados(id_, *contenido):
+    return seccion(id_, "Grados académicos",
+                   P("Todos sus grados, con la institución que los otorgó (lo pide la acreditación). El de mayor "
+                     "nivel se muestra en su perfil.", cls=(TextPresets.muted_sm, "mb-2")), *contenido)
+
+
+def seccion_grados(uid, errores=(), datos=None):
+    return grados_ui.seccion_grados(uid, "/perfil/grados", "seccion-grados", _tarjeta_grados, errores, datos)
+
+
+def _tras_cambio_de_grado(uid):
+    p = perfiles.obtener(uid)
+    return seccion_grados(uid), tarjeta_completitud(p, oob=True), vista_datos(p)(hx_swap_oob="true")
+
+
+@rt("/perfil/grados")
+def post(auth, nivel: str = "", titulo: str = "", institucion: str = "", pais: str = "", anio: str = ""):
+    datos = dict(nivel=nivel, titulo=titulo, institucion=institucion, pais=pais, anio=anio)
+    errores = academicos.agregar_grado(auth["id"], datos)
+    if errores:
+        return seccion_grados(auth["id"], errores, datos)
+    auditar(auth["id"], "editar_perfil", "investigador", auth["id"], "grado académico")
+    return _tras_cambio_de_grado(auth["id"])
+
+
+@rt("/perfil/grados/{gid}")
+def delete(auth, gid: int):
+    if academicos.quitar_grado(auth["id"], gid):
+        auditar(auth["id"], "editar_perfil", "investigador", auth["id"], "quitar grado académico")
+    return _tras_cambio_de_grado(auth["id"])
 
 
 # --- Identificadores ---------------------------------------------------------
@@ -474,7 +501,8 @@ def get(auth):
         Div(
             Div(Card(seccion_foto(p), Hr(cls="my-4 border-border"), tarjeta_completitud(p)),
                 cls="lg:col-span-1 space-y-6"),
-            Div(vista_datos(p), vista_identificadores(p), vista_lineas(p["id"]), seccion_areas(p["id"]), vista_bio(p),
+            Div(vista_datos(p), seccion_grados(p["id"]), vista_identificadores(p), vista_lineas(p["id"]),
+                seccion_areas(p["id"]), vista_bio(p),
                 seccion_preferencias(p, usuarios.por_id(auth["id"])["avisos_correo"]),
                 cls="lg:col-span-2 space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"),
