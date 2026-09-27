@@ -679,3 +679,92 @@ por la migración 0021).
   en que están **aprobados** (sin repetir; lo pendiente o rechazado no cuenta). Sin proyecto
   aprobado no tienen línea. Se ve en su ficha y en los XLSX de la memoria (también en proyectos).
 
+
+## 22. Ampliación a gestión curricular y docente (opción 2)
+
+Evaluación y opciones: https://claude.ai/artifact/SqsBxjJsvWFUC6QyNViebV (privada). Se elige un
+solo sistema organizado en módulos (Investigación, Docencia y Currículo, Acreditación) con el
+mismo stack. **Fuera de alcance:** registro académico (inscripciones, notas, kárdex, actas); esos
+datos se importan agregados del sistema académico de la UMSA.
+
+Las estimaciones suponen una persona a medio tiempo con asistencia de IA; son orientativas.
+
+### Fase 0 — Decisiones (1–2 semanas, sin código)
+
+- ¿Quién mantiene el sistema tras el piloto? Reunión con el área de TI de la UMSA (DTIC): si exige
+  PostgreSQL o un framework estándar, se decide aquí migrar (opciones 4 o 5) y la fase 1 cambia.
+- Alcance académico con la Dirección de Carrera: qué hojas de la Guía se llenarán desde el sistema.
+- Qué entrega el sistema académico de la UMSA (formato, periodicidad, nivel de agregación).
+- «Jerarquía académica» de la hoja 10: ¿categoría del portal o escalafón docente?
+- Fecha de nacimiento (tramos de edad, hoja 11): decisión explícita y aviso a los académicos.
+- Nombre del sistema. Una segunda persona que acompañe desde la fase 1 (continuidad).
+
+### Fase 1 — Saneamiento sin cambios visibles (3–4 semanas)
+
+1. Paquetes: `app/comun` (db, auth, config, seguridad, correo, auditoría, componentes),
+   `app/investigacion`, `app/acreditacion`, `app/academico` (vacío). Un commit por paquete; las
+   pruebas pasan sin cambios de comportamiento.
+2. Partir `routes/proyectos.py` (1.094 líneas) y `routes/productos.py` (890) por pestaña o flujo.
+3. Aislar lo propio de SQLite (`date('now','localtime')`, `sin_tildes`, apsw) en `comun/db` para
+   que una migración a PostgreSQL toque un solo lugar. Sin ORM.
+4. Estilos servidos desde `/static` (Tailwind compilado y recursos de MonsterUI), sin CDN; luego
+   una Content-Security-Policy estricta.
+5. Pruebas en navegador (Playwright) de 5 flujos: ingreso, registrar producto, proponer y decidir
+   una propuesta institucional, generar el anexo.
+6. `docs/mantenimiento.md`: arquitectura, convenciones, patrones HTMX, cómo agregar una migración,
+   despliegue, respaldo y una restauración ensayada. Política de actualización de FastHTML.
+
+Criterio de término: todas las pruebas en verde y el piloto sigue sin notar cambios.
+
+### Fase 2 — Personas, unidades y permisos (3–4 semanas)
+
+1. Persona académica separada de la cuenta: `investigador` pasa a ser el perfil de investigación
+   de una persona que puede ser docente, investigadora o ambas. Migración de datos compatible.
+2. Unidades: UMSA › FCPN › CMAT › IIMAT, para acotar permisos e informes.
+3. Roles con alcance y vigencia (`rol_asignado`: usuario, rol, unidad, desde, hasta):
+   administración del sistema, dirección de carrera, dirección del instituto, coordinación
+   académica, docente, investigador, comité de acreditación (lectura). Una función central
+   `puede(usuario, accion, recurso)` reemplaza gradualmente los ~100 usos de `es_admin` y
+   `es_investigador`.
+4. Acceso con cuentas de la UMSA si la DTIC ofrece un proveedor (Google Workspace, LDAP u OIDC).
+
+Criterio: matriz de permisos cubierta por pruebas.
+
+### Fase 3 — Módulo curricular y docente mínimo (5–6 semanas)
+
+1. Plan de estudios con versiones (resolución, vigencia): asignaturas (sigla, nombre, semestre,
+   horas teóricas y prácticas, créditos, obligatoria o electiva), prerrequisitos, perfil de
+   egreso y matriz asignatura–competencia.
+2. Gestiones académicas (2026-I, 2026-II…) configurables.
+3. Asignación docente por gestión: asignatura, paralelo, docentes y horas semanales.
+4. Carga horaria por persona y gestión: docencia (de la asignación), investigación, gestión y
+   otras; aviso si supera la jornada del vínculo.
+5. Programas analíticos por asignatura y gestión, con versión y aprobación de la Dirección
+   (mismo patrón que las propuestas institucionales).
+6. Perfeccionamiento docente (hoja 13).
+7. Carga por CSV del plan y de las asignaciones de los últimos 5 años.
+
+Criterio: hojas 10 y 11 de la Guía generadas por completo.
+
+### Fase 4 — Datos de la Carrera importados (2–3 semanas; depende de la UMSA)
+
+Importador con vista previa (como usuarios y vínculos) de datos agregados por cohorte:
+ingresantes, matriculados, egresados y titulados por modalidad, con fuente y fecha de corte
+como evidencia. Indicadores de retención y titulación según las definiciones de IAC-CINDA.
+
+### Fase 5 — Guía de Antecedentes completa (3 semanas)
+
+1. Completar los datos de investigación que faltan (análisis de la Guía): ISBN y datos del libro
+   en capítulos, fechas de patentes, instituciones y productos de redes, financiamiento interno y
+   externo en USD con tipo de cambio, prestación de servicios.
+2. Exportación que llena la planilla original (openpyxl, conservando estructura y fórmulas):
+   hojas 3–11, 13, 19–23 y 25–28.
+3. Informe de cobertura: qué celdas quedan para llenado manual.
+
+### Fase 6 — Lanzamiento como sistema de la Carrera y el Instituto (2 semanas)
+
+Nombre y navegación por módulos, capacitación de la Dirección y los docentes, piloto con un
+semestre real y ajuste.
+
+**Total orientativo:** 5 a 6 meses. Las fases 1 y 2 son útiles aunque luego se decida migrar;
+si en la fase 0 se decide ir a Django, se omiten los puntos 1.1 a 1.4.
