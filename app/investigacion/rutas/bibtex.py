@@ -12,8 +12,8 @@ from monsterui.all import (Button, ButtonT, Form, Label, LabelT, LabelTextArea, 
 
 from app.investigacion import bibtex, productos
 from app.acreditacion import informes
-from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
-from app.db import auditar, sin_tildes
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
+from app.comun.db import auditar, sin_tildes
 
 rt = APIRouter()
 EVENTO = "productos-cambiados"

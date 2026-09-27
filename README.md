@@ -59,42 +59,53 @@ perfiles).
 ```
 main.py                        create_app(): fast_app, MonsterUI, Beforeware, routers, manejo de errores
 app/
-  config.py                    configuración (variables de entorno PORTAL_*)
-  db.py                        fastlite + fastmigrate; función SQL sin_tildes; auditar()
-  seguridad.py                 Argon2, contraseñas temporales, política de contraseñas
-  auth.py                      Beforeware de sesión, login, cambio y recuperación de contraseña
-  usuarios.py                  cuentas y límite de intentos de ingreso
-  importar_usuarios.py         carga masiva de cuentas desde CSV
-  tokens.py                    enlaces de un solo uso (recuperar contraseña, invitación)
-  correo.py                    envío de correo (archivo .eml, SMTP, memoria para pruebas)
-  avisos.py                    avisos por correo del flujo de proyectos
-  perfiles.py                  perfil, áreas MSC, completitud y directorio
-  vinculos.py                  historial de vínculo con el instituto (categoría por periodo)
-  filiacion.py                 filiación IIMAT/UMSA por autor: detección y declaración
-  revistas.py                  catálogo de revistas con indexación por año (ISSN, clasificación)
-  importar_revistas.py         carga del catálogo de revistas por CSV
-  openalex.py                  consulta a OpenAlex: obras por ORCID y citas
-  cosecha.py                   carga de la producción desde OpenAlex y actualización de citas
-  acreditacion.py              anexo de I+D+i para la acreditación (IAC-CINDA), por criterio y año
-  estudiantes.py               periodos de estudio de estudiantes y tesistas; indicadores de participación
-  paises.py                    países normalizados: variantes, códigos ISO y deducción desde afiliaciones
-  importar_vinculos.py         carga del historial de vínculos desde un CSV de Recursos Humanos
-  identificadores.py           ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
-  msc.py                       búsqueda en el catálogo MSC2020
-  fotos.py                     recorte y limpieza de fotos (Pillow)
-  personas.py                  autores y participantes: 'i:<id>', 'e:<id>' y provisionales 'n:…'
-  actividades.py               actividades y participantes
-  productos.py                 productos, autores, reglas de revisión e informe, DOI/arXiv, citas
-  adjuntos.py                  adjuntos validados por contenido
-  proyectos.py                 proyectos, permisos y flujo propuesta → aprobación
-  institucionales.py           proyectos institucionales: periodos, convocatorias, propuestas y vigencia
-  importacion.py               importación desde Crossref y arXiv; reconocimiento de autores
-  bibtex.py                    importar y exportar BibTeX
-  informes.py                  datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
-  components/                  layout (página, navegación, modal), perfil, personas, registros, errores
-  routes/                      un APIRouter por área: inicio, perfil, investigadores, actividades,
-                               productos, bibtex, personas, adjuntos, estudiantes, propuestas, proyectos, acreditacion, informes,
-                               publico (+ API), admin_usuarios, admin_auditoria
+  comun/                       base que usan todos los módulos
+    config.py                  configuración (variables de entorno PORTAL_*)
+    db.py                      fastlite + fastmigrate; función SQL sin_tildes; auditar()
+    seguridad.py               Argon2, contraseñas temporales, política de contraseñas
+    auth.py                    Beforeware de sesión y de origen (CSRF), login, cambio y recuperación de contraseña
+    usuarios.py                cuentas y límite de intentos de ingreso
+    importar_usuarios.py       carga masiva de cuentas desde CSV
+    tokens.py                  enlaces de un solo uso (recuperar contraseña, invitación)
+    correo.py                  envío de correo (archivo .eml, SMTP, memoria para pruebas)
+    vinculos.py                historial de vínculo con el instituto (categoría y jornada por periodo)
+    importar_vinculos.py       carga del historial de vínculos desde un CSV de Recursos Humanos
+    personas.py                autores y participantes: 'i:<id>', 'e:<id>' y provisionales 'n:…'
+    estudiantes.py             periodos de estudio de estudiantes y tesistas; indicadores de participación
+    paises.py                  países normalizados: variantes, códigos ISO y deducción desde afiliaciones
+    fotos.py                   recorte y limpieza de fotos (Pillow)
+    componentes/               layout (página, navegación, modal), perfil, registros, errores
+    rutas/                     inicio, admin_usuarios, admin_auditoria, personas, estudiantes
+  investigacion/               producción y proyectos de investigación
+    perfiles.py                perfil, áreas MSC, completitud y directorio
+    identificadores.py         ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
+    msc.py                     búsqueda en el catálogo MSC2020
+    lineas.py                  líneas de investigación institucionales con vigencia
+    actividades.py             actividades y participantes
+    productos.py               productos, autores, reglas de revisión e informe, DOI/arXiv, citas
+    filiacion.py               filiación IIMAT/UMSA por autor: detección y declaración
+    adjuntos.py                adjuntos validados por contenido
+    proyectos.py               proyectos, permisos y flujo propuesta → aprobación
+    institucionales.py         proyectos institucionales: periodos, convocatorias, propuestas y vigencia
+    avisos.py                  avisos por correo del flujo de proyectos
+    revistas.py                catálogo de revistas con indexación por año (ISSN, clasificación)
+    importar_revistas.py       carga del catálogo de revistas por CSV
+    importacion.py             importación desde Crossref y arXiv; reconocimiento de autores
+    openalex.py                consulta a OpenAlex: obras por ORCID y citas
+    cosecha.py                 carga de la producción desde OpenAlex y actualización de citas
+    bibtex.py                  importar y exportar BibTeX
+    componentes/               selector de autores y participantes, líneas de investigación
+    rutas/                     perfil, investigadores, actividades, productos, bibtex, adjuntos, propuestas,
+                               proyectos, publico (+ API), admin_revistas, admin_lineas
+  acreditacion/                evidencia para IAC-CINDA
+    informes.py                datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
+    anexo.py                   anexo de I+D+i para la acreditación, por criterio y año
+    rutas/                     informes, anexo
+  academico/                   docencia y currículo (fase 3 del plan; aún vacío)
+
+Dependencias: `comun` no debería depender de los demás paquetes. Quedan excepciones que la fase 2
+resuelve (persona académica separada del perfil de investigación): `vinculos` e `importar_usuarios`
+usan `perfiles`, y `componentes/registros.py` y `rutas/inicio.py` conocen proyectos y productos.
 catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar
 scripts/seed.py                datos de ejemplo
@@ -157,7 +168,7 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
 - **URL de las vistas filtradas:** la fija el servidor con `HX-Replace-Url`, para que apunte a la
   página y no al fragmento.
 - **Errores:** a HTMX se le responde con el código (403, 404…) y el navegador muestra un aviso
-  (`app/components/errores.py`). A las peticiones normales, una página con el estilo del portal.
+  (`app/comun/componentes/errores.py`). A las peticiones normales, una página con el estilo del portal.
 
 **Rutas y archivos**
 - **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): la ruta de
@@ -170,11 +181,11 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
 **Seguridad**
 - La autorización se verifica en el servidor en cada ruta; ocultar un botón no basta.
 - Sin sesión solo se accede a `/login`, `/recuperar…`, `/publico/…` y `/api/v1/…` (reglas exactas
-  en `app/auth.py`).
+  en `app/comun/auth.py`).
 - Las exportaciones CSV/XLSX neutralizan fórmulas (`=`, `+`, `-`, `@`) para evitar su ejecución en Excel.
 - **CSRF:** toda petición que modifica datos (POST, PUT, PATCH, DELETE) debe venir del propio portal
   según `Origin` (o `Referer`): el host de la petición, `PORTAL_URL` o `PORTAL_ORIGENES_EXTRA`
-  (`app/auth.py`, `beforeware_origen`). Complementa la cookie `SameSite=Lax`, que no protege de
+  (`app/comun/auth.py`, `beforeware_origen`). Complementa la cookie `SameSite=Lax`, que no protege de
   otros subdominios del mismo sitio (p. ej. `*.umsa.bo`). Sin tokens: los formularios no cambian.
 
 ## Partes públicas y API

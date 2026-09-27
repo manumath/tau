@@ -3,9 +3,9 @@ import io
 import pytest
 from PIL import Image
 
-from app import fotos, usuarios
+from app.comun import fotos, usuarios
 from app.investigacion import msc, perfiles
-from app.db import get_db
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 
 

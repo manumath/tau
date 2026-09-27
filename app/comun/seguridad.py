@@ -4,7 +4,7 @@ import secrets
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
 
-from app import config
+from app.comun import config
 
 _ph = PasswordHasher()
 # Hash de relleno: se verifica contra él cuando el email no existe, para que el

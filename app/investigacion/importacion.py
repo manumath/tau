@@ -16,9 +16,9 @@ from urllib.parse import quote
 
 import httpx2
 
-from app import config, paises, personas
+from app.comun import config, paises, personas
 from app.investigacion import productos, revistas
-from app.db import get_db, sin_tildes
+from app.comun.db import get_db, sin_tildes
 
 TIMEOUT = 10
 CROSSREF = "https://api.crossref.org/works/"

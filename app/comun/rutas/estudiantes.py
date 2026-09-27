@@ -10,10 +10,10 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, Table, Tbody, Td, TextPresets, Th,
                            UkIcon)
 
-from app import estudiantes, personas
-from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.components.registros import insignia, url_filtrada
-from app.db import auditar, get_db, sin_tildes
+from app.comun import estudiantes, personas
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.registros import insignia, url_filtrada
+from app.comun.db import auditar, get_db, sin_tildes
 
 rt = APIRouter()
 ID_LISTA = "lista-estudiantes"

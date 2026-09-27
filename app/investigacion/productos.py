@@ -7,8 +7,8 @@ import re
 from datetime import date
 
 from app.investigacion import adjuntos, revistas
-from app import personas
-from app.db import get_db, sin_tildes
+from app.comun import personas
+from app.comun.db import get_db, sin_tildes
 
 ESTADOS = {"publicado": "Publicado", "aceptado": "Aceptado", "enviado": "Enviado",
            "en_preparacion": "En preparación"}

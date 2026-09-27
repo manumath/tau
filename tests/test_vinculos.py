@@ -5,9 +5,9 @@ from datetime import date
 import pytest
 
 from app.investigacion import actividades, perfiles, productos
-from app import importar_usuarios, importar_vinculos, usuarios, vinculos
+from app.comun import importar_usuarios, importar_vinculos, usuarios, vinculos
 from app.acreditacion import informes
-from app.db import get_db
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 
 

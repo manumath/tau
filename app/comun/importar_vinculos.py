@@ -10,9 +10,9 @@ nada; `aplicar` reemplaza el historial de las personas sin errores.
 """
 import csv
 import io
-from app import usuarios, vinculos
-from app.db import auditar, sin_tildes
-from app.importar_usuarios import MAX_BYTES, _categoria, _decodificar, _fecha, _separador
+from app.comun import usuarios, vinculos
+from app.comun.db import auditar, sin_tildes
+from app.comun.importar_usuarios import MAX_BYTES, _categoria, _decodificar, _fecha, _separador
 
 MAX_FILAS = 2000
 ALIAS = {

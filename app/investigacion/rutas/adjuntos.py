@@ -5,8 +5,8 @@ from urllib.parse import quote
 from fasthtml.common import APIRouter, FileResponse, Response, UploadFile
 
 from app.investigacion import actividades, adjuntos, productos
-from app.components.registros import seccion_adjuntos
-from app.db import auditar
+from app.comun.componentes.registros import seccion_adjuntos
+from app.comun.db import auditar
 
 rt = APIRouter()
 

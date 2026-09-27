@@ -8,8 +8,8 @@
 """
 import re
 
-from app import config
-from app.db import get_db, sin_tildes
+from app.comun import config
+from app.comun.db import get_db, sin_tildes
 
 ESTADOS = {"pendiente": "Pendiente de verificar", "verificada": "Verificada"}
 CUARTILES = ("Q1", "Q2", "Q3", "Q4")

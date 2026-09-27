@@ -6,8 +6,8 @@ en tesis, publicaciones, proyectos y actividades (IAC-CINDA 2.3.2, 2.3.4 y 3.6.1
 - Tesis dirigida: producto del tipo «Tesis dirigida» con el tesista entre sus autores; los autores
   del instituto son quienes la dirigen. En curso = «en preparación»; defendida = «publicado».
 """
-from app import config
-from app.db import get_db, sin_tildes
+from app.comun import config
+from app.comun.db import get_db, sin_tildes
 
 NIVELES = {"licenciatura": "Licenciatura", "maestria": "Maestría", "doctorado": "Doctorado"}
 TIPO_TESIS = "Tesis dirigida"
@@ -163,7 +163,7 @@ def tesis(desde_anio: int, hasta_anio: int) -> list[dict]:
     """Tesis dirigidas del periodo con al menos un director del instituto vinculado en la fecha.
     Cada una: producto, tesistas (con nivel), directores y estado (defendida / en curso)."""
     from app.investigacion import productos
-    from app import vinculos
+    from app.comun import vinculos
     res = []
     for f in get_db().q("""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
                            WHERE t.nombre = ? AND p.anio BETWEEN ? AND ? ORDER BY p.anio, p.id""",

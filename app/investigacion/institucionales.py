@@ -20,8 +20,8 @@ import time
 from datetime import date
 
 from app.investigacion import avisos, lineas, perfiles, proyectos
-from app import config, personas
-from app.db import get_db
+from app.comun import config, personas
+from app.comun.db import get_db
 
 ESTADOS = {"borrador": "Borrador", "enviada": "Enviada", "aceptada": "Aceptada",
            "condicional": "Aceptada con condiciones", "rechazada": "Rechazada", "retirada": "Retirada"}
@@ -536,7 +536,7 @@ def mantenimiento(forzar: bool = False):
     if not forzar and time.monotonic() - _ultimo_mantenimiento < 3600:
         return
     _ultimo_mantenimiento = time.monotonic()
-    from app import vinculos
+    from app.comun import vinculos
     vinculos.sincronizar_categoria()  # un vínculo con fecha de término deja de estar vigente
     refrescar_vigencias()
     recordatorios()

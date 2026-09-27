@@ -628,7 +628,7 @@ memoria (vínculo en la fecha, filiación, catálogo de revistas).
 
 ## 19. Internacionalización
 
-- **País de las personas externas**, normalizado (`app/paises.py`: «USA», «EE. UU.» → «Estados
+- **País de las personas externas**, normalizado (`app/comun/paises.py`: «USA», «EE. UU.» → «Estados
   Unidos»): desde OpenAlex (código de país de las instituciones del autor), deducido del texto de
   la afiliación al importar por DOI («…, Oxford, UK» → «Reino Unido») o de la institución al crear
   la persona. Nunca se sobrescribe un país ya registrado.
@@ -730,6 +730,13 @@ fase 4), la «jerarquía académica» de la hoja 10 y el nombre del sistema. No 
    despliegue, respaldo y una restauración ensayada. Política de actualización de FastHTML.
 
 Criterio de término: todas las pruebas en verde y el piloto sigue sin notar cambios.
+
+**Avance:**
+- 1.1 hecho (26-sep-2026): `app/comun`, `app/investigacion`, `app/acreditacion` y `app/academico`
+  (vacío), un commit por paquete, con una herramienta que reescribe los imports desde el árbol
+  sintáctico. Dependencias de `comun` hacia `investigacion` que quedan (a resolver en la fase 2):
+  `vinculos`/`importar_usuarios` → `perfiles`; `componentes/registros.py` y `rutas/inicio.py` →
+  proyectos y productos.
 
 ### Fase 2 — Personas, unidades y permisos (3–4 semanas)
 

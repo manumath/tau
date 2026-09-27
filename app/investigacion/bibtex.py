@@ -13,8 +13,8 @@ import bibtexparser
 from bibtexparser import middlewares as mw
 
 from app.investigacion import importacion, productos, revistas
-from app import personas
-from app.db import get_db, sin_tildes
+from app.comun import personas
+from app.comun.db import get_db, sin_tildes
 
 MAX_BYTES = 2 * 1024 * 1024
 MAX_ENTRADAS = 300

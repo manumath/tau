@@ -3,8 +3,8 @@ import re
 import pytest
 
 from app.investigacion import actividades, productos, proyectos
-from app import personas, usuarios
-from app.db import get_db
+from app.comun import personas, usuarios
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 
 CLAVE = "Clave-colega-1"

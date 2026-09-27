@@ -10,8 +10,8 @@ from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, R
 
 from app.acreditacion import anexo as acreditacion, informes
 from app.investigacion import actividades, proyectos
-from app import config, estudiantes
-from app.components.layout import pagina
+from app.comun import config, estudiantes
+from app.comun.componentes.layout import pagina
 from app.acreditacion.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _tabla_conteo, barra, cita,
                                              descarga, hoja, seccion_metodo)
 

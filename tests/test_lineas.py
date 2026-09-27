@@ -1,7 +1,7 @@
 """Líneas de investigación institucionales: catálogo con vigencia, propuestas, proyectos y perfiles."""
 from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
-from app.db import get_db
+from app.comun.db import get_db
 from tests.conftest import HX
 from tests.test_propuestas import COMPLETA, _crear, _enviada, entrar, fecha, gente  # noqa: F401
 
@@ -144,7 +144,7 @@ def test_administracion(client, gente):
 def test_productos_y_actividades_heredan_la_linea_del_proyecto(client, app):
     from app.acreditacion import informes
     from app.investigacion import productos
-    from app import vinculos
+    from app.comun import vinculos
     from tests.conftest import PASS_TEMP, login
     uid = get_db().q("SELECT id FROM usuario WHERE email = 'inv@test.cl'")[0]["id"]
     vinculos.agregar(uid, "titular", "2015-01-01")
@@ -164,7 +164,7 @@ def test_productos_y_actividades_heredan_la_linea_del_proyecto(client, app):
     assert fila["Líneas de investigación"] == "Sistemas Dinámicos; Teoría de Control; Optimización Matemática"
     assert lineas.de_registro("actividad", 999) == []
     get_db().t.producto_autor.insert(producto_id=pid, orden=1, investigador_id=uid)
-    from app import usuarios
+    from app.comun import usuarios
     usuarios.cambiar_password(uid, PASS_TEMP, temporal=False)
     login(client, "inv@test.cl", PASS_TEMP)
     assert "Optimización Matemática" in client.get(f"/productos/{pid}").text

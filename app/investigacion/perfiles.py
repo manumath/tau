@@ -1,5 +1,5 @@
 """Acceso a datos del perfil del investigador y sus áreas MSC."""
-from app.db import get_db, sin_tildes
+from app.comun.db import get_db, sin_tildes
 
 MAX_AREAS = 10
 LARGO_BIO = 3000
@@ -46,7 +46,7 @@ def categoria_texto(categoria: str | None) -> str:
 def cambiar_categoria(uid: int, categoria: str | None):
     """Corrige la categoría del vínculo vigente (o crea uno con ingreso desconocido). None quita el
     periodo vigente. Para un cambio con fecha (ascenso, término), use app.vinculos."""
-    from app import vinculos
+    from app.comun import vinculos
     if categoria is not None and categoria not in CATEGORIAS:
         raise ValueError(f"Categoría no válida: {categoria}")
     actual = vinculos.vigente(uid)

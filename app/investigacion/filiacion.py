@@ -6,8 +6,8 @@ vinculado en la fecha firmó con ella.
 """
 import re
 
-from app import config
-from app.db import get_db, sin_tildes
+from app.comun import config
+from app.comun.db import get_db, sin_tildes
 
 OPCIONES = {"": "Filiación sin declarar", "1": "Firmó con IIMAT/UMSA", "0": "Sin filiación del instituto"}
 

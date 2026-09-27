@@ -4,7 +4,7 @@ from fasthtml.common import A, Div, Input, Li, Option, P, Select, Span, Ul
 from monsterui.all import Button, ButtonT, TextPresets, UkIcon
 
 from app.investigacion import adjuntos
-from app.components.layout import mensaje_error
+from app.comun.componentes.layout import mensaje_error
 
 
 def insignia(texto, tono="gris", titulo=None, icono=None):

@@ -12,7 +12,7 @@ import fasthtml.common as fh
 from fasthtml.common import Div, Input, Li, Option, P, Select, Span, Ul
 from monsterui.all import Button, ButtonT, TextPresets, UkIcon
 
-from app import estudiantes
+from app.comun import estudiantes
 from app.investigacion.actividades import ROLES
 from app.investigacion.filiacion import OPCIONES as OPCIONES_FILIACION
 

@@ -18,8 +18,8 @@ Flujo de vínculos (tablas actividad_proyecto y producto_proyecto):
 from datetime import date
 
 from app.investigacion import avisos
-from app import personas
-from app.db import get_db, sin_tildes
+from app.comun import personas
+from app.comun.db import get_db, sin_tildes
 
 TIPOS = {"individual": "Individual", "institucional": "Institucional"}
 ESTADOS = {"formulacion": "En formulación", "vigente": "Vigente", "finalizado": "Finalizado"}
@@ -78,7 +78,7 @@ def validar(d: dict) -> list[str]:
 def crear(d: dict, responsable_id: int, creado_por: int, tipo: str = "individual") -> int:
     if tipo not in TIPOS:
         raise ValueError(f"Tipo de proyecto no válido: {tipo}")
-    from app import config
+    from app.comun import config
     db = get_db()
     with db.conn:
         pid = db.t.proyecto.insert(**{"moneda": config.MONEDA, **d}, tipo=tipo, creado_por=creado_por)["id"]
@@ -215,7 +215,7 @@ def reasignar_responsable(pid: int, nuevo_uid: int, anterior: str) -> str | None
     """Solo la administración. El nuevo responsable reemplaza a los actuales, que pasan a
     co-investigadores (`anterior='co_investigador'`) o dejan el proyecto (`anterior='baja'`).
     Sus registros ya aprobados siguen en el proyecto."""
-    from app import usuarios
+    from app.comun import usuarios
     u = usuarios.con_perfil(nuevo_uid)
     if not u or not u["es_investigador"] or not u["activo"]:
         return "El responsable debe ser un investigador(a) con cuenta activa."
@@ -512,7 +512,7 @@ def contrapartes(pid: int) -> list[dict]:
 
 
 def agregar_contraparte(pid: int, institucion: str, pais: str | None) -> str | None:
-    from app import paises
+    from app.comun import paises
     institucion = (institucion or "").strip()
     if not institucion:
         return "Indique la institución contraparte."
@@ -528,7 +528,7 @@ def quitar_contraparte(pid: int, cid: int):
 def ambito_efectivo(p: dict) -> str | None:
     """El ámbito declarado; si no se declaró, «internacional» cuando alguna contraparte es de otro
     país y «nacional» cuando todas son del país. None si no hay cómo saberlo."""
-    from app import config, paises
+    from app.comun import config, paises
     if p.get("ambito"):
         return p["ambito"]
     extranjeras = [paises.es_extranjero(c["pais"], config.PAIS) for c in contrapartes(p["id"])]

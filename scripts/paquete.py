@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastmigrate.core import get_db_version, get_migration_scripts  # noqa: E402
 
-from app import config  # noqa: E402
+from app.comun import config  # noqa: E402
 
 CARPETAS = ("fotos", "adjuntos")
 TABLAS_CONTEO = ("usuario", "investigador", "producto", "actividad", "proyecto", "adjunto")
@@ -145,7 +145,7 @@ def importar(archivo: Path, reemplazar: bool):
                 if (tmp / carpeta).is_dir():
                     shutil.move(str(tmp / carpeta), db.parent / carpeta)
 
-    from app.db import init_db  # aplica migraciones pendientes si el código es más nuevo
+    from app.comun.db import init_db  # aplica migraciones pendientes si el código es más nuevo
     init_db(db)
     conteos = _conteos(db)
     diferencias = {t: (manifiesto["conteos"][t], conteos[t]) for t in TABLAS_CONTEO

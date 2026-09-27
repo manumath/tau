@@ -2,8 +2,8 @@
 from datetime import date
 
 from app.investigacion import adjuntos
-from app import personas
-from app.db import get_db, sin_tildes
+from app.comun import personas
+from app.comun.db import get_db, sin_tildes
 
 MODALIDADES = {"presencial": "Presencial", "virtual": "Virtual", "hibrida": "Híbrida"}
 AMBITOS = {"local": "Local", "nacional": "Nacional", "internacional": "Internacional"}

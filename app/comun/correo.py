@@ -15,8 +15,8 @@ from datetime import datetime
 from email.message import EmailMessage
 from email.utils import make_msgid
 
-from app import config
-from app.db import dir_datos
+from app.comun import config
+from app.comun.db import dir_datos
 
 log = logging.getLogger("portal.correo")
 ENVIADOS: list[EmailMessage] = []

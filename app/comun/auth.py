@@ -3,10 +3,10 @@ from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon)
 
-from app import config, correo, tokens, usuarios
-from app.components.layout import mensaje_error, pagina
-from app.db import auditar
-from app.seguridad import errores_password, verificar_password
+from app.comun import config, correo, tokens, usuarios
+from app.comun.componentes.layout import mensaje_error, pagina
+from app.comun.db import auditar
+from app.comun.seguridad import errores_password, verificar_password
 
 # Rutas accesibles sin sesión.
 # Ojo: los patrones deben ser estrictos. Uno como r".*\.png" dejaría pasar sin sesión

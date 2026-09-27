@@ -8,9 +8,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import config, usuarios  # noqa: E402
-from app.db import init_db  # noqa: E402
-from app.seguridad import errores_password  # noqa: E402
+from app.comun import config, usuarios  # noqa: E402
+from app.comun.db import init_db  # noqa: E402
+from app.comun.seguridad import errores_password  # noqa: E402
 
 
 def main():

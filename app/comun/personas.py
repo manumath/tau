@@ -8,8 +8,8 @@ guardar (`materializar`), para no dejar personas huérfanas si se cancela el for
 import base64
 import json
 
-from app import paises
-from app.db import get_db, sin_tildes
+from app.comun import paises
+from app.comun.db import get_db, sin_tildes
 
 
 def ref(investigador_id=None, externo_id=None) -> str:

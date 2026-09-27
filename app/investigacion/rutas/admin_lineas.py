@@ -5,9 +5,9 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelInput, LabelTextArea, TextPresets, UkIcon
 
 from app.investigacion import lineas
-from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.components.registros import insignia
-from app.db import auditar
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.registros import insignia
+from app.comun.db import auditar
 
 rt = APIRouter()
 BASE = "/admin/lineas"

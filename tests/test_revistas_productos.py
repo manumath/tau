@@ -5,9 +5,9 @@ import copy
 import pytest
 
 from app.investigacion import bibtex, importacion, productos, revistas
-from app import usuarios, vinculos
+from app.comun import usuarios, vinculos
 from app.acreditacion import informes
-from app.db import get_db
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 from tests.test_importacion import CROSSREF, red  # noqa: F401
 

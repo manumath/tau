@@ -7,9 +7,9 @@ import httpx2
 import pytest
 
 from app.investigacion import cosecha, openalex, perfiles, productos, revistas
-from app import usuarios, vinculos
+from app.comun import usuarios, vinculos
 from app.acreditacion import informes
-from app.db import get_db
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 
 ORCID = "0000-0002-1825-0097"

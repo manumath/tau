@@ -10,8 +10,8 @@ import re
 from datetime import date
 
 from app.investigacion import filiacion, importacion, openalex, perfiles, productos, revistas
-from app import personas
-from app.db import auditar, get_db, sin_tildes
+from app.comun import personas
+from app.comun.db import auditar, get_db, sin_tildes
 
 
 def _normal(titulo: str) -> str:

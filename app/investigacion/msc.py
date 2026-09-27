@@ -1,7 +1,7 @@
 """Consultas al catálogo MSC2020."""
 import re
 
-from app.db import get_db
+from app.comun.db import get_db
 
 
 def por_codigo(codigo: str) -> dict | None:

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from app.db import dir_datos
+from app.comun.db import dir_datos
 
 MAX_BYTES = 5 * 1024 * 1024
 LADO = 400

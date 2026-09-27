@@ -1,7 +1,7 @@
 from fastmigrate.core import get_db_version
 
-from app import config
-from app.db import get_db, init_db
+from app.comun import config
+from app.comun.db import get_db, init_db
 
 
 def test_migraciones_aplicadas(app, tmp_path):

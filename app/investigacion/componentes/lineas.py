@@ -3,7 +3,7 @@ from fasthtml.common import Div, Input, Label, P, Span
 from monsterui.all import TextPresets
 
 from app.investigacion import lineas
-from app.components.registros import insignia
+from app.comun.componentes.registros import insignia
 
 
 def insignias_lineas(lista: list[dict], fecha: str | None = None, vacio="Sin líneas de investigación."):

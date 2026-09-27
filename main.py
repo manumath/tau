@@ -10,7 +10,7 @@ from fasthtml.common import Beforeware, Meta, fast_app, serve
 from fasthtml.toaster import setup_toasts
 from monsterui.all import Theme
 
-from app import config
+from app.comun import config
 
 # Zona horaria del instituto para todo el proceso: «hoy» (plazos, vigencias), horas mostradas y
 # date('now', 'localtime') en SQLite. Antes de importar el resto de la aplicación.
@@ -21,25 +21,25 @@ if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not 
           "se usa UTC.", flush=True)
 
 from app.investigacion import institucionales  # noqa: E402
-from app.auth import beforeware, beforeware_origen, beforeware_solo_lectura
-from app.auth import rt as rutas_auth
-from app.components.errores import JS_AVISOS, no_encontrado, paginas_de_error
-from app.components.perfil import katex_headers
-from app.db import init_db
+from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
+from app.comun.auth import rt as rutas_auth
+from app.comun.componentes.errores import JS_AVISOS, no_encontrado, paginas_de_error
+from app.comun.componentes.perfil import katex_headers
+from app.comun.db import init_db
 from app.investigacion.rutas.actividades import rt as rutas_actividades
 from app.investigacion.rutas.adjuntos import rt as rutas_adjuntos
 from app.investigacion.rutas.bibtex import rt as rutas_bibtex
-from app.routes.admin_auditoria import rt as rutas_admin_auditoria
+from app.comun.rutas.admin_auditoria import rt as rutas_admin_auditoria
 from app.investigacion.rutas.admin_revistas import rt as rutas_admin_revistas
 from app.investigacion.rutas.admin_lineas import rt as rutas_admin_lineas
 from app.acreditacion.rutas.anexo import rt as rutas_acreditacion
-from app.routes.estudiantes import rt as rutas_estudiantes
-from app.routes.admin_usuarios import rt as rutas_admin_usuarios
+from app.comun.rutas.estudiantes import rt as rutas_estudiantes
+from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
 from app.acreditacion.rutas.informes import rt as rutas_informes
-from app.routes.inicio import rt as rutas_inicio
+from app.comun.rutas.inicio import rt as rutas_inicio
 from app.investigacion.rutas.investigadores import rt as rutas_investigadores
 from app.investigacion.rutas.perfil import rt as rutas_perfil
-from app.routes.personas import rt as rutas_personas
+from app.comun.rutas.personas import rt as rutas_personas
 from app.investigacion.rutas.productos import rt as rutas_productos
 from app.investigacion.rutas.propuestas import rt as rutas_propuestas
 from app.investigacion.rutas.proyectos import rt as rutas_proyectos

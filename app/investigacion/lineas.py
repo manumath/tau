@@ -14,7 +14,7 @@ Reglas (ver PLAN.md, sección 21):
 """
 from datetime import date
 
-from app.db import get_db
+from app.comun.db import get_db
 
 LARGO_NOMBRE = 200
 LARGO_DESCRIPCION = 2000

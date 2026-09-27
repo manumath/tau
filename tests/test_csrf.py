@@ -1,7 +1,7 @@
 """Protección CSRF: las peticiones que modifican datos deben venir del propio portal (Origin o Referer)."""
 import pytest
 
-from app import config, usuarios
+from app.comun import config, usuarios
 from tests.conftest import HX, PASS_ADMIN, login
 
 DATOS = {"nombres": "Carl", "apellidos": "Gauss", "email": "gauss@test.cl", "es_admin": "on"}

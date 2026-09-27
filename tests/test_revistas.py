@@ -4,7 +4,7 @@ import base64
 import pytest
 
 from app.investigacion import importar_revistas, revistas
-from app.db import get_db
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 
 

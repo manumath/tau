@@ -8,9 +8,9 @@ omisión, exige revista verificada, como corresponde a la acreditación.
 from datetime import date
 
 from app.investigacion import actividades, perfiles, proyectos, revistas
-from app import config, estudiantes, paises, vinculos
+from app.comun import config, estudiantes, paises, vinculos
 from app.acreditacion import informes
-from app.db import get_db
+from app.comun.db import get_db
 
 # Actividades por criterio (nombres del catálogo de tipos de actividad).
 ESTANCIAS = ("Estancia o pasantía de investigación", "Visita de investigación")

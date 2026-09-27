@@ -4,12 +4,11 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, FtResponse, HtmxRe
 from monsterui.all import H2, Card, Grid, Input, TextPresets, UkIcon
 
 from app.investigacion import actividades, lineas, perfiles, productos
-from app import fotos, vinculos
-from app.components.lineas import insignias_lineas
-from app.components.layout import pagina
-from app.components.registros import url_filtrada
-from app.components.perfil import (avatar, chip_msc, lista_identificadores, seccion,
-                                   texto_con_parrafos)
+from app.comun import fotos, vinculos
+from app.investigacion.componentes.lineas import insignias_lineas
+from app.comun.componentes.layout import pagina
+from app.comun.componentes.registros import url_filtrada
+from app.comun.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
 
 rt = APIRouter()
 

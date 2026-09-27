@@ -6,7 +6,7 @@ por muchas personas): por eso nada se registra sin que el investigador lo confir
 """
 import re
 
-from app import config, paises
+from app.comun import config, paises
 from app.investigacion import productos
 from app.investigacion.importacion import ErrorImportacion, _dividir_nombre, _get, _limpiar
 

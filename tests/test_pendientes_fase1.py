@@ -3,7 +3,7 @@ import base64
 
 import pytest
 
-from app import config, importar_usuarios, usuarios
+from app.comun import config, importar_usuarios, usuarios
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 
 

@@ -1,6 +1,6 @@
 import re
 
-from app.seguridad import errores_password, hash_password, password_temporal, verificar_password
+from app.comun.seguridad import errores_password, hash_password, password_temporal, verificar_password
 
 
 def test_hash_y_verificacion():

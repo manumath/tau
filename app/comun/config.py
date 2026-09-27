@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parent.parent
+RAIZ = Path(__file__).resolve().parents[2]
 MIGRACIONES = RAIZ / "migrations"
 
 DB_PATH = Path(os.environ.get("PORTAL_DB", RAIZ / "data" / "portal.db"))

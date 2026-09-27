@@ -4,10 +4,10 @@ import os
 import pytest
 
 from app.investigacion import filiacion, importacion, productos, proyectos
-from app import personas, usuarios, vinculos
+from app.comun import personas, usuarios, vinculos
 from app.acreditacion import informes
-from app.db import get_db
-from app.routes.admin_usuarios import fecha_local
+from app.comun.db import get_db
+from app.comun.rutas.admin_usuarios import fecha_local
 from tests.conftest import HX, PASS_TEMP, login
 
 

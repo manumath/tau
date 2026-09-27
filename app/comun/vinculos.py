@@ -11,7 +11,7 @@ import calendar
 from datetime import date, timedelta
 
 from app.investigacion import perfiles
-from app.db import get_db
+from app.comun.db import get_db
 
 INICIO_DESCONOCIDO = "0000-01-01"
 SIN_FIN = "9999-12-31"

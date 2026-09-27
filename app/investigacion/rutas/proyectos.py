@@ -18,13 +18,13 @@ from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInpu
                            TextPresets, UkIcon)
 
 from app.investigacion import actividades, filiacion, institucionales, lineas, productos, proyectos
-from app import config, paises, personas, usuarios
-from app.components import personas as ui_personas
-from app.components.lineas import casillas_lineas, insignias_lineas
-from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.components.registros import dato, enlace_persona, insignia
+from app.comun import config, paises, personas, usuarios
+from app.investigacion.componentes import personas as ui_personas
+from app.investigacion.componentes.lineas import casillas_lineas, insignias_lineas
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.registros import dato, enlace_persona, insignia
 from app.investigacion.rutas import propuestas as ui_propuestas
-from app.db import auditar, get_db
+from app.comun.db import auditar, get_db
 
 rt = APIRouter()
 

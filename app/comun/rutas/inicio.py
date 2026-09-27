@@ -5,7 +5,7 @@ from fasthtml.common import A, APIRouter, Div, P, Span
 from monsterui.all import H2, H4, Card, Grid, Label, LabelT, Progress, TextPresets, UkIcon
 
 from app.investigacion import actividades, filiacion, perfiles, productos, proyectos
-from app.components.layout import pagina
+from app.comun.componentes.layout import pagina
 
 rt = APIRouter()
 

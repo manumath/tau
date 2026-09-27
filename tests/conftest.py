@@ -10,7 +10,7 @@ import pytest  # noqa: E402
 from starlette.testclient import TestClient  # noqa: E402
 
 import main  # noqa: E402
-from app import usuarios  # noqa: E402
+from app.comun import usuarios  # noqa: E402
 
 HX = {"HX-Request": "true"}
 PASS_ADMIN = "Admin-clave-123"
@@ -20,7 +20,7 @@ PASS_TEMP = "Temp-clave-123"
 @pytest.fixture(autouse=True)
 def buzon():
     """Correos enviados durante el test (se vacía antes de cada uno)."""
-    from app import correo
+    from app.comun import correo
     correo.ENVIADOS.clear()
     return correo.ENVIADOS
 

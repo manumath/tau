@@ -5,8 +5,8 @@ from openpyxl import load_workbook
 
 from app.acreditacion import informes
 from app.investigacion import perfiles, productos, proyectos
-from app import personas, usuarios
-from app.db import get_db
+from app.comun import personas, usuarios
+from app.comun.db import get_db
 from tests.conftest import PASS_ADMIN, PASS_TEMP, login
 
 CLAVE = "Clave-colega-1"

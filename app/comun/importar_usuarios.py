@@ -17,9 +17,9 @@ import secrets
 from datetime import date
 
 from app.investigacion import perfiles
-from app import usuarios
-from app.db import auditar, sin_tildes
-from app.seguridad import password_temporal
+from app.comun import usuarios
+from app.comun.db import auditar, sin_tildes
+from app.comun.seguridad import password_temporal
 
 MAX_BYTES = 1024 * 1024
 MAX_FILAS = 500

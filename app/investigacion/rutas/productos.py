@@ -21,14 +21,14 @@ from monsterui.all import (H2, Button, ButtonT, Card, CheckboxX, Form, FormLabel
 
 from app.investigacion import (actividades, cosecha, filiacion, importacion, lineas, perfiles, productos,
                                proyectos, revistas)
-from app import personas
-from app.components.lineas import insignias_lineas
+from app.comun import personas
+from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion import filiacion as filiacion_mod
-from app.components import personas as selector_personas
-from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.components.registros import (casillas_proyectos, dato, enlace_persona, filtros, insignia,
-                                      insignias_proyectos, seccion_adjuntos, url_filtrada)
-from app.db import auditar
+from app.investigacion.componentes import personas as selector_personas
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.registros import (casillas_proyectos, dato, enlace_persona, filtros, insignia,
+                                             insignias_proyectos, seccion_adjuntos, url_filtrada)
+from app.comun.db import auditar
 
 rt = APIRouter()
 

@@ -5,7 +5,7 @@ from pathlib import Path
 from fastlite import database
 from fastmigrate.core import create_db, run_migrations
 
-from app import config
+from app.comun import config
 
 _db = None
 _ruta: Path | None = None

@@ -4,8 +4,8 @@ import pytest
 
 from app.acreditacion import anexo as acreditacion
 from app.investigacion import importacion, openalex, productos, proyectos, revistas
-from app import paises, personas, usuarios, vinculos
-from app.db import get_db
+from app.comun import paises, personas, usuarios, vinculos
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 
 

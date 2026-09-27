@@ -16,9 +16,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import json  # noqa: E402
 
 from app.investigacion import actividades, institucionales, lineas, perfiles, productos, proyectos, revistas
-from app import config, estudiantes, personas, usuarios, vinculos
-from app.db import get_db  # noqa: E402
-from app.db import init_db  # noqa: E402
+from app.comun import config, estudiantes, personas, usuarios, vinculos
+from app.comun.db import get_db  # noqa: E402
+from app.comun.db import init_db  # noqa: E402
 
 ADMIN = dict(email="admin@instituto.test", nombres="Ada", apellidos="Administradora",
              password="Admin-portal-2026", es_admin=True, es_investigador=False,

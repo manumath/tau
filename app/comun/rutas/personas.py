@@ -4,10 +4,10 @@ from fasthtml.common import APIRouter, Div, HtmxResponseHeaders, Input, P, Respo
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Table, Tbody, Td, TextPresets, Th, UkIcon
 
-from app import paises, personas
-from app.components import personas as ui
-from app.components.layout import pagina
-from app.db import auditar
+from app.comun import paises, personas
+from app.investigacion.componentes import personas as ui
+from app.comun.componentes.layout import pagina
+from app.comun.db import auditar
 
 rt = APIRouter()
 CAMPOS = {"autor", "participante"}

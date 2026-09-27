@@ -1,7 +1,7 @@
 """Avisos por correo del flujo de proyectos. Respetan la preferencia `avisos_correo` y nunca
 avisan a quien hizo la acción (no tiene sentido avisarse a uno mismo)."""
-from app import config, correo
-from app.db import get_db
+from app.comun import config, correo
+from app.comun.db import get_db
 
 
 def _titulo(tipo: str, registro_id: int) -> str:

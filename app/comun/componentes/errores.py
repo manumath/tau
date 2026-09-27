@@ -10,7 +10,7 @@ from fasthtml.common import A, Div, FtResponse, JSONResponse, P, Response, Scrip
 from monsterui.all import H2, ButtonT, UkIcon
 from starlette.responses import FileResponse, StreamingResponse
 
-from app.components.layout import pagina
+from app.comun.componentes.layout import pagina
 
 TEXTOS = {
     403: ("Sin permiso", "shield-alert", "No tiene permiso para ver esta página. Si cree que debería "
@@ -28,7 +28,7 @@ def _usuario(req):
     uid = req.session.get("uid") if "session" in req.scope else None
     if not uid:
         return None
-    from app import usuarios
+    from app.comun import usuarios
     u = usuarios.con_perfil(uid)
     return u if u and u["activo"] and not u["debe_cambiar_pass"] else None
 

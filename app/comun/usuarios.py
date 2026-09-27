@@ -1,7 +1,7 @@
 """Acceso a datos de cuentas de usuario."""
-from app import config
-from app.db import get_db, sin_tildes
-from app.seguridad import hash_password
+from app.comun import config
+from app.comun.db import get_db, sin_tildes
+from app.comun.seguridad import hash_password
 
 
 def por_id(uid: int) -> dict | None:
@@ -42,7 +42,7 @@ def crear(email: str, nombres: str, apellidos: str, password: str, *,
     if es_investigador:
         db.t.investigador.insert(usuario_id=u["id"], categoria=categoria)
         if categoria:
-            from app import vinculos
+            from app.comun import vinculos
             vinculos.agregar(u["id"], categoria, fecha_ingreso or None)
     return u
 

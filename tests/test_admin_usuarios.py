@@ -1,7 +1,7 @@
 import re
 
-from app import usuarios
-from app.db import get_db
+from app.comun import usuarios
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 
 NUEVO = {"nombres": "Carl", "apellidos": "Gauss", "email": "Carl@Test.cl", "es_investigador": "on",

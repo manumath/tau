@@ -1,4 +1,4 @@
-from app import config, usuarios
+from app.comun import config, usuarios
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 
 

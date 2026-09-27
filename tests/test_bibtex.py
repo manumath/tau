@@ -3,8 +3,8 @@ import base64
 import pytest
 
 from app.investigacion import bibtex, productos
-from app import usuarios
-from app.db import get_db
+from app.comun import usuarios
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 
 BIB = r"""

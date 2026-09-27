@@ -6,7 +6,7 @@
 """
 import re
 
-from app.db import sin_tildes
+from app.comun.db import sin_tildes
 
 # nombre canónico → (código ISO, variantes). Países con los que más colabora la matemática
 # latinoamericana; los demás se guardan tal como se escriban.

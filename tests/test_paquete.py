@@ -10,8 +10,8 @@ from pathlib import Path
 from PIL import Image
 
 from app.investigacion import adjuntos, perfiles, productos
-from app import config, fotos, usuarios
-from app.db import get_db
+from app.comun import config, fotos, usuarios
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 
 RAIZ = Path(__file__).resolve().parent.parent

@@ -17,10 +17,10 @@ from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.investigacion import (actividades, cosecha, importacion, institucionales, perfiles, productos, proyectos,
                                revistas)
-from app import config
+from app.comun import config
 from app.acreditacion import informes
-from app.components.layout import pagina
-from app.db import auditar
+from app.comun.componentes.layout import pagina
+from app.comun.db import auditar
 from app.investigacion.identificadores import IDENTIFICADORES
 
 rt = APIRouter()

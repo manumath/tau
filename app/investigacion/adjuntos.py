@@ -9,7 +9,7 @@ import secrets
 import unicodedata
 from pathlib import Path
 
-from app.db import dir_datos, get_db
+from app.comun.db import dir_datos, get_db
 
 MAX_BYTES = 20 * 1024 * 1024
 MAX_POR_ENTIDAD = 10

@@ -6,7 +6,7 @@ vale una vez, vence, y al emitir uno nuevo del mismo propósito se anulan los an
 import hashlib
 import secrets
 
-from app.db import get_db
+from app.comun.db import get_db
 
 VIGENCIA = {"recuperar": "+1 hour", "invitacion": "+3 days"}
 MAX_RECUPERAR_POR_HORA = 3

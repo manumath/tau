@@ -17,12 +17,12 @@ from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput
 
 from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
-from app.components.lineas import casillas_lineas
-from app.components.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
-from app.components.perfil import texto_con_parrafos
-from app.components.registros import dato, insignia
-from app.db import auditar
-from app.routes.admin_usuarios import fecha_local
+from app.investigacion.componentes.lineas import casillas_lineas
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.perfil import texto_con_parrafos
+from app.comun.componentes.registros import dato, insignia
+from app.comun.db import auditar
+from app.comun.rutas.admin_usuarios import fecha_local
 
 rt = APIRouter()
 

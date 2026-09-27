@@ -10,8 +10,8 @@ import csv
 import io
 
 from app.investigacion import revistas
-from app.db import auditar, get_db, sin_tildes
-from app.importar_usuarios import MAX_BYTES, SI, NO, _decodificar, _separador
+from app.comun.db import auditar, get_db, sin_tildes
+from app.comun.importar_usuarios import MAX_BYTES, SI, NO, _decodificar, _separador
 
 MAX_FILAS = 3000
 ALIAS = {

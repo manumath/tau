@@ -4,7 +4,7 @@ from fasthtml.common import A, Div, Form, Main, Span, Title
 from monsterui.all import (H3, Button, ButtonT, Container, ContainerT, DivHStacked, NavBar,
                            TextPresets, UkIcon)
 
-from app import config
+from app.comun import config
 
 ID_MODAL = "modal"
 

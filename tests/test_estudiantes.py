@@ -5,9 +5,9 @@ import pytest
 from openpyxl import load_workbook
 
 from app.acreditacion import anexo as acreditacion, informes
-from app import estudiantes, personas, usuarios, vinculos
+from app.comun import estudiantes, personas, usuarios, vinculos
 from app.investigacion import productos, proyectos, revistas
-from app.db import get_db
+from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 
 
