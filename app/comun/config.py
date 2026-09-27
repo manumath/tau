@@ -35,9 +35,16 @@ OPENALEX_CLAVE = os.environ.get("PORTAL_OPENALEX_CLAVE")
 # Correo de contacto que se envía a Crossref (su «polite pool» responde mejor si se identifica).
 CONTACTO = os.environ.get("PORTAL_CONTACTO")
 
-# Dirección pública del portal (para los enlaces de los correos).
+# Nombre del sistema: el corto va en el encabezado, los correos y las exportaciones; la
+# descripción, en el ingreso y donde haya espacio.
+NOMBRE_SISTEMA = os.environ.get("PORTAL_SISTEMA", "TAU")
+DESCRIPCION_SISTEMA = os.environ.get(
+    "PORTAL_SISTEMA_DESCRIPCION", "Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática")
+NOMBRE_COMPLETO = f"{NOMBRE_SISTEMA} | {DESCRIPCION_SISTEMA}"
+
+# Dirección pública del sistema (para los enlaces de los correos).
 URL_BASE = os.environ.get("PORTAL_URL", "http://localhost:5001").rstrip("/")
-# Otras direcciones desde las que se accede al portal (separadas por coma), p. ej. una dirección
+# Otras direcciones desde las que se accede al sistema (separadas por coma), p. ej. una dirección
 # interna además del dominio público. Las peticiones que modifican datos deben venir de alguna de
 # ellas o del propio host (protección CSRF).
 ORIGENES_EXTRA = [x.strip() for x in os.environ.get("PORTAL_ORIGENES_EXTRA", "").split(",") if x.strip()]
@@ -45,7 +52,7 @@ ORIGENES_EXTRA = [x.strip() for x in os.environ.get("PORTAL_ORIGENES_EXTRA", "")
 # Correo: "archivo" (desarrollo: guarda .eml en <datos>/correos), "smtp" (producción),
 # "memoria" (tests) o "desactivado".
 CORREO_MODO = os.environ.get("PORTAL_CORREO_MODO", "archivo")
-CORREO_REMITENTE = os.environ.get("PORTAL_CORREO_REMITENTE", "Portal de Investigación <no-responder@instituto.test>")
+CORREO_REMITENTE = os.environ.get("PORTAL_CORREO_REMITENTE", f"{NOMBRE_SISTEMA} <no-responder@instituto.test>")
 SMTP_HOST = os.environ.get("PORTAL_SMTP_HOST", "localhost")
 SMTP_PUERTO = int(os.environ.get("PORTAL_SMTP_PUERTO", "587"))
 SMTP_USUARIO = os.environ.get("PORTAL_SMTP_USUARIO")

@@ -1,12 +1,20 @@
-# Portal de Investigación
+# TAU | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática
 
-Portal del instituto para que cada investigador registre su actividad científica (productos,
-actividades, proyectos) una sola vez y, con eso, se generen su CV, los informes de proyecto y la
-memoria anual. Hecho con [FastHTML](https://fastht.ml), HTMX, MonsterUI y SQLite.
+TAU es el sistema de información de la Carrera de Matemática (CMAT) y su Instituto de
+Investigación Matemática (IIMAT), FCPN, UMSA. Reúne en un solo lugar la actividad científica
+(productos, actividades, proyectos, líneas de investigación), la gestión académica (planes de
+estudio, oferta por gestión, asignación docente, carga horaria) y la evidencia para la acreditación
+ante IAC-CINDA. Cada hecho se registra una sola vez y, con eso, se generan los CV, los informes de
+proyecto, la memoria anual y el anexo de acreditación. Hecho con [FastHTML](https://fastht.ml),
+HTMX, MonsterUI y SQLite.
+
+Nació en 2026 como «Portal de Investigación» del IIMAT; algunos nombres técnicos conservan
+«portal» por compatibilidad con las instalaciones existentes (variables `PORTAL_*`, `portal.db`,
+el servicio `portal` y la aplicación de Fly.io).
 
 | Documento | Para qué |
 |---|---|
-| [Guía de uso](docs/guia-de-uso.md) | Cómo usar el portal: investigadores, responsables de proyecto y administración |
+| [Guía de uso](docs/guia-de-uso.md) | Cómo usar el sistema: investigadores, responsables de proyecto y administración |
 | [Despliegue](docs/despliegue.md) | Instalación en un servidor propio, correo, respaldos, mudanzas y actualizaciones |
 | [Despliegue en Fly.io](docs/despliegue-fly.md) | Alternativa sin servidor propio, y cómo mudarse después a uno |
 | [PLAN.md](PLAN.md) | Diseño, reglas de negocio, modelo de datos, estado, decisiones y pendientes |
@@ -145,10 +153,12 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 |---|---|---|
 | `PORTAL_DB` | `data/portal.db` | Base SQLite. Fotos, adjuntos y correos van en `fotos/`, `adjuntos/` y `correos/` junto a ella |
 | `PORTAL_URL` | `http://localhost:5001` | Dirección pública, para los enlaces de los correos y la protección CSRF |
-| `PORTAL_ORIGENES_EXTRA` | — | Otras direcciones desde las que se usa el portal, separadas por coma (p. ej. una interna); protección CSRF |
+| `PORTAL_ORIGENES_EXTRA` | — | Otras direcciones desde las que se usa el sistema, separadas por coma (p. ej. una interna); protección CSRF |
 | `PORTAL_SECRET_KEY` | archivo `.sesskey` | Clave de firma de la cookie de sesión |
 | `PORTAL_HTTPS_ONLY` | `0` | `1` en producción: cookie solo por HTTPS |
-| `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre que muestra la interfaz |
+| `PORTAL_SISTEMA` | `TAU` | Nombre corto del sistema (encabezado, título de las páginas, correos, exportaciones) |
+| `PORTAL_SISTEMA_DESCRIPCION` | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática | Descripción (ingreso, correos) |
+| `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre del instituto en informes y memoria |
 | `PORTAL_UNIVERSIDAD` | Universidad Mayor de San Andrés | Universidad a la que pertenece el instituto |
 | `PORTAL_ZONA_HORARIA` | `America/La_Paz` | Zona horaria de plazos, vigencias y horas mostradas (la base guarda UTC) |
 | `PORTAL_MONEDA` | `BOB` | Moneda de los montos de proyectos (se muestra como «Bs») |
@@ -158,7 +168,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_FILIACIONES` | IIMAT; CMAT; FCPN; UMSA y sus nombres completos | Nombres que cuentan como filiación del instituto al importar (separados por «;») |
 | `PORTAL_CONTACTO` | (vacío) | Correo que se informa a Crossref al importar |
 | `PORTAL_CORREO_MODO` | `archivo` | `archivo`, `smtp` o `desactivado` (las pruebas usan `memoria`) |
-| `PORTAL_CORREO_REMITENTE` | `Portal de Investigación <no-responder@instituto.test>` | Remitente |
+| `PORTAL_CORREO_REMITENTE` | `TAU <no-responder@instituto.test>` | Remitente |
 | `PORTAL_SMTP_HOST` / `_PUERTO` / `_USUARIO` / `_CLAVE` | `localhost` / `587` / — / — | Servidor SMTP |
 | `PORTAL_SMTP_STARTTLS` | `1` | `0` para desactivar STARTTLS |
 | `PORTAL_SOLO_LECTURA` | `0` | `1` durante mudanzas o mantenimiento: se consulta, pero no se guardan cambios |
@@ -173,7 +183,7 @@ memoria (`app.correo.ENVIADOS`, fixture `buzon`) y las consultas a Crossref y ar
 en Chrome los flujos críticos (ingreso y salida, registrar un producto, proponer y decidir una
 propuesta institucional, generar y descargar el anexo) y fallan si la página registra errores de
 JavaScript, recursos que no cargan o violaciones de la CSP. Sin `--navegador` se omiten.
-- Levantan el portal en un puerto libre con una base temporal (`tests/navegador/preparar.py`); no
+- Levantan el sistema en un puerto libre con una base temporal (`tests/navegador/preparar.py`); no
   tocan `data/portal.db` ni el servidor de desarrollo.
 - Usan Google Chrome instalado. Sin Chrome: `uv run playwright install chromium` y
   `PLAYWRIGHT_CANAL= uv run pytest --navegador`.
@@ -197,7 +207,7 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
 - **URL de las vistas filtradas:** la fija el servidor con `HX-Replace-Url`, para que apunte a la
   página y no al fragmento.
 - **Errores:** a HTMX se le responde con el código (403, 404…) y el navegador muestra un aviso
-  (`app/comun/componentes/errores.py`). A las peticiones normales, una página con el estilo del portal.
+  (`app/comun/componentes/errores.py`). A las peticiones normales, una página con el estilo del sistema.
 
 **Rutas y archivos**
 - **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): convención de
@@ -221,11 +231,11 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
   (`puede(usuario, accion, unidad)`); las rutas `/admin` se autorizan con `REGLAS_ADMIN` en
   `app/comun/auth.py`, y lo que no está ahí se deniega.
 - Las exportaciones CSV/XLSX neutralizan fórmulas (`=`, `+`, `-`, `@`) para evitar su ejecución en Excel.
-- **CSRF:** toda petición que modifica datos (POST, PUT, PATCH, DELETE) debe venir del propio portal
+- **CSRF:** toda petición que modifica datos (POST, PUT, PATCH, DELETE) debe venir del propio sistema
   según `Origin` (o `Referer`): el host de la petición, `PORTAL_URL` o `PORTAL_ORIGENES_EXTRA`
   (`app/comun/auth.py`, `beforeware_origen`). Complementa la cookie `SameSite=Lax`, que no protege de
   otros subdominios del mismo sitio (p. ej. `*.umsa.bo`). Sin tokens: los formularios no cambian.
-- **Cabeceras y CSP** (`app/comun/cabeceras.py`): solo recursos del propio portal, sin conexiones a
+- **Cabeceras y CSP** (`app/comun/cabeceras.py`): solo recursos del propio sistema, sin conexiones a
   otros sitios ni incrustación en marcos. `script-src` aún admite scripts en línea y `eval` (los
   manejadores `onclick`/`hx-on` los necesitan); quitarlos permitiría una política estricta.
 

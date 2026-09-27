@@ -1,6 +1,6 @@
 # Despliegue en Fly.io
 
-[Fly.io](https://fly.io) ejecuta el portal como contenedor sin administrar un servidor: da HTTPS,
+[Fly.io](https://fly.io) ejecuta el sistema como contenedor sin administrar un servidor: da HTTPS,
 un volumen persistente para los datos y secretos para la configuración. Es una alternativa a la
 [instalación en un servidor propio](despliegue.md); más abajo se explica cómo
 [mudarse de una a otra](#mudarse-a-un-servidor-propio-sin-perder-nada) sin perder nada.
@@ -46,12 +46,12 @@ ser del orden de pocos dólares al mes; revise la tarifa vigente en su sitio.
    Deja definidos como secretos de la app `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` y
    `BUCKET_NAME`, entre otros; `scripts/iniciar.sh` los usa para activar Litestream. Si no
    quedaran definidos, cópielos con `fly secrets set`.
-4. Defina los secretos del portal (una sola línea o varias):
+4. Defina los secretos del sistema (una sola línea o varias):
    ```bash
    fly secrets set PORTAL_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
    fly secrets set PORTAL_URL=https://portal.iimat.umsa.bo PORTAL_INSTITUTO="Instituto de Investigación Matemática" \
                    PORTAL_CONTACTO=soporte@umsa.bo
-   fly secrets set PORTAL_CORREO_REMITENTE="Portal de Investigación <no-responder@umsa.bo>" \
+   fly secrets set PORTAL_CORREO_REMITENTE="TAU <no-responder@umsa.bo>" \
                    PORTAL_SMTP_HOST=smtp.umsa.bo PORTAL_SMTP_PUERTO=587 \
                    PORTAL_SMTP_USUARIO=no-responder@umsa.bo PORTAL_SMTP_CLAVE='…'
    ```
@@ -113,7 +113,7 @@ CSRF). Si además se entra por `NOMBRE.fly.dev`, agréguela con
 
 ## Mudarse a un servidor propio sin perder nada
 
-Todo lo que el portal sabe está en tres lugares del volumen: `portal.db`, `fotos/` y `adjuntos/`.
+Todo lo que el sistema sabe está en tres lugares del volumen: `portal.db`, `fotos/` y `adjuntos/`.
 El **paquete de datos** (`scripts/paquete.py`) los lleva juntos en un archivo, con un manifiesto
 que se verifica al importar. Se conservan cuentas (con sus contraseñas, que viajan como hash),
 perfiles, productos, actividades, proyectos con sus propuestas y estados, adjuntos, fotos y
@@ -122,7 +122,7 @@ auditoría.
 1. **Prepare el servidor** según la [guía de despliegue](despliegue.md), pasos 1, 2, 4 y 5 (sin
    crear administrador: vendrá en el paquete). Use la misma `PORTAL_SECRET_KEY` que en Fly si
    quiere que nadie tenga que volver a ingresar, y la misma `PORTAL_URL` si mantiene el dominio.
-2. **Avise una ventana breve** (p. ej. 15 minutos fuera de horario) y ponga el portal de Fly en
+2. **Avise una ventana breve** (p. ej. 15 minutos fuera de horario) y ponga el sistema en Fly en
    **solo lectura**: las personas pueden consultar, pero nada cambia después de la copia.
    ```bash
    fly secrets set PORTAL_SOLO_LECTURA=1      # reinicia la máquina con el aviso de mantenimiento
@@ -132,7 +132,7 @@ auditoría.
    fly ssh console -C "python /app/scripts/paquete.py exportar /data/paquete.tar.gz"
    fly ssh sftp get /data/paquete.tar.gz ./portal-mudanza.tar.gz
    ```
-4. **Importe en el servidor** (con el portal detenido allí):
+4. **Importe en el servidor** (con el sistema detenido allí):
    ```bash
    cd /opt/portal && set -a && source /etc/portal.env && set +a
    uv run python scripts/paquete.py importar portal-mudanza.tar.gz
@@ -147,7 +147,7 @@ auditoría.
    `fly apps destroy NOMBRE-DE-LA-APP` elimina la app y su volumen (**es irreversible**), y
    `fly storage destroy NOMBRE-DEL-BUCKET` elimina la réplica en Tigris.
 
-Si algo falla antes del paso 6, `fly secrets unset PORTAL_SOLO_LECTURA` devuelve el portal de Fly
+Si algo falla antes del paso 6, `fly secrets unset PORTAL_SOLO_LECTURA` devuelve el sistema en Fly
 a la normalidad, tal como estaba. No use `fly scale count 0` para detenerlo: destruye la máquina,
 y al volver a crearla Fly puede asignarle un volumen nuevo y vacío (se perderían fotos y adjuntos).
 

@@ -1,8 +1,10 @@
-# Guía de uso del Portal de Investigación
+# Guía de uso de TAU
 
-El portal reúne la actividad científica del instituto: cada persona registra sus productos y
-actividades **una sola vez**, y con eso se generan su CV, los informes de los proyectos y la
-memoria anual.
+**TAU | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática** reúne la
+actividad científica del Instituto y la gestión académica de la Carrera: cada persona registra sus
+productos y actividades **una sola vez**, y con eso se generan su CV, los informes de los proyectos,
+la memoria anual y el anexo de acreditación; la Dirección de Carrera gestiona los planes, la oferta,
+la asignación docente y la carga horaria.
 
 - [Ingreso y contraseña](#ingreso-y-contraseña)
 - [Mi perfil](#mi-perfil)
@@ -16,7 +18,7 @@ memoria anual.
 ## Ingreso y contraseña
 
 - Ingrese con su correo institucional. Si recibió una **invitación por correo**, abra el enlace
-  (vale 3 días) y defina su contraseña. Si le entregaron una **contraseña temporal**, el portal
+  (vale 3 días) y defina su contraseña. Si le entregaron una **contraseña temporal**, el sistema
   le pedirá cambiarla al primer ingreso.
 - La contraseña debe tener al menos 10 caracteres y combinar letras con números o símbolos.
 - **¿La olvidó?** Use «¿Olvidó su contraseña?» en la pantalla de ingreso: recibirá un enlace
@@ -37,7 +39,7 @@ Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Ed
   aquí). Solo la ven usted y la Administración del sistema; los informes usan tramos de edad. Quien
   no tiene perfil de investigación la ve en «Mis datos personales» (menú con su nombre).
 - **Identificadores:** ORCID, MathSciNet, zbMATH, arXiv, Google Scholar y página web. Puede pegar
-  la dirección de su perfil: el portal guarda solo el identificador y verifica el ORCID.
+  la dirección de su perfil: el sistema guarda solo el identificador y verifica el ORCID.
 - **Líneas de investigación del instituto** (opcional): marque las líneas institucionales vigentes
   en las que investiga. Si una línea deja de regir, su perfil la muestra como «ya no rige» hasta
   que la desmarque.
@@ -46,7 +48,7 @@ Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Ed
 - **Resumen de investigación:** admite fórmulas en LaTeX (`$\zeta(s)$`, `$$…$$`), con vista previa.
 - **Foto:** JPG, PNG o WebP hasta 5 MB; se recorta en un cuadrado.
 - **Privacidad y avisos:**
-  - *Perfil público*: publica su perfil y sus publicaciones en la web del portal (sin correo,
+  - *Perfil público*: publica su perfil y sus publicaciones en la página pública del sistema (sin correo,
     actividades ni proyectos). Está desactivado hasta que usted lo active.
   - *Avisos por correo*: sobre propuestas en proyectos que usted dirige y sobre la revisión de
     las suyas.
@@ -71,7 +73,7 @@ quedan en la dirección de la página, para volver a ellos o compartirlos.
 En **Investigadores → Estudiantes y tesistas** registre a los estudiantes que participan en su
 investigación: tesistas, coautores, participantes de proyectos o actividades. Para cada uno indique
 sus estudios (nivel, programa, año de ingreso y, si ya egresó, año de egreso y si se tituló). Así los
-informes de acreditación cuentan su participación, y el portal sabe si alguien era estudiante o ya
+informes de acreditación cuentan su participación, y el sistema sabe si alguien era estudiante o ya
 graduado en la fecha de cada producto.
 
 Registre las **tesis que dirige** como producto «Tesis dirigida»: primero el tesista y luego quienes
@@ -88,7 +90,7 @@ institución y unifica variantes como «USA» o «EE. UU.».
 
 **«Buscar en OpenAlex»** (en «Mis productos») usa el ORCID de su perfil para encontrar sus obras en
 OpenAlex, un catálogo abierto de publicaciones. Muestra cuáles son nuevas, cuáles ya están en el
-portal y cuáles no se importan (p. ej., su tesis doctoral). Marque las que quiere registrar y
+sistema y cuáles no se importan (p. ej., su tesis doctoral). Marque las que quiere registrar y
 presione **«Registrar las seleccionadas»**: se crean con sus coautores, la revista del catálogo (o
 propuesta, si no está), la filiación IIMAT/UMSA si la afiliación publicada la menciona, y sus citas.
 **Revise cada obra**: OpenAlex a veces atribuye obras por error. «Descartar» oculta una obra que no
@@ -133,7 +135,7 @@ IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar
   «Registrar como persona externa» lo crea en el momento.
 - Ordénelos con las flechas, en el orden de la publicación.
 - Un artículo con varios autores del instituto se registra **una vez** y aparece en el perfil de
-  cada uno. Si al escribir el DOI el portal avisa que el producto ya existe, use **«Sumarme como
+  cada uno. Si al escribir el DOI el sistema avisa que el producto ya existe, use **«Sumarme como
   autor»** en vez de registrarlo de nuevo.
 
 ### Nivel de revisión y el informe del instituto
@@ -236,7 +238,7 @@ Hay dos tipos de proyecto:
   el producto también puede indicarlo junto a cada proyecto en el formulario.
 - **Ámbito y contrapartes:** en **Resumen** indique si el proyecto es nacional o internacional y
   agregue las instituciones con que colabora o que lo cofinancian, con su país. Sin ámbito indicado,
-  el portal lo deduce de las contrapartes.
+  el sistema lo deduce de las contrapartes.
 - En **Resumen** edite los datos y los objetivos; ahí aparecen también los registros editados
   después de aprobados, por si quiere revisarlos.
 - El botón **«Informe»** genera el informe de avance del proyecto.
@@ -309,11 +311,11 @@ proyecto y ser del mismo periodo).
 ## Administración
 
 - **Usuarios → Nuevo usuario:** con «Enviar invitación por correo» la persona define su
-  contraseña. Sin invitación, el portal muestra una contraseña temporal para entregar a mano.
+  contraseña. Sin invitación, el sistema muestra una contraseña temporal para entregar a mano.
   Las cuentas de investigador llevan **categoría** (titular, contratado, interino, invitado o
   externo): de ella depende quién puede proponer proyectos institucionales y ser responsable.
-- **Personas sin acceso:** en «Nuevo usuario», «Sin acceso al portal» registra a una persona solo por
-  sus datos (p. ej., un docente de la Carrera que no usa el portal): tiene vínculo y ficha, pero no
+- **Personas sin acceso:** en «Nuevo usuario», «Sin acceso al sistema» registra a una persona solo por
+  sus datos (p. ej., un docente de la Carrera que no usa el sistema): tiene vínculo y ficha, pero no
   puede ingresar ni pedir una contraseña por su cuenta. «Habilitar acceso» (llave) le genera una
   contraseña temporal. Las cuentas ya no necesitan ser de investigador o de administración: un
   docente puede no ser ninguna de las dos.
@@ -349,7 +351,7 @@ proyecto y ser del mismo periodo).
     `categoria`, `desde`, `hasta`, `jornada`, `nota` y `unidad`: IIMAT o CMAT, vacío = IIMAT; una
     fila por periodo). El historial de cada persona con cada unidad del archivo se reemplaza por el
     del archivo.
-  - Al **desactivar** una cuenta con vínculo vigente, el portal pregunta si también termina el
+  - Al **desactivar** una cuenta con vínculo vigente, el sistema pregunta si también termina el
     vínculo y en qué fecha. Lo publicado mientras estuvo vinculada sigue contando.
 - **Propuestas:** la bandeja de propuestas institucionales por periodo, con filtro por estado y el
   contador de las que esperan decisión. En cada propuesta: aceptar, aceptar con condiciones
@@ -374,7 +376,7 @@ proyecto y ser del mismo periodo).
   años que elija) ordenada según los criterios de IAC-CINDA: resumen por año; cuerpo académico por
   categoría y jornada completa equivalente (2.2.1); publicaciones, libros, patentes, software y
   traducciones (3.6.3 a–e); transferencia, estancias, proyectos, presentaciones y redes (3.6.3 f–j);
-  internacionalización (3.5.2) e impacto (3.6.1); lo que el portal aún no registra; y el método. Por
+  internacionalización (3.5.2) e impacto (3.6.1); lo que el sistema aún no registra; y el método. Por
   omisión solo cuenta artículos en revistas verificadas del catálogo; puede incluir las demás. El XLSX
   trae una hoja por criterio.
 - **Citas:** en la memoria, «Actualizar citas» consulta en OpenAlex las citas de todos los productos
@@ -397,7 +399,7 @@ proyecto y ser del mismo periodo).
 ## Preguntas frecuentes
 
 **Registré un artículo y mi coautor(a) del instituto también: ¿quedó duplicado?**
-El portal avisa al escribir el DOI o el arXiv. Si igual ocurrió, quien lo registró segundo puede
+El sistema avisa al escribir el DOI o el arXiv. Si igual ocurrió, quien lo registró segundo puede
 eliminar el suyo y usar «Sumarme como autor» en el existente.
 
 **¿Por qué mi artículo no aparece en la memoria anual?**
@@ -411,5 +413,5 @@ quienes pueden editar el registro. Fuera del instituto solo se ve lo que usted p
 
 **¿Cómo obtengo el CV en PDF?**
 Con «Imprimir / Guardar PDF» (o el menú Imprimir del navegador), elija «Guardar como PDF» como
-destino. Al imprimir, el portal oculta la navegación y los botones y usa texto negro sobre blanco
+destino. Al imprimir, el sistema oculta la navegación y los botones y usa texto negro sobre blanco
 en tamaño A4, aunque en pantalla use el tema oscuro.

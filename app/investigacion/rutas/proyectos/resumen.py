@@ -48,7 +48,7 @@ def tarjeta_propuestas(p, auth):
                     cls="flex flex-wrap justify-between items-center gap-2 mb-2"),
                 aviso,
                 ui_propuestas.lista_propuestas(props) if props
-                else P("Este proyecto no tiene propuestas registradas en el portal.", cls=TextPresets.muted_sm))
+                else P("Este proyecto no tiene propuestas registradas en el sistema.", cls=TextPresets.muted_sm))
 
 
 def tarjeta_contrapartes(p, auth):

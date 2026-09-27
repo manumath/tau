@@ -84,3 +84,10 @@ def test_cambio_de_password_exitoso(client):
     client.post("/logout")
     assert login(client, "inv@test.cl", nueva).headers["hx-redirect"] == "/"
     assert "incorrectos" in login(client, "inv@test.cl", PASS_TEMP).text
+
+
+def test_nombre_del_sistema(client):
+    r = client.get("/login")
+    assert "<title>Ingreso · TAU</title>" in r.text
+    assert "Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática" in r.text
+    assert "Portal de Investigación" not in r.text

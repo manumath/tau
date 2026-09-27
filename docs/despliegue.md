@@ -3,7 +3,7 @@
 > ¿Sin servidor propio? Vea la alternativa en [Fly.io](despliegue-fly.md). Los datos se pueden
 > mudar después entre una y otra sin perder nada (ver [Mudanzas](#mudanzas-y-mantenimiento)).
 
-Guía para instalar el portal en un servidor Linux (Ubuntu o Debian) con HTTPS. Supone un dominio,
+Guía para instalar el sistema en un servidor Linux (Ubuntu o Debian) con HTTPS. Supone un dominio,
 por ejemplo `portal.iimat.umsa.bo`, que ya apunta al servidor, y una cuenta de correo SMTP para
 los envíos.
 
@@ -25,7 +25,7 @@ cd /opt/portal && uv sync --no-dev
 
 ## 2. Configuración
 
-Cree `/etc/portal.env`, legible solo por el usuario que ejecutará el portal (`chmod 600`):
+Cree `/etc/portal.env`, legible solo por el usuario que ejecutará el sistema (`chmod 600`):
 
 ```ini
 PORTAL_DB=/var/lib/portal/portal.db
@@ -36,7 +36,7 @@ PORTAL_INSTITUTO=Instituto de Investigación Matemática
 PORTAL_CONTACTO=soporte@umsa.bo
 
 PORTAL_CORREO_MODO=smtp
-PORTAL_CORREO_REMITENTE=Portal de Investigación <no-responder@umsa.bo>
+PORTAL_CORREO_REMITENTE=TAU <no-responder@umsa.bo>
 PORTAL_SMTP_HOST=smtp.umsa.bo
 PORTAL_SMTP_PUERTO=587
 PORTAL_SMTP_USUARIO=no-responder@umsa.bo
@@ -53,7 +53,7 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 | Variable | Por qué importa |
 |---|---|
 | `PORTAL_URL` | Con ella se arman los enlaces de los correos (recuperar contraseña, invitaciones, avisos). También es un origen aceptado por la protección CSRF. |
-| `PORTAL_ORIGENES_EXTRA` | Solo si el portal se usa también desde otra dirección (p. ej. una IP interna): lista separada por comas. Si no, los cambios hechos desde esa dirección se rechazan con «Solicitud rechazada: no proviene del portal». |
+| `PORTAL_ORIGENES_EXTRA` | Solo si el sistema se usa también desde otra dirección (p. ej. una IP interna): lista separada por comas. Si no, los cambios hechos desde esa dirección se rechazan con «Solicitud rechazada: no proviene del sistema». |
 | `PORTAL_SECRET_KEY` | Firma la cookie de sesión. Si cambia, todas las sesiones se cierran. |
 | `PORTAL_HTTPS_ONLY=1` | La cookie de sesión solo viaja por HTTPS. |
 | `PORTAL_CONTACTO` | Crossref atiende mejor las consultas que se identifican. |
@@ -79,7 +79,7 @@ públicas.
 
 ```ini
 [Unit]
-Description=Portal de Investigación
+Description=TAU - Sistema Integrado de Gestión Académica y Científica (CMAT)
 After=network.target
 
 [Service]
@@ -99,7 +99,7 @@ journalctl -u portal -f        # registros del servicio
 ```
 
 Use `uvicorn` directamente: `python main.py` es el modo de desarrollo, con recarga automática.
-Con SQLite basta un proceso; el portal atiende sin problema a un instituto.
+Con SQLite basta un proceso; el sistema atiende sin problema a un instituto.
 
 ## 5. HTTPS con Caddy
 
@@ -134,12 +134,12 @@ ambas cosas. Por ejemplo, con `crontab -e`, una copia diaria a las 3:00:
 0 3 * * * sqlite3 /var/lib/portal/portal.db ".backup /respaldos/portal-$(date +\%F).db" && rsync -a /var/lib/portal/fotos /var/lib/portal/adjuntos /respaldos/archivos/
 ```
 
-`.backup` hace una copia consistente aunque el portal esté en uso. Guarde los respaldos fuera
+`.backup` hace una copia consistente aunque el sistema esté en uso. Guarde los respaldos fuera
 del servidor y pruebe de vez en cuando que se pueden restaurar. Para respaldo continuo, considere
 [Litestream](https://litestream.io).
 
 **Respaldo completo en un solo archivo:** `scripts/paquete.py` junta la base, las fotos y los
-adjuntos en un `.tar.gz` con un manifiesto verificable (se puede ejecutar con el portal en marcha):
+adjuntos en un `.tar.gz` con un manifiesto verificable (se puede ejecutar con el sistema en marcha):
 
 ```bash
 cd /opt/portal && set -a && source /etc/portal.env && set +a
@@ -148,9 +148,9 @@ uv run python scripts/paquete.py exportar /respaldos/portal-$(date +%F).tar.gz
 
 ## Mudanzas y mantenimiento
 
-El mismo paquete sirve para trasladar el portal a otro servidor (o a/desde [Fly.io](despliegue-fly.md)):
+El mismo paquete sirve para trasladar el sistema a otro servidor (o a/desde [Fly.io](despliegue-fly.md)):
 exportar en el origen, `uv run python scripts/paquete.py importar archivo.tar.gz` en el destino
-(con el portal detenido). El importador verifica la integridad y los conteos, no borra datos
+(con el sistema detenido). El importador verifica la integridad y los conteos, no borra datos
 existentes (los mueve a `respaldo-previo-…` si se usa `--reemplazar`) y aplica las migraciones
 pendientes.
 
@@ -176,7 +176,7 @@ los cambios de esquema van en un archivo nuevo en `migrations/`.
       `PORTAL_URL`.
 - [ ] Se sube una foto de perfil y un adjunto PDF, y se descargan.
 - [ ] Guardar cualquier cambio (p. ej. el perfil) funciona. Si aparece «Solicitud rechazada: no
-      proviene del portal», el proxy no está conservando el encabezado `Host` o se entra por una
+      proviene del sistema», el proxy no está conservando el encabezado `Host` o se entra por una
       dirección distinta de `PORTAL_URL` (agréguela a `PORTAL_ORIGENES_EXTRA`).
 - [ ] La importación por DOI funciona (el servidor necesita salida a `api.crossref.org` y
       `export.arxiv.org`).
@@ -186,7 +186,7 @@ los cambios de esquema van en un archivo nuevo en `migrations/`.
 ## Recursos de las páginas y política de contenido
 
 Desde el 26 de septiembre de 2026 las páginas no dependen de ningún CDN: htmx, Franken UI, KaTeX
-y los estilos de Tailwind (ya compilados) se sirven desde `/static` del propio portal, con versión
+y los estilos de Tailwind (ya compilados) se sirven desde `/static` del propio sistema, con versión
 por contenido y caché de un año. Cada respuesta lleva una política de seguridad de contenido (CSP)
-que solo admite recursos del portal. Si un proxy inverso agrega su propia CSP, no debe ser más
+que solo admite recursos del sistema. Si un proxy inverso agrega su propia CSP, no debe ser más
 permisiva; si agrega otra más estricta, compruebe que las páginas siguen funcionando.

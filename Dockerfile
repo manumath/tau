@@ -1,4 +1,4 @@
-# Imagen del Portal de Investigación (Fly.io u otro servicio de contenedores).
+# Imagen de TAU, Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática (Fly.io u otro servicio de contenedores).
 # Los datos (base SQLite, fotos, adjuntos) viven en un volumen montado en /data.
 FROM python:3.13-slim
 

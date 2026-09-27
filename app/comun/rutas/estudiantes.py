@@ -112,7 +112,7 @@ def _form_nuevo(d=None, errores=()):
     return modal(
         "Registrar estudiante",
         Form(mensaje_error(*errores),
-             P("Busque a la persona si ya figura en el portal (p. ej., como coautor); si no, escriba su nombre.",
+             P("Busque a la persona si ya figura en el sistema (p. ej., como coautor); si no, escriba su nombre.",
                cls=TextPresets.muted_sm),
              Div(Input(type="search", name="persona_q", placeholder="Buscar persona externa por nombre…", autocomplete="off",
                        cls="uk-input", aria_label="Buscar persona", hx_get="/estudiantes/buscar-persona",

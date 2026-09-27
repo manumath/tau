@@ -1,15 +1,16 @@
 # Guía de mantenimiento
 
-Para quien mantiene el portal: el personal de TI del IIMAT y la persona que acompaña la
+Para quien mantiene TAU (Sistema Integrado de Gestión Académica y Científica de la Carrera de
+Matemática): el personal de TI del IIMAT y la persona que acompaña la
 implementación. Supone que conoce Python y HTML; no supone que conozca FastHTML ni htmx.
 
 Otros documentos:
 
-- `README.md`: qué hace el portal, estructura de archivos, configuración (`PORTAL_*`) y convenciones.
+- `README.md`: qué hace el sistema, estructura de archivos, configuración (`PORTAL_*`) y convenciones.
 - `PLAN.md`: las decisiones y el porqué de cada regla, por sección (p. ej., sección 12 filiación,
   14 revistas, 21 líneas de investigación, 22 plan de ampliación).
 - `docs/despliegue.md` y `docs/despliegue-fly.md`: instalación en un servidor propio o en Fly.io.
-- `docs/guia-de-uso.md`: el portal visto por investigadores y administración.
+- `docs/guia-de-uso.md`: el sistema visto por investigadores y administración.
 
 ## 1. El primer día
 
@@ -121,7 +122,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 **Nunca edite una migración ya aplicada** en algún servidor: la base guarda el número de la última
 aplicada y no vuelve a leerla. Los cambios van en una migración nueva. Las migraciones se aplican
-solas al arrancar el portal.
+solas al arrancar el sistema.
 
 ### 4.2 Agregar una pantalla o una ruta
 
@@ -189,7 +190,7 @@ Política:
   ```
   Lea las notas de la versión antes. Si algo falla y no es obvio, vuelva a la versión anterior
   (`git checkout uv.lock && uv sync`) y anótelo.
-- **FastHTML en particular:** el portal depende de detalles suyos: la tupla `before` de
+- **FastHTML en particular:** el sistema depende de detalles suyos: la tupla `before` de
   Beforeware, `APIRouter`, `fast_app(default_hdrs=False, …)` y la ruta estática genérica que
   `recursos.montar` quita. Tras actualizarlo, revise esos cuatro puntos.
 - Una actualización de MonsterUI puede cambiar clases que arma en tiempo de ejecución: recompile
@@ -211,10 +212,10 @@ Dos mecanismos, que se complementan:
 - **Paquete completo** (base, fotos y adjuntos en un `.tar.gz`), para restaurar o mudarse:
 
   ```sh
-  # Se puede ejecutar con el portal en marcha.
+  # Se puede ejecutar con el sistema en marcha.
   PORTAL_DB=/var/lib/portal/portal.db uv run python scripts/paquete.py exportar /respaldos/portal.tar.gz
 
-  # Con el portal DETENIDO. Si ya hay datos, exige --reemplazar y los mueve a
+  # Con el sistema DETENIDO. Si ya hay datos, exige --reemplazar y los mueve a
   # respaldo-previo-<fecha>/ junto a la base (no borra nada).
   PORTAL_DB=/var/lib/portal/portal.db uv run python scripts/paquete.py importar /respaldos/portal.tar.gz --reemplazar
   ```
@@ -223,11 +224,11 @@ Dos mecanismos, que se complementan:
 
 | Paso | Resultado |
 |---|---|
-| Exportar con el portal en marcha | Paquete de 0,3 MB; manifiesto con esquema v21 y conteos |
+| Exportar con el sistema en marcha | Paquete de 0,3 MB; manifiesto con esquema v21 y conteos |
 | Importar en una ubicación vacía | 5 cuentas, 7 productos, 3 actividades, 4 proyectos, 6 líneas: iguales al origen |
 | Importar de nuevo sin `--reemplazar` | Se niega y explica qué hacer |
 | Importar con `--reemplazar` | Datos anteriores movidos a `respaldo-previo-…`; importación completa |
-| Importar un paquete antiguo (esquema v20) con el código actual | Aplica la migración 21 (crea las 6 líneas); el portal arranca y responde |
+| Importar un paquete antiguo (esquema v20) con el código actual | Aplica la migración 21 (crea las 6 líneas); el sistema arranca y responde |
 
 **Repita el ensayo cada semestre** (y después de cambiar el procedimiento de respaldo) sobre una
 copia, nunca sobre la base en uso. Un respaldo que nunca se restauró no es un respaldo. Anote aquí
@@ -235,7 +236,7 @@ la fecha y el resultado.
 
 ### 5.3 Modo solo lectura
 
-`PORTAL_SOLO_LECTURA=1` deja el portal consultable y rechaza todo cambio (útil durante una mudanza
+`PORTAL_SOLO_LECTURA=1` deja el sistema consultable y rechaza todo cambio (útil durante una mudanza
 o una restauración). No ejecuta las tareas horarias.
 
 ### 5.4 Correo
@@ -248,11 +249,11 @@ o una restauración). No ejecuta las tareas horarias.
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
-| «Solicitud rechazada: no proviene del portal» (403) al guardar | El portal se abre con una dirección distinta de `PORTAL_URL` (otro dominio, IP, puerto) | Agregue esa dirección a `PORTAL_ORIGENES_EXTRA` |
+| «Solicitud rechazada: no proviene del sistema» (403) al guardar | El sistema se abre con una dirección distinta de `PORTAL_URL` (otro dominio, IP, puerto) | Agregue esa dirección a `PORTAL_ORIGENES_EXTRA` |
 | Una clase de Tailwind no se aplica | CSS sin recompilar | `scripts/estilos.sh` (4.4); `tests/test_estilos.py` lo señala |
 | Nadie puede guardar nada | Modo solo lectura activo | Revise `PORTAL_SOLO_LECTURA` |
 | Una cuenta no puede ingresar aunque la contraseña es correcta | Bloqueo por intentos fallidos (15 minutos) | «Usuarios» → desbloquear |
-| El portal no arranca tras actualizar | Falló una migración | Lea el error; restaure el respaldo previo (5.2) y corrija la migración en una nueva |
+| El sistema no arranca tras actualizar | Falló una migración | Lea el error; restaure el respaldo previo (5.2) y corrija la migración en una nueva |
 | Una página de administración responde 403 | A la cuenta le falta el rol | «Usuarios» → «Roles» (lo hace Administración del sistema) |
 | Los correos no llegan | `PORTAL_CORREO_MODO` no es `smtp`, o credenciales SMTP | Revise `data/correos/` y la configuración SMTP |
 | Una prueba en navegador falla solo en su equipo | Chrome no instalado o muy antiguo | `uv run playwright install chromium` y `PLAYWRIGHT_CANAL=` |

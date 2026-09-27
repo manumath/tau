@@ -1,9 +1,9 @@
 """Autenticación: Beforeware de sesión, login, logout y cambio de contraseña."""
 import re
 
-from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response
+from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response, Span
 from fasthtml.toaster import add_toast
-from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon)
+from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets)
 
 from app.comun import academicos, config, correo, permisos, tokens, usuarios
 from app.comun.componentes.layout import mensaje_error, pagina
@@ -77,7 +77,7 @@ def _solo_lectura(req):
     datos para una mudanza, para que nada cambie después de la copia)."""
     if (config.SOLO_LECTURA and req.method not in ("GET", "HEAD", "OPTIONS")
             and req.url.path not in PERMITIDAS_EN_SOLO_LECTURA):
-        return Response("El portal está en mantenimiento: por ahora solo se puede consultar.",
+        return Response("El sistema está en mantenimiento: por ahora solo se puede consultar.",
                         status_code=503)
 
 
@@ -127,7 +127,7 @@ def _origen_valido(req):
         # navegadores actuales envían Origin en todo POST); se admite (clientes, pruebas).
         valido = True
     if not valido:
-        return Response("Solicitud rechazada: no proviene del portal.", status_code=403)
+        return Response("Solicitud rechazada: no proviene del sistema.", status_code=403)
     return None
 
 
@@ -155,7 +155,8 @@ def form_login(email: str = "", error: str = ""):
 
 def _tarjeta_acceso(titulo, subtitulo, *contenido):
     return Card(
-        Div(Div(UkIcon("sigma", height=40, width=40), cls="flex justify-center text-primary"),
+        Div(Div(Span("τ", cls="font-serif italic text-5xl leading-none", aria_hidden="true"),
+                cls="flex justify-center text-primary"),
             H2(titulo, cls="text-center text-xl"),
             P(subtitulo, cls=(TextPresets.muted_sm, "text-center")),
             cls="space-y-2 mb-6"),
@@ -163,7 +164,7 @@ def _tarjeta_acceso(titulo, subtitulo, *contenido):
 
 
 def _pagina_login(form):
-    return pagina("Ingreso", _tarjeta_acceso("Portal de Investigación", config.NOMBRE_INSTITUTO,
+    return pagina("Ingreso", _tarjeta_acceso(config.NOMBRE_SISTEMA, config.DESCRIPCION_SISTEMA,
                                              form))
 
 
@@ -292,7 +293,7 @@ def post(req, htmx, email: str = ""):
     # Una persona sin acceso (registrada solo por sus datos) no se habilita sola: lo hace la administración.
     if u and u["activo"] and not academicos.sin_acceso(u) and not tokens.demasiados_pedidos(u["id"]):
         enlace = f"{config.URL_BASE}/recuperar/{tokens.emitir(u['id'], 'recuperar')}"
-        correo.enviar(u["email"], "Recuperar su contraseña del Portal de Investigación",
+        correo.enviar(u["email"], f"Recuperar su contraseña de {config.NOMBRE_SISTEMA}",
                       f"Hola, {u['nombres']}:\n\nPara definir una nueva contraseña, abra este enlace "
                       f"(vale una vez y durante una hora):\n\n{enlace}\n\n"
                       "Si no lo solicitó, ignore este mensaje: su contraseña actual sigue vigente.")
@@ -334,7 +335,7 @@ def get(token: str):
     u = usuarios.por_id(t["usuario_id"])
     invitacion = t["proposito"] == "invitacion"
     return pagina("Definir contraseña", _tarjeta_acceso(
-        "Bienvenido(a) al portal" if invitacion else "Nueva contraseña",
+        f"Bienvenido(a) a {config.NOMBRE_SISTEMA}" if invitacion else "Nueva contraseña",
         f"{u['nombres']} {u['apellidos']} · {u['email']}", form_nueva(token)))
 
 

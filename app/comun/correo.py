@@ -29,7 +29,7 @@ def mensaje(para: str, asunto: str, cuerpo: str) -> EmailMessage:
     m["To"] = para
     m["Subject"] = asunto
     m["Message-ID"] = make_msgid(domain="portal.local")
-    m.set_content(cuerpo + f"\n\n--\n{config.NOMBRE_INSTITUTO} · Portal de Investigación\n{config.URL_BASE}\n")
+    m.set_content(cuerpo + f"\n\n--\n{config.NOMBRE_COMPLETO}\n{config.URL_BASE}\n")
     return m
 
 

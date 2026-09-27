@@ -1,17 +1,21 @@
-# Portal de Investigación: diseño y estado
+# TAU: diseño y estado
+
+**TAU | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática.** Nació
+como «Portal de Investigación» del IIMAT y se amplió (secciones 22 a 24) a la gestión académica de
+la Carrera y la acreditación; el nombre se adoptó el 27 de septiembre de 2026.
 
 > **Contexto:** Instituto de Investigación Matemática (IIMAT) de la Carrera de Matemática (CMAT),
 > Facultad de Ciencias Puras y Naturales (FCPN), Universidad Mayor de San Andrés (UMSA), La Paz,
-> Bolivia. El portal sostiene la **acreditación de la Carrera y del Instituto ante IAC-CINDA**.
+> Bolivia. TAU sostiene la **acreditación de la Carrera y del Instituto ante IAC-CINDA**.
 > Zona horaria America/La_Paz; montos en bolivianos (Bs). Ver la sección 13.
 
-Documento de diseño del portal: qué hace, cómo está organizado, qué se decidió y qué queda
+Documento de diseño del sistema: qué hace, cómo está organizado, qué se decidió y qué queda
 pendiente. Para instalarlo y trabajar en el código, vea el [README](README.md); para usarlo, la
 [guía de uso](docs/guia-de-uso.md); para ponerlo en producción, la [guía de despliegue](docs/despliegue.md).
 
 ## 1. Visión
 
-Portal interno donde cada investigador del instituto ingresa con su cuenta y mantiene al día su
+Sistema interno donde cada investigador del instituto ingresa con su cuenta y mantiene al día su
 actividad científica. Con esos mismos datos, sin volver a escribirlos, se generan el CV de cada
 investigador, el informe de cada proyecto y la memoria anual del instituto.
 
@@ -207,7 +211,7 @@ conviene validarlas con el instituto antes del piloto.
 - **Cuentas nuevas:** por defecto con invitación por correo (cada persona define su
   contraseña); si no hay correo, con contraseña temporal.
 - **Validación institucional** de registros (declarado → validado): no en el piloto.
-- **Ingreso:** usuario y contraseña propios del portal; sin SSO ni LDAP en el piloto.
+- **Ingreso:** usuario y contraseña propios del sistema; sin SSO ni LDAP en el piloto.
 
 ## 9. Pendiente
 
@@ -394,7 +398,7 @@ institucionales.
 | Qué filiación vale | IIMAT o cualquiera de las instancias que lo contienen, incluida la UMSA. Vale la doble filiación. |
 | Producción anterior al ingreso | Se registra en el perfil, pero no cuenta en los informes institucionales. Cuenta si hay vínculo en la fecha **y** filiación. |
 | Invitados y externos | Como ahora: los externos figuran si están ligados a un proyecto institucional. |
-| Desactivar una cuenta | El portal pregunta si también termina el vínculo y en qué fecha. |
+| Desactivar una cuenta | El sistema pregunta si también termina el vínculo y en qué fecha. |
 | Datos históricos | Los tiene Recursos Humanos; hay varios periodos por persona (ingreso y cambios de categoría). |
 | Informes de proyecto | Los fondos exigen filiación **y** que la publicación agradezca al proyecto. |
 
@@ -461,7 +465,7 @@ institucionales.
   reporte deben revisarse con la normativa boliviana y de la UMSA.
 - **IAC-CINDA:** la acreditación de la Carrera y del Instituto se hará con el Instituto
   Internacional para el Aseguramiento de la Calidad (IAC) de CINDA. Pendiente: conseguir su guía o
-  manual de criterios vigente y hacer una tabla de correspondencia criterio → dato del portal →
+  manual de criterios vigente y hacer una tabla de correspondencia criterio → dato del sistema →
   evidencia, para detectar lo que falta registrar y preparar un «informe para acreditación»
   (indicadores del periodo evaluado, normalmente varios años, con sus evidencias).
 
@@ -547,16 +551,16 @@ métricas» y que promueva la ciencia abierta.
 
 ## 15. Correspondencia con IAC-CINDA
 
-Tabla completa (criterio → qué registra el portal → brecha, con estado): 
+Tabla completa (criterio → qué registra el sistema → brecha, con estado): 
 https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el menú de la página).
 
 - Base: criterios de pregrado de IAC-CINDA (junio 2025, v1.2), que aplican a la Carrera de
   Matemática. **Pendiente:** confirmar con IAC-CINDA qué conjunto de criterios corresponde al
   Instituto (el Modelo 2025 describe procesos para instituciones, carreras, maestrías y doctorados).
 - De 33 criterios revisados que tocan la investigación: 15 cubiertos, 16 parciales, 2 brechas; 12
-  más dependen de políticas o procesos fuera del portal.
+  más dependen de políticas o procesos fuera del sistema.
 
-**Prioridades para el portal** (por aporte a la acreditación):
+**Prioridades para el sistema** (por aporte a la acreditación):
 
 1. Carga automática desde ORCID u OpenAlex, con citas (3.6.1, 3.6.3) — ✔ (ver sección 16).
 2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1) — ✔ (sección 17).
@@ -586,7 +590,7 @@ https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el m
   DOI. La memoria tiene una sección «Impacto»; los XLSX, las citas por producto con su fecha.
 - **Calidad de los datos:** OpenAlex atribuye a veces obras ajenas. Un ORCID de relleno (el de
   prueba 0000-0002-1825-0097, que usa un investigador de los datos de ejemplo) devuelve más de mil
-  obras de otras personas: el portal lo advierte cuando hay más de 40 obras por año.
+  obras de otras personas: el sistema lo advierte cuando hay más de 40 obras por año.
 - **Pendiente:** búsqueda para quienes no tienen ORCID (por nombre y afiliación en OpenAlex, con
   más riesgo de errores); actualización periódica de citas sin intervención.
 
@@ -601,7 +605,7 @@ memoria (vínculo en la fecha, filiación, catálogo de revistas).
   transferencia, redes, proyectos vigentes y citas.
 - **Por criterio:** 2.2.1 cuerpo académico (categoría al 31 de diciembre; JCE = horas/40), 3.6.3 a–j,
   2.2.1 d comités, 3.5.2 c coautoría internacional (preliminar: depende del país de los coautores
-  externos), 3.6.1 impacto; lista de lo que el portal aún no registra; «Datos y método».
+  externos), 3.6.1 impacto; lista de lo que el sistema aún no registra; «Datos y método».
 - **Revistas:** por omisión solo cuentan artículos en revistas verificadas (lo que corresponde a la
   acreditación); la opción «Incluir revistas sin verificar» sirve durante el piloto.
 - **Presentaciones (3.6.3 i):** eventos científicos con al menos un expositor del instituto.
@@ -645,12 +649,12 @@ memoria (vínculo en la fecha, filiación, catálogo de revistas).
 
 La cookie de sesión es `SameSite=Lax`: protege de formularios de *otros sitios*, pero no de otros
 subdominios del mismo sitio (en un dominio universitario, cualquier página en `*.umsa.bo`). Desde
-el 26 de septiembre de 2026, toda petición que modifica datos debe venir del propio portal según
+el 26 de septiembre de 2026, toda petición que modifica datos debe venir del propio sistema según
 `Origin` (o `Referer`, si falta): el host de la petición, `PORTAL_URL` o `PORTAL_ORIGENES_EXTRA`.
 Es la verificación de origen que recomienda OWASP; no requiere tokens ni cambiar formularios. Sin
 `Origin` ni `Referer` se admite (no es un navegador con la sesión de otra persona).
 
-Verificado con el servidor de desarrollo: un origen del propio portal se acepta (200) y uno de otro
+Verificado con el servidor de desarrollo: un origen del propio sistema se acepta (200) y uno de otro
 subdominio se rechaza (403).
 
 ## 21. Líneas de investigación institucionales
@@ -661,7 +665,7 @@ programa: Sistemas Dinámicos, Estructuras Algebraicas Ordenadas, Teoría de Con
 Matemáticos y Computación, Optimización Matemática y Áreas Fundamentales Complementarias (cargadas
 por la migración 0021).
 
-- **Las líneas cambian:** cada una tiene vigencia (`vigente_desde`, vacío = desde antes del portal;
+- **Las líneas cambian:** cada una tiene vigencia (`vigente_desde`, vacío = desde antes del sistema;
   `vigente_hasta`, vacío = sigue vigente). Una línea que deja de regir no se borra: se le pone fecha
   de término y quien ya la usaba la conserva en su historia. Solo se elimina una línea sin uso.
   Corregir la redacción se hace editándola; reformularla o dividirla, cerrándola y creando las nuevas.
@@ -695,7 +699,7 @@ Las estimaciones suponen una persona a medio tiempo con asistencia de IA; son or
   PostgreSQL o un framework estándar, se decide aquí migrar (opciones 4 o 5) y la fase 1 cambia.
 - Alcance académico con la Dirección de Carrera: qué hojas de la Guía se llenarán desde el sistema.
 - Qué entrega el sistema académico de la UMSA (formato, periodicidad, nivel de agregación).
-- «Jerarquía académica» de la hoja 10: ¿categoría del portal o escalafón docente?
+- «Jerarquía académica» de la hoja 10: ¿categoría del sistema o escalafón docente?
 - Fecha de nacimiento (tramos de edad, hoja 11): decisión explícita y aviso a los académicos.
 - Nombre del sistema. Una segunda persona que acompañe desde la fase 1 (continuidad).
 
@@ -710,9 +714,13 @@ Las estimaciones suponen una persona a medio tiempo con asistencia de IA; son or
   administración**. Los informes usan tramos de edad, nunca la fecha. Va en la persona académica
   (fase 2).
 - Una segunda persona acompaña la implementación desde la fase 1.
+- Nombre (27 de septiembre de 2026): **TAU | Sistema Integrado de Gestión Académica y Científica de
+  la Carrera de Matemática**. Se configura con `PORTAL_SISTEMA` y `PORTAL_SISTEMA_DESCRIPCION`; los
+  nombres técnicos (variables `PORTAL_*`, `portal.db`, servicio `portal`, aplicación de Fly.io)
+  conservan «portal» para no romper las instalaciones existentes.
 
 **Pendiente de la fase 0:** qué datos entrega el sistema académico de la UMSA (condiciona la
-fase 4), la «jerarquía académica» de la hoja 10 y el nombre del sistema. No bloquean las fases 1 a 3.
+fase 4) y la «jerarquía académica» de la hoja 10. No bloquean las fases 1 a 3.
 
 ### Fase 1 — Saneamiento sin cambios visibles (3–4 semanas)
 
@@ -844,7 +852,7 @@ si en la fase 0 se decide ir a Django, se omiten los puntos 1.1 a 1.4.
   (sistema nacional de investigación, etc.).
 - `grado_academico` (1 a n): nivel, título, institución, país y año. Reemplaza el campo único
   `investigador.grado` (se migra como primer grado).
-- **Personas sin acceso:** un docente de la Carrera que no usa el portal existe como persona,
+- **Personas sin acceso:** un docente de la Carrera que no usa el sistema existe como persona,
   sin contraseña utilizable (`pass_hash = '!'`, que nunca coincide), y se le puede habilitar el
   ingreso después (invitación).
 - `investigador` queda como **perfil de investigación opcional**: solo quien investiga lo tiene.
@@ -999,7 +1007,7 @@ semanales teóricas/prácticas/laboratorio, semestres de 20 semanas, nota mínim
 1. Gestiones: I-2026 y II-2026 (semestres), INV-2026 (invierno, julio) y **VER-2026** (verano, enero;
    «VER» y no «V» para no leerlo como el número romano 5). El verano se cuenta con la gestión
    anterior: VER-2026 se dicta en enero de 2027. Orden de la gestión 2026: I → INV → II → VER. El
-   portal guarda tipo, año y fechas; el código solo se muestra, y el orden sale de las fechas.
+   sistema guarda tipo, año y fechas; el código solo se muestra, y el orden sale de las fechas.
 2. El plan 2017 y el nuevo (desde 2027) coexisten mientras haya estudiantes en el antiguo, con una
    tabla de equivalencias entre asignaturas.
 3. Las asignaturas de otras carreras (FIS, QMF, QMI, QMC, INF, BIO, ECO) figuran en el plan, sin

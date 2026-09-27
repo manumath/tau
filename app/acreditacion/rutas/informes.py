@@ -81,7 +81,7 @@ def descarga(texto, href):
 
 
 def hoja(*contenido):
-    pie = P(f"Generado el {datetime.now():%d-%m-%Y %H:%M} · Portal de Investigación · "
+    pie = P(f"Generado el {datetime.now():%d-%m-%Y %H:%M} · {config.NOMBRE_SISTEMA} · "
             f"{config.NOMBRE_INSTITUTO}", cls="apagado text-xs mt-10 pt-3 border-t border-zinc-200")
     return Div(*contenido, pie, cls="hoja rounded-lg shadow-lg border border-border p-10 max-w-4xl mx-auto")
 
@@ -151,7 +151,7 @@ def get(auth):
                           href="/informes/acreditacion", cls="block hover:shadow-md transition"))
     return pagina("Informes",
                   Div(fh.H2("Informes", cls="uk-h2"),
-                      P("Documentos generados a partir de lo registrado en el portal.", cls=TextPresets.muted_sm),
+                      P("Documentos generados a partir de lo registrado en el sistema.", cls=TextPresets.muted_sm),
                       cls="mb-6 space-y-1"),
                   Div(*tarjetas, cls="grid grid-cols-1 md:grid-cols-3 gap-4"),
                   usuario=auth, seccion="informes")
@@ -382,7 +382,7 @@ def seccion_metodo(m):
     pol = m["revistas"]["politica"]
     return Div(
         H2("Datos y método"),
-        Ul(Li("Fuente: registros del Portal de Investigación del instituto, mantenidos por cada investigador(a) y "
+        Ul(Li(f"Fuente: registros de {config.NOMBRE_SISTEMA}, mantenidos por cada investigador(a) y "
               "revisados por la administración."),
            Li(f"Periodo: del {informes._fecha_corta(m['desde'])} al {informes._fecha_corta(m['hasta'])}. Los productos "
               "se ubican por año y mes de publicación; las actividades, por su fecha de inicio."),

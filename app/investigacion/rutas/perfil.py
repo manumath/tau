@@ -459,7 +459,7 @@ def seccion_preferencias(p, avisos_correo):
     return seccion(
         "seccion-preferencias", "Privacidad y avisos",
         Div(interruptor("perfil_publico", p["perfil_publico"], "Perfil público",
-                        "Publica en la web del portal su nombre, cargo, áreas, resumen, identificadores, "
+                        "Publica en la página pública del sistema su nombre, cargo, áreas, resumen, identificadores, "
                         "foto y productos publicados. No se muestran su correo, sus actividades ni los "
                         "productos en preparación."),
             A(UkIcon("external-link", height=14, width=14), "Ver mi perfil público",

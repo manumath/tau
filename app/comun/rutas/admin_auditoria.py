@@ -99,7 +99,7 @@ def get(auth, usuario: str = "", accion: str = "", q: str = ""):
         cls="flex flex-wrap gap-3 mb-4")
     return pagina(
         "Auditoría",
-        Div(H2("Auditoría"), P("Registro de acciones relevantes en el portal, de la más reciente a la más antigua.",
+        Div(H2("Auditoría"), P("Registro de acciones relevantes en el sistema, de la más reciente a la más antigua.",
                                cls=TextPresets.muted_sm), cls="mb-6 space-y-1"),
         filtros,
         Card(Div(Table(Thead(Tr(Th("Fecha"), Th("Persona"), Th("Acción"), Th("Registro"), Th("Detalle"))),

@@ -140,7 +140,7 @@ def documento(a):
         P(f"{config.NOMBRE_INSTITUTO} · {config.UNIVERSIDAD}", cls="apagado text-sm uppercase tracking-wide"),
         H1(f"Anexo de I+D+i para la acreditación, {a['desde_anio']}–{a['hasta_anio']}"),
         P("Evidencia de investigación, desarrollo e innovación ordenada según los criterios de IAC-CINDA para programas "
-          "de pregrado (junio 2025). Los datos provienen del Portal de Investigación; el método está al final.",
+          f"de pregrado (junio 2025). Los datos provienen de {config.NOMBRE_SISTEMA}; el método está al final.",
           cls="apagado text-sm"),
         Div(*[P(x, cls="text-sm") for x in avisos],
             cls="rounded-md border border-amber-300 bg-amber-50 text-amber-900 p-3 mt-3 space-y-1") if avisos else "",
@@ -198,11 +198,11 @@ def documento(a):
                   P(f"{m['impacto']['citas']} citas en {m['impacto']['con_datos']} de {m['impacto']['productos']} productos"
                     + (f", actualizadas el {m['impacto']['actualizadas']}." if m["impacto"]["actualizadas"] else "."),
                     cls="text-sm")),
-        Div(H2("Aún no registrado en el portal"),
+        Div(H2("Aún no registrado en el sistema"),
             Ul(Li("Premios y distinciones; arbitraje de artículos (2.2.1 d)."),
                Li("Asesorías y prestación de servicios (3.4.3); impacto de la vinculación (3.4.1)."),
                cls="list-disc pl-5 space-y-1 text-sm"),
-            P("Estos criterios deben documentarse por otros medios hasta que el portal los registre.", cls="apagado text-sm")),
+            P("Estos criterios deben documentarse por otros medios hasta que el sistema los registre.", cls="apagado text-sm")),
         seccion_metodo(m))
 
 

@@ -1,4 +1,4 @@
-"""Punto de entrada del Portal de Investigación.
+"""Punto de entrada de TAU, Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática.
 
 Desarrollo:  uv run python main.py      (recarga automática en http://localhost:5001)
 """
@@ -80,7 +80,7 @@ def create_app(db_path=config.DB_PATH):
         sess_https_only=config.HTTPS_ONLY,
         static_path=str(config.RAIZ / "static"),
         htmlkw={"lang": "es"},
-        title="Portal de Investigación",
+        title=config.NOMBRE_SISTEMA,
     )
     setup_toasts(app)
     app.after.append(paginas_de_error)

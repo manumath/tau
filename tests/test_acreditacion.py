@@ -98,7 +98,7 @@ def test_rutas(client, datos):
     assert "Anexo de I+D+i para la acreditación" in client.get("/informes").text
     r = client.get("/informes/acreditacion?desde=2022&hasta=2026")
     for texto in ("Resumen por año", "3.6.3 a", "Publicaciones en revistas indexadas", "Congreso con charla",
-                  "Jornada completa equivalente", "Aún no registrado en el portal", "Datos y método", "por confirmar"):
+                  "Jornada completa equivalente", "Aún no registrado en el sistema", "Datos y método", "por confirmar"):
         assert texto in r.text, texto
     r = client.get("/informes/acreditacion/xlsx?desde=2022&hasta=2026")
     assert r.headers["content-disposition"] == 'attachment; filename="anexo-idi-2022-2026.xlsx"'

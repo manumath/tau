@@ -190,7 +190,7 @@ def form_usuario(datos=None, errores=()):
                    value=d.get("fecha_ingreso") or ""),
         Div(LabelCheckboxX("Es investigador (tendrá perfil y registrará actividad)",
                            id="es_investigador", checked=d.get("es_investigador", True)),
-            LabelCheckboxX("Sin acceso al portal (se registran solo sus datos, p. ej., un docente que no lo usa)",
+            LabelCheckboxX("Sin acceso al sistema (se registran solo sus datos, p. ej., un docente que no lo usa)",
                            id="sin_acceso", checked=d.get("sin_acceso", False)),
             LabelCheckboxX("Administración (Adm. del sistema y Dirección del Instituto; otros roles, después en «Roles»)",
                            id="es_admin",
@@ -231,8 +231,8 @@ def modal_credenciales(titulo, u, password, nota):
 
 def enviar_invitacion(u):
     enlace = f"{config.URL_BASE}/recuperar/{tokens.emitir(u["id"], 'invitacion')}"
-    correo.enviar(u["email"], f"Invitación al Portal de Investigación · {config.NOMBRE_INSTITUTO}",
-                  f"Hola, {u['nombres']}:\n\nSe creó su cuenta en el Portal de Investigación del instituto. "
+    correo.enviar(u["email"], f"Invitación a {config.NOMBRE_SISTEMA} · {config.DESCRIPCION_SISTEMA}",
+                  f"Hola, {u['nombres']}:\n\nSe creó su cuenta en {config.NOMBRE_COMPLETO}. "
                   f"Para definir su contraseña, abra este enlace (vale una vez y durante 3 días):\n\n{enlace}\n\n"
                   f"Luego podrá ingresar con su correo ({u['email']}).")
 
@@ -250,7 +250,7 @@ def get(auth, q: str = ""):
     return pagina(
         "Usuarios",
         Div(Div(H2("Usuarios"),
-                P("Cuentas con acceso al portal.", cls=TextPresets.muted_sm)),
+                P("Cuentas con acceso al sistema.", cls=TextPresets.muted_sm)),
             Div(Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
                        hx_get="/admin/usuarios/importar", hx_target=f"#{ID_MODAL}") if cuentas else "",
                 Button(UkIcon("history", height=16, width=16), "Importar historial", cls=ButtonT.default,
@@ -316,7 +316,7 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
         u = usuarios.crear(password=None, **datos)
         auditar(auth["id"], "crear_usuario", "usuario", u["id"], f"{datos['email']} (sin acceso)")
         return (modal("Persona registrada",
-                      P(f"{u['nombres']} {u['apellidos']} quedó registrada sin acceso al portal. Para darle acceso, "
+                      P(f"{u['nombres']} {u['apellidos']} quedó registrada sin acceso al sistema. Para darle acceso, "
                         "use «Habilitar acceso» en su fila."),
                       Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
                           cls="flex justify-end mt-4")),

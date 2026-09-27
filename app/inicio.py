@@ -98,7 +98,7 @@ def get(auth):
     return pagina(
         "Inicio",
         Div(H2(f"Hola, {auth['nombres']}"),
-            P("Resumen de su actividad en el portal.", cls=TextPresets.muted_sm),
+            P("Resumen de su actividad en el sistema.", cls=TextPresets.muted_sm),
             cls="mb-6 space-y-1"),
         Grid(*tarjetas, cols_sm=1, cols_md=2, cols_lg=3, gap=4),
         usuario=auth, seccion="inicio")

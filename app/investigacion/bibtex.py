@@ -13,7 +13,7 @@ import bibtexparser
 from bibtexparser import middlewares as mw
 
 from app.investigacion import importacion, productos, revistas
-from app.comun import personas
+from app.comun import config, personas
 from app.comun.db import get_db, sin_tildes
 
 MAX_BYTES = 2 * 1024 * 1024
@@ -122,7 +122,7 @@ def _a_producto(e) -> dict:
     if nombre_tipo is None:
         return {"clave": e.key, "tipo_bib": tipo_bib, "autores": _autores(e),
                 "datos": {"titulo": _campo(e, "title") or "", "anio": _anio(e)},  # solo para mostrar
-                "errores": [f"Tipo @{tipo_bib} sin equivalente en el portal: regístrelo a mano."], "avisos": []}
+                "errores": [f"Tipo @{tipo_bib} sin equivalente en el sistema: regístrelo a mano."], "avisos": []}
     tipo = get_db().q("SELECT id, admite_revision FROM tipo_producto WHERE nombre = ?", [nombre_tipo])[0]
     if tipo_bib == "article" and arxiv and not _campo(e, "doi") and "arxiv" in sin_tildes(str(_campo(e, "journal") or "")):
         tipo = get_db().q("SELECT id, admite_revision FROM tipo_producto WHERE nombre = 'Preprint'")[0]
@@ -265,6 +265,6 @@ def entrada(p: dict, usadas: set[str]) -> str:
 
 def exportar(lista: list[dict]) -> str:
     usadas: set[str] = set()
-    cabecera = ("% Exportado del Portal de Investigación. Codificación UTF-8.\n"
+    cabecera = (f"% Exportado de {config.NOMBRE_COMPLETO}. Codificación UTF-8.\n"
                 f"% {len(lista)} entrada(s).\n\n")
     return cabecera + "\n".join(entrada(p, usadas) for p in lista)

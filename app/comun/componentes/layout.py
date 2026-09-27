@@ -73,8 +73,9 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
     if permisos.puede(usuario, "ver_usuarios"):
         enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
     enlaces.append(_menu_usuario(usuario))
-    marca = A(DivHStacked(UkIcon("sigma", height=26, width=26),
-                          H3("Portal de Investigación", cls="text-lg")), href="/")
+    marca = A(DivHStacked(Span("τ", cls="font-serif italic text-3xl leading-none text-primary", aria_hidden="true"),
+                          H3(config.NOMBRE_SISTEMA, cls="text-lg tracking-wide")),
+              href="/", title=config.DESCRIPCION_SISTEMA, aria_label=config.NOMBRE_COMPLETO)
     return NavBar(*enlaces, brand=marca, sticky=True, cls="px-6 py-3 border-b border-border")
 
 
@@ -83,11 +84,11 @@ def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = 
     cuerpo = Container(*contenido, cls=(ContainerT.xl, "py-8")) if usuario else Div(
         *contenido, cls="min-h-screen flex items-center justify-center p-4 bg-muted/40")
     aviso = Div(UkIcon("wrench", height=16, width=16, cls="shrink-0"),
-                Span("El portal está en mantenimiento: puede consultar, pero por ahora los cambios no se guardan."),
+                Span("El sistema está en mantenimiento: puede consultar, pero por ahora los cambios no se guardan."),
                 cls="flex items-center justify-center gap-2 px-4 py-2 text-sm bg-amber-100 text-amber-900 "
                     "dark:bg-amber-950 dark:text-amber-200 no-imprimir", role="status") \
         if config.SOLO_LECTURA else ""
-    return (Title(f"{titulo} · {config.NOMBRE_INSTITUTO}"),
+    return (Title(f"{titulo} · {config.NOMBRE_SISTEMA}"),
             aviso,
             barra_navegacion(usuario, seccion) if usuario else "",
             Main(cuerpo),

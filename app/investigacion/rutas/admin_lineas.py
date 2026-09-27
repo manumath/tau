@@ -104,7 +104,7 @@ def form_linea(d, errores=(), lid=None):
              Div(LabelInput("Vigente desde", id="vigente_desde", type="date", value=valor("vigente_desde")),
                  LabelInput("Vigente hasta", id="vigente_hasta", type="date", value=valor("vigente_hasta")),
                  cls="grid grid-cols-2 gap-4"),
-             P("Deje «desde» en blanco si la línea ya regía antes del portal, y «hasta» en blanco mientras siga "
+             P("Deje «desde» en blanco si la línea ya regía antes del sistema, y «hasta» en blanco mientras siga "
                "vigente. La vigencia la fija la resolución que aprueba las líneas.", cls=TextPresets.muted_sm),
              Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
                  Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),

@@ -78,7 +78,7 @@ def test_invitacion_por_correo(client, buzon):
     assert buzon[0]["To"] == "maryam@test.cl" and "Invitación" in buzon[0]["Subject"]
     client.post("/logout")
     enlace = _enlace(buzon[0])
-    assert "Bienvenido(a) al portal" in client.get(enlace).text
+    assert "Bienvenido(a) a TAU" in client.get(enlace).text
     client.post(enlace, headers=HX, data={"nueva": "Superficies-2026", "confirmacion": "Superficies-2026"})
     assert login(client, "maryam@test.cl", "Superficies-2026").headers["hx-redirect"] == "/"
 

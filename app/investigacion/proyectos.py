@@ -175,7 +175,7 @@ def agregar_participante(pid: int, ref: str, rol: str, forzar: bool = False) -> 
                   [pid, valor]):
         return "Esa persona ya participa en el proyecto."
     if rol in ROLES_RESPONSABLES and cols["externo_id"]:
-        return "Los responsables deben tener cuenta en el portal."
+        return "Los responsables deben tener cuenta en el sistema."
     if error := error_categoria(pid, cols["investigador_id"], rol):
         return error
     get_db().t.proyecto_participante.insert(proyecto_id=pid, rol=rol, fecha_desde=_hoy(), **cols)
@@ -191,7 +191,7 @@ def cambiar_rol(pid: int, part_id: int, rol: str, forzar: bool = False) -> str |
     if p["rol"] == "responsable" and rol != "responsable" and _n_responsables(pid, part_id) == 0:
         return "El proyecto debe tener al menos un responsable. Asigne otro antes."
     if rol in ROLES_RESPONSABLES and p["externo_id"]:
-        return "Los responsables deben tener cuenta en el portal."
+        return "Los responsables deben tener cuenta en el sistema."
     if error := error_categoria(pid, p["investigador_id"], rol):
         return error
     get_db().t.proyecto_participante.update(id=part_id, rol=rol)

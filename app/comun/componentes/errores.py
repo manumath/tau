@@ -16,7 +16,7 @@ TEXTOS = {
     403: ("Sin permiso", "shield-alert", "No tiene permiso para ver esta página. Si cree que debería "
                                          "tenerlo, consulte a la administración del instituto."),
     404: ("No encontrado", "search-x", "La página no existe o el registro fue eliminado."),
-    503: ("En mantenimiento", "wrench", "El portal está en mantenimiento: por ahora solo se puede "
+    503: ("En mantenimiento", "wrench", "El sistema está en mantenimiento: por ahora solo se puede "
                                         "consultar. Intente el cambio más tarde."),
 }
 
@@ -67,7 +67,7 @@ JS_AVISOS = Script("""
     403: 'No tiene permiso para esta acción.',
     404: 'No se encontró: puede que lo hayan eliminado. Recargue la página.',
     413: 'El archivo es demasiado grande.',
-    503: 'El portal está en mantenimiento: por ahora solo se puede consultar.',
+    503: 'El sistema está en mantenimiento: por ahora solo se puede consultar.',
   };
   function aviso(texto) {
     let c = document.getElementById('fh-toast-container');
