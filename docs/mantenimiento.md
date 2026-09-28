@@ -11,6 +11,9 @@ Otros documentos:
   14 revistas, 21 líneas de investigación, 22 plan de ampliación).
 - `docs/despliegue.md` y `docs/despliegue-fly.md`: instalación en un servidor propio o en Fly.io.
 - `docs/guia-de-uso.md`: el sistema visto por investigadores y administración.
+- `CLAUDE.md` y `.claude/skills/`: lo que debe saber un asistente de IA (Claude Code) que trabaje en
+  el código, y sus procedimientos: cerrar una etapa, nueva migración, nueva ruta o permiso, capturas
+  de pantalla (`.claude/skills/captura-visual/capturar.py` también sirve sin asistente).
 
 ## 1. El primer día
 

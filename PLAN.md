@@ -1108,5 +1108,5 @@ docente · equivalencias cuando llegue el plan nuevo.
   participantes, objetivos, contrapartes y enlaces; los productos y actividades siguen en el
   registro de sus autores. Los institucionales no se eliminan.
 
-**Por confirmar:** si el anexo de I+D+i (3.6.3 h) debe contar los proyectos de interacción social
-o solo los de investigación (hoy los lista todos, con su clase).
+**Confirmado (28-sep-2026):** las líneas de investigación son opcionales en los proyectos de
+interacción social, y el anexo de I+D+i (3.6.3 h) lista todos los proyectos vigentes con su clase.
