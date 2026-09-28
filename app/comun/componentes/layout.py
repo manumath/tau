@@ -14,6 +14,21 @@ def _enlace(texto, href, icono, activo=False, extra=""):
     return A(UkIcon(icono, height=16, width=16), texto, extra, href=href, cls=cls)
 
 
+def selector_tema():
+    """Claro, oscuro o el del sistema (static/js/tema.js guarda la elección en el navegador)."""
+    def opcion(valor, icono, texto):
+        return fh.Button(UkIcon(icono, height=14, width=14), texto, type="button", data_tema=valor,
+                         aria_pressed="false",
+                         cls="inline-flex items-center justify-center gap-1 rounded px-1 py-1 text-xs "
+                             "hover:bg-muted")
+    return Div(Span("Tema", cls="text-xs text-muted-foreground px-1"),
+               Div(opcion("light", "sun", "Claro"), opcion("dark", "moon", "Oscuro"),
+                   opcion("sistema", "monitor", "Sistema"),
+                   cls="grid grid-cols-3 gap-0.5 rounded-md border border-border p-0.5", role="group",
+                   aria_label="Tema"),
+               cls="px-2 py-2 space-y-1 border-t border-border mt-1")
+
+
 def _menu_usuario(usuario: dict):
     """Nombre del usuario con un desplegable: perfil, contraseña y salir."""
     item = "flex items-center gap-2 px-3 py-2 rounded hover:bg-muted w-full text-left text-sm"
@@ -35,6 +50,7 @@ def _menu_usuario(usuario: dict):
     opciones += [
         A(UkIcon("key-round", height=16, width=16), "Cambiar contraseña", href="/cambiar-password",
           cls=item),
+        selector_tema(),
         Form(fh.Button(UkIcon("log-out", height=16, width=16), "Salir", type="submit", cls=item),
              method="post", action="/logout", hx_post="/logout"),
     ]

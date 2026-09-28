@@ -26,6 +26,8 @@ la asignación docente y la carga horaria.
 - Tras 5 intentos fallidos el ingreso se bloquea 15 minutos. La administración puede
   desbloquearlo antes.
 - Para cambiar su contraseña: menú con su nombre (arriba a la derecha) → «Cambiar contraseña».
+- **Tema claro u oscuro:** menú con su nombre → «Tema»: *Claro*, *Oscuro* o *Sistema* (sigue la
+  configuración de su computadora o teléfono). La elección se guarda en ese navegador.
 
 ## Mi perfil
 

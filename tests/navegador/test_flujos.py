@@ -3,6 +3,8 @@
 Cubren lo que las pruebas con TestClient no ven: htmx, modales, confirmaciones, JavaScript de
 Franken UI y KaTeX, la política de seguridad de contenido y las descargas.
 """
+import re
+
 import openpyxl
 from playwright.sync_api import expect
 
@@ -108,3 +110,21 @@ def test_anexo_de_acreditacion(page, tmp_path):
     assert archivo.name.startswith("anexo-idi-") and archivo.suffix == ".xlsx"
     hojas = openpyxl.load_workbook(archivo).sheetnames
     assert len(hojas) > 3, hojas
+
+
+def test_cambiar_tema(page):
+    """Claro, oscuro o el del sistema, desde el menú del usuario; la elección se mantiene al recargar."""
+    entrar(page, "investigadora")
+    html = page.locator("html")
+    menu = page.locator("nav").get_by_role("button", name="Emmy")
+    menu.click()
+    page.get_by_role("button", name="Oscuro").click()
+    expect(html).to_have_class(re.compile(r"\bdark\b"))
+    page.reload()
+    expect(html).to_have_class(re.compile(r"\bdark\b"))
+    menu.click()
+    expect(page.get_by_role("button", name="Oscuro")).to_have_attribute("aria-pressed", "true")
+    page.get_by_role("button", name="Claro").click()
+    expect(html).not_to_have_class(re.compile(r"\bdark\b"))
+    page.get_by_role("button", name="Sistema").click()
+    assert page.evaluate("JSON.parse(localStorage.getItem('__FRANKEN__') || '{}').mode") is None

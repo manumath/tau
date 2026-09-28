@@ -24,7 +24,7 @@ uv run python .claude/skills/captura-visual/capturar.py [opciones] RUTA [RUTA ..
   una clave inventada; se fija **solo en la copia**.
 - `--rol ROL:SIGLA` (repetible) asigna roles en la copia, p. ej. `--rol direccion_carrera:CMAT`
   (la cuenta admin no la tiene y es la única que define vínculos y carga).
-- `--salida DIR` (use el scratchpad de la sesión), `--movil` (375 × 812), `--pagina-completa`.
+- `--salida DIR` (use el scratchpad de la sesión), `--movil` (375 × 812), `--pagina-completa`, `--oscuro` (revisar el modo oscuro).
 
 Ejemplos:
 

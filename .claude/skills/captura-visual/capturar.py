@@ -17,6 +17,7 @@ Opciones:
   --salida DIR        carpeta de las capturas (por omisión, una temporal que se informa)
   --ancho N --alto N  tamaño de la ventana (1280 × 900); --movil usa 375 × 812
   --pagina-completa   captura la página entera, no solo la ventana
+  --oscuro            el navegador prefiere el modo oscuro (tema «Sistema»)
 
 Imprime la ruta de cada PNG. Termina con error si la página registra errores de JavaScript.
 """
@@ -100,7 +101,8 @@ def capturar(url: str, rutas: list[str], args, salida: Path) -> int:
     ancho, alto = (375, 812) if args.movil else (args.ancho, args.alto)
     with sync_playwright() as p:
         navegador = p.chromium.launch(channel=canal)
-        pagina = navegador.new_page(viewport={"width": ancho, "height": alto})
+        pagina = navegador.new_page(viewport={"width": ancho, "height": alto},
+                                    color_scheme="dark" if args.oscuro else "light")
         pagina.on("pageerror", lambda e: errores_js.append(str(e)))
         pagina.goto(f"{url}/login")
         pagina.fill("input[name=email]", args.como)
@@ -140,6 +142,7 @@ def main():
     ap.add_argument("--alto", type=int, default=900)
     ap.add_argument("--movil", action="store_true")
     ap.add_argument("--pagina-completa", action="store_true")
+    ap.add_argument("--oscuro", action="store_true")
     args = ap.parse_args()
 
     carpeta = Path(tempfile.mkdtemp(prefix="tau-captura-"))

@@ -79,10 +79,11 @@ def encabezados():
         Link(rel="stylesheet", href=url("vendor/franken-ui/core.min.css")),
         Script(type="module", src=url("vendor/franken-ui/core.iife.js")),
         Link(rel="stylesheet", href=url("css/tailwind.css")),
-        # Tema de Franken UI (azul, modo claro u oscuro según el sistema), como Theme.blue.headers().
+        # Tema de Franken UI (azul; claro u oscuro según la elección guardada o, si no hay, el sistema).
         headers_theme("blue", mode="auto", radii=ThemeRadii.sm, shadows=ThemeShadows.sm, font=ThemeFont.sm),
         scrollspy_style,
         Script(type="module", src=url("vendor/franken-ui/icon.iife.js")),
+        Script(src=url("js/tema.js"), defer=True),  # selector de tema claro / oscuro / sistema
         Link(rel="stylesheet", href=url("vendor/katex/katex.min.css")),
         Script(_KATEX_JS.format(auto_render=url("vendor/katex/contrib/auto-render.mjs")), type="module"),
     ]
