@@ -20,7 +20,7 @@ def gente(app):
     emmy = usuarios.por_email("inv@test.cl")["id"]
     usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
     alan = usuarios.crear("alan@test.cl", "Alan", "Turing", None)["id"]  # registrado sin acceso
-    vinculos.agregar(emmy, "titular", "2010-01-01", unidad=unidades.id_de("CMAT"))  # puede dictar en verano
+    vinculos.agregar(emmy, "titular", "2010-01-01")  # puede dictar en verano
     return {"emmy": emmy, "alan": alan}
 
 

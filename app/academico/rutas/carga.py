@@ -8,7 +8,7 @@ from monsterui.all import H2, H3, Button, ButtonT, TextPresets, UkIcon
 
 from app.academico import carga, gestiones, oferta
 from app.academico.componentes import pestanas
-from app.comun import permisos, unidades, vinculos
+from app.comun import permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import get_db
@@ -39,11 +39,11 @@ def _estado(r):
 
 
 def _edita(auth) -> bool:
-    return permisos.puede(auth, "gestionar_vinculos", unidades.id_de(unidades.CARRERA))
+    return permisos.puede(auth, "gestionar_vinculos", vinculos.carrera())
 
 
 def _url_vinculo(uid):
-    return f"/admin/usuarios/{uid}/vinculo?unidad={unidades.id_de(unidades.CARRERA)}"
+    return f"/admin/usuarios/{uid}/vinculo"
 
 
 @rt(BASE)

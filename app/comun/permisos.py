@@ -49,7 +49,7 @@ ACCIONES = {
     "ver_datos_personales": {"administracion_sistema"},
     "ver_usuarios": {"administracion_sistema", "direccion_instituto", "direccion_carrera", "gestion_datos"},
     # Datos de personas (por unidad)
-    "gestionar_vinculos": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
+    "gestionar_vinculos": {"direccion_carrera"},  # categoría y vínculo: solo la Dirección de Carrera
     "gestionar_estudiantes": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
     "gestionar_personas_externas": {"direccion_instituto", "gestion_datos"},
     "gestionar_fichas": {"direccion_instituto", "direccion_carrera", "gestion_datos"},

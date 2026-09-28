@@ -51,8 +51,8 @@ COMPLETA = dict(nombre="Anillos y autómatas", descripcion="Estudio de anillos a
                 linea=["2", "4"])
 
 
-def _crear(client, nombre="Anillos y autómatas"):
-    r = client.post("/propuestas", headers=HX, data={"nombre": nombre})
+def _crear(client, nombre="Anillos y autómatas", clase="investigacion"):
+    r = client.post("/propuestas", headers=HX, data={"nombre": nombre, "clase": clase})
     return int(r.headers["hx-redirect"].rsplit("/", 1)[1])
 
 
@@ -102,7 +102,7 @@ def test_proponen_titulares_y_contratados(client, gente, quien, puede):
     entrar(client, quien)
     assert (client.get("/propuestas/nueva", headers=HX).status_code == 200) == puede
     assert ("Proponer proyecto institucional" in client.get("/proyectos").text) == puede
-    r = client.post("/propuestas", headers=HX, data={"nombre": "X"})
+    r = client.post("/propuestas", headers=HX, data={"nombre": "X", "clase": "investigacion"})
     assert ("hx-redirect" in r.headers) == puede
 
 
@@ -329,3 +329,22 @@ def test_categorias_en_proyectos_institucionales(client, gente, fecha):
     indiv = proyectos.crear(dict(nombre="Individual", estado="vigente"), gente["carl"], gente["carl"])
     assert proyectos.agregar_participante(indiv, f"i:{gente['sofia']}", "co_responsable", False) is None
     assert get_db().q("SELECT tipo FROM proyecto WHERE id = ?", [indiv])[0]["tipo"] == "individual"
+
+
+def test_clases_de_proyecto_institucional(client, gente):
+    """Investigación o interacción social (extensión); las líneas solo son obligatorias en investigación."""
+    entrar(client, "emmy")
+    r = client.post("/propuestas", headers=HX, data={"nombre": "Sin clase"})
+    assert "Elija si es un proyecto de investigación o de interacción social" in r.text
+    assert "Interacción social (extensión)" in client.get("/propuestas/nueva", headers=HX).text
+    prop_id = _crear(client, "Olimpiadas en los colegios", clase="interaccion_social")
+    prop = inst.obtener(prop_id)
+    assert prop["clase"] == "interaccion_social"
+    assert proyectos.tipo_texto(proyectos.obtener(prop["proyecto_id"])) == "Institucional de interacción social"
+    datos = {k: v for k, v in COMPLETA.items() if k != "linea"}
+    client.put(f"/propuestas/{prop_id}", headers=HX, data=datos)
+    assert "al menos una línea de investigación" not in inst.faltantes(inst.obtener(prop_id))
+    assert inst.copia(inst.obtener(prop_id))["clase"] == "Interacción social (extensión)"
+    otra = inst.obtener(_crear(client, "Álgebra"))
+    assert "al menos una línea de investigación" in inst.faltantes(otra)
+    assert "Interacción social" in client.get(f"/propuestas/{prop_id}").text

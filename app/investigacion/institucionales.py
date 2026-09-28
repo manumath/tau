@@ -4,6 +4,9 @@ Reglas (ver PLAN.md, sección 11):
   - Un periodo va de octubre a septiembre; se identifica por su año de inicio (2026 = oct 2026 –
     sept 2027). La convocatoria de un periodo es, por omisión, todo septiembre de ese año; la
     administración puede cambiar el plazo (tabla `convocatoria`).
+  - Dos clases de proyecto institucional: de investigación y de interacción social (extensión);
+    se elige al crear la propuesta. Las líneas de investigación son obligatorias en los de
+    investigación y opcionales en los de interacción social.
   - Proponen titulares y contratados. Quien propone un proyecto nuevo queda como responsable;
     la continuidad la propone un responsable del proyecto.
   - Flujo: borrador → enviada → aceptada | condicional | rechazada. Una propuesta condicional
@@ -153,7 +156,7 @@ def puede_editar(prop: dict, usuario: dict) -> bool:
 
 def obtener(prop_id: int) -> dict | None:
     filas = get_db().q(
-        """SELECT pi.*, p.tipo, p.estado AS estado_proyecto, u.nombres || ' ' || u.apellidos AS proponente
+        """SELECT pi.*, p.tipo, p.clase, p.estado AS estado_proyecto, u.nombres || ' ' || u.apellidos AS proponente
            FROM propuesta_institucional pi JOIN proyecto p ON p.id = pi.proyecto_id
            JOIN usuario u ON u.id = pi.proponente_id WHERE pi.id = ?""", [prop_id])
     if not filas:
@@ -189,7 +192,7 @@ def eventos(prop_id: int) -> list[dict]:
 def mis_propuestas(uid: int) -> list[dict]:
     """Propuestas que presentó o de proyectos en que es responsable vigente."""
     return get_db().q(
-        f"""SELECT pi.*, p.estado AS estado_proyecto FROM propuesta_institucional pi
+        f"""SELECT pi.*, p.clase, p.estado AS estado_proyecto FROM propuesta_institucional pi
            JOIN proyecto p ON p.id = pi.proyecto_id
            WHERE pi.proponente_id = :u OR pi.proyecto_id IN (
                  SELECT proyecto_id FROM proyecto_participante WHERE investigador_id = :u
@@ -201,8 +204,9 @@ def mis_propuestas(uid: int) -> list[dict]:
 def listar(periodo: int, estado: str = "") -> list[dict]:
     """Para la administración: propuestas de un periodo, sin borradores (no se han presentado)."""
     return get_db().q(
-        """SELECT pi.*, u.nombres || ' ' || u.apellidos AS proponente, u.apellidos AS proponente_apellidos
+        """SELECT pi.*, p.clase, u.nombres || ' ' || u.apellidos AS proponente, u.apellidos AS proponente_apellidos
            FROM propuesta_institucional pi JOIN usuario u ON u.id = pi.proponente_id
+           JOIN proyecto p ON p.id = pi.proyecto_id
            WHERE pi.periodo = :p AND pi.estado != 'borrador' AND (:e = '' OR pi.estado = :e)
            ORDER BY pi.estado != 'enviada', pi.enviada_en""", {"p": periodo, "e": estado})
 
@@ -224,17 +228,20 @@ def n_por_decidir() -> int:
 
 # --- Creación y edición -------------------------------------------------------------------------------
 
-def crear_nuevo(usuario: dict, nombre: str) -> tuple[int | None, str | None]:
+def crear_nuevo(usuario: dict, nombre: str, clase: str = "") -> tuple[int | None, str | None]:
     """Proyecto institucional en formulación + su propuesta en borrador. → (id propuesta, error)."""
     if not puede_proponer(usuario):
         return None, "Solo investigadores titulares o contratados pueden proponer proyectos institucionales."
     nombre = nombre.strip()
+    if clase not in proyectos.CLASES:
+        return None, "Elija si es un proyecto de investigación o de interacción social."
     if not nombre:
         return None, "Indique el nombre del proyecto."
     periodo = periodo_objetivo()
     db = get_db()
     with transaccion():
-        pid = db.t.proyecto.insert(nombre=nombre, estado="formulacion", tipo="institucional", moneda=config.MONEDA,
+        pid = db.t.proyecto.insert(nombre=nombre, estado="formulacion", tipo="institucional", clase=clase,
+                                   moneda=config.MONEDA,
                                    fecha_inicio=inicio(periodo), fecha_fin=fin(periodo),
                                    creado_por=usuario["id"])["id"]
         db.t.proyecto_participante.insert(proyecto_id=pid, investigador_id=usuario["id"], rol="responsable",
@@ -337,7 +344,7 @@ def faltantes(prop: dict) -> list[str]:
                   ("metodologia", "metodología"), ("resultados_esperados", "resultados esperados"),
                   ("bibliografia", "bibliografía")]
     falta = [texto for campo, texto in requeridos if not (prop[campo] or "").strip()]
-    if not prop["lineas"]:
+    if not prop["lineas"] and prop.get("clase") != "interaccion_social":
         falta.append("al menos una línea de investigación")
     else:
         cerradas = lineas.no_vigentes([x["id"] for x in prop["lineas"]], inicio(prop["periodo"]))
@@ -363,6 +370,7 @@ def copia(prop: dict) -> dict:
                "categoria": perfiles.categoria_texto(categoria(x["id"])) if x["interno"] else None}
               for x in proyectos.participantes(prop["proyecto_id"], solo_vigentes=True)]
     return {"nombre": prop["nombre"], "periodo": prop["periodo"], "modalidad": prop["modalidad"],
+            "clase": proyectos.CLASES.get(prop.get("clase") or "", ""),
             "proponente": prop["proponente"], "lineas": [x["nombre"] for x in prop["lineas"]],
             "descripcion": prop["descripcion"],
             "objetivo_general": prop["objetivo_general"],
@@ -600,7 +608,8 @@ def hojas_convocatoria(periodo: int) -> dict[str, list[dict]]:
     for p in listar(periodo):
         c = json.loads(p["copia_enviada"]) if p["copia_enviada"] else copia(obtener(p["id"]))
         clave = {"Proyecto": p["nombre"]}
-        resumen.append({**clave, "Modalidad": MODALIDADES[p["modalidad"]], "Proponente": p["proponente"],
+        resumen.append({**clave, "Clase": proyectos.CLASES.get(p["clase"] or "", ""),
+                        "Modalidad": MODALIDADES[p["modalidad"]], "Proponente": p["proponente"],
                         "Estado": ESTADOS[p["estado"]],
                         "Líneas de investigación": "; ".join(c.get("lineas", [])), "Enviada": (p["enviada_en"] or "")[:10],
                         "Envíos": p["envios"], "Decisión": (p["decidida_en"] or "")[:10],

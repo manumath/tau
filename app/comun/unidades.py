@@ -9,8 +9,6 @@ from app.comun.db import get_db
 
 INSTITUTO = "IIMAT"
 CARRERA = "CMAT"
-# Unidades con las que una persona puede tener vínculo (categoría y jornada).
-CON_VINCULO = (INSTITUTO, CARRERA)
 
 
 def todas() -> list[dict]:
@@ -40,10 +38,6 @@ def id_de(sigla: str) -> int:
 def instituto() -> int:
     """La unidad cuyo vínculo cuenta para los informes de investigación."""
     return id_de(INSTITUTO)
-
-
-def con_vinculo() -> list[dict]:
-    return [obtener(id_de(s)) for s in CON_VINCULO]
 
 
 def superiores(unidad_id: int) -> list[dict]:

@@ -60,7 +60,7 @@ def test_asignacion_docente(g2026):
     assert oferta.asignar(oid, emmy, "auxiliar") == ["Esa persona ya está asignada a este paralelo."]
     # Sin vínculo con la Carrera: se avisa, no se impide.
     assert oferta.sin_vinculo_con_la_carrera(emmy, g2026["I"])
-    vinculos.agregar(emmy, "titular", "2015-01-01", unidad=unidades.id_de("CMAT"))
+    vinculos.agregar(emmy, "titular", "2015-01-01")
     assert not oferta.sin_vinculo_con_la_carrera(emmy, g2026["I"])
     otra, _ = oferta.agregar(g2026["I"]["id"], "MAT-252", "A", "", 1)
     oferta.asignar(otra, emmy, "titular")
@@ -80,10 +80,10 @@ def test_cursos_de_temporada_solo_titulares(g2026):
     alan = usuarios.crear("alan@test.cl", "Alan", "Turing", None)["id"]
     oid, _ = oferta.agregar(g2026["VER"]["id"], "MAT-278", "A", "", 1)
     assert "titulares" in oferta.asignar(oid, emmy, "titular")[0]         # sin vínculo con la Carrera
-    vinculos.agregar(alan, "interino", "2020-01-01", unidad=unidades.id_de("CMAT"))
+    vinculos.agregar(alan, "interino", "2020-01-01")
     assert "titulares" in oferta.asignar(oid, alan, "titular")[0]         # interino: contrato semestral
     assert oferta.asignar(oid, alan, "auxiliar") == []                    # el auxiliar no tiene esa restricción
-    vinculos.agregar(emmy, "titular", "2015-01-01", unidad=unidades.id_de("CMAT"))
+    vinculos.agregar(emmy, "titular", "2015-01-01")
     assert oferta.asignar(oid, emmy, "titular") == []
     assert oferta.horas_de_docencia(emmy, g2026["VER"]["id"]) == 0       # no forma parte de la carga
 

@@ -25,12 +25,15 @@ def test_la_base_rechaza_categorias_desconocidas(app):
         perfiles.cambiar_categoria(_uid(), "emerito")
 
 
-def test_alta_exige_categoria_para_investigadores(admin):
-    datos = {"nombres": "Carl", "apellidos": "Gauss", "email": "gauss@test.cl", "es_investigador": "on"}
-    r = admin.post("/admin/usuarios", headers=HX, data=datos)
-    assert "Elija la categoría" in r.text and not usuarios.por_email("gauss@test.cl")
-    admin.post("/admin/usuarios", headers=HX, data={**datos, "categoria": "interino"})
-    assert usuarios.con_perfil(_uid("gauss@test.cl"))["categoria"] == "interino"
+def test_alta_con_categoria_solo_la_direccion_de_carrera(admin):
+    datos = {"nombres": "Carl", "apellidos": "Gauss", "email": "gauss@test.cl", "es_investigador": "on",
+             "categoria": "interino"}
+    admin.post("/admin/usuarios", headers=HX, data=datos)  # Adm. del sistema: la categoría se ignora
+    assert usuarios.con_perfil(_uid("gauss@test.cl"))["categoria"] is None
+    from app.comun import unidades
+    permisos.asignar(_uid("admin@test.cl"), "direccion_carrera", unidades.id_de("CMAT"))
+    admin.post("/admin/usuarios", headers=HX, data={**datos, "email": "gauss2@test.cl"})
+    assert usuarios.con_perfil(_uid("gauss2@test.cl"))["categoria"] == "interino"
 
 
 def test_alta_de_solo_admin_no_lleva_categoria(admin):
@@ -41,8 +44,8 @@ def test_alta_de_solo_admin_no_lleva_categoria(admin):
     assert permisos.tiene_rol(u, "administracion_sistema") and not u["es_investigador"] and u["categoria"] is None
 
 
-def test_cambiar_categoria_desde_el_listado(admin):
-    uid = _uid()
+def test_cambiar_categoria_desde_el_listado(carrera):
+    admin, uid = carrera, _uid()
     assert "Sin categoría" in admin.get("/admin/usuarios").text
     r = admin.post(f"/admin/usuarios/{uid}/categoria", headers=HX, data={"categoria": "contratado"})
     assert r.status_code == 200 and f'id="usuario-{uid}"' in r.text
@@ -55,7 +58,7 @@ def test_cambiar_categoria_desde_el_listado(admin):
     assert r.status_code == 400
 
 
-def test_solo_admin_cambia_la_categoria(client):
+def test_solo_la_direccion_de_carrera_cambia_la_categoria(client):
     usuarios.cambiar_password(_uid(), PASS_TEMP, temporal=False)
     login(client, "inv@test.cl", PASS_TEMP)
     r = client.post(f"/admin/usuarios/{_uid()}/categoria", headers=HX, data={"categoria": "titular"})
@@ -81,9 +84,15 @@ def test_csv_con_categoria(app):
 
 def test_csv_crea_cuentas_con_categoria(admin):
     csv = "email,nombres,apellidos,categoria\nx@test.cl,Xenia,Equis,externa\n"
+    contenido = {"contenido": base64.b64encode(csv.encode()).decode()}
+    admin.post("/admin/usuarios/importar/confirmar", headers=HX, data=contenido)
+    assert usuarios.con_perfil(_uid("x@test.cl"))["categoria"] is None  # sin Dirección de Carrera, se ignora
+    from app.comun import unidades
+    permisos.asignar(_uid("admin@test.cl"), "direccion_carrera", unidades.id_de("CMAT"))
+    csv = csv.replace("x@test.cl", "y@test.cl")
     admin.post("/admin/usuarios/importar/confirmar", headers=HX,
                data={"contenido": base64.b64encode(csv.encode()).decode()})
-    assert usuarios.con_perfil(_uid("x@test.cl"))["categoria"] == "externo"
+    assert usuarios.con_perfil(_uid("y@test.cl"))["categoria"] == "externo"
 
 
 def test_plantilla_incluye_categoria(app):

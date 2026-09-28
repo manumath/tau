@@ -38,22 +38,19 @@ def test_validacion_de_la_carga(emmy, cmat):
     assert vinculos.leer_carga({"horas": "", "docencia": "", "carga_detalle": ""}) is None
     assert vinculos.leer_carga({"horas": "160", "docencia": "64", "investigacion": "64", "extension": "32"}) == \
         _carga(160, docencia=64, investigacion=64, extension=32)
-    assert vinculos.agregar(emmy, "titular", "2020-01-01", unidad=cmat, carga=_carga(100, docencia=100)) == [
+    assert vinculos.agregar(emmy, "titular", "2020-01-01", carga=_carga(100, docencia=100)) == [
         "La carga contratada es de 32, 64, 96, 128 o 160 h/mes.", "Cada actividad es múltiplo de 32 h/mes (0, 32, 64…)."]
-    assert vinculos.agregar(emmy, "titular", "2020-01-01", unidad=cmat, carga=_carga(160, docencia=64)) == [
+    assert vinculos.agregar(emmy, "titular", "2020-01-01", carga=_carga(160, docencia=64)) == [
         "La distribución por actividad suma 64 h/mes y debe sumar la carga contratada (160 h/mes)."]
-    assert vinculos.agregar(emmy, "titular", "2020-01-01", unidad=cmat, carga={**_carga(None, docencia=64)})[0] \
+    assert vinculos.agregar(emmy, "titular", "2020-01-01", carga={**_carga(None, docencia=64)})[0] \
         .startswith("La carga contratada es de")
-    # Solo en el vínculo con la Carrera.
-    assert vinculos.agregar(emmy, "titular", "2020-01-01", carga=_carga(64, docencia=64)) == [
-        "La carga horaria se registra en el vínculo con la Carrera."]
-    assert vinculos.agregar(emmy, "titular", "2020-01-01", unidad=cmat,
+    assert vinculos.agregar(emmy, "titular", "2020-01-01",
                             carga=_carga(160, docencia=64, investigacion=64, extension=32)) == []
-    v = vinculos.vigente(emmy, unidad=cmat)
+    v = vinculos.vigente(emmy)
     assert vinculos.texto_carga(v) == "160 h/mes: docencia 64, investigación 64, extensión 32"
     # Un cambio de carga es un periodo nuevo; el anterior se cierra.
-    assert vinculos.cambiar_categoria(emmy, "titular", "2026-02-01", unidad=cmat, carga=_carga(96, docencia=96)) == []
-    periodos = vinculos.listar(emmy, cmat)
+    assert vinculos.cambiar_categoria(emmy, "titular", "2026-02-01", carga=_carga(96, docencia=96)) == []
+    periodos = vinculos.listar(emmy)
     assert [(p["fecha_fin"], p["horas_contratadas"]) for p in periodos] == [("2026-01-31", 160), (None, 96)]
     # Corregir sin carga deja el periodo sin carga registrada.
     assert vinculos.editar(periodos[1]["id"], "titular", "2026-02-01", None) == []
@@ -65,9 +62,9 @@ def test_resumen_por_semestre(g, emmy, cmat):
     _dictar(g["I"], alan, "MAT-111")
     r = carga.resumen(alan, g["I"])
     assert (r["contratada"], r["asignada"], r["avisos"]) == (None, 32, ["Sin vínculo con la Carrera al inicio del semestre."])
-    vinculos.agregar(emmy, "titular", "2020-01-01", unidad=cmat)
+    vinculos.agregar(emmy, "titular", "2020-01-01")
     assert carga.resumen(emmy, g["I"])["avisos"] == ["Falta registrar la carga contratada en su vínculo con la Carrera."]
-    vid = vinculos.vigente(emmy, unidad=cmat)["id"]
+    vid = vinculos.vigente(emmy)["id"]
     vinculos.editar(vid, "titular", "2020-01-01", None, carga=_carga(160, docencia=64, investigacion=64, extension=32))
     _dictar(g["I"], emmy, "MAT-251")
     assert carga.resumen(emmy, g["I"])["avisos"] == [
@@ -83,9 +80,9 @@ def test_resumen_por_semestre(g, emmy, cmat):
 
 
 def test_jce_del_anexo(g, emmy, cmat):
-    vinculos.agregar(emmy, "titular", "2020-01-01", None, 40)  # Instituto: jornada histórica de RR. HH.
+    vinculos.agregar(emmy, "titular", "2020-01-01", "2025-12-31", 40)  # jornada histórica de RR. HH.
     assert anexo.cuerpo_academico(2025, "2025-12-31")["horas"] == 160  # sin carga: jornada 40 h/semana × 4
-    vinculos.agregar(emmy, "titular", "2026-01-01", unidad=cmat, carga=_carga(128, docencia=64, investigacion=64))
+    vinculos.agregar(emmy, "titular", "2026-01-01", carga=_carga(128, docencia=64, investigacion=64))
     c = anexo.cuerpo_academico(2026, "2026-12-31")
     assert (c["horas"], c["jce"]) == (128, 0.8)                        # la carga contratada manda
     assert carga.contratada_en(emmy, "2025-06-01") is None
@@ -96,21 +93,19 @@ def test_pantallas_y_permisos(client, g, emmy, cmat):
     login(client, "inv@test.cl", PASS_TEMP)
     assert client.get("/docencia/carga").status_code == 403
     permisos.asignar(emmy, "coordinacion_academica", cmat)  # ve, pero no registra
-    vinculos.agregar(emmy, "titular", "2020-01-01", unidad=cmat, carga=_carga(64, docencia=32, gestion=32))
+    vinculos.agregar(emmy, "titular", "2020-01-01", carga=_carga(64, docencia=32, gestion=32))
     r = client.get(f"/docencia/carga?gestion={g['I']['id']}")
     assert "Noether" in r.text and "La registra la Dirección de Carrera" in r.text
     assert "Falta asignar 1 materia" in r.text
     detalle = client.get(f"/docencia/carga/{g['I']['id']}/{emmy}", headers=HX).text
     assert "64 h/mes" in detalle and "Registrar o cambiar la carga" not in detalle
-    assert client.get(f"/admin/usuarios/{emmy}/vinculo?unidad={cmat}", headers=HX).status_code == 403
+    assert client.get(f"/admin/usuarios/{emmy}/vinculo", headers=HX).status_code == 403
 
     # La Dirección de Carrera registra la carga desde Usuarios → Vínculo (pestaña de la Carrera).
     permisos.asignar(emmy, "direccion_carrera", cmat)
     assert "Registrar o cambiar la carga" in client.get(f"/docencia/carga/{g['I']['id']}/{emmy}", headers=HX).text
-    modal = client.get(f"/admin/usuarios/{emmy}/vinculo?unidad={cmat}", headers=HX).text
+    modal = client.get(f"/admin/usuarios/{emmy}/vinculo", headers=HX).text
     assert "Carga horaria contratada" in modal and "64 h/mes: docencia 32, gestión 32" in modal
-    iimat = client.get(f"/admin/usuarios/{emmy}/vinculo?unidad={unidades.instituto()}", headers=HX)
-    assert iimat.status_code == 403 or "Carga horaria contratada" not in iimat.text
     r = client.post(f"/admin/usuarios/{emmy}/vinculo/cambio", headers=HX,
                     data={"categoria": "titular", "desde": "2026-08-01", "unidad": str(cmat), "horas": "160",
                           "docencia": "64", "investigacion": "64", "extension": "0", "gestion": "32", "otras": "0"})
@@ -119,7 +114,7 @@ def test_pantallas_y_permisos(client, g, emmy, cmat):
                     data={"categoria": "interino", "desde": "2010-01-01", "hasta": "2011-12-31", "unidad": str(cmat),
                           "horas": "96", "docencia": "64"})
     assert "debe sumar la carga contratada (96 h/mes)" in r.text and 'value="96" selected' in r.text
-    vid = vinculos.vigente(emmy, unidad=cmat)["id"]
+    vid = vinculos.vigente(emmy)["id"]
     client.put(f"/admin/usuarios/vinculo/{vid}", headers=HX,
                data={"categoria": "titular", "desde": "2026-08-01", "horas": "128", "docencia": "96", "otras": "32",
                      "carga_detalle": "Tutoría"})

@@ -1,17 +1,18 @@
-"""Historial de vínculo de cada persona con una unidad (categoría y jornada por periodo).
+"""Historial de vínculo de cada persona (categoría y carga horaria por periodo).
 
-- Cada vínculo es con una unidad (app.comun.unidades): el Instituto (IIMAT) o la Carrera (CMAT).
-  Una persona puede tener ambos a la vez. Todas las funciones reciben `unidad` (id); sin ella,
-  el Instituto, que es el vínculo que cuenta para los informes de investigación.
-- Periodos sin superposición dentro de una misma unidad. fecha_inicio None = ingreso desconocido («desde siempre»);
+- Dependencia única: el vínculo es con la Carrera (CMAT), de la que el Instituto (IIMAT) forma
+  parte. Lo define solo la Dirección de Carrera: categoría, cambios, término y carga contratada.
+  La columna `unidad_id` guarda siempre la Carrera (la migración 0032 unió los periodos que antes
+  se llevaban por separado con el Instituto).
+- Periodos sin superposición. fecha_inicio None = ingreso desconocido («desde siempre»);
   fecha_fin None = vigente.
-- La categoría vigente de una persona es la de su vínculo vigente hoy con el Instituto; en SQL,
+- La categoría vigente de una persona es la de su vínculo vigente hoy; en SQL,
   `sql_categoria_vigente` (se calcula siempre: no hay copia que sincronizar).
 - Los informes usan la categoría **a la fecha** de cada producto o actividad (`en_fecha`).
-- Carga horaria contratada: cada periodo con la **Carrera** lleva la carga total (32, 64, 96, 128 o
-  160 h/mes) y su distribución por actividad en múltiplos de 32 h/mes, que suma la carga total. La
-  registra quien gestiona los vínculos de la Carrera (la Dirección de Carrera). Un cambio de carga
-  es un periodo nuevo («Registrar cambio»). Ver app.academico.carga para la vista por semestre.
+- Carga horaria contratada: cada periodo lleva la carga total (32, 64, 96, 128 o 160 h/mes) y su
+  distribución por actividad en múltiplos de 32 h/mes, que suma la carga total. Un cambio de carga
+  es un periodo nuevo («Cambiar de categoría o de carga»). Ver app.academico.carga para la vista
+  por semestre. Participar en proyectos no exige carga de investigación o extensión.
 """
 import calendar
 from datetime import date, timedelta
@@ -37,13 +38,14 @@ def hoy() -> date:
     return date.today()
 
 
-def _unidad(unidad: int | None) -> int:
-    return unidad or unidades.instituto()
+def carrera() -> int:
+    """La unidad del vínculo: la Carrera (dependencia única; el Instituto es parte de ella)."""
+    return unidades.id_de(unidades.CARRERA)
 
 
-def listar(uid: int, unidad: int | None = None) -> list[dict]:
+def listar(uid: int) -> list[dict]:
     return get_db().q("""SELECT * FROM vinculo WHERE usuario_id = ? AND unidad_id = ?
-                         ORDER BY COALESCE(fecha_inicio, ?), id""", [uid, _unidad(unidad), INICIO_DESCONOCIDO])
+                         ORDER BY COALESCE(fecha_inicio, ?), id""", [uid, carrera(), INICIO_DESCONOCIDO])
 
 
 def listar_todos(uid: int) -> list[dict]:
@@ -62,12 +64,12 @@ def _cubre(v: dict, fecha: str) -> bool:
     return (v["fecha_inicio"] or INICIO_DESCONOCIDO) <= fecha <= (v["fecha_fin"] or SIN_FIN)
 
 
-def vigente(uid: int, fecha: str | None = None, unidad: int | None = None) -> dict | None:
+def vigente(uid: int, fecha: str | None = None) -> dict | None:
     fecha = fecha or hoy().isoformat()
-    return next((v for v in listar(uid, unidad) if _cubre(v, fecha)), None)
+    return next((v for v in listar(uid) if _cubre(v, fecha)), None)
 
 
-def en_fecha(uid: int, anio: int, mes: int | None = None, unidad: int | None = None) -> tuple[str, str | None]:
+def en_fecha(uid: int, anio: int, mes: int | None = None) -> tuple[str, str | None]:
     """¿Estaba vinculado en esa fecha? → ('si' | 'no' | 'dudoso', categoría).
 
     Con mes, se mira el mes completo. Sin mes, 'si' si un mismo periodo cubre todo el año;
@@ -76,16 +78,16 @@ def en_fecha(uid: int, anio: int, mes: int | None = None, unidad: int | None = N
         desde, hasta = f"{anio}-{mes:02d}-01", f"{anio}-{mes:02d}-{calendar.monthrange(anio, mes)[1]:02d}"
     else:
         desde, hasta = f"{anio}-01-01", f"{anio}-12-31"
-    return _en_rango(uid, desde, hasta, unidad)
+    return _en_rango(uid, desde, hasta)
 
 
-def en_dia(uid: int, fecha: str, unidad: int | None = None) -> tuple[str, str | None]:
-    return _en_rango(uid, fecha, fecha, unidad)
+def en_dia(uid: int, fecha: str) -> tuple[str, str | None]:
+    return _en_rango(uid, fecha, fecha)
 
 
-def _en_rango(uid, desde, hasta, unidad=None):
+def _en_rango(uid, desde, hasta):
     parcial = None
-    for v in listar(uid, unidad):
+    for v in listar(uid):
         ini, fin = v["fecha_inicio"] or INICIO_DESCONOCIDO, v["fecha_fin"] or SIN_FIN
         if ini <= desde and hasta <= fin:
             return "si", v["categoria"]
@@ -94,25 +96,24 @@ def _en_rango(uid, desde, hasta, unidad=None):
     return ("dudoso", parcial) if parcial else ("no", None)
 
 
-def personas_en_rango(desde: str, hasta: str, unidad: int | None = None) -> list[dict]:
-    """Personas con algún periodo de vínculo con la unidad que toque [desde, hasta]."""
+def personas_en_rango(desde: str, hasta: str) -> list[dict]:
+    """Personas con algún periodo de vínculo que toque [desde, hasta]."""
     return get_db().q(
         """SELECT DISTINCT u.id, u.nombres, u.apellidos FROM usuario u JOIN vinculo v ON v.usuario_id = u.id
            WHERE v.unidad_id = ? AND (v.fecha_inicio IS NULL OR v.fecha_inicio <= ?)
              AND (v.fecha_fin IS NULL OR v.fecha_fin >= ?)
-           ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""", [_unidad(unidad), hasta, desde])
+           ORDER BY sin_tildes(u.apellidos), sin_tildes(u.nombres)""", [carrera(), hasta, desde])
 
 
-def sin_fecha_de_ingreso(unidad: int | None = None) -> list[dict]:
-    """Personas cuyo primer periodo con la unidad no tiene fecha de inicio (para advertir en informes)."""
+def sin_fecha_de_ingreso() -> list[dict]:
+    """Personas cuyo primer periodo no tiene fecha de inicio (para advertir en informes)."""
     return get_db().q(
         """SELECT DISTINCT u.id, u.nombres, u.apellidos FROM vinculo v JOIN usuario u ON u.id = v.usuario_id
-           WHERE v.fecha_inicio IS NULL AND v.unidad_id = ? ORDER BY u.apellidos, u.nombres""", [_unidad(unidad)])
+           WHERE v.fecha_inicio IS NULL AND v.unidad_id = ? ORDER BY u.apellidos, u.nombres""", [carrera()])
 
 
 def resumen(uid: int) -> str | None:
-    """«En el instituto desde 2019 · Titular desde 2023» (o None si no tiene vínculo vigente con el
-    Instituto)."""
+    """«Vinculado(a) desde 2019 · Titular desde 2023» (o None si no tiene vínculo vigente)."""
     actual = vigente(uid)
     if not actual:
         return None
@@ -124,7 +125,7 @@ def resumen(uid: int) -> str | None:
             date.fromisoformat(periodos[i - 1]["fecha_fin"]) + timedelta(days=1) >= date.fromisoformat(inicio):
         i -= 1
         inicio = periodos[i]["fecha_inicio"]
-    partes = [f"En el instituto desde {inicio[:4]}" if inicio else "En el instituto (fecha de ingreso sin registrar)"]
+    partes = [f"Vinculado(a) desde {inicio[:4]}" if inicio else "Vinculado(a) (fecha de ingreso sin registrar)"]
     if actual["fecha_inicio"] and actual["fecha_inicio"] != inicio:
         partes.append(f"{CATEGORIAS[actual['categoria']]} desde {actual['fecha_inicio'][:4]}")
     else:
@@ -140,8 +141,7 @@ def _fecha(valor) -> str | None:
     return date.fromisoformat(str(valor)).isoformat()
 
 
-def validar(uid: int, categoria: str, desde, hasta, jornada=None, excluir: int | None = None,
-            unidad: int | None = None) -> list[str]:
+def validar(uid: int, categoria: str, desde, hasta, jornada=None, excluir: int | None = None) -> list[str]:
     errores = []
     if categoria not in CATEGORIAS:
         errores.append("Categoría no válida.")
@@ -154,7 +154,7 @@ def validar(uid: int, categoria: str, desde, hasta, jornada=None, excluir: int |
     if jornada not in (None, "") and not (str(jornada).isdigit() and 1 <= int(jornada) <= 60):
         errores.append("La jornada debe ser un número de horas semanales entre 1 y 60.")
     ini, fin = d or INICIO_DESCONOCIDO, h or SIN_FIN
-    for v in listar(uid, unidad):
+    for v in listar(uid):
         if v["id"] == excluir:
             continue
         if ini <= (v["fecha_fin"] or SIN_FIN) and fin >= (v["fecha_inicio"] or INICIO_DESCONOCIDO):
@@ -180,11 +180,9 @@ def leer_carga(datos: dict) -> dict | None:
     return {"horas": horas, "actividades": {k: (0 if h is None else h) for k, h in acts.items()}, "detalle": detalle}
 
 
-def validar_carga(carga: dict | None, unidad: int | None) -> list[str]:
+def validar_carga(carga: dict | None) -> list[str]:
     if carga is None:
         return []
-    if _unidad(unidad) != unidades.id_de(unidades.CARRERA):
-        return ["La carga horaria se registra en el vínculo con la Carrera."]
     errores = []
     if carga["horas"] not in CARGAS:
         errores.append("La carga contratada es de 32, 64, 96, 128 o 160 h/mes.")
@@ -226,11 +224,11 @@ def texto_periodo(v: dict) -> str:
 
 
 def agregar(uid: int, categoria: str, desde=None, hasta=None, jornada=None, nota=None,
-            creado_por: int | None = None, unidad: int | None = None, carga: dict | None = None) -> list[str]:
-    errores = validar(uid, categoria, desde, hasta, jornada, unidad=unidad) + validar_carga(carga, unidad)
+            creado_por: int | None = None, carga: dict | None = None) -> list[str]:
+    errores = validar(uid, categoria, desde, hasta, jornada) + validar_carga(carga)
     if errores:
         return errores
-    get_db().t.vinculo.insert(usuario_id=uid, unidad_id=_unidad(unidad), categoria=categoria, fecha_inicio=_fecha(desde),
+    get_db().t.vinculo.insert(usuario_id=uid, unidad_id=carrera(), categoria=categoria, fecha_inicio=_fecha(desde),
                               fecha_fin=_fecha(hasta), jornada_horas=int(jornada) if jornada else None,
                               nota=(nota or "").strip() or None, creado_por=creado_por, **_columnas_carga(carga))
     return []
@@ -241,8 +239,7 @@ def editar(vid: int, categoria: str, desde, hasta, jornada=None, nota=None, carg
     v = obtener(vid)
     if not v:
         return ["Periodo no encontrado."]
-    errores = validar(v["usuario_id"], categoria, desde, hasta, jornada, excluir=vid, unidad=v["unidad_id"]) \
-        + validar_carga(carga, v["unidad_id"])
+    errores = validar(v["usuario_id"], categoria, desde, hasta, jornada, excluir=vid) + validar_carga(carga)
     if errores:
         return errores
     # Sin jornada (ya no se pide en el formulario) se conserva la registrada: dato histórico de RR. HH.
@@ -276,8 +273,7 @@ def corregir_categoria_vigente(uid: int, categoria: str | None):
         agregar(uid, categoria)
 
 
-def cambiar_categoria(uid: int, categoria: str, desde, jornada=None, creado_por: int | None = None,
-                      unidad: int | None = None, carga: dict | None = None) -> list[str]:
+def cambiar_categoria(uid: int, categoria: str, desde, jornada=None, creado_por: int | None = None, carga: dict | None = None) -> list[str]:
     """Cierra el periodo vigente el día anterior a `desde` y abre uno nuevo con la categoría (y la
     carga, en la Carrera: un cambio de carga también es un periodo nuevo)."""
     try:
@@ -286,7 +282,7 @@ def cambiar_categoria(uid: int, categoria: str, desde, jornada=None, creado_por:
         return ["Fecha no válida."]
     if not d:
         return ["Indique desde qué fecha rige la nueva categoría."]
-    actual = vigente(uid, d, unidad) or vigente(uid, unidad=unidad)
+    actual = vigente(uid, d) or vigente(uid)
     if actual:
         if actual["fecha_inicio"] and actual["fecha_inicio"] >= d:
             return ["La fecha debe ser posterior al inicio del periodo vigente."]
@@ -295,13 +291,13 @@ def cambiar_categoria(uid: int, categoria: str, desde, jornada=None, creado_por:
         cierre = (date.fromisoformat(d) - timedelta(days=1)).isoformat()
         get_db().execute("UPDATE vinculo SET fecha_fin = ? WHERE id = ?", [cierre, actual["id"]])
     errores = agregar(uid, categoria, d, None, jornada if jornada not in ("", None) else
-                      (actual or {}).get("jornada_horas"), None, creado_por, unidad, carga)
+                      (actual or {}).get("jornada_horas"), None, creado_por, carga)
     if errores and actual:  # deshace el cierre
         get_db().execute("UPDATE vinculo SET fecha_fin = NULL WHERE id = ?", [actual["id"]])
     return errores
 
 
-def terminar(uid: int, fecha, unidad: int | None = None) -> list[str]:
+def terminar(uid: int, fecha) -> list[str]:
     """Pone fecha de término al periodo vigente."""
     try:
         f = _fecha(fecha)
@@ -309,7 +305,7 @@ def terminar(uid: int, fecha, unidad: int | None = None) -> list[str]:
         return ["Fecha no válida."]
     if not f:
         return ["Indique la fecha de término."]
-    actual = vigente(uid, unidad=unidad) or vigente(uid, f, unidad)
+    actual = vigente(uid) or vigente(uid, f)
     if not actual:
         return ["No tiene un vínculo vigente."]
     if actual["fecha_inicio"] and f < actual["fecha_inicio"]:
@@ -318,15 +314,14 @@ def terminar(uid: int, fecha, unidad: int | None = None) -> list[str]:
     return []
 
 
-def reemplazar_historial(uid: int, periodos: list[dict], creado_por: int | None = None,
-                         unidad: int | None = None):
-    """Reemplaza el historial de una persona con una unidad (carga desde Recursos Humanos). Los
+def reemplazar_historial(uid: int, periodos: list[dict], creado_por: int | None = None):
+    """Reemplaza el historial de una persona (carga desde Recursos Humanos). Los
     periodos deben venir validados (ver importar_vinculos)."""
     db = get_db()
     with transaccion():
-        db.execute("DELETE FROM vinculo WHERE usuario_id = ? AND unidad_id = ?", [uid, _unidad(unidad)])
+        db.execute("DELETE FROM vinculo WHERE usuario_id = ? AND unidad_id = ?", [uid, carrera()])
         for p in periodos:
-            db.t.vinculo.insert(usuario_id=uid, unidad_id=_unidad(unidad), categoria=p["categoria"], fecha_inicio=p["desde"],
+            db.t.vinculo.insert(usuario_id=uid, unidad_id=carrera(), categoria=p["categoria"], fecha_inicio=p["desde"],
                                 fecha_fin=p["hasta"], jornada_horas=p.get("jornada"), nota=p.get("nota"),
                                 creado_por=creado_por)
 
@@ -336,10 +331,10 @@ def categoria_texto(categoria: str | None) -> str:
 
 
 def sql_categoria_vigente(alias: str = "u") -> str:
-    """Expresión SQL: categoría del vínculo vigente hoy con el Instituto de la fila `alias` de
+    """Expresión SQL: categoría del vínculo vigente hoy de la fila `alias` de
     usuario (NULL si no tiene). «Hoy» es `hoy()`, igual que en `vigente` (una sola fuente)."""
     f = hoy().isoformat()  # una fecha ISO, nunca un dato del usuario
     return (f"(SELECT v.categoria FROM vinculo v WHERE v.usuario_id = {alias}.id AND v.unidad_id = "
-            f"(SELECT id FROM unidad WHERE sigla = '{unidades.INSTITUTO}') "
+            f"(SELECT id FROM unidad WHERE sigla = '{unidades.CARRERA}') "
             f"AND (v.fecha_inicio IS NULL OR v.fecha_inicio <= '{f}') AND (v.fecha_fin IS NULL OR v.fecha_fin >= '{f}') "
             f"ORDER BY v.fecha_inicio DESC LIMIT 1)")

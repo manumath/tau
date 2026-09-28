@@ -22,6 +22,15 @@ from app.comun import permisos, personas
 from app.comun.db import AHORA, DISTINTO_DE, get_db, sin_tildes, transaccion, vigente_hasta
 
 TIPOS = {"individual": "Individual", "institucional": "Institucional"}
+# Clase de un proyecto institucional (los individuales no llevan).
+CLASES = {"investigacion": "Investigación", "interaccion_social": "Interacción social (extensión)"}
+
+
+def tipo_texto(p: dict) -> str:
+    """«Individual», «Institucional de investigación», «Institucional de interacción social»."""
+    if p["tipo"] == "institucional" and p.get("clase"):
+        return "Institucional de " + ("investigación" if p["clase"] == "investigacion" else "interacción social")
+    return TIPOS[p["tipo"]]
 ESTADOS = {"formulacion": "En formulación", "vigente": "Vigente", "finalizado": "Finalizado"}
 ROLES = {"responsable": "Responsable", "co_responsable": "Co-responsable",
          "co_investigador": "Co-investigador(a)", "postdoc": "Postdoctorado",
@@ -75,13 +84,19 @@ def validar(d: dict) -> list[str]:
     return errores
 
 
-def crear(d: dict, responsable_id: int, creado_por: int, tipo: str = "individual") -> int:
+def crear(d: dict, responsable_id: int, creado_por: int, tipo: str = "individual",
+          clase: str | None = None) -> int:
+    """`clase` (investigación o interacción social) solo en los institucionales; por omisión, investigación."""
     if tipo not in TIPOS:
         raise ValueError(f"Tipo de proyecto no válido: {tipo}")
+    clase = (clase or "investigacion") if tipo == "institucional" else None
+    if clase is not None and clase not in CLASES:
+        raise ValueError(f"Clase de proyecto no válida: {clase}")
     from app.comun import config
     db = get_db()
     with transaccion():
-        pid = db.t.proyecto.insert(**{"moneda": config.MONEDA, **d}, tipo=tipo, creado_por=creado_por)["id"]
+        pid = db.t.proyecto.insert(**{"moneda": config.MONEDA, **d}, tipo=tipo, clase=clase,
+                                   creado_por=creado_por)["id"]
         db.t.proyecto_participante.insert(proyecto_id=pid, investigador_id=responsable_id,
                                           rol="responsable", fecha_desde=d.get("fecha_inicio"))
     return pid
@@ -267,6 +282,19 @@ def puede_gestionar(pid: int, usuario: dict) -> bool:
 def puede_reasignar(usuario: dict) -> bool:
     """Reasignar al responsable de un proyecto: Dirección del Instituto."""
     return permisos.puede(usuario, "reasignar_responsable")
+
+
+def puede_eliminar(p: dict, usuario: dict) -> bool:
+    """Un proyecto individual lo elimina su responsable (o quien lo registró). Los institucionales
+    siguen su flujo (propuesta, decisión, término) y no se eliminan."""
+    return p["tipo"] == "individual" and (rol_de(p["id"], usuario["id"]) == "responsable"
+                                          or p["creado_por"] == usuario["id"])
+
+
+def eliminar(pid: int):
+    """Borra el proyecto con sus participantes, objetivos, contrapartes y enlaces. Los productos y
+    actividades enlazados no se borran: siguen en el registro de sus autores."""
+    get_db().execute("DELETE FROM proyecto WHERE id = ?", [pid])
 
 
 def puede_crear(usuario: dict) -> bool:

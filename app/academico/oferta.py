@@ -14,7 +14,7 @@
 """
 import re
 
-from app.comun import unidades, vinculos
+from app.comun import vinculos
 from app.comun.db import get_db
 
 ROLES = {"titular": "Titular", "auxiliar": "Auxiliar"}
@@ -128,7 +128,7 @@ def quitar(oid: int):
 
 def es_titular(usuario_id: int, gestion: dict) -> bool:
     """¿Docente titular (de planta) de la Carrera al inicio de la gestión?"""
-    v = vinculos.vigente(usuario_id, gestion["fecha_inicio"], unidades.id_de(unidades.CARRERA))
+    v = vinculos.vigente(usuario_id, gestion["fecha_inicio"])
     return bool(v and v["categoria"] == "titular")
 
 
@@ -168,7 +168,7 @@ def quitar_docente(did: int) -> dict | None:
 
 def sin_vinculo_con_la_carrera(usuario_id: int, gestion: dict) -> bool:
     """¿La persona no tiene vínculo con la Carrera que cubra el inicio de la gestión?"""
-    return vinculos.vigente(usuario_id, gestion["fecha_inicio"], unidades.id_de(unidades.CARRERA)) is None
+    return vinculos.vigente(usuario_id, gestion["fecha_inicio"]) is None
 
 
 def docentes_posibles(gestion: dict) -> list[dict]:

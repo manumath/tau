@@ -110,6 +110,19 @@ def post(auth, sess, nombre: str = "", codigo: str = "", estado: str = "", fecha
     return Redirect(f"/proyectos/{pid}")
 
 
+@rt("/proyectos/{pid}")
+def delete(auth, sess, pid: int):
+    p = proyectos.obtener(pid)
+    if not p:
+        return Response("No encontrado", status_code=404)
+    if not proyectos.puede_eliminar(p, auth):
+        return Response("Solo el responsable puede eliminar un proyecto individual.", status_code=403)
+    proyectos.eliminar(pid)
+    auditar(auth["id"], "eliminar_proyecto", "proyecto", pid, p["nombre"])
+    add_toast(sess, f"Proyecto «{p['nombre']}» eliminado.", "success")
+    return Redirect("/proyectos")
+
+
 @rt("/proyectos/{pid}/datos/editar")
 def get(auth, pid: int):
     p, error = _proyecto_o_error(pid, auth, gestionar=True)

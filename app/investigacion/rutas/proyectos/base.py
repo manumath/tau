@@ -24,7 +24,8 @@ def insignia_estado(p):
 
 def insignia_tipo(p):
     if p["tipo"] == "institucional":
-        return insignia("Institucional", "azul", icono="landmark")
+        return insignia(proyectos.tipo_texto(p), "azul", icono="landmark" if p.get("clase") != "interaccion_social"
+                        else "hand-helping")
     return insignia("Individual", "gris", icono="user-round")
 
 

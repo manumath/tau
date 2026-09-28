@@ -872,7 +872,8 @@ Tabla `unidad` (nombre, sigla, tipo, unidad superior): UMSA › FCPN › CMAT �
 migración. Se usa para:
 
 - el **vínculo**, que pasa a tener `unidad_id` (los actuales, IIMAT): una persona puede estar
-  vinculada a la Carrera, al Instituto o a ambos, con categoría y jornada propias en cada uno;
+  vinculada a la Carrera, al Instituto o a ambos, con categoría y jornada propias en cada uno.
+  *Revisado el 28-sep-2026 (sección 25): hay una sola dependencia, la Carrera;*
 - el **alcance de los roles** (abajo) y de los informes (memoria del IIMAT, datos de la Carrera);
 - la **filiación** (hoy la lista fija `FILIACIONES` de config), que se deriva de la jerarquía.
 
@@ -1073,3 +1074,39 @@ docente · equivalencias cuando llegue el plan nuevo.
   agregan a mano; una troncal se puede quitar y volver a crear el año no la repone. Botón «Agregar
   las troncales» para completar semestres ya creados. La importación de gestiones pasadas no agrega
   troncales (el archivo manda).
+
+## 25. Dependencia única, clases de proyecto institucional y proyectos individuales (28-sep-2026)
+
+**Decisiones del instituto:**
+
+1. **Una sola dependencia.** El vínculo de cada persona es con la Carrera de Matemática; el
+   Instituto forma parte de ella, sin periodos diferenciados. **Solo la Dirección de Carrera**
+   define la categoría y el vínculo: altas, cambios, término y carga horaria contratada. La
+   Dirección del Instituto gestiona el ciclo de vida y los flujos de trabajo (actividades y
+   productos) de los proyectos, como unidades integradas por sus participantes, incluidos los
+   externos, tengan o no carga horaria asignada para investigación o extensión.
+2. **Dos clases de proyecto institucional:** de investigación y de interacción social
+   (extensión). Solo titulares y contratados pueden proponerlos (ya regía).
+3. Quien registra un **proyecto individual** puede eliminarlo.
+
+**Hecho (28-sep-2026):**
+
+- Migración 0032: los periodos con el Instituto pasan a la Carrera; los que se superponían con
+  uno de la Carrera se descartan (manda el de la Carrera, que lleva la carga). `vinculos` ya no
+  recibe `unidad`: todo es con la Carrera (`vinculos.carrera()`); la categoría vigente y los
+  informes usan ese único historial.
+- `gestionar_vinculos` = Dirección de Carrera (antes también Dirección del Instituto y Gestión de
+  datos). La ventana «Vínculo» ya no tiene selector de unidad. Al crear cuentas (formulario o CSV),
+  la categoría solo se toma si quien las crea tiene la Dirección de Carrera; si no, la cuenta queda
+  «Sin categoría». «Importar historial» ya no lleva columna `unidad` (si viene, se ignora).
+- Migración 0033: `proyecto.clase` (`investigacion` | `interaccion_social`; vacío en los
+  individuales; los institucionales existentes, investigación). Se elige al proponer. Las líneas
+  de investigación son obligatorias en los de investigación y opcionales en los de interacción
+  social. La clase figura en la propuesta, la bandeja y el XLSX de la convocatoria, la ficha del
+  proyecto, la memoria (institucionales separados por clase) y el anexo.
+- Proyectos individuales: botón «Eliminar» para su responsable (o quien lo registró). Se borran
+  participantes, objetivos, contrapartes y enlaces; los productos y actividades siguen en el
+  registro de sus autores. Los institucionales no se eliminan.
+
+**Por confirmar:** si el anexo de I+D+i (3.6.3 h) debe contar los proyectos de interacción social
+o solo los de investigación (hoy los lista todos, con su clase).

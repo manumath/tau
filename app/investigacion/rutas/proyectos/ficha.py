@@ -66,8 +66,16 @@ def get(auth, pid: int, tab: str = "resumen"):
         Div(Div(Div(insignia_tipo(p), insignia_estado(p),
                     Span(p["codigo"] or "", cls="font-mono text-sm text-muted-foreground"),
                     cls="flex items-center gap-2"),
-                A(UkIcon("file-text", height=14, width=14), "Informe", href=f"/proyectos/{pid}/informe",
-                  cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1"),
+                Div(A(UkIcon("file-text", height=14, width=14), "Informe", href=f"/proyectos/{pid}/informe",
+                      cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1"),
+                    fh.Button(UkIcon("trash-2", height=14, width=14), "Eliminar", type="button",
+                              cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1 text-red-600",
+                              hx_delete=f"/proyectos/{pid}",
+                              hx_confirm=f"¿Eliminar el proyecto «{p['nombre']}»? Se borran sus participantes, "
+                                         "objetivos y contrapartes. Los productos y actividades enlazados no se "
+                                         "borran: siguen en el registro de sus autores, sin este proyecto.")
+                    if proyectos.puede_eliminar(p, auth) else "",
+                    cls="flex items-center gap-2"),
                 cls="flex items-center justify-between gap-2"),
             H2(p["nombre"], cls="mt-2"),
             Div(P("Responsable: " + ", ".join(f"{r['nombres']} {r['apellidos']}" for r in responsables)

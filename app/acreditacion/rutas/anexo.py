@@ -149,7 +149,7 @@ def documento(a):
             _cifra(m["impacto"]["citas"], "citas (OpenAlex)"), cls="grid grid-cols-5 gap-3 mt-6"),
         H2("Resumen por año"), resumen,
         _criterio("2.2.1", "Cuerpo académico", "Dotación, categoría y dedicación (jornada) de quienes estuvieron "
-                  "vinculados al instituto cada año, según el historial de Recursos Humanos.", cuerpo),
+                  "vinculados a la Carrera y su Instituto cada año, según el historial de Recursos Humanos.", cuerpo),
         _criterio("3.6.3 a", "Publicaciones en revistas indexadas y arbitradas",
                   f"{len(a['articulos'])} artículos que cuentan: {rv['por_ambito'].get('Nacional', 0)} en revistas nacionales, "
                   f"{rv['por_ambito'].get('Internacional', 0)} en internacionales, {rv['acceso_abierto']} en acceso abierto.",
@@ -178,7 +178,7 @@ def documento(a):
                                           Div("Contrapartes: " + "; ".join(f"{c['institucion']} ({c['pais'] or '?'})"
                                                                            for c in p["contrapartes"]), cls="apagado text-xs")
                                           if p["contrapartes"] else ""),
-                                       Td(proyectos.TIPOS[p["tipo"]]),
+                                       Td(proyectos.tipo_texto(p)),
                                        Td(proyectos.AMBITOS.get(p["ambito_efectivo"], "Sin indicar")),
                                        Td(f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}"),
                                        Td(p["fuente_financiamiento"] or "—"), Td(p["responsables"] or "—"), _num(p["n_internos"]))
@@ -264,7 +264,7 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
                else "Incluye revistas sin verificar (clasificación declarada)"},
               {"Tema": "Índices que cuentan como indexado", "Descripción": ", ".join(m["revistas"]["politica"]["indexado"])},
               {"Tema": "Índices que cuentan como arbitrado", "Descripción": ", ".join(m["revistas"]["politica"]["arbitrado"])},
-              {"Tema": "Regla de conteo", "Descripción": "Al menos un autor vinculado al instituto en la fecha de publicación "
+              {"Tema": "Regla de conteo", "Descripción": "Al menos un autor vinculado (Carrera e Instituto) en la fecha de publicación "
                "que firmó con la filiación IIMAT/UMSA; cada producto se cuenta una vez."},
               {"Tema": "Cuerpo académico", "Descripción": "Personas con vínculo vigente al 31 de diciembre de cada año; "
                "JCE = carga contratada (h/mes) / 160; sin carga registrada, jornada del vínculo × 4."},

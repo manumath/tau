@@ -74,7 +74,7 @@ def vista_datos(p):
     return seccion("seccion-datos", "Datos básicos",
                    fila("Nombre", f"{p['nombres']} {p['apellidos']}"),
                    fila("Correo", p["email"]),
-                   fila("Vínculo", vinculos.resumen(p["id"]) or "Sin vínculo vigente con el instituto"),
+                   fila("Vínculo", vinculos.resumen(p["id"]) or "Sin vínculo vigente"),
                    fila("Grado académico", p["grado"] or "Sin grados registrados (ver «Grados académicos»)"),
                    fila("Cargo", p["cargo"]),
                    fila("Unidad o grupo", p["unidad"]),

@@ -163,7 +163,7 @@ def crear(filas: list[dict], invitar: bool, admin_id: int, enviar_invitacion) ->
             continue
         datos = dict(email=f["email"], nombres=f["nombres"], apellidos=f["apellidos"],
                      es_admin=f["es_admin"], es_investigador=f["es_investigador"],
-                     categoria=f["categoria"] if f["es_investigador"] else None,
+                     categoria=f["categoria"],
                      fecha_ingreso=f["fecha_ingreso"] if f["es_investigador"] else None)
         if invitar:
             u = usuarios.crear(password=secrets.token_urlsafe(24), debe_cambiar_pass=False, **datos)

@@ -132,7 +132,7 @@ def test_rutas_de_memoria_por_periodo(client, emmy):
 def aceptada(client, emmy, monkeypatch):
     """Propuesta de Emmy aceptada para 2026–2027 (con dos actividades previstas)."""
     monkeypatch.setattr(inst, "hoy", lambda: date(2026, 9, 10))
-    prop_id, _ = inst.crear_nuevo({"id": emmy, "es_investigador": True}, "Anillos")
+    prop_id, _ = inst.crear_nuevo({"id": emmy, "es_investigador": True}, "Anillos", "investigacion")
     prop = inst.obtener(prop_id)
     inst.guardar(prop, {k: COMPLETA[k] for k in ("nombre", "descripcion", "objetivo_general", "metodologia",
                                                  "resultados_esperados", "bibliografia")},
@@ -199,5 +199,5 @@ def test_exportar_convocatoria(client, emmy, aceptada):
     libro = load_workbook(io.BytesIO(r.content))
     assert libro.sheetnames == ["Propuestas", "Textos", "Objetivos", "Actividades previstas"]
     fila = [c.value for c in libro["Propuestas"][2]]
-    assert fila[:4] == ["Anillos y autómatas", "Proyecto nuevo", "Emmy Noether", "Aceptada"]
+    assert fila[:5] == ["Anillos y autómatas", "Investigación", "Proyecto nuevo", "Emmy Noether", "Aceptada"]
     assert libro["Objetivos"].max_row == 3 and libro["Actividades previstas"]["B2"].value == "oct 2026"

@@ -247,7 +247,7 @@ def documento_proyecto(datos, desde, hasta):
     return hoja(
         P(f"Informe de avance · {desde}–{hasta}", cls="apagado text-sm uppercase tracking-wide"),
         H1(p["nombre"]),
-        P(" · ".join(x for x in (f"Proyecto {proyectos.TIPOS[p['tipo']].lower()}", p["codigo"], p["fuente_financiamiento"],
+        P(" · ".join(x for x in (f"Proyecto {proyectos.tipo_texto(p).lower()}", p["codigo"], p["fuente_financiamiento"],
                                  f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}") if x), cls="apagado"),
         P(Strong("Responsable: "), resp, cls="text-sm mt-1") if resp else "",
         Div(_cifra(len(datos["productos_informe"]), "productos que cuentan"),
@@ -414,7 +414,7 @@ def documento_memoria(m):
             cls="rounded-md border border-amber-300 bg-amber-50 text-amber-900 p-3 mt-3 space-y-1 no-imprimir")
         if m["avisos"] else "",
         P("Productos que cuentan: indexados o arbitrados, aceptados o publicados en el periodo, con al menos "
-          "un autor vinculado al instituto en la fecha de publicación (con la categoría de ese momento) que firmó "
+          "un autor vinculado (Carrera e Instituto) en la fecha de publicación (con la categoría de ese momento) que firmó "
           "con la filiación del instituto. "
           "Cada producto se cuenta una vez. La producción de investigadores externos figura solo si está "
           "ligada a un proyecto institucional.", cls="apagado text-sm"),
@@ -466,8 +466,12 @@ def documento_memoria(m):
               Ul(*[Li(Strong(p["codigo"] + " — ") if p["codigo"] else "", p["nombre"],
                       Span(f" · {p['fuente_financiamiento']}" if p["fuente_financiamiento"] else "", cls="apagado"))
                    for p in lista], cls="space-y-1"))
-          for titulo, lista in (("Institucionales", [p for p in m["proyectos"] if p["tipo"] == "institucional"]),
-                                ("Individuales", [p for p in m["proyectos"] if p["tipo"] == "individual"]))
+          for titulo, lista in (
+              ("Institucionales de investigación",
+               [p for p in m["proyectos"] if p["tipo"] == "institucional" and p.get("clase") != "interaccion_social"]),
+              ("Institucionales de interacción social",
+               [p for p in m["proyectos"] if p["tipo"] == "institucional" and p.get("clase") == "interaccion_social"]),
+              ("Individuales", [p for p in m["proyectos"] if p["tipo"] == "individual"]))
           if lista] or [P("—", cls="apagado")],
         seccion_metodo(m))
 

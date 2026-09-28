@@ -38,7 +38,7 @@ RUTAS = {  # ruta → quienes reciben 200 (el resto, 403)
     "/admin/usuarios": {"sistema", "instituto", "carrera", "datos_cmat"},
     "/admin/usuarios/nuevo": {"sistema"},
     "/admin/usuarios/importar": {"sistema"},
-    "/admin/usuarios/historial": {"instituto", "carrera", "datos_cmat"},
+    "/admin/usuarios/historial": {"carrera"},
     "/admin/auditoria": {"sistema"},
     "/admin/revistas": {"instituto"},
     "/admin/lineas": {"instituto"},
@@ -60,14 +60,14 @@ def test_rutas_por_rol(client, cuentas, clave):
         200 if clave == "sistema" else 403)
 
 
-def test_vinculos_segun_la_unidad_del_rol(client, cuentas):
+def test_vinculo_solo_la_direccion_de_carrera(client, cuentas):
+    """Categoría y vínculo (cambios, término, carga): solo la Dirección de Carrera."""
     inv = cuentas["investigador"]
-    cmat, iimat = unidades.id_de("CMAT"), unidades.id_de("IIMAT")
-    for clave, ve_iimat, ve_cmat in (("instituto", True, False), ("carrera", False, True),
-                                     ("datos_cmat", False, True), ("sistema", False, False)):
+    for clave in ("instituto", "carrera", "datos_cmat", "sistema"):
         _como(client, clave)
-        assert (client.get(f"/admin/usuarios/{inv}/vinculo?unidad={iimat}").status_code == 200) is ve_iimat, clave
-        assert (client.get(f"/admin/usuarios/{inv}/vinculo?unidad={cmat}").status_code == 200) is ve_cmat, clave
+        assert (client.get(f"/admin/usuarios/{inv}/vinculo").status_code == 200) is (clave == "carrera"), clave
+        r = client.get("/admin/usuarios")
+        assert ('hx-get="/admin/usuarios/{}/vinculo"'.format(inv) in r.text) is (clave == "carrera"), clave
 
 
 def test_menu_y_botones_segun_el_rol(client, cuentas):
@@ -76,7 +76,7 @@ def test_menu_y_botones_segun_el_rol(client, cuentas):
     assert "Nuevo usuario" in r.text and "Importar historial" not in r.text and "/roles" in r.text
     r = _como(client, "instituto").get("/admin/usuarios")
     assert "Catálogo de revistas" in r.text and "Auditoría" not in r.text
-    assert "Nuevo usuario" not in r.text and "Importar historial" in r.text and "/roles" not in r.text
+    assert "Nuevo usuario" not in r.text and "Importar historial" not in r.text and "/roles" not in r.text
     assert "Restablecer contraseña" not in r.text  # las acciones de cuenta son de Administración del sistema
     r = _como(client, "comite").get("/")
     assert 'href="/informes"' in r.text and 'href="/admin/usuarios"' not in r.text

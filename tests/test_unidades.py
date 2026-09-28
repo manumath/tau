@@ -1,4 +1,4 @@
-"""Fase 2, paso 1: unidades (UMSA › FCPN › CMAT › IIMAT) y vínculo por unidad."""
+"""Unidades (UMSA › FCPN › CMAT › IIMAT) y vínculo con una sola dependencia (la Carrera)."""
 import base64
 
 import pytest
@@ -15,89 +15,72 @@ def test_jerarquia(app):
     iimat, cmat = unidades.id_de("IIMAT"), unidades.id_de("CMAT")
     assert [u["sigla"] for u in unidades.superiores(iimat)] == ["IIMAT", "CMAT", "FCPN", "UMSA"]
     assert set(unidades.contenidas(unidades.id_de("FCPN"))) == {unidades.id_de("FCPN"), cmat, iimat}
-    assert [u["sigla"] for u in unidades.con_vinculo()] == ["IIMAT", "CMAT"]
-    assert unidades.instituto() == iimat
+    assert unidades.instituto() == iimat and vinculos.carrera() == cmat
     with pytest.raises(ValueError):
         unidades.id_de("FACULTAD-X")
 
 
-def test_vinculos_simultaneos_con_la_carrera_y_el_instituto(emmy, hoy):
-    cmat = unidades.id_de("CMAT")
+def test_dependencia_unica(emmy, hoy):
+    """Un solo historial por persona, con la Carrera (el Instituto forma parte de ella)."""
     assert vinculos.agregar(emmy, "titular", "2020-01-01", jornada=20) == []
-    assert vinculos.agregar(emmy, "titular", "2010-03-01", jornada=20, unidad=cmat) == []  # se superponen: otra unidad
-    assert "Se superpone" in vinculos.agregar(emmy, "interino", "2012-01-01", "2013-01-01", unidad=cmat)[0]
-    assert vinculos.vigente(emmy)["unidad_id"] == unidades.instituto()
-    assert vinculos.vigente(emmy, unidad=cmat)["fecha_inicio"] == "2010-03-01"
-    assert [v["sigla"] for v in vinculos.listar_todos(emmy)] == ["CMAT", "IIMAT"]  # orden de la jerarquía
-    # Cambiar de categoría o terminar en la Carrera no toca el Instituto.
-    assert vinculos.terminar(emmy, "2026-06-30", unidad=cmat) == []
-    assert vinculos.vigente(emmy, unidad=cmat) is None and vinculos.vigente(emmy)
+    assert "Se superpone" in vinculos.agregar(emmy, "interino", "2019-06-01", "2020-06-30")[0]
+    assert vinculos.vigente(emmy)["unidad_id"] == unidades.id_de("CMAT")
     assert perfiles.obtener(emmy)["categoria"] == "titular"
+    # Ese mismo vínculo define qué producción cuenta en los informes de investigación.
+    _producto(emmy, "Con vínculo", 2024)
+    assert vinculos.en_fecha(emmy, 2024) == ("si", "titular")
+    assert "Con vínculo" in [p["titulo"] for p in informes.memoria(2024)["productos"]]
+    assert vinculos.terminar(emmy, "2026-06-30") == [] and vinculos.vigente(emmy) is None
 
 
-def test_solo_el_vinculo_con_el_instituto_cuenta_para_investigacion(emmy, hoy):
-    """Una docente de la Carrera sin vínculo con el IIMAT: su producción no entra en la memoria."""
-    vinculos.agregar(emmy, "titular", "2010-01-01", unidad=unidades.id_de("CMAT"))
-    _producto(emmy, "Solo de la Carrera", 2024)
-    assert vinculos.en_fecha(emmy, 2024) == ("no", None)
-    assert vinculos.en_fecha(emmy, 2024, unidad=unidades.id_de("CMAT")) == ("si", "titular")
-    assert perfiles.obtener(emmy)["categoria"] is None  # la categoría del perfil es la del Instituto
-    assert "Solo de la Carrera" not in [p["titulo"] for p in informes.memoria(2024)["productos"]]
-
-
-def test_migracion_asigna_el_instituto(app):
-    columnas = {c["name"]: c for c in get_db().q("PRAGMA table_info(vinculo)")}
-    assert columnas["unidad_id"]["notnull"] == 1
+def test_migracion_une_los_periodos(app):
+    """0032: los periodos con el Instituto pasan a la Carrera, salvo los que se superponen con uno de
+    la Carrera (manda el de la Carrera)."""
+    from pathlib import Path as P
+    db = get_db()
+    iimat, cmat = unidades.id_de("IIMAT"), unidades.id_de("CMAT")
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    for unidad, desde, hasta in ((iimat, "2015-01-01", "2017-12-31"), (iimat, "2018-01-01", None),
+                                 (cmat, "2019-03-01", None)):
+        db.t.vinculo.insert(usuario_id=emmy, unidad_id=unidad, categoria="titular", fecha_inicio=desde, fecha_fin=hasta)
+    sql = (P(__file__).parent.parent / "migrations" / "0032-vinculo-unico.sql").read_text()
+    db.conn.execute(sql)  # apsw ejecuta todas las sentencias del script
+    assert [(v["fecha_inicio"], v["unidad_id"]) for v in vinculos.listar(emmy)] == [
+        ("2015-01-01", cmat), ("2019-03-01", cmat)]
 
 
 HISTORIAL = ("email;unidad;categoria;desde;hasta;jornada;nota\n"
-             "inv@test.cl;;titular;2019-01-01;;40;\n"          # sin unidad: el Instituto
-             "inv@test.cl;cmat;titular;2015-03-01;;20;Docente\n"
-             "inv@test.cl;FCPN;titular;2015-03-01;;;\n")
+             "inv@test.cl;IIMAT;contratado;2015-03-01;2018-12-31;40;\n"   # la unidad se ignora
+             "inv@test.cl;cmat;titular;2019-01-01;;20;Docente\n")
 
 
-def test_importar_historial_por_unidad(admin, emmy, hoy):
-    cmat = unidades.id_de("CMAT")
-    # Sin un rol en la Carrera, las filas de la CMAT se rechazan.
-    r = admin.post("/admin/usuarios/historial/revisar", headers=HX,
-                   files={"archivo": ("h.csv", HISTORIAL.encode(), "text/csv")})
-    assert "No puede gestionar los vínculos de CMAT." in r.text and "Actualizar 1 persona(s)" in r.text
-    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", cmat)
-    vinculos.agregar(emmy, "invitado", "2018-01-01", "2018-12-31")  # Instituto: se reemplaza
-    vinculos.agregar(emmy, "interino", "2011-01-01", "2011-12-31", unidad=cmat)  # Carrera: se reemplaza
+def test_importar_historial(admin, emmy, hoy):
+    # Solo la Dirección de Carrera importa historiales.
+    assert admin.post("/admin/usuarios/historial/revisar", headers=HX,
+                      files={"archivo": ("h.csv", HISTORIAL.encode(), "text/csv")}).status_code == 403
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    vinculos.agregar(emmy, "invitado", "2011-01-01", "2011-12-31")  # se reemplaza
     personas, errores = importar_vinculos.leer(HISTORIAL.encode())
-    assert not errores
-    p = {(x["email"], x["unidad"]): x for x in personas}
-    assert p[("inv@test.cl", "IIMAT")]["actuales"] == 1 and p[("inv@test.cl", "CMAT")]["actuales"] == 1
-    assert "Unidad no válida: FCPN" in p[("inv@test.cl", "FCPN")]["errores"][0]
+    assert not errores and len(personas) == 1 and personas[0]["actuales"] == 1
     r = admin.post("/admin/usuarios/historial/revisar", headers=HX,
                    files={"archivo": ("h.csv", HISTORIAL.encode(), "text/csv")})
-    assert "Actualizar 2 persona(s)" in r.text and "CMAT" in r.text
+    assert "Actualizar 1 persona(s)" in r.text
     admin.post("/admin/usuarios/historial/confirmar", headers=HX,
                data={"contenido": base64.b64encode(HISTORIAL.encode()).decode()})
-    assert [(v["categoria"], v["fecha_inicio"]) for v in vinculos.listar(emmy)] == [("titular", "2019-01-01")]
-    assert [(v["categoria"], v["nota"]) for v in vinculos.listar(emmy, cmat)] == [("titular", "Docente")]
+    assert [(v["categoria"], v["fecha_inicio"], v["nota"]) for v in vinculos.listar(emmy)] == [
+        ("contratado", "2015-03-01", None), ("titular", "2019-01-01", "Docente")]
 
 
-def test_pantalla_de_vinculos_por_unidad(admin, emmy, hoy):
-    cmat = unidades.id_de("CMAT")
-    # Solo con Dirección del Instituto: ve el IIMAT y no la CMAT.
-    r = admin.get(f"/admin/usuarios/{emmy}/vinculo")
-    assert "Carrera de Matemática (CMAT)" not in r.text
-    assert admin.get(f"/admin/usuarios/{emmy}/vinculo?unidad={cmat}").status_code == 403
+def test_pantalla_de_vinculo_solo_para_la_direccion_de_carrera(admin, emmy, hoy):
+    # Administración del sistema y Dirección del Instituto (roles de la cuenta admin) no definen vínculos.
+    assert admin.get(f"/admin/usuarios/{emmy}/vinculo").status_code == 403
     assert admin.post(f"/admin/usuarios/{emmy}/vinculo/periodo", headers=HX,
-                      data={"categoria": "titular", "desde": "2012-03-01", "unidad": str(cmat)}).status_code == 403
-    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", cmat)
+                      data={"categoria": "titular", "desde": "2012-03-01"}).status_code == 403
+    assert "Categoría (si es investigador o docente)" not in admin.get("/admin/usuarios/nuevo").text
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
     r = admin.get(f"/admin/usuarios/{emmy}/vinculo")
-    assert "Carrera de Matemática (CMAT)" in r.text and 'name="unidad" value="4"' in r.text
-    r = admin.get(f"/admin/usuarios/{emmy}/vinculo?unidad={cmat}")
-    assert f'name="unidad" value="{cmat}"' in r.text
+    assert "Carga horaria contratada" in r.text and "Instituto de Investigación Matemática (IIMAT)" not in r.text
     r = admin.post(f"/admin/usuarios/{emmy}/vinculo/periodo", headers=HX,
-                   data={"categoria": "titular", "desde": "2012-03-01", "jornada": "20", "unidad": str(cmat)})
-    assert "2012-03-01" in r.text
-    assert vinculos.vigente(emmy, unidad=cmat)["jornada_horas"] == 20 and vinculos.vigente(emmy) is None
-    assert get_db().q("SELECT detalle FROM auditoria WHERE accion = 'agregar_vinculo'")[0]["detalle"].startswith("CMAT:")
-    # Una unidad que no admite vínculo se rechaza.
-    assert admin.post(f"/admin/usuarios/{emmy}/vinculo/periodo", headers=HX,
-                      data={"categoria": "titular", "desde": "2020-01-01",
-                            "unidad": str(unidades.id_de("UMSA"))}).status_code == 403
+                   data={"categoria": "titular", "desde": "2012-03-01", "jornada": "20"})
+    assert "2012-03-01" in r.text and vinculos.vigente(emmy)["jornada_horas"] == 20
+    assert "Categoría (si es investigador o docente)" in admin.get("/admin/usuarios/nuevo").text

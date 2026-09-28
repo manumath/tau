@@ -50,6 +50,14 @@ def admin(client):
     return client
 
 
+@pytest.fixture
+def carrera(admin):
+    """La cuenta admin con, además, la Dirección de Carrera: la única que define categoría y vínculo."""
+    from app.comun import permisos, unidades, usuarios
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    return admin
+
+
 # --- Pruebas en navegador (tests/navegador) -----------------------------------------------------
 # Son opcionales: necesitan Chrome (o el Chromium de Playwright) y levantan un servidor aparte.
 

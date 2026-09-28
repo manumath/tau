@@ -5,7 +5,7 @@ from app.comun.db import AHORA, IGUAL_A, get_db, sin_tildes
 MAX_AREAS = 10
 LARGO_BIO = 3000
 
-# Categoría del vínculo con el Instituto (definida en app.comun.vinculos; None = sin categoría).
+# Categoría del vínculo (dependencia única con la Carrera; definida en app.comun.vinculos; None = sin categoría).
 CATEGORIAS = vinculos.CATEGORIAS
 # Quiénes pueden proponer proyectos institucionales y ser sus responsables; los interinos pueden
 # además ser co-responsables.

@@ -17,7 +17,7 @@ import json  # noqa: E402
 
 from app.academico import gestiones, oferta  # noqa: E402
 from app.investigacion import actividades, institucionales, lineas, perfiles, productos, proyectos, revistas
-from app.comun import academicos, config, estudiantes, personas, unidades, usuarios, vinculos  # noqa: E402
+from app.comun import academicos, config, estudiantes, personas, usuarios, vinculos  # noqa: E402
 from app.comun.db import AHORA, get_db, marca_tiempo  # noqa: E402
 from app.comun.db import init_db  # noqa: E402
 
@@ -243,7 +243,7 @@ def _cargar_institucionales():
 
     periodo = institucionales.periodo_objetivo()
     pid = db.t.proyecto.insert(nombre="Sistemas integrables y geometría de trompos", estado="formulacion",
-                               tipo="institucional", fecha_inicio=institucionales.inicio(periodo),
+                               tipo="institucional", clase="investigacion", fecha_inicio=institucionales.inicio(periodo),
                                fecha_fin=institucionales.fin(periodo), creado_por=sofia)["id"]
     db.t.proyecto_participante.insert(proyecto_id=pid, investigador_id=sofia, rol="responsable",
                                       fecha_desde=date.today().isoformat())
@@ -279,24 +279,20 @@ def _cargar_vinculos():
         if u and (not actuales or all(v["fecha_inicio"] is None for v in actuales)):
             vinculos.reemplazar_historial(u["id"], periodos)
             hecho = True
-    # Emmy es además docente de la Carrera (vínculo con otra unidad, simultáneo).
-    emmy = usuarios.por_email("emmy.noether@instituto.test")
-    cmat = unidades.id_de(unidades.CARRERA)
-    if emmy and not vinculos.listar(emmy["id"], cmat):
-        # Carga contratada: 128 h/mes = dos materias (64) + investigación (64).
-        vinculos.agregar(emmy["id"], "titular", "2012-03-01", jornada=20, nota="Docente de la Carrera", unidad=cmat,
-                         carga={"horas": 128, "detalle": "Proyecto de álgebra",
-                                "actividades": {"docencia": 64, "investigacion": 64, "extension": 0, "gestion": 0,
-                                                "otras": 0}})
-        hecho = True
-    # Alan, docente interino de la Carrera en II-2026: 64 h/mes = una materia (32) + extensión (32).
-    alan = usuarios.por_email("alan.turing@instituto.test")
-    if alan and not vinculos.listar(alan["id"], cmat):
-        vinculos.agregar(alan["id"], "interino", "2026-08-01", "2026-12-31", nota="Contrato II-2026", unidad=cmat,
-                         carga={"horas": 64, "detalle": "Olimpiadas de matemática",
-                                "actividades": {"docencia": 32, "investigacion": 0, "extension": 32, "gestion": 0,
-                                                "otras": 0}})
-        hecho = True
+    # Carga horaria contratada del periodo vigente (Ramanujan, invitado, no tiene: participa en
+    # proyectos sin carga asignada).
+    for email, horas, acts, detalle in (
+            ("sofia.kovalevskaya@instituto.test", 160, {"docencia": 64, "investigacion": 64, "gestion": 32},
+             "Dirección del Instituto"),
+            ("emmy.noether@instituto.test", 128, {"docencia": 64, "investigacion": 64}, "Proyecto de álgebra"),
+            ("alan.turing@instituto.test", 64, {"docencia": 32, "extension": 32}, "Olimpiadas de matemática")):
+        u = usuarios.por_email(email)
+        v = vinculos.vigente(u["id"]) if u else None
+        if v and not vinculos.carga_de(v):
+            carga = {"horas": horas, "detalle": detalle,
+                     "actividades": {k: acts.get(k, 0) for k in vinculos.ACTIVIDADES}}
+            vinculos.editar(v["id"], v["categoria"], v["fecha_inicio"], v["fecha_fin"], nota=v["nota"], carga=carga)
+            hecho = True
     return hecho
 
 

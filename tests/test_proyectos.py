@@ -338,3 +338,31 @@ def test_fuera_de_periodo():
     assert proyectos.fuera_de_periodo(p, "producto", {"anio": 2025})
     assert not proyectos.fuera_de_periodo(p, "producto", {"anio": 2026})
     assert not proyectos.fuera_de_periodo({"fecha_inicio": None, "fecha_fin": None}, "producto", {"anio": 1990})
+
+
+def test_eliminar_proyecto_individual(client, gente, proyecto):
+    """El responsable de un proyecto individual lo elimina; los productos enlazados siguen en su registro."""
+    entrar(client, "emmy")
+    r = client.post("/productos", headers=HX, data={**_producto(gente["emmy"], "Enlazado"), "proyecto": [str(proyecto)]})
+    prod = get_db().q("SELECT id FROM producto WHERE titulo = 'Enlazado'")[0]["id"]
+    assert get_db().q("SELECT 1 FROM producto_proyecto WHERE producto_id = ? AND proyecto_id = ?", [prod, proyecto])
+    assert "Eliminar" in client.get(f"/proyectos/{proyecto}").text
+    # Un participante que no es responsable no puede.
+    entrar(client, "alan")
+    assert "hx-delete=\"/proyectos/" not in client.get(f"/proyectos/{proyecto}").text
+    assert client.delete(f"/proyectos/{proyecto}", headers=HX).status_code == 403
+    entrar(client, "emmy")
+    r = client.delete(f"/proyectos/{proyecto}", headers=HX)
+    assert r.headers["hx-redirect"] == "/proyectos" and proyectos.obtener(proyecto) is None
+    assert get_db().q("SELECT id FROM producto WHERE id = ?", [prod])  # el producto sigue
+    assert not get_db().q("SELECT 1 FROM proyecto_participante WHERE proyecto_id = ?", [proyecto])
+    assert get_db().q("SELECT detalle FROM auditoria WHERE accion = 'eliminar_proyecto'")[0]["detalle"] == \
+        "Álgebra y computación"
+
+
+def test_los_institucionales_no_se_eliminan(client, gente):
+    pid = proyectos.crear(dict(nombre="Institucional", estado="vigente"), gente["emmy"], gente["admin"],
+                          tipo="institucional")
+    assert proyectos.obtener(pid)["clase"] == "investigacion"
+    entrar(client, "emmy")
+    assert client.delete(f"/proyectos/{pid}", headers=HX).status_code == 403

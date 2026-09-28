@@ -47,6 +47,7 @@ def proponer(page, nombre: str) -> str:
     """La investigadora crea y envía una propuesta institucional completa. → URL de la propuesta."""
     page.goto("/proyectos")
     page.get_by_role("button", name="Proponer proyecto institucional").click()
+    page.locator("#modal").get_by_label("Investigación").check()
     page.locator("#modal input[name=nombre]").fill(nombre)
     page.locator("#modal").get_by_role("button", name="Crear borrador").click()
     page.wait_for_url("**/propuestas/*")

@@ -9,7 +9,7 @@
 - Jornada completa equivalente (anexo de acreditación) = carga contratada / 160.
 """
 from app.academico import oferta
-from app.comun import unidades, vinculos
+from app.comun import vinculos
 from app.comun.db import get_db
 
 UNIDAD = vinculos.UNIDAD_CARGA
@@ -19,13 +19,9 @@ ACTIVIDADES = vinculos.ACTIVIDADES
 SEMESTRES = ("I", "II")
 
 
-def _carrera() -> int:
-    return unidades.id_de(unidades.CARRERA)
-
-
 def vinculo_en(usuario_id: int, fecha: str) -> dict | None:
-    """El periodo de vínculo con la Carrera que cubre la fecha."""
-    return vinculos.vigente(usuario_id, fecha, _carrera())
+    """El periodo de vínculo que cubre la fecha."""
+    return vinculos.vigente(usuario_id, fecha)
 
 
 def resumen(usuario_id: int, gestion: dict) -> dict:
@@ -56,7 +52,7 @@ def personas(gestion: dict) -> list[dict]:
                   AND COALESCE(fecha_inicio, '0000-01-01') <= :f AND COALESCE(fecha_fin, '9999-12-31') >= :f
            UNION SELECT d.usuario_id FROM oferta_docente d JOIN oferta o ON o.id = d.oferta_id
                  WHERE o.gestion_id = :g AND d.rol = 'titular'""",
-        {"u": _carrera(), "f": gestion["fecha_inicio"], "g": gestion["id"]})]
+        {"u": vinculos.carrera(), "f": gestion["fecha_inicio"], "g": gestion["id"]})]
     res = []
     for p in get_db().q(f"""SELECT id, nombres, apellidos FROM usuario WHERE id IN ({",".join("?" * len(ids)) or "NULL"})
                             ORDER BY apellidos, nombres""", ids):

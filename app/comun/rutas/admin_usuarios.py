@@ -40,24 +40,23 @@ def opciones_categoria(actual, vacia="Sin categoría"):
             *[Option(t, value=c, selected=c == actual) for c, t in vinculos.CATEGORIAS.items()]]
 
 
-def unidades_vinculo(auth) -> list[dict]:
-    """Unidades cuyos vínculos puede gestionar quien mira (IIMAT, CMAT o ambas)."""
-    return [x for x in unidades.con_vinculo() if permisos.puede(auth, "gestionar_vinculos", x["id"])]
+def gestiona_vinculos(auth) -> bool:
+    """Categoría y vínculo (cambios, término, carga contratada): solo la Dirección de Carrera."""
+    return permisos.puede(auth, "gestionar_vinculos", vinculos.carrera())
 
 
 def resumen_vinculo(u, con_boton=True):
-    """Categoría vigente con cada unidad (IIMAT, CMAT), aviso si falta la fecha de ingreso y botón
-    para abrir el historial."""
-    partes = []
-    for x in unidades.con_vinculo():
-        v = vinculos.vigente(u["id"], unidad=x["id"])
-        if v:
-            partes.append(Span(f"{x['sigla']}: {vinculos.CATEGORIAS[v['categoria']]}", cls="text-sm"))
-            if not v["fecha_inicio"]:
-                partes.append(Span(" · ingreso sin fecha", cls="text-xs text-amber-700"))
-            partes.append(Span(" ", cls="mr-1"))
-    if not partes:
-        partes = [Span("Sin categoría" if not vinculos.listar_todos(u["id"]) else "Sin vínculo vigente",
+    """Categoría vigente, carga contratada, aviso si falta la fecha de ingreso y botón para abrir el
+    historial."""
+    v = vinculos.vigente(u["id"])
+    if v:
+        partes = [Span(vinculos.CATEGORIAS[v["categoria"]], cls="text-sm")]
+        if vinculos.carga_de(v):
+            partes.append(Span(f" · {v['horas_contratadas']} h/mes", cls=TextPresets.muted_sm))
+        if not v["fecha_inicio"]:
+            partes.append(Span(" · ingreso sin fecha", cls="text-xs text-amber-700"))
+    else:
+        partes = [Span("Sin categoría" if not vinculos.listar(u["id"]) else "Sin vínculo vigente",
                        cls="text-sm text-amber-700")]
     return Div(*partes,
                fh.Button(UkIcon("id-card", height=14, width=14), "Vínculo", type="button",
@@ -73,7 +72,7 @@ CORTO = {"administracion_sistema": "Adm. del sistema", "direccion_instituto": "D
 
 def _personal_academico(u) -> bool:
     """Investigadores, docentes y quien tenga vínculos (no las cuentas solo de administración)."""
-    return bool(u["es_investigador"] or vinculos.listar_todos(u["id"]) or not permisos.roles_vigentes(u["id"]))
+    return bool(u["es_investigador"] or vinculos.listar(u["id"]) or not permisos.roles_vigentes(u["id"]))
 
 
 def _etiquetas_perfil(u, gestiona_roles=False, gestiona_vinculos=False):
@@ -123,7 +122,7 @@ def fila(u, auth: dict):
         hx_swap="outerHTML") if bloqueada else ""
     # Si tiene vínculo vigente, desactivar abre una ventana que pregunta si también termina.
     con_vinculo = (u["activo"] and u["es_investigador"] and vinculos.vigente(uid)
-                   and permisos.puede(auth, "gestionar_vinculos", unidades.instituto()))
+                   and gestiona_vinculos(auth))
     boton_activo = Button(
         UkIcon("user-x" if u["activo"] else "user-check", height=18, width=18),
         cls=(ButtonT.ghost, ButtonT.icon),
@@ -155,7 +154,7 @@ def fila(u, auth: dict):
         Td(Div(f"{u['apellidos']}, {u['nombres']}", cls="font-medium"),
            Div("(usted)", cls=TextPresets.muted_sm) if es_yo else ""),
         Td(u["email"]),
-        Td(_etiquetas_perfil(u, permisos.puede(auth, "asignar_roles"), bool(unidades_vinculo(auth)))),
+        Td(_etiquetas_perfil(u, permisos.puede(auth, "asignar_roles"), gestiona_vinculos(auth))),
         Td(_estado(u, bloqueada)),
         Td(fecha_local(u["ultimo_acceso"]),
            cls=(TextPresets.muted_sm, "whitespace-nowrap hidden lg:table-cell")),
@@ -171,8 +170,22 @@ def cuerpo_tabla(lista, auth, oob=False):
     return Tbody(*filas, id=ID_TBODY, hx_swap_oob="true" if oob else None)
 
 
-def form_usuario(datos=None, errores=()):
+def form_usuario(datos=None, errores=(), con_vinculo=False):
+    """`con_vinculo`: quien crea la cuenta define también la categoría (solo la Dirección de Carrera)."""
     d = datos or {}
+    vinculo = Div(
+        Div(FormLabel("Categoría (si es investigador o docente)", fr="categoria"),
+            Select(*opciones_categoria(d.get("categoria"), vacia="— Sin vínculo por ahora —"), id="categoria",
+                   name="categoria", cls="uk-select"),
+            P("Titulares y contratados pueden proponer proyectos institucionales y ser sus responsables; "
+              "los interinos pueden ser co-responsables. La carga horaria se registra después, en «Vínculo».",
+              cls=TextPresets.muted_sm),
+            cls="space-y-2"),
+        LabelInput("Fecha de ingreso", id="fecha_ingreso", type="date", value=d.get("fecha_ingreso") or ""),
+        cls="space-y-4") if con_vinculo else P(
+            UkIcon("info", height=14, width=14, cls="shrink-0 mt-0.5"),
+            Span("La categoría y el vínculo (ingreso, carga horaria) los define la Dirección de Carrera en «Vínculo»."),
+            cls=(TextPresets.muted_sm, "flex items-start gap-1"))
     return Form(
         mensaje_error(*errores),
         Div(LabelInput("Nombres", id="nombres", value=d.get("nombres", ""), required=True),
@@ -180,14 +193,7 @@ def form_usuario(datos=None, errores=()):
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
         LabelInput("Correo institucional", id="email", type="email", value=d.get("email", ""),
                    required=True),
-        Div(FormLabel("Categoría (si es investigador)", fr="categoria"),
-            Select(*opciones_categoria(d.get("categoria"), vacia="— Elija —"), id="categoria",
-                   name="categoria", cls="uk-select"),
-            P("Titulares y contratados pueden proponer proyectos institucionales y ser sus responsables; "
-              "los interinos pueden ser co-responsables.", cls=TextPresets.muted_sm),
-            cls="space-y-2"),
-        LabelInput("Fecha de ingreso al instituto (si es investigador)", id="fecha_ingreso", type="date",
-                   value=d.get("fecha_ingreso") or ""),
+        vinculo,
         Div(LabelCheckboxX("Es investigador (tendrá perfil y registrará actividad)",
                            id="es_investigador", checked=d.get("es_investigador", True)),
             LabelCheckboxX("Sin acceso al sistema (se registran solo sus datos, p. ej., un docente que no lo usa)",
@@ -256,7 +262,7 @@ def get(auth, q: str = ""):
                 Button(UkIcon("history", height=16, width=16), "Importar historial", cls=ButtonT.default,
                        title="Periodos de vínculo y categorías desde Recursos Humanos",
                        hx_get="/admin/usuarios/historial", hx_target=f"#{ID_MODAL}")
-                if unidades_vinculo(auth) else "",
+                if gestiona_vinculos(auth) else "",
                 Button(UkIcon("user-plus", height=16, width=16), "Nuevo usuario", cls=ButtonT.primary,
                        hx_get="/admin/usuarios/nuevo", hx_target=f"#{ID_MODAL}") if cuentas else "",
                 cls="flex gap-2"),
@@ -279,18 +285,19 @@ def get(auth, q: str = ""):
 
 
 @rt(f"{BASE}/nuevo")
-def get():
-    return modal("Nuevo usuario", form_usuario())
+def get(auth):
+    return modal("Nuevo usuario", form_usuario(con_vinculo=gestiona_vinculos(auth)))
 
 
 @rt(BASE)
 def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categoria: str = "",
          es_investigador: bool = False, es_admin: bool = False, invitar: bool = False, fecha_ingreso: str = "",
          sin_acceso: bool = False):
+    con_vinculo = gestiona_vinculos(auth)
     datos = dict(nombres=nombres.strip(), apellidos=apellidos.strip(),
                  email=email.strip().lower(), es_investigador=es_investigador, es_admin=es_admin,
-                 categoria=(categoria or None) if es_investigador else None,
-                 fecha_ingreso=(fecha_ingreso or None) if es_investigador else None)
+                 categoria=(categoria or None) if con_vinculo else None,
+                 fecha_ingreso=(fecha_ingreso or None) if con_vinculo and categoria else None)
     errores = []
     try:
         date.fromisoformat(fecha_ingreso) if fecha_ingreso else None
@@ -304,10 +311,11 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
         errores.append("Ya existe una cuenta con ese correo.")
     if sin_acceso and es_admin:
         errores.append("Una persona sin acceso no puede tener roles de administración.")
-    if es_investigador and categoria not in vinculos.CATEGORIAS:
-        errores.append("Elija la categoría del investigador(a).")
+    if datos["categoria"] and datos["categoria"] not in vinculos.CATEGORIAS:
+        errores.append("Categoría no válida.")
     if errores:
-        return modal("Nuevo usuario", form_usuario({**datos, "invitar": invitar, "sin_acceso": sin_acceso}, errores))
+        return modal("Nuevo usuario", form_usuario({**datos, "invitar": invitar, "sin_acceso": sin_acceso}, errores,
+                                                   con_vinculo))
 
     def tabla():
         """La tabla actualizada (con la persona recién creada), fuera de banda."""
@@ -347,7 +355,7 @@ def modal_desactivar(u, errores=(), termina="si", fecha=""):
         "Desactivar cuenta",
         Form(mensaje_error(*errores),
              P(f"{u['nombres']} {u['apellidos']} no podrá ingresar hasta que se reactive la cuenta. Su vínculo "
-               f"con el instituto ({vinculos.CATEGORIAS[v['categoria']]}, {vinculos.texto_periodo(v)}) está vigente."),
+               f"({vinculos.CATEGORIAS[v['categoria']]}, {vinculos.texto_periodo(v)}) está vigente."),
              Div(fh.Label(fh.Input(type="radio", name="termina", value="si", checked=termina == "si", cls="uk-radio"),
                           Span("Terminar también su vínculo el día", cls="text-sm"),
                           Input(type="date", name="fecha", value=fecha or date.today().isoformat(),
@@ -357,7 +365,7 @@ def modal_desactivar(u, errores=(), termina="si", fecha=""):
                           Span("Solo desactivar la cuenta (el vínculo sigue vigente)", cls="text-sm"),
                           cls="flex items-center gap-2"),
                  cls="space-y-2"),
-             P("El vínculo define qué producción cuenta para el instituto: lo publicado mientras estuvo vinculado "
+             P("El vínculo define qué producción cuenta en los informes: lo publicado mientras estuvo vinculado "
                "sigue contando después.", cls=TextPresets.muted_sm),
              Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
                  Button("Desactivar", type="submit", cls=ButtonT.destructive), cls="flex justify-end gap-2"),
@@ -379,8 +387,8 @@ def post(uid: int, auth, termina: str = "", fecha: str = ""):
     if not u or uid == auth["id"]:
         return fila(u, auth) if u else ""
     if u["activo"] and termina == "si":
-        if not permisos.puede(auth, "gestionar_vinculos", unidades.instituto()):
-            return SIN_PERMISO_UNIDAD
+        if not gestiona_vinculos(auth):
+            return SIN_PERMISO
         errores = vinculos.terminar(uid, fecha)
         if errores:
             return modal_desactivar(u, errores, termina, fecha), HtmxResponseHeaders(
@@ -398,8 +406,8 @@ def post(uid: int, auth, sess, categoria: str = ""):
         return ""
     if categoria and categoria not in vinculos.CATEGORIAS:
         return Response("Categoría no válida", status_code=400)
-    if not permisos.puede(auth, "gestionar_vinculos", unidades.instituto()):
-        return SIN_PERMISO_UNIDAD
+    if not gestiona_vinculos(auth):
+        return SIN_PERMISO
     vinculos.corregir_categoria_vigente(uid, categoria or None)
     auditar(auth["id"], "cambiar_categoria", "investigador", uid,
             f"{vinculos.categoria_texto(u['categoria'])} → {vinculos.categoria_texto(categoria)}")
@@ -473,12 +481,22 @@ def _etiqueta_estado(f):
     return Label("Error", cls=LabelT.destructive)
 
 
+def _leer_cuentas(contenido, auth):
+    """Lee el CSV de cuentas. La categoría solo la define la Dirección de Carrera: para quien no
+    gestiona vínculos, esa columna se ignora (se asigna después en «Vínculo»)."""
+    filas, errores = importar_usuarios.leer(contenido)
+    if not gestiona_vinculos(auth):
+        for f in filas:
+            f["categoria"] = None
+    return filas, errores
+
+
 @rt(f"{BASE}/importar/revisar")
 async def post(auth, archivo: UploadFile = None):
     if archivo is None or not archivo.filename:
         return modal("Importar cuentas desde CSV", _form_archivo(["Seleccione un archivo."]), ancho="max-w-2xl")
     contenido = await archivo.read(importar_usuarios.MAX_BYTES + 1)
-    filas, errores = importar_usuarios.leer(contenido)
+    filas, errores = _leer_cuentas(contenido, auth)
     if not filas:
         return modal("Importar cuentas desde CSV", _form_archivo(errores), ancho="max-w-2xl")
     nuevas = sum(f["estado"] == "nueva" for f in filas)
@@ -498,6 +516,8 @@ async def post(auth, archivo: UploadFile = None):
         mensaje_error(*errores),
         P(f"{nuevas} cuenta(s) nueva(s) · {existentes} ya existente(s), se omiten · {con_error} con error, se omiten.",
           cls="text-sm font-medium mb-3"),
+        "" if gestiona_vinculos(auth) else P("La categoría no se importa: la define la Dirección de Carrera en "
+                                             "«Vínculo».", cls=(TextPresets.muted_sm, "mb-3")),
         Div(tabla, cls="max-h-80 overflow-y-auto border border-border rounded-md mb-4"),
         Form(
             # El contenido viaja de vuelta en base64 y se valida otra vez al confirmar.
@@ -519,7 +539,7 @@ def post(auth, sess, contenido: str = "", invitar: bool = False):
         datos = base64.b64decode(contenido, validate=True)
     except ValueError:
         return modal("Importar cuentas desde CSV", _form_archivo(["No se pudo leer el archivo. Súbalo otra vez."]))
-    filas, _ = importar_usuarios.leer(datos)
+    filas, _ = _leer_cuentas(datos, auth)
     creadas = importar_usuarios.crear(filas, invitar, auth["id"], enviar_invitacion)
     tabla = Template(cuerpo_tabla(usuarios.listar(), auth, oob=True))
     add_toast(sess, f"{len(creadas)} cuenta(s) creada(s).", "success")
@@ -783,45 +803,31 @@ def _campos_carga(d, sufijo=""):
         cls="rounded-md border border-border p-3 mt-3")
 
 
-def _selector_unidad(uid, actual, permitidas):
-    """Pestañas IIMAT / CMAT (las que quien mira puede gestionar): el historial y las acciones son
-    de la unidad elegida."""
-    return Div(*[Button(f"{x['nombre']} ({x['sigla']})", type="button",
-                        cls=(ButtonT.primary if x["id"] == actual else ButtonT.default, ButtonT.sm),
-                        hx_get=f"{BASE}/{uid}/vinculo?unidad={x['id']}", hx_target=f"#{ID_MODAL}",
-                        aria_pressed="true" if x["id"] == actual else "false")
-                 for x in permitidas],
-               cls="flex flex-wrap gap-2 mb-3", role="group", aria_label="Unidad")
-
-
-def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
-    """Historial de periodos con una unidad y acciones: cambio de categoría, término, periodo
-    histórico, corrección. `unidad` debe ser una que `auth` pueda gestionar."""
+def modal_vinculo(u, auth, errores=(), editar=None, datos=None):
+    """Historial de periodos de vínculo y acciones: cambio de categoría o de carga, término, periodo
+    histórico, corrección. Solo para quien gestiona los vínculos (la Dirección de Carrera)."""
     uid = u["id"]
-    permitidas = unidades_vinculo(auth)
-    unidad = unidad or permitidas[0]["id"]
     datos = datos or {}
-    periodos = vinculos.listar(uid, unidad)
-    vig = vinculos.vigente(uid, unidad=unidad)
-    es_carrera = unidad == unidades.id_de(unidades.CARRERA)
+    periodos = vinculos.listar(uid)
+    vig = vinculos.vigente(uid)
     filas = []
     for v in periodos:
         if editar == v["id"]:
             filas.append(Tr(Td(Form(
                 _campos_periodo({"categoria": v["categoria"], "desde": v["fecha_inicio"], "hasta": v["fecha_fin"],
                                  "jornada": v["jornada_horas"], "nota": v["nota"], **datos}, sufijo=f"-{v["id"]}"),
-                _campos_carga(datos or _datos_carga(v), sufijo=f"-{v["id"]}") if es_carrera else "",
+                _campos_carga(datos or _datos_carga(v), sufijo=f"-{v["id"]}"),
                 Div(Button("Cancelar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
-                           hx_get=f"{BASE}/{uid}/vinculo?unidad={unidad}", hx_target=f"#{ID_MODAL}"),
+                           hx_get=f"{BASE}/{uid}/vinculo", hx_target=f"#{ID_MODAL}"),
                     Button("Guardar", type="submit", cls=(ButtonT.primary, ButtonT.sm)),
                     cls="flex justify-end gap-2 mt-2"),
-                hx_put=f"{BASE}/vinculo/{v["id"]}", hx_target=f"#{ID_MODAL}"), colspan=6 if es_carrera else 5)))
+                hx_put=f"{BASE}/vinculo/{v["id"]}", hx_target=f"#{ID_MODAL}"), colspan=6)))
             continue
         filas.append(Tr(
             Td(vinculos.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700") if vig and v["id"] == vig["id"] else ""),
             Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700"), cls="whitespace-nowrap"),
             Td(v["fecha_fin"] or "—", cls="whitespace-nowrap"),
-            Td(Span(vinculos.texto_carga(v) or "—", cls="text-sm")) if es_carrera else "",
+            Td(Span(vinculos.texto_carga(v) or "—", cls="text-sm")),
             Td(Span(v["nota"] or "—", cls="text-sm"),
                Span(f" · jornada según RR. HH.: {v['jornada_horas']} h/semana", cls=TextPresets.muted_sm)
                if v["jornada_horas"] else ""),
@@ -831,43 +837,40 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None, unidad=None):
                           title="Eliminar (solo para corregir errores)", hx_delete=f"{BASE}/vinculo/{v["id"]}",
                           hx_target=f"#{ID_MODAL}", hx_confirm="¿Eliminar este periodo? Úselo solo para corregir errores."),
                    cls="flex justify-end"))))
-    tabla = Table(Thead(Tr(Th("Categoría"), Th("Desde"), Th("Hasta"), Th("Carga (h/mes)") if es_carrera else "",
-                           Th("Nota"), Th(""))),
+    tabla = Table(Thead(Tr(Th("Categoría"), Th("Desde"), Th("Hasta"), Th("Carga (h/mes)"), Th("Nota"), Th(""))),
                   Tbody(*filas) if filas else Tbody(Tr(Td("Sin periodos registrados.", colspan=6,
                                                           cls=TextPresets.muted_sm))),
                   cls="uk-table-divider uk-table-small")
 
     def accion(titulo, *campos, url, boton):
         return fh.Details(fh.Summary(titulo, cls="cursor-pointer text-sm font-medium text-primary"),
-                          Form(*campos, Input(type="hidden", name="unidad", value=str(unidad)),
+                          Form(*campos,
                                Div(Button(boton, type="submit", cls=(ButtonT.primary, ButtonT.sm)),
-                                            cls="flex justify-end mt-2"),
+                                   cls="flex justify-end mt-2"),
                                hx_post=url, hx_target=f"#{ID_MODAL}", cls="mt-2"),
                           cls="rounded-md border border-border p-3")
     acciones = [
-        accion("Cambiar de categoría o de carga (ascenso, nuevo contrato)" if es_carrera
-               else "Cambiar de categoría (ascenso, nuevo contrato)",
+        accion("Cambiar de categoría o de carga (ascenso, nuevo contrato)",
                P("Cierra el periodo vigente el día anterior y abre uno nuevo.", cls=TextPresets.muted_sm),
-               _campos_periodo(datos or {"categoria": vig["categoria"]} if vig else datos, con_hasta=False,
-                               con_nota=False, sufijo="-cambio"),
-               _campos_carga(datos or _datos_carga(vig), sufijo="-cambio") if es_carrera else "",
+               _campos_periodo(datos or {"categoria": vig["categoria"]}, con_hasta=False, con_nota=False,
+                               sufijo="-cambio"),
+               _campos_carga(datos or _datos_carga(vig), sufijo="-cambio"),
                url=f"{BASE}/{uid}/vinculo/cambio", boton="Registrar cambio") if vig else "",
         accion("Terminar el vínculo",
                LabelInput("Último día", id="fecha-termino", name="fecha", type="date", value=date.today().isoformat()),
                url=f"{BASE}/{uid}/vinculo/termino", boton="Terminar") if vig else "",
         accion("Agregar un periodo (histórico o nuevo ingreso)",
-               _campos_periodo(datos, sufijo="-nuevo"), _campos_carga(datos, sufijo="-nuevo") if es_carrera else "",
+               _campos_periodo(datos, sufijo="-nuevo"), _campos_carga(datos, sufijo="-nuevo"),
                url=f"{BASE}/{uid}/vinculo/periodo", boton="Agregar"),
     ]
     return modal(
         f"Vínculo de {u['nombres']} {u['apellidos']}",
         mensaje_error(*errores),
-        P("Periodos de pertenencia a cada unidad con su categoría; los de la Carrera llevan además la carga horaria "
-          "contratada y su distribución por actividad. El vínculo con el Instituto define "
-          "qué producción cuenta en los informes de investigación y con qué categoría; el de la Carrera, la "
-          "docencia. Para cargar el historial de muchas personas, use «Importar historial» en el listado.",
+        P("Periodos de vínculo con la Carrera de Matemática (el Instituto forma parte de ella: es una sola "
+          "dependencia), con su categoría y su carga horaria contratada. Lo define la Dirección de Carrera. La "
+          "categoría a la fecha de cada producto o actividad es la que cuenta en los informes. Para cargar el "
+          "historial de muchas personas, use «Importar historial» en el listado.",
           cls=(TextPresets.muted_sm, "mb-3")),
-        _selector_unidad(uid, unidad, permitidas),
         Div(tabla, cls="overflow-x-auto mb-4"),
         Div(*acciones, cls="space-y-2"),
         Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
@@ -880,95 +883,77 @@ def _investigador(uid):
     return usuarios.con_perfil(uid)
 
 
-def _unidad_valida(valor, auth) -> int | None:
-    """Unidad pedida, si quien pide puede gestionar sus vínculos; sin unidad, la primera que puede.
-    None si pide una que no puede (la ruta responde 403)."""
-    permitidas = [x["id"] for x in unidades_vinculo(auth)]
-    if not str(valor).isdigit():
-        return permitidas[0] if permitidas else None
-    return int(valor) if int(valor) in permitidas else None
-
-
-SIN_PERMISO_UNIDAD = Response("No puede gestionar los vínculos de esa unidad.", status_code=403)
-
-
-def _sigla(unidad):
-    return unidades.obtener(unidad or unidades.instituto())["sigla"]
-
-
-@rt(BASE + "/{uid}/vinculo")
-def get(auth, uid: int, unidad: str = ""):
-    u = _investigador(uid)
-    if not u:
-        return Response("No encontrado", status_code=404)
-    un = _unidad_valida(unidad, auth)
-    return modal_vinculo(u, auth, unidad=un) if un else SIN_PERMISO_UNIDAD
+SIN_PERMISO = Response("Solo la Dirección de Carrera define la categoría y el vínculo.", status_code=403)
 
 
 def _form_carga(req_form) -> dict:
     return {k: req_form.get(k, "") for k in CAMPOS_CARGA}
 
 
-@rt(BASE + "/{uid}/vinculo/cambio")
-async def post(auth, req, uid: int, categoria: str = "", desde: str = "", jornada: str = "", unidad: str = ""):
+@rt(BASE + "/{uid}/vinculo")
+def get(auth, uid: int):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    un = _unidad_valida(unidad, auth)
-    if un is None:
-        return SIN_PERMISO_UNIDAD
+    return modal_vinculo(u, auth) if gestiona_vinculos(auth) else SIN_PERMISO
+
+
+@rt(BASE + "/{uid}/vinculo/cambio")
+async def post(auth, req, uid: int, categoria: str = "", desde: str = "", jornada: str = ""):
+    u = _investigador(uid)
+    if not u:
+        return Response("No encontrado", status_code=404)
+    if not gestiona_vinculos(auth):
+        return SIN_PERMISO
     fc = _form_carga(await req.form())
     carga = vinculos.leer_carga(fc)
-    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"], unidad=un, carga=carga)
+    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"], carga=carga)
     if not errores:
-        auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{_sigla(un)}: {categoria} desde {desde}"
-                + (f"; carga {vinculos.texto_carga(vinculos.vigente(uid, desde, un))}" if carga else ""))
-    return modal_vinculo(u, auth, errores, unidad=un,
+        auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{categoria} desde {desde}"
+                + (f"; carga {vinculos.texto_carga(vinculos.vigente(uid, desde))}" if carga else ""))
+    return modal_vinculo(u, auth, errores,
                          datos={"categoria": categoria, "desde": desde, "jornada": jornada, **fc} if errores else None)
 
 
 @rt(BASE + "/{uid}/vinculo/termino")
-def post(auth, uid: int, fecha: str = "", unidad: str = ""):
+def post(auth, uid: int, fecha: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    un = _unidad_valida(unidad, auth)
-    if un is None:
-        return SIN_PERMISO_UNIDAD
-    errores = vinculos.terminar(uid, fecha, unidad=un)
+    if not gestiona_vinculos(auth):
+        return SIN_PERMISO
+    errores = vinculos.terminar(uid, fecha)
     if not errores:
-        auditar(auth["id"], "terminar_vinculo", "investigador", uid, f"{_sigla(un)}: {fecha}")
-    return modal_vinculo(u, auth, errores, unidad=un)
+        auditar(auth["id"], "terminar_vinculo", "investigador", uid, fecha)
+    return modal_vinculo(u, auth, errores)
 
 
 @rt(BASE + "/{uid}/vinculo/periodo")
 async def post(auth, req, uid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = "",
-               nota: str = "", unidad: str = ""):
+               nota: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
-    un = _unidad_valida(unidad, auth)
-    if un is None:
-        return SIN_PERMISO_UNIDAD
+    if not gestiona_vinculos(auth):
+        return SIN_PERMISO
     fc = _form_carga(await req.form())
     carga = vinculos.leer_carga(fc)
     errores = vinculos.agregar(uid, categoria, desde or None, hasta or None, jornada or None, nota, auth["id"],
-                               unidad=un, carga=carga)
+                               carga=carga)
     if not errores:
         auditar(auth["id"], "agregar_vinculo", "investigador", uid,
-                f"{_sigla(un)}: {categoria} {desde or '?'} a {hasta or 'hoy'}"
-                + (f"; carga {carga['horas']} h/mes" if carga else ""))
+                f"{categoria} {desde or '?'} a {hasta or 'hoy'}" + (f"; carga {carga['horas']} h/mes" if carga else ""))
     datos = dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota, **fc) if errores else None
-    return modal_vinculo(u, auth, errores, datos=datos, unidad=un)
+    return modal_vinculo(u, auth, errores, datos=datos)
 
 
 def _periodo_o_error(vid, auth):
-    """(periodo, None) si existe y quien pide puede gestionar su unidad; (None, respuesta) si no."""
+    """(periodo, None) si existe y quien pide gestiona los vínculos; (None, respuesta) si no."""
     v = vinculos.obtener(vid)
     if not v:
         return None, Response("No encontrado", status_code=404)
-    if not permisos.puede(auth, "gestionar_vinculos", v["unidad_id"]):
-        return None, SIN_PERMISO_UNIDAD
+    if not gestiona_vinculos(auth):
+        return None, SIN_PERMISO
     return v, None
 
 
@@ -977,7 +962,7 @@ def get(auth, vid: int):
     v, error = _periodo_o_error(vid, auth)
     if error:
         return error
-    return modal_vinculo(_investigador(v["usuario_id"]), auth, editar=vid, unidad=v["unidad_id"])
+    return modal_vinculo(_investigador(v["usuario_id"]), auth, editar=vid)
 
 
 @rt(BASE + "/vinculo/{vid}")
@@ -987,17 +972,16 @@ async def put(auth, req, vid: int, categoria: str = "", desde: str = "", hasta: 
     if error:
         return error
     fc = _form_carga(await req.form())
-    # Fuera de la Carrera el formulario no lleva carga: se conserva la registrada (normalmente ninguna).
-    carga = vinculos.leer_carga(fc) if v["unidad_id"] == unidades.id_de(unidades.CARRERA) else vinculos.carga_de(v)
+    carga = vinculos.leer_carga(fc)
     errores = vinculos.editar(vid, categoria, desde or None, hasta or None, jornada or None, nota, carga=carga)
     if not errores:
         auditar(auth["id"], "corregir_vinculo", "investigador", v["usuario_id"],
                 f"{categoria} {desde or '?'} a {hasta or 'hoy'}" + (f"; carga {carga['horas']} h/mes" if carga else ""))
     u = _investigador(v["usuario_id"])
     if errores:
-        return modal_vinculo(u, auth, errores, editar=vid, unidad=v["unidad_id"],
+        return modal_vinculo(u, auth, errores, editar=vid,
                              datos=dict(categoria=categoria, desde=desde, hasta=hasta, jornada=jornada, nota=nota, **fc))
-    return modal_vinculo(u, auth, unidad=v["unidad_id"])
+    return modal_vinculo(u, auth)
 
 
 @rt(BASE + "/vinculo/{vid}")
@@ -1006,9 +990,8 @@ def delete(auth, vid: int):
     if error:
         return error
     vinculos.eliminar(vid)
-    auditar(auth["id"], "eliminar_vinculo", "investigador", v["usuario_id"],
-            f"{_sigla(v['unidad_id'])}: {vinculos.texto_periodo(v)}")
-    return modal_vinculo(_investigador(v["usuario_id"]), auth, unidad=v["unidad_id"])
+    auditar(auth["id"], "eliminar_vinculo", "investigador", v["usuario_id"], vinculos.texto_periodo(v))
+    return modal_vinculo(_investigador(v["usuario_id"]), auth)
 
 
 # --- Historial de vínculos desde Recursos Humanos (CSV) -----------------------------------------------------
@@ -1018,10 +1001,10 @@ def _form_historial(errores=()):
         mensaje_error(*errores),
         P("Suba un CSV de Recursos Humanos con una fila por periodo: ", Code("email"), ", ", Code("categoria"), ", ",
           Code("desde"), " y, si quiere, ", Code("hasta"), " (vacío = vigente), ", Code("jornada"), " (horas "
-          "semanales), ", Code("nota"), " y ", Code("unidad"), " (IIMAT o CMAT; vacío = IIMAT). Fechas como "
-          "AAAA-MM-DD o DD/MM/AAAA.", cls="text-sm"),
-        P("El historial de cada persona con cada unidad del archivo se reemplaza por el del archivo; lo demás no "
-          "cambia. Primero verá una vista previa.", cls=TextPresets.muted_sm),
+          "semanales) y ", Code("nota"), ". Fechas como AAAA-MM-DD o DD/MM/AAAA.", cls="text-sm"),
+        P("El historial de cada persona del archivo se reemplaza por el del archivo; lo demás no cambia. La carga "
+          "horaria contratada se registra después en el vínculo de cada persona. Primero verá una vista previa.",
+          cls=TextPresets.muted_sm),
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/historial/plantilla",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
         Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
@@ -1032,12 +1015,7 @@ def _form_historial(errores=()):
 
 
 def _leer_historial(contenido, auth):
-    """Lee el CSV y marca con error las filas de unidades cuyos vínculos quien importa no gestiona."""
-    personas, errores = importar_vinculos.leer(contenido)
-    for p in personas:
-        if p.get("unidad_id") and not permisos.puede(auth, "gestionar_vinculos", p["unidad_id"]):
-            p["errores"].insert(0, f"No puede gestionar los vínculos de {p['unidad']}.")
-    return personas, errores
+    return importar_vinculos.leer(contenido)
 
 
 @rt(f"{BASE}/historial")
@@ -1066,7 +1044,6 @@ async def post(auth, archivo: UploadFile = None):
         periodos = "; ".join(f"{vinculos.CATEGORIAS[x['categoria']]} {x['desde']} a {x['hasta'] or 'hoy'}"
                              for x in p["periodos"])
         filas.append(Tr(Td(Div(nombre, cls="font-medium"), Div(p["email"], cls=TextPresets.muted_sm)),
-                        Td(p["unidad"], cls="text-sm"),
                         Td(periodos or "—", cls="text-sm"),
                         Td(Label("Error", cls=LabelT.destructive), Div(*[P(e, cls="text-sm") for e in p["errores"]])
                            if p["errores"] else
@@ -1075,7 +1052,7 @@ async def post(auth, archivo: UploadFile = None):
         "Vista previa del historial",
         P(f"{len(listas)} persona(s) se actualizarán · {len(personas) - len(listas)} con errores, se omiten.",
           cls="text-sm font-medium mb-3"),
-        Div(Table(Thead(Tr(Th("Persona"), Th("Unidad"), Th("Periodos del archivo"), Th("Resultado"))), Tbody(*filas),
+        Div(Table(Thead(Tr(Th("Persona"), Th("Periodos del archivo"), Th("Resultado"))), Tbody(*filas),
                   cls="uk-table-divider uk-table-small"),
             cls="max-h-96 overflow-y-auto border border-border rounded-md mb-4"),
         Form(Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),

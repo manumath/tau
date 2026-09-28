@@ -55,8 +55,8 @@ def crear(email: str, nombres: str, apellidos: str, password: str | None, *,
         permisos.asignar(u["id"], "direccion_instituto", unidades.instituto())
     if es_investigador:
         db.t.investigador.insert(usuario_id=u["id"])
-        if categoria:
-            vinculos.agregar(u["id"], categoria, fecha_ingreso or None)
+    if categoria:
+        vinculos.agregar(u["id"], categoria, fecha_ingreso or None)
     return u
 
 

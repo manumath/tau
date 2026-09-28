@@ -70,7 +70,8 @@ def aviso_convocatoria(auth):
 def lista_propuestas(props, con_proyecto=False):
     return Ul(*[Li(
         Div(A(p["nombre"], href=f"/propuestas/{p['id']}", cls="font-medium hover:underline"),
-            Span(f" · {inst.MODALIDADES[p['modalidad']].lower()} · {inst.periodo_texto(p['periodo'])}",
+            Span(f" · {proyectos.CLASES[p['clase']].lower() + ' · ' if p.get('clase') else ''}"
+                 f"{inst.MODALIDADES[p['modalidad']].lower()} · {inst.periodo_texto(p['periodo'])}",
                  cls=TextPresets.muted_sm)),
         Div(insignia_estado(p["estado"]),
             Span(f" {p['comentario']}", cls="text-sm") if p["estado"] in ("condicional", "rechazada")
@@ -88,8 +89,16 @@ def seccion_mis_propuestas(auth):
 
 # --- Nueva propuesta y continuidad -------------------------------------------------------------------------
 
-def _form_nueva(nombre="", error=None):
+def _form_nueva(nombre="", error=None, clase=""):
     periodo = inst.periodo_objetivo()
+    opciones = Div(
+        FormLabel("Clase de proyecto"),
+        *[fh.Label(fh.Input(type="radio", name="clase", value=k, checked=k == clase, required=True, cls="uk-radio"),
+                   Span(t, cls="text-sm"), cls="flex items-center gap-2")
+          for k, t in proyectos.CLASES.items()],
+        P("Los de investigación se adscriben a las líneas de investigación vigentes; los de interacción social "
+          "(extensión), si corresponde.", cls=TextPresets.muted_sm),
+        cls="space-y-2")
     return modal(
         "Proponer proyecto institucional",
         Form(mensaje_error(*([error] if error else [])),
@@ -97,6 +106,7 @@ def _form_nueva(nombre="", error=None):
                f"({inst.periodo_largo(periodo)}). Usted quedará como responsable. Primero se crea un borrador "
                "que puede completar con calma; la administración solo lo ve cuando usted lo envía.",
                cls=TextPresets.muted_sm),
+             opciones,
              LabelInput("Nombre del proyecto", id="nombre", value=nombre, required=True, maxlength=300),
              Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
                  Button("Crear borrador", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
@@ -111,12 +121,12 @@ def get(auth):
 
 
 @rt("/propuestas")
-def post(auth, sess, nombre: str = ""):
-    prop_id, error = inst.crear_nuevo(auth, nombre)
+def post(auth, sess, nombre: str = "", clase: str = ""):
+    prop_id, error = inst.crear_nuevo(auth, nombre, clase)
     if error:
         if not inst.puede_proponer(auth):
             return Response(error, status_code=403)
-        return _form_nueva(nombre, error)
+        return _form_nueva(nombre, error, clase)
     prop = inst.obtener(prop_id)
     auditar(auth["id"], "crear_propuesta", "proyecto", prop["proyecto_id"], f"{prop['nombre']} ({prop['periodo']})")
     add_toast(sess, "Borrador creado. Complételo y envíelo dentro del plazo.", "success")
@@ -213,7 +223,9 @@ def editor(prop, auth, errores=()):
                  LabelInput("Nombre del proyecto", id="nombre", value=prop["nombre"], required=True, maxlength=300),
                  Div(FormLabel("Líneas de investigación institucionales"),
                      P(f"Seleccione las líneas vigentes en el periodo {inst.periodo_texto(periodo)} a las que se "
-                       "adscribe el proyecto (al menos una).", cls=TextPresets.muted_sm),
+                       "adscribe el proyecto" + (" (opcional en un proyecto de interacción social)."
+                                                 if prop.get("clase") == "interaccion_social" else " (al menos una)."),
+                       cls=TextPresets.muted_sm),
                      casillas_lineas([x["id"] for x in prop["lineas"]], inst.inicio(periodo),
                                      actuales=prop["lineas"]),
                      cls="space-y-2"),
@@ -268,6 +280,7 @@ def contenido(c: dict):
     """Muestra una propuesta en el formato de `inst.copia` (la enviada o la actual)."""
     return Div(
         _seccion("Datos básicos",
+                 dato("Clase de proyecto", c.get("clase") or None),
                  dato("Líneas de investigación", "; ".join(c.get("lineas", [])) or None),
                  dato("Descripción", texto_con_parrafos(c["descripcion"], "—")),
                  dato("Objetivo general", c["objetivo_general"]),
@@ -355,6 +368,7 @@ def get(auth, prop_id: int):
           href=f"/admin/propuestas?periodo={prop['periodo']}" if decide else "/proyectos",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         Div(Div(insignia_estado(prop["estado"]),
+                insignia(proyectos.CLASES[prop["clase"]], "azul") if prop.get("clase") else "",
                 insignia(inst.MODALIDADES[prop["modalidad"]], "gris"),
                 insignia(f"Periodo {inst.periodo_texto(prop['periodo'])}", "gris", icono="calendar-range"),
                 cls="flex flex-wrap gap-2"),
@@ -520,6 +534,7 @@ def get(auth, periodo: str = "", estado: str = ""):
     filtro = [("", f"Todas ({sum(n.values())})")] + [(e, f"{t} ({n.get(e, 0)})") for e, t in inst.ESTADOS.items()
                                                      if e != "borrador"]
     filas = [fh.Tr(fh.Td(A(p["nombre"], href=f"/propuestas/{p['id']}", cls="font-medium hover:underline")),
+                   fh.Td(proyectos.CLASES.get(p["clase"] or "", "—"), cls="text-sm"),
                    fh.Td(inst.MODALIDADES[p["modalidad"]], cls="text-sm"),
                    fh.Td(p["proponente"], cls="text-sm"),
                    fh.Td(p["enviada_en"][:10] if p["enviada_en"] else "—", cls="text-sm whitespace-nowrap"),
@@ -545,7 +560,7 @@ def get(auth, periodo: str = "", estado: str = ""):
                 cls="text-sm px-3 py-1 rounded-full border " +
                     ("border-primary bg-primary/10 text-primary" if e == estado else "border-border hover:bg-muted"))
               for e, t in filtro], cls="flex flex-wrap gap-2 mb-4"),
-        Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Proyecto"), fh.Th("Modalidad"), fh.Th("Proponente"), fh.Th("Enviada"),
+        Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Proyecto"), fh.Th("Clase"), fh.Th("Modalidad"), fh.Th("Proponente"), fh.Th("Enviada"),
                                     fh.Th("Estado"))), fh.Tbody(*filas),
                      cls="uk-table uk-table-divider uk-table-middle uk-table-hover"),
             cls="overflow-x-auto") if filas else P("No hay propuestas enviadas en este periodo.",

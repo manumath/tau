@@ -92,8 +92,8 @@ def test_docente_de_la_carrera_sin_perfil_de_investigacion(admin):
     permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", cmat)
     r = admin.post(f"/admin/usuarios/{kw}/vinculo/periodo", headers=HX,
                    data={"categoria": "titular", "desde": "2010-03-01", "jornada": "40", "unidad": str(cmat)})
-    assert r.status_code == 200 and vinculos.vigente(kw, unidad=cmat)["jornada_horas"] == 40
-    assert "CMAT: Titular" in admin.get("/admin/usuarios").text
+    assert r.status_code == 200 and vinculos.vigente(kw)["jornada_horas"] == 40
+    assert "Titular" in admin.get("/admin/usuarios").text
 
 
 def test_ficha_academica_segun_el_rol(client, emmy):

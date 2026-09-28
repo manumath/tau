@@ -402,7 +402,7 @@ def filas_actividades(acts: list[dict]) -> list[dict]:
 
 def filas_proyectos(proys: list[dict]) -> list[dict]:
     return [{
-        "Tipo": proyectos.TIPOS[p["tipo"]], "Código": p["codigo"] or "", "Nombre": p["nombre"],
+        "Tipo": proyectos.tipo_texto(p), "Código": p["codigo"] or "", "Nombre": p["nombre"],
         "Estado": proyectos.ESTADOS[p["estado"]],
         "Inicio": p["fecha_inicio"] or "", "Término": p["fecha_fin"] or "",
         "Financiamiento": p["fuente_financiamiento"] or "",

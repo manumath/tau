@@ -49,7 +49,7 @@ def test_periodos_y_superposicion(emmy, hoy):
     assert vinculos.en_fecha(emmy, 2018) == ("dudoso", "contratado")  # desde marzo
     assert vinculos.en_fecha(emmy, 2023) == ("si", "titular")
     assert vinculos.en_dia(emmy, "2021-12-31") == ("si", "contratado")
-    assert vinculos.resumen(emmy) == "En el instituto desde 2018 · Titular desde 2022"
+    assert vinculos.resumen(emmy) == "Vinculado(a) desde 2018 · Titular desde 2022"
 
 
 def test_cambio_de_categoria_y_termino(emmy, hoy):
@@ -82,7 +82,8 @@ def test_cuenta_nueva_con_categoria_y_fecha_de_ingreso(app, hoy):
 
 # --- Administración ------------------------------------------------------------------------------------
 
-def test_ventana_de_vinculo(admin, emmy, hoy):
+def test_ventana_de_vinculo(carrera, emmy, hoy):
+    admin = carrera
     r = admin.get(f"/admin/usuarios/{emmy}/vinculo", headers=HX)
     assert "Sin periodos registrados" in r.text and "Agregar un periodo" in r.text
     r = admin.post(f"/admin/usuarios/{emmy}/vinculo/periodo", headers=HX,
@@ -105,14 +106,15 @@ def test_ventana_de_vinculo(admin, emmy, hoy):
     assert {"agregar_vinculo", "cambiar_categoria", "corregir_vinculo", "terminar_vinculo", "eliminar_vinculo"} <= acciones
 
 
-def test_solo_admin_gestiona_vinculos(client, emmy):
+def test_solo_la_direccion_de_carrera_gestiona_vinculos(client, emmy):
     login(client, "inv@test.cl", PASS_TEMP)
     assert client.get(f"/admin/usuarios/{emmy}/vinculo", headers=HX).status_code == 403
     assert client.post(f"/admin/usuarios/{emmy}/vinculo/periodo", headers=HX,
                        data={"categoria": "titular", "desde": "2020-01-01"}).status_code == 403
 
 
-def test_desactivar_pregunta_por_el_vinculo(admin, emmy, hoy):
+def test_desactivar_pregunta_por_el_vinculo(carrera, emmy, hoy):
+    admin = carrera
     vinculos.agregar(emmy, "titular", "2019-01-01")
     fila = admin.get("/admin/usuarios").text
     assert f"/admin/usuarios/{emmy}/desactivar" in fila
@@ -129,7 +131,8 @@ def test_desactivar_pregunta_por_el_vinculo(admin, emmy, hoy):
     assert not usuarios.por_id(emmy)["activo"] and vinculos.vigente(emmy)
 
 
-def test_alta_con_fecha_de_ingreso(admin, hoy):
+def test_alta_con_fecha_de_ingreso(carrera, hoy):
+    admin = carrera
     admin.post("/admin/usuarios", headers=HX, data={"nombres": "Carl", "apellidos": "Gauss", "email": "g@test.cl",
                                                     "es_investigador": "on", "categoria": "interino",
                                                     "fecha_ingreso": "2025-08-01"})
@@ -160,7 +163,8 @@ def test_leer_historial(emmy):
     assert any("se superponen" in e for e in p["alan@test.cl"]["errores"])
 
 
-def test_importar_historial_reemplaza(admin, emmy, hoy):
+def test_importar_historial_reemplaza(carrera, emmy, hoy):
+    admin = carrera
     vinculos.agregar(emmy, "invitado")  # lo que había: se reemplaza
     contenido = base64.b64encode(HISTORIAL.encode()).decode()
     r = admin.post("/admin/usuarios/historial/revisar", headers=HX,
@@ -226,5 +230,5 @@ def test_memoria_incluye_a_quienes_ya_no_estan_y_advierte(emmy, hoy):
 def test_perfil_muestra_el_vinculo(client, emmy, hoy):
     vinculos.agregar(emmy, "titular", "2019-05-01")
     login(client, "inv@test.cl", PASS_TEMP)
-    assert "En el instituto desde 2019" in client.get("/perfil").text
+    assert "Vinculado(a) desde 2019" in client.get("/perfil").text
     login(client, "admin@test.cl", PASS_ADMIN)

@@ -113,7 +113,7 @@ pero la memoria las informa aparte.
 
 **Filiación:** junto a cada autor del instituto se indica si **firmó la publicación con la
 filiación del instituto** (IIMAT, CMAT, FCPN o UMSA; vale la doble filiación). En los informes
-institucionales solo cuenta un producto si al menos un autor vinculado al instituto en esa fecha
+institucionales solo cuenta un producto si al menos un autor vinculado (Carrera e Instituto) en esa fecha
 firmó con ella. Al importar por DOI, se marca sola cuando la afiliación publicada menciona al
 instituto o a la UMSA; revísela. En la lista de productos, **«Sin filiación declarada»** muestra
 sus artículos indexados o arbitrados pendientes, con botones Sí / No y «Firmé todos estos con
@@ -175,9 +175,16 @@ Hay dos tipos de proyecto:
 
 - **Individual:** lo registra usted mismo con **«Nuevo proyecto individual»** y queda como
   responsable. No necesita aprobación. Sirve, por ejemplo, para un proyecto con financiamiento
-  externo o una línea de trabajo propia.
-- **Institucional:** se propone en la convocatoria de septiembre y lo acepta la administración.
-  Rige de octubre a septiembre.
+  externo o una línea de trabajo propia. Si ya no corresponde, su responsable lo **elimina** con el
+  botón «Eliminar» de la ficha: se borran sus participantes, objetivos y contrapartes; los productos
+  y actividades enlazados siguen en el registro de sus autores.
+- **Institucional:** los gestiona la Dirección del Instituto. Son de dos clases: **de
+  investigación** y **de interacción social** (extensión). Se proponen en la convocatoria de
+  septiembre y los acepta la Dirección del Instituto. Rigen de octubre a septiembre y no se
+  eliminan: siguen su flujo (propuesta, decisión, continuidad o término).
+
+Participar en un proyecto no requiere tener carga horaria asignada para investigación o extensión:
+el equipo lo integran sus participantes, del instituto o externos.
 
 ### Proyectos institucionales
 
@@ -186,9 +193,10 @@ Hay dos tipos de proyecto:
 - **Cuándo:** la convocatoria de cada periodo está abierta todo septiembre (la administración
   puede ampliar el plazo). El borrador se puede preparar en cualquier momento; solo el envío
   debe hacerse dentro del plazo. «Proyectos» muestra la convocatoria abierta o la próxima.
-- **Cómo:** «Proponer proyecto institucional» crea un borrador. Complete sus secciones: datos
-  básicos (incluidas las **líneas de investigación** vigentes a las que se adscribe el proyecto:
-  al menos una) y objetivos específicos, metodología, resultados esperados, actividades programadas
+- **Cómo:** «Proponer proyecto institucional» pide la **clase** (investigación o interacción
+  social) y el nombre, y crea un borrador. Complete sus secciones: datos básicos (incluidas las
+  **líneas de investigación** vigentes a las que se adscribe el proyecto: al menos una en los de
+  investigación; opcionales en los de interacción social) y objetivos específicos, metodología, resultados esperados, actividades programadas
   (con el mes previsto de cada una) y bibliografía. «Guardar borrador» guarda sin enviar; abajo
   se indica qué falta. Agregue al equipo desde «Gestionar participantes».
 - **Después de enviar** no se puede modificar. La administración puede:
@@ -279,8 +287,8 @@ previa dice por qué). Los docentes deben estar registrados en «Usuarios», aun
 **Carga horaria:** cada persona tiene una carga contratada de 32, 64, 96, 128 o 160 h/mes (160 =
 tiempo completo), distribuida por actividad en múltiplos de 32 h/mes: docencia, investigación,
 extensión y servicios, gestión y otras. Por ejemplo, 160 h/mes = docencia 64 (dos materias) +
-investigación 64 + extensión 32. La Dirección de Carrera la **registra en el vínculo con la
-Carrera** (Usuarios → Vínculo, pestaña CMAT; ver abajo). La pestaña «Carga horaria» la muestra por
+investigación 64 + extensión 32. La Dirección de Carrera la **registra en el vínculo** de cada
+persona (Usuarios → Vínculo; ver abajo). La pestaña «Carga horaria» la muestra por
 semestre, según el vínculo vigente al inicio del semestre, y compara la docencia prevista con la
 asignada en la oferta (32 h/mes por materia como titular, de grado o maestría; no suman los
 auxiliares ni los cursos de verano e invierno). Avisa si faltan materias por asignar o si hay más
@@ -313,8 +321,10 @@ proyecto y ser del mismo periodo).
 
 - **Usuarios → Nuevo usuario:** con «Enviar invitación por correo» la persona define su
   contraseña. Sin invitación, el sistema muestra una contraseña temporal para entregar a mano.
-  Las cuentas de investigador llevan **categoría** (titular, contratado, interino, invitado o
-  externo): de ella depende quién puede proponer proyectos institucionales y ser responsable.
+  La **categoría** (titular, contratado, interino, invitado o externo) la define solo la
+  Dirección de Carrera: si quien crea la cuenta tiene ese rol, la indica aquí; si no, queda «Sin
+  categoría» y la Dirección de Carrera la registra después en «Vínculo». De ella depende quién puede
+  proponer proyectos institucionales y ser responsable.
 - **Personas sin acceso:** en «Nuevo usuario», «Sin acceso al sistema» registra a una persona solo por
   sus datos (p. ej., un docente de la Carrera que no usa el sistema): tiene vínculo y ficha, pero no
   puede ingresar ni pedir una contraseña por su cuenta. «Habilitar acceso» (llave) le genera una
@@ -326,37 +336,35 @@ proyecto y ser del mismo periodo).
 - **Roles** (en la tabla de usuarios, botón «Roles»; solo Administración del sistema): cada rol se
   asigna a una persona para una unidad, desde una fecha y, si corresponde, hasta otra, anotando qué
   dirección lo pidió. «Quitar» hace que el rol deje de regir desde hoy; queda en el historial.
-  Roles: Administración del sistema (cuentas, roles, auditoría), Dirección del Instituto
-  (propuestas, catálogos, vínculos del IIMAT, memoria y anexo), Dirección de Carrera, Coordinación
-  académica, Comité de acreditación (ve todo, no modifica) y Gestión de datos (carga de vínculos y
-  estudiantes de su unidad). El sistema no permite quedarse sin Administración del sistema.
-  Cada rol ve solo lo suyo: Administración del sistema, cuentas, roles y auditoría; la Dirección
-  del Instituto, propuestas, catálogos, vínculos del IIMAT, memoria y anexo; la Dirección de
-  Carrera y Gestión de datos, los vínculos de su unidad; el Comité, los informes.
+  Roles: Administración del sistema (cuentas, roles, auditoría), Dirección del Instituto (el ciclo
+  de vida de los proyectos institucionales: convocatoria, propuestas, responsables; catálogos,
+  memoria y anexo), Dirección de Carrera (categoría y vínculo de cada persona, con su carga horaria;
+  planes, oferta y docencia), Coordinación académica, Comité de acreditación (ve todo, no modifica)
+  y Gestión de datos (estudiantes y fichas de su unidad). El sistema no permite quedarse sin
+  Administración del sistema.
 - **Usuarios → Importar CSV:** alta masiva desde una planilla con `email`, `nombres`,
   `apellidos` y, opcionalmente, `categoria`, `investigador` y `admin` (sí/no; «sí» asigna Administración
-  del sistema y Dirección del Instituto). Las filas sin
-  categoría se crean igual y quedan como «Sin categoría». Hay una plantilla. La vista
+  del sistema y Dirección del Instituto). La `categoria` solo se toma si quien importa tiene la
+  Dirección de Carrera; si no, y en las filas sin ella, la cuenta queda «Sin categoría». Hay una plantilla. La vista
   previa marca cada fila como nueva, ya existente o con error antes de crear nada.
 - En la tabla de usuarios:
   - 🔓 **Desbloquear**: una cuenta bloqueada por intentos fallidos, sin cambiar su contraseña.
   - 🔑 **Restablecer**: genera una contraseña temporal nueva.
   - Activar o desactivar una cuenta; desactivarla cierra su sesión de inmediato.
-  - **Vínculo**: el historial de pertenencia de cada persona al **Instituto (IIMAT)** y a la
-    **Carrera (CMAT)**, con su categoría por periodo; una persona puede estar vinculada a
-    ambos a la vez. Elija la unidad arriba. Desde ahí se registra un cambio de categoría (cierra el
-    periodo vigente el día anterior), se termina el vínculo o se agrega un periodo histórico. En la
-    **Carrera**, cada periodo lleva además la **carga horaria contratada** (total y distribución por
-    actividad, que debe sumar el total); un cambio de carga (nuevo contrato, más horas) se registra
-    con «Cambiar de categoría o de carga», que abre un periodo nuevo. Los
-    informes de investigación solo cuentan lo producido **mientras la persona estaba vinculada al
-    Instituto**, con la categoría de ese momento; el vínculo con la Carrera es para la docencia. Las cuentas sin fecha de ingreso se marcan en ámbar.
-  - **Importar historial:** carga el historial desde un CSV de Recursos Humanos (`email`,
-    `categoria`, `desde`, `hasta`, `jornada`, `nota` y `unidad`: IIMAT o CMAT, vacío = IIMAT; una
-    fila por periodo). El historial de cada persona con cada unidad del archivo se reemplaza por el
-    del archivo.
-  - Al **desactivar** una cuenta con vínculo vigente, el sistema pregunta si también termina el
-    vínculo y en qué fecha. Lo publicado mientras estuvo vinculada sigue contando.
+  - **Vínculo** (solo la Dirección de Carrera): el historial de vínculo de cada persona con una
+    **sola dependencia**, la Carrera de Matemática (el Instituto forma parte de ella), con su
+    categoría y su **carga horaria contratada** por periodo (total y distribución por actividad, que
+    debe sumar el total). Desde ahí se registra un cambio de categoría o de carga («Cambiar de
+    categoría o de carga»: cierra el periodo vigente el día anterior y abre uno nuevo), se termina
+    el vínculo o se agrega un periodo histórico. Los informes solo cuentan lo producido **mientras
+    la persona estaba vinculada**, con la categoría de ese momento. Las cuentas sin fecha de
+    ingreso se marcan en ámbar.
+  - **Importar historial** (Dirección de Carrera): carga el historial desde un CSV de Recursos
+    Humanos (`email`, `categoria`, `desde`, `hasta`, `jornada` y `nota`; una fila por periodo). El
+    historial de cada persona del archivo se reemplaza por el del archivo; la carga horaria se
+    registra después en su vínculo.
+  - Al **desactivar** una cuenta con vínculo vigente, a la Dirección de Carrera el sistema le
+    pregunta si también termina el vínculo y en qué fecha. Lo publicado mientras estuvo vinculada sigue contando.
 - **Propuestas:** la bandeja de propuestas institucionales por periodo, con filtro por estado y el
   contador de las que esperan decisión. En cada propuesta: aceptar, aceptar con condiciones
   (indicándolas) o rechazar (con el motivo). En la misma página se ajusta el **plazo** de la
