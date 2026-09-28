@@ -109,8 +109,8 @@ def test_si_otro_proyecto_asigna_toda_la_carga_no_hay_aviso(gente, hoy):
     assert carga_proyectos.pendientes(a) == []
 
 
+def test_pantallas(client, gente, hoy):
     alan = gente["alan"]
-    alan, emmy = gente["alan"], gente["emmy"]
     a = gente["proyecto"]("Álgebra")
     externo_individual = gente["proyecto"]("Propio", tipo="individual")
     login(client, "inv@test.cl", PASS_TEMP)
