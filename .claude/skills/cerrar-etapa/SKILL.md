@@ -25,7 +25,9 @@ Si se usó una clase de Tailwind que antes no existía: `scripts/estilos.sh` y c
 uv run pytest -q                 # rápido (~1,5 min)
 uv run pytest -q --navegador     # antes del commit: flujos en Chrome, errores de JS y CSP
 ```
-Si una prueba falla porque la regla cambió a propósito, actualice la expectativa **y** diga en la
+No encadene `pytest … | tail` con `&& git commit`: la tubería oculta el código de salida y se
+commitea aunque falle. Corra las pruebas, confirme «N passed» sin «failed» y recién entonces haga
+el commit. Si una prueba falla porque la regla cambió a propósito, actualice la expectativa **y** diga en la
 respuesta qué regla cambió. Nunca borre una prueba para que pase. Agregue pruebas para lo nuevo
 (lógica, permisos por rol y la pantalla).
 
