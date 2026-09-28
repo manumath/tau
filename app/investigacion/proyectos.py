@@ -496,7 +496,9 @@ def n_pendientes(pid: int) -> int:
     return get_db().q("""SELECT (SELECT COUNT(*) FROM actividad_proyecto WHERE proyecto_id = :p
                                  AND estado = 'pendiente')
                               + (SELECT COUNT(*) FROM producto_proyecto WHERE proyecto_id = :p
-                                 AND estado = 'pendiente') AS n""", {"p": pid})[0]["n"]
+                                 AND estado = 'pendiente')
+                              + (SELECT COUNT(*) FROM aviso_carga WHERE proyecto_id = :p
+                                 AND atendido_en IS NULL) AS n""", {"p": pid})[0]["n"]
 
 
 def n_pendientes_para(usuario: dict) -> int:
@@ -508,6 +510,8 @@ def n_pendientes_para(usuario: dict) -> int:
            SELECT (SELECT COUNT(*) FROM actividad_proyecto WHERE estado = 'pendiente'
                      AND proyecto_id IN (SELECT proyecto_id FROM mios))
                 + (SELECT COUNT(*) FROM producto_proyecto WHERE estado = 'pendiente'
+                     AND proyecto_id IN (SELECT proyecto_id FROM mios))
+                + (SELECT COUNT(*) FROM aviso_carga WHERE atendido_en IS NULL
                      AND proyecto_id IN (SELECT proyecto_id FROM mios)) AS n""",
         {"u": usuario["id"]})[0]["n"]
 

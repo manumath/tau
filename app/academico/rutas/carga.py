@@ -113,6 +113,10 @@ def get(auth, gid: int, uid: int):
             P(f"{c['horas']} h/mes" + (f" · {c['detalle']}" if c["detalle"] else ""), cls="text-sm font-medium")
             if c else P("Sin carga registrada.", cls=TextPresets.muted_sm),
             distribucion,
+            *([H3("En proyectos", cls="text-base font-semibold mt-4"),
+               Ul(*[Li(f"{x['nombre']} · {'investigación' if x['clase'] == 'investigacion' else 'extensión'} · "
+                       f"{x['horas']} h/mes", cls="text-sm py-0.5") for x in carga.en_proyectos(v["id"])])]
+              if v and carga.en_proyectos(v["id"]) else []),
             H3("Docencia asignada", cls="text-base font-semibold mt-4"),
             Ul(*[Li(f"{m['sigla']} {m['nombre']} · paralelo {m['paralelo']} · {oferta.HORAS_POR_MATERIA} h/mes",
                     cls="text-sm py-0.5") for m in r["materias"]]) if r["materias"]

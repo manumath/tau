@@ -129,3 +129,37 @@ def recordatorio_continuidad(p: dict, periodo: int, cierre: str):
             f"Si quiere continuarlo en el periodo {periodo}–{periodo + 1}, presente la propuesta de continuidad "
             f"antes del {cierre}; si no, el proyecto concluye en esa fecha.\n\n"
             f"{_url_proyecto(p['id'], 'resumen')}")
+
+
+def _persona(uid: int) -> str:
+    u = _usuario(uid)
+    return f"{u['nombres']} {u['apellidos']}" if u else "(persona eliminada)"
+
+
+def carga_desvinculado(pid: int, uid: int, horas: int, fin: str):
+    """A los responsables: un participante con carga en el proyecto quedó sin vínculo."""
+    proyecto = get_db().q("SELECT nombre FROM proyecto WHERE id = ?", [pid])[0]["nombre"]
+    for r in _responsables(pid):
+        if r["id"] == uid or not _quiere(r):
+            continue
+        correo.enviar(
+            r["email"], f"«{proyecto}»: {_persona(uid)} quedó sin vínculo",
+            f"Hola, {r['nombres']}:\n\nEl vínculo de {_persona(uid)} con la Carrera terminó el {fin}. Tenía "
+            f"{horas} h/mes asignadas en el proyecto «{proyecto}». Puede seguir como participante, pero desde esa "
+            "fecha figura sin carga horaria. Si vuelve a vincularse, usted decide si le asigna carga otra vez.\n\n"
+            f"{_url_proyecto(pid, 'pendientes')}")
+
+
+def carga_nuevo_vinculo(pid: int, uid: int, libres: int, actividad: str):
+    """A los responsables: un participante que tuvo carga en el proyecto volvió a vincularse."""
+    proyecto = get_db().q("SELECT nombre FROM proyecto WHERE id = ?", [pid])[0]["nombre"]
+    texto_act = "investigación" if actividad == "investigacion" else "extensión"
+    for r in _responsables(pid):
+        if r["id"] == uid or not _quiere(r):
+            continue
+        correo.enviar(
+            r["email"], f"«{proyecto}»: {_persona(uid)} tiene un nuevo periodo de vínculo",
+            f"Hola, {r['nombres']}:\n\n{_persona(uid)}, que tuvo carga horaria en «{proyecto}», tiene un nuevo "
+            f"periodo de vínculo con {libres} h/mes de {texto_act} sin asignar. La carga en el proyecto no se "
+            "reasigna sola: si corresponde, asígnela en la pestaña «Participantes».\n\n"
+            f"{_url_proyecto(pid, 'participantes')}")

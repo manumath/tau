@@ -546,6 +546,8 @@ def mantenimiento(forzar: bool = False):
     _ultimo_mantenimiento = time.monotonic()
     refrescar_vigencias()
     recordatorios()
+    from app.investigacion import carga_proyectos  # evita el ciclo de importación
+    carga_proyectos.revisar()  # vínculos que terminaron o empezaron con la fecha
 
 
 # --- Plan de actividades: previstas frente a realizadas ---------------------------------------------------

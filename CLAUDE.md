@@ -52,10 +52,15 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   carga horaria contratada). La Dirección del Instituto gestiona el ciclo de vida de los proyectos
   institucionales. Administración del sistema: cuentas, roles (a pedido de las direcciones) y
   auditoría. El Comité de acreditación ve todo y no modifica.
+- **Vínculo por periodos:** contratados, interinos e invitados con fecha de término obligatoria;
+  titular permanente (se termina a mano con motivo: retiro, renuncia, despido, fallecimiento).
 - **Carga horaria:** unidades de 32 h/mes; carga contratada 32–160 h/mes por periodo de vínculo,
   distribuida por actividad (docencia, investigación, extensión, gestión, otras) y que suma el
   total. Cada materia como titular = 32 h/mes; auxiliares y cursos de verano/invierno no suman.
   JCE = carga / 160. Participar en proyectos no exige carga.
+- **Carga en proyectos** (solo institucionales): el responsable la asigna por participante; sale de
+  la investigación o la extensión del vínculo vigente y rige solo mientras ese periodo está vigente.
+  En un nuevo periodo no se reasigna sola; los responsables reciben avisos (`carga_proyectos`).
 - **Gestiones:** I, INV (julio), II, VER (enero del año siguiente, contado con la gestión
   anterior: VER-2026 = enero de 2027). Verano e invierno solo los dictan titulares.
 - **Proyectos:** individuales (los elimina su responsable) e institucionales de **investigación** o

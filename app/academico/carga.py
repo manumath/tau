@@ -45,6 +45,15 @@ def resumen(usuario_id: int, gestion: dict) -> dict:
             "prevista": prevista, "asignada": asignada, "avisos": avisos}
 
 
+def en_proyectos(vid: int) -> list[dict]:
+    """Carga de un periodo de vínculo asignada por los responsables en proyectos institucionales
+    (sale de la investigación o la extensión; ver app.investigacion.carga_proyectos)."""
+    return get_db().q(
+        """SELECT p.id, p.nombre, p.clase, pc.horas FROM participante_carga pc
+           JOIN proyecto_participante pp ON pp.id = pc.participante_id JOIN proyecto p ON p.id = pp.proyecto_id
+           WHERE pc.vinculo_id = ? ORDER BY p.nombre""", [vid])
+
+
 def personas(gestion: dict) -> list[dict]:
     """Quienes tienen vínculo con la Carrera al inicio del semestre o dictan como titulares en él."""
     ids = [f["usuario_id"] for f in get_db().q(

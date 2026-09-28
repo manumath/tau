@@ -40,7 +40,8 @@ def con_perfil(uid: int) -> dict | None:
 
 def crear(email: str, nombres: str, apellidos: str, password: str | None, *,
           es_admin=False, es_investigador=True, debe_cambiar_pass=True,
-          categoria: str | None = None, fecha_ingreso: str | None = None) -> dict:
+          categoria: str | None = None, fecha_ingreso: str | None = None,
+          fecha_termino: str | None = None) -> dict:
     db = get_db()
     # Sin contraseña: persona registrada sin acceso al portal (ver app.comun.academicos).
     sin_acceso = password is None
@@ -56,7 +57,7 @@ def crear(email: str, nombres: str, apellidos: str, password: str | None, *,
     if es_investigador:
         db.t.investigador.insert(usuario_id=u["id"])
     if categoria:
-        vinculos.agregar(u["id"], categoria, fecha_ingreso or None)
+        vinculos.agregar(u["id"], categoria, fecha_ingreso or None, fecha_termino or None)
     return u
 
 

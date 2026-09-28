@@ -53,16 +53,33 @@ def test_periodos_y_superposicion(emmy, hoy):
 
 
 def test_cambio_de_categoria_y_termino(emmy, hoy):
-    vinculos.agregar(emmy, "interino", "2024-02-01", jornada=20)
-    assert vinculos.cambiar_categoria(emmy, "contratado", "2024-01-01") == [
+    vinculos.agregar(emmy, "interino", "2024-02-01", "2026-12-31", jornada=20)
+    assert vinculos.cambiar_categoria(emmy, "contratado", "2024-01-01", hasta="2026-12-31") == [
         "La fecha debe ser posterior al inicio del periodo vigente."]
-    assert vinculos.cambiar_categoria(emmy, "contratado", "2025-03-01") == []
+    # A mitad del contrato: el periodo vigente se cierra aunque tuviera término posterior.
+    assert "Indique la fecha de término" in vinculos.cambiar_categoria(emmy, "contratado", "2025-03-01")[0]
+    assert vinculos.listar(emmy)[0]["fecha_fin"] == "2026-12-31"  # se deshizo el cierre
+    assert vinculos.cambiar_categoria(emmy, "contratado", "2025-03-01", hasta="2025-12-31") == []
+    assert vinculos.cambiar_categoria(emmy, "titular", "2026-01-01") == []  # sin periodo vigente: uno nuevo
     periodos = vinculos.listar(emmy)
     assert [(v["categoria"], v["fecha_inicio"], v["fecha_fin"], v["jornada_horas"]) for v in periodos] == [
-        ("interino", "2024-02-01", "2025-02-28", 20), ("contratado", "2025-03-01", None, 20)]
-    assert vinculos.terminar(emmy, "2026-06-30") == []
+        ("interino", "2024-02-01", "2025-02-28", 20), ("contratado", "2025-03-01", "2025-12-31", 20),
+        ("titular", "2026-01-01", None, None)]
+    assert vinculos.terminar(emmy, "2026-06-30", "baja") == ["Motivo de término no válido."]
+    assert vinculos.terminar(emmy, "2026-06-30", "retiro") == []
+    assert vinculos.listar(emmy)[-1]["motivo_termino"] == "retiro"
     assert vinculos.vigente(emmy) is None and perfiles.obtener(emmy)["categoria"] is None
     assert vinculos.resumen(emmy) is None
+
+
+def test_termino_segun_la_categoria(emmy, hoy):
+    """Contratados, interinos e invitados: periodo con término. Titular: sin término futuro."""
+    for cat in ("contratado", "interino", "invitado"):
+        assert "Indique la fecha de término" in vinculos.agregar(emmy, cat, "2026-01-01")[0]
+    assert "es permanente" in vinculos.agregar(emmy, "titular", "2026-01-01", "2030-12-31")[0]
+    assert vinculos.agregar(emmy, "titular", "1990-01-01", "2000-12-31") == []  # historial: se retiró
+    otra = usuarios.crear("otra@test.cl", "Otra", "Persona", PASS_TEMP)["id"]
+    assert vinculos.agregar(otra, "invitado") == []  # ingreso desconocido (dato antiguo): se admite
 
 
 def test_termino_futuro_deja_de_estar_vigente_con_el_tiempo(emmy, hoy):
@@ -87,7 +104,8 @@ def test_ventana_de_vinculo(carrera, emmy, hoy):
     r = admin.get(f"/admin/usuarios/{emmy}/vinculo", headers=HX)
     assert "Sin periodos registrados" in r.text and "Agregar un periodo" in r.text
     r = admin.post(f"/admin/usuarios/{emmy}/vinculo/periodo", headers=HX,
-                   data={"categoria": "contratado", "desde": "2019-03-01", "jornada": "40", "nota": "Contrato 1"})
+                   data={"categoria": "contratado", "desde": "2019-03-01", "hasta": "2026-12-31", "jornada": "40",
+                         "nota": "Contrato 1"})
     assert "Contratado(a)" in r.text and "vigente" in r.text and 'hx-swap-oob="true"' in r.text
     r = admin.post(f"/admin/usuarios/{emmy}/vinculo/cambio", headers=HX, data={"categoria": "titular", "desde": "2023-01-01"})
     assert [v["categoria"] for v in vinculos.listar(emmy)] == ["contratado", "titular"]
@@ -98,8 +116,10 @@ def test_ventana_de_vinculo(carrera, emmy, hoy):
     admin.put(f"/admin/usuarios/vinculo/{v['id']}", headers=HX,
               data={"categoria": "contratado", "desde": "2019-04-01", "hasta": "2022-12-31", "jornada": "40"})
     assert vinculos.listar(emmy)[0]["fecha_inicio"] == "2019-04-01"
-    admin.post(f"/admin/usuarios/{emmy}/vinculo/termino", headers=HX, data={"fecha": "2026-08-31"})
-    assert vinculos.vigente(emmy) is None
+    r = admin.post(f"/admin/usuarios/{emmy}/vinculo/termino", headers=HX, data={"fecha": "2026-08-31"})
+    assert "Indique el motivo del término" in r.text and vinculos.vigente(emmy)
+    r = admin.post(f"/admin/usuarios/{emmy}/vinculo/termino", headers=HX, data={"fecha": "2026-08-31", "motivo": "renuncia"})
+    assert vinculos.vigente(emmy) is None and "Renuncia" in r.text
     admin.delete(f"/admin/usuarios/vinculo/{v['id']}", headers=HX)
     assert len(vinculos.listar(emmy)) == 1
     acciones = {f["accion"] for f in get_db().q("SELECT accion FROM auditoria")}
@@ -133,11 +153,13 @@ def test_desactivar_pregunta_por_el_vinculo(carrera, emmy, hoy):
 
 def test_alta_con_fecha_de_ingreso(carrera, hoy):
     admin = carrera
-    admin.post("/admin/usuarios", headers=HX, data={"nombres": "Carl", "apellidos": "Gauss", "email": "g@test.cl",
-                                                    "es_investigador": "on", "categoria": "interino",
-                                                    "fecha_ingreso": "2025-08-01"})
+    datos = {"nombres": "Carl", "apellidos": "Gauss", "email": "g@test.cl", "es_investigador": "on",
+             "categoria": "interino", "fecha_ingreso": "2025-08-01"}
+    r = admin.post("/admin/usuarios", headers=HX, data=datos)
+    assert "Indique la fecha de término" in r.text and not usuarios.por_email("g@test.cl")
+    admin.post("/admin/usuarios", headers=HX, data={**datos, "fecha_termino": "2025-12-31"})
     uid = usuarios.por_email("g@test.cl")["id"]
-    assert vinculos.listar(uid)[0]["fecha_inicio"] == "2025-08-01"
+    assert [(v["fecha_inicio"], v["fecha_fin"]) for v in vinculos.listar(uid)] == [("2025-08-01", "2025-12-31")]
 
 
 # --- CSV ----------------------------------------------------------------------------------------------------
@@ -147,7 +169,8 @@ HISTORIAL = ("Correo;Categoría;Fecha de ingreso;Término;Jornada;Nota\n"
              "inv@test.cl;titular;2022-01-01;;40;Res. 345/2021\n"
              "otro@test.cl;titular;2020-01-01;;;\n"
              "alan@test.cl;interino;2020-01-01;2021-01-01;;\n"
-             "alan@test.cl;contratado;2020-06-01;;;\n"
+             "alan@test.cl;contratado;2020-06-01;2020-12-31;;\n"
+             "nadie@test.cl;invitado;2020-06-01;;;\n"
              "alan@test.cl;emérito;31/02/2020;;99;\n")
 
 
@@ -161,6 +184,7 @@ def test_leer_historial(emmy):
     assert "No hay una persona registrada" in p["otro@test.cl"]["errores"][0]
     assert any("categoría no válida" in e and "fecha no válida" in e and "jornada" in e for e in p["alan@test.cl"]["errores"])
     assert any("se superponen" in e for e in p["alan@test.cl"]["errores"])
+    assert any("falta la fecha de término" in e for e in p["nadie@test.cl"]["errores"])
 
 
 def test_importar_historial_reemplaza(carrera, emmy, hoy):

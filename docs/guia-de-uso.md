@@ -240,6 +240,18 @@ el equipo lo integran sus participantes, del instituto o externos.
 - En **Participantes** agregue personas del instituto o externas, cambie roles o dé de baja
   (lo ya aprobado se conserva). Puede nombrar co-responsables; cambiar al responsable lo hace
   la administración.
+- **Carga horaria en el proyecto** (proyectos institucionales): al agregar a alguien del instituto
+  indique cuántas h/mes dedica al proyecto (múltiplos de 32) o «Sin carga»; después se cambia en la
+  columna «Carga (h/mes)». Sale de la carga de **investigación** (proyectos de investigación) o de
+  **extensión** (interacción social) que la Dirección de Carrera registró en su vínculo, y la suma en
+  todos sus proyectos no puede superarla: el sistema muestra cuánto le queda libre. Rige solo
+  mientras ese vínculo está vigente:
+  - si el vínculo termina, la persona puede seguir en el proyecto, pero desde esa fecha figura sin
+    carga; usted recibe un aviso («Quedó sin vínculo»);
+  - si vuelve a vincularse, la carga **no se reasigna sola**: usted recibe un aviso («Nuevo periodo
+    de vínculo») y decide si le asigna carga o no. Si otro proyecto ya le asignó toda su carga libre,
+    ese aviso no aparece.
+  Los avisos llegan por correo y quedan en **Pendientes** hasta que los atienda.
 - **Agradecimiento:** los fondos exigen que cada publicación lleve la filiación del instituto y
   **agradezca al proyecto**. Al aprobar un producto indique si lo agradece; en la pestaña
   **Productos** cada uno muestra ambos requisitos y puede corregir el agradecimiento. Quien registra
@@ -354,9 +366,13 @@ proyecto y ser del mismo periodo).
   - **Vínculo** (solo la Dirección de Carrera): el historial de vínculo de cada persona con una
     **sola dependencia**, la Carrera de Matemática (el Instituto forma parte de ella), con su
     categoría y su **carga horaria contratada** por periodo (total y distribución por actividad, que
-    debe sumar el total). Desde ahí se registra un cambio de categoría o de carga («Cambiar de
-    categoría o de carga»: cierra el periodo vigente el día anterior y abre uno nuevo), se termina
-    el vínculo o se agrega un periodo histórico. Los informes solo cuentan lo producido **mientras
+    debe sumar el total). Contratados, interinos e invitados se vinculan **por un periodo con fecha de
+    término** (obligatoria); el vínculo de titular es **permanente** (sin término). Desde ahí se
+    registra un cambio de categoría o de carga («Cambiar de categoría o de carga»: cierra el periodo
+    vigente el día anterior, aunque tuviera término posterior, y abre uno nuevo), se **termina** el
+    vínculo con su **motivo** (fin de contrato, renuncia, retiro, despido, fallecimiento u otro) o se
+    agrega un periodo histórico o un nuevo contrato. La investigación y la extensión asignadas en
+    proyectos no pueden quedar por debajo de lo que los responsables ya asignaron. Los informes solo cuentan lo producido **mientras
     la persona estaba vinculada**, con la categoría de ese momento. Las cuentas sin fecha de
     ingreso se marcan en ámbar.
   - **Importar historial** (Dirección de Carrera): carga el historial desde un CSV de Recursos

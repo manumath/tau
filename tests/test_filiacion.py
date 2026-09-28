@@ -109,7 +109,7 @@ def test_solo_el_autor_declara_su_filiacion(client, emmy):
 
 def test_memoria_exige_filiacion(emmy):
     alan = usuarios.crear("alan@test.cl", "Alan", "Turing", PASS_TEMP, categoria="contratado",
-                          fecha_ingreso="2020-01-01")["id"]
+                          fecha_ingreso="2020-01-01", fecha_termino="2027-12-31")["id"]
     _producto([f"i:{emmy}"], [1], "Con filiación")
     _producto([f"i:{emmy}"], [0], "Sin filiación")
     _producto([f"i:{emmy}"], [None], "Sin declarar")

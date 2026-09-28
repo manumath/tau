@@ -181,7 +181,10 @@ def form_usuario(datos=None, errores=(), con_vinculo=False):
               "los interinos pueden ser co-responsables. La carga horaria se registra después, en «Vínculo».",
               cls=TextPresets.muted_sm),
             cls="space-y-2"),
-        LabelInput("Fecha de ingreso", id="fecha_ingreso", type="date", value=d.get("fecha_ingreso") or ""),
+        Div(LabelInput("Fecha de ingreso", id="fecha_ingreso", type="date", value=d.get("fecha_ingreso") or ""),
+            LabelInput("Fecha de término", id="fecha_termino", type="date", value=d.get("fecha_termino") or ""),
+            cls="grid grid-cols-2 gap-4"),
+        P(AYUDA_TERMINO, cls=TextPresets.muted_sm),
         cls="space-y-4") if con_vinculo else P(
             UkIcon("info", height=14, width=14, cls="shrink-0 mt-0.5"),
             Span("La categoría y el vínculo (ingreso, carga horaria) los define la Dirección de Carrera en «Vínculo»."),
@@ -292,17 +295,23 @@ def get(auth):
 @rt(BASE)
 def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categoria: str = "",
          es_investigador: bool = False, es_admin: bool = False, invitar: bool = False, fecha_ingreso: str = "",
-         sin_acceso: bool = False):
+         fecha_termino: str = "", sin_acceso: bool = False):
     con_vinculo = gestiona_vinculos(auth)
     datos = dict(nombres=nombres.strip(), apellidos=apellidos.strip(),
                  email=email.strip().lower(), es_investigador=es_investigador, es_admin=es_admin,
                  categoria=(categoria or None) if con_vinculo else None,
-                 fecha_ingreso=(fecha_ingreso or None) if con_vinculo and categoria else None)
+                 fecha_ingreso=(fecha_ingreso or None) if con_vinculo and categoria else None,
+                 fecha_termino=(fecha_termino or None) if con_vinculo and categoria else None)
     errores = []
     try:
         date.fromisoformat(fecha_ingreso) if fecha_ingreso else None
+        date.fromisoformat(fecha_termino) if fecha_termino else None
     except ValueError:
-        errores.append("Fecha de ingreso no válida.")
+        errores.append("Fecha de ingreso o de término no válida.")
+    else:
+        if datos["categoria"] in vinculos.CATEGORIAS and (e := vinculos.regla_termino(
+                datos["categoria"], datos["fecha_ingreso"], datos["fecha_termino"])):
+            errores.append(e)
     if not datos["nombres"] or not datos["apellidos"]:
         errores.append("Nombres y apellidos son obligatorios.")
     if not _RE_EMAIL.match(datos["email"]):
@@ -349,7 +358,7 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
             tabla())
 
 
-def modal_desactivar(u, errores=(), termina="si", fecha=""):
+def modal_desactivar(u, errores=(), termina="si", fecha="", motivo=""):
     v = vinculos.vigente(u["id"])
     return modal(
         "Desactivar cuenta",
@@ -360,7 +369,10 @@ def modal_desactivar(u, errores=(), termina="si", fecha=""):
                           Span("Terminar también su vínculo el día", cls="text-sm"),
                           Input(type="date", name="fecha", value=fecha or date.today().isoformat(),
                                 cls="uk-input w-44 ml-2", aria_label="Fecha de término"),
-                          cls="flex items-center gap-2"),
+                          Select(Option("Motivo…", value=""),
+                                 *[Option(t, value=k, selected=k == motivo) for k, t in vinculos.MOTIVOS_TERMINO.items()],
+                                 name="motivo", cls="uk-select w-44", aria_label="Motivo del término"),
+                          cls="flex flex-wrap items-center gap-2"),
                  fh.Label(fh.Input(type="radio", name="termina", value="no", checked=termina == "no", cls="uk-radio"),
                           Span("Solo desactivar la cuenta (el vínculo sigue vigente)", cls="text-sm"),
                           cls="flex items-center gap-2"),
@@ -382,18 +394,19 @@ def get(uid: int, auth):
 
 
 @rt(BASE + "/{uid}/activo")
-def post(uid: int, auth, termina: str = "", fecha: str = ""):
+def post(uid: int, auth, termina: str = "", fecha: str = "", motivo: str = ""):
     u = usuarios.con_perfil(uid)
     if not u or uid == auth["id"]:
         return fila(u, auth) if u else ""
     if u["activo"] and termina == "si":
         if not gestiona_vinculos(auth):
             return SIN_PERMISO
-        errores = vinculos.terminar(uid, fecha)
+        errores = vinculos.terminar(uid, fecha, motivo or None)
         if errores:
-            return modal_desactivar(u, errores, termina, fecha), HtmxResponseHeaders(
+            return modal_desactivar(u, errores, termina, fecha, motivo), HtmxResponseHeaders(
                 retarget=f"#{ID_MODAL}", reswap="innerHTML")
-        auditar(auth["id"], "terminar_vinculo", "investigador", uid, fecha)
+        auditar(auth["id"], "terminar_vinculo", "investigador", uid,
+                fecha + (f" ({vinculos.MOTIVOS_TERMINO[motivo].lower()})" if motivo else ""))
     usuarios.set_activo(uid, not u["activo"])
     auditar(auth["id"], "desactivar_usuario" if u["activo"] else "activar_usuario", "usuario", uid)
     return fila(usuarios.con_perfil(uid), auth), Div(id=ID_MODAL, hx_swap_oob="true")
@@ -757,16 +770,28 @@ def delete(auth, uid: int, gid: int):
 
 # --- Historial de vínculo ---------------------------------------------------------------------------------
 
-def _campos_periodo(d, con_hasta=True, con_nota=True, sufijo=""):
+AYUDA_TERMINO = ("Contratados, interinos e invitados: con fecha de término (periodo definido). Titular: sin "
+                 "término; si se retira, renuncia o fallece, use «Terminar el vínculo».")
+
+
+def _campos_periodo(d, con_nota=True, sufijo=""):
     return Div(
-        Div(FormLabel("Categoría"), Select(*opciones_categoria(d.get("categoria"), vacia="— Elija —"),
-                                           name="categoria", cls="uk-select"), cls="space-y-1"),
-        LabelInput("Desde", id=f"desde{sufijo}", name="desde", type="date", value=d.get("desde") or ""),
-        LabelInput("Hasta", id=f"hasta{sufijo}", name="hasta", type="date", value=d.get("hasta") or "")
-        if con_hasta else "",
-        LabelInput("Nota", id=f"nota{sufijo}", name="nota", value=d.get("nota") or "",
-                   placeholder="Resolución, contrato…") if con_nota else "",
-        cls="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end")
+        Div(Div(FormLabel("Categoría"), Select(*opciones_categoria(d.get("categoria"), vacia="— Elija —"),
+                                               name="categoria", cls="uk-select"), cls="space-y-1"),
+            LabelInput("Desde", id=f"desde{sufijo}", name="desde", type="date", value=d.get("desde") or ""),
+            LabelInput("Hasta", id=f"hasta{sufijo}", name="hasta", type="date", value=d.get("hasta") or ""),
+            LabelInput("Nota", id=f"nota{sufijo}", name="nota", value=d.get("nota") or "",
+                       placeholder="Resolución, contrato…") if con_nota else "",
+            cls="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end"),
+        P(AYUDA_TERMINO, cls=(TextPresets.muted_sm, "mt-1")))
+
+
+def _campo_motivo(nombre="motivo", actual="", sufijo=""):
+    return Div(FormLabel("Motivo", fr=f"{nombre}{sufijo}"),
+               Select(Option("— Elija —", value=""),
+                      *[Option(t, value=k, selected=k == actual) for k, t in vinculos.MOTIVOS_TERMINO.items()],
+                      name=nombre, id=f"{nombre}{sufijo}", cls="uk-select", required=True),
+               cls="space-y-1")
 
 
 CAMPOS_CARGA = ("horas", *vinculos.ACTIVIDADES, "carga_detalle")
@@ -826,7 +851,9 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None):
         filas.append(Tr(
             Td(vinculos.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700") if vig and v["id"] == vig["id"] else ""),
             Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700"), cls="whitespace-nowrap"),
-            Td(v["fecha_fin"] or "—", cls="whitespace-nowrap"),
+            Td(v["fecha_fin"] or "—",
+               Div(vinculos.MOTIVOS_TERMINO[v["motivo_termino"]], cls=TextPresets.muted_sm) if v["motivo_termino"] else "",
+               cls="whitespace-nowrap"),
             Td(Span(vinculos.texto_carga(v) or "—", cls="text-sm")),
             Td(Span(v["nota"] or "—", cls="text-sm"),
                Span(f" · jornada según RR. HH.: {v['jornada_horas']} h/semana", cls=TextPresets.muted_sm)
@@ -852,12 +879,13 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None):
     acciones = [
         accion("Cambiar de categoría o de carga (ascenso, nuevo contrato)",
                P("Cierra el periodo vigente el día anterior y abre uno nuevo.", cls=TextPresets.muted_sm),
-               _campos_periodo(datos or {"categoria": vig["categoria"]}, con_hasta=False, con_nota=False,
-                               sufijo="-cambio"),
+               _campos_periodo(datos or {"categoria": vig["categoria"]}, con_nota=False, sufijo="-cambio"),
                _campos_carga(datos or _datos_carga(vig), sufijo="-cambio"),
                url=f"{BASE}/{uid}/vinculo/cambio", boton="Registrar cambio") if vig else "",
-        accion("Terminar el vínculo",
-               LabelInput("Último día", id="fecha-termino", name="fecha", type="date", value=date.today().isoformat()),
+        accion("Terminar el vínculo (fin de contrato, retiro, renuncia, despido, fallecimiento)",
+               Div(LabelInput("Último día", id="fecha-termino", name="fecha", type="date",
+                              value=date.today().isoformat()),
+                   _campo_motivo(sufijo="-termino"), cls="grid grid-cols-2 gap-3 items-end"),
                url=f"{BASE}/{uid}/vinculo/termino", boton="Terminar") if vig else "",
         accion("Agregar un periodo (histórico o nuevo ingreso)",
                _campos_periodo(datos, sufijo="-nuevo"), _campos_carga(datos, sufijo="-nuevo"),
@@ -899,7 +927,7 @@ def get(auth, uid: int):
 
 
 @rt(BASE + "/{uid}/vinculo/cambio")
-async def post(auth, req, uid: int, categoria: str = "", desde: str = "", jornada: str = ""):
+async def post(auth, req, uid: int, categoria: str = "", desde: str = "", hasta: str = "", jornada: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
@@ -907,24 +935,27 @@ async def post(auth, req, uid: int, categoria: str = "", desde: str = "", jornad
         return SIN_PERMISO
     fc = _form_carga(await req.form())
     carga = vinculos.leer_carga(fc)
-    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"], carga=carga)
+    errores = vinculos.cambiar_categoria(uid, categoria, desde, jornada or None, auth["id"], carga=carga,
+                                         hasta=hasta or None)
     if not errores:
         auditar(auth["id"], "cambiar_categoria", "investigador", uid, f"{categoria} desde {desde}"
                 + (f"; carga {vinculos.texto_carga(vinculos.vigente(uid, desde))}" if carga else ""))
     return modal_vinculo(u, auth, errores,
-                         datos={"categoria": categoria, "desde": desde, "jornada": jornada, **fc} if errores else None)
+                         datos={"categoria": categoria, "desde": desde, "hasta": hasta, "jornada": jornada, **fc}
+                         if errores else None)
 
 
 @rt(BASE + "/{uid}/vinculo/termino")
-def post(auth, uid: int, fecha: str = ""):
+def post(auth, uid: int, fecha: str = "", motivo: str = ""):
     u = _investigador(uid)
     if not u:
         return Response("No encontrado", status_code=404)
     if not gestiona_vinculos(auth):
         return SIN_PERMISO
-    errores = vinculos.terminar(uid, fecha)
+    errores = ["Indique el motivo del término."] if not motivo else vinculos.terminar(uid, fecha, motivo)
     if not errores:
-        auditar(auth["id"], "terminar_vinculo", "investigador", uid, fecha)
+        auditar(auth["id"], "terminar_vinculo", "investigador", uid,
+                f"{fecha} ({vinculos.MOTIVOS_TERMINO[motivo].lower()})")
     return modal_vinculo(u, auth, errores)
 
 

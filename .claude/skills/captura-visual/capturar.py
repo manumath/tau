@@ -115,7 +115,8 @@ def capturar(url: str, rutas: list[str], args, salida: Path) -> int:
             pagina.goto(url + ruta)
             pagina.wait_for_load_state("networkidle")
             for texto in clics:
-                pagina.get_by_text(texto, exact=False).first.click()
+                # El primer elemento visible con ese texto (puede haber otros ocultos, p. ej. en ayudas).
+                pagina.get_by_text(texto, exact=False).locator("visible=true").first.click(timeout=10000)
                 pagina.wait_for_timeout(600)
             nombre = f"{i:02d}-" + (re.sub(r"[^a-z0-9]+", "-", ruta.lower()).strip("-") or "inicio") + ".png"
             pagina.screenshot(path=str(salida / nombre), full_page=args.pagina_completa)

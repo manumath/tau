@@ -71,6 +71,8 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
             problemas.append("falta la fecha de inicio")
         elif hasta and hasta < desde:
             problemas.append("el término es anterior al inicio")
+        elif cat in vinculos.CON_TERMINO and not hasta:
+            problemas.append(f"falta la fecha de término ({vinculos.CATEGORIAS[cat].lower()}: periodo definido)")
         if jornada and not (jornada.isdigit() and 1 <= int(jornada) <= 60):
             problemas.append("jornada: horas semanales entre 1 y 60")
         if problemas:

@@ -1110,3 +1110,42 @@ docente · equivalencias cuando llegue el plan nuevo.
 
 **Confirmado (28-sep-2026):** las líneas de investigación son opcionales en los proyectos de
 interacción social, y el anexo de I+D+i (3.6.3 h) lista todos los proyectos vigentes con su clase.
+
+## 26. Término del vínculo y carga horaria en proyectos (28-sep-2026)
+
+**Decisiones del instituto:**
+
+1. Contratados, interinos e invitados se vinculan por un periodo con **fecha de término
+   obligatoria**. El titular es permanente (sin término), pero su vínculo se puede terminar a mano
+   por retiro, despido, fallecimiento o renuncia.
+2. Al agregar participantes a un proyecto **institucional**, el responsable indica su carga horaria
+   en el proyecto (puede no tener). Sale de la carga de investigación (proyectos de investigación) o
+   de extensión (interacción social) que la Dirección de Carrera asignó en su vínculo, y rige solo
+   mientras ese vínculo está vigente. Los proyectos individuales no asignan carga.
+3. Si el vínculo termina durante el proyecto, la persona puede seguir como participante, pero figura
+   sin carga desde entonces, y se avisa al responsable. En un nuevo periodo de vínculo la carga no se
+   reasigna sola: se avisa a los responsables de los proyectos donde tuvo carga, **solo mientras le
+   quede carga libre** de esa actividad (si otro proyecto ya se la asignó toda, el aviso no aparece
+   o desaparece), y el responsable decide.
+
+**Hecho (28-sep-2026):**
+
+- Migración 0034: `vinculo.motivo_termino`; `participante_carga` (participante, periodo de vínculo,
+  horas, desde; una por participante y periodo); `aviso_carga` (desvinculado | nuevo_vinculo; se
+  crea una vez y se atiende).
+- `vinculos.regla_termino`: término obligatorio para contratado, interino e invitado (salvo periodos
+  antiguos con ingreso desconocido); un titular nuevo no lleva término futuro. Se aplica al agregar
+  periodos, al cambiar de categoría (ahora con «hasta»; cierra el periodo vigente aunque tuviera
+  término posterior), al crear cuentas con categoría y al importar el historial. `terminar` guarda
+  el motivo. Al corregir un periodo, la investigación/extensión no puede bajar de lo asignado en
+  proyectos.
+- `app/investigacion/carga_proyectos.py`: disponible, asignar, historial, avisos. Los avisos se
+  revisan cuando cambia un vínculo (`vinculos.OYENTES`, para no importar desde `comun`), al asignar
+  y en el mantenimiento horario (términos que llegan con la fecha). Correos a los responsables
+  (`avisos.carga_desvinculado`, `avisos.carga_nuevo_vinculo`); los avisos cuentan en los
+  pendientes del proyecto y de la barra.
+- Pantallas: columna «Carga (h/mes)» en Participantes, carga al agregar a alguien del instituto,
+  avisos en Pendientes, motivo en «Terminar el vínculo» y al desactivar una cuenta; en Docencia →
+  Carga horaria, la carga de cada persona en proyectos.
+
+**Por hacer si hace falta:** carga en proyectos en el informe del proyecto y en el anexo.

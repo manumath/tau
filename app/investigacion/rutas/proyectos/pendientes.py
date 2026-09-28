@@ -1,10 +1,10 @@
-"""Pestaña «Pendientes»: propuestas de vinculación por aprobar o rechazar."""
+"""Pestaña «Pendientes»: propuestas de vinculación por aprobar o rechazar y avisos de carga horaria."""
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, Option, P, Response, Select, Span
 from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, Card, FormLabel, LabelTextArea, TextPresets, UkIcon
 
-from app.investigacion import actividades, filiacion, productos, proyectos
+from app.investigacion import actividades, carga_proyectos, filiacion, productos, proyectos
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
 from app.investigacion.rutas.proyectos.base import EVENTO_PENDIENTES, ID_TAB, _proyecto_o_error, contador_pestana
@@ -74,9 +74,32 @@ def _tarjeta_pendiente(p, tipo, v, vigentes):
         id=caja_id)
 
 
+def _aviso_carga(p, a, gestiona):
+    nombre = f"{a['nombres']} {a['apellidos']}"
+    if a["tipo"] == "desvinculado":
+        texto = (f"El vínculo de {nombre} terminó el {a['fecha_fin']}. Sigue como participante, pero desde esa fecha "
+                 "figura sin carga horaria en el proyecto.")
+        boton = "Entendido"
+    else:
+        texto = (f"{nombre} tiene un nuevo periodo de vínculo (desde {a['fecha_inicio']}) con carga libre. La carga "
+                 "en el proyecto no se reasigna sola: asígnela en «Participantes» o indique que no corresponde.")
+        boton = "No asignar carga"
+    return Card(Div(UkIcon("user-round-cog", height=18, width=18, cls="shrink-0 mt-0.5 text-amber-600"),
+                    Div(Span(carga_proyectos.TIPOS_AVISO[a["tipo"]], cls="font-medium"), P(texto, cls="text-sm")),
+                    cls="flex gap-3"),
+                Div(fh.Button("Ir a participantes", type="button", cls="text-sm text-primary hover:underline",
+                              hx_get=f"/proyectos/{p['id']}/tab/participantes", hx_target=f"#{ID_TAB}")
+                    if a["tipo"] == "nuevo_vinculo" else "",
+                    Button(boton, type="button", cls=(ButtonT.default, ButtonT.sm),
+                           hx_post=f"/proyectos/{p['id']}/avisos-carga/{a['id']}/atender", hx_target=f"#{ID_TAB}"),
+                    cls="flex items-center justify-end gap-3 mt-2") if gestiona else "")
+
+
 def tab_pendientes(p, auth):
     pid = p["id"]
     vigentes = proyectos.participantes(pid, solo_vigentes=True)
+    gestiona = proyectos.puede_gestionar(pid, auth)
+    avisos_carga = [_aviso_carga(p, a, gestiona) for a in carga_proyectos.pendientes(pid)]
     tarjetas = [_tarjeta_pendiente(p, "actividad", v, vigentes)
                 for v in proyectos.registros(pid, "actividad", "pendiente")]
     tarjetas += [_tarjeta_pendiente(p, "producto", v, vigentes)
@@ -85,6 +108,7 @@ def tab_pendientes(p, auth):
         P("Actividades y productos que los participantes proponen para el proyecto. Al aprobarlos pasan "
           "a formar parte de él; si los rechaza, indique el motivo: quien los propuso lo verá.",
           cls=(TextPresets.muted_sm, "mb-4")),
+        Div(*avisos_carga, cls="space-y-4 mb-4") if avisos_carga else "",
         Div(*tarjetas, cls="space-y-4") if tarjetas
         else Card(P(UkIcon("inbox", height=16, width=16, cls="inline mr-2"), "No hay propuestas pendientes.",
                     cls=(TextPresets.muted_sm, "text-center py-6"))))
@@ -94,6 +118,16 @@ def _tras_revision(p, auth):
     """Bandeja actualizada + contador de la pestaña (fuera de banda) + evento para la navegación."""
     return (tab_pendientes(p, auth), contador_pestana(p["id"], oob=True),
             HtmxResponseHeaders(trigger=EVENTO_PENDIENTES))
+
+
+@rt("/proyectos/{pid}/avisos-carga/{aid}/atender")
+def post(auth, pid: int, aid: int):
+    p, error = _proyecto_o_error(pid, auth, gestionar=True)
+    if error:
+        return error
+    if carga_proyectos.atender(pid, aid, auth["id"]):
+        auditar(auth["id"], "atender_aviso_carga", "proyecto", pid, str(aid))
+    return _tras_revision(p, auth)
 
 
 @rt("/proyectos/{pid}/pendientes/{tipo}/{rid}/aprobar")

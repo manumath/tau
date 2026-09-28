@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import json  # noqa: E402
 
 from app.academico import gestiones, oferta  # noqa: E402
-from app.investigacion import actividades, institucionales, lineas, perfiles, productos, proyectos, revistas
+from app.investigacion import actividades, carga_proyectos, institucionales, lineas, perfiles, productos, proyectos, revistas
 from app.comun import academicos, config, estudiantes, personas, usuarios, vinculos  # noqa: E402
 from app.comun.db import AHORA, get_db, marca_tiempo  # noqa: E402
 from app.comun.db import init_db  # noqa: E402
@@ -264,7 +264,7 @@ HISTORIAL = {
     "sofia.kovalevskaya@instituto.test": [dict(categoria="titular", desde="2012-03-01", hasta=None, jornada=40)],
     "emmy.noether@instituto.test": [dict(categoria="contratado", desde="2018-03-01", hasta="2021-12-31", jornada=40),
                                     dict(categoria="titular", desde="2022-01-01", hasta=None, jornada=40)],
-    "alan.turing@instituto.test": [dict(categoria="contratado", desde="2024-08-01", hasta=None, jornada=40)],
+    "alan.turing@instituto.test": [dict(categoria="contratado", desde="2024-08-01", hasta="2026-12-31", jornada=40)],
     "srinivasa.ramanujan@instituto.test": [dict(categoria="invitado", desde="2026-03-01", hasta="2026-12-31",
                                                 jornada=20, nota="Estancia de investigación")],
 }
@@ -369,6 +369,18 @@ def _cargar_lineas() -> bool:
     return True
 
 
+def _cargar_carga_en_proyectos():
+    """Emmy dedica 32 h/mes de su investigación al proyecto institucional que dirige (si aún no tiene)."""
+    emmy = usuarios.por_email("emmy.noether@instituto.test")
+    algebra = get_db().q("SELECT * FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01'")
+    if not emmy or not algebra:
+        return
+    part = get_db().q("SELECT id FROM proyecto_participante WHERE proyecto_id = ? AND investigador_id = ?",
+                      [algebra[0]["id"], emmy["id"]])
+    if part and not carga_proyectos.actual(part[0]["id"]):
+        carga_proyectos.asignar(algebra[0]["id"], part[0]["id"], 32, emmy["id"])
+
+
 def _cargar_docencia() -> bool:
     """Gestiones 2026 (los semestres con las troncales) y docentes de ejemplo en II-2026 (solo si no
     hay gestiones)."""
@@ -445,6 +457,7 @@ def main():
     con_estudiantes = _cargar_estudiantes()
     con_lineas = _cargar_lineas()
     con_docencia = _cargar_docencia()
+    _cargar_carga_en_proyectos()
     # Internacionalización de ejemplo (idempotente): países normalizados y ámbito de los proyectos.
     personas.completar_paises()
     db = get_db()
