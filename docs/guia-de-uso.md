@@ -351,6 +351,16 @@ Menú «Informes»:
   en los institucionales, además, el plan de actividades (previstas y realizadas). Indica cuántos
   productos cumplen los requisitos de los fondos (filiación y agradecimiento) y qué le falta a cada
   uno. Descarga en XLSX.
+- **Carga docente** (direcciones, Coordinación académica y Comité; también desde Docencia → Carga
+  horaria): un semestre, con la carga contratada y su distribución por persona y por categoría, la
+  jornada completa equivalente (carga / 160), la docencia prevista frente a la asignada, la carga en
+  proyectos, los avisos, los paralelos sin docente y las inscripciones por JCE. Imprimible y en XLSX.
+- **Cuerpo académico** (quien ve los informes institucionales): indicadores por año para el criterio
+  de cuerpo académico de IAC-CINDA: académicos vinculados, JCE, porcentaje con doctorado y con
+  posgrado, sin grado registrado, porcentaje de la carga en investigación, con proyecto vigente,
+  inscripciones por JCE, y la distribución por categoría y por tramo de edad (la fecha de nacimiento
+  nunca se muestra). Imprimible y en XLSX. Las «inscripciones» suman los inscritos de cada paralelo:
+  no son la matrícula de la Carrera.
 - **Memoria del instituto** (administración): ver abajo.
 
 ### Plan de actividades (proyectos institucionales)

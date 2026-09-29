@@ -80,8 +80,12 @@ def get(auth, gestion: str = ""):
                 P("En h/mes (unidades de 32), según el vínculo con la Carrera al inicio del semestre. Docencia: "
                   "prevista / asignada en la oferta (32 h/mes por materia como titular, de grado o maestría); no suman "
                   "los auxiliares ni los cursos de verano e invierno.", cls=TextPresets.muted_sm)),
-            Select(*[Option(gestiones.codigo(x), value=str(x["id"]), selected=x["id"] == g["id"]) for x in _semestres()],
-                   aria_label="Semestre", cls="uk-select w-40", onchange=f"location.href='{BASE}?gestion='+this.value"),
+            Div(Select(*[Option(gestiones.codigo(x), value=str(x["id"]), selected=x["id"] == g["id"]) for x in _semestres()],
+                       aria_label="Semestre", cls="uk-select w-40", onchange=f"location.href='{BASE}?gestion='+this.value"),
+                A(UkIcon("file-text", height=14, width=14), "Informe imprimible y XLSX",
+                  href=f"/informes/carga-docente?gestion={g['id']}",
+                  cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1"),
+                cls="flex flex-wrap items-center gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-4"),
         nota,
         Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Persona"), fh.Th("Contratada"), fh.Th("Docencia (materias)"),

@@ -40,13 +40,13 @@ PASS_TEMPORAL_DEMO = "Temporal-2026"
 PERFILES = {
     "sofia.kovalevskaya@instituto.test": dict(
         grados=[dict(nivel="doctorado", titulo="Doctora en Matemáticas", institucion="Universidad de Gotinga",
-                     pais="Alemania", anio=1874)],
+                     pais="Alemania", anio=1998)],
         areas=["35-XX", "70E17", "35Q35"],
         bio="Estudio el movimiento de un cuerpo rígido alrededor de un punto fijo y la existencia "
             "de soluciones analíticas de ecuaciones en derivadas parciales."),
     "emmy.noether@instituto.test": dict(
         grados=[dict(nivel="doctorado", titulo="Doctora en Matemáticas", institucion="Universidad de Erlangen",
-                     pais="Alemania", anio=1907)],
+                     pais="Alemania", anio=2005)],
         zbmath_id="noether.emmy", areas=["13-XX", "13E05", "16-XX", "17-XX"],
         bio="Trabajo en álgebra conmutativa y no conmutativa: anillos que satisfacen la condición "
             "de cadena ascendente, $I_1 \\subseteq I_2 \\subseteq \\cdots$, y teoría de ideales.\n\n"
@@ -54,9 +54,9 @@ PERFILES = {
             "$$\\frac{d}{dt}\\left(\\frac{\\partial L}{\\partial \\dot q}\\,\\delta q\\right) = 0.$$"),
     "alan.turing@instituto.test": dict(
         grados=[dict(nivel="doctorado", titulo="PhD in Mathematics", institucion="Princeton University",
-                     pais="Estados Unidos", anio=1938),
+                     pais="Estados Unidos", anio=2010),
                 dict(nivel="licenciatura", titulo="Bachelor of Arts in Mathematics",
-                     institucion="King's College, Cambridge", pais="Reino Unido", anio=1934)],
+                     institucion="King's College, Cambridge", pais="Reino Unido", anio=2006)],
         orcid="0000-0002-1825-0097", arxiv_id="turing_a_1", areas=["03D10", "68Q04", "03-XX"],
         bio=None),
 }
@@ -410,7 +410,8 @@ def _cargar_perfil(uid: int, datos: dict | None):
     for codigo in datos.pop("areas", []):
         perfiles.agregar_area(uid, codigo)
     for g in datos.pop("grados", []):
-        academicos.agregar_grado(uid, g)
+        errores = academicos.agregar_grado(uid, g)
+        assert not errores, f"Grado de ejemplo no válido: {errores}"
     perfiles.actualizar_campos(uid, **datos)
 
 

@@ -1181,3 +1181,21 @@ Acreditación) y «Mi docencia» (`/docencia/mia`; `/docencia` abre ahí para qu
 materias). Funciones en `app/academico/carga.py`: `semestre_de_referencia`, `contratos_por_vencer`,
 `vigentes_sin_carga`, `gestiones_de`, `materias_con_detalle`, `proyectos_con_carga`. Los invitados y
 externos sin materias ya no generan el aviso «Falta registrar la carga contratada».
+
+## 29. Informes de docencia (punto 2 de la evaluación, 28-sep-2026)
+
+- `app/acreditacion/cuerpo_academico.py`: `carga_docente(gestion)` (por persona, por categoría y
+  total; JCE; docencia prevista y asignada; carga en proyectos; inscripciones del semestre por
+  JCE) e `indicadores_anio(anio)` / `indicadores(desde, hasta)` (vinculados y JCE de
+  `anexo.cuerpo_academico`; % con doctorado y con posgrado según los grados obtenidos hasta ese
+  año; tramos de edad; % de la carga en investigación; % con proyecto vigente; inscripciones por
+  JCE del II semestre del año, o del I si el II aún no empezó).
+- Pantallas `/informes/carga-docente` (`ver_carga`) y `/informes/cuerpo-academico`
+  (`ver_informes_institucionales`), imprimibles y en XLSX; tarjetas en «Informes» y enlace desde
+  Docencia → Carga horaria.
+- **Límite conocido:** «inscripciones» suma inscritos por paralelo; la matrícula real (y con ella
+  la razón estudiantes/JCE que pide IAC-CINDA) depende de los datos del sistema académico de la UMSA
+  (fase 4). La carga de un periodo largo de vínculo se aplica a todos sus años: para series
+  históricas exactas, registre la carga en periodos por gestión.
+- Se corrigió el seed: los grados de ejemplo tenían años anteriores a 1940 y la validación los
+  descartaba sin avisar.

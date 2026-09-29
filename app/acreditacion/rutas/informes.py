@@ -149,6 +149,20 @@ def get(auth):
                                    P("Evidencia de los últimos 5 años ordenada según los criterios de IAC-CINDA, "
                                      "con resumen por año. Descarga en XLSX.", cls=TextPresets.muted_sm))),
                           href="/informes/acreditacion", cls="block hover:shadow-md transition"))
+    if permisos.puede(auth, "ver_carga"):
+        tarjetas.append(A(Card(Div(UkIcon("clock", height=22, width=22, cls="text-primary"),
+                                   H3("Carga docente", cls="text-base font-semibold mt-2"),
+                                   P("Carga contratada y su distribución por persona y categoría en un semestre, "
+                                     "con JCE, docencia prevista y asignada, e inscripciones por JCE. Descarga en XLSX.",
+                                     cls=TextPresets.muted_sm))),
+                          href="/informes/carga-docente", cls="block hover:shadow-md transition"))
+    if permisos.puede(auth, "ver_informes_institucionales"):
+        tarjetas.append(A(Card(Div(UkIcon("users-round", height=22, width=22, cls="text-primary"),
+                                   H3("Cuerpo académico", cls="text-base font-semibold mt-2"),
+                                   P("Indicadores por año: vinculados, JCE, doctorado y posgrado, categorías, tramos "
+                                     "de edad, carga en investigación y proyectos. Descarga en XLSX.",
+                                     cls=TextPresets.muted_sm))),
+                          href="/informes/cuerpo-academico", cls="block hover:shadow-md transition"))
     return pagina("Informes",
                   Div(fh.H2("Informes", cls="uk-h2"),
                       P("Documentos generados a partir de lo registrado en el sistema.", cls=TextPresets.muted_sm),
