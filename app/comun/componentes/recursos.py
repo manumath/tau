@@ -84,6 +84,7 @@ def encabezados():
         scrollspy_style,
         Script(type="module", src=url("vendor/franken-ui/icon.iife.js")),
         Script(src=url("js/tema.js"), defer=True),  # selector de tema claro / oscuro / sistema
+        Script(src=url("js/tablas.js"), defer=True),  # orden, filtro y CSV en <table data-tabla>
         Link(rel="stylesheet", href=url("vendor/katex/katex.min.css")),
         Script(_KATEX_JS.format(auto_render=url("vendor/katex/contrib/auto-render.mjs")), type="module"),
     ]

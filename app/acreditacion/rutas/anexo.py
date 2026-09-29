@@ -182,7 +182,7 @@ def documento(a):
                                        Td(proyectos.AMBITOS.get(p["ambito_efectivo"], "Sin indicar")),
                                        Td(f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}"),
                                        Td(p["fuente_financiamiento"] or "—"), Td(p["responsables"] or "—"), _num(p["n_internos"]))
-                                    for p in a["proyectos"]])), cls="overflow-x-auto")
+                                    for p in a["proyectos"]]), data_tabla="proyectos-anexo"), cls="overflow-x-auto")
                   if a["proyectos"] else P("Sin proyectos vigentes en el periodo.", cls="apagado")),
         seccion_estudiantes(a["estudiantes"]),
         _criterio("3.6.3 i", "Presentaciones en congresos y eventos científicos",

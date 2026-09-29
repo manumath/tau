@@ -84,7 +84,7 @@ def tabla_externos(q="", sin_pais=True):
                      Tbody(Tr(Td("No hay personas que coincidan." if q or not sin_pais else
                                  "Todas las personas externas tienen país registrado.", colspan=2,
                                  cls=(TextPresets.muted_sm, "text-center py-6")))),
-                     cls="uk-table-divider uk-table-middle"),
+                     cls="uk-table-divider uk-table-middle", data_tabla="personas-externas", data_tabla_filtro="no"),
                id="tabla-externos", cls="overflow-x-auto")
 
 

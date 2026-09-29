@@ -458,7 +458,8 @@ def documento_memoria(m):
                             Span(f" (hasta {x['hasta']})", cls="apagado") if x.get("hasta") else ""),
                          Td(perfiles.categoria_texto(x["categoria"])),
                          Td(str(x["productos"]), cls="text-right"),
-                         Td(str(x["actividades"]), cls="text-right")) for x in m["por_investigador"]])),
+                         Td(str(x["actividades"]), cls="text-right")) for x in m["por_investigador"]]),
+              data_tabla="memoria-por-investigador"),
         H2(f"Productos ({len(m['productos'])})"),
         Ol(*[cita(x)(Span(" — clasificación declarada (revista sin verificar)", cls="apagado")
                 if x["tipo"] == revistas.TIPO_ARTICULO and not x["clasificacion_catalogo"] else "")

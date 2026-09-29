@@ -277,7 +277,7 @@ def get(auth, q: str = ""):
         Div(Table(Thead(Tr(Th("Nombre"), Th("Correo"), Th("Perfil"), Th("Estado"),
                            Th("Último acceso", cls="hidden lg:table-cell"), Th(""))),
                   cuerpo_tabla(usuarios.listar(q), auth),
-                  cls="uk-table-middle uk-table-divider uk-table-hover"),
+                  cls="uk-table-middle uk-table-divider uk-table-hover", data_tabla="usuarios", data_tabla_filtro="no"),
             cls="overflow-x-auto"),
         usuario=auth, seccion="usuarios")
 

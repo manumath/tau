@@ -68,7 +68,7 @@ def documento_carga(d):
                            Th("Docencia prevista / asignada", cls="text-right"),
                            *[Th(ABREV[k], cls="text-right", title=ACT[k]) for k in ca.ACTIVIDADES_NO_DOCENCIA],
                            Th("En proyectos", cls="text-right"), Th("Estado"))),
-                  Tbody(*filas)), cls="overflow-x-auto") if filas
+                  Tbody(*filas), data_tabla=f"carga-docente-{gestiones.codigo(g)}"), cls="overflow-x-auto") if filas
         else P("Nadie tiene vínculo con la Carrera ni materias en este semestre.", cls="apagado"),
         H2("Oferta del semestre"),
         P(f"{i['paralelos']} paralelos · {i['sin_docente']} sin docente titular · {i['inscritos']} inscripciones"

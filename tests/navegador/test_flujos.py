@@ -128,3 +128,26 @@ def test_cambiar_tema(page):
     expect(html).not_to_have_class(re.compile(r"\bdark\b"))
     page.get_by_role("button", name="Sistema").click()
     assert page.evaluate("JSON.parse(localStorage.getItem('__FRANKEN__') || '{}').mode") is None
+
+
+def test_tabla_ordena_filtra_y_descarga(page):
+    """Componente de tablas (static/js/tablas.js): orden y CSV en Usuarios; filtro en la memoria."""
+    entrar(page, "admin")
+    page.goto("/admin/usuarios")
+    tabla = page.locator("table[data-tabla='usuarios']")
+    filas = tabla.locator("tbody tr")
+    assert filas.count() >= 2
+    encabezado = tabla.locator("th", has_text="Nombre")
+    encabezado.click()
+    encabezado.click()
+    expect(encabezado).to_have_attribute("aria-sort", "descending")
+    nombres = [t.split("\n")[0].strip() for t in filas.locator("td:first-child").all_inner_texts()]
+    assert nombres == sorted(nombres, reverse=True, key=str.lower)
+    with page.expect_download() as descarga:
+        page.get_by_role("button", name="Descargar CSV").click()
+    lineas = open(descarga.value.path(), encoding="utf-8-sig").read().splitlines()
+    assert lineas[0].startswith("Nombre,Correo") and len(lineas) == filas.count() + 1
+    page.goto("/informes/memoria")
+    filtro = page.locator("input[aria-label='Filtrar la tabla']").first
+    filtro.fill("zzz-nadie")
+    expect(page.get_by_text(re.compile(r"^0 de \d+ filas?$")).first).to_be_visible()

@@ -98,7 +98,8 @@ def seccion_oferta(g, auth, errores=()):
         P(f"{len(filas)} paralelo(s)" + (f" · {total} sin docente" if total else ""), cls=(TextPresets.muted_sm, "mb-2")),
         Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Sigla"), fh.Th("Asignatura"), fh.Th("Paralelo"), fh.Th("Inscritos"),
                                     fh.Th("Docentes"), fh.Th(""))), fh.Tbody(*filas),
-                     cls="uk-table uk-table-divider uk-table-small"), cls="overflow-x-auto")
+                     cls="uk-table uk-table-divider uk-table-small", data_tabla=f"oferta-{gestiones.codigo(g)}"),
+            cls="overflow-x-auto")
         if filas else P("Aún no hay asignaturas en la oferta de esta gestión.", cls=TextPresets.muted_sm),
         id=ID_OFERTA)
 

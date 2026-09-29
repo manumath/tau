@@ -91,7 +91,8 @@ def get(auth, gestion: str = ""):
         Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Persona"), fh.Th("Contratada"), fh.Th("Docencia (materias)"),
                                     *[fh.Th(t) for k, t in carga.ACTIVIDADES.items() if k != "docencia"],
                                     fh.Th("Estado"))),
-                     fh.Tbody(*filas), cls="uk-table uk-table-divider uk-table-small"), cls="overflow-x-auto")
+                     fh.Tbody(*filas), cls="uk-table uk-table-divider uk-table-small",
+                     data_tabla=f"carga-horaria-{gestiones.codigo(g)}"), cls="overflow-x-auto")
         if filas else P("Nadie tiene vínculo con la Carrera ni materias asignadas en este semestre.",
                         cls=TextPresets.muted_sm),
         usuario=auth, seccion="docencia")

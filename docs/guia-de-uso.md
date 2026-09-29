@@ -29,6 +29,13 @@ la asignación docente y la carga horaria.
 - **Tema claro u oscuro:** menú con su nombre → «Tema»: *Claro*, *Oscuro* o *Sistema* (sigue la
   configuración de su computadora o teléfono). La elección se guarda en ese navegador.
 
+## Tablas
+
+En las tablas principales (carga horaria, oferta, usuarios, propuestas, revistas, participantes,
+informes…) puede **ordenar** haciendo clic en el título de una columna (otro clic invierte el orden),
+**filtrar** escribiendo en «Filtrar…» (no distingue tildes ni mayúsculas) y **descargar en CSV** lo
+que ve, con el orden y el filtro aplicados. El CSV se abre en Excel con las tildes correctas.
+
 ## Inicio
 
 Al ingresar, **Para hoy** muestra lo que requiere su atención según su rol, con enlace directo:

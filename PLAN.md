@@ -1199,3 +1199,13 @@ externos sin materias ya no generan el aviso «Falta registrar la carga contrata
   históricas exactas, registre la carga en periodos por gestión.
 - Se corrigió el seed: los grados de ejemplo tenían años anteriores a 1940 y la validación los
   descartaba sin avisar.
+
+## 30. Componente de tablas (punto 3 de la evaluación, 28-sep-2026)
+
+`static/js/tablas.js`: toda `<table data-tabla="…">` gana orden por columna (números, fechas y texto en
+español; los vacíos al final), filtro por texto con conteo «N de M filas» y «Descargar CSV» de lo
+visible (UTF-8 con BOM, fórmulas neutralizadas como en el servidor). Se reaplica con htmx (`htmx:load`)
+y se actualiza si htmx reemplaza las filas (`htmx:afterSettle`). Aplicado en carga horaria, oferta,
+usuarios (sin filtro: tiene buscador del servidor), propuestas, revistas, personas externas,
+estudiantes, participantes, informe de carga docente, memoria por investigador y proyectos del anexo.
+No se aplica a tablas por grupos (planes por semestre) ni a las series por año de los informes.

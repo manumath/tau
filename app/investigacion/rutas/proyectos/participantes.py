@@ -102,7 +102,8 @@ def tab_participantes(p, auth):
                 fh.Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Persona"), fh.Th("Rol"),
                                                fh.Th("Carga (h/mes)") if con_carga else "",
                                                fh.Th("Periodo"), fh.Th(""))),
-                                fh.Tbody(*filas), cls="uk-table uk-table-divider uk-table-middle"),
+                                fh.Tbody(*filas), cls="uk-table uk-table-divider uk-table-middle",
+                                data_tabla=f"participantes-{pid}"),
                        cls="overflow-x-auto"),
                 agregar)
 

@@ -43,7 +43,8 @@ def lista(q="", nivel="", estado=""):
     return Div(Table(Thead(Tr(Th("Estudiante"), Th("Estudios"), Th("Estado"), Th("Participación"))),
                      Tbody(*filas) if filas else Tbody(Tr(Td("No hay estudiantes registrados que coincidan.", colspan=4,
                                                              cls=(TextPresets.muted_sm, "text-center py-6")))),
-                     cls="uk-table-divider uk-table-middle uk-table-hover"),
+                     cls="uk-table-divider uk-table-middle uk-table-hover", data_tabla="estudiantes",
+                     data_tabla_filtro="no"),
                id=ID_LISTA, cls="overflow-x-auto")
 
 

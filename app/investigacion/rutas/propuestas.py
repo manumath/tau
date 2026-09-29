@@ -562,7 +562,8 @@ def get(auth, periodo: str = "", estado: str = ""):
               for e, t in filtro], cls="flex flex-wrap gap-2 mb-4"),
         Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Proyecto"), fh.Th("Clase"), fh.Th("Modalidad"), fh.Th("Proponente"), fh.Th("Enviada"),
                                     fh.Th("Estado"))), fh.Tbody(*filas),
-                     cls="uk-table uk-table-divider uk-table-middle uk-table-hover"),
+                     cls="uk-table uk-table-divider uk-table-middle uk-table-hover",
+                     data_tabla=f"propuestas-{inst.periodo_texto(periodo)}"),
             cls="overflow-x-auto") if filas else P("No hay propuestas enviadas en este periodo.",
                                                     cls=TextPresets.muted_sm),
         usuario=auth, seccion="propuestas")

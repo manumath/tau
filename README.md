@@ -209,6 +209,13 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
 - **Errores:** a HTMX se le responde con el código (403, 404…) y el navegador muestra un aviso
   (`app/comun/componentes/errores.py`). A las peticiones normales, una página con el estilo del sistema.
 
+**Tablas**
+- Una `<table data-tabla="nombre-del-archivo">` gana orden por columna, filtro por texto y «Descargar
+  CSV» de lo visible (`static/js/tablas.js`, sin librerías). Las columnas sin título no se ordenan ni
+  se exportan; una celda puede traer `data-valor` para ordenar por otro valor. Con
+  `data-tabla-filtro="no"` se omite el filtro (listas con buscador propio del servidor). Úselo en
+  tablas de datos con varias filas; no en tablas por grupos (p. ej., un plan por semestre).
+
 **Rutas y archivos**
 - **Descargas sin extensión en la URL** (`/informes/memoria/xlsx`, no `.xlsx`): convención de
   cuando la ruta estática de FastHTML capturaba las URL terminadas en extensiones conocidas. Esa
