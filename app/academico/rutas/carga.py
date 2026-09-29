@@ -59,8 +59,8 @@ def get(auth, gestion: str = ""):
     for r in carga.personas(g):
         c = r["carga"]
         filas.append(fh.Tr(
-            fh.Td(A(f"{r['apellidos']}, {r['nombres']}", href="#", hx_get=f"{BASE}/{g['id']}/{r['id']}",
-                    hx_target=f"#{ID_MODAL}", cls="font-medium hover:underline"),
+            fh.Td(A(f"{r['apellidos']}, {r['nombres']}", href=f"/docencia/docentes/{r['id']}?gestion={g['id']}",
+                    cls="font-medium hover:underline"),
                   Div(vinculos.CATEGORIAS[r["vinculo"]["categoria"]], cls=TextPresets.muted_sm) if r["vinculo"] else ""),
             fh.Td(_h(r["contratada"]), cls="tabular-nums"),
             fh.Td(f"{_h(r['prevista'])} / {r['asignada']}" + (f" ({len(r['materias'])})" if r["materias"] else ""),
@@ -70,7 +70,7 @@ def get(auth, gestion: str = ""):
             fh.Td(_estado(r))))
     nota = P(UkIcon("info", height=14, width=14, cls="shrink-0 mt-0.5"),
              Span("La carga contratada y su distribución se registran en el vínculo con la Carrera (Usuarios → Vínculo). "
-             + ("Haga clic en una persona para verla o cambiarla." if _edita(auth)
+             + ("Haga clic en una persona para ver su ficha y cambiar su vínculo o su carga." if _edita(auth)
                 else "La registra la Dirección de Carrera; usted puede consultarla.")),
              cls=(TextPresets.muted_sm, "flex items-start gap-1 mb-4"))
     return pagina(
@@ -82,6 +82,8 @@ def get(auth, gestion: str = ""):
                   "los auxiliares ni los cursos de verano e invierno.", cls=TextPresets.muted_sm)),
             Div(Select(*[Option(gestiones.codigo(x), value=str(x["id"]), selected=x["id"] == g["id"]) for x in _semestres()],
                        aria_label="Semestre", cls="uk-select w-40", onchange=f"location.href='{BASE}?gestion='+this.value"),
+                A(UkIcon("refresh-cw", height=14, width=14), "Renovar contratos", href="/docencia/renovaciones",
+                  cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1") if _edita(auth) else "",
                 A(UkIcon("file-text", height=14, width=14), "Informe imprimible y XLSX",
                   href=f"/informes/carga-docente?gestion={g['id']}",
                   cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1"),

@@ -334,6 +334,24 @@ plantilla). La oferta de cada gestión del archivo se reemplaza por la del archi
 corregir el archivo y volver a importarlo. Una gestión con algún error no se importa (la vista
 previa dice por qué). Los docentes deben estar registrados en «Usuarios», aunque sea sin acceso.
 
+**Ficha de docente** (direcciones, Coordinación y Comité): en «Carga horaria», el nombre de cada
+persona abre su ficha, con lo mismo que ella ve en «Mi docencia» (materias, carga, carga en proyectos,
+historial). La Dirección de Carrera tiene ahí el botón «Vínculo y carga» para corregirlos sin ir a
+Usuarios.
+
+**Acciones masivas** (Dirección de Carrera y Coordinación académica en la oferta; Dirección de
+Carrera en los contratos):
+
+- **Copiar de …** (en «Oferta y docentes»): agrega los paralelos del mismo semestre del año anterior
+  que aún no están, sin inscritos y, si se marca, con sus docentes (con las reglas de siempre: en
+  verano e invierno, solo titulares).
+- **Asignar en grilla:** todos los paralelos de la gestión con un selector de titular; se guarda una
+  sola vez. Cambiar el titular reemplaza al anterior; los auxiliares no cambian.
+- **Renovar contratos** (botón en «Carga horaria»; también desde el aviso del inicio): contratados,
+  interinos e invitados cuyo periodo terminó antes del semestre y aún no tienen uno nuevo. Se abre en
+  bloque un periodo con la misma categoría y la misma carga contratada, entre las fechas que indique.
+  La carga en proyectos no pasa sola: los responsables reciben el aviso para reasignarla.
+
 **Carga horaria:** cada persona tiene una carga contratada de 32, 64, 96, 128 o 160 h/mes (160 =
 tiempo completo), distribuida por actividad en múltiplos de 32 h/mes: docencia, investigación,
 extensión y servicios, gestión y otras. Por ejemplo, 160 h/mes = docencia 64 (dos materias) +

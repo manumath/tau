@@ -144,7 +144,7 @@ def _para_carrera(auth):
         vencen = carga.contratos_por_vencer(30)
         if vencen:
             items.append(_item(f"{_plural(len(vencen), 'vínculo')} termina{'n' if len(vencen) != 1 else ''} en los "
-                               "próximos 30 días sin un periodo nuevo registrado", "/admin/usuarios",
+                               "próximos 30 días sin un periodo nuevo registrado", "/docencia/renovaciones",
                                detalle="; ".join(f"{f['nombres']} {f['apellidos']} ({f['fecha_fin']})" for f in vencen[:4])))
         sin_carga = carga.vigentes_sin_carga()
         if sin_carga:

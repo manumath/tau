@@ -6,7 +6,7 @@ import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Code, Datalist, Div, Input, Li, Option, P, Redirect, Response, Select, Span,
                              Ul, UploadFile)
 from fasthtml.toaster import add_toast
-from monsterui.all import H2, Button, ButtonT, TextPresets, UkIcon
+from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.academico import gestiones, importar_oferta, oferta
 from app.academico.componentes import pestanas
@@ -112,6 +112,8 @@ def get(auth, gestion: str = ""):
                       P("Todavía no hay gestiones registradas. ", A("Crear las gestiones de un año", href="/docencia/gestiones",
                                                                     cls="text-primary hover:underline"),
                         cls="text-sm"), usuario=auth, seccion="docencia")
+    anterior = oferta.mismo_semestre_anio_anterior(g)
+    anterior = anterior if anterior and oferta.listar(anterior["id"]) else None
     temporada = P("Curso de temporada: solo lo dictan docentes titulares y no suma a la carga horaria del semestre "
                   "(cuenta como docencia dictada).", cls="text-sm text-amber-700 mb-4") \
         if g["tipo"] in oferta.TEMPORADA else ""
@@ -125,6 +127,10 @@ def get(auth, gestion: str = ""):
                        hx_post=f"{BASE}/{g['id']}/troncales", hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
                        hx_confirm="¿Agregar a la oferta las troncales de las licenciaturas que aún no están "
                                   "(paralelo A)?") if _puede(auth) and g["tipo"] not in oferta.TEMPORADA else "",
+                Button(UkIcon("copy", height=16, width=16), f"Copiar de {gestiones.codigo(anterior)}", cls=ButtonT.default,
+                       hx_get=f"{BASE}/{g['id']}/copiar", hx_target=f"#{ID_MODAL}") if _puede(auth) and anterior else "",
+                A(UkIcon("grid-3x3", height=16, width=16), "Asignar en grilla", href=f"{BASE}/{g['id']}/grilla",
+                  cls="uk-btn uk-btn-default inline-flex items-center gap-1") if _puede(auth) else "",
                 Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
                        hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if _puede(auth) else "",
                 cls="flex flex-wrap gap-2"),
@@ -132,6 +138,127 @@ def get(auth, gestion: str = ""):
         temporada,
         seccion_oferta(g, auth),
         usuario=auth, seccion="docencia")
+
+
+# --- Copiar del año anterior y grilla ----------------------------------------------------------------------
+
+@rt(f"{BASE}/{{gid}}/copiar")
+def get(auth, gid: int):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    g, error = _gestion_o_404(gid)
+    if error:
+        return error
+    origen = oferta.mismo_semestre_anio_anterior(g)
+    if not origen:
+        return Response("No hay gestión del año anterior", status_code=404)
+    n = len(oferta.listar(origen["id"]))
+    return modal(
+        f"Copiar la oferta de {gestiones.codigo(origen)}",
+        fh.Form(
+            P(f"Se agregan a {gestiones.codigo(g)} los {n} paralelos de {gestiones.codigo(origen)} que aún no están, sin "
+              "inscritos. Lo que ya está en la oferta no cambia.", cls="text-sm"),
+            fh.Label(fh.Input(type="checkbox", name="con_docentes", value="1", checked=True, cls="uk-checkbox"),
+                     Span("Con sus docentes (titulares y auxiliares). Se aplican las mismas reglas que al asignar a mano: "
+                          "en verano e invierno, solo titulares.", cls="text-sm"), cls="flex items-start gap-2"),
+            Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                Button(UkIcon("copy", height=14, width=14), "Copiar", type="submit", cls=ButtonT.primary),
+                cls="flex justify-end gap-2"),
+            hx_post=f"{BASE}/{gid}/copiar", hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML", cls="space-y-4"))
+
+
+@rt(f"{BASE}/{{gid}}/copiar")
+def post(auth, sess, gid: int, con_docentes: str = ""):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    g, error = _gestion_o_404(gid)
+    if error:
+        return error
+    origen = oferta.mismo_semestre_anio_anterior(g)
+    if not origen:
+        return Response("No hay gestión del año anterior", status_code=404)
+    with transaccion():
+        r = oferta.copiar(origen, g, con_docentes == "1", auth["id"])
+    auditar(auth["id"], "copiar_oferta", "gestion_academica", gid,
+            f"de {gestiones.codigo(origen)}: {r['paralelos']} paralelo(s), {r['docentes']} docente(s)")
+    add_toast(sess, f"Se copiaron {r['paralelos']} paralelo(s) y {r['docentes']} asignación(es) de docente.", "success")
+    for aviso in r["avisos"][:5]:
+        add_toast(sess, aviso, "warning")
+    return seccion_oferta(g, auth), Div(id=ID_MODAL, hx_swap_oob="true")
+
+
+def _pagina_grilla(g, auth, errores=()):
+    posibles = oferta.docentes_posibles(g)
+    opciones = lambda actual: [Option("— Sin titular —", value="")] + [  # noqa: E731
+        Option(f"{p['apellidos']}, {p['nombres']}" + ("" if p["con_vinculo"] else " (sin vínculo)"),
+               value=str(p["id"]), selected=p["id"] == actual) for p in posibles]
+    filas = []
+    for o in oferta.listar(g["id"]):
+        t = oferta.titular_de(o["id"])
+        auxiliares = [f"{d['nombres']} {d['apellidos']}" for d in o["docentes"] if d["rol"] == "auxiliar"]
+        filas.append(fh.Tr(fh.Td(o["sigla"], cls="font-mono text-sm whitespace-nowrap"), fh.Td(o["nombre"], cls="text-sm"),
+                           fh.Td(o["paralelo"], cls="text-sm"),
+                           fh.Td(Select(*opciones(t["usuario_id"] if t else None), name=f"titular_{o['id']}",
+                                        cls="uk-select h-8 text-sm w-72", aria_label=f"Titular de {o['sigla']} {o['paralelo']}")),
+                           fh.Td(", ".join(auxiliares) or "—", cls="text-xs text-muted-foreground")))
+    return pagina(
+        f"Grilla de docentes {gestiones.codigo(g)}",
+        pestanas("oferta", auth),
+        A(UkIcon("arrow-left", height=14, width=14), "Oferta y docentes", href=f"{BASE}?gestion={g['id']}",
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
+        Div(H2(f"Docentes titulares de {gestiones.codigo(g)}"),
+            P("Elija el titular de cada paralelo y guarde una sola vez. Cambiar el titular reemplaza al anterior; los "
+              "auxiliares se gestionan en «Oferta y docentes».", cls=TextPresets.muted_sm), cls="mb-4"),
+        mensaje_error(*errores),
+        Card(fh.Form(
+            Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Sigla"), fh.Th("Asignatura"), fh.Th("Paralelo"), fh.Th("Titular"),
+                                        fh.Th("Auxiliares"))), fh.Tbody(*filas),
+                         cls="uk-table uk-table-divider uk-table-small", data_tabla=f"grilla-{gestiones.codigo(g)}"),
+                cls="overflow-x-auto"),
+            Div(Button(UkIcon("save", height=14, width=14), "Guardar la grilla", type="submit", cls=ButtonT.primary),
+                cls="flex justify-end mt-4 sticky bottom-0 bg-background py-3"),
+            method="post", action=f"{BASE}/{g['id']}/grilla") if filas
+            else P("Aún no hay paralelos en esta gestión.", cls=TextPresets.muted_sm)),
+        usuario=auth, seccion="docencia")
+
+
+@rt(f"{BASE}/{{gid}}/grilla")
+def get(auth, gid: int):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    g, error = _gestion_o_404(gid)
+    return error or _pagina_grilla(g, auth)
+
+
+@rt(f"{BASE}/{{gid}}/grilla")
+async def post(auth, sess, req, gid: int):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    g, error = _gestion_o_404(gid)
+    if error:
+        return error
+    form = await req.form()
+    cambios, errores = 0, []
+    with transaccion():
+        for o in oferta.listar(g["id"]):
+            valor = form.get(f"titular_{o['id']}")
+            if valor is None:
+                continue
+            nuevo = int(valor) if str(valor).isdigit() else None
+            actual = oferta.titular_de(o["id"])
+            if (actual["usuario_id"] if actual else None) == nuevo:
+                continue
+            e = oferta.fijar_titular(o["id"], nuevo)
+            if e:
+                errores.append(f"{o['sigla']} {o['paralelo']}: {e[0]}")
+            else:
+                cambios += 1
+    if cambios:
+        auditar(auth["id"], "grilla_docentes", "gestion_academica", gid, f"{gestiones.codigo(g)}: {cambios} cambio(s)")
+        add_toast(sess, f"{cambios} paralelo(s) actualizado(s).", "success")
+    if errores:
+        return _pagina_grilla(g, auth, errores)
+    return Redirect(f"{BASE}?gestion={gid}")
 
 
 def _gestion_o_404(gid):

@@ -1220,3 +1220,17 @@ sin ORCID o bajo el 50 %, publicaciones que no cuentan hasta completarse (reutil
 `memoria(...)["por_confirmar"]` de la ventana del anexo), paralelos sin docente o sin inscritos,
 observaciones de planes, proyectos sin ámbito y de investigación sin línea. El inicio muestra el total
 en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)` y sumarla a `CHEQUEOS`.
+
+## 32. Ficha de docente y acciones masivas (punto 5 de la evaluación, 28-sep-2026)
+
+- Ficha `/docencia/docentes/{uid}` (`ver_carga`; la propia persona va a «Mi docencia»): reutiliza las
+  tarjetas de «Mi docencia»; botón «Vínculo y carga» (abre la ventana de vínculo) para la Dirección de
+  Carrera. Los nombres de «Carga horaria» enlazan a la ficha.
+- Oferta: «Copiar de …» (`oferta.copiar`: paralelos del mismo semestre del año anterior que faltan,
+  sin inscritos, con docentes opcionales y las reglas de `asignar`) y «Asignar en grilla»
+  (`oferta.fijar_titular`: un titular por paralelo, reemplaza al anterior, respeta la regla de
+  temporada).
+- Renovaciones `/docencia/renovaciones` (`gestionar_vinculos` en la Carrera):
+  `carga.candidatos_renovacion` (último periodo con término, terminado en los 150 días previos al
+  semestre, sin periodo nuevo) y `carga.renovar` (misma categoría y carga; la carga en proyectos no
+  pasa: avisos a responsables). El aviso del inicio sobre vínculos que vencen enlaza aquí.

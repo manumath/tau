@@ -1,12 +1,13 @@
 """«Mi docencia»: lo que la persona dicta y su carga horaria, en una sola página (solo lo propio)."""
 import fasthtml.common as fh
-from fasthtml.common import APIRouter, Div, Li, Option, P, Redirect, Select, Span, Ul
-from monsterui.all import H2, H3, Card, TextPresets, UkIcon
+from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response, Select, Span, Ul
+from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.academico import carga, gestiones, oferta
 from app.academico.componentes import pestanas, tiene_docencia
-from app.comun import vinculos
-from app.comun.componentes.layout import pagina
+from app.comun import adscripcion, permisos, vinculos
+from app.comun.componentes.layout import ID_MODAL, pagina
+from app.comun.db import get_db
 from app.comun.componentes.registros import insignia
 
 rt = APIRouter()
@@ -83,16 +84,29 @@ def _tarjeta_historial(uid):
         if periodos else P("Sin periodos registrados.", cls=(TextPresets.muted_sm, "mt-2")))
 
 
-@rt(BASE)
-def get(auth, gestion: str = ""):
-    uid = auth["id"]
+def _gestion_y_selector(uid, gestion, base):
     lista = carga.gestiones_de(uid)
     g = next((x for x in lista if str(x["id"]) == gestion), None) or carga.semestre_de_referencia() \
         or (lista[0] if lista else None)
-    v = vinculos.vigente(uid)
     selector = Select(*[Option(gestiones.codigo(x), value=str(x["id"]), selected=g and x["id"] == g["id"]) for x in lista],
                       aria_label="Gestión", cls="uk-select w-40",
-                      onchange=f"location.href='{BASE}?gestion='+this.value") if len(lista) > 1 else ""
+                      onchange=f"location.href='{base}?gestion='+this.value") if len(lista) > 1 else ""
+    return g, selector
+
+
+def cuerpo(uid, g):
+    """Materias, carga en proyectos, vínculo e historial de una persona (lo usan «Mi docencia» y la ficha)."""
+    v = vinculos.vigente(uid)
+    return Div(Div(_tarjeta_materias(uid, g) if g else Card(P("Aún no hay gestiones registradas.", cls=TextPresets.muted_sm)),
+                   _tarjeta_proyectos(uid, v), cls="space-y-4 lg:col-span-2 min-w-0"),
+               Div(_tarjeta_vinculo(v), _tarjeta_historial(uid), cls="space-y-4 min-w-0"),
+               cls="grid grid-cols-1 lg:grid-cols-3 gap-4")
+
+
+@rt(BASE)
+def get(auth, gestion: str = ""):
+    uid = auth["id"]
+    g, selector = _gestion_y_selector(uid, gestion, BASE)
     return pagina(
         "Mi docencia",
         pestanas("mia", auth),
@@ -100,14 +114,46 @@ def get(auth, gestion: str = ""):
                 P("Sus materias, su carga horaria y su vínculo con la Carrera. Solo usted y las direcciones ven esta "
                   "información.", cls=TextPresets.muted_sm)),
             selector, cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
-        Div(Div(_tarjeta_materias(uid, g) if g else Card(P("Aún no hay gestiones registradas.", cls=TextPresets.muted_sm)),
-                _tarjeta_proyectos(uid, v), cls="space-y-4 lg:col-span-2 min-w-0"),
-            Div(_tarjeta_vinculo(v), _tarjeta_historial(uid), cls="space-y-4 min-w-0"),
-            cls="grid grid-cols-1 lg:grid-cols-3 gap-4"),
+        cuerpo(uid, g),
         P(UkIcon("info", height=14, width=14, cls="shrink-0 mt-0.5"),
           Span("¿Algo no coincide? La carga y el vínculo los corrige la Dirección de Carrera; las materias, la "
                "Dirección de Carrera o la Coordinación académica en «Oferta y docentes»."),
           cls=(TextPresets.muted_sm, "flex items-start gap-1 mt-6")),
+        usuario=auth, seccion="docencia")
+
+
+@rt("/docencia/docentes/{uid}")
+def get(auth, uid: int, gestion: str = ""):
+    """Ficha de un docente para las direcciones: lo mismo que ve en «Mi docencia», con acceso a editar."""
+    if uid == auth["id"]:
+        return Redirect(BASE + (f"?gestion={gestion}" if gestion else ""))
+    if not permisos.puede(auth, "ver_carga"):
+        return Response("No autorizado", status_code=403)
+    persona = get_db().q("SELECT id, nombres, apellidos, email FROM usuario WHERE id = ?", [uid])
+    if not persona:
+        return Response("No encontrado", status_code=404)
+    p = persona[0]
+    g, selector = _gestion_y_selector(uid, gestion, f"/docencia/docentes/{uid}")
+    v = vinculos.vigente(uid)
+    edita_vinculo = permisos.puede(auth, "gestionar_vinculos", vinculos.carrera())
+    return pagina(
+        f"{p['nombres']} {p['apellidos']}",
+        pestanas("carga", auth),
+        A(UkIcon("arrow-left", height=14, width=14), "Carga horaria",
+          href="/docencia/carga" + (f"?gestion={g['id']}" if g and g["tipo"] in carga.SEMESTRES else ""),
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
+        Div(Div(H2(f"{p['nombres']} {p['apellidos']}"),
+                P(" · ".join(x for x in (vinculos.CATEGORIAS[v["categoria"]] if v else "Sin vínculo vigente",
+                                         adscripcion.cargo(uid), p["email"]) if x), cls=TextPresets.muted_sm)),
+            Div(selector,
+                Button(UkIcon("pencil", height=14, width=14), "Vínculo y carga", cls=(ButtonT.default, ButtonT.sm),
+                       hx_get=f"/admin/usuarios/{uid}/vinculo", hx_target=f"#{ID_MODAL}") if edita_vinculo else "",
+                A(UkIcon("user-round", height=14, width=14), "Perfil", href=f"/investigadores/{uid}",
+                  cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1")
+                if get_db().q("SELECT 1 FROM investigador WHERE usuario_id = ?", [uid]) else "",
+                cls="flex flex-wrap items-center gap-2"),
+            cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
+        cuerpo(uid, g),
         usuario=auth, seccion="docencia")
 
 

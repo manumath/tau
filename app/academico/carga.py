@@ -141,3 +141,39 @@ def proyectos_con_carga(usuario_id: int) -> list[dict]:
     """Su carga en proyectos en el periodo de vínculo vigente (la asignan los responsables)."""
     v = vinculos.vigente(usuario_id)
     return en_proyectos(v["id"]) if v else []
+
+
+# --- Renovación de contratos ----------------------------------------------------------------------
+
+def candidatos_renovacion(gestion: dict, dias: int = 150) -> list[dict]:
+    """Contratados, interinos e invitados cuyo último periodo terminó antes del semestre (en los
+    `dias` previos a su inicio) y que aún no tienen vínculo al inicio del semestre."""
+    inicio = date.fromisoformat(gestion["fecha_inicio"])
+    desde = (inicio - timedelta(days=dias)).isoformat()
+    filas = get_db().q(
+        f"""SELECT v.*, u.nombres, u.apellidos FROM vinculo v JOIN usuario u ON u.id = v.usuario_id
+            WHERE u.activo = 1 AND v.categoria IN ({",".join("?" * len(vinculos.CON_TERMINO))})
+              AND v.fecha_fin >= ? AND v.fecha_fin < ?
+              AND NOT EXISTS (SELECT 1 FROM vinculo n WHERE n.usuario_id = v.usuario_id
+                              AND COALESCE(n.fecha_fin, '9999-12-31') >= ? AND n.id != v.id)
+            ORDER BY u.apellidos, u.nombres""",
+        [*vinculos.CON_TERMINO, desde, gestion["fecha_inicio"], gestion["fecha_inicio"]])
+    return filas
+
+
+def renovar(ids_vinculo: list[int], desde: str, hasta: str, por: int) -> tuple[int, list[str]]:
+    """Abre un periodo nuevo para cada vínculo indicado, con la misma categoría y carga contratada.
+    La carga en proyectos no pasa sola (la deciden los responsables). → (renovados, errores)."""
+    n, errores = 0, []
+    for vid in ids_vinculo:
+        v = vinculos.obtener(vid)
+        if not v:
+            continue
+        e = vinculos.agregar(v["usuario_id"], v["categoria"], desde, hasta, nota="Renovación",
+                             creado_por=por, carga=vinculos.carga_de(v))
+        if e:
+            persona = get_db().q("SELECT nombres, apellidos FROM usuario WHERE id = ?", [v["usuario_id"]])[0]
+            errores.append(f"{persona['nombres']} {persona['apellidos']}: {e[0]}")
+        else:
+            n += 1
+    return n, errores

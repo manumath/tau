@@ -193,3 +193,57 @@ def horas_de_docencia(usuario_id: int, gestion_id: int) -> int:
     if not g or g[0]["tipo"] in TEMPORADA:
         return 0
     return HORAS_POR_MATERIA * len(materias_de(usuario_id, gestion_id))
+
+
+# --- Acciones masivas ---------------------------------------------------------------------------------
+
+def mismo_semestre_anio_anterior(gestion: dict) -> dict | None:
+    filas = get_db().q("SELECT * FROM gestion_academica WHERE anio = ? AND tipo = ?", [gestion["anio"] - 1, gestion["tipo"]])
+    return filas[0] if filas else None
+
+
+def copiar(origen: dict, destino: dict, con_docentes: bool, uid: int) -> dict:
+    """Copia a `destino` los paralelos de `origen` que aún no están (sin inscritos) y, si se pide, sus
+    docentes (con las mismas reglas que al asignar a mano). → {paralelos, docentes, avisos}."""
+    ya = {(f["asignatura_id"], f["paralelo"]): f["id"] for f in get_db().q(
+        "SELECT id, asignatura_id, paralelo FROM oferta WHERE gestion_id = ?", [destino["id"]])}
+    res = {"paralelos": 0, "docentes": 0, "avisos": []}
+    for o in listar(origen["id"]):
+        clave = (o["asignatura_id"], o["paralelo"])
+        if clave in ya:
+            oid = ya[clave]
+        else:
+            oid = get_db().t.oferta.insert(gestion_id=destino["id"], asignatura_id=o["asignatura_id"],
+                                           paralelo=o["paralelo"], creado_por=uid)["id"]
+            res["paralelos"] += 1
+        if not con_docentes:
+            continue
+        for d in o["docentes"]:
+            errores = asignar(oid, d["usuario_id"], d["rol"])
+            if not errores:
+                res["docentes"] += 1
+            elif "ya está asignada" not in errores[0]:
+                res["avisos"].append(f"{o['sigla']} {o['paralelo']}, {d['nombres']} {d['apellidos']}: {errores[0]}")
+    return res
+
+
+def titular_de(oid: int) -> dict | None:
+    filas = get_db().q("SELECT * FROM oferta_docente WHERE oferta_id = ? AND rol = 'titular' ORDER BY id", [oid])
+    return filas[0] if filas else None
+
+
+def fijar_titular(oid: int, usuario_id: int | None) -> list[str]:
+    """Deja a `usuario_id` como único titular del paralelo (None: sin titular). Los auxiliares no cambian."""
+    actual = titular_de(oid)
+    if actual and actual["usuario_id"] == usuario_id:
+        return []
+    if usuario_id:
+        gestion = get_db().q("""SELECT g.* FROM oferta o JOIN gestion_academica g ON g.id = o.gestion_id
+                                WHERE o.id = ?""", [oid])[0]
+        if (e := puede_dictar(usuario_id, gestion, "titular")):
+            return [e]
+    get_db().execute("DELETE FROM oferta_docente WHERE oferta_id = ? AND rol = 'titular'", [oid])
+    if usuario_id:
+        get_db().execute("DELETE FROM oferta_docente WHERE oferta_id = ? AND usuario_id = ?", [oid, usuario_id])
+        get_db().t.oferta_docente.insert(oferta_id=oid, usuario_id=usuario_id, rol="titular")
+    return []
