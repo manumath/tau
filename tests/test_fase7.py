@@ -125,7 +125,7 @@ def test_sin_avisos_a_uno_mismo_ni_a_quien_los_desactivo(proyecto, buzon):
 
 @pytest.fixture
 def publica(emmy):
-    perfiles.actualizar_campos(emmy, perfil_publico=1, cargo="Titular", bio="Anillos $R$.")
+    perfiles.actualizar_campos(emmy, perfil_publico=1, bio="Anillos $R$.")
     tipo = get_db().q("SELECT id FROM tipo_producto WHERE nombre = 'Artículo en revista'")[0]["id"]
     for titulo, estado in (("Publicado", "publicado"), ("En preparación", "en_preparacion")):
         d, _ = productos.preparar(dict(tipo_id=str(tipo), titulo=titulo, anio="2026", estado_publicacion=estado,
@@ -143,7 +143,7 @@ def test_perfil_privado_no_se_publica(client, emmy):
 
 def test_perfil_publico_sin_sesion(client, publica):
     r = client.get(f"/publico/investigadores/{publica}")
-    assert r.status_code == 200 and "Emmy Noether" in r.text and "Titular" in r.text
+    assert r.status_code == 200 and "Emmy Noether" in r.text and "Carrera de Matemática" in r.text
     assert "Publicado" in r.text and "En preparación" not in r.text
     assert "inv@test.cl" not in r.text  # el correo no se publica
     assert "Emmy Noether" in client.get("/publico/investigadores?q=noether").text

@@ -104,13 +104,14 @@ def get(auth, gid: int, uid: int):
     persona, r = filas[0], carga.resumen(uid, g)
     c, v = r["carga"], r["vinculo"]
     distribucion = Ul(*[Li(Span(f"{t}: ", cls="text-sm"), Span(f"{c['actividades'][k]} h/mes", cls="text-sm font-medium"),
+                           Span(f" · {c['detalles'][k]}", cls=TextPresets.muted_sm) if c["detalles"].get(k) else "",
                            cls="py-0.5") for k, t in carga.ACTIVIDADES.items() if c["actividades"][k]]) if c else ""
     return modal(
         f"{persona['nombres']} {persona['apellidos']} · {gestiones.codigo(g)}",
         Div(P(f"Vínculo con la Carrera: {vinculos.CATEGORIAS[v['categoria']]} ({vinculos.texto_periodo(v)})"
               if v else "Sin vínculo con la Carrera al inicio del semestre.", cls="text-sm"),
             H3("Carga contratada", cls="text-base font-semibold mt-4"),
-            P(f"{c['horas']} h/mes" + (f" · {c['detalle']}" if c["detalle"] else ""), cls="text-sm font-medium")
+            P(f"{c['horas']} h/mes", cls="text-sm font-medium")
             if c else P("Sin carga registrada.", cls=TextPresets.muted_sm),
             distribucion,
             *([H3("En proyectos", cls="text-base font-semibold mt-4"),

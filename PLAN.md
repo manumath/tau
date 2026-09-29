@@ -1149,3 +1149,21 @@ interacción social, y el anexo de I+D+i (3.6.3 h) lista todos los proyectos vig
   Carga horaria, la carga de cada persona en proyectos.
 
 **Por hacer si hace falta:** carga en proyectos en el informe del proyecto y en el anexo.
+
+## 27. Cargo y unidad o grupo calculados (28-sep-2026)
+
+**Decisión del instituto:** en el perfil ya no se editan «Cargo» ni «Unidad o grupo».
+
+- **Cargo:** «Docente Investigador» si la persona tiene carga de investigación en su vínculo
+  vigente; «Docente» si no. Sin vínculo vigente, sin cargo (decisión del agente, por confirmar).
+- **Unidad o grupo,** en este orden: proyectos de los que es responsable (y co-responsable),
+  proyectos en que participa, el detalle de «Extensión y servicios» y el de «Gestión» del vínculo;
+  si nada aplica, «Carrera de Matemática». Solo proyectos vigentes (no en formulación ni
+  finalizados).
+
+**Hecho:** migración 0035: detalle por actividad en el vínculo (`detalle_investigacion`,
+`_extension`, `_gestion`, `_otras`; el detalle único anterior pasa a la actividad si solo una tenía
+horas, si no a la nota del periodo) y se quitan `investigador.cargo` y `.unidad`.
+`app/comun/adscripcion.py` calcula ambos (solo consulta tablas); los usan el perfil, el directorio
+(y su búsqueda), la página pública, la API, el CV y la afiliación que se muestra de cada persona en
+proyectos y autorías. El perfil completo ya no cuenta cargo ni unidad.

@@ -10,7 +10,7 @@ import json
 
 import fasthtml.common as fh
 
-from fasthtml.common import A, APIRouter, Datalist, Div, Hr, Li, Option, P, Span, Ul, UploadFile
+from fasthtml.common import A, APIRouter, Div, Hr, Li, P, Span, Ul, UploadFile
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
@@ -78,6 +78,9 @@ def vista_datos(p):
                    fila("Grado académico", p["grado"] or "Sin grados registrados (ver «Grados académicos»)"),
                    fila("Cargo", p["cargo"]),
                    fila("Unidad o grupo", p["unidad"]),
+                   P("El cargo y la unidad o grupo se calculan: el cargo, de su carga de investigación; la unidad, de "
+                     "sus proyectos y de las actividades de extensión y gestión de su vínculo.",
+                     cls=(TextPresets.muted_sm, "mt-2")),
                    accion=_boton_editar("datos"))
 
 
@@ -89,12 +92,8 @@ def form_datos(d, errores=()):
             LabelInput("Apellidos", id="apellidos", value=d["apellidos"], required=True, maxlength=80),
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
         P(f"Correo: {d['email']} · Categoría: {perfiles.categoria_texto(d['categoria'])} "
-          "(los cambia la administración).", cls=TextPresets.muted_sm),
-        LabelInput("Cargo", id="cargo", value=d["cargo"] or "", list="cargos", maxlength=100,
-                   placeholder="Investigador(a) asociado(a)"),
-        Datalist(*[Option(value=c) for c in perfiles.CARGOS_SUGERIDOS], id="cargos"),
-        LabelInput("Unidad o grupo", id="unidad", value=d["unidad"] or "", maxlength=120,
-                   placeholder="Grupo de Teoría de Números"),
+          "(la define la Dirección de Carrera). El cargo y la unidad o grupo se calculan solos.",
+          cls=TextPresets.muted_sm),
     ))
 
 
@@ -109,14 +108,13 @@ def get(auth):
 
 
 @rt("/perfil/datos")
-def put(auth, sess, nombres: str = "", apellidos: str = "", cargo: str = "", unidad: str = ""):
+def put(auth, sess, nombres: str = "", apellidos: str = ""):
     p = perfiles.obtener(auth["id"])
-    d = dict(nombres=nombres.strip(), apellidos=apellidos.strip(), cargo=cargo.strip() or None,
-             unidad=unidad.strip() or None)
+    d = dict(nombres=nombres.strip(), apellidos=apellidos.strip())
     errores = []
     if not d["nombres"] or not d["apellidos"]:
         errores.append("Nombres y apellidos son obligatorios.")
-    for campo, maximo in (("nombres", 80), ("apellidos", 80), ("cargo", 100), ("unidad", 120)):
+    for campo, maximo in (("nombres", 80), ("apellidos", 80)):
         if d[campo] and len(d[campo]) > maximo:
             errores.append(f"«{campo.capitalize()}» admite hasta {maximo} caracteres.")
     if errores:

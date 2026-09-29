@@ -9,7 +9,7 @@ from tests.test_vinculos import hoy  # noqa: F401
 
 
 def _carga(horas, **acts):
-    return {"horas": horas, "detalle": None, "actividades": {k: acts.get(k, 0) for k in vinculos.ACTIVIDADES}}
+    return {"horas": horas, "detalles": {}, "actividades": {k: acts.get(k, 0) for k in vinculos.ACTIVIDADES}}
 
 
 @pytest.fixture

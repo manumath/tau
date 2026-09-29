@@ -9,7 +9,7 @@ from tests.conftest import HX, PASS_TEMP, login
 
 
 def _carga(horas, **acts):
-    return {"horas": horas, "detalle": None,
+    return {"horas": horas, "detalles": {k: None for k in vinculos.CON_DETALLE},
             "actividades": {k: acts.get(k, 0) for k in vinculos.ACTIVIDADES}}
 
 
@@ -117,7 +117,7 @@ def test_pantallas_y_permisos(client, g, emmy, cmat):
     vid = vinculos.vigente(emmy)["id"]
     client.put(f"/admin/usuarios/vinculo/{vid}", headers=HX,
                data={"categoria": "titular", "desde": "2026-08-01", "horas": "128", "docencia": "96", "otras": "32",
-                     "carga_detalle": "Tutoría"})
-    assert vinculos.texto_carga(vinculos.obtener(vid)) == "128 h/mes: docencia 96, otras 32"
+                     "detalle_otras": "Tutoría"})
+    assert vinculos.texto_carga(vinculos.obtener(vid)) == "128 h/mes: docencia 96, otras 32 (Tutoría)"
     assert {"cambiar_categoria", "corregir_vinculo"} <= {a["accion"] for a in get_db().q("SELECT accion FROM auditoria")}
     assert carga.contratada_en(emmy, "2026-09-01") == 128 and carga.contratada_en(emmy, "2026-03-01") == 64

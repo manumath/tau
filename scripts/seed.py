@@ -41,14 +41,12 @@ PERFILES = {
     "sofia.kovalevskaya@instituto.test": dict(
         grados=[dict(nivel="doctorado", titulo="Doctora en Matemáticas", institucion="Universidad de Gotinga",
                      pais="Alemania", anio=1874)],
-        cargo="Investigador(a) titular", unidad="Grupo de Ecuaciones Diferenciales",
         areas=["35-XX", "70E17", "35Q35"],
         bio="Estudio el movimiento de un cuerpo rígido alrededor de un punto fijo y la existencia "
             "de soluciones analíticas de ecuaciones en derivadas parciales."),
     "emmy.noether@instituto.test": dict(
         grados=[dict(nivel="doctorado", titulo="Doctora en Matemáticas", institucion="Universidad de Erlangen",
                      pais="Alemania", anio=1907)],
-        cargo="Investigador(a) titular", unidad="Grupo de Álgebra",
         zbmath_id="noether.emmy", areas=["13-XX", "13E05", "16-XX", "17-XX"],
         bio="Trabajo en álgebra conmutativa y no conmutativa: anillos que satisfacen la condición "
             "de cadena ascendente, $I_1 \\subseteq I_2 \\subseteq \\cdots$, y teoría de ideales.\n\n"
@@ -59,7 +57,6 @@ PERFILES = {
                      pais="Estados Unidos", anio=1938),
                 dict(nivel="licenciatura", titulo="Bachelor of Arts in Mathematics",
                      institucion="King's College, Cambridge", pais="Reino Unido", anio=1934)],
-        cargo="Investigador(a) asociado(a)", unidad="Grupo de Lógica y Computación",
         orcid="0000-0002-1825-0097", arxiv_id="turing_a_1", areas=["03D10", "68Q04", "03-XX"],
         bio=None),
 }
@@ -281,15 +278,16 @@ def _cargar_vinculos():
             hecho = True
     # Carga horaria contratada del periodo vigente (Ramanujan, invitado, no tiene: participa en
     # proyectos sin carga asignada).
-    for email, horas, acts, detalle in (
+    for email, horas, acts, detalles in (
             ("sofia.kovalevskaya@instituto.test", 160, {"docencia": 64, "investigacion": 64, "gestion": 32},
-             "Dirección del Instituto"),
-            ("emmy.noether@instituto.test", 128, {"docencia": 64, "investigacion": 64}, "Proyecto de álgebra"),
-            ("alan.turing@instituto.test", 64, {"docencia": 32, "extension": 32}, "Olimpiadas de matemática")):
+             {"gestion": "Dirección del Instituto"}),
+            ("emmy.noether@instituto.test", 128, {"docencia": 64, "investigacion": 64}, {}),
+            ("alan.turing@instituto.test", 64, {"docencia": 32, "extension": 32},
+             {"extension": "Olimpiadas de matemática"})):
         u = usuarios.por_email(email)
         v = vinculos.vigente(u["id"]) if u else None
         if v and not vinculos.carga_de(v):
-            carga = {"horas": horas, "detalle": detalle,
+            carga = {"horas": horas, "detalles": detalles,
                      "actividades": {k: acts.get(k, 0) for k in vinculos.ACTIVIDADES}}
             vinculos.editar(v["id"], v["categoria"], v["fecha_inicio"], v["fecha_fin"], nota=v["nota"], carga=carga)
             hecho = True

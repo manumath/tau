@@ -8,7 +8,7 @@ guardar (`materializar`), para no dejar personas huérfanas si se cancela el for
 import base64
 import json
 
-from app.comun import paises
+from app.comun import adscripcion, paises
 from app.comun.db import get_db, sin_tildes
 
 
@@ -77,8 +77,10 @@ def por_ref(r: str) -> dict | None:
     tipo, num = p
     if tipo == "i":
         filas = get_db().q(
-            """SELECT u.id, u.nombres, u.apellidos, i.unidad AS afiliacion FROM usuario u
+            """SELECT u.id, u.nombres, u.apellidos FROM usuario u
                JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [num])
+        for f in filas:
+            f["afiliacion"] = adscripcion.unidad(f["id"])
     else:
         filas = get_db().q("SELECT id, nombres, apellidos, institucion AS afiliacion "
                            "FROM persona_externa WHERE id = ?", [num])
@@ -93,7 +95,7 @@ def buscar(texto: str, excluir: set[str] = frozenset(), limite: int = 8) -> list
     if len(texto.strip()) < 2:
         return []
     internos = get_db().q(
-        """SELECT u.id, u.nombres, u.apellidos, i.unidad AS afiliacion FROM usuario u
+        """SELECT u.id, u.nombres, u.apellidos FROM usuario u
            JOIN investigador i ON i.usuario_id = u.id
            WHERE u.activo = 1 AND (sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
                                    OR sin_tildes(u.apellidos || ' ' || u.nombres) LIKE :p)
@@ -103,7 +105,8 @@ def buscar(texto: str, excluir: set[str] = frozenset(), limite: int = 8) -> list
            WHERE usuario_id IS NULL AND (sin_tildes(nombres || ' ' || apellidos) LIKE :p
                                          OR sin_tildes(apellidos || ' ' || nombres) LIKE :p)
            ORDER BY sin_tildes(apellidos) LIMIT :l""", {"p": patron, "l": limite})
-    res = [{**p, "ref": f"i:{p['id']}", "interno": True} for p in internos]
+    res = [{**p, "afiliacion": adscripcion.unidad(p["id"]), "ref": f"i:{p['id']}", "interno": True}
+           for p in internos]
     res += [{**p, "ref": f"e:{p['id']}", "interno": False} for p in externos]
     return [p for p in res if p["ref"] not in excluir][:limite]
 

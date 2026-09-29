@@ -1,5 +1,5 @@
 """Acceso a datos del perfil del investigador y sus áreas MSC."""
-from app.comun import academicos, vinculos
+from app.comun import academicos, adscripcion, vinculos
 from app.comun.db import AHORA, IGUAL_A, get_db, sin_tildes
 
 MAX_AREAS = 10
@@ -12,24 +12,18 @@ CATEGORIAS = vinculos.CATEGORIAS
 CATEGORIAS_RESPONSABLES = ("titular", "contratado")
 CATEGORIAS_CO_RESPONSABLES = ("titular", "contratado", "interino")
 
-CARGOS_SUGERIDOS = ["Investigador(a) titular", "Investigador(a) asociado(a)",
-                    "Investigador(a) adjunto(a)", "Investigador(a) postdoctoral",
-                    "Estudiante de doctorado", "Profesor(a) emérito(a)", "Investigador(a) visitante"]
-
-
 def obtener(uid: int) -> dict | None:
-    """Usuario + investigador en un solo dict (None si la cuenta no es de investigador)."""
+    """Usuario + investigador en un solo dict, con el cargo y la unidad o grupo calculados
+    (app.comun.adscripcion). None si la cuenta no es de investigador."""
     filas = get_db().q(
         f"""SELECT u.id, u.email, u.nombres, u.apellidos, u.activo, i.*,
                    {vinculos.sql_categoria_vigente('u')} AS categoria, {academicos.sql_grado_principal('u')} AS grado
             FROM usuario u JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [uid])
-    return filas[0] if filas else None
+    return adscripcion.completar(filas[0]) if filas else None
 
 
-def actualizar_datos(uid: int, *, nombres, apellidos, cargo, unidad):
-    db = get_db()
-    db.t.usuario.update(id=uid, nombres=nombres, apellidos=apellidos)
-    actualizar_campos(uid, cargo=cargo, unidad=unidad)
+def actualizar_datos(uid: int, *, nombres, apellidos):
+    get_db().t.usuario.update(id=uid, nombres=nombres, apellidos=apellidos)
 
 
 def actualizar_campos(uid: int, **campos):
@@ -106,8 +100,6 @@ def completitud(perfil: dict, n_areas: int) -> tuple[int, list[str]]:
     """Porcentaje de perfil completo y lista de lo que falta."""
     chequeos = [
         (bool(perfil["grado"]), "grado académico"),
-        (bool(perfil["cargo"]), "cargo"),
-        (bool(perfil["unidad"]), "unidad o grupo"),
         (bool(perfil["orcid"]), "ORCID"),
         (bool(perfil["mr_id"] or perfil["zbmath_id"]), "MathSciNet o zbMATH"),
         (n_areas > 0, "áreas MSC"),
@@ -121,29 +113,35 @@ def completitud(perfil: dict, n_areas: int) -> tuple[int, list[str]]:
 # --- Directorio --------------------------------------------------------------
 
 def directorio(texto: str = "", solo_publicos: bool = False, categoria: str = "") -> list[dict]:
-    """Investigadores activos; filtra por nombre, cargo, unidad o área MSC (código o texto) y,
-    si se indica, por categoría ('sin' = sin categoría)."""
+    """Investigadores activos; filtra por nombre, cargo, unidad o grupo, o área MSC (código o
+    texto) y, si se indica, por categoría ('sin' = sin categoría). El cargo y la unidad se calculan
+    (app.comun.adscripcion), así que se filtran aquí y no en SQL."""
     texto = texto.strip()
     patron = f"%{sin_tildes(texto)}%"
     filas = get_db().q(
         f"""SELECT * FROM (
-               SELECT u.id, u.nombres, u.apellidos, i.cargo, i.unidad, i.foto,
+               SELECT u.id, u.nombres, u.apellidos, i.foto,
+                      (:t = '' OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
+                       OR EXISTS (SELECT 1 FROM investigador_msc im JOIN msc m ON m.codigo = im.codigo
+                                   WHERE im.usuario_id = u.id
+                                     AND (m.codigo LIKE :c OR m.texto_plano LIKE :p))) AS coincide,
                       {vinculos.sql_categoria_vigente('u')} AS categoria,
                       (SELECT m.codigo || char(31) || m.texto FROM investigador_msc im
                          JOIN msc m ON m.codigo = im.codigo
                         WHERE im.usuario_id = u.id AND im.principal = 1) AS area_principal
                FROM usuario u JOIN investigador i ON i.usuario_id = u.id
-               WHERE u.activo = 1 AND (:pub = 0 OR i.perfil_publico = 1) AND (
-                     :t = '' OR sin_tildes(u.nombres || ' ' || u.apellidos) LIKE :p
-                     OR sin_tildes(i.cargo) LIKE :p OR sin_tildes(i.unidad) LIKE :p
-                     OR EXISTS (SELECT 1 FROM investigador_msc im JOIN msc m ON m.codigo = im.codigo
-                                 WHERE im.usuario_id = u.id
-                                   AND (m.codigo LIKE :c OR m.texto_plano LIKE :p))))
+               WHERE u.activo = 1 AND (:pub = 0 OR i.perfil_publico = 1))
            WHERE :cat = '' OR categoria {IGUAL_A} :cat OR (:cat = 'sin' AND categoria IS NULL)
            ORDER BY sin_tildes(apellidos), sin_tildes(nombres)""",
         {"t": texto, "p": patron, "c": texto.replace("x", "_").replace("X", "_") + "%",
          "pub": int(solo_publicos), "cat": categoria})
+    res = []
+    buscado = sin_tildes(texto)
     for f in filas:
+        adscripcion.completar(f)
+        if not (f.pop("coincide") or buscado in sin_tildes(f["cargo"] or "") or buscado in sin_tildes(f["unidad"])):
+            continue
         codigo, _, texto_area = (f.pop("area_principal") or "").partition(chr(31))
         f["area"] = {"codigo": codigo, "texto": texto_area} if codigo else None
-    return filas
+        res.append(f)
+    return res

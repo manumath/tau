@@ -29,6 +29,9 @@ UNIDAD_CARGA = 32
 CARGAS = (32, 64, 96, 128, 160)
 ACTIVIDADES = {"docencia": "Docencia", "investigacion": "Investigación", "extension": "Extensión y servicios",
                "gestion": "Gestión", "otras": "Otras"}
+# Actividades con detalle propio (proyecto, programa de extensión, cargo de gestión…). La docencia
+# no lo lleva: sale de la oferta.
+CON_DETALLE = ("investigacion", "extension", "gestion", "otras")
 
 # Contratados, interinos e invitados se vinculan por un periodo con término; los titulares, sin
 # término (su vínculo se termina a mano, con el motivo).
@@ -203,14 +206,16 @@ def _horas(valor) -> int | None | bool:
 
 
 def leer_carga(datos: dict) -> dict | None:
-    """Carga del formulario (horas, docencia, investigacion, extension, gestion, otras,
-    carga_detalle) → {horas, actividades: {clave: h}, detalle}, o None si no se indicó nada."""
+    """Carga del formulario (horas, docencia, investigacion, extension, gestion, otras y
+    detalle_<actividad>) → {horas, actividades: {clave: h}, detalles: {clave: texto}}, o None si no
+    se indicó nada."""
     horas = _horas(datos.get("horas"))
     acts = {k: _horas(datos.get(k)) for k in ACTIVIDADES}
-    detalle = (datos.get("carga_detalle") or "").strip()[:300] or None
-    if horas is None and not any(acts.values()) and not detalle:
+    detalles = {k: (datos.get(f"detalle_{k}") or "").strip()[:200] or None for k in CON_DETALLE}
+    if horas is None and not any(acts.values()) and not any(detalles.values()):
         return None
-    return {"horas": horas, "actividades": {k: (0 if h is None else h) for k, h in acts.items()}, "detalle": detalle}
+    return {"horas": horas, "actividades": {k: (0 if h is None else h) for k, h in acts.items()},
+            "detalles": detalles}
 
 
 def validar_carga(carga: dict | None) -> list[str]:
@@ -225,14 +230,19 @@ def validar_carga(carga: dict | None) -> list[str]:
     elif carga["horas"] in CARGAS and sum(acts.values()) != carga["horas"]:
         errores.append(f"La distribución por actividad suma {sum(acts.values())} h/mes y debe sumar la carga "
                        f"contratada ({carga['horas']} h/mes).")
+    sin_horas = [ACTIVIDADES[k].lower() for k, t in (carga.get("detalles") or {}).items() if t and not acts.get(k)]
+    if sin_horas:
+        errores.append(f"Hay detalle sin horas en: {', '.join(sin_horas)}. Asígnele horas o borre el detalle.")
     return errores
 
 
 def _columnas_carga(carga: dict | None) -> dict:
     if carga is None:
-        return {"horas_contratadas": None, **{f"carga_{k}": 0 for k in ACTIVIDADES}, "carga_detalle": None}
+        return {"horas_contratadas": None, **{f"carga_{k}": 0 for k in ACTIVIDADES},
+                **{f"detalle_{k}": None for k in CON_DETALLE}}
+    detalles = carga.get("detalles") or {}
     return {"horas_contratadas": carga["horas"], **{f"carga_{k}": h for k, h in carga["actividades"].items()},
-            "carga_detalle": carga["detalle"]}
+            **{f"detalle_{k}": detalles.get(k) for k in CON_DETALLE}}
 
 
 def carga_de(v: dict | None) -> dict | None:
@@ -240,7 +250,7 @@ def carga_de(v: dict | None) -> dict | None:
     if not v or not v.get("horas_contratadas"):
         return None
     return {"horas": v["horas_contratadas"], "actividades": {k: v[f"carga_{k}"] for k in ACTIVIDADES},
-            "detalle": v["carga_detalle"]}
+            "detalles": {k: v[f"detalle_{k}"] for k in CON_DETALLE}}
 
 
 def texto_carga(v: dict | None) -> str:
@@ -248,7 +258,8 @@ def texto_carga(v: dict | None) -> str:
     c = carga_de(v)
     if not c:
         return ""
-    partes = [f"{ACTIVIDADES[k].split(' ')[0].lower()} {h}" for k, h in c["actividades"].items() if h]
+    partes = [f"{ACTIVIDADES[k].split(' ')[0].lower()} {h}" + (f" ({c['detalles'][k]})" if c["detalles"].get(k) else "")
+              for k, h in c["actividades"].items() if h]
     return f"{c['horas']} h/mes" + (": " + ", ".join(partes) if partes else "")
 
 

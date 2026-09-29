@@ -794,7 +794,9 @@ def _campo_motivo(nombre="motivo", actual="", sufijo=""):
                cls="space-y-1")
 
 
-CAMPOS_CARGA = ("horas", *vinculos.ACTIVIDADES, "carga_detalle")
+CAMPOS_CARGA = ("horas", *vinculos.ACTIVIDADES, *(f"detalle_{k}" for k in vinculos.CON_DETALLE))
+EJEMPLO_DETALLE = {"investigacion": "Proyecto o línea", "extension": "Programa o servicio (se muestra en el perfil)",
+                   "gestion": "Cargo o comisión (se muestra en el perfil)", "otras": "Descripción"}
 
 
 def _datos_carga(v) -> dict:
@@ -803,7 +805,7 @@ def _datos_carga(v) -> dict:
     if not c:
         return {}
     return {"horas": str(c["horas"]), **{k: str(h) for k, h in c["actividades"].items()},
-            "carga_detalle": c["detalle"] or ""}
+            **{f"detalle_{k}": t or "" for k, t in c["detalles"].items()}}
 
 
 def _campos_carga(d, sufijo=""):
@@ -821,10 +823,13 @@ def _campos_carga(d, sufijo=""):
           "titular son 32 h/mes de docencia. Déjelo en blanco en periodos sin carga registrada.",
           cls=(TextPresets.muted_sm, "mb-2")),
         Div(horas("horas", "Total contratado", vinculos.CARGAS, "— Sin registrar —"),
-            *[horas(k, t, vinculos.CARGAS, "0") for k, t in vinculos.ACTIVIDADES.items()],
+            horas("docencia", "Docencia", vinculos.CARGAS, "0"),
             cls="grid grid-cols-2 sm:grid-cols-3 gap-3 items-end"),
-        LabelInput("Detalle", id=f"carga_detalle{sufijo}", name="carga_detalle", value=d.get("carga_detalle") or "",
-                   placeholder="Proyecto, cargo de gestión, programa de extensión…", cls="mt-3"),
+        *[Div(horas(k, vinculos.ACTIVIDADES[k], vinculos.CARGAS, "0"),
+              Div(LabelInput("Detalle", id=f"detalle_{k}{sufijo}", name=f"detalle_{k}",
+                             value=d.get(f"detalle_{k}") or "", placeholder=EJEMPLO_DETALLE[k], maxlength=200),
+                  cls="sm:col-span-2"),
+              cls="grid grid-cols-2 sm:grid-cols-3 gap-3 items-end mt-3") for k in vinculos.CON_DETALLE],
         cls="rounded-md border border-border p-3 mt-3")
 
 

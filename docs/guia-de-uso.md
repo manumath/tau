@@ -33,8 +33,13 @@ la asignación docente y la carga horaria.
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».
 
-- **Datos básicos:** cargo y unidad o grupo. El grado que se muestra es el de mayor nivel de sus
-  grados académicos.
+- **Datos básicos:** su nombre. El **cargo** y la **unidad o grupo** no se editan: se calculan.
+  - *Cargo:* «Docente Investigador» si su vínculo vigente tiene carga de investigación; si no,
+    «Docente».
+  - *Unidad o grupo:* primero los proyectos vigentes de los que es responsable, luego aquellos en
+    que participa, luego el detalle de su carga de extensión y servicios y el de gestión (los
+    registra la Dirección de Carrera en su vínculo). Si nada de eso aplica: «Carrera de Matemática».
+  El grado que se muestra es el de mayor nivel de sus grados académicos.
 - **Grados académicos:** todos sus grados (doctorado, maestría, licenciatura…), con el título, la
   institución que lo otorgó, el país y el año. Los pide la acreditación.
 - **Datos personales:** su fecha de nacimiento, tal como la registró la administración (no se edita
@@ -368,7 +373,9 @@ proyecto y ser del mismo periodo).
   - **Vínculo** (solo la Dirección de Carrera): el historial de vínculo de cada persona con una
     **sola dependencia**, la Carrera de Matemática (el Instituto forma parte de ella), con su
     categoría y su **carga horaria contratada** por periodo (total y distribución por actividad, que
-    debe sumar el total). Contratados, interinos e invitados se vinculan **por un periodo con fecha de
+    debe sumar el total), con un **detalle por actividad** (proyecto o línea, programa de extensión,
+    cargo de gestión…); el de extensión y el de gestión aparecen en la «unidad o grupo» del perfil.
+    Contratados, interinos e invitados se vinculan **por un periodo con fecha de
     término** (obligatoria); el vínculo de titular es **permanente** (sin término). Desde ahí se
     registra un cambio de categoría o de carga («Cambiar de categoría o de carga»: cierra el periodo
     vigente el día anterior, aunque tuviera término posterior, y abre uno nuevo), se **termina** el

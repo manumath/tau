@@ -68,6 +68,9 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   periodo octubre–septiembre. Líneas de investigación obligatorias solo en los de investigación.
 - **Informes:** cuenta lo producido mientras la persona estaba vinculada, con la categoría de esa
   fecha. Las inconsistencias de datos oficiales (PDF de planes) se cargan tal cual y se marcan.
+- **Cargo y unidad o grupo** del perfil se calculan (`app/comun/adscripcion.py`): «Docente
+  Investigador» con carga de investigación, si no «Docente»; unidad = proyectos que dirige, en que
+  participa, detalle de extensión y de gestión del vínculo, o «Carrera de Matemática».
 - Fecha de nacimiento: la ve la administración y la propia persona; los informes usan tramos.
 
 ## Cuidados al trabajar aquí

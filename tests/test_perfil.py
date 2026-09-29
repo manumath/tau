@@ -3,7 +3,7 @@ import io
 import pytest
 from PIL import Image
 
-from app.comun import academicos, fotos, usuarios
+from app.comun import academicos, fotos, usuarios, vinculos
 from app.investigacion import msc, perfiles
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
@@ -58,12 +58,12 @@ def test_pagina_de_perfil(inv):
 def test_editar_datos_basicos(inv):
     r = inv.get("/perfil/datos/editar", headers=HX)
     assert r.text.lstrip().startswith("<div") and 'hx-put="/perfil/datos"' in r.text
-    r = inv.put("/perfil/datos", headers=HX, data=dict(
-        nombres="Amalie Emmy", apellidos="Noether", cargo="Investigadora", unidad="Álgebra"))
+    assert 'name="cargo"' not in r.text and 'name="unidad"' not in r.text  # se calculan, no se editan
+    r = inv.put("/perfil/datos", headers=HX, data=dict(nombres="Amalie Emmy", apellidos="Noether"))
     assert "Amalie Emmy Noether" in r.text and "Sin grados registrados" in r.text
     assert 'id="perfil-completitud"' in r.text and 'hx-swap-oob="true"' in r.text
     p = perfiles.obtener(inv.uid)
-    assert (p["nombres"], p["grado"], p["unidad"]) == ("Amalie Emmy", None, "Álgebra")
+    assert (p["nombres"], p["grado"], p["cargo"], p["unidad"]) == ("Amalie Emmy", None, None, "Carrera de Matemática")
 
 
 def test_datos_invalidos_no_se_guardan(inv):
@@ -189,11 +189,13 @@ def test_completitud(app):
     academicos.agregar_grado(uid, {"nivel": "doctorado"})
     perfiles.actualizar_campos(uid, orcid="0000-0002-1825-0097")
     pct, faltan = perfiles.completitud(perfiles.obtener(uid), 1)
-    assert pct == 38 and "ORCID" not in faltan and "áreas MSC" not in faltan
+    assert pct == 50 and "ORCID" not in faltan and "áreas MSC" not in faltan
 
 
 def test_directorio_busca_por_nombre_unidad_y_area_sin_tildes(inv):
-    perfiles.actualizar_campos(inv.uid, unidad="Grupo de Álgebra")
+    vinculos.agregar(inv.uid, "titular", "2015-01-01", carga={
+        "horas": 128, "actividades": {"docencia": 64, "investigacion": 32, "extension": 32, "gestion": 0, "otras": 0},
+        "detalles": {"extension": "Seminario de Álgebra"}})
     perfiles.agregar_area(inv.uid, "13E05")
     nombres = lambda q: [d["apellidos"] for d in perfiles.directorio(q)]  # noqa: E731
     assert nombres("") == ["Noether"]              # el admin sin perfil no aparece
@@ -201,6 +203,7 @@ def test_directorio_busca_por_nombre_unidad_y_area_sin_tildes(inv):
     assert nombres("algebra") == ["Noether"]       # sin tilde encuentra «Álgebra»
     assert nombres("13E") == ["Noether"] and nombres("noetherian") == ["Noether"]
     assert nombres("topology") == []
+    assert nombres("docente investigador") == ["Noether"]  # por el cargo calculado
     r = inv.get("/investigadores/resultados", params={"q": "13E"}, headers=HX)
     assert "Noether" in r.text and "13E05" in r.text
 
