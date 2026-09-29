@@ -7,7 +7,7 @@ from monsterui.all import H2, H3, H4, Card, Grid, Label, LabelT, Progress, TextP
 
 from app.academico import carga, gestiones
 from app.academico.componentes import tiene_docencia
-from app.acreditacion import anexo
+from app.acreditacion import anexo, calidad
 from app.comun import permisos, vinculos
 from app.comun.db import get_db
 from app.investigacion import actividades, filiacion, institucionales, perfiles, productos, proyectos
@@ -234,9 +234,21 @@ def _para_mi(auth):
     return _grupo("list-checks", "Lo mío", items) if items or auth["es_investigador"] else None
 
 
+def _para_calidad(auth):
+    """Quien ve la calidad de datos: cuántos registros quedan por completar (enlace al tablero)."""
+    if not permisos.puede(auth, "ver_calidad_datos"):
+        return None
+    r = calidad.resumen()
+    item = _item(f"{_plural(r['registros'], 'registro')} por completar en {r['con_observaciones']} de "
+                 f"{r['chequeos']} revisiones", "/informes/calidad",
+                 detalle="Antes de generar la memoria o el anexo.") if r["registros"] else None
+    return _grupo("list-checks", "Calidad de datos", [item])
+
+
 @rt("/")
 def get(auth):
-    grupos = [x for x in (_para_mi(auth), _para_carrera(auth), _para_instituto(auth), _para_acreditacion(auth)) if x]
+    grupos = [x for x in (_para_mi(auth), _para_carrera(auth), _para_instituto(auth), _para_acreditacion(auth),
+                          _para_calidad(auth)) if x]
     tarjetas = []
     if auth["es_investigador"]:
         tarjetas += [_tarjeta_proyectos(auth), *_tarjetas_produccion(auth["id"]),

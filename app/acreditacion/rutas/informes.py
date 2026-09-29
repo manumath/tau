@@ -163,6 +163,13 @@ def get(auth):
                                      "de edad, carga en investigación y proyectos. Descarga en XLSX.",
                                      cls=TextPresets.muted_sm))),
                           href="/informes/cuerpo-academico", cls="block hover:shadow-md transition"))
+    if permisos.puede(auth, "ver_calidad_datos"):
+        tarjetas.append(A(Card(Div(UkIcon("list-checks", height=22, width=22, cls="text-primary"),
+                                   H3("Calidad de datos", cls="text-base font-semibold mt-2"),
+                                   P("Lo que falta o no cuadra antes de generar la memoria, el anexo o los informes "
+                                     "de docencia, con quién lo corrige y un enlace para hacerlo.",
+                                     cls=TextPresets.muted_sm))),
+                          href="/informes/calidad", cls="block hover:shadow-md transition"))
     return pagina("Informes",
                   Div(fh.H2("Informes", cls="uk-h2"),
                       P("Documentos generados a partir de lo registrado en el sistema.", cls=TextPresets.muted_sm),

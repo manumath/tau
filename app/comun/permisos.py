@@ -69,6 +69,8 @@ ACCIONES = {
     "ver_evidencias": {"direccion_instituto", "comite_acreditacion"},
     "ver_cv_ajeno": {"direccion_instituto", "direccion_carrera", "comite_acreditacion"},
     "ver_informes_institucionales": {"direccion_instituto", "direccion_carrera", "comite_acreditacion"},
+    "ver_calidad_datos": {"direccion_instituto", "direccion_carrera", "coordinacion_academica", "comite_acreditacion",
+                          "administracion_sistema"},
 }
 
 

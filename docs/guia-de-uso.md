@@ -368,6 +368,11 @@ Menú «Informes»:
   inscripciones por JCE, y la distribución por categoría y por tramo de edad (la fecha de nacimiento
   nunca se muestra). Imprimible y en XLSX. Las «inscripciones» suman los inscritos de cada paralelo:
   no son la matrícula de la Carrera.
+- **Calidad de datos** (direcciones, Coordinación académica, Comité y Administración del sistema;
+  también aparece en el inicio): 12 revisiones de lo que falta o no cuadra antes de generar informes,
+  agrupadas en vínculos y carga, personas, producción, docencia y proyectos. Cada una dice a qué
+  afecta y quién lo corrige; al abrirla muestra los registros con un enlace para corregirlos. La
+  página no cambia nada.
 - **Memoria del instituto** (administración): ver abajo.
 
 ### Plan de actividades (proyectos institucionales)

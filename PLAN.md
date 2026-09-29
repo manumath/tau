@@ -1209,3 +1209,14 @@ y se actualiza si htmx reemplaza las filas (`htmx:afterSettle`). Aplicado en car
 usuarios (sin filtro: tiene buscador del servidor), propuestas, revistas, personas externas,
 estudiantes, participantes, informe de carga docente, memoria por investigador y proyectos del anexo.
 No se aplica a tablas por grupos (planes por semestre) ni a las series por año de los informes.
+
+## 31. Tablero de calidad de datos (punto 4 de la evaluación, 28-sep-2026)
+
+`app/acreditacion/calidad.py` (solo consulta) y `/informes/calidad` (acción `ver_calidad_datos`:
+direcciones, Coordinación académica, Comité y Administración del sistema). Doce revisiones, cada una
+con a qué afecta, quién la corrige y sus registros con enlace: periodos sin término, docentes sin
+carga, vínculos sin ingreso, investigadores sin vínculo, sin grado, sin fecha de nacimiento, perfiles
+sin ORCID o bajo el 50 %, publicaciones que no cuentan hasta completarse (reutiliza
+`memoria(...)["por_confirmar"]` de la ventana del anexo), paralelos sin docente o sin inscritos,
+observaciones de planes, proyectos sin ámbito y de investigación sin línea. El inicio muestra el total
+en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)` y sumarla a `CHEQUEOS`.
