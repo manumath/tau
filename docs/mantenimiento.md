@@ -175,6 +175,23 @@ htmx, fasthtml.js, Franken UI y KaTeX tienen versión fija (`VERSIONES` en
 Las URL llevan una huella del contenido (`?v=…`): los navegadores toman la versión nueva sin
 vaciar caché.
 
+### 4.5 bis Actualizar la plantilla de la Guía de Antecedentes
+
+La Guía de Antecedentes de IAC-CINDA se genera llenando la plantilla oficial vacía
+`datos/iac-cinda/Guia-de-Antecedentes-pregrado-2025.xlsx` (versionada; los PDF de IAC-CINDA, en
+`/iac-cinda/`, no). Se escribe celda por celda en el XML (`app/comun/xlsx_plantilla.py`), sin
+openpyxl, porque este descarta los gráficos del resumen estadístico al guardar. Si IAC-CINDA publica
+una versión nueva:
+
+1. Guárdela vacía en `datos/iac-cinda/` y actualice `PLANTILLA` en
+   `app/acreditacion/guia_antecedentes.py`.
+2. Compare hojas, encabezados y filas de datos con la anterior (nombres de hoja en `H`, columnas en
+   cada función `_<hoja>`, primera fila de datos) y corrija lo que cambió.
+3. Revise si siguen los errores de fórmulas que el sistema corrige (hojas 4, 5, 6 y 20) y quite las
+   correcciones que ya no hagan falta.
+4. `uv run pytest tests/test_guia_antecedentes.py` y abra en Excel una guía generada con la base de
+   ejemplo: debe abrir sin avisos de reparación y con los gráficos del resumen.
+
 ### 4.6 Actualizar dependencias de Python
 
 FastHTML y MonsterUI están en versiones 0.x/1.0: pueden cambiar su API entre versiones menores.

@@ -494,6 +494,19 @@ proyecto y ser del mismo periodo).
   regla que se aplicó; así se responde de inmediato «¿de dónde sale este número?». La sección
   **«Tendencias»** muestra las series del periodo en gráficos, y cada barra lleva a los registros de
   su año. Los gráficos se imprimen con el documento.
+- **Informes → Guía de Antecedentes IAC-CINDA** (Direcciones de Carrera y del Instituto, Comité de
+  acreditación): la planilla oficial de IAC-CINDA para carreras de pregrado (2025), llenada con lo que
+  registra el sistema. Elija el **programa** (cada licenciatura se acredita por separado), el **último
+  ciclo** de referencia (la Guía pide los 10 semestres que terminan en él) y el **tipo de cambio** en
+  bolivianos por dólar (la Guía pide los montos en USD; sin él, los montos en bolivianos quedan en
+  blanco) y pulse «Descargar la Guía (XLSX)». La pantalla detalla qué llena el sistema en cada hoja:
+  identificación, líneas, asignaturas del plan, académicos y su caracterización por ciclo, auxiliares,
+  proyectos, artículos, libros, patentes, redes, desarrollo académico y profesional, y extensión. Lo
+  demás (admisión, cohortes, egreso y titulación, consejo, becas, bienestar, recursos, impacto y
+  difusión de cada actividad) se completa a mano en el archivo. El resumen estadístico y sus gráficos
+  se calculan solos al abrirlo en Excel. Criterios: horas en **horas semanales** (la carga mensual ÷ 4);
+  jornada completa desde 160 h/mes, media jornada de 80 a 159, por horas bajo 80. Revise el archivo
+  antes de enviarlo.
 - **Citas:** en la memoria, «Actualizar citas» consulta en OpenAlex las citas de todos los productos
   con DOI. La sección «Impacto» las suma y el XLSX las trae por producto, con su fecha.
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se

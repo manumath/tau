@@ -1281,3 +1281,35 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   (Chrome omite los fondos por omisión). `capturar.py --pdf` guarda el PDF como lo imprime Chrome.
 - Pendiente del punto 8: inicio de sesión UMSA (según el proveedor que confirme la DTIC) y Guía de
   Antecedentes de IAC-CINDA (falta la planilla oficial vigente).
+
+## 36. Guía de Antecedentes de IAC-CINDA (punto 8 de la evaluación, 28-sep-2026)
+
+- La Dirección entregó la planilla oficial vacía (pregrado, 2025): 33 hojas, 9 gráficos en el resumen
+  estadístico. Se versiona en `datos/iac-cinda/` (decisión del 28-sep-2026); los PDF siguen fuera.
+- `app/comun/xlsx_plantilla.py` escribe celdas en el XML de cada hoja con lxml y deja intacto lo demás
+  (openpyxl descarta gráficos e imágenes al guardar). Filas agregadas más allá de la tabla toman el
+  formato de su última fila numerada; si se sobrescribe la maestra de una fórmula compartida, las
+  dependientes pasan a fórmula explícita; se pide recalcular al abrir y se quita la cadena de cálculo.
+- `app/acreditacion/guia_antecedentes.py` llena las hojas 1, 2, 7.a, 7.b, 10, 11, 12, 19–23, 25–27;
+  `COBERTURA` dice qué queda a mano. Pantalla y descarga en `/informes/guia-antecedentes`
+  (`ver_informes_institucionales`, sin unidad: Direcciones de Carrera e Instituto y Comité).
+- Decisiones del 28-sep-2026: horas en **h/semana** (h/mes ÷ 4); jornada completa ≥ 160 h/mes, media
+  80–159, por horas < 80 (sin carga registrada cuenta como por horas y se anota); montos en USD con el
+  **tipo de cambio que indica quien genera la guía**.
+- Decisiones tomadas por el equipo (confirmar):
+  - «Académicos del programa»: vínculo con la Carrera como titular, contratado(a), interino(a) o
+    invitado(a) (no «externo»); la hoja 10 los toma al cierre del último año (o a hoy).
+  - Hoja 20: proyectos individuales e institucionales de investigación; los de interacción social van
+    a la 27 (extensión) con las actividades de divulgación. Monto de un institucional → financiamiento
+    interno; de un individual → externo, con su fuente.
+  - Hojas 22, 23 y 25: productos enviados, aceptados o publicados en los años de los 10 ciclos con al
+    menos un autor del programa vinculado en la fecha (sin exigir revista verificada ni arbitraje: la
+    Guía pide todos los artículos, con su indexación).
+  - 7.a: «Número máximo de estudiantes por sección» = máximo de inscritos registrado en un paralelo en
+    el último año; «veces que se dicta» = gestiones del último año en que se ofertó.
+  - Duración del programa: semestres del plan ÷ 2 (el Plan 2017 cargado tiene 8 semestres: 4 años).
+- Errores de la plantilla que se corrigen en el archivo generado: tasas de egreso y titulación (hojas
+  5 y 6) apuntaban a otro libro (`[1]4.b.Cohortes semestre-ciclo`); deserción al tercer año de la
+  cohorte de la fila 18 (hoja 4) usaba la fila 17; «Costo total» de la hoja 20 sumaba AQ+AR (columnas
+  de difusión) en vez de AT+AU. Se quita el vínculo externo.
+- Pendiente del punto 8: inicio de sesión UMSA (proveedor por confirmar con la DTIC).

@@ -118,7 +118,8 @@ app/
     informes.py                datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
     anexo.py                   anexo de I+D+i para la acreditación, por criterio y año
     estudiantes.py             tesis e indicadores de participación de estudiantes
-    rutas/                     informes, anexo
+    guia_antecedentes.py       Guía de Antecedentes de IAC-CINDA: la plantilla oficial llenada con los datos
+    rutas/                     informes, anexo, guia_antecedentes
   academico/                   docencia y currículo (fase 3)
     planes.py                  programas, planes de estudio, asignaturas, electivas, requisitos, observaciones
     importar_planes.py         carga de planes desde datos/planes/ (la usa la migración 0028)

@@ -208,6 +208,12 @@ def get(auth):
                                      "de edad, carga en investigación y proyectos. Descarga en XLSX.",
                                      cls=TextPresets.muted_sm))),
                           href="/informes/cuerpo-academico", cls="block hover:shadow-md transition"))
+        tarjetas.append(A(Card(Div(UkIcon("file-spreadsheet", height=22, width=22, cls="text-primary"),
+                                   H3("Guía de Antecedentes IAC-CINDA", cls="text-base font-semibold mt-2"),
+                                   P("La planilla oficial para la acreditación del pregrado, llenada con los datos del "
+                                     "sistema: plan, cuerpo académico, proyectos, publicaciones y actividades.",
+                                     cls=TextPresets.muted_sm))),
+                          href="/informes/guia-antecedentes", cls="block hover:shadow-md transition"))
     if permisos.puede(auth, "ver_calidad_datos"):
         tarjetas.append(A(Card(Div(UkIcon("list-checks", height=22, width=22, cls="text-primary"),
                                    H3("Calidad de datos", cls="text-base font-semibold mt-2"),

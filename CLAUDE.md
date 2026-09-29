@@ -43,7 +43,8 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
 - `app/acreditacion`: CV, memoria, anexo de I+D+i, estudiantes.
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
   `main.py`. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
-  `datos/planes/` (planes de estudio en CSV), `static/` (vendor con versión fija), `estilos/`.
+  `datos/planes/` (planes de estudio en CSV), `datos/iac-cinda/` (plantilla vacía de la Guía de
+  Antecedentes), `static/` (vendor con versión fija), `estilos/`.
 
 ## Reglas de negocio que no se deducen del código a simple vista
 
@@ -82,7 +83,10 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
 - Contraseñas: solo las de ejemplo del seed o de prueba fijadas en copias temporales. Nunca pida
   ni use contraseñas del sistema operativo o cuentas reales.
 - Descargas e instalaciones (paquetes, binarios, plugins): pida permiso explícito antes.
-- No versione `data/`, `.herramientas/`, ni los PDF de IAC-CINDA.
+- No versione `data/`, `.herramientas/`, ni los PDF de IAC-CINDA (`/iac-cinda/`). La plantilla vacía de
+  la Guía de Antecedentes sí va versionada, en `datos/iac-cinda/`.
+- Plantillas XLSX ajenas (la Guía de Antecedentes): nunca con openpyxl al guardar, que borra gráficos e
+  imágenes; use `app/comun/xlsx_plantilla.py`, que escribe solo las celdas pedidas.
 - Nunca edite una migración aplicada; nunca borre una prueba para que pase.
 - Seguridad: autorización en el servidor en cada ruta; CSRF por `Origin`; CSP propia
   (`app/comun/cabeceras.py`), sin recursos de otros sitios.

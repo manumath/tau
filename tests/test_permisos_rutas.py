@@ -45,6 +45,7 @@ RUTAS = {  # ruta → quienes reciben 200 (el resto, 403)
     "/admin/propuestas": {"instituto"},
     "/informes/memoria?anio=2025": {"instituto", "comite"},
     "/informes/acreditacion?desde=2022&hasta=2026": {"instituto", "comite"},
+    "/informes/guia-antecedentes": {"instituto", "carrera", "comite"},
 }
 
 
