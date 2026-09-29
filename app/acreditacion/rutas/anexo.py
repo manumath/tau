@@ -5,21 +5,36 @@ from datetime import date
 from urllib.parse import urlencode
 
 import fasthtml.common as fh
-from fasthtml.common import (APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select, Span, Table, Tbody,
+from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select, Span, Table, Tbody,
                              Td, Th, Thead, Tr, Ul)
 
 from app.acreditacion import anexo as acreditacion, informes
-from app.investigacion import actividades, proyectos
-from app.comun import config, estudiantes, permisos, unidades
+from app.investigacion import actividades, productos, proyectos
+from app.comun import config, estudiantes, permisos, unidades, vinculos
+from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import pagina
+from monsterui.all import H2 as Titulo, Card, TextPresets, UkIcon
 from app.acreditacion.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _tabla_conteo, barra, cita,
                                              descarga, hoja, seccion_metodo)
 
 rt = APIRouter()
 
 
-def _num(n):
-    return Td(str(n), cls="text-right tabular-nums")
+def _num(n, href=None):
+    # Un cero no enlaza: no hay registros que mostrar.
+    return Td(A(str(n), href=href, title="Ver los registros que componen esta cifra") if href and n else str(n),
+              cls="text-right tabular-nums")
+
+
+def _q(a) -> str:
+    """Ventana y criterio de revistas del anexo, para enlaces que vuelven a él o lo detallan."""
+    return urlencode({"desde": a["desde_anio"], "hasta": a["hasta_anio"],
+                      "revistas": "verificadas" if a["exige_verificada"] else "todas"})
+
+
+def url_detalle(a, indicador, anio, categoria=""):
+    extra = f"&{urlencode({'categoria': categoria})}" if categoria else ""
+    return f"/informes/acreditacion/detalle?indicador={indicador}&anio={anio}&{_q(a)}{extra}"
 
 
 def _lista_actividades(acts, vacio="Sin registros en el periodo."):
@@ -44,10 +59,34 @@ def _lista_productos(prods, vacio="Sin registros en el periodo.", detalle=True):
     return Ol(*[cita(p)(extra(p)) for p in prods], cls="citas")
 
 
+def _ancla(codigo):
+    return "c-" + "".join(c for c in codigo.split(" ·")[0] if c.isalnum())
+
+
 def _criterio(codigo, titulo, que, *contenido):
     """Sección de un criterio: código, título, qué evidencia aporta y el contenido."""
     return Div(H2(Span(codigo, cls="font-mono text-base mr-2"), titulo), P(que, cls="apagado text-sm"), *contenido,
-               cls="space-y-2")
+               cls="space-y-2", id=_ancla(codigo))
+
+
+def seccion_tendencias(a):
+    """Series del periodo en gráficos; cada barra lleva a los registros de ese año."""
+    anios = a["anios"]
+    etiquetas = [x["anio"] for x in anios]
+
+    def g(titulo, *claves, nota=""):
+        series = [(acreditacion.INDICADORES[k][0], [x[k] for x in anios]) for k in claves]
+        return barras(titulo, etiquetas, series, [[url_detalle(a, k, y) for y in etiquetas] for k in claves], nota)
+    return Div(H2("Tendencias"),
+               P("Cada barra lleva a los registros de ese año.", cls="apagado text-sm no-imprimir"),
+               Div(g("Investigadores", "investigadores"), g("Jornada completa equivalente", "jce"),
+                   g("Artículos que cuentan", "indexados", "arbitrados"),
+                   g("Presentaciones en eventos", "presentaciones"), g("Proyectos vigentes", "proyectos"),
+                   g("Tesis defendidas", "tesis_defendidas"),
+                   g("Coautoría internacional", "coautoria_internacional", nota="Artículos con coautores de otro país."),
+                   g("Productos con estudiantes", "con_estudiantes"),
+                   g("Citas (OpenAlex)", "citas", nota="Por año de publicación; las recientes acumulan menos."),
+                   cls="grid grid-cols-2 md:grid-cols-3 gap-3"))
 
 
 def _nombres(personas_):
@@ -121,13 +160,16 @@ def documento(a):
             ("con_estudiantes", "Productos con estudiantes"), ("coautoria_internacional", "Artículos con coautoría internacional"),
             ("proyectos_internacionales", "Proyectos internacionales"), ("citas", "Citas")]
     resumen = Div(Table(Thead(Tr(Th("Indicador"), *[Th(str(x["anio"]), cls="text-right") for x in anios])),
-                        Tbody(*[Tr(Td(t), *[_num(x[k]) for x in anios]) for k, t in cols])),
+                        Tbody(*[Tr(Td(t), *[_num(x[k], url_detalle(a, k, x["anio"])) for x in anios]) for k, t in cols])),
                   cls="overflow-x-auto")
     categorias = sorted({c for x in a["cuerpo"] for c in x["por_categoria"]})
     cuerpo = Div(Table(Thead(Tr(Th("Categoría (al 31 de diciembre)"), *[Th(str(x["anio"]), cls="text-right") for x in a["cuerpo"]])),
-                       Tbody(*[Tr(Td(c), *[_num(x["por_categoria"].get(c, 0)) for x in a["cuerpo"]]) for c in categorias],
-                             Tr(Td("Total", cls="font-semibold"), *[_num(x["total"]) for x in a["cuerpo"]]),
-                             Tr(Td("Jornada completa equivalente (160 h/mes)"), *[_num(x["jce"]) for x in a["cuerpo"]]),
+                       Tbody(*[Tr(Td(c), *[_num(x["por_categoria"].get(c, 0), url_detalle(a, "investigadores", x["anio"], c))
+                                           for x in a["cuerpo"]]) for c in categorias],
+                             Tr(Td("Total", cls="font-semibold"),
+                                *[_num(x["total"], url_detalle(a, "investigadores", x["anio"])) for x in a["cuerpo"]]),
+                             Tr(Td("Jornada completa equivalente (160 h/mes)"),
+                                *[_num(x["jce"], url_detalle(a, "jce", x["anio"])) for x in a["cuerpo"]]),
                              Tr(Td("Sin carga registrada"), *[_num(x["sin_jornada"]) for x in a["cuerpo"]]))),
                  cls="overflow-x-auto")
     rv = m["revistas"]
@@ -144,10 +186,14 @@ def documento(a):
           cls="apagado text-sm"),
         Div(*[P(x, cls="text-sm") for x in avisos],
             cls="rounded-md border border-amber-300 bg-amber-50 text-amber-900 p-3 mt-3 space-y-1") if avisos else "",
-        Div(_cifra(len(a["articulos"]), "artículos que cuentan"), _cifra(len(a["libros"]), "libros y capítulos"),
-            _cifra(len(a["presentaciones"]), "presentaciones"), _cifra(len(a["proyectos"]), "proyectos"),
-            _cifra(m["impacto"]["citas"], "citas (OpenAlex)"), cls="grid grid-cols-5 gap-3 mt-6"),
-        H2("Resumen por año"), resumen,
+        Div(_cifra(len(a["articulos"]), "artículos que cuentan", "#c-363a"),
+            _cifra(len(a["libros"]), "libros y capítulos", "#c-363b"),
+            _cifra(len(a["presentaciones"]), "presentaciones", "#c-363i"),
+            _cifra(len(a["proyectos"]), "proyectos", "#c-363h"),
+            _cifra(m["impacto"]["citas"], "citas (OpenAlex)", "#c-361"), cls="grid grid-cols-5 gap-3 mt-6"),
+        H2("Resumen por año"),
+        P("Cada cifra enlaza a los registros que la componen.", cls="apagado text-sm no-imprimir"), resumen,
+        seccion_tendencias(a),
         _criterio("2.2.1", "Cuerpo académico", "Dotación, categoría y dedicación (jornada) de quienes estuvieron "
                   "vinculados a la Carrera y su Instituto cada año, según el historial de Recursos Humanos.", cuerpo),
         _criterio("3.6.3 a", "Publicaciones en revistas indexadas y arbitradas",
@@ -286,3 +332,68 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
         "Por confirmar": informes.filas_productos(m["por_confirmar"]),
         "Método": metodo})
     return _archivo(contenido, f"anexo-idi-{d}-{h}.xlsx", XLSX)
+
+
+# --- Trazabilidad: de dónde sale cada cifra ------------------------------------------------------
+
+def _tabla_registros(d, auth):
+    clase, regs = d["clase"], d["registros"]
+    if not regs:
+        return P("Ningún registro compone esta cifra.", cls="apagado")
+    enlace = lambda texto, href: A(texto, href=href, cls="text-primary hover:underline") if href else texto  # noqa: E731
+    if clase == "persona":
+        cab = ("Persona", "Categoría", "Carga (h/mes)")
+        filas = [(enlace(f"{p['apellidos']}, {p['nombres']}", f"/investigadores/{p['id']}"), p["categoria"],
+                  Td(str(p["jornada"] or "—"), cls="text-right tabular-nums")) for p in regs]
+    elif clase == "producto":
+        cab = ("Año", "Título", "Tipo", "Medio", "Revisión") + (("Citas",) if d["indicador"] == "citas" else ()) \
+            + (("Países de coautores",) if d["indicador"] == "coautoria_internacional" else ())
+        filas = [(str(p["anio"]), enlace(p["titulo"], f"/productos/{p['id']}"), p["tipo"], p["medio"] or "—",
+                  productos.REVISIONES.get(p["revision"], p["revision"] or "—"),
+                  *((Td(str(p["citas"]), cls="text-right tabular-nums"),) if d["indicador"] == "citas" else ()),
+                  *((", ".join(p["paises"]),) if d["indicador"] == "coautoria_internacional" else ()))
+                 for p in regs]
+    elif clase == "actividad":
+        cab = ("Fechas", "Título", "Tipo", "Institución", "País", "Ámbito")
+        filas = [(actividades.fechas_texto(x), enlace(x["titulo"], f"/actividades/{x['id']}"), x["tipo"],
+                  x["institucion"] or "—", x["pais"] or "—", actividades.AMBITOS[x["ambito"]]) for x in regs]
+    else:
+        cab = ("Código", "Proyecto", "Tipo", "Periodo", "Ámbito", "Financiamiento")
+        filas = [(p["codigo"] or "—",
+                  enlace(p["nombre"], f"/proyectos/{p['id']}" if proyectos.puede_ver(p["id"], auth) else None),
+                  proyectos.tipo_texto(p), f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}",
+                  proyectos.AMBITOS.get(proyectos.ambito_efectivo(p), "Sin indicar"), p["fuente_financiamiento"] or "—")
+                 for p in regs]
+    numericas = ("Carga (h/mes)", "Citas")
+    return Div(Table(Thead(Tr(*[Th(c, cls="text-right" if c in numericas else "") for c in cab])),
+                     Tbody(*[Tr(*[c if getattr(c, "tag", None) == "td" else Td(c) for c in f]) for f in filas]),
+                     data_tabla=f"anexo-{d['indicador']}-{d['anio']}", cls="uk-table uk-table-divider uk-table-small"),
+               cls="overflow-x-auto")
+
+
+@rt("/informes/acreditacion/detalle")
+def get(auth, indicador: str = "", anio: str = "", desde: str = "", hasta: str = "", revistas: str = "verificadas",
+        categoria: str = ""):
+    if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
+        return Response("No autorizado", status_code=403)
+    d0, h0 = _ventana(desde, hasta)
+    y = int(anio) if anio.isdigit() else h0
+    if categoria and categoria not in vinculos.CATEGORIAS.values():
+        categoria = ""
+    d = acreditacion.detalle(indicador, y, f"{max(h0, y)}-12-31", revistas != "todas", categoria)
+    if not d or not 2000 <= y <= date.today().year:
+        return Response("Indicador no encontrado", status_code=404)
+    volver = f"/informes/acreditacion?{urlencode({'desde': d0, 'hasta': h0, 'revistas': revistas if revistas == 'todas' else 'verificadas'})}"
+    titulo = f"{d['nombre']}{' · ' + categoria if categoria else ''}, {y}"
+    return pagina(
+        titulo,
+        A(UkIcon("arrow-left", height=14, width=14), f"Anexo de I+D+i {d0}–{h0}", href=volver,
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
+        Card(Div(Div(Titulo(titulo), P(d["regla"], cls=TextPresets.muted_sm),
+                     P("Solo revistas verificadas en el catálogo." if revistas != "todas"
+                       else "Incluye revistas sin verificar.", cls=TextPresets.muted_sm) if d["clase"] == "producto" else ""),
+                 Div(Div(str(d["valor"]), cls="text-3xl font-semibold tabular-nums"),
+                     Div("cifra del anexo", cls="text-xs text-muted-foreground"), cls="text-right shrink-0"),
+                 cls="flex flex-wrap items-start justify-between gap-4 mb-4"),
+             _tabla_registros(d, auth)),
+        usuario=auth, seccion="informes")

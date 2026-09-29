@@ -1247,3 +1247,18 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
 - Pantallas: campana en la barra (se carga aparte, `/avisos/campana`), `/avisos` (historial y
   preferencia), `/avisos/{id}` (marca leído y lleva a donde se atiende). «Mi perfil» enlaza a la
   preferencia.
+
+## 34. Series con gráficos y trazabilidad (punto 7 de la evaluación, 28-sep-2026)
+
+- `app/comun/componentes/graficos.py`: `barras()` dibuja barras apiladas en SVG en el servidor (sin
+  JavaScript ni bibliotecas externas: la CSP no las admite y así se imprimen igual). Cada barra puede
+  enlazar a sus registros; `role="img"` con los datos en `aria-label` y un `title` por barra.
+- Anexo: `anexo.INDICADORES` (nombre, clase de registro y regla de cada fila del resumen por año) y
+  `registros_del_anio()`, que devuelve los registros de cada indicador; la cifra es su cantidad (JCE y
+  citas suman). `detalle()` alimenta `/informes/acreditacion/detalle?indicador=&anio=` (con
+  `categoria` para el cuerpo académico), con la misma autorización del anexo. Una prueba verifica que
+  cada cifra de cada año coincide con sus registros. Los ceros no enlazan.
+- Anexo: sección «Tendencias» (nueve gráficos del periodo); las cifras destacadas enlazan a su
+  criterio.
+- Memoria: `informes.serie_anual()` y la sección «Evolución» (cinco años calendario que terminan en el
+  periodo elegido; cada barra abre la memoria de su año).

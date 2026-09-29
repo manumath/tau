@@ -108,13 +108,25 @@ def test_memoria(datos):
     assert len(m["productos"]) == 2                 # …pero una sola vez en el total
 
 
+def test_serie_anual_coincide_con_la_memoria_de_cada_anio(datos):
+    serie = informes.serie_anual(2026)
+    assert [x["anio"] for x in serie] == [2022, 2023, 2024, 2025, 2026]
+    for x in serie:
+        m = informes.memoria(x["anio"])
+        assert (x["indexados"], x["arbitrados"], x["internacionales"] + x["otras"], x["proyectos"]) == (
+            m["n_indexados"], m["n_arbitrados"], len(m["actividades"]), len(m["proyectos"]))
+    assert (serie[-1]["indexados"], serie[-1]["arbitrados"]) == (1, 1)
+
+
 def test_memoria_solo_admin_y_descargas(client, datos):
     login(client, "inv@test.cl", PASS_TEMP)
     assert client.get("/informes/memoria").status_code == 403
     assert client.get("/informes/memoria/xlsx").status_code == 403
     client.post("/logout")
     login(client, "admin@test.cl", PASS_ADMIN)
-    assert "Memoria anual 2026" in client.get("/informes/memoria?anio=2026").text
+    r = client.get("/informes/memoria?anio=2026")
+    assert "Memoria anual 2026" in r.text and "Evolución 2022–2026" in r.text and "<svg" in r.text
+    assert 'href="/informes/memoria?anio=2025"' in r.text  # cada barra abre la memoria de su año
 
     r = client.get("/informes/memoria/xlsx?anio=2026")
     assert r.headers["content-disposition"] == 'attachment; filename="memoria-2026.xlsx"'

@@ -19,6 +19,7 @@ from app.investigacion import (actividades, cosecha, importacion, institucionale
                                revistas)
 from app.comun import config, permisos, unidades
 from app.acreditacion import informes
+from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import pagina
 from app.comun.db import auditar
 from app.investigacion.identificadores import IDENTIFICADORES
@@ -49,7 +50,7 @@ ESTILO_IMPRESION = Style("""
   .hoja, .hoja * { color: #000 !important; }
   .hoja a { text-decoration: none; }
   .hoja h2, .hoja h3 { break-after: avoid; }
-  .hoja li, .hoja tr { break-inside: avoid; }
+  .hoja li, .hoja tr, .hoja .grafico { break-inside: avoid; }
 }
 """)
 
@@ -114,9 +115,13 @@ def cita(p, destacar_uid=None):
               *[x for par in zip(ids, [" "] * len(ids)) for x in par])
 
 
-def _cifra(valor, texto):
-    return Div(Div(str(valor), cls="text-2xl font-bold"), Div(texto, cls="apagado text-xs"),
-               cls="border border-zinc-200 rounded p-3 text-center")
+def _cifra(valor, texto, href=None):
+    """Cifra destacada; con `href`, enlaza a los registros que la componen."""
+    contenido = (Div(str(valor), cls="text-2xl font-bold"), Div(texto, cls="apagado text-xs"))
+    if href:
+        return A(*contenido, href=href, cls="block border border-zinc-200 rounded p-3 text-center hover:bg-zinc-50",
+                 style="color: inherit")
+    return Div(*contenido, cls="border border-zinc-200 rounded p-3 text-center")
 
 
 # --- Índice de informes -----------------------------------------------------------------------------
@@ -425,7 +430,24 @@ def seccion_metodo(m):
            cls="list-disc pl-5 space-y-1 text-sm"))
 
 
-def documento_memoria(m):
+def seccion_evolucion(serie):
+    """Los últimos cinco años en gráficos; cada barra abre la memoria de su año."""
+    etiquetas = [x["anio"] for x in serie]
+    enlaces = [f"/informes/memoria?anio={y}" for y in etiquetas]
+
+    def g(titulo, *claves_nombres):
+        return barras(titulo, etiquetas, [(t, [x[k] for x in serie]) for k, t in claves_nombres],
+                      [enlaces] * len(claves_nombres))
+    return Div(H2(f"Evolución {etiquetas[0]}–{etiquetas[-1]}"),
+               P("Años calendario, con las mismas reglas de esta memoria. Cada barra abre la memoria de su año.",
+                 cls="apagado text-sm"),
+               Div(g("Productos que cuentan", ("indexados", "Indexados"), ("arbitrados", "Arbitrados")),
+                   g("Actividades", ("internacionales", "Internacionales"), ("otras", "Locales y nacionales")),
+                   g("Proyectos vigentes", ("proyectos", "Proyectos")),
+                   cls="grid grid-cols-3 gap-3"))
+
+
+def documento_memoria(m, serie=None):
     return hoja(
         P(config.NOMBRE_INSTITUTO, cls="apagado text-sm uppercase tracking-wide"),
         H1(m["titulo"]),
@@ -443,6 +465,7 @@ def documento_memoria(m):
             _cifra(len(m["actividades"]), "actividades"),
             _cifra(m["por_ambito"].get("internacional", 0), "actividades internacionales"),
             _cifra(len(m["proyectos"]), "proyectos vigentes"), cls="grid grid-cols-5 gap-3 mt-6"),
+        seccion_evolucion(serie) if serie else "",
         Div(Div(H3("Productos indexados por índice"),
                 _tabla_conteo("Índice", m["por_indice"]) if m["por_indice"] else P("—", cls="apagado")),
             Div(H3("Actividades por tipo"),
@@ -545,6 +568,7 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
         return Response("No autorizado", status_code=403)
     m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta, modo))
     anios = sorted(set(informes.anios_con_datos()) | {date.today().year}, reverse=True)
+    serie = informes.serie_anual(int(m["hasta"][:4]))
     q = urlencode(m["params"])
     descargas = [Button(UkIcon("refresh-cw", height=14, width=14), "Actualizar citas", type="button",
                         cls=(ButtonT.default, ButtonT.sm), hx_post="/informes/citas/actualizar",
@@ -554,7 +578,7 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
                  descarga("CSV productos", f"/informes/memoria/csv/productos?{q}"),
                  descarga("CSV actividades", f"/informes/memoria/csv/actividades?{q}")]
     return pagina(m["titulo"], ESTILO_IMPRESION, barra(selector_periodo(m, anios), descargas),
-                  documento_memoria(m), usuario=auth, seccion="informes")
+                  documento_memoria(m, serie), usuario=auth, seccion="informes")
 
 
 @rt("/informes/citas/actualizar")

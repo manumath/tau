@@ -344,6 +344,19 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
             "por_ambito": por_ambito, "por_investigador": resumen, "por_categoria": por_categoria}
 
 
+def serie_anual(hasta_anio: int, n: int = 5) -> list[dict]:
+    """La memoria de los `n` años calendario que terminan en `hasta_anio`, resumida: lo que se grafica
+    en «Evolución» (con las mismas reglas, para que cada barra coincida con la memoria de su año)."""
+    res = []
+    for anio in range(hasta_anio - n + 1, hasta_anio + 1):
+        m = memoria(anio)
+        internacionales = m["por_ambito"].get("internacional", 0)
+        res.append({"anio": anio, "indexados": m["n_indexados"], "arbitrados": m["n_arbitrados"],
+                    "internacionales": internacionales, "otras": len(m["actividades"]) - internacionales,
+                    "proyectos": len(m["proyectos"])})
+    return res
+
+
 def anios_con_datos() -> list[int]:
     filas = get_db().q("""SELECT anio FROM producto UNION SELECT CAST(substr(fecha_inicio, 1, 4) AS INTEGER)
                           FROM actividad ORDER BY 1 DESC""")
