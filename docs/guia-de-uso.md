@@ -29,6 +29,30 @@ la asignación docente y la carga horaria.
 - **Tema claro u oscuro:** menú con su nombre → «Tema»: *Claro*, *Oscuro* o *Sistema* (sigue la
   configuración de su computadora o teléfono). La elección se guarda en ese navegador.
 
+## Inicio
+
+Al ingresar, **Para hoy** muestra lo que requiere su atención según su rol, con enlace directo:
+
+- **Lo mío** (todos): pendientes por revisar en sus proyectos, propuestas aceptadas con condiciones,
+  publicaciones sin filiación declarada, la convocatoria abierta y su docencia del semestre.
+- **Dirección de Carrera** (o Coordinación académica): materias sin docente titular en el semestre,
+  docentes con la carga por revisar, vínculos que terminan en los próximos 30 días sin un periodo
+  nuevo registrado y docentes con vínculo vigente sin carga contratada.
+- **Dirección del Instituto:** propuestas por decidir, proyectos institucionales que terminan en los
+  próximos 60 días, participantes con carga que quedaron sin vínculo y publicaciones sin filiación.
+- **Acreditación** (quien ve los informes institucionales): académicos vinculados, jornadas
+  completas equivalentes y proyectos vigentes del año, con acceso a la memoria y al anexo.
+
+Debajo siguen los accesos a sus módulos.
+
+## Mi docencia
+
+**Docencia → Mi docencia** (la sección abre ahí si usted tiene vínculo con la Carrera o materias):
+sus materias por gestión (titular o auxiliar, con inscritos), la docencia prevista frente a la
+asignada, su vínculo y su carga horaria contratada por actividad, su carga en proyectos y su
+historial de vínculo. Es solo lectura: la carga y el vínculo los corrige la Dirección de Carrera; las
+materias, la Dirección de Carrera o la Coordinación académica.
+
 ## Mi perfil
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».

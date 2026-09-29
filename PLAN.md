@@ -1167,3 +1167,17 @@ horas, si no a la nota del periodo) y se quitan `investigador.cargo` y `.unidad`
 `app/comun/adscripcion.py` calcula ambos (solo consulta tablas); los usan el perfil, el directorio
 (y su búsqueda), la página pública, la API, el CV y la afiliación que se muestra de cada persona en
 proyectos y autorías. El perfil completo ya no cuenta cargo ni unidad.
+
+## 28. Usabilidad e informes: evaluación y punto 1 (28-sep-2026)
+
+Evaluación publicada como página (stack adecuado; la brecha está en la experiencia por rol y los
+informes de docencia) con un orden de trabajo de 8 puntos: 1 inicio por rol y «Mi docencia»; 2
+informe de carga docente e indicadores del cuerpo académico; 3 componente de tablas; 4 tablero de
+calidad de datos; 5 ficha de docente y acciones masivas; 6 centro de avisos; 7 series con gráficos y
+trazabilidad en el anexo; 8 SSO UMSA, PDF con membrete, Guía de Antecedentes.
+
+**Punto 1, hecho:** «Para hoy» en el inicio (Lo mío, Dirección de Carrera, Dirección del Instituto,
+Acreditación) y «Mi docencia» (`/docencia/mia`; `/docencia` abre ahí para quien tiene vínculo o
+materias). Funciones en `app/academico/carga.py`: `semestre_de_referencia`, `contratos_por_vencer`,
+`vigentes_sin_carga`, `gestiones_de`, `materias_con_detalle`, `proyectos_con_carga`. Los invitados y
+externos sin materias ya no generan el aviso «Falta registrar la carga contratada».

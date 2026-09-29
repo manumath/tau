@@ -8,7 +8,9 @@
   maestría). No suman los auxiliares ni los cursos de verano e invierno.
 - Jornada completa equivalente (anexo de acreditación) = carga contratada / 160.
 """
-from app.academico import oferta
+from datetime import date, timedelta
+
+from app.academico import gestiones, oferta
 from app.comun import vinculos
 from app.comun.db import get_db
 
@@ -17,6 +19,8 @@ CARGAS = vinculos.CARGAS
 TIEMPO_COMPLETO = CARGAS[-1]
 ACTIVIDADES = vinculos.ACTIVIDADES
 SEMESTRES = ("I", "II")
+# Categorías que no necesariamente tienen carga contratada (p. ej., un invitado que solo investiga).
+SIN_CARGA_OBLIGATORIA = ("invitado", "externo")
 
 
 def vinculo_en(usuario_id: int, fecha: str) -> dict | None:
@@ -35,7 +39,8 @@ def resumen(usuario_id: int, gestion: dict) -> dict:
     if not v:
         avisos.append("Sin vínculo con la Carrera al inicio del semestre.")
     elif not c:
-        avisos.append("Falta registrar la carga contratada en su vínculo con la Carrera.")
+        if v["categoria"] not in SIN_CARGA_OBLIGATORIA or materias:
+            avisos.append("Falta registrar la carga contratada en su vínculo con la Carrera.")
     elif asignada != prevista:
         n = abs(prevista - asignada) // oferta.HORAS_POR_MATERIA
         materias_txt = "1 materia" if n == 1 else f"{n} materias"
@@ -73,3 +78,66 @@ def contratada_en(usuario_id: int, fecha: str) -> int | None:
     """Carga contratada (h/mes) del vínculo con la Carrera que cubre la fecha."""
     c = vinculos.carga_de(vinculo_en(usuario_id, fecha))
     return c["horas"] if c else None
+
+
+# --- Tableros -------------------------------------------------------------------------------------
+
+def semestre_de_referencia(hoy: str | None = None) -> dict | None:
+    """El semestre en curso o, si hoy es temporada (invierno, verano) o receso, el próximo; si no
+    hay próximo, el último."""
+    h = hoy or date.today().isoformat()
+    filas = get_db().q(
+        """SELECT * FROM gestion_academica WHERE tipo IN ('I', 'II') AND fecha_fin >= ?
+           ORDER BY fecha_inicio LIMIT 1""", [h]) or get_db().q(
+        "SELECT * FROM gestion_academica WHERE tipo IN ('I', 'II') ORDER BY fecha_inicio DESC LIMIT 1")
+    return filas[0] if filas else None
+
+
+def contratos_por_vencer(dias: int = 30) -> list[dict]:
+    """Periodos de vínculo vigentes que terminan en los próximos `dias` días."""
+    hoy = vinculos.hoy()
+    return get_db().q(
+        """SELECT v.id, v.usuario_id, v.categoria, v.fecha_fin, u.nombres, u.apellidos FROM vinculo v
+           JOIN usuario u ON u.id = v.usuario_id
+           WHERE v.fecha_fin BETWEEN ? AND ? AND COALESCE(v.fecha_inicio, '0000-01-01') <= ?
+             AND NOT EXISTS (SELECT 1 FROM vinculo n WHERE n.usuario_id = v.usuario_id AND n.fecha_inicio > v.fecha_fin)
+           ORDER BY v.fecha_fin, u.apellidos""",
+        [hoy.isoformat(), (hoy + timedelta(days=dias)).isoformat(), hoy.isoformat()])
+
+
+def vigentes_sin_carga() -> list[dict]:
+    """Docentes (titulares, contratados, interinos) con vínculo vigente sin carga contratada."""
+    h = vinculos.hoy().isoformat()
+    return get_db().q(
+        f"""SELECT v.usuario_id, u.nombres, u.apellidos, v.categoria FROM vinculo v JOIN usuario u ON u.id = v.usuario_id
+            WHERE v.horas_contratadas IS NULL AND v.categoria NOT IN ({",".join("?" * len(SIN_CARGA_OBLIGATORIA))})
+              AND COALESCE(v.fecha_inicio, '0000-01-01') <= ? AND COALESCE(v.fecha_fin, '9999-12-31') >= ?
+            ORDER BY u.apellidos""", [*SIN_CARGA_OBLIGATORIA, h, h])
+
+
+# --- Mi docencia ----------------------------------------------------------------------------------
+
+def gestiones_de(usuario_id: int) -> list[dict]:
+    """Gestiones en que dictó (con cualquier rol), más el semestre de referencia; recientes primero."""
+    ids = {f["gestion_id"] for f in get_db().q(
+        """SELECT DISTINCT o.gestion_id FROM oferta_docente d JOIN oferta o ON o.id = d.oferta_id
+           WHERE d.usuario_id = ?""", [usuario_id])}
+    ref = semestre_de_referencia()
+    if ref:
+        ids.add(ref["id"])
+    return [g for g in gestiones.listar() if g["id"] in ids]
+
+
+def materias_con_detalle(usuario_id: int, gestion_id: int) -> list[dict]:
+    """Paralelos que dicta en la gestión (titular o auxiliar), con inscritos."""
+    return get_db().q(
+        """SELECT a.sigla, a.nombre, o.paralelo, o.inscritos, d.rol FROM oferta_docente d
+           JOIN oferta o ON o.id = d.oferta_id JOIN asignatura a ON a.id = o.asignatura_id
+           WHERE d.usuario_id = ? AND o.gestion_id = ? ORDER BY d.rol = 'auxiliar', a.sigla, o.paralelo""",
+        [usuario_id, gestion_id])
+
+
+def proyectos_con_carga(usuario_id: int) -> list[dict]:
+    """Su carga en proyectos en el periodo de vínculo vigente (la asignan los responsables)."""
+    v = vinculos.vigente(usuario_id)
+    return en_proyectos(v["id"]) if v else []
