@@ -1234,3 +1234,16 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   `carga.candidatos_renovacion` (último periodo con término, terminado en los 150 días previos al
   semestre, sin periodo nuevo) y `carga.renovar` (misma categoría y carga; la carga en proyectos no
   pasa: avisos a responsables). El aviso del inicio sobre vínculos que vencen enlaza aquí.
+
+## 33. Centro de avisos y resumen semanal (punto 6 de la evaluación, 28-sep-2026)
+
+- Migración 0036: tabla `notificacion` (asunto, texto, url interna, leída, resumida) y
+  `usuario.frecuencia_avisos` (`inmediato` | `semanal` | `nunca`; reemplaza `avisos_correo`: desactivado
+  = `nunca`) con `ultimo_resumen`.
+- `app/comun/notificaciones.py`: `avisar(u, asunto, texto, url, cuerpo_correo)` registra el aviso y
+  envía el correo si la preferencia es inmediata; `resumen_semanal()` (en el mantenimiento horario)
+  envía a quien lo prefiere los avisos sin leer ni resumir, a lo más uno cada 7 días. Todos los avisos
+  de `app/investigacion/avisos.py` pasan por ahí (mismos asuntos y enlaces de siempre).
+- Pantallas: campana en la barra (se carga aparte, `/avisos/campana`), `/avisos` (historial y
+  preferencia), `/avisos/{id}` (marca leído y lleva a donde se atiende). «Mi perfil» enlaza a la
+  preferencia.

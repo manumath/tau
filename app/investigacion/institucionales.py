@@ -548,6 +548,8 @@ def mantenimiento(forzar: bool = False):
     recordatorios()
     from app.investigacion import carga_proyectos  # evita el ciclo de importación
     carga_proyectos.revisar()  # vínculos que terminaron o empezaron con la fecha
+    from app.comun import notificaciones
+    notificaciones.resumen_semanal()  # a quien prefiere un resumen semanal por correo
 
 
 # --- Plan de actividades: previstas frente a realizadas ---------------------------------------------------

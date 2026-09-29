@@ -29,6 +29,15 @@ la asignación docente y la carga horaria.
 - **Tema claro u oscuro:** menú con su nombre → «Tema»: *Claro*, *Oscuro* o *Sistema* (sigue la
   configuración de su computadora o teléfono). La elección se guarda en ese navegador.
 
+## Avisos
+
+La **campana** de la barra superior muestra cuántos avisos tiene sin leer y los últimos: propuestas
+por revisar en sus proyectos, decisiones sobre sus propuestas, cambios de carga de sus participantes,
+plazos de continuidad. Al abrir uno, el sistema lo marca como leído y lo lleva a donde se atiende.
+**Avisos** (enlace al pie de la campana) muestra todos y le permite elegir cómo recibirlos por correo:
+**al momento**, en un **resumen semanal** (los que aún no leyó) o **solo en el sistema**. Aunque elija
+no recibir correos, los avisos siempre quedan en la campana.
+
 ## Tablas
 
 En las tablas principales (carga horaria, oferta, usuarios, propuestas, revistas, participantes,

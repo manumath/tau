@@ -111,11 +111,11 @@ def test_aviso_de_propuesta_y_de_revision(proyecto, buzon):
 
 def test_sin_avisos_a_uno_mismo_ni_a_quien_los_desactivo(proyecto, buzon):
     pid, alan, emmy, prod = proyecto["pid"], proyecto["alan"], proyecto["emmy"], proyecto["prod"]
-    get_db().execute("UPDATE usuario SET avisos_correo = 0 WHERE id = ?", [emmy])
+    get_db().execute("UPDATE usuario SET frecuencia_avisos = 'nunca' WHERE id = ?", [emmy])
     proyectos.sincronizar("producto", prod, [pid], {"id": alan})
     assert buzon == []
     # Lo que vincula la responsable queda aprobado directo: no hay propuesta ni aviso.
-    get_db().execute("UPDATE usuario SET avisos_correo = 1 WHERE id = ?", [emmy])
+    get_db().execute("UPDATE usuario SET frecuencia_avisos = 'inmediato' WHERE id = ?", [emmy])
     proyectos.desvincular("producto", prod, pid)
     proyectos.sincronizar("producto", prod, [pid], {"id": emmy})
     assert buzon == []
@@ -167,8 +167,8 @@ def test_interruptor_de_perfil_publico(client, emmy):
     assert "Ver mi perfil público" in r.text and perfiles.obtener(emmy)["perfil_publico"] == 1
     client.post("/perfil/preferencias/perfil_publico", headers=HX, data={})
     assert perfiles.obtener(emmy)["perfil_publico"] == 0
-    client.post("/perfil/preferencias/avisos_correo", headers=HX, data={})
-    assert usuarios.por_id(emmy)["avisos_correo"] == 0
+    client.post("/avisos/preferencia", data={"frecuencia": "nunca"})
+    assert usuarios.por_id(emmy)["frecuencia_avisos"] == "nunca"
 
 
 def test_rutas_publicas_no_abren_lo_privado(client, publica):

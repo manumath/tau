@@ -151,3 +151,15 @@ def test_tabla_ordena_filtra_y_descarga(page):
     filtro = page.locator("input[aria-label='Filtrar la tabla']").first
     filtro.fill("zzz-nadie")
     expect(page.get_by_text(re.compile(r"^0 de \d+ filas?$")).first).to_be_visible()
+
+
+def test_campana_de_avisos(page):
+    """La campana se carga aparte y abre su menú con el enlace a todos los avisos."""
+    entrar(page, "investigadora")
+    campana = page.locator("#campana-avisos button").first
+    expect(campana).to_be_visible()
+    campana.click()
+    expect(page.get_by_role("link", name="Ver todos los avisos y elegir cómo recibirlos")).to_be_visible()
+    page.get_by_role("link", name="Ver todos los avisos y elegir cómo recibirlos").click()
+    page.wait_for_url("**/avisos")
+    expect(page.get_by_text("Cómo recibir los avisos")).to_be_visible()

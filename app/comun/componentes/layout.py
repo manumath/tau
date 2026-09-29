@@ -88,6 +88,8 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
                                extra=contador))
     if permisos.puede(usuario, "ver_usuarios"):
         enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
+    # Campana de avisos: se carga aparte (app/comun/rutas/avisos.py), como los contadores.
+    enlaces.append(Span(id="campana-avisos", hx_get="/avisos/campana", hx_trigger="load", hx_swap="outerHTML"))
     enlaces.append(_menu_usuario(usuario))
     marca = A(DivHStacked(Span("τ", cls="font-serif italic text-3xl leading-none text-primary", aria_hidden="true"),
                           H3(config.NOMBRE_SISTEMA, cls="text-lg tracking-wide")),

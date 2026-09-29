@@ -15,14 +15,14 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
 
-from app.comun import academicos, fotos, usuarios, vinculos
+from app.comun import academicos, fotos, vinculos
 from app.investigacion import lineas, msc, perfiles
 from app.comun.componentes import datos_personales
 from app.comun.componentes import grados as grados_ui
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.investigacion.componentes.lineas import casillas_lineas, insignias_lineas
 from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
-from app.comun.db import auditar, get_db
+from app.comun.db import auditar
 from app.investigacion.identificadores import IDENTIFICADORES, normalizar_todos
 
 rt = APIRouter()
@@ -444,7 +444,7 @@ def delete(auth):
 
 # --- Privacidad y avisos -----------------------------------------------------------
 
-def seccion_preferencias(p, avisos_correo):
+def seccion_preferencias(p):
     def interruptor(nombre, activo, titulo, ayuda):
         return fh.Label(
             Input(type="checkbox", name=nombre, value="1", checked=bool(activo),
@@ -464,23 +464,20 @@ def seccion_preferencias(p, avisos_correo):
               href=f"/publico/investigadores/{p['id']}", target="_blank",
               cls="inline-flex items-center gap-1 text-sm text-primary hover:underline ml-12")
             if p["perfil_publico"] else "",
-            interruptor("avisos_correo", avisos_correo, "Avisos por correo",
-                        "Cuando alguien propone algo a un proyecto que usted dirige, o cuando revisan "
-                        "una propuesta suya."),
+            A(UkIcon("bell", height=14, width=14), "Avisos: elija si los recibe por correo al momento, en un "
+              "resumen semanal o solo en el sistema", href="/avisos",
+              cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
             cls="space-y-4"))
 
 
 @rt("/perfil/preferencias/{nombre}")
-def post(auth, sess, nombre: str, perfil_publico: bool = False, avisos_correo: bool = False):
+def post(auth, sess, nombre: str, perfil_publico: bool = False):
     if nombre == "perfil_publico":
         perfiles.actualizar_campos(auth["id"], perfil_publico=int(perfil_publico))
         auditar(auth["id"], "perfil_publico" if perfil_publico else "perfil_privado", "investigador", auth["id"])
         add_toast(sess, "Su perfil ahora es público." if perfil_publico else "Su perfil ya no es público.",
                   "success")
-    elif nombre == "avisos_correo":
-        get_db().execute("UPDATE usuario SET avisos_correo = ? WHERE id = ?", [int(avisos_correo), auth["id"]])
-    p = perfiles.obtener(auth["id"])
-    return seccion_preferencias(p, usuarios.por_id(auth["id"])["avisos_correo"])
+    return seccion_preferencias(perfiles.obtener(auth["id"]))
 
 
 # --- Página ----------------------------------------------------------------------
@@ -502,7 +499,7 @@ def get(auth):
                 cls="lg:col-span-1 space-y-6"),
             Div(vista_datos(p), seccion_grados(p["id"]), datos_personales.tarjeta(p["id"]),
                 vista_identificadores(p), vista_lineas(p["id"]), seccion_areas(p["id"]), vista_bio(p),
-                seccion_preferencias(p, usuarios.por_id(auth["id"])["avisos_correo"]),
+                seccion_preferencias(p),
                 cls="lg:col-span-2 space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"),
         usuario=auth, seccion="perfil")
