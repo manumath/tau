@@ -25,6 +25,9 @@ uv run python .claude/skills/captura-visual/capturar.py [opciones] RUTA [RUTA ..
 - `--rol ROL:SIGLA` (repetible) asigna roles en la copia, p. ej. `--rol direccion_carrera:CMAT`
   (la cuenta admin no la tiene y es la única que define vínculos y carga).
 - `--salida DIR` (use el scratchpad de la sesión), `--movil` (375 × 812), `--pagina-completa`, `--oscuro` (revisar el modo oscuro).
+- `--pdf`: guarda el PDF como lo imprime Chrome (A4, membrete, pie con «Página X de Y») en vez de
+  PNG; para revisar los informes impresos. Para mirarlo, convierta páginas a PNG
+  (`sips -s format png archivo.pdf --out pagina.png` da la primera en macOS).
 
 Ejemplos:
 

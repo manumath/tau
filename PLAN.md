@@ -1262,3 +1262,22 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   criterio.
 - Memoria: `informes.serie_anual()` y la sección «Evolución» (cinco años calendario que terminan en el
   periodo elegido; cada barra abre la memoria de su año).
+
+## 35. PDF con membrete (punto 8 de la evaluación, primera parte, 28-sep-2026)
+
+- Decisión (28-sep-2026): el PDF se sigue generando con la impresión del navegador (las fórmulas
+  salen con KaTeX; sin dependencias nuevas). Un generador en el servidor (WeasyPrint) se evaluará
+  solo si hacen falta envíos automáticos de PDF.
+- Decisión (28-sep-2026): **todos los informes llevan los logos del IIMAT y de la Carrera**.
+- `hoja()` agrega el membrete (logos a los lados; universidad, facultad, Carrera e Instituto al
+  centro, desde `config`: `UNIVERSIDAD`, `FACULTAD`, `NOMBRE_CARRERA`, `NOMBRE_INSTITUTO`) y, con
+  cajas de margen de `@page`, el pie de cada página: título del informe (del primer H1) y «Página X
+  de Y». Chrome y Edge las dibujan; los demás navegadores las omiten.
+- Logos: los originales que entregó la Dirección están en `static/img/membrete/logo_*.png` (también
+  UMSA y FCPN, por ahora sin uso); el membrete usa copias recortadas de 300 px de alto (`iimat.png`,
+  `cmat.png`, ≈50 KB). Para cambiar un logo, reemplace el original y regenere la copia con el mismo
+  alto.
+- Impresión: tablas anchas sin recorte (8 pt), sin flechas de ordenar, leyendas de gráficos en SVG
+  (Chrome omite los fondos por omisión). `capturar.py --pdf` guarda el PDF como lo imprime Chrome.
+- Pendiente del punto 8: inicio de sesión UMSA (según el proveedor que confirme la DTIC) y Guía de
+  Antecedentes de IAC-CINDA (falta la planilla oficial vigente).

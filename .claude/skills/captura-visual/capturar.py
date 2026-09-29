@@ -121,7 +121,14 @@ def capturar(url: str, rutas: list[str], args, salida: Path) -> int:
                 pagina.get_by_text(texto, exact=False).locator("visible=true").first.click(timeout=10000)
                 pagina.wait_for_timeout(600)
             nombre = f"{i:02d}-" + (re.sub(r"[^a-z0-9]+", "-", ruta.lower()).strip("-") or "inicio") + ".png"
-            pagina.screenshot(path=str(salida / nombre), full_page=args.pagina_completa)
+            if args.pdf:
+                # Como «Guardar como PDF» de Chrome sin encabezados del navegador: usa @page del informe.
+                nombre = nombre[:-4] + ".pdf"
+                pagina.emulate_media(media="print")
+                pagina.pdf(path=str(salida / nombre), prefer_css_page_size=True, print_background=True)
+                pagina.emulate_media(media="screen")
+            else:
+                pagina.screenshot(path=str(salida / nombre), full_page=args.pagina_completa)
             print(salida / nombre)
         navegador.close()
     for e in errores_js:
@@ -143,6 +150,7 @@ def main():
     ap.add_argument("--movil", action="store_true")
     ap.add_argument("--pagina-completa", action="store_true")
     ap.add_argument("--oscuro", action="store_true")
+    ap.add_argument("--pdf", action="store_true", help="guardar el PDF impreso (A4, con @page) en vez de PNG")
     args = ap.parse_args()
 
     carpeta = Path(tempfile.mkdtemp(prefix="tau-captura-"))

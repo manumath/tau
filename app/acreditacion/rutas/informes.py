@@ -18,6 +18,7 @@ from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 from app.investigacion import (actividades, cosecha, importacion, institucionales, perfiles, productos, proyectos,
                                revistas)
 from app.comun import config, permisos, unidades
+from app.comun.componentes import recursos
 from app.acreditacion import informes
 from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import pagina
@@ -41,6 +42,7 @@ ESTILO_IMPRESION = Style("""
 .hoja th.text-right, .hoja td.text-right { text-align: right; }
 .hoja ol.citas { list-style: decimal; padding-left: 1.5rem; }
 .hoja ol.citas li { margin: .35rem 0; }
+.hoja .membrete-logo { height: 4.5rem; width: auto; }
 @media print {
   @page { size: A4; margin: 16mm 15mm; }
   .monster-navbar, nav, .no-imprimir, #fh-toast-container, #modal { display: none !important; }
@@ -50,6 +52,13 @@ ESTILO_IMPRESION = Style("""
   .hoja, .hoja * { color: #000 !important; }
   .hoja a { text-decoration: none; }
   .hoja h2, .hoja h3 { break-after: avoid; }
+  .hoja .membrete-logo { height: 20mm; }
+  /* Tablas anchas: sin recorte del contenedor con desplazamiento; letra y relleno menores. */
+  .hoja .overflow-x-auto { overflow: visible !important; }
+  .hoja table, .hoja table * { font-size: 8pt !important; }
+  .hoja th, .hoja td { padding: .25rem .3rem; }
+  .hoja th { white-space: normal !important; }
+  .hoja .membrete { border-color: #a1a1aa !important; }
   .hoja li, .hoja tr, .hoja .grafico { break-inside: avoid; }
 }
 """)
@@ -69,10 +78,13 @@ def barra(filtros=(), descargas=()):
     return Div(
         fh.Form(*filtros, Button("Aplicar", type="submit", cls=(ButtonT.default, ButtonT.sm)),
                 method="get", cls="flex flex-wrap items-center gap-3") if filtros else Div(),
-        Div(*descargas,
-            Button(UkIcon("printer", height=16, width=16), "Imprimir / Guardar PDF", type="button",
-                   cls=ButtonT.primary, onclick="window.print()"),
-            cls="flex flex-wrap gap-2"),
+        Div(Div(*descargas,
+                Button(UkIcon("printer", height=16, width=16), "Imprimir / Guardar PDF", type="button",
+                       cls=ButtonT.primary, onclick="window.print()"),
+                cls="flex flex-wrap justify-end gap-2"),
+            P("Para el PDF con membrete: destino «Guardar como PDF» y, en «Más opciones», desmarque "
+              "«Encabezados y pies de página» del navegador.", cls="text-xs text-muted-foreground text-right"),
+            cls="space-y-1"),
         cls="no-imprimir flex flex-wrap items-center justify-between gap-4 mb-6")
 
 
@@ -81,10 +93,38 @@ def descarga(texto, href):
              cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1")
 
 
-def hoja(*contenido):
+def _cadena_css(texto: str) -> str:
+    return '"' + texto.replace("\\", "\\\\").replace('"', '\\"').replace("<", "\\3c ").replace("\n", " ") + '"'
+
+
+def membrete():
+    """Logos del IIMAT y de la Carrera con los nombres institucionales (primera página)."""
+    logo = lambda archivo, alt: fh.Img(src=recursos.url(f"img/membrete/{archivo}"), alt=alt,  # noqa: E731
+                                       cls="membrete-logo")
+    return Div(logo("iimat.png", f"Logo del {config.NOMBRE_INSTITUTO}"),
+               Div(Div(config.UNIVERSIDAD, cls="font-semibold uppercase tracking-wide"),
+                   Div(config.FACULTAD),
+                   Div(f"{config.NOMBRE_CARRERA} · {config.NOMBRE_INSTITUTO}", cls="font-medium"),
+                   cls="text-center text-sm leading-snug"),
+               logo("cmat.png", f"Logo de la {config.NOMBRE_CARRERA}"),
+               cls="membrete flex items-center justify-between gap-4 pb-3 mb-6 border-b-2 border-zinc-300")
+
+
+def hoja(*contenido, titulo: str = ""):
+    """Hoja imprimible con membrete. Al imprimir, el pie de cada página lleva el título del informe
+    y «Página X de Y» (cajas de margen de @page: Chrome y Edge; otros navegadores las omiten). Sin
+    `titulo`, usa el del primer H1 del documento."""
+    if not titulo:
+        h1 = next((c for c in contenido if getattr(c, "tag", None) == "h1"), None)
+        titulo = "".join(x for x in h1.children if isinstance(x, str)) if h1 else ""
     pie = P(f"Generado el {datetime.now():%d-%m-%Y %H:%M} · {config.NOMBRE_SISTEMA} · "
             f"{config.NOMBRE_INSTITUTO}", cls="apagado text-xs mt-10 pt-3 border-t border-zinc-200")
-    return Div(*contenido, pie, cls="hoja rounded-lg shadow-lg border border-border p-10 max-w-4xl mx-auto")
+    izquierda = _cadena_css(f"{titulo} · " if titulo else "") + f' {_cadena_css(config.NOMBRE_CARRERA + " · " + config.NOMBRE_INSTITUTO)}'
+    paginas = Style("@media print { @page { @bottom-left { content: " + izquierda + "; font: 8pt sans-serif; "
+                    "color: #52525b; } @bottom-right { content: \"Página \" counter(page) \" de \" counter(pages); "
+                    "font: 8pt sans-serif; color: #52525b; } } }")
+    return Div(paginas, membrete(), *contenido, pie,
+               cls="hoja rounded-lg shadow-lg border border-border p-10 max-w-4xl mx-auto")
 
 
 def cita(p, destacar_uid=None):
@@ -449,7 +489,6 @@ def seccion_evolucion(serie):
 
 def documento_memoria(m, serie=None):
     return hoja(
-        P(config.NOMBRE_INSTITUTO, cls="apagado text-sm uppercase tracking-wide"),
         H1(m["titulo"]),
         P(f"Del {informes._fecha_corta(m['desde'])} al {informes._fecha_corta(m['hasta'])}.", cls="apagado text-sm")
         if "anio" not in m["params"] else "",

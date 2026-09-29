@@ -46,8 +46,10 @@ def barras(titulo: str, etiquetas: list, series: list[tuple], enlaces: list[list
                                font_size=13, font_weight=600, fill="#18181b"))
         piezas.append(svg.Text(str(etiqueta), x=centro, y=alto - 5, text_anchor="middle", font_size=12.5, fill=_TEXTO))
     datos = "; ".join(f"{e}: {_formato(t)}" for e, t in zip(etiquetas, totales))
-    leyenda = Div(*[Span(Span(cls="inline-block h-2.5 w-2.5 rounded-sm mr-1",
-                              style=f"background:{COLORES[j % len(COLORES)]}"), nombre, cls="inline-flex items-center")
+    # Muestras de color en SVG (no como fondo: Chrome omite los fondos al imprimir por omisión).
+    muestra = lambda j: svg.Svg(svg.Rect(width=10, height=10, rx=2, fill=COLORES[j % len(COLORES)]),  # noqa: E731
+                                viewBox="0 0 10 10", width=10, height=10, cls="mr-1 shrink-0", aria_hidden="true")
+    leyenda = Div(*[Span(muestra(j), nombre, cls="inline-flex items-center")
                     for j, (nombre, _) in enumerate(series)],
                   cls="flex flex-wrap gap-x-3 gap-y-0.5 text-xs apagado") if len(series) > 1 else ""
     return Div(Div(titulo, cls="text-sm font-semibold"),

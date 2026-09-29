@@ -179,7 +179,6 @@ def documento(a):
     if not a["exige_verificada"] and rv["declarados"]:
         avisos.append(f"{rv['declarados']} artículo(s) cuentan con clasificación declarada (revista sin verificar).")
     return hoja(
-        P(f"{config.NOMBRE_INSTITUTO} · {config.UNIVERSIDAD}", cls="apagado text-sm uppercase tracking-wide"),
         H1(f"Anexo de I+D+i para la acreditación, {a['desde_anio']}–{a['hasta_anio']}"),
         P("Evidencia de investigación, desarrollo e innovación ordenada según los criterios de IAC-CINDA para programas "
           f"de pregrado (junio 2025). Los datos provienen de {config.NOMBRE_SISTEMA}; el método está al final.",

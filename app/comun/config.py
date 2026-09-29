@@ -10,6 +10,8 @@ SECRET_KEY = os.environ.get("PORTAL_SECRET_KEY")  # None → FastHTML usa/crea .
 HTTPS_ONLY = os.environ.get("PORTAL_HTTPS_ONLY", "0") == "1"
 NOMBRE_INSTITUTO = os.environ.get("PORTAL_INSTITUTO", "Instituto de Investigación Matemática")
 UNIVERSIDAD = os.environ.get("PORTAL_UNIVERSIDAD", "Universidad Mayor de San Andrés")
+FACULTAD = os.environ.get("PORTAL_FACULTAD", "Facultad de Ciencias Puras y Naturales")
+NOMBRE_CARRERA = os.environ.get("PORTAL_CARRERA", "Carrera de Matemática")
 
 # Contexto local: zona horaria de las fechas (plazos, «hoy», horas mostradas) y moneda de los montos.
 ZONA_HORARIA = os.environ.get("PORTAL_ZONA_HORARIA", "America/La_Paz")

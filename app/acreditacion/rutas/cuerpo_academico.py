@@ -10,7 +10,7 @@ from app.academico import carga as carga_mod, gestiones
 from app.acreditacion import cuerpo_academico as ca, informes
 from app.acreditacion.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _selector_anio, barra, descarga,
                                              hoja)
-from app.comun import permisos, unidades, vinculos
+from app.comun import permisos, vinculos
 from app.comun.componentes.layout import pagina
 
 rt = APIRouter()
@@ -46,8 +46,6 @@ def documento_carga(d):
     categorias = [Tr(Td(c), _num(x["personas"]), _num(x["horas"]), _num(x["jce"]), _num(x["docencia"]),
                      *[_h(x[k]) for k in ca.ACTIVIDADES_NO_DOCENCIA]) for c, x in d["por_categoria"].items()]
     return hoja(
-        P(f"{unidades.obtener(unidades.id_de(unidades.CARRERA))['nombre']} · {unidades.obtener(unidades.id_de('UMSA'))['nombre']}",
-          cls="apagado text-sm uppercase tracking-wide"),
         H1(f"Carga docente {gestiones.codigo(g)}"),
         P(f"{gestiones.nombre(g)}, del {g['fecha_inicio']} al {g['fecha_fin']}. Carga en h/mes (unidades de 32); "
           "rige el vínculo vigente al inicio del semestre. JCE = carga contratada / 160.", cls="apagado text-sm"),
@@ -125,8 +123,6 @@ def documento_indicadores(serie):
     ultimo = serie[-1]
     cab = Thead(Tr(Th(""), *[Th(str(a), cls="text-right") for a in anios]))
     return hoja(
-        P(f"{unidades.obtener(unidades.id_de(unidades.CARRERA))['nombre']} · {unidades.obtener(unidades.id_de('UMSA'))['nombre']}",
-          cls="apagado text-sm uppercase tracking-wide"),
         H1(f"Cuerpo académico {anios[0]}–{anios[-1]}"),
         P("Indicadores al 31 de diciembre de cada año (el año en curso, a hoy), con el vínculo con la Carrera vigente "
           "en esa fecha. Pensados para el criterio de cuerpo académico de IAC-CINDA.", cls="apagado text-sm"),

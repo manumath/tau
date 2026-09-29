@@ -526,7 +526,12 @@ Sus colegas ven su perfil y su producción en el directorio interno. Los adjunto
 quienes pueden editar el registro. Fuera del instituto solo se ve lo que usted publique con
 «Perfil público».
 
-**¿Cómo obtengo el CV en PDF?**
+**¿Cómo obtengo el CV (o cualquier informe) en PDF con membrete?**
 Con «Imprimir / Guardar PDF» (o el menú Imprimir del navegador), elija «Guardar como PDF» como
-destino. Al imprimir, el sistema oculta la navegación y los botones y usa texto negro sobre blanco
-en tamaño A4, aunque en pantalla use el tema oscuro.
+destino y, en «Más opciones», desmarque **«Encabezados y pies de página»** (los del navegador: la
+dirección web y la fecha). Todos los informes —CV, informe de proyecto, memoria, anexo de I+D+i,
+carga docente y cuerpo académico— llevan en la primera página el membrete con los logos del IIMAT
+y de la Carrera, y en cada página un pie con el título del informe y «Página X de Y». Al imprimir,
+el sistema oculta la navegación y los botones y usa texto negro sobre blanco en tamaño A4, aunque
+en pantalla use el tema oscuro. El pie numerado se ve en Chrome y Edge; en otros navegadores el
+documento sale igual, sin ese pie.

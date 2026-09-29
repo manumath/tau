@@ -87,7 +87,7 @@
       th.classList.add("cursor-pointer", "select-none", "whitespace-nowrap");
       th.title = "Ordenar por esta columna";
       const flecha = document.createElement("span");
-      flecha.className = "ml-1 text-muted-foreground";
+      flecha.className = "no-imprimir ml-1 text-muted-foreground";
       flecha.setAttribute("aria-hidden", "true");
       flecha.textContent = NEUTRA;
       th.appendChild(flecha);
