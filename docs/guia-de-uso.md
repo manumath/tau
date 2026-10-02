@@ -65,8 +65,8 @@ Debajo siguen los accesos a sus módulos.
 
 **Docencia → Mi docencia** (la sección abre ahí si usted tiene vínculo con la Carrera o materias):
 sus materias por gestión (titular o auxiliar, con inscritos), la docencia prevista frente a la
-asignada, su vínculo y su carga horaria contratada por actividad, su carga en proyectos y su
-historial de vínculo. Es solo lectura: la carga y el vínculo los corrige la Dirección de Carrera; las
+asignada (con una barra de avance), su vínculo y su carga horaria contratada por actividad, su carga en proyectos (con una barra de las horas de
+investigación o extensión ya asignadas en proyectos) y su historial de vínculo. Es solo lectura: la carga y el vínculo los corrige la Dirección de Carrera; las
 materias, la Dirección de Carrera o la Coordinación académica.
 
 ## Mi perfil
@@ -244,8 +244,13 @@ el equipo lo integran sus participantes, del instituto o externos.
   social) y el nombre, y crea un borrador. Complete sus secciones: datos básicos (incluidas las
   **líneas de investigación** vigentes a las que se adscribe el proyecto: al menos una en los de
   investigación; opcionales en los de interacción social) y objetivos específicos, metodología, resultados esperados, actividades programadas
-  (con el mes previsto de cada una) y bibliografía. «Guardar borrador» guarda sin enviar; abajo
-  se indica qué falta. Agregue al equipo desde «Gestionar participantes».
+  (con el mes previsto de cada una) y bibliografía. «Guardar borrador» guarda sin enviar; abajo,
+  una barra muestra cuántos **requisitos para enviar** se cumplen y cuáles faltan. Agregue al equipo
+  desde «Gestionar participantes».
+- **En qué va:** arriba de cada propuesta, un indicador muestra sus etapas: preparación, envío
+  (con el plazo mientras no se envía), decisión (en revisión, aceptada, con condiciones o rechazada)
+  y el proyecto (desde el 1 de octubre del periodo). Cada etapa cumplida lleva su fecha. En
+  «Proyectos → Mis propuestas institucionales» se ve en pequeño junto a cada propuesta.
 - **Después de enviar** no se puede modificar. La administración puede:
   - *aceptarla*: el proyecto rige de octubre a septiembre;
   - *aceptarla con condiciones*: el proyecto queda en espera; corrija la propuesta según las

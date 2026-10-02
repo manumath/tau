@@ -21,7 +21,7 @@ from app.comun import config, permisos, unidades
 from app.comun.componentes import recursos
 from app.acreditacion import informes
 from app.comun.componentes.graficos import barras
-from app.comun.componentes.layout import pagina
+from app.comun.componentes.layout import boton_espera, pagina
 from app.comun.db import auditar
 from app.investigacion.identificadores import IDENTIFICADORES
 
@@ -615,8 +615,8 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
     anios = sorted(set(informes.anios_con_datos()) | {date.today().year}, reverse=True)
     serie = informes.serie_anual(int(m["hasta"][:4]))
     q = urlencode(m["params"])
-    descargas = [Button(UkIcon("refresh-cw", height=14, width=14), "Actualizar citas", type="button",
-                        cls=(ButtonT.default, ButtonT.sm), hx_post="/informes/citas/actualizar",
+    descargas = [boton_espera(UkIcon("refresh-cw", height=14, width=14), "Actualizar citas", type="button",
+                              cls=(ButtonT.default, ButtonT.sm), hx_post="/informes/citas/actualizar",
                         hx_confirm="¿Consultar en OpenAlex las citas de todos los productos con DOI?",
                         title="Consulta OpenAlex (puede tardar unos segundos)"),
                  descarga("XLSX", f"/informes/memoria/xlsx?{q}"),

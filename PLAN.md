@@ -1313,3 +1313,22 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   cohorte de la fila 18 (hoja 4) usaba la fila 17; «Costo total» de la hoja 20 sumaba AQ+AR (columnas
   de difusión) en vez de AT+AU. Se quita el vínculo externo.
 - Pendiente del punto 8: inicio de sesión UMSA (proveedor por confirmar con la DTIC).
+
+## 37. Etapas de propuestas, botones que esperan y barras de avance (1-oct-2026)
+
+- `app/comun/componentes/etapas.py`: indicador de etapas propio (lista ordenada con Tailwind, sin
+  JavaScript, `aria-current="step"`, texto para lectores de pantalla; versión compacta para listas).
+  No se usa `Steps` de MonsterUI porque depende de daisyUI, que TAU no carga.
+- Propuestas: `institucionales.pasos(prop)` arma preparación → envío (o reenvío) → decisión → proyecto,
+  con las fechas del historial; en la ficha y, compacto, en «Mis propuestas institucionales».
+  `requisitos(prop)` da cada requisito para enviar y si se cumple (`faltantes` sale de ahí); el
+  editor muestra «Requisitos para enviar: x de n» con `Progress`.
+- `boton_espera` (layout): se deshabilita y gira durante la petición HTMX. En enviar propuesta,
+  registrar decisión, actualizar citas, buscar en OpenAlex e importar por DOI/arXiv. Reemplaza a
+  `LoaderButton` de MonsterUI, que no aplana clases en tupla.
+- «Mi docencia» (y la ficha del docente): barras de docencia asignada frente a prevista y de horas
+  asignadas en proyectos frente a la investigación o extensión del vínculo.
+- Decisiones del equipo (confirmar): en la lista de la Dirección del Instituto se dejó solo la
+  insignia de estado (la tabla ya tiene la fecha de envío); el indicador compacto va en «Mis
+  propuestas». La preparación del semestre queda para una etapa posterior.
+- `capturar.py --base RUTA` para capturar con una base preparada.

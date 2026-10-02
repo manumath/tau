@@ -348,3 +348,73 @@ def test_clases_de_proyecto_institucional(client, gente):
     otra = inst.obtener(_crear(client, "Álgebra"))
     assert "al menos una línea de investigación" in inst.faltantes(otra)
     assert "Interacción social" in client.get(f"/propuestas/{prop_id}").text
+
+
+# --- Indicador de etapas y requisitos ----------------------------------------------------------------
+
+def _estados(prop_id):
+    return [(p["titulo"], p["estado"]) for p in inst.pasos(inst.obtener(prop_id))]
+
+
+def test_etapas_de_la_propuesta(client, gente, fecha):
+    entrar(client, "emmy")
+    borrador = _crear(client, "Borrador")
+    assert _estados(borrador) == [("Preparación", "actual"), ("Envío", "pendiente"), ("Decisión", "pendiente"),
+                                  ("Proyecto", "pendiente")]
+    assert inst.pasos(inst.obtener(borrador))[1]["detalle"] == "Plazo: hasta el 30 sept 2026"
+    fecha("2026-10-02")
+    assert inst.pasos(inst.obtener(borrador))[1]["detalle"] == "El plazo cerró el 30 sept 2026"
+
+    fecha("2026-09-10")
+    prop = _enviada(client, fecha)
+    assert _estados(prop)[1:3] == [("Envío", "hecho"), ("En revisión", "actual")]
+    entrar(client, "admin")
+    client.post(f"/propuestas/{prop}/decidir", headers=HX, data={"decision": "condicional", "comentario": "Ajuste."})
+    assert _estados(prop)[2] == ("Con condiciones", "alerta")
+    entrar(client, "emmy")
+    client.post(f"/propuestas/{prop}/enviar", headers=HX, data=COMPLETA)
+    assert _estados(prop)[1] == ("Reenvío", "hecho")
+    entrar(client, "admin")
+    client.post(f"/propuestas/{prop}/decidir", headers=HX, data={"decision": "aceptada"})
+    fecha("2026-09-20")
+    assert _estados(prop)[2:] == [("Aceptada", "hecho"), ("Proyecto", "pendiente")]
+    fecha("2026-10-01")
+    assert _estados(prop)[3] == ("En ejecución", "hecho")
+    assert inst.pasos(inst.obtener(prop))[3]["detalle"] == "Desde el 1 oct 2026"
+
+    # En la ficha: el indicador marca la etapa en curso para lectores de pantalla.
+    entrar(client, "emmy")
+    r = client.get(f"/propuestas/{borrador}")
+    assert 'aria-label="Etapas de la propuesta"' in r.text and 'aria-current="step"' in r.text
+    assert "Preparación: en curso" in r.text
+    # En «Mis propuestas» (página de proyectos), versión compacta.
+    assert "Etapas de «Borrador»" in client.get("/proyectos").text
+
+
+def test_etapas_de_rechazo_y_retiro(client, gente, fecha):
+    prop = _enviada(client, fecha)
+    entrar(client, "admin")
+    client.post(f"/propuestas/{prop}/decidir", headers=HX, data={"decision": "rechazada", "comentario": "No."})
+    assert _estados(prop)[2:] == [("Rechazada", "error"), ("Proyecto", "omitido")]
+    entrar(client, "alan")
+    otra = _crear(client, "Otra")
+    client.put(f"/propuestas/{otra}", headers=HX, data={**COMPLETA, "nombre": "Otra"})
+    client.post(f"/propuestas/{otra}/enviar", headers=HX, data={**COMPLETA, "nombre": "Otra"})
+    client.post(f"/propuestas/{otra}/retirar", headers=HX)
+    assert _estados(otra)[2:] == [("Retirada", "omitido"), ("Proyecto", "omitido")]
+
+
+def test_requisitos_para_enviar_y_botones_que_esperan(client, gente):
+    entrar(client, "emmy")
+    prop = _crear(client)
+    reqs = inst.requisitos(inst.obtener(prop))
+    assert [t for t, c in reqs if not c] == inst.faltantes(inst.obtener(prop))
+    assert ("nombre", True) in reqs and ("metodología", False) in reqs
+    client.put(f"/propuestas/{prop}", headers=HX, data=COMPLETA)
+    p = inst.obtener(prop)
+    assert inst.faltantes(p) == [] and all(c for _, c in inst.requisitos(p))
+    r = client.get(f"/propuestas/{prop}")
+    n = len(inst.requisitos(p))
+    assert f"Requisitos para enviar: {n} de {n}" in r.text and f'<progress value="{n}" max="{n}"' in r.text
+    # «Enviar» se deshabilita mientras se procesa (envía correos).
+    assert 'hx-disabled-elt="this"' in r.text

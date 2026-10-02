@@ -46,10 +46,11 @@ def _puerto_libre() -> int:
 def preparar_base(base: str, carpeta: Path) -> Path:
     db = carpeta / "tau.db"
     entorno = {**os.environ, "PORTAL_DB": str(db), "PORTAL_CORREO_MODO": "desactivado"}
-    if base == "dev":
-        origen = RAIZ / "data" / "portal.db"
+    if base != "seed":
+        # «dev»: la base del servidor de desarrollo; otra cosa: la ruta de una base preparada.
+        origen = RAIZ / "data" / "portal.db" if base == "dev" else Path(base)
         if not origen.exists():
-            sys.exit("No existe data/portal.db: use --base seed.")
+            sys.exit(f"No existe {origen}: use --base seed.")
         # Copia consistente aunque el servidor de desarrollo esté en uso.
         subprocess.run(["sqlite3", str(origen), f".backup '{db}'"], check=True)
     else:
@@ -139,7 +140,7 @@ def capturar(url: str, rutas: list[str], args, salida: Path) -> int:
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("rutas", nargs="+")
-    ap.add_argument("--base", choices=("seed", "dev"), default="seed")
+    ap.add_argument("--base", default="seed", help="seed (por omisión), dev o la ruta de una base preparada")
     ap.add_argument("--como", default="admin@instituto.test")
     ap.add_argument("--clave", default=CLAVE_ADMIN)
     ap.add_argument("--clave-prueba", action="store_true")

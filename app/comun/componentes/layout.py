@@ -141,6 +141,19 @@ def cerrar_modal():
     return Div(id=ID_MODAL, hx_swap_oob="true")
 
 
+def boton_espera(*contenido, cls=ButtonT.default, **kwargs):
+    """Botón para operaciones que tardan (consultas a OpenAlex, envíos con correo): mientras dura la
+    petición HTMX queda deshabilitado y muestra un ícono girando (como LoaderButton de MonsterUI,
+    que no admite clases en tupla). Si la petición la hace el formulario, póngale a este
+    hx_disabled_elt="find button[type='submit']"."""
+    kwargs.setdefault("hx_disabled_elt", "this")
+    clases = cls if isinstance(cls, tuple) else (cls,)
+    return Button(Span(*contenido, cls="inline-flex items-center gap-1 group-disabled:opacity-0"),
+                  UkIcon("loader-circle", height=16, width=16,
+                         cls="absolute group-disabled:animate-spin group-enabled:hidden"),
+                  cls=(*clases, "relative group disabled:cursor-not-allowed"), **kwargs)
+
+
 def mensaje_error(*errores):
     if not errores:
         return ""

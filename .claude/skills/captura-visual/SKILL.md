@@ -19,6 +19,8 @@ uv run python .claude/skills/captura-visual/capturar.py [opciones] RUTA [RUTA ..
   `"/docencia/carga|Noether, Emmy"`.
 - `--base seed` (por omisión) crea una base con `scripts/seed.py`; `--base dev` copia
   `data/portal.db` con `.backup` (datos reales del usuario: solo para mirar, no para publicar).
+  `--base RUTA` copia una base preparada (p. ej., un seed temporal al que se le agregó un caso que
+  el seed no trae, como una propuesta en borrador); la original no se toca.
 - `--como EMAIL --clave CLAVE`: por omisión la cuenta admin de ejemplo del README.
 - Cuentas de ejemplo con contraseña temporal (Emmy, Alan, Sofía…): agregue `--clave-prueba` con
   una clave inventada; se fija **solo en la copia**.

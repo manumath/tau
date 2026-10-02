@@ -1,7 +1,7 @@
 """«Mi docencia»: lo que la persona dicta y su carga horaria, en una sola página (solo lo propio)."""
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response, Select, Span, Ul
-from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
+from monsterui.all import H2, H3, Button, ButtonT, Card, Progress, TextPresets, UkIcon
 
 from app.academico import carga, gestiones, oferta
 from app.academico.componentes import pestanas, tiene_docencia
@@ -33,6 +33,11 @@ def _tarjeta_vinculo(v):
         P("La registra la Dirección de Carrera.", cls=(TextPresets.muted_sm, "mt-2")))
 
 
+def _barra(valor, maximo, etiqueta):
+    """Avance de horas (si se pasa del máximo, la barra queda llena y el aviso lo explica)."""
+    return Progress(value=min(valor, maximo), max=maximo, aria_label=etiqueta, title=etiqueta, cls="mt-1")
+
+
 def _tarjeta_materias(uid, g):
     materias = carga.materias_con_detalle(uid, g["id"])
     temporada = g["tipo"] in oferta.TEMPORADA
@@ -51,6 +56,7 @@ def _tarjeta_materias(uid, g):
           cls="text-sm text-amber-700 mt-2") if temporada else "",
         Div(P(f"Docencia prevista: {r['prevista'] if r['prevista'] is not None else '—'} h/mes · asignada: "
               f"{r['asignada']} h/mes (32 por materia como titular).", cls="text-sm"),
+            _barra(r["asignada"], r["prevista"], "Docencia asignada respecto de la prevista") if r["prevista"] else "",
             *[insignia(a, "ambar", icono="circle-alert") for a in r["avisos"]],
             cls="mt-3 space-y-1") if r else "")
 
@@ -60,7 +66,7 @@ def _tarjeta_proyectos(uid, v):
     en = carga.proyectos_con_carga(uid)
     usadas = {a: sum(x["horas"] for x in en if vinculos.ACTIVIDAD_DE_CLASE.get(x["clase"]) == a)
               for a in ("investigacion", "extension")}
-    resumen = [f"{vinculos.ACTIVIDADES[a]}: {usadas[a]} de {c['actividades'][a]} h/mes asignadas en proyectos"
+    resumen = [(a, f"{vinculos.ACTIVIDADES[a]}: {usadas[a]} de {c['actividades'][a]} h/mes asignadas en proyectos")
                for a in ("investigacion", "extension") if c and c["actividades"][a]]
     return Card(
         H3("Carga en proyectos", cls="text-base font-semibold"),
@@ -68,7 +74,8 @@ def _tarjeta_proyectos(uid, v):
                 Span(f" · {'investigación' if x['clase'] == 'investigacion' else 'interacción social'} · {x['horas']} h/mes",
                      cls=TextPresets.muted_sm), cls="py-0.5") for x in en], cls="mt-2")
         if en else P("Ningún proyecto le tiene carga asignada en su vínculo vigente.", cls=(TextPresets.muted_sm, "mt-2")),
-        *[P(t, cls=TextPresets.muted_sm) for t in resumen],
+        *[Div(P(t, cls=TextPresets.muted_sm), _barra(usadas[a], c["actividades"][a], t))
+          for a, t in resumen],
         P("La asigna el responsable de cada proyecto institucional.", cls=(TextPresets.muted_sm, "mt-2")))
 
 

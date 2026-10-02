@@ -29,6 +29,7 @@ def test_mi_docencia(client, hoy):
     r = client.get("/docencia/mia")
     assert "Mi docencia" in r.text and "MAT-111" in r.text and "128" in r.text and "Investigación" in r.text
     assert "Falta asignar 1 materia" in r.text  # docencia prevista 64, asignada 32
+    assert '<progress value="32" max="64"' in r.text  # barra de docencia asignada respecto de la prevista
     assert "Historial de vínculo" in r.text
 
 

@@ -40,6 +40,14 @@ description: Agregar una pantalla, ruta HTMX o acción con permisos en TAU (Fast
 - Campos dinámicos del formulario (p. ej. varias actividades): `async def post(auth, req, …)` y
   `await req.form()`.
 - Errores de validación: vuelva a mostrar el formulario con `mensaje_error(*errores)` y lo escrito.
+- Operaciones que tardan (consultas a OpenAlex o Crossref, envíos con correo): `boton_espera` de
+  `layout.py` (se deshabilita y muestra que trabaja). No use `LoaderButton` de MonsterUI: rompe las
+  clases en tupla. Si la petición la hace el formulario, póngale
+  `hx_disabled_elt="find button[type='submit']"`.
+- Trámites con etapas: `etapas(pasos)` de `app/comun/componentes/etapas.py` (los pasos los calcula
+  la lógica del módulo, como `institucionales.pasos`). Avances (x de n): `Progress` de MonsterUI.
+- Componentes de MonsterUI basados en daisyUI (`Steps`, `Alert`, `Loading`, `Toast`) no tienen
+  estilos en TAU (daisyUI no se carga): no los use.
 - Toda modificación se audita: `auditar(auth["id"], "accion", "entidad", id, "detalle legible")`.
 
 ## Textos

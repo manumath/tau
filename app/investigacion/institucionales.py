@@ -20,7 +20,7 @@ Reglas (ver PLAN.md, sección 11):
 """
 import json
 import time
-from datetime import date
+from datetime import date, datetime, timezone
 
 from app.investigacion import avisos, lineas, perfiles, proyectos
 from app.comun import config, permisos
@@ -189,6 +189,51 @@ def eventos(prop_id: int) -> list[dict]:
         [prop_id])
 
 
+def _corta(d: date) -> str:
+    return f"{d.day} {MESES[d.month - 1]} {d.year}"
+
+
+def _dia(iso_utc: str | None) -> str | None:
+    """'2026-09-12 03:10:00' (UTC, como lo guarda SQLite) → '11 sept 2026' en la hora local."""
+    if not iso_utc:
+        return None
+    return _corta(datetime.fromisoformat(iso_utc).replace(tzinfo=timezone.utc).astimezone().date())
+
+
+def pasos(prop: dict, evs: list[dict] | None = None) -> list[dict]:
+    """Etapas de una propuesta para el indicador (app.comun.componentes.etapas): preparación,
+    envío, decisión y ejecución del proyecto, con la fecha de cada una tomada del historial."""
+    evs = eventos(prop["id"]) if evs is None else evs
+    ultimo = {}
+    for e in evs:
+        ultimo[e["accion"]] = e["fecha"]
+    estado = prop["estado"]
+    enviada = estado != "borrador"
+    cierra = date.fromisoformat(plazo(prop["periodo"])["cierra"])
+    preparacion = {"titulo": "Preparación", "estado": "hecho" if enviada else "actual",
+                   "detalle": f"Creada el {_dia(prop['creada_en'])}" if prop.get("creada_en") else None}
+    envio = {"titulo": "Reenvío" if prop["envios"] > 1 else "Envío", "estado": "hecho" if enviada else "pendiente",
+             "detalle": _dia(ultimo.get("enviada")) if enviada else
+             (f"Plazo: hasta el {_corta(cierra)}" if hoy() <= cierra else f"El plazo cerró el {_corta(cierra)}")}
+    decision = {
+        "enviada": {"titulo": "En revisión", "estado": "actual", "detalle": "Dirección del Instituto"},
+        "aceptada": {"titulo": "Aceptada", "estado": "hecho", "detalle": _dia(prop["decidida_en"])},
+        "condicional": {"titulo": "Con condiciones", "estado": "alerta", "detalle": "Corregir y reenviar"},
+        "rechazada": {"titulo": "Rechazada", "estado": "error", "detalle": _dia(prop["decidida_en"])},
+        "retirada": {"titulo": "Retirada", "estado": "omitido", "detalle": _dia(ultimo.get("retirada"))},
+    }.get(estado, {"titulo": "Decisión", "estado": "pendiente", "detalle": None})
+    desde = date.fromisoformat(inicio(prop["periodo"]))
+    texto_desde = f"Desde el {_corta(desde)}"
+    if estado in ("rechazada", "retirada"):
+        ejecucion = {"titulo": "Proyecto", "estado": "omitido", "detalle": "No se ejecuta"}
+    elif estado == "aceptada":
+        ejecucion = {"titulo": "En ejecución" if hoy() >= desde else "Proyecto",
+                     "estado": "hecho" if hoy() >= desde else "pendiente", "detalle": texto_desde}
+    else:
+        ejecucion = {"titulo": "Proyecto", "estado": "pendiente", "detalle": texto_desde}
+    return [preparacion, envio, decision, ejecucion]
+
+
 def mis_propuestas(uid: int) -> list[dict]:
     """Propuestas que presentó o de proyectos en que es responsable vigente."""
     return get_db().q(
@@ -338,25 +383,27 @@ def guardar(prop: dict, datos: dict, objetivos: list[str], actividades: list[tup
     return []
 
 
+def requisitos(prop: dict) -> list[tuple[str, bool]]:
+    """Requisitos para poder enviarla: [(qué se pide, si se cumple)], en el orden del formulario."""
+    res = [(texto, bool((prop[campo] or "").strip())) for campo, texto in (
+        ("nombre", "nombre"), ("descripcion", "descripción"), ("objetivo_general", "objetivo general"),
+        ("metodologia", "metodología"), ("resultados_esperados", "resultados esperados"),
+        ("bibliografia", "bibliografía"))]
+    if prop.get("clase") != "interaccion_social":
+        res.append(("al menos una línea de investigación", bool(prop["lineas"])))
+    cerradas = lineas.no_vigentes([x["id"] for x in prop["lineas"]], inicio(prop["periodo"])) if prop["lineas"] else []
+    if cerradas:
+        res.append(("quitar las líneas que no rigen en el periodo (" + ", ".join(cerradas) + ")", False))
+    res.append(("al menos un objetivo específico", bool(prop["objetivos"])))
+    res.append(("al menos una actividad prevista", bool(prop["actividades"])))
+    if prop["actividades"]:
+        res.append(("el mes previsto de cada actividad", all(a["mes_previsto"] for a in prop["actividades"])))
+    return res
+
+
 def faltantes(prop: dict) -> list[str]:
     """Qué falta para poder enviarla."""
-    requeridos = [("nombre", "nombre"), ("descripcion", "descripción"), ("objetivo_general", "objetivo general"),
-                  ("metodologia", "metodología"), ("resultados_esperados", "resultados esperados"),
-                  ("bibliografia", "bibliografía")]
-    falta = [texto for campo, texto in requeridos if not (prop[campo] or "").strip()]
-    if not prop["lineas"] and prop.get("clase") != "interaccion_social":
-        falta.append("al menos una línea de investigación")
-    else:
-        cerradas = lineas.no_vigentes([x["id"] for x in prop["lineas"]], inicio(prop["periodo"]))
-        if cerradas:
-            falta.append("quitar las líneas que no rigen en el periodo (" + ", ".join(cerradas) + ")")
-    if not prop["objetivos"]:
-        falta.append("al menos un objetivo específico")
-    if not prop["actividades"]:
-        falta.append("al menos una actividad prevista")
-    elif any(not a["mes_previsto"] for a in prop["actividades"]):
-        falta.append("el mes previsto de cada actividad")
-    return falta
+    return [texto for texto, cumple in requisitos(prop) if not cumple]
 
 
 def _evento(prop_id, accion, uid, comentario=None):

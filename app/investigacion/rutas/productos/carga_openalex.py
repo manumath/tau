@@ -10,7 +10,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, CheckboxX, FormLabel, TextPresets, UkIcon
 
 from app.investigacion import cosecha, importacion, perfiles
-from app.comun.componentes.layout import mensaje_error, pagina
+from app.comun.componentes.layout import boton_espera, mensaje_error, pagina
 from app.comun.componentes.registros import insignia
 from app.investigacion.rutas.productos.lista import EVENTO
 
@@ -100,12 +100,11 @@ def get(auth):
             Div(*[Div(FormLabel(t, fr=n), Select(*[Option(str(a), value=str(a), selected=a == v) for a in anios],
                                               id=n, name=n, cls="uk-select w-28"), cls="space-y-1")
                   for t, n, v in (("Desde", "desde", desde), ("Hasta", "hasta", hasta))],
-                Button(UkIcon("search", height=14, width=14), "Buscar en OpenAlex", type="submit", cls=ButtonT.primary,
-                       disabled=not (p and p["orcid"])),
-                Span(UkIcon("loader-circle", height=16, width=16, cls="animate-spin"), id="buscando-oa",
-                     cls="htmx-indicator"),
+                boton_espera(UkIcon("search", height=14, width=14), "Buscar en OpenAlex", type="submit",
+                             cls=ButtonT.primary, disabled=not (p and p["orcid"])),
                 cls="flex flex-wrap items-end gap-3"),
-            hx_post="/productos/openalex/buscar", hx_target=f"#{ID_COSECHA}", hx_indicator="#buscando-oa",
+            hx_post="/productos/openalex/buscar", hx_target=f"#{ID_COSECHA}",
+            hx_disabled_elt="find button[type='submit']",
             cls="space-y-3")),
         Div(id=ID_COSECHA, cls="mt-6"),
         usuario=auth, seccion="productos")

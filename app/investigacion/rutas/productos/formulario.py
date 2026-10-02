@@ -13,7 +13,7 @@ from app.investigacion import actividades, importacion, productos, proyectos, re
 from app.comun import personas
 from app.investigacion import filiacion as filiacion_mod
 from app.investigacion.componentes import personas as selector_personas
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, boton_espera, mensaje_error, modal
 from app.comun.componentes.registros import insignia
 from app.investigacion.componentes.registros import casillas_proyectos
 from app.comun.db import auditar
@@ -161,8 +161,8 @@ def caja_importar(valor="", error=None, contenido=None):
                   cls="uk-input", aria_label="DOI o identificador arXiv",
                   onkeydown="if(event.key==='Enter'){event.preventDefault();"
                             "document.getElementById('boton-importar').click()}"),
-            Button("Importar", type="button", id="boton-importar",
-                   cls=(ButtonT.primary, "shrink-0"), hx_post="/productos/importar",
+            boton_espera("Importar", type="button", id="boton-importar",
+                         cls=(ButtonT.primary, "shrink-0"), hx_post="/productos/importar",
                    hx_include="#identificador, input[name=proyecto]:checked", hx_target=f"#{ID_MODAL}",
                    hx_indicator="#importando", hx_disabled_elt="this"),
             cls="flex gap-2"),

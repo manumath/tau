@@ -13,13 +13,14 @@ import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Div, H3, Input, Li, Option, P, Redirect, Response, Select, Span,
                              Strong, Textarea, Ul)
 from fasthtml.toaster import add_toast
-from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, TextPresets, UkIcon
+from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, Progress, TextPresets, UkIcon
 
 from app.comun import permisos
 from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
 from app.investigacion.componentes.lineas import casillas_lineas
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.etapas import etapas
+from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, boton_espera, mensaje_error, modal, pagina
 from app.investigacion.componentes.perfil import texto_con_parrafos
 from app.comun.componentes.registros import dato, insignia
 from app.comun.db import auditar
@@ -73,9 +74,9 @@ def lista_propuestas(props, con_proyecto=False):
             Span(f" · {proyectos.CLASES[p['clase']].lower() + ' · ' if p.get('clase') else ''}"
                  f"{inst.MODALIDADES[p['modalidad']].lower()} · {inst.periodo_texto(p['periodo'])}",
                  cls=TextPresets.muted_sm)),
-        Div(insignia_estado(p["estado"]),
-            Span(f" {p['comentario']}", cls="text-sm") if p["estado"] in ("condicional", "rechazada")
-            and p["comentario"] else "", cls="mt-1"),
+        Div(insignia_estado(p["estado"]), etapas(inst.pasos(p), compacto=True, etiqueta=f"Etapas de «{p['nombre']}»"),
+            cls="mt-1 flex flex-wrap items-center gap-3"),
+        P(p["comentario"], cls="text-sm mt-1") if p["estado"] in ("condicional", "rechazada") and p["comentario"] else "",
         cls="py-2") for p in props], cls="divide-y divide-border")
 
 
@@ -201,8 +202,20 @@ def equipo(prop, auth):
         P("Responsables: titulares o contratados; co-responsables: también interinos.", cls=TextPresets.muted_sm))
 
 
+def avance(prop):
+    """Barra de requisitos para enviar: cuántos se cumplen y cuáles faltan."""
+    reqs = inst.requisitos(prop)
+    hechos = sum(c for _, c in reqs)
+    faltan = [t for t, c in reqs if not c]
+    return Div(Div(Span(f"Requisitos para enviar: {hechos} de {len(reqs)}", cls="text-sm font-medium"),
+                   Span("Lista para enviar." if not faltan else "", cls="text-sm text-green-700"),
+                   cls="flex flex-wrap items-baseline justify-between gap-2"),
+               Progress(value=hechos, max=len(reqs), cls="mt-1 mb-1", aria_label="Requisitos cumplidos"),
+               P("Falta: " + ", ".join(faltan) + ".", cls=TextPresets.muted_sm) if faltan else "",
+               cls="min-w-0 flex-1")
+
+
 def editor(prop, auth, errores=()):
-    faltan = inst.faltantes(prop)
     periodo = prop["periodo"]
     plazo = inst.plazo(periodo)
     if prop["estado"] == "condicional":
@@ -256,14 +269,13 @@ def editor(prop, auth, errores=()):
         _seccion("Bibliografía", _area("Bibliografía", "bibliografia", prop["bibliografia"], 6,
                                        "Una referencia por línea.", oculta=True), numero=5),
         _seccion("Equipo", equipo(prop, auth)),
-        Div(Div(estado_envio,
-                P("Falta: " + ", ".join(faltan) + "." if faltan else "Lista para enviar.",
-                  cls=TextPresets.muted_sm if faltan else "text-sm text-green-700")),
+        Div(Div(estado_envio, avance(prop), cls="min-w-0 flex-1 space-y-1"),
             Div(Button("Guardar borrador" if prop["estado"] == "borrador" else "Guardar", type="submit",
                        cls=ButtonT.default),
-                Button(UkIcon("send", height=14, width=14),
-                       "Reenviar propuesta" if prop["estado"] == "condicional" else "Enviar propuesta",
-                       type="button", cls=ButtonT.primary, hx_post=f"/propuestas/{prop['id']}/enviar",
+                # Envía correos: mientras se procesa, el botón queda deshabilitado y muestra que trabaja.
+                boton_espera(UkIcon("send", height=14, width=14),
+                             "Reenviar propuesta" if prop["estado"] == "condicional" else "Enviar propuesta",
+                             type="button", cls=ButtonT.primary, hx_post=f"/propuestas/{prop['id']}/enviar",
                        hx_include=f"#{ID_EDITOR}", hx_target=f"#{ID_EDITOR}", hx_swap="outerHTML",
                        hx_confirm="Una vez enviada, no podrá modificarla salvo que la administración la acepte "
                                   "con condiciones. ¿Enviar?"),
@@ -325,8 +337,9 @@ def panel_decision(prop, errores=(), decision="", comentario=""):
                  Textarea(comentario, id="comentario", name="comentario", rows=4, cls="uk-textarea"),
                  P("Obligatorio al aceptar con condiciones o al rechazar. Quien propuso lo recibe por correo.",
                    cls=TextPresets.muted_sm), cls="space-y-1"),
-             Button("Registrar decisión", type="submit", cls=ButtonT.primary),
+             boton_espera("Registrar decisión", type="submit", cls=ButtonT.primary),
              hx_post=f"/propuestas/{prop['id']}/decidir", hx_target="#panel-decision", hx_swap="outerHTML",
+             hx_disabled_elt="find button[type='submit']",
              cls="space-y-3"),
         id="panel-decision", cls="border-primary/40")
 
@@ -377,7 +390,8 @@ def get(auth, prop_id: int):
         P(f"Propuesta de {prop['proponente']}",
           " · ", A("Ver proyecto", href=f"/proyectos/{prop['proyecto_id']}", cls="text-primary hover:underline")
           if proyectos.puede_ver(prop["proyecto_id"], auth) else "",
-          cls=(TextPresets.muted_sm, "mb-6")),
+          cls=(TextPresets.muted_sm, "mb-4")),
+        Card(etapas(inst.pasos(prop), etiqueta="Etapas de la propuesta"), cls="mb-6"),
         Div(UkIcon("circle-alert", height=16, width=16, cls="shrink-0"),
             Div(Strong("Aceptada con condiciones: " if prop["estado"] == "condicional" else "Motivo del rechazo: "),
                 Span(prop["comentario"] or "")),
