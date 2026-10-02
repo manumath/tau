@@ -5,6 +5,7 @@ arbitrado y ya fue aceptado o publicado (ver `cuenta_para_informe`).
 """
 import re
 from datetime import date
+from difflib import SequenceMatcher
 
 from app.investigacion import adjuntos, msc, revistas
 from app.comun import personas
@@ -17,6 +18,9 @@ ESTADOS_INFORME = ("aceptado", "publicado")
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
          "octubre", "noviembre", "diciembre"]
 TIPO_PRESENTACION = "Presentación"
+TIPO_PREPRINT = "Preprint"
+# No son versión publicada de un preprint (PLAN.md §46).
+NO_SON_VERSION = (TIPO_PREPRINT, TIPO_PRESENTACION, "Tesis dirigida", "Patente")
 
 
 def tipos() -> list[dict]:
@@ -68,7 +72,24 @@ def obtener(pid: int) -> dict | None:
         """SELECT i.* FROM producto_indice pi JOIN indice i ON i.id = pi.indice_id
            WHERE pi.producto_id = ? ORDER BY i.orden""", [pid])
     p["msc"] = msc.de_producto(pid)
+    # Preprint y versión publicada (PLAN.md §46): el preprint apunta a su versión publicada.
+    p["publicado_como"] = _resumen(p["publicado_como_id"])
+    filas = get_db().q("SELECT id FROM producto WHERE publicado_como_id = ?", [pid])
+    p["preprint"] = _resumen(filas[0]["id"]) if filas else None
     return p
+
+
+def _resumen(pid) -> dict | None:
+    """Lo necesario para enlazar a otro producto: id, título, año, DOI y arXiv."""
+    if not pid:
+        return None
+    filas = get_db().q("SELECT id, titulo, anio, doi, arxiv_id FROM producto WHERE id = ?", [pid])
+    return filas[0] if filas else None
+
+
+def arxiv_de(p: dict) -> str | None:
+    """El arXiv del producto o, en una versión publicada, el de su preprint enlazado."""
+    return p.get("arxiv_id") or (p.get("preprint") or {}).get("arxiv_id")
 
 
 def autores(pid: int) -> list[dict]:
@@ -211,6 +232,11 @@ def guardar(d: dict, autores_refs: list[str], usuario_id: int, pid: int | None =
             db.t.producto_indice.insert(producto_id=pid, indice_id=i)
         if codigos_msc is not None:
             msc.guardar_de_producto(pid, codigos_msc)
+        # Si cambió el tipo, el enlace preprint–versión publicada deja de tener sentido (PLAN.md §46).
+        if (tipo(d["tipo_id"]) or {}).get("nombre") == TIPO_PREPRINT:
+            db.execute("UPDATE producto SET publicado_como_id = NULL WHERE publicado_como_id = ?", [pid])
+        else:
+            db.execute("UPDATE producto SET publicado_como_id = NULL WHERE id = ?", [pid])
     return pid
 
 
@@ -230,6 +256,77 @@ def eliminar(pid: int):
     with transaccion():
         db.execute("DELETE FROM adjunto WHERE entidad = 'producto' AND entidad_id = ?", [pid])
         db.execute("DELETE FROM producto WHERE id = ?", [pid])
+
+
+# --- Preprint y versión publicada ------------------------------------------------------------
+
+def es_preprint(p: dict) -> bool:
+    return p["tipo"] == TIPO_PREPRINT
+
+
+def enlazar_version(preprint_id: int, pid: int) -> str | None:
+    """Enlaza el preprint con su versión publicada. → mensaje de error o None."""
+    pre, pub = obtener(preprint_id), obtener(pid)
+    if not pre or not pub:
+        return "El producto no existe."
+    if not es_preprint(pre):
+        return "Solo un preprint se enlaza con su versión publicada."
+    if pub["tipo"] in NO_SON_VERSION or pub["id"] == pre["id"]:
+        return f"Un producto de tipo «{pub['tipo']}» no puede ser la versión publicada de un preprint."
+    if pub["preprint"] and pub["preprint"]["id"] != pre["id"]:
+        return f"«{pub['titulo']}» ya está enlazado con otro preprint."
+    get_db().execute("UPDATE producto SET publicado_como_id = ? WHERE id = ?", [pid, preprint_id])
+    return None
+
+
+def desenlazar_version(preprint_id: int):
+    get_db().execute("UPDATE producto SET publicado_como_id = NULL WHERE id = ?", [preprint_id])
+
+
+def sin_preprints_publicados(lista: list[dict]) -> list[dict]:
+    """Quita los preprints cuya versión publicada está en la misma lista (se lista solo esa)."""
+    ids = {p["id"] for p in lista}
+    return [p for p in lista if not (p.get("publicado_como_id") and p["publicado_como_id"] in ids)]
+
+
+def _normalizar_titulo(t: str) -> str:
+    return re.sub(r"[^a-z0-9 ]", "", sin_tildes(t or "").lower())
+
+
+def parecido(a: str, b: str) -> float:
+    return SequenceMatcher(None, _normalizar_titulo(a), _normalizar_titulo(b)).ratio()
+
+
+def candidatos_version(pre: dict, uid: int, limite: int = 30) -> list[dict]:
+    """Productos de la persona que pueden ser la versión publicada del preprint (no son preprints,
+    presentaciones, tesis ni patentes) y no tienen ya otro preprint enlazado; los de título más parecido
+    primero."""
+    enlazadas = {f["publicado_como_id"] for f in get_db().q(
+        "SELECT publicado_como_id FROM producto WHERE publicado_como_id IS NOT NULL AND id != ?", [pre["id"]])}
+    candidatos = [p for p in de_investigador(uid) if p["tipo"] not in NO_SON_VERSION and p["id"] not in enlazadas]
+    candidatos.sort(key=lambda p: (-parecido(p["titulo"], pre["titulo"]), -p["anio"]))
+    return candidatos[:limite]
+
+
+def preprints_sin_enlazar(umbral: float = 0.85) -> list[tuple[dict, dict]]:
+    """(preprint, posible versión publicada) que comparten un autor del instituto y tienen títulos muy
+    parecidos, sin enlazar: para Calidad de datos."""
+    pares = get_db().q(
+        """SELECT DISTINCT pre.id AS pre, pub.id AS pub, pre.titulo AS t1, pub.titulo AS t2
+           FROM producto pre JOIN tipo_producto tp ON tp.id = pre.tipo_id AND tp.nombre = ?
+           JOIN producto_autor a1 ON a1.producto_id = pre.id AND a1.investigador_id IS NOT NULL
+           JOIN producto_autor a2 ON a2.investigador_id = a1.investigador_id AND a2.producto_id != pre.id
+           JOIN producto pub ON pub.id = a2.producto_id
+           JOIN tipo_producto tq ON tq.id = pub.tipo_id AND tq.nombre NOT IN (?, ?, ?, ?)
+           WHERE pre.publicado_como_id IS NULL AND pub.anio >= pre.anio - 1
+             AND NOT EXISTS (SELECT 1 FROM producto x WHERE x.publicado_como_id = pub.id)""",
+        [TIPO_PREPRINT, *NO_SON_VERSION])
+    res, vistos = [], set()
+    for f in sorted(pares, key=lambda f: -parecido(f["t1"], f["t2"])):
+        if f["pre"] not in vistos and parecido(f["t1"], f["t2"]) >= umbral:
+            vistos.add(f["pre"])
+            res.append((_resumen(f["pre"]), _resumen(f["pub"])))
+    return res
 
 
 # --- Permisos --------------------------------------------------------------------------

@@ -1,32 +1,49 @@
 """Importación de un producto por DOI o arXiv y avisos de duplicado: si el producto ya está
-registrado, se ofrece sumarse como autor en vez de registrarlo dos veces."""
+registrado, se ofrece sumarse como autor en vez de registrarlo dos veces. Si lo registrado es un
+preprint y se importa su versión publicada, esta queda como registro aparte enlazado (PLAN.md §46)."""
+import json
+
 from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, P, Response, Span
 from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, UkIcon
 
-from app.investigacion import importacion, msc, productos
+from app.investigacion import importacion, msc, productos, proyectos
 from app.comun.componentes.layout import ID_MODAL
 from app.comun.db import auditar
-from app.investigacion.rutas.productos.formulario import autores_de_refs, caja_importar, modal_form
+from app.investigacion.rutas.productos.formulario import autores_de_refs, caja_importar, modal_form, preprint_editable
 from app.investigacion.rutas.productos.lista import EVENTO
 
 rt = APIRouter()
 
 
 @rt("/productos/importar")
-def post(auth, identificador: str = "", arxiv_asociado: str = "", proyecto: list[int] = None):
+def post(auth, identificador: str = "", arxiv_asociado: str = "", preprint: int = None, proyecto: list[int] = None):
     """Consulta Crossref o arXiv y devuelve el formulario completo, prellenado.
-    Si hay un error o el producto ya existe, solo se actualiza el recuadro de importación."""
+    Si hay un error o el producto ya existe, solo se actualiza el recuadro de importación.
+
+    Versión publicada de un preprint ya registrado (`preprint`, o el arXiv de `arxiv_asociado` si es
+    un preprint registrado): el artículo será un registro aparte, enlazado al preprint, que conserva
+    su arXiv; se preseleccionan los proyectos del preprint."""
     def en_la_caja(*args, **kw):
-        return caja_importar(*args, **kw), HtmxResponseHeaders(retarget="#caja-importar", reswap="outerHTML")
+        return (caja_importar(*args, preprint=preprint, **kw),
+                HtmxResponseHeaders(retarget="#caja-importar", reswap="outerHTML"))
 
     try:
         info = importacion.importar(identificador, arxiv_asociado or None)
     except importacion.ErrorImportacion as e:
         return en_la_caja(identificador, str(e))
     d = info["datos"]
+    if not preprint and d["arxiv_id"] and d["doi"] and (registrado := productos.existente(None, d["arxiv_id"])):
+        preprint = registrado["id"]
+    pre = preprint_editable(preprint, auth["id"])
+    if pre and d["arxiv_id"] == pre["arxiv_id"]:
+        d["arxiv_id"] = None  # el arXiv queda en el preprint
     if (otro := productos.existente(d["doi"], d["arxiv_id"])):
-        return en_la_caja(identificador, contenido=aviso_duplicado(otro, auth["id"]))
+        return en_la_caja(identificador, contenido=aviso_duplicado(otro, auth["id"], info.get("doi_publicado")))
+    if pre:
+        d["_preprint"] = pre
+        proyecto = proyecto or [v["proyecto_id"] for v in proyectos.vinculos_de("producto", pre["id"])
+                                if v["estado"] != "rechazado"]
     refs, info["resumen"] = importacion.resolver_autores(info["autores"])
     if f"i:{auth['id']}" not in refs:
         info["avisos"].append("Usted no aparece entre los autores reconocidos. Si es coautor(a), "
@@ -57,8 +74,16 @@ def post(auth, doi: str = "", arxiv_id: str = "", pid: str = ""):
     return aviso_duplicado(otro, auth["id"]) if otro else ""
 
 
-def aviso_duplicado(otro, uid):
+def aviso_duplicado(otro, uid, doi_publicado=None):
+    """Aviso de que el producto ya existe. Si es un preprint sin versión publicada enlazada y arXiv
+    informa su DOI, ofrece importar esa versión (quedará enlazada)."""
     ya_es_autor = productos.es_autor(otro["id"], uid)
+    version = Button(UkIcon("download", height=14, width=14), f"Importar su versión publicada ({doi_publicado})",
+                     type="button", cls=(ButtonT.primary, ButtonT.sm), hx_post="/productos/importar",
+                     hx_vals=json.dumps({"identificador": doi_publicado, "preprint": otro["id"]}),
+                     hx_target=f"#{ID_MODAL}") \
+        if doi_publicado and productos.es_preprint(otro) and not otro["publicado_como"] \
+        and productos.puede_editar(otro, uid) else ""
     return Div(
         Div(UkIcon("copy", height=16, width=16, cls="shrink-0"),
             Div(P("Este producto ya está registrado:", cls="font-medium"),
@@ -69,7 +94,7 @@ def aviso_duplicado(otro, uid):
             Span("Usted ya figura como autor.", cls="text-sm") if ya_es_autor else
             Button("Sumarme como autor", type="button", cls=(ButtonT.primary, ButtonT.sm),
                    hx_post=f"/productos/{otro['id']}/sumarme", hx_target=f"#{ID_MODAL}"),
-            cls="flex items-center gap-4 mt-2"),
+            version, cls="flex flex-wrap items-center gap-4 mt-2"),
         cls="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/40 "
             "dark:border-amber-800 p-3")
 

@@ -79,6 +79,7 @@ def cv(uid: int, desde: int, hasta: int, solo_informe: bool = False, solo_filiac
     perfil = perfiles.obtener(uid)
     prods = [p for p in productos.de_investigador(uid) if desde <= p["anio"] <= hasta
              and productos.es_autor(p["id"], uid)]  # en el CV, solo aquello de lo que es autor
+    prods = productos.sin_preprints_publicados(prods)  # el preprint, solo si su versión publicada no está
     if solo_informe:
         prods = [p for p in prods if productos.cuenta_para_informe(p)]
     if solo_filiacion:

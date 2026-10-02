@@ -39,7 +39,7 @@ def productos_publicos(uid: int) -> list[dict]:
         f"""SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
             WHERE pa.investigador_id = ? AND {FILTRO_PUBLICO}
             ORDER BY p.anio DESC, p.id DESC""", [uid])
-    return [productos.obtener(f["id"]) for f in filas]
+    return productos.sin_preprints_publicados([productos.obtener(f["id"]) for f in filas])
 
 
 def ids_publicos() -> set[int]:
@@ -76,14 +76,16 @@ def _cita_publica(p, publicos):
                        if a["interno"] and a["id"] in publicos else nombre)
     medio = ", ".join(str(x) for x in (p["medio"], p["volumen"] and f"vol. {p['volumen']}",
                                         p["paginas"] and f"pp. {p['paginas']}") if x)
-    enlace = f"https://doi.org/{p['doi']}" if p["doi"] else \
-        f"https://arxiv.org/abs/{p['arxiv_id']}" if p["arxiv_id"] else p["url"]
+    arxiv = productos.arxiv_de(p)
+    enlace = f"https://doi.org/{p['doi']}" if p["doi"] else f"https://arxiv.org/abs/{arxiv}" if arxiv else p["url"]
     return Li(Div(Span(str(p["anio"]), cls="font-mono text-sm text-muted-foreground w-12 shrink-0"),
                   Div(A(p["titulo"], href=enlace, target="_blank", rel="noopener", cls="font-medium hover:underline")
                       if enlace else Span(p["titulo"], cls="font-medium"),
                       P(*autores, cls="text-sm"),
                       P(medio + (" · aceptado" if p["estado_publicacion"] == "aceptado" else ""),
                         cls=TextPresets.muted_sm) if medio else "",
+                      P(A(f"arXiv:{arxiv}", href=f"https://arxiv.org/abs/{arxiv}", target="_blank", rel="noopener",
+                          cls="text-primary hover:underline"), cls="text-sm") if arxiv and p["doi"] else "",
                       P("MSC2020: " + ", ".join(m["codigo"] for m in p["msc"]), cls=(TextPresets.muted_sm, "nomath"),
                         title=" · ".join(m["texto_plano"] for m in p["msc"])) if p["msc"] else "",
                       cls="min-w-0"),
@@ -182,7 +184,7 @@ def _producto_json(p, publicos):
     return {"id": p["id"], "titulo": p["titulo"], "anio": p["anio"], "tipo": p["tipo"],
             "estado": p["estado_publicacion"], "revision": p["revision"],
             "indices": [i["nombre"] for i in p["indices"]], "medio": p["medio"], "volumen": p["volumen"],
-            "numero": p["numero"], "paginas": p["paginas"], "doi": p["doi"], "arxiv": p["arxiv_id"],
+            "numero": p["numero"], "paginas": p["paginas"], "doi": p["doi"], "arxiv": productos.arxiv_de(p),
             "msc": [{"codigo": m["codigo"], "texto": m["texto_plano"], "principal": bool(m["principal"])}
                     for m in p["msc"]],
             "autores": [{"nombre": f"{a['nombres']} {a['apellidos']}",
@@ -217,4 +219,5 @@ def get(anio: str = ""):
         f"""SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
             WHERE pa.investigador_id IN ({marcas}) AND {FILTRO_PUBLICO}
             {filtro} ORDER BY p.anio DESC, p.id DESC""", [*publicos, *params])
-    return _json([_producto_json(productos.obtener(f["id"]), publicos) for f in filas])
+    lista = productos.sin_preprints_publicados([productos.obtener(f["id"]) for f in filas])
+    return _json([_producto_json(p, publicos) for p in lista])

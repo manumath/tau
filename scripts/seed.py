@@ -425,6 +425,24 @@ def _clasificar_productos() -> int:
     return n
 
 
+def _cargar_preprint() -> bool:
+    """Un preprint de Emmy enlazado a su versión publicada (PLAN.md §46), si aún no lo hay."""
+    articulo = get_db().q("SELECT id FROM producto WHERE titulo = ?",
+                          ["Anillos con condición de cadena ascendente y sus ideales primarios"])
+    emmy = usuarios.por_email("emmy.noether@instituto.test")
+    if not articulo or not emmy or get_db().q("SELECT 1 FROM producto WHERE publicado_como_id IS NOT NULL"):
+        return False
+    autores = [f"i:{emmy['id']}"]
+    d, errores = productos.preparar(dict(tipo_id=str(_id_tipo("tipo_producto", "Preprint")), anio="2025", mes="9",
+                                         titulo="Anillos noetherianos: ideales primarios y cadenas ascendentes",
+                                         estado_publicacion="publicado", revision="sin_arbitraje",
+                                         medio="arXiv [math.AC]", arxiv_id="2509.04321", msc=["13E05"]), autores, [])
+    assert not errores, errores
+    pre = productos.guardar(d, autores, emmy["id"], filiaciones=[1])
+    assert productos.enlazar_version(pre, articulo[0]["id"]) is None
+    return True
+
+
 def _cargar_perfil(uid: int, datos: dict | None):
     if not datos:
         return
@@ -480,6 +498,7 @@ def main():
     con_docencia = _cargar_docencia()
     _cargar_carga_en_proyectos()
     _clasificar_productos()
+    _cargar_preprint()
     # Internacionalización de ejemplo (idempotente): países normalizados y ámbito de los proyectos.
     personas.completar_paises()
     db = get_db()

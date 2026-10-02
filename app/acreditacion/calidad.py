@@ -11,7 +11,7 @@ from app.academico import carga
 from app.acreditacion import anexo, informes
 from app.comun import academicos, personas, vinculos
 from app.comun.db import get_db
-from app.investigacion import perfiles
+from app.investigacion import perfiles, productos
 
 QUIEN = {"carrera": "Dirección de Carrera", "instituto": "Dirección del Instituto",
          "administracion": "Administración del sistema", "personas": "Cada persona (en su perfil o sus registros)",
@@ -136,6 +136,16 @@ def productos_sin_msc():
                     [_item(f"{f['titulo']} ({f['anio']})", f"/productos/{f['id']}") for f in filas])
 
 
+def preprints_sin_enlazar():
+    pares = productos.preprints_sin_enlazar()
+    return _chequeo("preprints", "Producción", "Preprints con su posible versión publicada sin enlazar",
+                    "Un preprint y su versión publicada registrados por separado se listan dos veces en el CV, el "
+                    "perfil público y la exportación BibTeX. Enlácelos desde la ficha del preprint.", "personas",
+                    "CV, perfil público y BibTeX",
+                    [_item(f"{pre['titulo']} ({pre['anio']})", f"/productos/{pre['id']}",
+                           f"posible versión publicada: «{pub['titulo']}» ({pub['anio']})") for pre, pub in pares])
+
+
 # --- Docencia -----------------------------------------------------------------------------------------
 
 def oferta_incompleta():
@@ -209,8 +219,9 @@ def externos_con_cuenta():
 
 
 CHEQUEOS = (sin_termino, sin_carga, sin_ingreso, investigadores_sin_vinculo, sin_grado, sin_nacimiento,
-            perfiles_incompletos, productos_por_confirmar, productos_sin_msc, externos_duplicados, externos_con_cuenta,
-            oferta_incompleta, observaciones_de_planes, proyectos_sin_ambito, proyectos_sin_lineas)
+            perfiles_incompletos, productos_por_confirmar, productos_sin_msc, preprints_sin_enlazar,
+            externos_duplicados, externos_con_cuenta, oferta_incompleta, observaciones_de_planes,
+            proyectos_sin_ambito, proyectos_sin_lineas)
 
 
 def revisar() -> list[dict]:

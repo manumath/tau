@@ -4,7 +4,7 @@ arXiv y los avisos de duplicado, en `importar`."""
 import json
 from datetime import date
 
-from fasthtml.common import APIRouter, Div, HtmxResponseHeaders, Input, Option, P, Redirect, Response, Select, Span
+from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, Input, Option, P, Redirect, Response, Select, Span
 from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, Form, FormLabel, LabelInput, LabelTextArea, TextPresets, UkIcon
 
@@ -22,9 +22,10 @@ from app.investigacion.rutas.productos.lista import EVENTO
 rt = APIRouter()
 
 
-def caja_importar(valor="", error=None, contenido=None):
+def caja_importar(valor="", error=None, contenido=None, preprint=None):
     """Recuadro «Importar desde DOI o arXiv» (solo al crear). `contenido` reemplaza al mensaje
-    de ayuda, p. ej. con el aviso de que el producto ya existe."""
+    de ayuda, p. ej. con el aviso de que el producto ya existe. Con `preprint` (id), lo importado
+    queda como versión publicada de ese preprint."""
     return Div(
         Div(UkIcon("download", height=16, width=16, cls="shrink-0 text-primary"),
             Span("Importar desde DOI o arXiv", cls="font-medium text-sm"), cls="flex items-center gap-2"),
@@ -35,7 +36,8 @@ def caja_importar(valor="", error=None, contenido=None):
             boton_espera("Importar", type="button", id="boton-importar",
                          cls=(ButtonT.primary, "shrink-0"), hx_post="/productos/importar",
                    hx_include="#identificador, input[name=proyecto]:checked", hx_target=f"#{ID_MODAL}",
-                   hx_indicator="#importando", hx_disabled_elt="this"),
+                   hx_indicator="#importando", hx_disabled_elt="this",
+                   hx_vals=json.dumps({"preprint": preprint}) if preprint else None),
             cls="flex gap-2"),
         Span(UkIcon("loader-circle", height=14, width=14, cls="animate-spin"),
              " Consultando Crossref / arXiv…", id="importando", cls="htmx-indicator text-sm"),
@@ -83,6 +85,7 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
         banner_importacion(importado) if importado else ("" if pid else caja_importar()),
         mensaje_error(*errores),
         Input(type="hidden", name="pid", value=pid or ""),
+        aviso_preprint(d["_preprint"]) if d.get("_preprint") else "",
         Div(Div(FormLabel("Tipo", fr="tipo_id"),
                 Select(*[Option(t["nombre"], value=str(t["id"]),
                                 selected=str(t["id"]) == str(d.get("tipo_id")))
@@ -132,6 +135,17 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
             cls="flex justify-end gap-2"),
         hx_put=f"/productos/{pid}" if pid else None, hx_post=None if pid else "/productos",
         hx_target=f"#{ID_MODAL}", cls="space-y-4")
+
+
+def aviso_preprint(pre):
+    """Al registrar la versión publicada de un preprint ya registrado (PLAN.md §46)."""
+    return Div(Input(type="hidden", name="preprint", value=str(pre["id"])),
+               UkIcon("link", height=14, width=14, cls="shrink-0 mt-0.5"),
+               Span("Quedará enlazado como versión publicada del preprint ",
+                    A(pre["titulo"], href=f"/productos/{pre['id']}", target="_blank", cls="text-primary hover:underline"),
+                    (f" (arXiv:{pre['arxiv_id']})" if pre.get("arxiv_id") else "") + ". En el CV y el perfil público "
+                    "se listará solo esta versión."),
+               cls="flex gap-1.5 text-sm rounded-md border border-border bg-muted/40 p-3")
 
 
 def modal_form(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, proyectos_sel=None,
@@ -197,18 +211,30 @@ def _revista_propuesta(d, nueva, uid) -> str | None:
     return None
 
 
-def _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion=None, agradece=None, nueva=None):
+def preprint_editable(preprint_id, uid) -> dict | None:
+    """El preprint a enlazar, si existe, es un preprint sin versión publicada y quien registra puede editarlo."""
+    pre = productos.obtener(preprint_id) if preprint_id else None
+    if pre and productos.es_preprint(pre) and not pre["publicado_como"] and productos.puede_editar(pre, uid):
+        return pre
+    return None
+
+
+def _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion=None, agradece=None, nueva=None,
+             preprint=None):
     agradece = filiacion_mod.leer_agradece(agradece)
     nueva = nueva or {}
+    pre = preprint_editable(preprint, auth["id"]) if pid is None else None
     d, errores = productos.preparar(datos, autor or [], indice or [], pid)
     if not errores and (error := _revista_propuesta(d, nueva, auth["id"])):
         errores = [error]
     if errores:
-        return modal_form(auth, {**datos, **nueva, "_agradece": agradece}, autores_de_refs(autor, filiacion),
+        return modal_form(auth, {**datos, **nueva, "_agradece": agradece, "_preprint": pre}, autores_de_refs(autor, filiacion),
                            indice or [], errores, pid, proyecto or [])
     nuevo = pid is None
     autor = [personas.materializar(r, auth["id"]) for r in autor]  # externos importados
     pid = productos.guardar(d, autor, auth["id"], pid, filiacion)
+    if pre and not productos.enlazar_version(pre["id"], pid):
+        auditar(auth["id"], "enlazar_version", "producto", pre["id"], f"versión publicada: producto {pid}")
     for aviso in proyectos.sincronizar("producto", pid, proyecto or [], auth):
         add_toast(sess, aviso, "warning")
     # Agradecimiento: en los proyectos en que queda vinculado (o propuesto).
@@ -228,12 +254,12 @@ def post(auth, sess, tipo_id: str = "", titulo: str = "", anio: str = "",
          resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
          indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
          agradece: list[str] = None, revista_id: str = "", revista_nueva_titulo: str = "",
-         revista_nueva_issn: str = "", revista_nueva_eissn: str = "", msc: list[str] = None):
+         revista_nueva_issn: str = "", revista_nueva_eissn: str = "", msc: list[str] = None, preprint: int = None):
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
                         paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id, msc)
     nueva = dict(revista_nueva_titulo=revista_nueva_titulo, revista_nueva_issn=revista_nueva_issn,
                  revista_nueva_eissn=revista_nueva_eissn)
-    return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion, agradece, nueva)
+    return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion, agradece, nueva, preprint)
 
 
 @rt("/productos/{pid}/editar")

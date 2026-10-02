@@ -250,3 +250,27 @@ def test_clasificacion_msc_del_producto(page):
     expect(page.locator("#lista-productos")).to_contain_text("Funciones zeta de anillos")
     page.get_by_role("link", name="Funciones zeta de anillos").click()
     expect(page.locator("main")).to_contain_text("Clasificación MSC2020")
+
+
+def test_enlazar_preprint_con_su_version_publicada(page):
+    """PLAN.md §46: desde la ficha del preprint se elige la versión publicada; la ficha se actualiza."""
+    entrar(page, "investigadora")
+    page.goto("/productos")
+    modal = page.locator("#modal")
+    for tipo, titulo in (("Preprint", "Cuerpos de clases y reciprocidad"),
+                         ("Artículo en revista", "Cuerpos de clases y reciprocidad.")):
+        page.get_by_role("button", name="Nuevo producto").click()
+        modal.locator("select[name=tipo_id]").select_option(label=tipo)
+        modal.locator("input[name=titulo]").fill(titulo)
+        modal.get_by_role("button", name="Guardar").click()
+        expect(modal.locator("form")).to_have_count(0)
+    page.locator("#lista-productos").get_by_role("link", name="Cuerpos de clases y reciprocidad", exact=True).click()
+    page.get_by_role("button", name="Enlazar con su versión publicada").click()
+    expect(modal.get_by_text("Versión publicada del preprint")).to_be_visible()
+    modal.get_by_role("button", name="Enlazar").click()
+    expect(modal.locator("form")).to_have_count(0)
+    ficha = page.locator("#ficha-producto")
+    expect(ficha.get_by_role("link", name="Cuerpos de clases y reciprocidad.")).to_be_visible()
+    page.once("dialog", lambda d: d.accept())
+    ficha.get_by_role("button", name="Desenlazar").click()
+    expect(ficha.get_by_role("button", name="Enlazar con su versión publicada")).to_be_visible()

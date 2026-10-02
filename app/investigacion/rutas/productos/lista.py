@@ -31,6 +31,8 @@ def insignias(p):
         res.append(insignia(productos.ESTADOS[p["estado_publicacion"]], "ambar"))
     if productos.cuenta_para_informe(p):
         res.append(insignia("Cuenta para el informe", "verde", icono="check"))
+    if p.get("publicado_como"):
+        res.append(insignia("Con versión publicada", "verde", icono="link", titulo=p["publicado_como"]["titulo"]))
     if p.get("msc"):
         principal = p["msc"][0]
         res.append(insignia(f"MSC {principal['codigo']}", "gris", titulo=principal["texto_plano"]))

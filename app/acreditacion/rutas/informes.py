@@ -149,8 +149,8 @@ def cita(p, destacar_uid=None):
     ids = []
     if p["doi"]:
         ids.append(A(f"doi:{p['doi']}", href=f"https://doi.org/{p['doi']}"))
-    if p["arxiv_id"]:
-        ids.append(A(f"arXiv:{p['arxiv_id']}", href=f"https://arxiv.org/abs/{p['arxiv_id']}"))
+    if (arxiv := productos.arxiv_de(p)):  # en una versión publicada, el de su preprint
+        ids.append(A(f"arXiv:{arxiv}", href=f"https://arxiv.org/abs/{arxiv}"))
     return Li(*autores, f" ({p['anio']}). ", Span(p["titulo"].rstrip(".") + ". ", cls="italic"),
               medio.lstrip(", ") + ("." if medio else ""), " ", " ".join(extras), " ",
               *[x for par in zip(ids, [" "] * len(ids)) for x in par])

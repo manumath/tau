@@ -248,8 +248,8 @@ def entrada(p: dict, usadas: set[str]) -> str:
               ("pages", (p["paginas"] or "").replace("–", "--") or None),
               ("doi", p["doi"]),
               ("issn", (p.get("revista") or {}).get("issn") or (p.get("revista") or {}).get("eissn"))]
-    if p["arxiv_id"]:
-        campos += [("eprint", p["arxiv_id"]), ("archiveprefix", "arXiv")]
+    if (arxiv := productos.arxiv_de(p)):  # en una versión publicada, el de su preprint
+        campos += [("eprint", arxiv), ("archiveprefix", "arXiv")]
     campos += [("url", p["url"]), ("note", NOTAS_ESTADO.get(p["estado_publicacion"]))]
     if p["tipo"] in ("Presentación", "Software", "Tesis dirigida"):
         campos.append(("type", p["tipo"]))

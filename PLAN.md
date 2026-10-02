@@ -239,8 +239,8 @@ el 1-oct-2026 sin cambios.
 - *(Hecho el 1-oct-2026, §41 y §42.)* Fusionar personas externas duplicadas, y vincular una persona
   externa a su cuenta si luego la recibe.
 - *(Hecho el 2-oct-2026, §45.)* Áreas MSC en los productos.
-- Enlace formal entre un preprint y su versión publicada, como registros separados. Hoy la
-  versión publicada importada conserva el arXiv en el mismo registro.
+- *(Hecho el 2-oct-2026, §46.)* Enlace formal entre un preprint y su versión publicada, como
+  registros separados.
 
 **Futuro, si se requiere:** validación institucional, SSO o LDAP, integración con el
 repositorio institucional, proyectos públicos, cuartiles o factor de impacto de las revistas.
@@ -1511,3 +1511,37 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   clasificar y aparecen en Calidad de datos.
 - El aviso de Calidad de datos abarca las publicaciones indexadas o arbitradas, aceptadas o publicadas,
   con algún autor del instituto, en la ventana del anexo (no solo las que cuentan en la memoria).
+
+## 46. Preprint y versión publicada (2-oct-2026)
+
+**Decisiones de la Dirección (2-oct-2026):**
+- Con el preprint enlazado a su versión publicada, el CV, el perfil público y la exportación BibTeX
+  listan **solo la versión publicada**, con un enlace a su arXiv. El preprint sigue en «Mis productos»,
+  marcado «Con versión publicada».
+- Al importar la versión publicada de un preprint **ya registrado** se crea un **registro nuevo
+  enlazado**; el preprint se conserva y se preseleccionan sus proyectos.
+- Los artículos que ya guardan su arXiv en el mismo registro (importados como versión publicada de un
+  preprint no registrado) **quedan así**; ese caso sigue igual.
+
+**Implementación:**
+- Migración 0040: `producto.publicado_como_id` (en el preprint, hacia su versión publicada; ON DELETE
+  SET NULL) con índice único: una versión publicada tiene a lo sumo un preprint.
+- `productos`: `obtener` agrega `publicado_como` (en el preprint) y `preprint` (en la versión);
+  `arxiv_de(p)` da el arXiv propio o el del preprint; `enlazar_version`/`desenlazar_version`;
+  `sin_preprints_publicados(lista)` quita un preprint solo si su versión está en la misma lista (en un CV
+  de un periodo que no la incluye, el preprint sí aparece); `candidatos_version` ordena por parecido de
+  título (difflib); `preprints_sin_enlazar` para Calidad de datos (mismo autor del instituto, títulos con
+  parecido ≥ 0,85). Si un producto cambia de tipo, su enlace se quita.
+- Se aplica en el CV (y su BibTeX), «Exportar BibTeX» de «Mis productos», el perfil público y la API
+  `/api/v1/productos`. La memoria y el anexo no cambian: los preprints no cuentan.
+- Rutas `/productos/{pid}/version` (GET ventana, POST enlazar, DELETE desenlazar) en
+  `rutas/productos/version.py`; `/productos/importar` acepta `preprint` y reconoce el arXiv registrado
+  en `arxiv_asociado`. Seed: un preprint de Emmy enlazado a su artículo.
+
+**Decisiones del equipo (confirmar):**
+- No pueden ser versión publicada: preprints, presentaciones, tesis dirigidas ni patentes.
+- Enlazar exige poder editar ambos productos (ser autor o haberlos registrado); un preprint ajeno no se
+  enlaza al importar (se ofrece «Sumarme como autor», como hoy).
+- La API pública aplica la misma regla que el perfil público.
+- El aviso de Calidad de datos sugiere pares con un autor del instituto en común, títulos muy parecidos y
+  la versión del año anterior al preprint o posterior.

@@ -21,6 +21,22 @@ def insignia_estado_revista(r):
         else insignia("pendiente de verificar", "ambar", icono="clock")
 
 
+def version_publicada(p, editable):
+    """En un preprint: su versión publicada (con «Desenlazar») o el botón para enlazarla (PLAN.md §46)."""
+    pub = p["publicado_como"]
+    if pub:
+        return Div(A(pub["titulo"], href=f"/productos/{pub['id']}", cls="text-primary hover:underline"),
+                   Span(f"({pub['anio']})", cls=(TextPresets.muted_sm, "ml-1")),
+                   Button("Desenlazar", type="button", cls=(ButtonT.ghost, ButtonT.xs, "ml-2"),
+                          hx_delete=f"/productos/{p['id']}/version",
+                          hx_confirm="¿Desenlazar el preprint de su versión publicada? Volverá a listarse aparte.")
+                   if editable else "", cls="flex flex-wrap items-center")
+    if not editable:
+        return None
+    return Button(UkIcon("link", height=14, width=14), "Enlazar con su versión publicada", type="button",
+                  cls=(ButtonT.default, ButtonT.sm), hx_get=f"/productos/{p['id']}/version", hx_target=f"#{ID_MODAL}")
+
+
 def ficha(p, auth):
     uid = auth["id"]
     editable = productos.puede_editar(p, uid)
@@ -63,6 +79,9 @@ def ficha(p, auth):
                                            Span(" · según el catálogo" if p["clasificacion_catalogo"] else
                                                 " · declarado por los autores" if p["tipo"] == revistas.TIPO_ARTICULO else "",
                                                 cls=TextPresets.muted_sm))),
+            dato("Versión publicada", version_publicada(p, editable)) if productos.es_preprint(p) else "",
+            dato("Preprint", A(p["preprint"]["titulo"], href=f"/productos/{p['preprint']['id']}",
+                               cls="text-primary hover:underline") if p["preprint"] else None),
             dato("Clasificación MSC2020", chips_msc(p["msc"]) if p["msc"] else None),
             dato("Presentada en", A(actividad["titulo"], href=f"/actividades/{actividad['id']}",
                                     cls="text-primary hover:underline") if actividad else None),

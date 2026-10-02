@@ -31,7 +31,7 @@ def _descarga(texto: str, nombre: str):
 @rt("/productos/bibtex")
 def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, area: str = ""):
     """Exporta lo que se ve en «Mis productos» con los filtros vigentes."""
-    lista = productos.de_investigador(auth["id"], q, anio, tipo, informe, area=area)
+    lista = productos.sin_preprints_publicados(productos.de_investigador(auth["id"], q, anio, tipo, informe, area=area))
     return _descarga(bibtex.exportar(lista), "productos.bib")
 
 

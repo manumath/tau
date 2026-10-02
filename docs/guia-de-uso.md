@@ -191,6 +191,22 @@ IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar
   registrada* o *con error* antes de confirmar.
 - **A mano:** complete el formulario.
 
+### Preprint y versión publicada
+
+Si registró un **preprint** y luego se publica, registre la versión publicada **aparte** y enlácelos:
+el CV, el perfil público y la exportación BibTeX listarán **solo la versión publicada**, con el arXiv
+del preprint. El preprint sigue en «Mis productos», con la etiqueta «Con versión publicada».
+
+- **Desde la ficha del preprint:** «Enlazar con su versión publicada» → elija la versión entre sus
+  productos (los de título más parecido aparecen primero) o impórtela por su DOI; queda enlazada sola.
+- **Al importar:** si pega el arXiv de un preprint que ya registró y arXiv informa su DOI, se ofrece
+  «Importar su versión publicada». El artículo se crea enlazado al preprint, con los mismos proyectos
+  marcados.
+- Un artículo importado como «versión publicada» de un preprint que **no** estaba registrado queda en
+  un solo registro, con su DOI y su arXiv.
+- «Desenlazar» en la ficha deshace el enlace. **Calidad de datos** avisa de los preprints que parecen
+  tener su versión publicada registrada sin enlazar.
+
 ### Clasificación MSC2020
 
 Clasifique cada producto con la **Mathematics Subject Classification (MSC2020)**: un código
@@ -474,7 +490,7 @@ Menú «Informes»:
   nunca se muestra). Imprimible y en XLSX. Las «inscripciones» suman los inscritos de cada paralelo:
   no son la matrícula de la Carrera.
 - **Calidad de datos** (direcciones, Coordinación académica, Comité y Administración del sistema;
-  también aparece en el inicio): 15 revisiones de lo que falta o no cuadra antes de generar informes,
+  también aparece en el inicio): 16 revisiones de lo que falta o no cuadra antes de generar informes,
   agrupadas en vínculos y carga, personas, producción, docencia y proyectos. Cada una dice a qué
   afecta y quién lo corrige; al abrirla muestra los registros con un enlace para corregirlos. La
   página no cambia nada.
