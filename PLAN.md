@@ -1538,7 +1538,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   `rutas/productos/version.py`; `/productos/importar` acepta `preprint` y reconoce el arXiv registrado
   en `arxiv_asociado`. Seed: un preprint de Emmy enlazado a su artículo.
 
-**Decisiones del equipo (confirmar):**
+**Decisiones confirmadas por la Dirección (2-oct-2026):**
 - No pueden ser versión publicada: preprints, presentaciones, tesis dirigidas ni patentes.
 - Enlazar exige poder editar ambos productos (ser autor o haberlos registrado); un preprint ajeno no se
   enlaza al importar (se ofrece «Sumarme como autor», como hoy).
