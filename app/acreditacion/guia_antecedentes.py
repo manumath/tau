@@ -33,7 +33,7 @@ H = {  # nombres de las hojas en la plantilla (algunos terminan en espacio)
     "desarrollo": "19. Desarrollo académico", "proyectos": "20. Proyectos de investigación",
     "profesional": "21. Desarrollo profesional", "articulos": "22. Artículos",
     "libros": "23. Libros o Capítulos de libro", "patentes": "25. Patentes", "redes": "26. Redes",
-    "extension": "27. Extensión",
+    "extension": "27. Extensión", "servicios": "28. Prestación de servicios",
 }
 # Qué llena el sistema en cada hoja (se muestra en la pantalla de la guía).
 COBERTURA = [
@@ -46,8 +46,8 @@ COBERTURA = [
     ("7.a y 7.b. Asignaturas", "Del plan vigente: semestre, requisitos, créditos y veces que se dictó en el último "
                                "año. Falta: cupo por sección y línea formativa."),
     ("8 y 9. Plan de estudios y consejo", "No."),
-    ("10. Académicos", "Grados, edad, incorporación, unidad, categoría, horas por actividad, cursos y tesis. Falta: "
-                       "sistema nacional de investigación y logros."),
+    ("10. Académicos", "Grados, edad, incorporación, unidad, categoría, horas por actividad, cursos, tesis y premios. "
+                       "Falta: sistema nacional de investigación."),
     ("11. Caracterización", "Por ciclo: jornada, horas de docencia, grado, edad y categoría."),
     ("12. Jefes de práctica", "Auxiliares de docencia registrados en la oferta del último año. Falta: horas."),
     ("13 a 18. Perfeccionamiento, personal, becas, bienestar y recursos", "No."),
@@ -59,7 +59,8 @@ COBERTURA = [
     ("24. Obras de creación", "No aplica."),
     ("26. Redes", "Participación en redes. Falta: actividades, productos y difusión."),
     ("27. Extensión", "Proyectos de interacción social y actividades de divulgación. Falta: impacto y evaluación."),
-    ("28. Prestación de servicios", "No (el sistema aún no la registra)."),
+    ("28. Prestación de servicios", "Servicios registrados como actividades: contraparte, responsables, "
+                                    "participantes y montos en USD. Falta: impacto, evaluación y difusión."),
 ]
 
 
@@ -253,6 +254,7 @@ def academicos_al(fecha: str) -> list[tuple[dict, dict]]:
 def _academicos(x: Plantilla, anio_ini: int, anio_fin: int, corte: str):
     h = H["academicos"]
     tesis = ind_estudiantes.tesis(anio_ini, anio_fin)
+    premios_del_programa = _actividades_del_programa(f"{anio_ini}-01-01", corte, anexo.PREMIOS)
     for i, (u, v) in enumerate(academicos_al(corte)):
         r = 7 + i
         uid = u["id"]
@@ -281,6 +283,9 @@ def _academicos(x: Plantilla, anio_ini: int, anio_fin: int, corte: str):
         propias = [t for t in tesis if any(d["id"] == uid for d in t["directores"])]
         x.escribir(h, f"X{r}", len(propias))
         x.escribir(h, f"Y{r}", "; ".join(f"{t['producto']['titulo']} ({t['producto']['anio']})" for t in propias) or None)
+        premios = [a for a in premios_del_programa if any(p["id"] == uid for p in a["internos"])]
+        x.escribir(h, f"Z{r}", "; ".join(f"{a['titulo']}" + (f", {a['institucion']}" if a["institucion"] else "")
+                                         + f" ({a['fecha_inicio'][:4]})" for a in premios) or None)
         obs = []
         if not _horas_vinculo(v):
             obs.append("Sin carga contratada registrada")
@@ -612,6 +617,34 @@ def _extension(x: Plantilla, desde: str, hasta: str):
         x.escribir(h, f"R{r}", tipo or "Proyecto de interacción social")
 
 
+def _servicios(x: Plantilla, desde: str, hasta: str, tipo_cambio: float | None):
+    h = H["servicios"]
+    for i, a in enumerate(_actividades_del_programa(desde, hasta, anexo.SERVICIOS)):
+        r = 8 + i
+        partes = actividades.participantes(a["id"])
+        anio = int(a["fecha_inicio"][:4])
+        estudiantes_ = [p for p in partes if not p["interno"] and p.get("id") and estudiantes.estudiante_en(p["id"], anio)]
+        monto = _usd(a["monto"], a["moneda"], tipo_cambio)
+        ingresos = _usd(a["ingresos"], a["moneda"], tipo_cambio)
+        x.escribir(h, f"A{r}", i + 1)
+        x.escribir(h, f"B{r}", anio)
+        x.escribir(h, f"C{r}", a["titulo"])
+        x.escribir(h, f"D{r}", _nombres([p for p in partes if p["rol"] == "responsable"]) or _nombres(a["internos"]))
+        x.escribir(h, f"E{r}", a["descripcion"])
+        x.escribir(h, f"F{r}", a["institucion"])
+        x.escribir(h, f"G{r}", len(a["internos"]))
+        x.escribir(h, f"H{r}", len(estudiantes_))
+        x.escribir(h, f"N{r}", monto if a["financiamiento"] == "interno" else None)
+        x.escribir(h, f"O{r}", monto if a["financiamiento"] != "interno" else None)
+        x.escribir(h, f"Q{r}", ingresos)
+        obs = []
+        if a["monto"] is not None and monto is None:
+            obs.append(f"Monto: {a['monto']} {a['moneda'] or ''} (sin tipo de cambio a USD)".replace("  ", " "))
+        if a["monto"] is not None and not a["financiamiento"]:
+            obs.append("Origen del financiamiento sin indicar (se puso como externo)")
+        x.escribir(h, f"R{r}", "; ".join(obs) or None)
+
+
 # --- Generación ---------------------------------------------------------------------------------------
 
 def generar(plan_id: int | None = None, ultimo: tuple[int, str] | None = None, tipo_cambio: float | None = None,
@@ -641,4 +674,5 @@ def generar(plan_id: int | None = None, ultimo: tuple[int, str] | None = None, t
     _patentes(x, anio_ini, anio_fin)
     _redes(x, desde, hasta)
     _extension(x, desde, hasta)
+    _servicios(x, desde, hasta, tipo_cambio)
     return x.guardar()

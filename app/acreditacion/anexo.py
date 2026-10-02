@@ -21,6 +21,9 @@ TRANSFERENCIA = ("Transferencia de conocimiento",)
 DIVULGACION = ("Charla de divulgación",)
 REDES = ("Participación en red de investigación",)
 COMITES = ("Comité científico o editorial",)
+PREMIOS = (actividades.PREMIO,)
+ARBITRAJES = (actividades.ARBITRAJE,)
+SERVICIOS = (actividades.SERVICIO,)
 JORNADA_COMPLETA = 160  # h/mes: tiempo completo (5 cargas de 32 h/mes)
 TIPOS_ARTICULO = (revistas.TIPO_ARTICULO, "Artículo en actas de congreso")
 
@@ -129,7 +132,15 @@ INDICADORES = {
                                   "financiamiento de otros países (o ámbito internacional declarado)."),
     "citas": ("Citas", "producto", "Suma de las citas según OpenAlex de los productos que cuentan en el año. Se "
               "listan los productos con citas."),
+    "premios": ("Premios y distinciones", "actividad", "Premios y distinciones recibidos en el año por personas "
+                "vinculadas en la fecha."),
+    "arbitrajes": ("Artículos arbitrados para revistas", "actividad", "Suma de los artículos que arbitraron para "
+                   "revistas personas vinculadas (una entrada por revista y año). Se listan las entradas."),
+    "servicios": ("Prestación de servicios", "actividad", "Servicios prestados a terceros (asesorías, cursos, "
+                  "consultorías) con participación de personas vinculadas en la fecha."),
 }
+# Indicadores cuya cifra no es la cantidad de registros, sino una suma.
+SUMAS = ("jce", "citas", "arbitrajes")
 
 
 def registros_del_anio(anio: int, hasta: str, exigir_verificada: bool = True) -> tuple[dict, dict, dict]:
@@ -158,6 +169,9 @@ def registros_del_anio(anio: int, hasta: str, exigir_verificada: bool = True) ->
         "coautoria_internacional": coautoria_internacional(arts)["lista"],
         "proyectos_internacionales": [p for p in ma["proyectos"] if proyectos.ambito_efectivo(p) == "internacional"],
         "citas": sorted((p for p in prods if p.get("citas")), key=lambda p: -p["citas"]),
+        "premios": [a for a in acts if a["tipo"] in PREMIOS],
+        "arbitrajes": [a for a in acts if a["tipo"] in ARBITRAJES],
+        "servicios": [a for a in acts if a["tipo"] in SERVICIOS],
     }
     return cuerpo, regs, ma
 
@@ -169,7 +183,8 @@ def detalle(indicador: str, anio: int, hasta: str, exigir_verificada: bool = Tru
     nombre, clase, regla = INDICADORES[indicador]
     cuerpo, regs, ma = registros_del_anio(anio, hasta, exigir_verificada)
     lista = regs[indicador]
-    valor = {"jce": cuerpo["jce"], "citas": ma["impacto"]["citas"]}.get(indicador, len(lista))
+    valor = {"jce": cuerpo["jce"], "citas": ma["impacto"]["citas"],
+             "arbitrajes": sum(a["cantidad"] or 0 for a in regs["arbitrajes"])}.get(indicador, len(lista))
     if categoria and clase == "persona":
         lista = [p for p in lista if p["categoria"] == categoria]
         valor = len(lista)
@@ -194,7 +209,7 @@ def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> d
     for anio in range(desde_anio, hasta_anio + 1):
         cuerpo, regs, ma = registros_del_anio(anio, hasta, exigir_verificada)
         anios.append({"anio": anio, **{k: len(v) for k, v in regs.items()}, "jce": cuerpo["jce"],
-                      "citas": ma["impacto"]["citas"]})
+                      "citas": ma["impacto"]["citas"], "arbitrajes": sum(a["cantidad"] or 0 for a in regs["arbitrajes"])})
 
     proys = []
     for p in m["proyectos"]:
@@ -210,6 +225,7 @@ def anexo(desde_anio: int, hasta_anio: int, exigir_verificada: bool = True) -> d
         "articulos": articulos, "libros": libros, "tecnicos": tecnicos, "proyectos": proys,
         "presentaciones": presentaciones, "estancias": por_tipo(ESTANCIAS), "transferencia": por_tipo(TRANSFERENCIA),
         "divulgacion": por_tipo(DIVULGACION), "redes": por_tipo(REDES), "comites": por_tipo(COMITES),
+        "premios": por_tipo(PREMIOS), "arbitrajes": por_tipo(ARBITRAJES), "servicios": por_tipo(SERVICIOS),
         "movilidad_internacional": [a for a in por_tipo(ESTANCIAS) if _internacional(a)],
         "coautoria": coautoria_internacional(articulos),
         "estudiantes": ind_estudiantes.indicadores(m),

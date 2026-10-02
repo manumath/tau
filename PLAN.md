@@ -1376,3 +1376,26 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   - Calidad de datos: si no hay nada que corregir, no se envía (se registra para no reintentar).
   - Sin nadie con el rol, el envío no se registra y se reintenta en la siguiente revisión.
   - Los cursos de verano e invierno no generan informes.
+
+## 40. Premios, arbitraje y prestación de servicios (1-oct-2026)
+
+- Decisiones de la Dirección (1-oct-2026): se registran **como tipos de actividad** («Premio o
+  distinción», «Arbitraje de artículos», «Prestación de servicios»); el arbitraje, **por revista y año**
+  con la cantidad de artículos; los servicios los registran **quienes los realizan**, con **monto,
+  moneda, origen del financiamiento (interno o externo) e ingresos** para la unidad.
+- Migración 0038: los tres tipos; columnas `cantidad`, `revista_id`, `monto`, `moneda`,
+  `financiamiento` e `ingresos` en `actividad`; roles nuevos de participante (`distinguido`, `revisor`,
+  `responsable`, con la tabla reconstruida para cambiar el CHECK).
+- Formulario: el bloque de fechas, institución y campos propios se pide al servidor al cambiar el tipo
+  (`/actividades/campos`, conserva lo escrito). El arbitraje guarda del 1 de enero al 31 de diciembre
+  del año (se muestra «2026») y reconoce la revista del catálogo por su título. Cada tipo exige al
+  menos un participante con su rol.
+- Anexo: «Reconocimiento de pares» (2.2.1 d) con premios, arbitraje y comités; sección nueva 3.4.3;
+  tres indicadores con trazabilidad (los arbitrajes suman artículos: `anexo.SUMAS`); el XLSX los trae
+  con cantidad y montos. Ya no figuran en «Aún no registrado» (queda el impacto de la vinculación).
+- Guía de Antecedentes: hoja 10, columna de logros (premios en los años de la guía); hoja 28 completa
+  salvo impacto, evaluación y difusión.
+- Decisiones del equipo (confirmar):
+  - Un arbitraje cuenta en la memoria si el revisor estaba vinculado el 1 de enero de ese año (la regla
+    general usa la fecha de inicio de la actividad).
+  - Un servicio sin origen del financiamiento se pone como externo en la Guía (y se anota).

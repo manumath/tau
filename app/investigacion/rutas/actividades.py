@@ -4,7 +4,7 @@ Sigue los mismos patrones que productos (evento `actividades-cambiadas` vía HX-
 """
 from datetime import date
 
-from fasthtml.common import (A, APIRouter, Div, H3, HtmxResponseHeaders, Option, P,
+from fasthtml.common import (A, APIRouter, Datalist, Div, H3, HtmxResponseHeaders, Option, P,
                              Redirect, Response, Select, Span)
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea,
@@ -85,16 +85,18 @@ def form_actividad(auth, d, participantes_, errores=(), aid=None, proyectos_sel=
         return LabelInput(etiqueta, id=nombre, value=d.get(nombre) or "", **kw)
 
     tipos = {t["id"]: t["nombre"] for t in actividades.tipos()}
+    tipo = Div(FormLabel("Tipo", fr="tipo_id"),
+               # Al cambiar el tipo, el servidor devuelve los campos que corresponden (con lo ya escrito).
+               Select(*[Option(t, value=v, selected=str(v) == str(d.get("tipo_id"))) for v, t in tipos.items()],
+                      id="tipo_id", name="tipo_id", cls="uk-select", hx_get="/actividades/campos",
+                      hx_trigger="change", hx_target=f"#{ID_CAMPOS}", hx_swap="outerHTML",
+                      hx_include=f"#{ID_CAMPOS}, #tipo_id"),
+               cls="space-y-2")
     return Form(
         mensaje_error(*errores),
-        Div(_select("Tipo", "tipo_id", tipos, d.get("tipo_id")),
-            campo("Inicio", "fecha_inicio", type="date", required=True),
-            campo("Término", "fecha_fin", type="date"),
-            cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
+        tipo,
         campo("Título", "titulo", required=True, placeholder="Congreso Latinoamericano de Matemáticas"),
-        Div(campo("Institución organizadora o anfitriona", "institucion"),
-            campo("Ciudad o sede", "lugar"), campo("País", "pais"),
-            cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
+        campos_del_tipo(d),
         Div(_select("Modalidad", "modalidad", actividades.MODALIDADES, d.get("modalidad")),
             _select("Ámbito", "ambito", actividades.AMBITOS, d.get("ambito")),
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
@@ -108,6 +110,59 @@ def form_actividad(auth, d, participantes_, errores=(), aid=None, proyectos_sel=
             cls="flex justify-end gap-2"),
         hx_put=f"/actividades/{aid}" if aid else None, hx_post=None if aid else "/actividades",
         hx_target=f"#{ID_MODAL}", cls="space-y-4")
+
+
+ID_CAMPOS = "campos-del-tipo"
+ETIQUETA_INSTITUCION = {actividades.PREMIO: "Institución que lo otorga", actividades.ARBITRAJE: "Revista",
+                        actividades.SERVICIO: "Contraparte"}
+PISTA_INSTITUCION = {actividades.SERVICIO: "A quién se presta el servicio", actividades.ARBITRAJE: "Del catálogo o escrita"}
+
+
+def campos_del_tipo(d):
+    """Fechas, institución y los campos propios del tipo (arbitraje: año, revista y cantidad;
+    servicio: monto, moneda, origen e ingresos). Se reemplaza al cambiar el tipo."""
+    tipo = actividades.nombre_tipo(d.get("tipo_id"))
+
+    def campo(etiqueta, nombre, **kw):
+        return LabelInput(etiqueta, id=nombre, value="" if d.get(nombre) is None else str(d[nombre]), **kw)
+    institucion = campo(ETIQUETA_INSTITUCION.get(tipo, "Institución organizadora o anfitriona"), "institucion",
+                        list="revistas-catalogo" if tipo == actividades.ARBITRAJE else None,
+                        placeholder=PISTA_INSTITUCION.get(tipo))
+    rol = actividades.ROL_DEL_TIPO.get(tipo)
+    pista_rol = Div(UkIcon("info", height=14, width=14, cls="shrink-0 mt-0.5"),
+                    Span(f"En «Participantes», al menos una persona con el rol «{actividades.ROLES[rol]}»."),
+                    cls="flex items-start gap-1.5 text-sm text-muted-foreground") if rol else ""
+    if tipo == actividades.ARBITRAJE:
+        hoy = date.today().year
+        anio = int((d.get("fecha_inicio") or str(hoy))[:4])
+        return Div(
+            Div(_select("Año", "anio", {a: str(a) for a in range(hoy, hoy - 11, -1)}, anio),
+                institucion,
+                campo("Artículos arbitrados", "cantidad", type="number", min="1", required=True),
+                cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
+            Datalist(*[Option(value=r["titulo"]) for r in get_db().q("SELECT titulo FROM revista ORDER BY titulo")],
+                     id="revistas-catalogo"),
+            P("Una entrada por revista y año, sin títulos de los artículos (el arbitraje es confidencial).",
+              cls=TextPresets.muted_sm),
+            pista_rol, id=ID_CAMPOS, cls="space-y-2")
+    fechas = Div(campo("Fecha" if tipo == actividades.PREMIO else "Inicio", "fecha_inicio", type="date", required=True),
+                 campo("Término", "fecha_fin", type="date") if tipo != actividades.PREMIO else "",
+                 cls="grid grid-cols-1 sm:grid-cols-2 gap-4")
+    lugar = Div(institucion, campo("Ciudad o sede", "lugar"), campo("País", "pais"),
+                cls="grid grid-cols-1 sm:grid-cols-3 gap-4")
+    extra = ""
+    if tipo == actividades.SERVICIO:
+        extra = Div(
+            Div(campo("Monto del servicio", "monto", inputmode="numeric", placeholder="Sin puntos ni comas"),
+                _select("Moneda", "moneda", {"": "—", **actividades.MONEDAS}, d.get("moneda") or ""),
+                _select("Financiamiento", "financiamiento", {"": "—", **actividades.FINANCIAMIENTOS},
+                        d.get("financiamiento") or ""),
+                campo("Ingresos para la unidad", "ingresos", inputmode="numeric", placeholder="En la misma moneda"),
+                cls="grid grid-cols-1 sm:grid-cols-4 gap-4"),
+            P("Los ingresos son lo que el servicio dejó a la Carrera o el Instituto. La Guía de Antecedentes los pide "
+              "en dólares: se convierten con el tipo de cambio que se indica al generarla.", cls=TextPresets.muted_sm),
+            cls="space-y-2")
+    return Div(fechas, lugar, extra, pista_rol, id=ID_CAMPOS, cls="space-y-4")
 
 
 def _modal_form(auth, d, participantes_, errores=(), aid=None, proyectos_sel=None, preseleccion=None):
@@ -128,7 +183,26 @@ def _guardar(auth, sess, aid, d, participante, rol, proyecto):
     pares = list(zip(participante or [], rol or []))
     d = {k: (v.strip() or None) if isinstance(v, str) else v for k, v in d.items()}
     d["tipo_id"] = int(d["tipo_id"]) if str(d.get("tipo_id") or "").isdigit() else None
-    errores = actividades.validar(d, pares)
+    tipo = actividades.nombre_tipo(d["tipo_id"])
+    errores = []
+    anio = d.pop("anio", None)
+    for k in ("cantidad", "monto", "ingresos"):
+        d[k], ok = actividades.entero(d.get(k))
+        if not ok:
+            errores.append("Los montos y cantidades van como números enteros, sin puntos ni comas.")
+    if tipo == actividades.ARBITRAJE:        # por revista y año
+        anio = anio if str(anio or "").isdigit() else str(date.today().year)
+        d.update(fecha_inicio=f"{anio}-01-01", fecha_fin=f"{anio}-12-31", lugar=None, pais=None,
+                 revista_id=actividades.revista_del_catalogo(d.get("institucion")))
+    else:
+        d["revista_id"] = None
+    if tipo == actividades.PREMIO:
+        d["fecha_fin"] = None
+    if tipo != actividades.ARBITRAJE:
+        d["cantidad"] = None
+    if tipo != actividades.SERVICIO:
+        d.update(monto=None, moneda=None, financiamiento=None, ingresos=None)
+    errores = list(dict.fromkeys(errores)) + actividades.validar(d, pares)
     if errores:
         return _modal_form(auth, d, _participantes_de(participante, rol), errores, aid, proyecto or [])
     nueva = aid is None
@@ -141,10 +215,11 @@ def _guardar(auth, sess, aid, d, participante, rol, proyecto):
 
 
 def _datos(tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin, modalidad, ambito,
-           url, descripcion):
+           url, descripcion, anio="", cantidad="", monto="", moneda="", financiamiento="", ingresos=""):
     return dict(tipo_id=tipo_id, titulo=titulo, institucion=institucion, lugar=lugar, pais=pais,
                 fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, modalidad=modalidad, ambito=ambito,
-                url=url, descripcion=descripcion)
+                url=url, descripcion=descripcion, anio=anio, cantidad=cantidad, monto=monto, moneda=moneda,
+                financiamiento=financiamiento, ingresos=ingresos)
 
 
 # --- Rutas --------------------------------------------------------------------------------
@@ -184,10 +259,26 @@ def get(auth, proyecto: int = None):
 def post(auth, sess, tipo_id: str = "", titulo: str = "", institucion: str = "", lugar: str = "",
          pais: str = "", fecha_inicio: str = "", fecha_fin: str = "", modalidad: str = "",
          ambito: str = "", url: str = "", descripcion: str = "", participante: list[str] = None,
-         rol: list[str] = None, proyecto: list[int] = None):
+         rol: list[str] = None, proyecto: list[int] = None, anio: str = "", cantidad: str = "", monto: str = "",
+         moneda: str = "", financiamiento: str = "", ingresos: str = ""):
     d = _datos(tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin, modalidad,
-               ambito, url, descripcion)
+               ambito, url, descripcion, anio, cantidad, monto, moneda, financiamiento, ingresos)
     return _guardar(auth, sess, None, d, participante, rol, proyecto)
+
+
+@rt("/actividades/campos")
+def get(auth, tipo_id: str = "", fecha_inicio: str = "", fecha_fin: str = "", institucion: str = "",
+        lugar: str = "", pais: str = "", anio: str = "", cantidad: str = "", monto: str = "", moneda: str = "",
+        financiamiento: str = "", ingresos: str = ""):
+    """Campos del tipo elegido, conservando lo ya escrito (el tipo cambia en el formulario)."""
+    hoy = date.today()
+    if anio.isdigit():   # viene del arbitraje (solo año): hoy si es el año en curso; si no, el 1 de enero
+        inicio = hoy.isoformat() if int(anio) == hoy.year else f"{anio}-01-01"
+    else:
+        inicio = fecha_inicio or hoy.isoformat()
+    return campos_del_tipo(dict(tipo_id=tipo_id, fecha_inicio=inicio, fecha_fin=fecha_fin, institucion=institucion,
+                                lugar=lugar, pais=pais, cantidad=cantidad or None, monto=monto or None,
+                                moneda=moneda, financiamiento=financiamiento, ingresos=ingresos or None))
 
 
 @rt("/actividades/{aid}/editar")
@@ -202,12 +293,13 @@ def get(auth, aid: int):
 def put(auth, sess, aid: int, tipo_id: str = "", titulo: str = "", institucion: str = "",
         lugar: str = "", pais: str = "", fecha_inicio: str = "", fecha_fin: str = "",
         modalidad: str = "", ambito: str = "", url: str = "", descripcion: str = "",
-        participante: list[str] = None, rol: list[str] = None, proyecto: list[int] = None):
+        participante: list[str] = None, rol: list[str] = None, proyecto: list[int] = None, anio: str = "",
+        cantidad: str = "", monto: str = "", moneda: str = "", financiamiento: str = "", ingresos: str = ""):
     a = actividades.obtener(aid)
     if not a or not actividades.puede_editar(a, auth["id"]):
         return Response("No autorizado", status_code=403)
     d = _datos(tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin, modalidad,
-               ambito, url, descripcion)
+               ambito, url, descripcion, anio, cantidad, monto, moneda, financiamiento, ingresos)
     return _guardar(auth, sess, aid, d, participante, rol, proyecto)
 
 
@@ -245,9 +337,16 @@ def ficha(a, auth):
                 H2(a["titulo"], cls="mt-2"), cls="min-w-0"),
             acciones, cls="flex flex-wrap items-start justify-between gap-4 mb-6"),
         Card(
-            dato("Fechas", actividades.fechas_texto(a)),
-            dato("Lugar", _lugar(a)),
-            dato("Modalidad", actividades.MODALIDADES[a["modalidad"]]),
+            dato("Año" if actividades.anual(a) else "Fechas", actividades.fechas_texto(a)),
+            dato(ETIQUETA_INSTITUCION.get(a["tipo"], "Lugar"), _lugar(a)),
+            dato("Artículos arbitrados", str(a["cantidad"]) if a.get("cantidad") else None),
+            dato("En el catálogo de revistas", "Sí" if a.get("revista_id") else None),
+            dato("Monto", f"{a['monto']:,} {a['moneda'] or ''}".replace(",", ".") if a.get("monto") is not None else None),
+            dato("Financiamiento", actividades.FINANCIAMIENTOS.get(a.get("financiamiento") or "")),
+            dato("Ingresos para la unidad",
+                 f"{a['ingresos']:,} {a['moneda'] or ''}".replace(",", ".") if a.get("ingresos") is not None else None),
+            dato("Modalidad", actividades.MODALIDADES[a["modalidad"]]) if a["tipo"] not in (
+                actividades.PREMIO, actividades.ARBITRAJE) else "",
             dato("Enlace", A(a["url"], href=a["url"], target="_blank", rel="noopener noreferrer",
                              cls="text-primary hover:underline break-all") if a["url"] else None),
             dato("Participantes", Div(*[Div(enlace_persona(p),

@@ -130,7 +130,7 @@ def test_trazabilidad_cada_cifra_coincide_con_sus_registros(datos):
         for k, (_, clase, _) in acreditacion.INDICADORES.items():
             d = acreditacion.detalle(k, fila["anio"], "2026-12-31")
             assert d["valor"] == fila[k], (k, fila["anio"])
-            if k not in ("jce", "citas"):
+            if k not in acreditacion.SUMAS:
                 assert len(d["registros"]) == fila[k], (k, fila["anio"])
     d = acreditacion.detalle("coautoria_internacional", 2024, "2026-12-31")
     assert [(p["titulo"], p["paises"]) for p in d["registros"]] == [("Internacional con coautor", ["Estados Unidos"])]

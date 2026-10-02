@@ -8,7 +8,13 @@ from app.comun.db import AHORA, get_db, sin_tildes, transaccion
 MODALIDADES = {"presencial": "Presencial", "virtual": "Virtual", "hibrida": "Híbrida"}
 AMBITOS = {"local": "Local", "nacional": "Nacional", "internacional": "Internacional"}
 ROLES = {"expositor": "Expositor(a)", "organizador": "Organizador(a)", "asistente": "Asistente",
-         "comite": "Comité"}
+         "comite": "Comité", "distinguido": "Distinguido(a)", "revisor": "Revisor(a)", "responsable": "Responsable"}
+# Tipos con datos propios (PLAN §40) y el rol que debe tener al menos un participante.
+PREMIO, ARBITRAJE, SERVICIO = "Premio o distinción", "Arbitraje de artículos", "Prestación de servicios"
+ROL_DEL_TIPO = {PREMIO: "distinguido", ARBITRAJE: "revisor", SERVICIO: "responsable"}
+MONEDAS = {"BOB": "Bolivianos (Bs)", "USD": "Dólares (USD)"}
+FINANCIAMIENTOS = {"interno": "Interno (de la universidad)", "externo": "Externo"}
+CAMPOS_PROPIOS = ("cantidad", "revista_id", "monto", "moneda", "financiamiento", "ingresos")
 
 
 def tipos() -> list[dict]:
@@ -33,8 +39,20 @@ def participantes(aid: int) -> list[dict]:
     return res
 
 
+def nombre_tipo(tipo_id) -> str | None:
+    filas = get_db().q("SELECT nombre FROM tipo_actividad WHERE id = ?", [tipo_id])
+    return filas[0]["nombre"] if filas else None
+
+
+def anual(a: dict) -> bool:
+    """Una entrada de todo un año (el arbitraje se registra por revista y año)."""
+    return bool(a.get("fecha_fin")) and a["fecha_inicio"][4:] == "-01-01" and a["fecha_fin"][4:] == "-12-31" \
+        and a["fecha_inicio"][:4] == a["fecha_fin"][:4]
+
+
 def validar(d: dict, participantes_: list[tuple[str, str]]) -> list[str]:
     errores = []
+    tipo = nombre_tipo(d["tipo_id"])
     if not d["titulo"]:
         errores.append("El título es obligatorio.")
     if not get_db().q("SELECT 1 FROM tipo_actividad WHERE id = ? AND activo = 1", [d["tipo_id"]]):
@@ -55,7 +73,35 @@ def validar(d: dict, participantes_: list[tuple[str, str]]) -> list[str]:
         errores.append("Hay participantes o roles no válidos.")
     if len({r for r, _ in participantes_}) != len(participantes_):
         errores.append("Hay participantes repetidos.")
+    rol = ROL_DEL_TIPO.get(tipo)
+    if rol and participantes_ and not any(x == rol for _, x in participantes_):
+        errores.append(f"Indique quién es {ROLES[rol].lower()}: al menos un participante con ese rol.")
+    if tipo == ARBITRAJE and not (isinstance(d.get("cantidad"), int) and d["cantidad"] > 0):
+        errores.append("Indique cuántos artículos arbitró para esa revista en el año.")
+    if tipo == ARBITRAJE and not d.get("institucion"):
+        errores.append("Indique la revista.")
+    if tipo == SERVICIO:
+        if d.get("monto") is not None and d.get("moneda") not in MONEDAS:
+            errores.append("Indique la moneda del monto.")
+        if d.get("financiamiento") not in (None, *FINANCIAMIENTOS):
+            errores.append("Origen del financiamiento no válido.")
     return errores
+
+
+def revista_del_catalogo(titulo: str | None) -> int | None:
+    """La revista del catálogo con ese título (sin distinguir mayúsculas), si existe."""
+    if not titulo:
+        return None
+    filas = get_db().q("SELECT id FROM revista WHERE lower(titulo) = lower(?) LIMIT 1", [titulo.strip()])
+    return filas[0]["id"] if filas else None
+
+
+def entero(texto) -> tuple[int | None, bool]:
+    """'1 500' / '1500' → (1500, True); '' → (None, True); '15,5' → (None, False)."""
+    t = str(texto or "").replace(" ", "").replace("\u00a0", "")
+    if not t:
+        return None, True
+    return (int(t), True) if t.isdigit() else (None, False)
 
 
 def guardar(d: dict, participantes_: list[tuple[str, str]], usuario_id: int, aid: int | None = None):
@@ -139,6 +185,8 @@ def para_selector(uid: int) -> list[dict]:
 def fechas_texto(a: dict) -> str:
     """'2026-03-02' / '2026-03-02'…'2026-03-06' → '2 mar 2026' / '2–6 mar 2026'."""
     meses = "ene feb mar abr may jun jul ago sep oct nov dic".split()
+    if anual(a):
+        return a["fecha_inicio"][:4]
     i = date.fromisoformat(a["fecha_inicio"])
     f = date.fromisoformat(a["fecha_fin"]) if a.get("fecha_fin") else i
     if f == i:

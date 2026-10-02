@@ -224,8 +224,21 @@ Además de seminarios, congresos y escuelas, registre **estancias o pasantías d
 
 «Actividades» reúne seminarios, congresos, escuelas, visitas y otras actividades. Al registrar
 una, indique el tipo, las fechas, el lugar, la modalidad y el ámbito, y los participantes (del
-instituto o externos) con su rol: expositor(a), organizador(a), asistente o comité. En la ficha
-puede adjuntar certificados o afiches.
+instituto o externos) con su rol: expositor(a), organizador(a), asistente, comité, distinguido(a),
+revisor(a) o responsable. En la ficha puede adjuntar certificados o afiches.
+
+Tres tipos tienen datos propios (el formulario cambia al elegirlos):
+
+- **Premio o distinción:** la institución que lo otorga y la fecha; al menos una persona con el rol
+  «Distinguido(a)». Sale en el anexo (reconocimiento de pares, 2.2.1 d) y en la Guía de Antecedentes
+  (logros de cada académico).
+- **Arbitraje de artículos:** una entrada **por revista y año**, con la cantidad de artículos que
+  arbitró, sin sus títulos (el arbitraje es confidencial); al menos una persona «Revisor(a)». Si la
+  revista está en el catálogo, se reconoce por su título.
+- **Prestación de servicios** (asesorías, cursos o consultorías para terceros): la contraparte, el
+  monto con su moneda, si el financiamiento es interno o externo y los ingresos que dejó a la Carrera
+  o el Instituto; al menos una persona «Responsable». Sale en el anexo (3.4.3) y en la hoja 28 de la
+  Guía de Antecedentes (en dólares, con el tipo de cambio que se indica al generarla).
 
 Para una **charla** en un congreso, registre el congreso como actividad y la charla como producto
 de tipo «Presentación», vinculada a esa actividad.

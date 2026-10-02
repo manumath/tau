@@ -409,6 +409,11 @@ def filas_actividades(acts: list[dict]) -> list[dict]:
             "Participantes del instituto": "; ".join(
                 f"{p['apellidos']}, {p['nombres']} ({actividades.ROLES[p['rol']]})" for p in parts if p["interno"]),
             "Líneas de investigación": lineas.nombres(lineas.de_registro("actividad", a["id"])),
+            # Propios de arbitraje (artículos) y de prestación de servicios (montos en su moneda).
+            "Cantidad": a.get("cantidad") if a.get("cantidad") is not None else "",
+            "Monto": a.get("monto") if a.get("monto") is not None else "", "Moneda": a.get("moneda") or "",
+            "Financiamiento": a.get("financiamiento") or "",
+            "Ingresos para la unidad": a.get("ingresos") if a.get("ingresos") is not None else "",
         })
     return filas
 

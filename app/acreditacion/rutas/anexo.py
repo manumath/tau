@@ -158,7 +158,9 @@ def documento(a):
             ("estancias", "Estancias"), ("transferencia", "Transferencia"), ("redes", "Redes"),
             ("proyectos", "Proyectos vigentes"), ("tesis_defendidas", "Tesis defendidas"),
             ("con_estudiantes", "Productos con estudiantes"), ("coautoria_internacional", "Artículos con coautoría internacional"),
-            ("proyectos_internacionales", "Proyectos internacionales"), ("citas", "Citas")]
+            ("proyectos_internacionales", "Proyectos internacionales"), ("citas", "Citas"),
+            ("premios", "Premios y distinciones"), ("arbitrajes", "Artículos arbitrados para revistas"),
+            ("servicios", "Prestación de servicios")]
     resumen = Div(Table(Thead(Tr(Th("Indicador"), *[Th(str(x["anio"]), cls="text-right") for x in anios])),
                         Tbody(*[Tr(Td(t), *[_num(x[k], url_detalle(a, k, x["anio"])) for x in anios]) for k, t in cols])),
                   cls="overflow-x-auto")
@@ -236,16 +238,35 @@ def documento(a):
                   _lista_actividades(a["presentaciones"])),
         _criterio("3.6.3 j", "Participación en redes de investigación", "Redes nacionales e internacionales.",
                   _lista_actividades(a["redes"])),
-        _criterio("2.2.1 d", "Reconocimiento de pares", "Participación en comités científicos o editoriales.",
-                  _lista_actividades(a["comites"])),
+        _criterio("2.2.1 d", "Reconocimiento de pares",
+                  "Premios y distinciones, arbitraje de artículos para revistas y participación en comités "
+                  "científicos o editoriales.",
+                  H3("Premios y distinciones"), _lista_actividades(a["premios"]),
+                  H3(f"Arbitraje de artículos ({sum(x['cantidad'] or 0 for x in a['arbitrajes'])} artículos)"),
+                  Ul(*[Li(Span(actividades.fechas_texto(x), cls="apagado"), " — ", x["institucion"] or x["titulo"],
+                          Span(f" · {x['cantidad']} artículo{'s' if (x['cantidad'] or 0) != 1 else ''} · "
+                               f"{_nombres([p for p in actividades.participantes(x['id']) if p['interno']])}",
+                               cls="apagado")) for x in a["arbitrajes"]], cls="space-y-1")
+                  if a["arbitrajes"] else P("Sin registros en el periodo.", cls="apagado"),
+                  H3("Comités científicos o editoriales"), _lista_actividades(a["comites"])),
+        _criterio("3.4.3", "Prestación de servicios",
+                  "Asesorías, cursos y consultorías prestados a terceros, con su contraparte y lo que generaron.",
+                  Ul(*[Li(Span(actividades.fechas_texto(x), cls="apagado"), " — ", x["titulo"],
+                          Span(" · " + " · ".join(y for y in (
+                              x["institucion"],
+                              f"{x['monto']:,} {x['moneda'] or ''}".replace(",", ".") if x["monto"] is not None else None,
+                              actividades.FINANCIAMIENTOS.get(x["financiamiento"] or "", "").split(" (")[0].lower() or None,
+                              f"ingresos para la unidad: {x['ingresos']:,} {x['moneda'] or ''}".replace(",", ".")
+                              if x["ingresos"] is not None else None) if y), cls="apagado"))
+                       for x in a["servicios"]], cls="space-y-1")
+                  if a["servicios"] else P("Sin registros en el periodo.", cls="apagado")),
         seccion_internacionalizacion(a),
         _criterio("3.6.1", "Impacto", "Citas según OpenAlex de los productos que cuentan, por año de publicación.",
                   P(f"{m['impacto']['citas']} citas en {m['impacto']['con_datos']} de {m['impacto']['productos']} productos"
                     + (f", actualizadas el {m['impacto']['actualizadas']}." if m["impacto"]["actualizadas"] else "."),
                     cls="text-sm")),
         Div(H2("Aún no registrado en el sistema"),
-            Ul(Li("Premios y distinciones; arbitraje de artículos (2.2.1 d)."),
-               Li("Asesorías y prestación de servicios (3.4.3); impacto de la vinculación (3.4.1)."),
+            Ul(Li("Impacto de la vinculación con el medio (3.4.1)."),
                cls="list-disc pl-5 space-y-1 text-sm"),
             P("Estos criterios deben documentarse por otros medios hasta que el sistema los registre.", cls="apagado text-sm")),
         seccion_metodo(m))
@@ -294,7 +315,9 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
                "transferencia": "Transferencia", "redes": "Redes", "proyectos": "Proyectos vigentes",
                "tesis_defendidas": "Tesis defendidas", "con_estudiantes": "Productos con estudiantes",
                "coautoria_internacional": "Artículos con coautoría internacional",
-               "proyectos_internacionales": "Proyectos internacionales", "citas": "Citas"}
+               "proyectos_internacionales": "Proyectos internacionales", "citas": "Citas",
+               "premios": "Premios y distinciones", "arbitrajes": "Artículos arbitrados para revistas",
+               "servicios": "Prestación de servicios"}
     resumen = [{"Indicador": t, **{str(x["anio"]): x[k] for x in a["anios"]}} for k, t in nombres.items()]
     cuerpo = [{"Año": c["anio"], "Investigador(a)": f"{p['apellidos']}, {p['nombres']}", "Categoría": p["categoria"],
                "Carga (h/mes)": p["jornada"] or ""} for c in a["cuerpo"] for p in c["personas"]]
@@ -303,7 +326,9 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
         return [{"Criterio": criterio, **f} for f in informes.filas_actividades(acts)]
     acts = (actividades_con("3.6.3 f Transferencia", a["transferencia"]) + actividades_con("3.4.1 Divulgación", a["divulgacion"])
             + actividades_con("3.6.3 g Estancias", a["estancias"]) + actividades_con("3.6.3 i Presentaciones", a["presentaciones"])
-            + actividades_con("3.6.3 j Redes", a["redes"]) + actividades_con("2.2.1 d Comités", a["comites"]))
+            + actividades_con("3.6.3 j Redes", a["redes"]) + actividades_con("2.2.1 d Comités", a["comites"])
+            + actividades_con("2.2.1 d Premios", a["premios"]) + actividades_con("2.2.1 d Arbitraje", a["arbitrajes"])
+            + actividades_con("3.4.3 Prestación de servicios", a["servicios"]))
     metodo = [{"Tema": "Periodo", "Descripción": f"{a['desde']} a {a['hasta']}"},
               {"Tema": "Revistas", "Descripción": "Solo revistas verificadas en el catálogo" if a["exige_verificada"]
                else "Incluye revistas sin verificar (clasificación declarada)"},
@@ -353,9 +378,12 @@ def _tabla_registros(d, auth):
                   *((", ".join(p["paises"]),) if d["indicador"] == "coautoria_internacional" else ()))
                  for p in regs]
     elif clase == "actividad":
-        cab = ("Fechas", "Título", "Tipo", "Institución", "País", "Ámbito")
+        arbitraje = d["indicador"] == "arbitrajes"
+        cab = ("Fechas", "Título", "Tipo", "Institución", "País", "Ámbito") + (("Artículos",) if arbitraje else ())
         filas = [(actividades.fechas_texto(x), enlace(x["titulo"], f"/actividades/{x['id']}"), x["tipo"],
-                  x["institucion"] or "—", x["pais"] or "—", actividades.AMBITOS[x["ambito"]]) for x in regs]
+                  x["institucion"] or "—", x["pais"] or "—", actividades.AMBITOS[x["ambito"]],
+                  *((Td(str(x["cantidad"] or 0), cls="text-right tabular-nums"),) if arbitraje else ()))
+                 for x in regs]
     else:
         cab = ("Código", "Proyecto", "Tipo", "Periodo", "Ámbito", "Financiamiento")
         filas = [(p["codigo"] or "—",
@@ -363,7 +391,7 @@ def _tabla_registros(d, auth):
                   proyectos.tipo_texto(p), f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}",
                   proyectos.AMBITOS.get(proyectos.ambito_efectivo(p), "Sin indicar"), p["fuente_financiamiento"] or "—")
                  for p in regs]
-    numericas = ("Carga (h/mes)", "Citas")
+    numericas = ("Carga (h/mes)", "Citas", "Artículos")
     return Div(Table(Thead(Tr(*[Th(c, cls="text-right" if c in numericas else "") for c in cab])),
                      Tbody(*[Tr(*[c if getattr(c, "tag", None) == "td" else Td(c) for c in f]) for f in filas]),
                      data_tabla=f"anexo-{d['indicador']}-{d['anio']}", cls="uk-table uk-table-divider uk-table-small"),
