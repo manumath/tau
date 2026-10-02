@@ -1395,7 +1395,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   con cantidad y montos. Ya no figuran en «Aún no registrado» (queda el impacto de la vinculación).
 - Guía de Antecedentes: hoja 10, columna de logros (premios en los años de la guía); hoja 28 completa
   salvo impacto, evaluación y difusión.
-- Decisiones del equipo (confirmar):
+- Decisiones confirmadas por la Dirección (1-oct-2026):
   - Un arbitraje cuenta en la memoria si el revisor estaba vinculado el 1 de enero de ese año (la regla
     general usa la fecha de inicio de la actividad).
   - Un servicio sin origen del financiamiento se pone como externo en la Guía (y se anota).
