@@ -89,7 +89,8 @@ def test_guia_con_los_datos_del_sistema(guia_llena):
 
     asig = libro[H["asignaturas"]]
     fila = next(r for r in range(7, 80) if (asig[f"C{r}"].value or "").endswith("(MAT-111)"))
-    assert (asig[f"B{fila}"].value, asig[f"E{fila}"].value, asig[f"F{fila}"].value) == (1, 1, 40)
+    assert (asig[f"B{fila}"].value, asig[f"E{fila}"].value, asig[f"F{fila}"].value) == (1, 1, None)  # cupo: a mano
+    assert ident["B12"].value is None   # duración oficial: a mano (la plantilla traía un 5)
 
     acad = libro[H["academicos"]]
     filas = {acad[f"C{r}"].value: r for r in range(7, 20) if acad[f"C{r}"].value}

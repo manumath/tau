@@ -38,13 +38,13 @@ H = {  # nombres de las hojas en la plantilla (algunos terminan en espacio)
 # Qué llena el sistema en cada hoja (se muestra en la pantalla de la guía).
 COBERTURA = [
     ("0. Resumen estadístico", "Se calcula solo en Excel a partir de las demás hojas."),
-    ("1. Identificación", "Programa, institución, duración, créditos u horas del plan, área OCDE y los 10 ciclos. "
-                          "Falta: matrícula, sede, jornada, modalidad y año de inicio."),
+    ("1. Identificación", "Programa, institución, créditos u horas del plan, área OCDE y los 10 ciclos. "
+                          "Falta: matrícula, sede, jornada, modalidad, duración oficial y año de inicio."),
     ("2. Líneas de investigación", "Las líneas vigentes. Falta: perfiles de ingreso y egreso y objetivos."),
     ("3 a 6. Admisión, cohortes, egreso y titulación", "No: son datos del sistema académico de la UMSA. El "
                                                        "sistema solo ajusta los ciclos y corrige las fórmulas."),
-    ("7.a y 7.b. Asignaturas", "Del plan vigente: semestre, requisitos, créditos, veces que se dictó en el último año y "
-                               "máximo de inscritos por paralelo. Falta: línea formativa."),
+    ("7.a y 7.b. Asignaturas", "Del plan vigente: semestre, requisitos, créditos y veces que se dictó en el último "
+                               "año. Falta: cupo por sección y línea formativa."),
     ("8 y 9. Plan de estudios y consejo", "No."),
     ("10. Académicos", "Grados, edad, incorporación, unidad, categoría, horas por actividad, cursos y tesis. Falta: "
                        "sistema nacional de investigación y logros."),
@@ -149,13 +149,12 @@ def planes_vigentes() -> list[dict]:
 def _identificacion(x: Plantilla, plan, ciclos):
     h = H["id"]
     x.escribir(h, "B7", config.UNIVERSIDAD)
+    # Duración oficial: la completa la Dirección (decisión del 1-oct-2026); la plantilla trae un 5 de ejemplo.
+    x.escribir(h, "B12", None)
     x.escribir(h, "A19", "CIENCIAS_NATURALES")
     x.escribir(h, "B19", "1.1. MATEMÁTICAS")
     if plan:
         x.escribir(h, "B6", plan["programa"])
-        semestres = [f["semestre"] for f in planes.asignaturas(plan["id"]) if f["semestre"]]
-        if semestres:
-            x.escribir(h, "B12", (max(semestres) + 1) // 2)
         t = planes.totales(plan["id"])
         if "en créditos" in t:
             x.escribir(h, "B13", t["en créditos"][0] or t["en créditos"][1])
@@ -196,7 +195,7 @@ def _asignaturas(x: Plantilla, plan, anio_ref: int):
     if not plan:
         return
     dictado = {f["asignatura_id"]: f for f in get_db().q(
-        """SELECT o.asignatura_id, COUNT(DISTINCT o.gestion_id) AS veces, MAX(o.inscritos) AS maximo
+        """SELECT o.asignatura_id, COUNT(DISTINCT o.gestion_id) AS veces
            FROM oferta o JOIN gestion_academica g ON g.id = o.gestion_id WHERE g.anio = ?
            GROUP BY o.asignatura_id""", [anio_ref])}
     filas = planes.asignaturas(plan["id"])
@@ -210,7 +209,6 @@ def _asignaturas(x: Plantilla, plan, anio_ref: int):
         x.escribir(H["asignaturas"], f"C{r}", nombre)
         x.escribir(H["asignaturas"], f"D{r}", "sí" if f["requisitos"] else "no")
         x.escribir(H["asignaturas"], f"E{r}", d.get("veces"))
-        x.escribir(H["asignaturas"], f"F{r}", d.get("maximo"))
         x.escribir(H["asignaturas"], f"I{r}", f["creditos"])
         obs = [planes.TIPOS[f["tipo"]]] if f["tipo"] != "obligatoria" else []
         if f["requisitos"]:
@@ -223,7 +221,6 @@ def _asignaturas(x: Plantilla, plan, anio_ref: int):
         x.escribir(H["optativas"], f"A{r}", i + 1)
         x.escribir(H["optativas"], f"B{r}", planes.GRUPOS_ELECTIVAS[f["tipo"]])
         x.escribir(H["optativas"], f"C{r}", f"{f['nombre']} ({f['sigla']})")
-        x.escribir(H["optativas"], f"D{r}", d.get("maximo"))
         x.escribir(H["optativas"], f"F{r}", f["creditos"])
 
 

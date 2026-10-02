@@ -1296,18 +1296,16 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
 - Decisiones del 28-sep-2026: horas en **h/semana** (h/mes ÷ 4); jornada completa ≥ 160 h/mes, media
   80–159, por horas < 80 (sin carga registrada cuenta como por horas y se anota); montos en USD con el
   **tipo de cambio que indica quien genera la guía**.
-- Decisiones tomadas por el equipo (confirmar):
+- Decisiones confirmadas por la Dirección (1-oct-2026):
   - «Académicos del programa»: vínculo con la Carrera como titular, contratado(a), interino(a) o
     invitado(a) (no «externo»); la hoja 10 los toma al cierre del último año (o a hoy).
   - Hoja 20: proyectos individuales e institucionales de investigación; los de interacción social van
     a la 27 (extensión) con las actividades de divulgación. Monto de un institucional → financiamiento
     interno; de un individual → externo, con su fuente.
   - Hojas 22, 23 y 25: productos enviados, aceptados o publicados en los años de los 10 ciclos con al
-    menos un autor del programa vinculado en la fecha (sin exigir revista verificada ni arbitraje: la
-    Guía pide todos los artículos, con su indexación).
-  - 7.a: «Número máximo de estudiantes por sección» = máximo de inscritos registrado en un paralelo en
-    el último año; «veces que se dicta» = gestiones del último año en que se ofertó.
-  - Duración del programa: semestres del plan ÷ 2 (el Plan 2017 cargado tiene 8 semestres: 4 años).
+    menos un autor del programa vinculado en la fecha (sin exigir revista verificada ni arbitraje).
+  - 7.a: «veces que se dicta» = gestiones del último año en que se ofertó. El **cupo por sección** y la
+    **duración del programa** (hoja 1) quedan en blanco para completarlos a mano con el dato oficial.
 - Errores de la plantilla que se corrigen en el archivo generado: tasas de egreso y titulación (hojas
   5 y 6) apuntaban a otro libro (`[1]4.b.Cohortes semestre-ciclo`); deserción al tercer año de la
   cohorte de la fila 18 (hoja 4) usaba la fila 17; «Costo total» de la hoja 20 sumaba AQ+AR (columnas
@@ -1328,7 +1326,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   `LoaderButton` de MonsterUI, que no aplana clases en tupla.
 - «Mi docencia» (y la ficha del docente): barras de docencia asignada frente a prevista y de horas
   asignadas en proyectos frente a la investigación o extensión del vínculo.
-- Decisiones del equipo (confirmar): en la lista de la Dirección del Instituto se dejó solo la
+- Decisión confirmada por la Dirección (1-oct-2026): en la lista de la Dirección del Instituto queda solo la
   insignia de estado (la tabla ya tiene la fecha de envío); el indicador compacto va en «Mis
   propuestas». La preparación del semestre queda para una etapa posterior.
 - `capturar.py --base RUTA` para capturar con una base preparada.
