@@ -1369,7 +1369,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
 - Migración 0037: tabla `informe_programado` (informe, ocasión, fecha, destinatarios) para que cada
   envío salga una sola vez.
 - «Informes» muestra a cada persona los informes que recibe: próximos envíos y últimos realizados.
-- Decisiones del equipo (confirmar):
+- Decisiones confirmadas por la Dirección (1-oct-2026):
   - Ventanas: la memoria se envía entre el 10 de enero y el 31 de marzo; la carga, en las 3 semanas
     siguientes al inicio; si en la ventana nadie usa el sistema, ese envío no ocurre (no hay tareas
     programadas en el servidor).
