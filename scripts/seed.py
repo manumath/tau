@@ -16,7 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import json  # noqa: E402
 
 from app.academico import gestiones, oferta  # noqa: E402
-from app.investigacion import actividades, carga_proyectos, institucionales, lineas, perfiles, productos, proyectos, revistas
+from app.investigacion import (actividades, carga_proyectos, institucionales, lineas, msc, perfiles,  # noqa: E402
+                               productos, proyectos, revistas)
 from app.comun import academicos, config, estudiantes, personas, usuarios, vinculos  # noqa: E402
 from app.comun.db import AHORA, get_db, marca_tiempo  # noqa: E402
 from app.comun.db import init_db  # noqa: E402
@@ -403,6 +404,27 @@ def _cargar_docencia() -> bool:
     return True
 
 
+# Clasificación MSC2020 de los productos de ejemplo (el principal primero).
+MSC_PRODUCTOS = {
+    "Anillos con condición de cadena ascendente y sus ideales primarios": ["13E05", "13C05"],
+    "Invariantes algebraicos de máquinas de estados finitos": ["68Q70", "03D05", "13A50"],
+    "Morfogénesis y ecuaciones de reacción-difusión": ["35K57", "92C15"],
+    "Sobre números computables: notas del seminario": ["03D80"],
+}
+
+
+def _clasificar_productos() -> int:
+    """Clasifica los productos de ejemplo que aún no tienen códigos MSC (también en bases anteriores)."""
+    n = 0
+    for titulo, codigos in MSC_PRODUCTOS.items():
+        fila = get_db().q("""SELECT id FROM producto p WHERE titulo = ?
+                             AND NOT EXISTS (SELECT 1 FROM producto_msc WHERE producto_id = p.id)""", [titulo])
+        if fila:
+            msc.guardar_de_producto(fila[0]["id"], codigos)
+            n += 1
+    return n
+
+
 def _cargar_perfil(uid: int, datos: dict | None):
     if not datos:
         return
@@ -457,6 +479,7 @@ def main():
     con_lineas = _cargar_lineas()
     con_docencia = _cargar_docencia()
     _cargar_carga_en_proyectos()
+    _clasificar_productos()
     # Internacionalización de ejemplo (idempotente): países normalizados y ámbito de los proyectos.
     personas.completar_paises()
     db = get_db()

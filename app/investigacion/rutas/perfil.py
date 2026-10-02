@@ -10,7 +10,7 @@ import json
 
 import fasthtml.common as fh
 
-from fasthtml.common import A, APIRouter, Div, Hr, Li, P, Span, Ul, UploadFile
+from fasthtml.common import A, APIRouter, Div, Hr, P, Span, UploadFile
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
@@ -21,6 +21,7 @@ from app.comun.componentes import datos_personales
 from app.comun.componentes import grados as grados_ui
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.investigacion.componentes.lineas import casillas_lineas, insignias_lineas
+from app.investigacion.componentes.msc import resultados as resultados_msc
 from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
 from app.comun.db import auditar
 from app.investigacion.identificadores import IDENTIFICADORES, normalizar_todos
@@ -342,30 +343,11 @@ def seccion_areas(uid, error=None):
 @rt("/perfil/msc/buscar")
 def get(auth, q: str = ""):
     ya = tuple(a["codigo"] for a in perfiles.areas(auth["id"]))
-    resultados = msc.buscar(q, excluir=ya)
     if not q.strip():
         return ""
-    if not resultados:
-        return Div(P("Sin resultados. Pruebe con otro término (el catálogo MSC está en inglés).",
-                     cls=(TextPresets.muted_sm, "p-3")),
-                   cls="absolute z-20 w-full mt-1 rounded-md border border-border bg-background shadow-lg")
-    secciones = {}
-
-    def ruta_seccion(m):
-        if m["nivel"] == 1:
-            return ""
-        s = secciones.setdefault(m["codigo"][:2], msc.seccion(m["codigo"]))
-        return s["texto"] + " › " if s else ""
-
-    return Ul(*[Li(fh.Button(
-        Span(m["codigo"], cls="font-mono text-xs font-semibold w-14 shrink-0 nomath"),
-        Span(Span(ruta_seccion(m), cls=TextPresets.muted_sm), m["texto"], cls="text-sm"),
-        type="button", cls="w-full flex gap-3 items-baseline text-left px-3 py-2 "
-                           "hover:bg-muted focus:bg-muted focus:outline-none",
-        hx_post="/perfil/msc", hx_vals=json.dumps({"codigo": m["codigo"]}),
-        hx_target="#seccion-areas", hx_swap="outerHTML")) for m in resultados],
-        cls="absolute z-20 w-full mt-1 max-h-80 overflow-y-auto rounded-md border border-border "
-            "bg-background shadow-lg divide-y divide-border", role="listbox")
+    return resultados_msc(msc.buscar(q, excluir=ya), lambda m: dict(
+        hx_post="/perfil/msc", hx_vals=json.dumps({"codigo": m["codigo"]}), hx_target="#seccion-areas",
+        hx_swap="outerHTML"))
 
 
 @rt("/perfil/msc")

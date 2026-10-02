@@ -1,6 +1,6 @@
 """Lista de productos: presentación de cada producto, filtros y declaración de filiación."""
 import fasthtml.common as fh
-from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, Label, P, Response, Span
+from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, Label, Option, P, Response, Select, Span
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, CheckboxX, TextPresets, UkIcon
 
@@ -31,6 +31,9 @@ def insignias(p):
         res.append(insignia(productos.ESTADOS[p["estado_publicacion"]], "ambar"))
     if productos.cuenta_para_informe(p):
         res.append(insignia("Cuenta para el informe", "verde", icono="check"))
+    if p.get("msc"):
+        principal = p["msc"][0]
+        res.append(insignia(f"MSC {principal['codigo']}", "gris", titulo=principal["texto_plano"]))
     if p.get("citas"):
         res.append(insignia(f"{p['citas']} cita{'s' if p['citas'] != 1 else ''}", "gris", icono="quote",
                             titulo=f"Según OpenAlex, al {p['citas_actualizadas']}"))
@@ -102,8 +105,8 @@ def _confirmacion_eliminar(p):
     return f"¿Eliminar «{p['titulo']}»?{aviso}"
 
 
-def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False):
-    items = productos.de_investigador(uid, q, anio, tipo, informe, sin_filiacion)
+def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False, area=""):
+    items = productos.de_investigador(uid, q, anio, tipo, informe, sin_filiacion, area)
     n_informe = sum(productos.cuenta_para_informe(p) for p in items)
     contenido = (
         [P(f"{len(items)} producto{'s' if len(items) != 1 else ''} · {n_informe} cuenta"
@@ -119,7 +122,7 @@ def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False):
              cls="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-300 "
                  "bg-amber-50 dark:bg-amber-950 p-3 mt-3") if sin_filiacion else "",
          Div(*[item(p, uid) for p in items], cls="divide-y divide-border")]
-        if items else [P("No hay productos que coincidan." if (q or anio or tipo or informe or sin_filiacion)
+        if items else [P("No hay productos que coincidan." if (q or anio or tipo or informe or sin_filiacion or area)
                          else "Aún no registra productos. Use «Nuevo producto» para empezar.",
                          cls=(TextPresets.muted_sm, "py-8 text-center"))])
     return Div(*contenido, id=ID_LISTA, hx_get="/productos/lista", hx_include=f"#{ID_FILTROS}",
@@ -128,8 +131,17 @@ def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False):
 
 # --- Rutas: lista ---------------------------------------------------------------------
 
+def selector_area(areas, area):
+    """Filtro por sección MSC2020 (en el código principal o en uno secundario)."""
+    return Select(Option("Todas las áreas (MSC)", value=""),
+                  *[Option(f"{s['codigo'][:2]} · {s['texto_plano']}", value=s["codigo"][:2], selected=s["codigo"][:2] == area)
+                    for s in areas],
+                  name="area", cls="uk-select w-56", aria_label="Área MSC2020")
+
+
 @rt("/productos")
-def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, sin_filiacion: bool = False):
+def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, sin_filiacion: bool = False,
+        area: str = ""):
     uid = auth["id"]
     casilla_informe = Label(CheckboxX(name="informe", value="1", checked=informe),
                             Span("Solo los que cuentan para el informe"),
@@ -158,28 +170,30 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         filtros(ID_FILTROS, "/productos/lista", ID_LISTA, q, anio, productos.anios_de(uid), tipo,
-                productos.tipos(), extra=[casilla_informe, casilla_filiacion]),
-        Card(lista(uid, q, anio, tipo, informe, sin_filiacion)),
+                productos.tipos(), extra=[selector_area(productos.areas_de(uid), area), casilla_informe,
+                                          casilla_filiacion]),
+        Card(lista(uid, q, anio, tipo, informe, sin_filiacion, area)),
         usuario=auth, seccion="productos")
 
 
 @rt("/productos/lista")
-def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, sin_filiacion: bool = False):
-    return (lista(auth["id"], q, anio, tipo, informe, sin_filiacion),
-            HtmxResponseHeaders(replace_url=url_filtrada("/productos", q=q, anio=anio, tipo=tipo,
+def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, sin_filiacion: bool = False,
+        area: str = ""):
+    return (lista(auth["id"], q, anio, tipo, informe, sin_filiacion, area),
+            HtmxResponseHeaders(replace_url=url_filtrada("/productos", q=q, anio=anio, tipo=tipo, area=area,
                                                          informe="1" if informe else "",
                                                          sin_filiacion="1" if sin_filiacion else "")))
 
 
 @rt("/productos/filiacion/todos")
-def post(auth, sess, q: str = "", anio: str = "", tipo: str = "", informe: bool = False):
+def post(auth, sess, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, area: str = ""):
     """Declara la filiación propia en todos los productos pendientes que muestra la lista."""
     uid = auth["id"]
-    ids = [p["id"] for p in productos.de_investigador(uid, q, anio, tipo, informe, sin_filiacion=True)]
+    ids = [p["id"] for p in productos.de_investigador(uid, q, anio, tipo, informe, sin_filiacion=True, area=area)]
     n = filiacion.declarar(uid, ids, 1)
     auditar(uid, "declarar_filiacion", "producto", None, f"{n} producto(s)")
     add_toast(sess, f"Filiación declarada en {n} producto(s).", "success")
-    return lista(uid, q, anio, tipo, informe, sin_filiacion=True)
+    return lista(uid, q, anio, tipo, informe, sin_filiacion=True, area=area)
 
 
 @rt("/productos/{pid}/filiacion")

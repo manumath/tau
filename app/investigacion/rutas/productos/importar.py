@@ -4,7 +4,7 @@ from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, P, Response,
 from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, UkIcon
 
-from app.investigacion import importacion, productos
+from app.investigacion import importacion, msc, productos
 from app.comun.componentes.layout import ID_MODAL
 from app.comun.db import auditar
 from app.investigacion.rutas.productos.formulario import autores_de_refs, caja_importar, modal_form
@@ -35,6 +35,13 @@ def post(auth, identificador: str = "", arxiv_asociado: str = "", proyecto: list
     filiaciones = [info["resumen"]["filiacion"].get(ref) for ref in refs]
     if info["resumen"]["filiacion"]:
         info["avisos"].append("La filiación IIMAT/UMSA se marcó según la afiliación publicada: revísela.")
+    # Clasificación MSC2020 sugerida: la de zbMATH Open para el DOI; si no la hay, el área principal de
+    # los autores del instituto.
+    if (codigos := importacion.msc_de_zbmath(d.get("doi") or info.get("doi_publicado"))):
+        d["msc"], d["_msc_origen"] = codigos, "zbMATH Open"
+    else:
+        d["msc"] = msc.sugeridos_por_perfil([int(r[2:]) for r in refs if r.startswith("i:")])
+        d["_msc_origen"] = "el perfil de los autores"
     return modal_form(auth, d, autores_de_refs(refs, filiaciones), [], proyectos_sel=proyecto or [],
                        importado=info)
 

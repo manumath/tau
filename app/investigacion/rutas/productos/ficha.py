@@ -5,6 +5,7 @@ from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 from app.comun import permisos
 from app.investigacion import actividades, lineas, productos, proyectos, revistas
 from app.investigacion.componentes.lineas import insignias_lineas
+from app.investigacion.componentes.msc import chips as chips_msc
 from app.comun.componentes.layout import ID_MODAL, pagina
 from app.comun.componentes.registros import dato, enlace_persona, insignia
 from app.investigacion.componentes.registros import insignias_proyectos, seccion_adjuntos
@@ -62,6 +63,7 @@ def ficha(p, auth):
                                            Span(" · según el catálogo" if p["clasificacion_catalogo"] else
                                                 " · declarado por los autores" if p["tipo"] == revistas.TIPO_ARTICULO else "",
                                                 cls=TextPresets.muted_sm))),
+            dato("Clasificación MSC2020", chips_msc(p["msc"]) if p["msc"] else None),
             dato("Presentada en", A(actividad["titulo"], href=f"/actividades/{actividad['id']}",
                                     cls="text-primary hover:underline") if actividad else None),
             dato("Identificadores", Div(*[e for e in enlaces if e], cls="flex gap-4 flex-wrap"))

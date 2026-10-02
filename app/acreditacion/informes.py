@@ -15,7 +15,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
-from app.investigacion import (actividades, filiacion, institucionales, lineas, perfiles, productos, proyectos,
+from app.investigacion import (actividades, filiacion, institucionales, lineas, msc, perfiles, productos, proyectos,
                                revistas)
 from app.comun import config, vinculos
 from app.comun.db import get_db
@@ -251,6 +251,7 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
                 motivos.append("filiación sin declarar")
             por_confirmar.append({**x, "motivo": "; ".join(motivos)})
     prods.sort(key=lambda p: (p["revision"] != "indexado", p["tipo"], p["titulo"]))
+    por_area, sin_area = _por_area(prods)
 
     # Revistas de los artículos que cuentan: ámbito, acceso abierto, cuartil y origen del dato.
     articulos = [p for p in prods if p["tipo"] == revistas.TIPO_ARTICULO]
@@ -341,7 +342,25 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
             "n_arbitrados": sum(p["revision"] == "arbitrado" for p in prods),
             "por_indice": dict(sorted(por_indice.items(), key=lambda x: -x[1])),
             "por_tipo_actividad": dict(sorted(por_tipo_act.items(), key=lambda x: -x[1])),
-            "por_ambito": por_ambito, "por_investigador": resumen, "por_categoria": por_categoria}
+            "por_ambito": por_ambito, "por_investigador": resumen, "por_categoria": por_categoria,
+            "por_area": por_area, "sin_area": sin_area}
+
+
+def _por_area(prods: list[dict]) -> tuple[list[dict], int]:
+    """Productos por sección MSC2020 de su código principal (PLAN.md §45), indexados y arbitrados, de más a
+    menos; y cuántos no tienen clasificación."""
+    areas, sin_area = {}, 0
+    for p in prods:
+        if not p["msc"]:
+            sin_area += 1
+            continue
+        clave = p["msc"][0]["codigo"][:2]
+        a = areas.setdefault(clave, {"seccion": clave, "indexados": 0, "arbitrados": 0})
+        a["indexados" if p["revision"] == "indexado" else "arbitrados"] += 1
+    for a in areas.values():
+        s = msc.seccion(a["seccion"])
+        a["texto"], a["total"] = (s["texto_plano"] if s else ""), a["indexados"] + a["arbitrados"]
+    return sorted(areas.values(), key=lambda a: (-a["total"], a["seccion"])), sin_area
 
 
 def serie_anual(hasta_anio: int, n: int = 5) -> list[dict]:
@@ -386,6 +405,7 @@ def filas_productos(prods: list[dict]) -> list[dict]:
             "Proyectos": ", ".join(v["proyecto"] for v in proyectos.vinculos_de("producto", p["id"])
                                    if v["estado"] == "aprobado"),
             "Líneas de investigación": lineas.nombres(lineas.de_registro("producto", p["id"])),
+            "MSC2020 (principal primero)": ", ".join(m["codigo"] for m in p["msc"]),
             # Revista y origen de la clasificación (transparencia del método).
             "Revista (catálogo)": r["revista"] or "", "ISSN": r["issn"] or "", "País de la revista": r["pais"] or "",
             "Ámbito": r["ambito"] or "", "Acceso abierto": {1: "Sí", 0: "No"}.get(r["acceso_abierto"], ""),

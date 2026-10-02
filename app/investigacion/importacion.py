@@ -4,6 +4,8 @@
 devuelve un dict con los datos listos para el formulario de producto, los autores tal como
 vienen en la fuente y avisos para el usuario. No guarda nada: el investigador revisa y confirma.
 
+`msc_de_zbmath` trae la clasificación MSC2020 que zbMATH Open asignó al DOI (para sugerirla).
+
 `resolver_autores` convierte los autores importados en referencias del selector: reconoce a
 los investigadores del instituto (por ORCID o por nombre), reutiliza externos ya registrados y
 deja los demás como referencias provisionales 'n:' que se registran al guardar.
@@ -17,12 +19,13 @@ from urllib.parse import quote
 import httpx2
 
 from app.comun import config, paises, personas
-from app.investigacion import productos, revistas
+from app.investigacion import msc, productos, revistas
 from app.comun.db import get_db, sin_tildes
 
 TIMEOUT = 10
 CROSSREF = "https://api.crossref.org/works/"
 ARXIV = "https://export.arxiv.org/api/query"
+ZBMATH = "https://api.zbmath.org/v1/document/_structured_search"
 NS = {"a": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom",
       "os": "http://a9.com/-/spec/opensearch/1.1/"}
 # Tipo de Crossref → tipo de producto del portal.
@@ -231,6 +234,25 @@ def importar(texto: str, arxiv_asociado: str | None = None) -> dict:
     if not res["datos"]["titulo"]:
         raise ErrorImportacion("El registro encontrado no tiene título; ingréselo a mano.")
     return res
+
+
+# --- Clasificación MSC (zbMATH Open) ----------------------------------------------------------------------
+
+def msc_de_zbmath(doi: str | None) -> list[str]:
+    """Códigos MSC2020 que zbMATH Open asignó al DOI, el principal primero (solo los del catálogo, a lo
+    sumo `msc.MAX_PRODUCTO`). Es una sugerencia: si zbMATH no lo tiene o no responde, devuelve []
+    sin estorbar la importación."""
+    if not doi:
+        return []
+    try:
+        r = _get(ZBMATH, {"DOI": doi, "page": 0, "results_per_page": 1})
+        if r.status_code != 200:
+            return []
+        resultado = r.json().get("result") or []
+        codigos = [m["code"] for m in resultado[0].get("msc") or [] if m.get("scheme", "msc2020") == "msc2020"]
+    except (ErrorImportacion, ValueError, KeyError, IndexError, TypeError, AttributeError):
+        return []
+    return msc.existentes(codigos)[:msc.MAX_PRODUCTO]
 
 
 # --- Autores ----------------------------------------------------------------------------------------------

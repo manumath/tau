@@ -504,6 +504,29 @@ def seccion_metodo(m):
            cls="list-disc pl-5 space-y-1 text-sm"))
 
 
+def seccion_areas(m):
+    """Productos que cuentan por sección MSC2020 de su código principal (PLAN.md §45)."""
+    if not m["productos"]:
+        return ""
+    areas = m["por_area"]
+    filas = [Tr(Td(Span(f"{a['seccion']} ", cls="font-mono"), a["texto"]), Td(str(a["indexados"]), cls="text-right"),
+                Td(str(a["arbitrados"]), cls="text-right"), Td(str(a["total"]), cls="text-right")) for a in areas]
+    if m["sin_area"]:
+        filas.append(Tr(Td("Sin clasificar", cls="apagado"), Td(""), Td(""), Td(str(m["sin_area"]), cls="text-right")))
+    tabla = Table(Thead(Tr(Th("Sección"), Th("Indexados", cls="text-right"), Th("Arbitrados", cls="text-right"),
+                           Th("Total", cls="text-right"))), Tbody(*filas))
+    grafico = barras("Productos por sección MSC2020", [a["seccion"] for a in areas[:12]],
+                     [("Indexados", [a["indexados"] for a in areas[:12]]),
+                      ("Arbitrados", [a["arbitrados"] for a in areas[:12]])],
+                     nota="Las 12 secciones con más productos." if len(areas) > 12 else "") if areas else ""
+    return Div(
+        H2("Por área (MSC2020)"),
+        P("Cada producto se cuenta una vez, en la sección de su código MSC2020 principal.", cls="apagado text-sm"),
+        Div(Div(tabla), grafico, cls="grid grid-cols-2 gap-6 items-start"),
+        P(f"{m['sin_area']} producto(s) sin clasificación MSC2020: complétela en cada producto (Calidad de datos "
+          "los lista).", cls="text-sm text-amber-700 no-imprimir") if m["sin_area"] else "")
+
+
 def seccion_evolucion(serie):
     """Los últimos cinco años en gráficos; cada barra abre la memoria de su año."""
     etiquetas = [x["anio"] for x in serie]
@@ -544,6 +567,7 @@ def documento_memoria(m, serie=None):
             Div(H3("Actividades por tipo"),
                 _tabla_conteo("Tipo", m["por_tipo_actividad"]) if m["por_tipo_actividad"] else P("—", cls="apagado")),
             cls="grid grid-cols-2 gap-6"),
+        seccion_areas(m),
         seccion_revistas(m["revistas"]),
         seccion_impacto(m["impacto"]),
         H2("Por categoría"),

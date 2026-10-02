@@ -213,3 +213,40 @@ def test_selector_de_periodo_de_la_memoria(page):
     page.locator("select[name=modo]").select_option("periodo")
     expect(page.locator("[data-modo=periodo]")).to_be_visible()
     expect(page.locator("[data-modo=anio]")).to_be_hidden()
+
+
+def test_clasificacion_msc_del_producto(page):
+    """Selector MSC2020 (PLAN.md §45): buscar, agregar, reordenar (el primero es el principal) y filtrar."""
+    entrar(page, "investigadora")
+    page.goto("/productos")
+    page.get_by_role("button", name="Nuevo producto").click()
+    modal = page.locator("#modal")
+    modal.locator("select[name=tipo_id]").select_option(label="Preprint")
+    modal.locator("input[name=titulo]").fill("Funciones zeta de anillos")
+    lista = modal.locator("#lista-msc")
+    buscar = modal.locator("#buscar-msc")
+    for texto, codigo in (("13E05", "13E05"), ("11M06", "11M06")):
+        buscar.click()
+        buscar.fill(texto)
+        modal.locator("#resultados-msc button", has_text=codigo).first.click()
+        expect(lista.locator(f"input[value='{codigo}']")).to_have_count(1)
+        expect(buscar).to_have_value("")                       # el buscador se limpia tras agregar
+    buscar.fill("13E")                                         # no ofrece los ya elegidos
+    expect(modal.locator("#resultados-msc button", has_text="13E10")).to_have_count(1)
+    expect(modal.locator("#resultados-msc button", has_text="13E05")).to_have_count(0)
+    buscar.fill("")
+    filas = lista.locator("li")
+    principal = lista.get_by_text("Principal")
+    expect(filas.first).to_contain_text("13E05")
+    expect(principal.first).to_be_visible()
+    expect(filas.nth(1).get_by_text("Principal")).to_be_hidden()
+    filas.nth(1).get_by_role("button", name="Subir 11M06").click()     # 11M06 pasa a ser el principal
+    expect(filas.first).to_contain_text("11M06")
+    expect(filas.first.get_by_text("Principal")).to_be_visible()
+    modal.get_by_role("button", name="Guardar").click()
+    expect(modal.locator("form")).to_have_count(0)
+    page.reload()                                                  # el filtro ofrece las áreas al cargar
+    page.locator("select[name=area]").select_option("11")
+    expect(page.locator("#lista-productos")).to_contain_text("Funciones zeta de anillos")
+    page.get_by_role("link", name="Funciones zeta de anillos").click()
+    expect(page.locator("main")).to_contain_text("Clasificación MSC2020")

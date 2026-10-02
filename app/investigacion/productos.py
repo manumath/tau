@@ -6,7 +6,7 @@ arbitrado y ya fue aceptado o publicado (ver `cuenta_para_informe`).
 import re
 from datetime import date
 
-from app.investigacion import adjuntos, revistas
+from app.investigacion import adjuntos, msc, revistas
 from app.comun import personas
 from app.comun.db import AHORA, DISTINTO_DE, get_db, sin_tildes, transaccion
 
@@ -67,6 +67,7 @@ def obtener(pid: int) -> dict | None:
     p["indices"] = get_db().q(
         """SELECT i.* FROM producto_indice pi JOIN indice i ON i.id = pi.indice_id
            WHERE pi.producto_id = ? ORDER BY i.orden""", [pid])
+    p["msc"] = msc.de_producto(pid)
     return p
 
 
@@ -99,9 +100,15 @@ def existente(doi: str | None, arxiv_id: str | None, excluir: int | None = None)
 
 def preparar(datos: dict, autores_refs: list[str], indices_ids: list[int],
              pid: int | None = None) -> tuple[dict, list[str]]:
-    """Normaliza y valida. Devuelve (datos listos para guardar, errores)."""
+    """Normaliza y valida. Devuelve (datos listos para guardar, errores). Si `datos` trae `msc` (la
+    clasificación MSC2020, el principal primero), se valida y se guarda; si no, no se toca."""
+    datos = dict(datos)
+    codigos_msc = datos.pop("msc", None)
     d = {k: (v.strip() if isinstance(v, str) else v) or None for k, v in datos.items()}
     errores = []
+    if codigos_msc is not None:
+        d["_msc"], errores_msc = msc.validar(codigos_msc)
+        errores += errores_msc
     t = tipo(d.get("tipo_id")) if str(d.get("tipo_id") or "").isdigit() else None
     if not t or not t["activo"]:
         errores.append("Seleccione un tipo de producto.")
@@ -187,6 +194,7 @@ def guardar(d: dict, autores_refs: list[str], usuario_id: int, pid: int | None =
     filiaciones += [None] * (len(autores_refs) - len(filiaciones))
     db = get_db()
     indices_ids = d.pop("_indices", [])
+    codigos_msc = d.pop("_msc", None)
     with transaccion():
         if pid is None:
             pid = db.t.producto.insert(**d, creado_por=usuario_id)["id"]
@@ -201,6 +209,8 @@ def guardar(d: dict, autores_refs: list[str], usuario_id: int, pid: int | None =
                                        filiacion_instituto=normalizar(fil) if cols["investigador_id"] else None)
         for i in indices_ids:
             db.t.producto_indice.insert(producto_id=pid, indice_id=i)
+        if codigos_msc is not None:
+            msc.guardar_de_producto(pid, codigos_msc)
     return pid
 
 
@@ -240,9 +250,10 @@ def puede_eliminar(p: dict, uid: int) -> bool:
 # --- Listados ---------------------------------------------------------------------------
 
 def de_investigador(uid: int, texto: str = "", anio: str = "", tipo_id: str = "",
-                    solo_informe: bool = False, sin_filiacion: bool = False) -> list[dict]:
+                    solo_informe: bool = False, sin_filiacion: bool = False, area: str = "") -> list[dict]:
     """Productos de los que es autor o que registró, más recientes primero. `sin_filiacion`: solo
-    aquellos en que es autor(a) y no ha declarado si firmó con la filiación del instituto."""
+    aquellos en que es autor(a) y no ha declarado si firmó con la filiación del instituto. `area`:
+    sección MSC ('11'), en su código principal o en uno secundario."""
     filtros, params = [], {"u": uid}
     if texto.strip():
         filtros.append("(sin_tildes(p.titulo) LIKE :t OR sin_tildes(p.medio) LIKE :t)")
@@ -253,6 +264,9 @@ def de_investigador(uid: int, texto: str = "", anio: str = "", tipo_id: str = ""
     if tipo_id.isdigit():
         filtros.append("p.tipo_id = :tp")
         params["tp"] = int(tipo_id)
+    if re.fullmatch(r"\d{2}", area):
+        filtros.append("EXISTS (SELECT 1 FROM producto_msc WHERE producto_id = p.id AND substr(codigo, 1, 2) = :ar)")
+        params["ar"] = area
     if solo_informe:
         filtros.append("p.revision IN ('indexado', 'arbitrado') "
                        "AND p.estado_publicacion IN ('aceptado', 'publicado')")
@@ -287,3 +301,13 @@ def cita(p: dict) -> str:
     if medio:
         partes.append(medio.lstrip(", ") + ".")
     return " ".join(partes)
+
+
+def areas_de(uid: int) -> list[dict]:
+    """Secciones MSC de los productos de la persona (para el filtro de su lista)."""
+    return get_db().q(
+        """SELECT DISTINCT s.* FROM producto p JOIN producto_msc pm ON pm.producto_id = p.id
+           JOIN msc s ON s.codigo = substr(pm.codigo, 1, 2) || '-XX'
+           WHERE p.creado_por = :u OR EXISTS
+           (SELECT 1 FROM producto_autor WHERE producto_id = p.id AND investigador_id = :u)
+           ORDER BY s.codigo""", {"u": uid})

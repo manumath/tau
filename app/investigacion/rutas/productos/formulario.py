@@ -8,9 +8,10 @@ from fasthtml.common import APIRouter, Div, HtmxResponseHeaders, Input, Option, 
 from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, Form, FormLabel, LabelInput, LabelTextArea, TextPresets, UkIcon
 
-from app.investigacion import productos, proyectos, revistas
+from app.investigacion import msc, productos, proyectos, revistas
 from app.comun import personas
 from app.investigacion import filiacion as filiacion_mod
+from app.investigacion.componentes import msc as msc_ui
 from app.investigacion.componentes import personas as selector_personas
 from app.comun.componentes.layout import ID_MODAL, boton_espera, mensaje_error, modal
 from app.investigacion.componentes.registros import casillas_proyectos
@@ -124,6 +125,7 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
         campo("Enlace (URL)", "url", type="url", placeholder="https://…"),
         LabelTextArea("Resumen", id="resumen", value=d.get("resumen") or "", rows=4,
                       placeholder="Admite LaTeX: $\\zeta(s)$"),
+        msc_ui.selector(msc_elegidos(d.get("msc")), d.get("_msc_origen", "")),
         casillas_proyectos("producto", pid, auth, proyectos_sel, preseleccion, d.get("_agradece")),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
             Button("Guardar", type="submit", cls=ButtonT.primary),
@@ -141,11 +143,18 @@ def modal_form(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, pro
 
 
 def _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                paginas, doi, arxiv_id, url, resumen, actividad_id, mes="", revista_id=""):
+                paginas, doi, arxiv_id, url, resumen, actividad_id, mes="", revista_id="", codigos_msc=None):
     return dict(tipo_id=tipo_id, titulo=titulo, anio=anio, mes=mes, revista_id=revista_id,
                 estado_publicacion=estado_publicacion,
                 revision=revision, medio=medio, volumen=volumen, numero=numero, paginas=paginas,
-                doi=doi, arxiv_id=arxiv_id, url=url, resumen=resumen, actividad_id=actividad_id)
+                doi=doi, arxiv_id=arxiv_id, url=url, resumen=resumen, actividad_id=actividad_id,
+                msc=codigos_msc or [])
+
+
+def msc_elegidos(valor) -> list[dict]:
+    """Clasificación para el selector: códigos ('11M06', del formulario o de una sugerencia) o filas
+    del catálogo (de un producto guardado)."""
+    return [m for m in ((msc.por_codigo(x) if isinstance(x, str) else x) for x in valor or []) if m]
 
 
 def autores_de_refs(refs, filiaciones=None):
@@ -162,7 +171,7 @@ def get(auth, proyecto: int = None):
     tipo_articulo = next((t for t in productos.tipos() if t["nombre"] == "Artículo en revista"),
                          productos.tipos()[0])
     d = dict(tipo_id=tipo_articulo["id"], anio=date.today().year, estado_publicacion="publicado",
-             revision="arbitrado")
+             revision="arbitrado", msc=msc.sugeridos_por_perfil([auth["id"]]), _msc_origen="su perfil")
     return modal_form(auth, d, autores_de_refs([f"i:{auth['id']}"]), [], preseleccion=proyecto)
 
 
@@ -219,9 +228,9 @@ def post(auth, sess, tipo_id: str = "", titulo: str = "", anio: str = "",
          resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
          indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
          agradece: list[str] = None, revista_id: str = "", revista_nueva_titulo: str = "",
-         revista_nueva_issn: str = "", revista_nueva_eissn: str = ""):
+         revista_nueva_issn: str = "", revista_nueva_eissn: str = "", msc: list[str] = None):
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id)
+                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id, msc)
     nueva = dict(revista_nueva_titulo=revista_nueva_titulo, revista_nueva_issn=revista_nueva_issn,
                  revista_nueva_eissn=revista_nueva_eissn)
     return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion, agradece, nueva)
@@ -242,12 +251,12 @@ def put(auth, sess, pid: int, tipo_id: str = "", titulo: str = "", anio: str = "
         resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
         indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
         agradece: list[str] = None, revista_id: str = "", revista_nueva_titulo: str = "",
-        revista_nueva_issn: str = "", revista_nueva_eissn: str = ""):
+        revista_nueva_issn: str = "", revista_nueva_eissn: str = "", msc: list[str] = None):
     p = productos.obtener(pid)
     if not p or not productos.puede_editar(p, auth["id"]):
         return Response("No autorizado", status_code=403)
     datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id)
+                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id, msc)
     nueva = dict(revista_nueva_titulo=revista_nueva_titulo, revista_nueva_issn=revista_nueva_issn,
                  revista_nueva_eissn=revista_nueva_eissn)
     return _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion, agradece, nueva)

@@ -26,7 +26,8 @@ el servicio `portal` y la aplicación de Fly.io).
 - **Perfil:** datos, identificadores (ORCID, MathSciNet, zbMATH, arXiv…), áreas MSC2020, foto,
   resumen con LaTeX; directorio interno y perfil público opcional.
 - **Productos y actividades:** autores del instituto y externos, nivel de revisión e índices,
-  detección de duplicados, adjuntos; importación desde DOI (Crossref), arXiv y BibTeX.
+  detección de duplicados, adjuntos, clasificación MSC2020 (sugerida desde zbMATH Open); importación
+  desde DOI (Crossref), arXiv y BibTeX.
 - **Proyectos:** individuales (los crea cada investigador) e institucionales (propuesta anual en la
   convocatoria de septiembre, con decisión de la administración y continuidad); participantes, objetivos y flujo *propuesta → aprobación* de actividades y
   productos, con bandeja de pendientes y avisos por correo.
@@ -92,7 +93,7 @@ app/
   investigacion/               producción y proyectos de investigación
     perfiles.py                perfil, áreas MSC, completitud y directorio
     identificadores.py         ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
-    msc.py                     búsqueda en el catálogo MSC2020
+    msc.py                     catálogo MSC2020: búsqueda y clasificación de los productos
     lineas.py                  líneas de investigación institucionales con vigencia
     actividades.py             actividades y participantes
     productos.py               productos, autores, reglas de revisión e informe, DOI/arXiv, citas
@@ -103,7 +104,7 @@ app/
     avisos.py                  avisos por correo del flujo de proyectos
     revistas.py                catálogo de revistas con indexación por año (ISSN, clasificación)
     importar_revistas.py       carga del catálogo de revistas por CSV
-    importacion.py             importación desde Crossref y arXiv; reconocimiento de autores
+    importacion.py             importación desde Crossref y arXiv; reconocimiento de autores; MSC de zbMATH Open
     openalex.py                consulta a OpenAlex: obras por ORCID y citas
     cosecha.py                 carga de la producción desde OpenAlex y actualización de citas
     bibtex.py                  importar y exportar BibTeX
@@ -178,7 +179,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 ## Pruebas
 
 `uv run pytest`. Cada prueba usa una base nueva en un directorio temporal. Los correos quedan en
-memoria (`app.correo.ENVIADOS`, fixture `buzon`) y las consultas a Crossref y arXiv se simulan
+memoria (`app.correo.ENVIADOS`, fixture `buzon`) y las consultas a Crossref, arXiv y zbMATH se simulan
 (`tests/test_importacion.py`), así que las pruebas no necesitan red.
 
 **Pruebas en navegador** (`tests/navegador/`, Playwright): `uv run pytest --navegador`. Recorren

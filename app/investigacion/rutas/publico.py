@@ -84,6 +84,8 @@ def _cita_publica(p, publicos):
                       P(*autores, cls="text-sm"),
                       P(medio + (" · aceptado" if p["estado_publicacion"] == "aceptado" else ""),
                         cls=TextPresets.muted_sm) if medio else "",
+                      P("MSC2020: " + ", ".join(m["codigo"] for m in p["msc"]), cls=(TextPresets.muted_sm, "nomath"),
+                        title=" · ".join(m["texto_plano"] for m in p["msc"])) if p["msc"] else "",
                       cls="min-w-0"),
                   cls="flex gap-4"), cls="py-3")
 
@@ -181,6 +183,8 @@ def _producto_json(p, publicos):
             "estado": p["estado_publicacion"], "revision": p["revision"],
             "indices": [i["nombre"] for i in p["indices"]], "medio": p["medio"], "volumen": p["volumen"],
             "numero": p["numero"], "paginas": p["paginas"], "doi": p["doi"], "arxiv": p["arxiv_id"],
+            "msc": [{"codigo": m["codigo"], "texto": m["texto_plano"], "principal": bool(m["principal"])}
+                    for m in p["msc"]],
             "autores": [{"nombre": f"{a['nombres']} {a['apellidos']}",
                          "investigador_id": a["id"] if a["interno"] and a["id"] in publicos else None}
                         for a in p["autores"]]}

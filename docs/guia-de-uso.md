@@ -191,6 +191,21 @@ IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar
   registrada* o *con error* antes de confirmar.
 - **A mano:** complete el formulario.
 
+### Clasificación MSC2020
+
+Clasifique cada producto con la **Mathematics Subject Classification (MSC2020)**: un código
+**principal** y hasta **4 secundarios**, de cualquier nivel (una sección como 11-XX, una subsección
+como 11Mxx o un código fino como 11M06). Búsquelos por código o por tema en inglés en
+«Clasificación MSC2020»; el **primero de la lista es el principal** (lleva la marca ★ Principal) y
+se cambia con las flechas.
+
+- Al **importar por DOI**, el sistema trae la clasificación que **zbMATH Open** asignó a ese
+  artículo. Si zbMATH no lo tiene (o el producto no tiene DOI), sugiere el **área principal del perfil**
+  de los autores del instituto; en un producto nuevo, la suya. Es solo una sugerencia: revísela antes
+  de guardar.
+- La memoria del instituto agrupa la producción por la **sección del código principal**. En «Mis
+  productos» puede **filtrar por área** (cuenta el código principal y los secundarios).
+
 ### Autores
 
 - Agregue autores buscando por nombre: primero aparecen los del instituto. Si alguien no existe,
@@ -459,7 +474,7 @@ Menú «Informes»:
   nunca se muestra). Imprimible y en XLSX. Las «inscripciones» suman los inscritos de cada paralelo:
   no son la matrícula de la Carrera.
 - **Calidad de datos** (direcciones, Coordinación académica, Comité y Administración del sistema;
-  también aparece en el inicio): 12 revisiones de lo que falta o no cuadra antes de generar informes,
+  también aparece en el inicio): 15 revisiones de lo que falta o no cuadra antes de generar informes,
   agrupadas en vínculos y carga, personas, producción, docencia y proyectos. Cada una dice a qué
   afecta y quién lo corrige; al abrirla muestra los registros con un enlace para corregirlos. La
   página no cambia nada.
@@ -545,7 +560,8 @@ proyecto y ser del mismo periodo).
   nacionales e internacionales, cuenta las de acceso abierto, los cuartiles y cuántos artículos se
   clasificaron por el catálogo o por lo declarado; **«Datos y método»** explica cómo se calcularon las
   cifras. El XLSX incluye, por producto, la revista, su ámbito, el origen de la clasificación y la
-  fuente de cada indexación. **«Evolución»** grafica los cinco años calendario que terminan en el
+  fuente de cada indexación y su clasificación MSC2020. **«Por área (MSC2020)»** cuenta los productos por la
+  sección de su código principal, con un gráfico, e indica cuántos están sin clasificar. **«Evolución»** grafica los cinco años calendario que terminan en el
   periodo elegido (productos, actividades y proyectos); cada barra abre la memoria de ese año.
 - **Informes → Anexo de I+D+i para la acreditación:** la evidencia de los últimos 5 años (o de los
   años que elija) ordenada según los criterios de IAC-CINDA: resumen por año; cuerpo académico por

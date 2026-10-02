@@ -238,7 +238,7 @@ el 1-oct-2026 sin cambios.
   se cambian con una migración.
 - *(Hecho el 1-oct-2026, §41 y §42.)* Fusionar personas externas duplicadas, y vincular una persona
   externa a su cuenta si luego la recibe.
-- Áreas MSC en los productos (hoy solo en los perfiles).
+- *(Hecho el 2-oct-2026, §45.)* Áreas MSC en los productos.
 - Enlace formal entre un preprint y su versión publicada, como registros separados. Hoy la
   versión publicada importada conserva el arXiv en el mismo registro.
 
@@ -1473,3 +1473,41 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   la tabla, `gestiona_vinculos`, `SIN_PERMISO`), `cuentas`, `importar_cuentas`, `roles`, `ficha`,
   `vinculo` e `historial`. `fecha_local`, que usaban otros cinco módulos, pasó a
   `app/comun/componentes/registros.py`. Mismas 270 rutas y en el mismo orden; suite completa (529).
+
+## 45. Clasificación MSC2020 de los productos (2-oct-2026)
+
+**Decisiones de la Dirección (2-oct-2026):**
+- Como en las revistas y en zbMATH: un código **principal** y hasta **4 secundarios**, de cualquier
+  nivel del catálogo (11-XX, 11Mxx, 11M06). Los informes agrupan por la sección (dos primeros
+  caracteres) del principal.
+- Sugerencia al registrar: al importar por DOI se consulta **zbMATH Open** (servicio público y
+  gratuito) y se traen sus códigos; si no los hay, el área principal del perfil de los autores. Siempre
+  editable.
+- Se usa en la ficha, el perfil público y la API; como filtro de «Mis productos»; en la memoria
+  (producción por área, con gráfico) y en Calidad de datos (aviso, sin volverla obligatoria).
+
+**Implementación:**
+- Migración 0039: tabla `producto_msc(producto_id, codigo, orden)`; el principal es el de orden 0.
+  Los productos existentes quedan sin clasificar (el seed clasifica los de ejemplo).
+- `app/investigacion/msc.py`: `de_producto`, `validar`, `guardar_de_producto`, `sugeridos_por_perfil`.
+  `productos.preparar` valida `msc` solo si viene en los datos: BibTeX, OpenAlex y otras vías que no la
+  traen no borran la que había.
+- Formulario: selector ordenable (`app/investigacion/componentes/msc.py`, compartido con el buscador
+  del perfil); la marca «Principal» la lleva por CSS el primero de la lista, así se actualiza al
+  reordenar sin ir al servidor. Rutas `/productos/msc/buscar` y `/productos/msc/fila`.
+- `importacion.msc_de_zbmath(doi)`: `api.zbmath.org/v1/document/_structured_search?DOI=…` (el primer
+  código de zbMATH es el principal). Si falla o no responde, devuelve [] sin estorbar la importación.
+  Para un preprint sin DOI se usa el DOI de su versión publicada, si arXiv lo informa.
+- Memoria: «Por área (MSC2020)» (tabla y gráfico, indexados y arbitrados, y «sin clasificar»); el XLSX
+  de productos suma la columna «MSC2020 (principal primero)». Calidad de datos: «Publicaciones
+  indexadas o arbitradas sin clasificación MSC2020» en la ventana del anexo.
+- API `/api/v1/productos`: campo `msc` (código, texto, principal). Perfil público: códigos bajo cada cita.
+
+**Decisiones del equipo (confirmar):**
+- El filtro por área de «Mis productos» cuenta el código principal **y** los secundarios (la memoria
+  cuenta solo el principal, para no contar un producto dos veces).
+- En un producto nuevo (sin importar) se sugiere el área principal del perfil de quien registra.
+- La cosecha desde OpenAlex y la importación BibTeX no consultan zbMATH: esos productos quedan sin
+  clasificar y aparecen en Calidad de datos.
+- El aviso de Calidad de datos abarca las publicaciones indexadas o arbitradas, aceptadas o publicadas,
+  con algún autor del instituto, en la ventana del anexo (no solo las que cuentan en la memoria).

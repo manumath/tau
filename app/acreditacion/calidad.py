@@ -121,6 +121,21 @@ def productos_por_confirmar():
                     "vínculo cubre solo parte del año.", "personas", "Memoria y anexo de I+D+i", items)
 
 
+def productos_sin_msc():
+    d, h = anexo.ventana_por_omision()
+    filas = get_db().q(
+        """SELECT p.id, p.titulo, p.anio FROM producto p
+           WHERE p.anio BETWEEN ? AND ? AND p.revision IN ('indexado', 'arbitrado')
+             AND p.estado_publicacion IN ('aceptado', 'publicado')
+             AND EXISTS (SELECT 1 FROM producto_autor WHERE producto_id = p.id AND investigador_id IS NOT NULL)
+             AND NOT EXISTS (SELECT 1 FROM producto_msc WHERE producto_id = p.id)
+           ORDER BY p.anio DESC, p.titulo""", [d, h])
+    return _chequeo("sin_msc", "Producción", f"Publicaciones indexadas o arbitradas sin clasificación MSC2020 ({d}–{h})",
+                    "La memoria agrupa la producción por la sección de su código MSC2020 principal; sin él, "
+                    "el producto figura como «sin clasificar».", "personas", "Memoria (producción por área)",
+                    [_item(f"{f['titulo']} ({f['anio']})", f"/productos/{f['id']}") for f in filas])
+
+
 # --- Docencia -----------------------------------------------------------------------------------------
 
 def oferta_incompleta():
@@ -194,8 +209,8 @@ def externos_con_cuenta():
 
 
 CHEQUEOS = (sin_termino, sin_carga, sin_ingreso, investigadores_sin_vinculo, sin_grado, sin_nacimiento,
-            perfiles_incompletos, productos_por_confirmar, externos_duplicados, externos_con_cuenta, oferta_incompleta,
-            observaciones_de_planes, proyectos_sin_ambito, proyectos_sin_lineas)
+            perfiles_incompletos, productos_por_confirmar, productos_sin_msc, externos_duplicados, externos_con_cuenta,
+            oferta_incompleta, observaciones_de_planes, proyectos_sin_ambito, proyectos_sin_lineas)
 
 
 def revisar() -> list[dict]:

@@ -1,11 +1,14 @@
 """Campos del formulario de productos que dependen del tipo: revista del catálogo (en artículos),
 nivel de revisión, índices y actividad asociada (en presentaciones). Se vuelven a pedir al servidor
-cuando cambia el tipo, el año, la revisión o la revista (/productos/campos)."""
+cuando cambia el tipo, el año, la revisión o la revista (/productos/campos). También el buscador de
+la clasificación MSC2020 (/productos/msc/…)."""
 import fasthtml.common as fh
 from fasthtml.common import APIRouter, Div, Input, Label, Li, Option, P, Select, Span, Ul
 from monsterui.all import CheckboxX, FormLabel, LabelInput, TextPresets, UkIcon
 
 from app.investigacion import actividades, productos, revistas
+from app.investigacion import msc as msc_mod
+from app.investigacion.componentes import msc as msc_ui
 from app.comun.componentes.registros import insignia
 
 rt = APIRouter()
@@ -157,3 +160,22 @@ def get(revista_q: str = ""):
         opciones = [Li(P("No está en el catálogo: propóngala más abajo.", cls=(TextPresets.muted_sm, "px-3 py-2")))]
     return Ul(*opciones, cls="absolute z-30 w-full mt-1 max-h-72 overflow-y-auto rounded-md border border-border "
                             "bg-background shadow-lg divide-y divide-border")
+
+
+@rt("/productos/msc/buscar")
+def get(msc_q: str = "", msc: list[str] = None):
+    """Autocompletar de la clasificación MSC2020 (excluye los códigos ya elegidos)."""
+    elegidos = msc or []
+    if not msc_q.strip():
+        return ""
+    if len(elegidos) >= msc_mod.MAX_PRODUCTO:
+        return msc_ui.resultados([], None, vacio=f"Ya tiene {msc_mod.MAX_PRODUCTO} códigos: quite uno para agregar otro.")
+    return msc_ui.resultados(msc_mod.buscar(msc_q, excluir=tuple(elegidos)), lambda m: dict(
+        hx_get=f"/productos/msc/fila?codigo={m['codigo']}", hx_target=f"#{msc_ui.LISTA}", hx_swap="beforeend",
+        data_tras_pedido_limpiar=f"{msc_ui.BUSCAR},{msc_ui.RESULTADOS}"))
+
+
+@rt("/productos/msc/fila")
+def get(codigo: str = ""):
+    m = msc_mod.por_codigo(codigo.strip())
+    return msc_ui.fila(m) if m else ""
