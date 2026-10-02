@@ -1413,7 +1413,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
 - Pantalla `/personas/externos/duplicados` (acción `gestionar_personas_externas`: Dirección del
   Instituto y Gestión de datos; las investigadoras e investigadores no fusionan, porque afecta
   registros ajenos). Tablero de calidad: revisión «Coautores externos posiblemente duplicados».
-- Decisiones del equipo (confirmar):
+- Decisiones confirmadas por la Dirección (1-oct-2026):
   - Quién fusiona: Dirección del Instituto y Gestión de datos (no cada investigador).
   - En un proyecto en que estaban ambas fichas, se conservan el rol y las fechas de la ficha elegida.
 - Pendiente del mismo punto del plan original: vincular una persona externa a su cuenta cuando luego
