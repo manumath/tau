@@ -1503,7 +1503,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   indexadas o arbitradas sin clasificación MSC2020» en la ventana del anexo.
 - API `/api/v1/productos`: campo `msc` (código, texto, principal). Perfil público: códigos bajo cada cita.
 
-**Decisiones del equipo (confirmar):**
+**Decisiones confirmadas por la Dirección (2-oct-2026):**
 - El filtro por área de «Mis productos» cuenta el código principal **y** los secundarios (la memoria
   cuenta solo el principal, para no contar un producto dos veces).
 - En un producto nuevo (sin importar) se sugiere el área principal del perfil de quien registra.
