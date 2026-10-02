@@ -1343,7 +1343,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   Coordinación académica): indicador de etapas con enlaces, tarjetas con barra de avance, pendientes
   y acceso a donde se resuelve cada etapa (si el rol no puede, dice quién lo hace). Inicio: «Preparación
   de I-2027: x de 5 etapas listas · Siguiente: …».
-- Decisiones del equipo (confirmar): por omisión se prepara el **próximo semestre que no empezó**
+- Decisiones confirmadas por la Dirección (1-oct-2026): por omisión se prepara el **próximo semestre que no empezó**
   (con las fechas de su gestión o, si no existe, las de omisión); las troncales que no se ofertan se
   muestran como dato pero no impiden dar la oferta por cargada (la Dirección puede quitar una a
   propósito); sin gestión, las demás etapas quedan a la espera; los cursos de verano e invierno no
