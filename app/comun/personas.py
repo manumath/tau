@@ -266,3 +266,61 @@ def fusionar(conservar: int, eliminar: int) -> str | None:
                                          "c": conservar})
         db.execute("DELETE FROM persona_externa WHERE id = ?", [eliminar])
     return None
+
+
+# --- Externos que luego recibieron cuenta ------------------------------------------------------------
+
+def sugerencias_de_cuenta() -> list[dict]:
+    """Personas externas (sin cuenta vinculada) que podrían ser alguien que ya tiene cuenta: mismo
+    ORCID, mismo correo, o mismo apellido con nombres compatibles. → [{'externo', 'usuario', 'motivo'}]."""
+    cuentas = get_db().q("""SELECT u.id, u.nombres, u.apellidos, u.email, i.orcid FROM usuario u
+                            LEFT JOIN investigador i ON i.usuario_id = u.id WHERE u.activo = 1""")
+    por_apellido = {}
+    for u in cuentas:
+        por_apellido.setdefault(" ".join(_tokens(u["apellidos"])), []).append(u)
+    res = []
+    for e in get_db().q("SELECT id, nombres, apellidos, email, orcid FROM persona_externa WHERE usuario_id IS NULL"):
+        for u in cuentas:
+            motivo = None
+            if e["orcid"] and u["orcid"] and e["orcid"].strip() == u["orcid"].strip():
+                motivo = "Mismo ORCID"
+            elif e["email"] and u["email"] and e["email"].strip().lower() == u["email"].strip().lower():
+                motivo = "Mismo correo"
+            elif (u in por_apellido.get(" ".join(_tokens(e["apellidos"])), [])
+                  and not (e["orcid"] and u["orcid"] and e["orcid"].strip() != u["orcid"].strip())
+                  and nombres_compatibles(e["nombres"], u["nombres"])):
+                motivo = "Mismo apellido y nombres compatibles"
+            if motivo:
+                res.append({"externo": _resumen_externo(e["id"]), "usuario": u, "motivo": motivo})
+    return sorted(res, key=lambda r: (sin_tildes(r["usuario"]["apellidos"]).lower(), r["externo"]["id"]))
+
+
+def vincular_a_cuenta(externo_id: int, usuario_id: int) -> str | None:
+    """La persona externa recibió cuenta: sus autorías y participaciones en actividades y proyectos
+    pasan a la cuenta (si ya figuraba con la cuenta en el mismo registro, queda una vez). Si tiene
+    periodos de estudiante, la ficha se conserva enlazada a la cuenta solo para guardarlos (decisión
+    del 1-oct-2026, PLAN §42); si no, se borra. El ORCID pasa al perfil si este no lo tiene.
+    → None, o el motivo por el que no se puede."""
+    e = _resumen_externo(externo_id)
+    u = get_db().q("SELECT id FROM usuario WHERE id = ?", [usuario_id])
+    if not e or not u:
+        return "La persona o la cuenta ya no existen."
+    if e["usuario_id"]:
+        return "Esa ficha ya está vinculada a una cuenta."
+    db = get_db()
+    with transaccion():
+        for tabla, registro in (("producto_autor", "producto_id"), ("actividad_participante", "actividad_id"),
+                                ("proyecto_participante", "proyecto_id")):
+            db.execute(f"""DELETE FROM {tabla} WHERE externo_id = :e AND {registro} IN (
+                               SELECT {registro} FROM {tabla} WHERE investigador_id = :u)""",
+                       {"e": externo_id, "u": usuario_id})
+            db.execute(f"UPDATE {tabla} SET investigador_id = ?, externo_id = NULL WHERE externo_id = ?",
+                       [usuario_id, externo_id])
+        if e["orcid"]:
+            db.execute("""UPDATE investigador SET orcid = ? WHERE usuario_id = ? AND (orcid IS NULL OR orcid = '')""",
+                       [e["orcid"].strip(), usuario_id])
+        if e["n_estudiante"]:
+            db.execute("UPDATE persona_externa SET usuario_id = ? WHERE id = ?", [usuario_id, externo_id])
+        else:
+            db.execute("DELETE FROM persona_externa WHERE id = ?", [externo_id])
+    return None

@@ -443,10 +443,9 @@ def _proyectos(x: Plantilla, desde: str, hasta: str, tipo_cambio: float | None):
         completa = [x for x in otros_int if _jornada(_horas_vinculo(_academico(x["id"], corte) or {})) == "completa"]
         parcial = [x for x in otros_int if x not in completa]
         externos = [x for x in partes if not x["interno"] and x["rol"] not in ("tesista",)]
-        estudiantes_ = [x for x in partes if not x["interno"] and x.get("id")]
         anio = int(corte[:4])
-        pre = [x for x in estudiantes_ if (e := estudiantes.estudiante_en(x["id"], anio)) and e["nivel"] == "licenciatura"]
-        pos = [x for x in estudiantes_ if (e := estudiantes.estudiante_en(x["id"], anio)) and e["nivel"] != "licenciatura"]
+        pre = [x for x in partes if (e := estudiantes.estudiante_de(x, anio)) and e["nivel"] == "licenciatura"]
+        pos = [x for x in partes if (e := estudiantes.estudiante_de(x, anio)) and e["nivel"] != "licenciatura"]
         meses = None
         if p["fecha_inicio"] and p["fecha_fin"]:
             a0, a1 = date.fromisoformat(p["fecha_inicio"]), date.fromisoformat(p["fecha_fin"])
@@ -623,7 +622,7 @@ def _servicios(x: Plantilla, desde: str, hasta: str, tipo_cambio: float | None):
         r = 8 + i
         partes = actividades.participantes(a["id"])
         anio = int(a["fecha_inicio"][:4])
-        estudiantes_ = [p for p in partes if not p["interno"] and p.get("id") and estudiantes.estudiante_en(p["id"], anio)]
+        estudiantes_ = [p for p in partes if estudiantes.estudiante_de(p, anio)]
         monto = _usd(a["monto"], a["moneda"], tipo_cambio)
         ingresos = _usd(a["ingresos"], a["moneda"], tipo_cambio)
         x.escribir(h, f"A{r}", i + 1)

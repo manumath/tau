@@ -9,7 +9,7 @@ la asignación docente y la carga horaria.
 - [Ingreso y contraseña](#ingreso-y-contraseña)
 - [Mi perfil](#mi-perfil)
 - [Productos](#productos)
-- [Coautores externos duplicados](#coautores-externos-duplicados)
+- [Coautores externos: duplicados y cuentas](#coautores-externos-duplicados-y-cuentas)
 - [Actividades](#actividades)
 - [Proyectos](#proyectos)
 - [Informes](#informes)
@@ -217,7 +217,19 @@ IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar
   registró puede eliminarlo.
 - «Exportar BibTeX» descarga lo que está viendo, con los filtros aplicados.
 
-## Coautores externos duplicados
+## Coautores externos: duplicados y cuentas
+
+**Externos que luego reciben cuenta.** Si un coautor o participante registrado como externo recibe
+después una cuenta (por ejemplo, un exestudiante que ahora es docente), lo que figura a nombre de la
+ficha externa no cuenta como suyo hasta vincularla. **Investigadores → Coautores externos →
+Duplicados y cuentas** sugiere los pares (mismo ORCID, mismo correo, o mismo apellido con nombres
+compatibles); también se puede vincular a mano con «Vincular a una cuenta» en la lista de
+externos. Al vincular, sus productos, actividades y proyectos pasan a la cuenta; si tiene periodos de
+estudiante, la ficha se conserva enlazada para guardarlos, de modo que lo que hizo como estudiante
+sigue contando en los indicadores de estudiantes (tesis, productos con estudiantes). Su ORCID pasa
+al perfil si este no lo tenía. Lo hacen la Dirección del Instituto y Gestión de datos.
+
+**Duplicados.**
 
 Una misma persona externa puede quedar registrada dos veces («H. Weyl» y «Hermann Weyl»), y entonces
 cuenta dos veces en los indicadores de coautoría e internacionalización. **Investigadores → Coautores

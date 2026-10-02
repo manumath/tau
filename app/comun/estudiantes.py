@@ -152,6 +152,28 @@ def participacion(externo_id: int) -> dict:
     }
 
 
+def ficha(p: dict) -> int | None:
+    """La ficha de persona externa que guarda los periodos de estudiante de `p` (autor o participante):
+    la propia si es externa; si tiene cuenta, la ficha que se le vinculó al recibirla (PLAN §42)."""
+    if not p.get("id"):
+        return None
+    if not p.get("interno"):
+        return p["id"]
+    filas = get_db().q("SELECT id FROM persona_externa WHERE usuario_id = ? LIMIT 1", [p["id"]])
+    return filas[0]["id"] if filas else None
+
+
+def estudiante_de(p: dict, anio: int) -> dict | None:
+    """Periodo de estudios de la persona (externa o con cuenta) que cubre el año."""
+    f = ficha(p)
+    return estudiante_en(f, anio) if f else None
+
+
+def graduado_de(p: dict, anio: int) -> dict | None:
+    f = ficha(p)
+    return graduado_en(f, anio) if f else None
+
+
 def es_estudiante_ref(autores: list[dict], anio: int) -> list[dict]:
-    """Autores externos de un producto que eran estudiantes ese año."""
-    return [a for a in autores if not a["interno"] and a.get("id") and estudiante_en(a["id"], anio)]
+    """Autores de un producto que eran estudiantes ese año (también quien luego recibió cuenta)."""
+    return [a for a in autores if estudiante_de(a, anio)]

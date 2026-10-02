@@ -3,7 +3,8 @@
 app.comun.estudiantes."""
 from app.comun import vinculos
 from app.comun.db import get_db
-from app.comun.estudiantes import NIVELES, TIPO_TESIS, es_estudiante_ref, estudiante_en, graduado_en, periodos
+from app.comun.estudiantes import (NIVELES, TIPO_TESIS, es_estudiante_ref, estudiante_de, estudiante_en, ficha,
+                                   graduado_de, periodos)
 from app.investigacion import actividades, productos, proyectos
 
 
@@ -20,9 +21,11 @@ def tesis(desde_anio: int, hasta_anio: int) -> list[dict]:
             continue
         tesistas = []
         for a in x["autores"]:
-            if a["interno"] or not a.get("id"):
+            # Tesistas: los demás autores (externos o, si luego recibieron cuenta, con su ficha de estudiante).
+            f = ficha(a)
+            if a in directores or not f:
                 continue
-            p = estudiante_en(a["id"], x["anio"]) or (periodos(a["id"]) or [None])[-1]
+            p = estudiante_en(f, x["anio"]) or (periodos(f) or [None])[-1]
             tesistas.append({**a, "nivel": p["nivel"] if p else None, "del_programa": bool(p and p["del_programa"])})
         res.append({"producto": x, "tesistas": tesistas, "directores": directores,
                     "estado": "defendida" if x["estado_publicacion"] == "publicado" else "en curso",
@@ -35,20 +38,19 @@ def indicadores(m: dict) -> dict:
     a0, a1 = int(m["desde"][:4]), int(m["hasta"][:4])
     con_estudiantes = [p for p in m["productos"] if es_estudiante_ref(p["autores"], p["anio"])]
     con_graduados = [p for p in m["productos"]
-                     if any(not a["interno"] and a.get("id") and graduado_en(a["id"], p["anio"]) for a in p["autores"])]
+                     if any(graduado_de(a, p["anio"]) for a in p["autores"])]
     proys = []
     for p in m["proyectos"]:
         ini = int((p["fecha_inicio"] or f"{a0}")[:4])
         fin = int((p["fecha_fin"] or f"{a1}")[:4])
         anios = range(max(ini, a0), min(fin, a1) + 1)
-        est = [x for x in proyectos.participantes(p["id"]) if not x["interno"] and x.get("id")
-               and any(estudiante_en(x["id"], y) for y in anios)]
+        est = [x for x in proyectos.participantes(p["id"]) if any(estudiante_de(x, y) for y in anios)]
         if est:
             proys.append({**p, "estudiantes": est})
     acts = []
     for a in m["actividades"]:
         anio = int(a["fecha_inicio"][:4])
-        est = [x for x in actividades.participantes(a["id"]) if not x["interno"] and x.get("id") and estudiante_en(x["id"], anio)]
+        est = [x for x in actividades.participantes(a["id"]) if estudiante_de(x, anio)]
         if est:
             acts.append({**a, "estudiantes": est})
     t = tesis(a0, a1)

@@ -1416,5 +1416,23 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
 - Decisiones confirmadas por la Dirección (1-oct-2026):
   - Quién fusiona: Dirección del Instituto y Gestión de datos (no cada investigador).
   - En un proyecto en que estaban ambas fichas, se conservan el rol y las fechas de la ficha elegida.
-- Pendiente del mismo punto del plan original: vincular una persona externa a su cuenta cuando luego
-  la recibe (pasar sus registros de «externo» a «investigador»).
+- El mismo punto del plan original incluía vincular una persona externa a su cuenta: ver §42.
+
+## 42. Vincular una persona externa a su cuenta (1-oct-2026)
+
+- Decisiones de la Dirección (1-oct-2026): si tiene periodos de estudiante, la ficha externa se
+  **conserva enlazada** a la cuenta (`persona_externa.usuario_id`) solo para guardarlos; vinculan la
+  **Dirección del Instituto y Gestión de datos**; el sistema **sugiere** los pares y una persona confirma.
+- `personas.sugerencias_de_cuenta()`: externos sin cuenta vinculada con el mismo ORCID, correo, o apellido
+  y nombres compatibles que una cuenta activa (nunca con ORCID distintos).
+- `personas.vincular_a_cuenta(externo, usuario)`: en una transacción, autorías y participaciones en
+  actividades y proyectos pasan a la cuenta (sin repetir en un mismo registro; la filiación de esas
+  autorías queda sin declarar); el ORCID pasa al perfil si no lo tiene; la ficha se conserva enlazada
+  si tiene periodos de estudiante y, si no, se borra. Se audita (`vincular_externo`). Sin migración.
+- `estudiantes.ficha(p)`, `estudiante_de(p, anio)`, `graduado_de(p, anio)`: la condición de estudiante de
+  cualquier persona (externa o con cuenta, por su ficha enlazada). Las usan los indicadores de
+  estudiantes (tesis, productos, proyectos y actividades con estudiantes) y la Guía, para que lo que
+  alguien hizo como estudiante siga contando tras recibir cuenta.
+- Pantalla: `/personas/externos/duplicados` («Duplicados y cuentas») con la sección «Ya tienen cuenta»;
+  vinculación manual desde la lista de externos. Tablero de calidad: «Coautores externos que ya tienen
+  cuenta».

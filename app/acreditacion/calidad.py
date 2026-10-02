@@ -184,8 +184,17 @@ def externos_duplicados():
                            "/personas/externos/duplicados", p["motivo"]) for p in pares])
 
 
+def externos_con_cuenta():
+    sugerencias = personas.sugerencias_de_cuenta()
+    return _chequeo("externos_con_cuenta", "Producción", "Coautores externos que ya tienen cuenta",
+                    "Lo que registraron como externos no cuenta como producción del instituto hasta vincularlo a su cuenta.",
+                    "instituto", "Memoria, anexo y CV de esas personas",
+                    [_item(f"{s['externo']['apellidos']}, {s['externo']['nombres']} → {s['usuario']['apellidos']}, "
+                           f"{s['usuario']['nombres']}", "/personas/externos/duplicados", s["motivo"]) for s in sugerencias])
+
+
 CHEQUEOS = (sin_termino, sin_carga, sin_ingreso, investigadores_sin_vinculo, sin_grado, sin_nacimiento,
-            perfiles_incompletos, productos_por_confirmar, externos_duplicados, oferta_incompleta,
+            perfiles_incompletos, productos_por_confirmar, externos_duplicados, externos_con_cuenta, oferta_incompleta,
             observaciones_de_planes, proyectos_sin_ambito, proyectos_sin_lineas)
 
 
