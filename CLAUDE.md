@@ -25,7 +25,7 @@ la fase 0): no proponga Django, PostgreSQL ni SPA salvo que el usuario lo pida.
 
 ```bash
 uv run python main.py                 # servidor de desarrollo (puerto 5001, lo suele tener abierto el usuario)
-uv run pytest -q                      # ~460 pruebas, cada una con base temporal
+uv run pytest -q                      # ~500 pruebas, cada una con base temporal
 uv run pytest -q --navegador          # + flujos en Chrome (Playwright)
 uvx pyflakes app scripts tests        # «redefinition of unused get/post» es normal en rutas
 scripts/estilos.sh                    # recompilar Tailwind tras usar una clase nueva
@@ -97,6 +97,14 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   mensaje en español y la línea `Co-Authored-By` que indique el sistema.
 - Cuando una regla del instituto no está clara, pregunte con opciones concretas; las decisiones
   van a PLAN.md con fecha. Si tomó una decisión por su cuenta, dígalo al final para que la confirme.
+- Principios: la solución más simple que resuelva la causa de fondo, no un parche; toque solo lo
+  necesario. Antes de presentar un cambio grande, pregúntese si hay una forma más limpia.
+- No declare algo terminado sin evidencia (pruebas, captura o archivo generado; skill
+  `cerrar-etapa`). Si algo se desvía a mitad de camino, deténgase y replantee en vez de insistir.
+- Errores de código: corríjalos sin pedir ayuda. Reglas del instituto, datos reales o decisiones
+  ya tomadas: pregunte.
+- Tras una corrección del usuario, anote la lección donde se aplicará: la skill que corresponde
+  o «Cuidados al trabajar aquí».
 - Documente en el mismo commit: guía (usuarios), PLAN.md (decisiones y estado), README o
   mantenimiento si corresponde, y este archivo si cambia algo que todo agente debe saber.
 
