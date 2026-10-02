@@ -6,15 +6,19 @@ from app.comun import permisos
 from app.investigacion import actividades, lineas, productos, proyectos, revistas
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.comun.componentes.layout import ID_MODAL, pagina
-from app.comun.componentes.registros import dato, enlace_persona
+from app.comun.componentes.registros import dato, enlace_persona, insignia
 from app.investigacion.componentes.registros import insignias_proyectos, seccion_adjuntos
 from app.investigacion.rutas.productos.lista import EVENTO, _confirmacion_eliminar, insignias
-from app.investigacion.rutas.productos.formulario import insignia_estado_revista
 
 rt = APIRouter()
 
 
 # --- Ficha -------------------------------------------------------------------------------
+
+def insignia_estado_revista(r):
+    return insignia("verificada", "verde", icono="badge-check") if r["estado"] == "verificada" \
+        else insignia("pendiente de verificar", "ambar", icono="clock")
+
 
 def ficha(p, auth):
     uid = auth["id"]

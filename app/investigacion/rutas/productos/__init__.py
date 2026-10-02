@@ -7,17 +7,18 @@ Patrones HTMX:
   se vuelve a pedir al servidor cuando cambian (/productos/campos).
 - Al escribir un DOI o arXiv se avisa si el producto ya existe (/productos/verificar).
 
-Módulos: lista, formulario, carga_openalex y ficha. Se registran en ese orden: la ficha va al final
-porque «/productos/{pid}» capturaría las rutas literales («/productos/nuevo», «/productos/campos»,
+Módulos: lista, campos (los que dependen del tipo), formulario (alta y edición), importar (DOI,
+arXiv y duplicados), carga_openalex y ficha. Se registran en ese orden: la ficha va al final porque
+«/productos/{pid}» capturaría las rutas literales («/productos/nuevo», «/productos/campos»,
 «/productos/openalex», «/productos/revistas»)."""
-from app.investigacion.rutas.productos import lista, formulario, carga_openalex, ficha
+from app.investigacion.rutas.productos import lista, campos, formulario, importar, carga_openalex, ficha
 
 
 class _Rutas:
     """Registra los routers del paquete en orden (main.py lo usa como un APIRouter)."""
 
     def to_app(self, app):
-        for modulo in (lista, formulario, carga_openalex, ficha):
+        for modulo in (lista, campos, formulario, importar, carga_openalex, ficha):
             if hasattr(modulo, "rt"):
                 modulo.rt.to_app(app)
 

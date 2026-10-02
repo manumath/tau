@@ -1459,3 +1459,13 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   navegador del modal, las filas, los avisos y los selectores (fallan con cualquier violación).
 - De paso: «Nueva actividad» daba error 500 a una cuenta sin perfil de investigador; ahora empieza sin
   participantes.
+
+## 44. División del formulario de productos (2-oct-2026)
+
+- `app/investigacion/rutas/productos/formulario.py` (484 líneas) se dividió por flujo, sin cambiar
+  comportamiento: `campos.py` (revista del catálogo, revisión, índices y actividad que dependen del
+  tipo; `/productos/campos` y `/productos/revistas`), `formulario.py` (formulario, recuadro de
+  importación, alta, edición y eliminación) e `importar.py` (DOI o arXiv, aviso de duplicado y
+  «Sumarme como autor»). La insignia de estado de la revista pasó a `ficha.py`, su único uso.
+- Verificado: las mismas 270 rutas antes y después, sin ciclos entre módulos, suite completa con
+  navegador (529).
