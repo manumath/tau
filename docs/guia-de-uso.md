@@ -233,7 +233,7 @@ al perfil si este no lo tenía. Lo hacen la Dirección del Instituto y Gestión 
 
 Una misma persona externa puede quedar registrada dos veces («H. Weyl» y «Hermann Weyl»), y entonces
 cuenta dos veces en los indicadores de coautoría e internacionalización. **Investigadores → Coautores
-externos → Posibles duplicados** (Dirección del Instituto y Gestión de datos) muestra los pares que
+externos → Duplicados y cuentas** (Dirección del Instituto y Gestión de datos) muestra los pares que
 podrían ser la misma persona: mismo ORCID, o mismo apellido con nombres compatibles. Dos fichas con
 ORCID distintos nunca se proponen. Para cada par, elija qué ficha conservar y pulse «Fusionar»: sus
 productos, actividades, proyectos y periodos de estudiante pasan a la ficha conservada (si ambas
@@ -493,9 +493,10 @@ proyecto y ser del mismo periodo).
   dirección lo pidió. «Quitar» hace que el rol deje de regir desde hoy; queda en el historial.
   Roles: Administración del sistema (cuentas, roles, auditoría), Dirección del Instituto (el ciclo
   de vida de los proyectos institucionales: convocatoria, propuestas, responsables; catálogos,
-  memoria y anexo), Dirección de Carrera (categoría y vínculo de cada persona, con su carga horaria;
-  planes, oferta y docencia), Coordinación académica, Comité de acreditación (ve todo, no modifica)
-  y Gestión de datos (estudiantes y fichas de su unidad). El sistema no permite quedarse sin
+  coautores externos, memoria y anexo), Dirección de Carrera (categoría y vínculo de cada persona,
+  con su carga horaria; planes, oferta y docencia), Coordinación académica (planes, oferta y
+  asignación docente), Comité de acreditación (ve todo, no modifica) y Gestión de datos (fichas
+  académicas, estudiantes y coautores externos de su unidad). El sistema no permite quedarse sin
   Administración del sistema.
 - **Usuarios → Importar CSV:** alta masiva desde una planilla con `email`, `nombres`,
   `apellidos` y, opcionalmente, `categoria`, `investigador` y `admin` (sí/no; «sí» asigna Administración

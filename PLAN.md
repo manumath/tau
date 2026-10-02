@@ -236,7 +236,8 @@ el 1-oct-2026 sin cambios.
 **Funcionalidad que el plan original incluía y aún no está:**
 - Administrar los catálogos (tipos de actividad y de producto, índices) desde la interfaz. Hoy
   se cambian con una migración.
-- Fusionar personas externas duplicadas, y vincular una persona externa a su cuenta si luego la recibe.
+- *(Hecho el 1-oct-2026, §41 y §42.)* Fusionar personas externas duplicadas, y vincular una persona
+  externa a su cuenta si luego la recibe.
 - Áreas MSC en los productos (hoy solo en los perfiles).
 - Enlace formal entre un preprint y su versión publicada, como registros separados. Hoy la
   versión publicada importada conserva el arXiv en el mismo registro.
@@ -431,7 +432,7 @@ institucionales.
   aunque ya no lo estén (con «hasta …»), con su categoría al final del periodo. El desglose por
   categoría cuenta cada registro con la categoría de sus autores a la fecha.
 - La carga de cuentas por CSV acepta además `fecha_ingreso`.
-- Pendiente de decidir: el cálculo por jornada (punto 3 del análisis) ya tiene el dato.
+- *(Resuelto en la fase 3.)* El cálculo por jornada: el anexo usa JCE = carga contratada / 160 (§24).
 
 ### Etapas
 
@@ -897,6 +898,11 @@ Tabla `rol_asignado`: persona, rol, unidad, desde, hasta, asignado por. Se asign
 | Coordinación académica | CMAT | preparar asignaciones y revisar programas, sin aprobar |
 | Comité de acreditación | UMSA (todo) | ver todos los informes, anexos y exportaciones; no modifica nada |
 | Gestión de datos | una unidad | cargar vínculos (RR. HH.), estudiantes e importaciones de su unidad |
+
+> *Nota (2-oct-2026):* esta tabla es la propuesta original. Desde la dependencia única (§25, 28-sep-2026)
+> **solo la Dirección de Carrera** define categoría, vínculo y carga; la Dirección del Instituto y Gestión
+> de datos ya no gestionan vínculos. Lo vigente está en `ACCIONES` y `DESCRIPCIONES`
+> (`app/comun/permisos.py`).
 
 Los roles **derivados** no se asignan: *investigador* (tiene perfil de investigación y vínculo
 con el IIMAT), *docente* (vínculo con la Carrera o asignaciones), *responsable de proyecto*

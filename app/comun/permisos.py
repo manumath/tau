@@ -31,12 +31,13 @@ ROLES = {
 ROLES_DE_TODA_LA_UNIVERSIDAD = ("administracion_sistema", "comite_acreditacion")
 DESCRIPCIONES = {
     "administracion_sistema": "Cuentas y roles, auditoría y configuración. No decide sobre contenido académico.",
-    "direccion_instituto": "Propuestas y convocatoria, catálogos de revistas y líneas, vínculos del IIMAT, "
-                           "memoria y anexo de I+D+i.",
-    "direccion_carrera": "Plan de estudios, asignación docente y programas, vínculos e informes de la Carrera.",
+    "direccion_instituto": "Propuestas y convocatoria, catálogos de revistas y líneas, coautores externos, "
+                           "memoria y anexo de I+D+i. No define vínculos.",
+    "direccion_carrera": "Categoría, vínculo y carga horaria de cada persona; plan de estudios, oferta y asignación "
+                         "docente; informes de la Carrera.",
     "coordinacion_academica": "Prepara asignaciones y revisa programas, sin aprobarlos.",
     "comite_acreditacion": "Ve todos los informes, anexos y exportaciones; no modifica nada.",
-    "gestion_datos": "Carga vínculos de RR. HH., estudiantes e importaciones de su unidad.",
+    "gestion_datos": "Fichas académicas (grados, fecha de nacimiento), estudiantes y coautores externos de su unidad.",
 }
 
 # acción → roles que la permiten. Las acciones con unidad se consultan con ella (p. ej., vínculos

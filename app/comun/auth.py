@@ -23,7 +23,7 @@ RUTAS_CAMBIO_PASS = {"/cambiar-password", "/logout"}
 
 # Rutas /admin: la primera regla cuyo patrón coincide con la ruta completa decide qué acción se
 # exige (basta una de las indicadas). Lo que no está aquí se deniega. Las acciones por unidad
-# (vínculos del IIMAT o de la CMAT) se verifican además dentro de la ruta.
+# (p. ej., los vínculos, que son con la Carrera) se verifican además dentro de la ruta.
 REGLAS_ADMIN = [
     (r"/admin/usuarios/(\d+/roles|roles/\d+/terminar)", ("asignar_roles",)),
     (r"/admin/usuarios/(\d+/vinculo(/\w+)?|\d+/categoria|vinculo/\d+(/editar)?|historial(/\w+)?)",

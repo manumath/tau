@@ -10,3 +10,6 @@ data/
 
 # Herramientas locales de desarrollo (p. ej., el compilador de Tailwind).
 .herramientas/
+
+# Diagramas generados con Archify (se regeneran; no son parte del sistema).
+.archify/
