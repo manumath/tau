@@ -189,18 +189,22 @@ lectura permiten mudarse entre ambos sin perder información.
 
 ## 8. Decisiones tomadas
 
-Las marcadas con **(confirmar)** las tomé durante el desarrollo por ser razonables, pero
-conviene validarlas con el instituto antes del piloto.
+Las marcadas **(confirmada)** las tomó el equipo durante el desarrollo y la Dirección las confirmó
+el 1-oct-2026 sin cambios.
 
 - **Informe del instituto:** solo productos indexados o arbitrados. Si están enviados o en
-  preparación, todavía no cuentan **(confirmar)**.
+  preparación, todavía no cuentan (cuentan los aceptados y publicados) **(confirmada)**.
 - **Qué índices cuentan como «indexado»:** WoS (SCIE y ESCI), Scopus, SciELO, MathSciNet y
-  zbMATH sí; Latindex no **(confirmar)**.
+  zbMATH sí; Latindex Catálogo no (cuenta como arbitrado: evalúa la calidad editorial, no indexa
+  citas) **(confirmada)**.
 - **Permisos sobre registros:** editan el creador y los coautores o participantes del instituto;
-  elimina solo el creador **(confirmar)**.
+  elimina solo el creador **(confirmada)**.
 - **Adjuntos** (certificados, etc.): solo los ven quienes pueden editar el registro y la administración.
-- **Co-responsables** tienen los mismos permisos que el responsable, incluida la aprobación **(confirmar)**.
-- **Proyectos** privados: los ven sus participantes y la administración **(confirmar)**.
+- **Co-responsables** tienen los mismos permisos que el responsable, incluida la aprobación y la
+  asignación de carga **(confirmada)**.
+- **Proyectos** privados: los ven sus participantes (también quienes ya salieron), la Dirección del
+  Instituto y el Comité de acreditación; no la Administración del sistema ni el perfil público
+  **(confirmada)**.
 - **Perfil público** desactivado por defecto; cada persona decide. No se publican correo,
   actividades, proyectos, adjuntos, trabajos en curso ni presentaciones.
 - **PDF desde el navegador:** los generadores del lado del servidor (WeasyPrint, Typst) no
@@ -216,10 +220,13 @@ conviene validarlas con el instituto antes del piloto.
 ## 9. Pendiente
 
 **Antes de producción** (ver [despliegue](docs/despliegue.md) o [Fly.io](docs/despliegue-fly.md)):
-- Compilar Tailwind localmente en lugar de cargarlo desde un CDN (el aviso de la consola lo
-  recomienda) y, idealmente, servir también los scripts de htmx, FrankenUI y KaTeX desde el propio servidor.
+- *(Hecho en la fase 1.)* Tailwind compilado localmente y htmx, Franken UI y KaTeX servidos por el
+  propio sistema, sin CDN.
 - Configurar SMTP, `PORTAL_URL`, `PORTAL_SECRET_KEY`, `PORTAL_HTTPS_ONLY=1` y `PORTAL_CONTACTO`.
-- Revisar con el instituto las decisiones marcadas «(confirmar)».
+- *(Hecho el 1-oct-2026.)* Revisar con el instituto las decisiones marcadas «(confirmar)».
+- Designar un suplente del responsable técnico y fijar la política de respaldos (diarios, fuera del
+  servidor, con ensayo de restauración cada semestre). Propuesta para la reunión de despliegue:
+  documento «Fundamento técnico de TAU».
 - Elegir dónde alojar el piloto (servidor del instituto o Fly.io) según su política sobre datos
   personales en proveedores externos; usar un dominio propio desde el inicio facilita mudarse.
 - Si se usa Fly.io: probar un despliegue real. La imagen se construyó y se probó localmente con
@@ -276,14 +283,14 @@ implementan por etapas; cada una termina con pruebas, datos de ejemplo y documen
 | Propuesta de continuidad | Repite todas las secciones, precargadas desde el periodo anterior y editables (nuevos objetivos, nuevo plan de actividades). |
 | Memoria | Además del año calendario, por periodo de vigencia (octubre–septiembre) y por un rango de fechas que elija quien la genera. |
 
-### Interpretaciones propias (confirmar)
+### Interpretaciones propias (confirmadas el 1-oct-2026)
 
 - Las restricciones por categoría se aplican a los proyectos **institucionales**. Un proyecto
-  individual lo puede registrar cualquier investigador(a) y queda como responsable **(confirmar)**.
+  individual lo puede registrar cualquier investigador(a) y queda como responsable.
 - «Ligado a un proyecto institucional» significa que el producto o actividad está **aprobado** en
-  un proyecto institucional vigente en el periodo del informe **(confirmar)**.
-- La categoría la asigna y cambia solo la administración. No se guarda su historial: los informes
-  de años anteriores usan la categoría actual **(confirmar)**.
+  un proyecto institucional (no en formulación) vigente en el periodo del informe.
+- *(Superada.)* «La categoría no guarda historial»: la reemplazaron los periodos de vínculo (§12,
+  §23 y §25). La categoría la define la Dirección de Carrera y los informes usan la de cada fecha.
 - Una continuidad enviada que aún no se decide al 1 de octubre mantiene el proyecto vigente
   («en renovación») hasta la decisión; si se rechaza, el proyecto concluye el 30 de septiembre.
 - Los borradores se preparan en cualquier momento; solo se **envían** dentro del plazo. La
