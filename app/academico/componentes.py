@@ -1,7 +1,7 @@
 """Piezas comunes de la sección Docencia."""
 from fasthtml.common import A, Div
 
-from app.comun import permisos
+from app.comun import permisos, vinculos
 from app.comun.db import get_db
 
 
@@ -13,8 +13,15 @@ def tiene_docencia(auth: dict | None) -> bool:
                               UNION SELECT 1 FROM oferta_docente WHERE usuario_id = :u LIMIT 1""", {"u": auth["id"]}))
 
 
+def prepara_semestres(auth: dict | None) -> bool:
+    """Dirección de Carrera y Coordinación académica (preparación del semestre)."""
+    return bool(auth) and (permisos.puede(auth, "gestionar_oferta")
+                           or permisos.puede(auth, "gestionar_vinculos", vinculos.carrera()))
+
+
 # (clave, texto, url, condición): la condición es una acción de permisos o una función de auth.
 PESTANAS = (("mia", "Mi docencia", "/docencia/mia", tiene_docencia),
+            ("preparacion", "Preparación del semestre", "/docencia/preparacion", prepara_semestres),
             ("planes", "Planes de estudio", "/docencia/planes", None),
             ("oferta", "Oferta y docentes", "/docencia/oferta", None),
             ("carga", "Carga horaria", "/docencia/carga", "ver_carga"),

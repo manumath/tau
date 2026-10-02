@@ -1332,3 +1332,19 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   insignia de estado (la tabla ya tiene la fecha de envío); el indicador compacto va en «Mis
   propuestas». La preparación del semestre queda para una etapa posterior.
 - `capturar.py --base RUTA` para capturar con una base preparada.
+
+## 38. Preparación del semestre (1-oct-2026)
+
+- `app/academico/preparacion.py`: `estado(anio, tipo)` con cinco etapas (gestión creada → oferta
+  cargada → contratos renovados → docentes asignados → carga cuadrada), cada una con su detalle, lo
+  que falta en una frase, avance (x de n) y pendientes. Reutiliza las reglas de oferta,
+  `carga.candidatos_renovacion` y `carga.personas` (avisos de carga), sin duplicarlas.
+- Pantalla `/docencia/preparacion` (pestaña «Preparación del semestre»; Dirección de Carrera y
+  Coordinación académica): indicador de etapas con enlaces, tarjetas con barra de avance, pendientes
+  y acceso a donde se resuelve cada etapa (si el rol no puede, dice quién lo hace). Inicio: «Preparación
+  de I-2027: x de 5 etapas listas · Siguiente: …».
+- Decisiones del equipo (confirmar): por omisión se prepara el **próximo semestre que no empezó**
+  (con las fechas de su gestión o, si no existe, las de omisión); las troncales que no se ofertan se
+  muestran como dato pero no impiden dar la oferta por cargada (la Dirección puede quitar una a
+  propósito); sin gestión, las demás etapas quedan a la espera; los cursos de verano e invierno no
+  entran.

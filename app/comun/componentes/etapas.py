@@ -1,12 +1,13 @@
 """Indicador de etapas de un trámite (por ejemplo, una propuesta institucional): en qué paso va,
 cuáles se cumplieron y cuáles faltan. Lista ordenada con Tailwind, sin JavaScript; se imprime igual.
 
-Cada paso es un dict: `titulo`, `estado` y, opcional, `detalle` (p. ej., la fecha). Estados:
+Cada paso es un dict: `titulo`, `estado` y, opcionales, `detalle` (p. ej., la fecha) y `href` (el
+título enlaza a donde se resuelve esa etapa). Estados:
 - `hecho`: cumplido; `actual`: en curso o esperando; `pendiente`: aún no llega;
 - `alerta`: requiere una acción (p. ej., condiciones por atender); `error`: terminó mal (rechazo);
 - `omitido`: ya no ocurrirá (p. ej., el proyecto de una propuesta rechazada).
 """
-from fasthtml.common import Div, Li, Ol, Span
+from fasthtml.common import A, Div, Li, Ol, Span
 from monsterui.all import UkIcon
 
 _CIRCULO = {
@@ -34,8 +35,8 @@ def etapas(pasos: list[dict], compacto: bool = False, etiqueta: str = "Etapas"):
         tramo = Div(cls="absolute top-1/2 left-1/2 -z-0 h-0.5 w-full -translate-y-1/2 "
                         + _TRAMO.get(estado, "bg-border")) if i < len(pasos) - 1 else ""
         texto = "" if compacto else Div(
-            Div(p["titulo"], cls="text-sm font-medium leading-tight "
-                                 + ("text-muted-foreground" if estado in _APAGADOS else "")),
+            Div(A(p["titulo"], href=p["href"], cls="hover:underline") if p.get("href") else p["titulo"],
+                cls="text-sm font-medium leading-tight " + ("text-muted-foreground" if estado in _APAGADOS else "")),
             Div(p["detalle"], cls="text-xs text-muted-foreground leading-tight mt-0.5") if p.get("detalle") else "",
             cls="mt-2 text-center px-1")
         items.append(Li(

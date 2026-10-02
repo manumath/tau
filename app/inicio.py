@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from fasthtml.common import A, APIRouter, Div, Li, P, Span, Ul
 from monsterui.all import H2, H3, H4, Card, Grid, Label, LabelT, Progress, TextPresets, UkIcon
 
-from app.academico import carga, gestiones
+from app.academico import carga, gestiones, preparacion
 from app.academico.componentes import tiene_docencia
 from app.acreditacion import anexo, calidad
 from app.comun import permisos, vinculos
@@ -140,6 +140,12 @@ def _para_carrera(auth):
             if revisar:
                 items.append(_item(f"{_plural(len(revisar), 'docente')} con la carga de {gestiones.codigo(g)} por revisar",
                                    f"/docencia/carga?gestion={g['id']}", detalle=_nombres(revisar)))
+    prox = preparacion.estado(*preparacion.semestre_siguiente())
+    if prox["hechas"] < prox["total"]:
+        falta = next(e for e in prox["etapas"] if not e["listo"])
+        items.append(_item(f"Preparación de {prox['codigo']}: {prox['hechas']} de {prox['total']} etapas listas",
+                           f"/docencia/preparacion?semestre={prox['codigo']}", tono="info",
+                           detalle=f"Siguiente: {falta['falta']}."))
     if dirige:
         vencen = carga.contratos_por_vencer(30)
         if vencen:

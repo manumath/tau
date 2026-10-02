@@ -53,7 +53,8 @@ Al ingresar, **Para hoy** muestra lo que requiere su atención según su rol, co
   publicaciones sin filiación declarada, la convocatoria abierta y su docencia del semestre.
 - **Dirección de Carrera** (o Coordinación académica): materias sin docente titular en el semestre,
   docentes con la carga por revisar, vínculos que terminan en los próximos 30 días sin un periodo
-  nuevo registrado y docentes con vínculo vigente sin carga contratada.
+  nuevo registrado, docentes con vínculo vigente sin carga contratada y cuántas etapas faltan para
+  preparar el próximo semestre.
 - **Dirección del Instituto:** propuestas por decidir, proyectos institucionales que terminan en los
   próximos 60 días, participantes con carga que quedaron sin vínculo y publicaciones sin filiación.
 - **Acreditación** (quien ve los informes institucionales): académicos vinculados, jornadas
@@ -361,6 +362,12 @@ Carrera en los contratos):
   verano e invierno, solo titulares).
 - **Asignar en grilla:** todos los paralelos de la gestión con un selector de titular; se guarda una
   sola vez. Cambiar el titular reemplaza al anterior; los auxiliares no cambian.
+- **Preparación del semestre** (pestaña de Docencia, para la Dirección de Carrera y la Coordinación
+  académica): las cinco etapas para que un semestre arranque, con su avance: gestión creada, oferta
+  cargada, contratos renovados, docentes asignados (paralelos con titular) y carga cuadrada (docentes
+  sin observaciones en su carga). Cada etapa muestra lo que falta y enlaza a donde se resuelve. Por
+  omisión muestra el próximo semestre; el selector permite revisar los demás. La página no cambia
+  nada: es un tablero.
 - **Renovar contratos** (botón en «Carga horaria»; también desde el aviso del inicio): contratados,
   interinos e invitados cuyo periodo terminó antes del semestre y aún no tienen uno nuevo. Se abre en
   bloque un periodo con la misma categoría y la misma carga contratada, entre las fechas que indique.
