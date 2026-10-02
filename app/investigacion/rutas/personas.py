@@ -1,12 +1,12 @@
 """Endpoints del selector de personas (autocompletar, filas y alta rápida de externos)."""
 import fasthtml.common as fh
-from fasthtml.common import APIRouter, Div, HtmxResponseHeaders, Input, P, Response, Span, Thead, Tr
+from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, Input, Li, P, Response, Span, Thead, Tr, Ul
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Table, Tbody, Td, TextPresets, Th, UkIcon
 
 from app.comun import paises, permisos, personas
 from app.investigacion.componentes import personas as ui
-from app.comun.componentes.layout import pagina
+from app.comun.componentes.layout import boton_espera, pagina
 from app.comun.db import auditar
 
 rt = APIRouter()
@@ -100,9 +100,13 @@ def get(auth, q: str = "", sin_pais: bool = True, todos: bool = False):
                 P("Personas sin cuenta en el sistema (coautores, participantes de actividades y proyectos). Su país sirve "
                   "para medir la colaboración internacional (IAC-CINDA 3.5.2). Al importar desde OpenAlex el país se "
                   "completa solo; aquí se completan los que falten.", cls=(TextPresets.muted_sm, "max-w-3xl"))),
-            Button(UkIcon("wand-sparkles", height=16, width=16), "Completar países automáticamente", cls=ButtonT.default,
-                   hx_post="/personas/externos/completar",
-                   title="Normaliza los países escritos y deduce los que faltan desde la institución"),
+            Div(Button(UkIcon("wand-sparkles", height=16, width=16), "Completar países automáticamente",
+                       cls=ButtonT.default, hx_post="/personas/externos/completar",
+                       title="Normaliza los países escritos y deduce los que faltan desde la institución"),
+                A(UkIcon("users", height=16, width=16), f"Posibles duplicados ({len(personas.posibles_duplicados())})",
+                  href="/personas/externos/duplicados", cls="uk-btn uk-btn-default inline-flex items-center gap-1")
+                if _fusiona(auth) else "",
+                cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-4"),
         P(f"{n_sin} persona(s) sin país.", cls="text-sm text-amber-700" if n_sin else "text-sm text-green-700"),
         fh.Form(Input(type="search", name="q", value=q, placeholder="Buscar por nombre o institución…",
@@ -131,6 +135,93 @@ def post(auth, sess):
     auditar(auth["id"], "completar_paises", "persona_externa", None, f"{normalizados} normalizados, {deducidos} deducidos")
     add_toast(sess, f"Países: {deducidos} deducido(s) de la institución y {normalizados} normalizado(s).", "success")
     return HtmxResponseHeaders(refresh="true")
+
+
+# --- Duplicados: dos fichas de la misma persona ------------------------------------------------------
+
+def _fusiona(auth):
+    """Fusionar cambia registros de otras personas: solo quien administra las personas externas."""
+    return permisos.puede(auth, "gestionar_personas_externas")
+
+
+def _ficha_externo(e, nombre_radio, valor, marcado):
+    datos = [x for x in (e["institucion"], e["pais"], f"ORCID {e['orcid']}" if e["orcid"] else None,
+                         e["email"]) if x]
+    def n(cantidad, singular, plural):
+        return f"{cantidad} {singular if cantidad == 1 else plural}"
+    uso = " · ".join([n(e["n_productos"], "producto", "productos"), n(e["n_actividades"], "actividad", "actividades"),
+                      n(e["n_proyectos"], "proyecto", "proyectos")]
+                     + ([n(e["n_estudiante"], "periodo de estudiante", "periodos de estudiante")] if e["n_estudiante"] else []))
+    return fh.Label(Input(type="radio", name=nombre_radio, value=str(valor), checked=marcado, cls="uk-radio mt-1"),
+                    Div(Div(f"{e['apellidos']}, {e['nombres']}", cls="font-medium"),
+                        Div(" · ".join(datos) or "Sin institución ni país", cls=TextPresets.muted_sm),
+                        Div(uso, cls=TextPresets.muted_sm), cls="min-w-0"),
+                    cls="flex items-start gap-2 rounded border border-border p-3 hover:bg-muted cursor-pointer")
+
+
+def tarjeta_duplicado(par):
+    a, b = par["a"], par["b"]
+    clave = f"{a['id']}-{b['id']}"
+    return Card(
+        Div(Span(par["motivo"], cls="text-xs font-medium text-muted-foreground uppercase tracking-wide"),
+            cls="mb-2"),
+        fh.Form(P("¿Cuál ficha conservar? La otra se elimina y sus registros pasan a la elegida.", cls="text-sm mb-2"),
+                Div(_ficha_externo(a, "conservar", a["id"], True), _ficha_externo(b, "conservar", b["id"], False),
+                    cls="grid grid-cols-1 md:grid-cols-2 gap-3"),
+                Input(type="hidden", name="par", value=clave),
+                Div(boton_espera(UkIcon("merge", height=14, width=14), "Fusionar", type="submit",
+                                 cls=(ButtonT.primary, ButtonT.sm)),
+                    cls="flex justify-end mt-3"),
+                hx_post="/personas/externos/fusionar", hx_target=f"#par-{clave}", hx_swap="outerHTML",
+                hx_disabled_elt="find button[type='submit']",
+                hx_confirm="¿Fusionar estas dos fichas? No se puede deshacer."),
+        id=f"par-{clave}")
+
+
+@rt("/personas/externos/duplicados")
+def get(auth):
+    if not _fusiona(auth):
+        return Response("No autorizado", status_code=403)
+    pares = personas.posibles_duplicados()
+    return pagina(
+        "Posibles duplicados",
+        A(UkIcon("arrow-left", height=14, width=14), "Coautores externos", href="/personas/externos",
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
+        Div(H2("Coautores externos posiblemente duplicados"),
+            P("Fichas que podrían ser la misma persona: mismo ORCID, o mismo apellido con nombres compatibles "
+              "(«H.» y «Hermann»). Un duplicado cuenta dos veces en los indicadores de coautoría e "
+              "internacionalización. Revise cada par: si son la misma persona, elija qué ficha conservar.",
+              cls=(TextPresets.muted_sm, "max-w-3xl")),
+            Ul(Li("Los productos, actividades, proyectos y periodos de estudiante pasan a la ficha conservada; si "
+                  "ambas figuraban en el mismo registro, queda una vez."),
+               Li("Los datos que le falten a la ficha conservada (institución, país, ORCID, correo) se toman de la otra."),
+               cls="list-disc pl-5 text-sm text-muted-foreground mt-2 space-y-0.5"),
+            cls="mb-6"),
+        Div(*[tarjeta_duplicado(p) for p in pares], cls="space-y-4") if pares
+        else Card(P("No hay posibles duplicados.", cls=TextPresets.muted_sm)),
+        usuario=auth, seccion="investigadores")
+
+
+@rt("/personas/externos/fusionar")
+def post(auth, sess, par: str = "", conservar: str = ""):
+    if not _fusiona(auth):
+        return Response("No autorizado", status_code=403)
+    ids = [int(x) for x in par.split("-") if x.isdigit()]
+    if len(ids) != 2 or not conservar.isdigit() or int(conservar) not in ids:
+        return Response("Datos no válidos", status_code=400)
+    c = int(conservar)
+    e = next(x for x in ids if x != c)
+    antes = personas.por_ref(f"e:{e}")
+    error = personas.fusionar(c, e)
+    if error:
+        add_toast(sess, error, "error")
+        return HtmxResponseHeaders(refresh="true")
+    auditar(auth["id"], "fusionar_externos", "persona_externa", c,
+            f"Se unió «{antes['nombres']} {antes['apellidos']}» (id {e})" if antes else f"id {e}")
+    add_toast(sess, "Fichas fusionadas.", "success")
+    return Div(UkIcon("check", height=14, width=14, cls="shrink-0 text-green-600"),
+               Span(f"Fusionadas: queda «{personas.por_ref(f'e:{c}')['nombres']} {personas.por_ref(f'e:{c}')['apellidos']}»."),
+               id=f"par-{par}", cls="flex items-center gap-2 rounded border border-border p-3 text-sm")
 
 
 @rt("/personas/externos/{eid}")

@@ -1399,3 +1399,22 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   - Un arbitraje cuenta en la memoria si el revisor estaba vinculado el 1 de enero de ese año (la regla
     general usa la fecha de inicio de la actividad).
   - Un servicio sin origen del financiamiento se pone como externo en la Guía (y se anota).
+
+## 41. Fusionar coautores externos duplicados (1-oct-2026)
+
+- `personas.posibles_duplicados()`: pares de externos sin cuenta con el mismo ORCID, o con el mismo
+  apellido (sin tildes ni mayúsculas) y nombres compatibles en orden (iguales, o uno es la inicial del
+  otro: «H.» y «Hermann»). Dos ORCID distintos nunca se proponen; un «H.» ambiguo se propone con
+  cada candidato y decide una persona.
+- `personas.fusionar(conservar, eliminar)`: en una transacción, pasa autorías, participaciones en
+  actividades y proyectos y periodos de estudiante (si ambas fichas estaban en el mismo registro,
+  queda una), completa institución, país, ORCID y correo faltantes y borra la otra ficha. Sin
+  migración. Se audita (`fusionar_externos`).
+- Pantalla `/personas/externos/duplicados` (acción `gestionar_personas_externas`: Dirección del
+  Instituto y Gestión de datos; las investigadoras e investigadores no fusionan, porque afecta
+  registros ajenos). Tablero de calidad: revisión «Coautores externos posiblemente duplicados».
+- Decisiones del equipo (confirmar):
+  - Quién fusiona: Dirección del Instituto y Gestión de datos (no cada investigador).
+  - En un proyecto en que estaban ambas fichas, se conservan el rol y las fechas de la ficha elegida.
+- Pendiente del mismo punto del plan original: vincular una persona externa a su cuenta cuando luego
+  la recibe (pasar sus registros de «externo» a «investigador»).

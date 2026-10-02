@@ -9,6 +9,7 @@ la asignación docente y la carga horaria.
 - [Ingreso y contraseña](#ingreso-y-contraseña)
 - [Mi perfil](#mi-perfil)
 - [Productos](#productos)
+- [Coautores externos duplicados](#coautores-externos-duplicados)
 - [Actividades](#actividades)
 - [Proyectos](#proyectos)
 - [Informes](#informes)
@@ -215,6 +216,18 @@ IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar
 - Pueden editar el producto quien lo registró y sus autores del instituto; solo quien lo
   registró puede eliminarlo.
 - «Exportar BibTeX» descarga lo que está viendo, con los filtros aplicados.
+
+## Coautores externos duplicados
+
+Una misma persona externa puede quedar registrada dos veces («H. Weyl» y «Hermann Weyl»), y entonces
+cuenta dos veces en los indicadores de coautoría e internacionalización. **Investigadores → Coautores
+externos → Posibles duplicados** (Dirección del Instituto y Gestión de datos) muestra los pares que
+podrían ser la misma persona: mismo ORCID, o mismo apellido con nombres compatibles. Dos fichas con
+ORCID distintos nunca se proponen. Para cada par, elija qué ficha conservar y pulse «Fusionar»: sus
+productos, actividades, proyectos y periodos de estudiante pasan a la ficha conservada (si ambas
+estaban en el mismo registro, queda una vez) y los datos que le falten se toman de la otra. No se
+puede deshacer y queda en la auditoría. El tablero de calidad de datos avisa cuando hay pares por
+revisar.
 
 ## Actividades
 

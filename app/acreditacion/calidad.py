@@ -9,7 +9,7 @@ from urllib.parse import quote
 
 from app.academico import carga
 from app.acreditacion import anexo, informes
-from app.comun import academicos, vinculos
+from app.comun import academicos, personas, vinculos
 from app.comun.db import get_db
 from app.investigacion import perfiles
 
@@ -175,9 +175,18 @@ def proyectos_sin_lineas():
                     "Líneas de investigación", [_item(f["nombre"], f"/proyectos/{f['id']}") for f in filas])
 
 
+def externos_duplicados():
+    pares = personas.posibles_duplicados()
+    return _chequeo("externos_duplicados", "Producción", "Coautores externos posiblemente duplicados",
+                    "Dos fichas de una misma persona cuentan dos veces en coautoría e internacionalización.",
+                    "instituto", "Indicadores de coautoría e internacionalización (3.5.2)",
+                    [_item(f"{p['a']['apellidos']}, {p['a']['nombres']} · {p['b']['apellidos']}, {p['b']['nombres']}",
+                           "/personas/externos/duplicados", p["motivo"]) for p in pares])
+
+
 CHEQUEOS = (sin_termino, sin_carga, sin_ingreso, investigadores_sin_vinculo, sin_grado, sin_nacimiento,
-            perfiles_incompletos, productos_por_confirmar, oferta_incompleta, observaciones_de_planes,
-            proyectos_sin_ambito, proyectos_sin_lineas)
+            perfiles_incompletos, productos_por_confirmar, externos_duplicados, oferta_incompleta,
+            observaciones_de_planes, proyectos_sin_ambito, proyectos_sin_lineas)
 
 
 def revisar() -> list[dict]:

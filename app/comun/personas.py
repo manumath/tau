@@ -9,7 +9,7 @@ import base64
 import json
 
 from app.comun import adscripcion, paises
-from app.comun.db import get_db, sin_tildes
+from app.comun.db import get_db, sin_tildes, transaccion
 
 
 def ref(investigador_id=None, externo_id=None) -> str:
@@ -172,3 +172,97 @@ def completar_paises() -> tuple[int, int]:
             get_db().execute("UPDATE persona_externa SET pais = ? WHERE id = ?", [nuevo, e["id"]])
             deducidos += 1
     return normalizados, deducidos
+
+
+# --- Externos duplicados: detección y fusión -----------------------------------------------------------
+
+def _tokens(nombres: str) -> list[str]:
+    return [t for t in sin_tildes(nombres or "").lower().replace("-", " ").replace(".", " ").split() if t]
+
+
+def nombres_compatibles(a: str, b: str) -> bool:
+    """«H.» y «Hermann», «Hermann» y «Hermann Klaus», «H. K.» y «Hermann Klaus» son compatibles;
+    «Hermann» y «Hans», no. Se comparan los nombres en orden: iguales, o uno es la inicial del otro."""
+    ta, tb = _tokens(a), _tokens(b)
+    if not ta or not tb:
+        return False
+    for x, y in zip(ta, tb):
+        if x == y or (len(x) == 1 and y.startswith(x)) or (len(y) == 1 and x.startswith(y)):
+            continue
+        return False
+    return True
+
+
+def _resumen_externo(eid: int) -> dict:
+    fila = get_db().q(
+        """SELECT pe.*,
+                  (SELECT COUNT(*) FROM producto_autor x WHERE x.externo_id = pe.id) AS n_productos,
+                  (SELECT COUNT(*) FROM actividad_participante x WHERE x.externo_id = pe.id) AS n_actividades,
+                  (SELECT COUNT(*) FROM proyecto_participante x WHERE x.externo_id = pe.id) AS n_proyectos,
+                  (SELECT COUNT(*) FROM estudiante x WHERE x.externo_id = pe.id) AS n_estudiante
+           FROM persona_externa pe WHERE pe.id = ?""", [eid])
+    return fila[0] if fila else None
+
+
+def posibles_duplicados() -> list[dict]:
+    """Pares de externos (sin cuenta) que podrían ser la misma persona: mismo ORCID, o mismo apellido
+    (sin tildes ni mayúsculas) con nombres compatibles. Dos ORCID distintos nunca se proponen.
+    → [{'a', 'b', 'motivo'}] con el resumen de cada uno (lo más usado primero)."""
+    gente = get_db().q("SELECT id, nombres, apellidos, orcid FROM persona_externa WHERE usuario_id IS NULL")
+    por_apellido, pares = {}, {}
+    for p in gente:
+        por_apellido.setdefault(" ".join(_tokens(p["apellidos"])), []).append(p)
+    por_orcid = {}
+    for p in gente:
+        if p["orcid"]:
+            por_orcid.setdefault(p["orcid"].strip(), []).append(p)
+    for lista in por_orcid.values():
+        for i, a in enumerate(lista):
+            for b in lista[i + 1:]:
+                pares[(min(a["id"], b["id"]), max(a["id"], b["id"]))] = "Mismo ORCID"
+    for lista in por_apellido.values():
+        for i, a in enumerate(lista):
+            for b in lista[i + 1:]:
+                clave = (min(a["id"], b["id"]), max(a["id"], b["id"]))
+                distintos = a["orcid"] and b["orcid"] and a["orcid"].strip() != b["orcid"].strip()
+                if clave not in pares and not distintos and nombres_compatibles(a["nombres"], b["nombres"]):
+                    pares[clave] = "Mismo apellido y nombres compatibles"
+    res = []
+    for (x, y), motivo in pares.items():
+        a, b = _resumen_externo(x), _resumen_externo(y)
+        uso = lambda e: e["n_productos"] + e["n_actividades"] + e["n_proyectos"] + e["n_estudiante"]  # noqa: E731
+        if uso(b) > uso(a):
+            a, b = b, a
+        res.append({"a": a, "b": b, "motivo": motivo})
+    return sorted(res, key=lambda r: (sin_tildes(r["a"]["apellidos"]).lower(), sin_tildes(r["a"]["nombres"]).lower()))
+
+
+def fusionar(conservar: int, eliminar: int) -> str | None:
+    """Une dos fichas de una misma persona externa: los productos, actividades, proyectos y periodos
+    de estudiante de `eliminar` pasan a `conservar` (si ambas figuraban en el mismo registro, queda
+    una vez), los datos que le falten a `conservar` se toman de `eliminar`, y `eliminar` se borra.
+    → None, o el motivo por el que no se puede."""
+    if conservar == eliminar:
+        return "Elija dos personas distintas."
+    a, b = _resumen_externo(conservar), _resumen_externo(eliminar)
+    if not a or not b:
+        return "Una de las personas ya no existe."
+    if a["usuario_id"] or b["usuario_id"]:
+        return "Solo se fusionan personas externas sin cuenta en el sistema."
+    if a["orcid"] and b["orcid"] and a["orcid"].strip() != b["orcid"].strip():
+        return "Tienen ORCID distintos: no son la misma persona."
+    db = get_db()
+    with transaccion():
+        for tabla, registro in (("producto_autor", "producto_id"), ("actividad_participante", "actividad_id"),
+                                ("proyecto_participante", "proyecto_id")):
+            db.execute(f"""DELETE FROM {tabla} WHERE externo_id = :e AND {registro} IN (
+                               SELECT {registro} FROM {tabla} WHERE externo_id = :c)""", {"e": eliminar, "c": conservar})
+            db.execute(f"UPDATE {tabla} SET externo_id = ? WHERE externo_id = ?", [conservar, eliminar])
+        db.execute("UPDATE estudiante SET externo_id = ? WHERE externo_id = ?", [conservar, eliminar])
+        db.execute("""UPDATE persona_externa SET
+                          institucion = COALESCE(NULLIF(institucion, ''), :i), pais = COALESCE(NULLIF(pais, ''), :p),
+                          email = COALESCE(NULLIF(email, ''), :m), orcid = COALESCE(NULLIF(orcid, ''), :o)
+                      WHERE id = :c""", {"i": b["institucion"], "p": b["pais"], "m": b["email"], "o": b["orcid"],
+                                         "c": conservar})
+        db.execute("DELETE FROM persona_externa WHERE id = ?", [eliminar])
+    return None
