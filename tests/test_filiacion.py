@@ -7,7 +7,7 @@ from app.investigacion import filiacion, importacion, productos, proyectos
 from app.comun import personas, usuarios, vinculos
 from app.acreditacion import informes
 from app.comun.db import get_db
-from app.comun.rutas.admin_usuarios import fecha_local
+from app.comun.componentes.registros import fecha_local
 from tests.conftest import HX, PASS_TEMP, login
 
 

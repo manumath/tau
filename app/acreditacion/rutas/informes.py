@@ -23,7 +23,7 @@ from app.acreditacion import informes, programados
 from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import boton_espera, pagina
 from app.comun.db import auditar
-from app.comun.rutas.admin_usuarios import fecha_local
+from app.comun.componentes.registros import fecha_local
 from app.investigacion.identificadores import IDENTIFICADORES
 
 rt = APIRouter()

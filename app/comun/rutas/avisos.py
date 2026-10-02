@@ -6,7 +6,7 @@ from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.comun import notificaciones, usuarios
 from app.comun.componentes.layout import pagina
-from app.comun.rutas.admin_usuarios import fecha_local
+from app.comun.componentes.registros import fecha_local
 
 rt = APIRouter()
 ID_CAMPANA = "campana-avisos"

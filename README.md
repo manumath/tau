@@ -85,10 +85,10 @@ app/
     estudiantes.py             periodos de estudio de estudiantes y tesistas; indicadores de participación
     paises.py                  países normalizados: variantes, códigos ISO y deducción desde afiliaciones
     fotos.py                   recorte y limpieza de fotos (Pillow)
-    componentes/               layout (página, navegación, modal), registros (insignias, filtros, datos),
+    componentes/               layout (página, navegación, modal), registros (insignias, filtros, datos, fechas),
                                grados, recursos (static), errores
-    rutas/                     admin_usuarios (cuentas, vínculos, roles, ficha), admin_auditoria, estudiantes,
-                               mis_datos
+    rutas/                     admin_usuarios/ (paquete: cuentas, importar_cuentas, roles, ficha, vinculo,
+                               historial), admin_auditoria, estudiantes, mis_datos
   investigacion/               producción y proyectos de investigación
     perfiles.py                perfil, áreas MSC, completitud y directorio
     identificadores.py         ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces

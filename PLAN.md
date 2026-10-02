@@ -1460,7 +1460,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
 - De paso: «Nueva actividad» daba error 500 a una cuenta sin perfil de investigador; ahora empieza sin
   participantes.
 
-## 44. División del formulario de productos (2-oct-2026)
+## 44. División de los archivos de rutas más grandes (2-oct-2026)
 
 - `app/investigacion/rutas/productos/formulario.py` (484 líneas) se dividió por flujo, sin cambiar
   comportamiento: `campos.py` (revista del catálogo, revisión, índices y actividad que dependen del
@@ -1469,3 +1469,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   «Sumarme como autor»). La insignia de estado de la revista pasó a `ficha.py`, su único uso.
 - Verificado: las mismas 270 rutas antes y después, sin ciclos entre módulos, suite completa con
   navegador (529).
+- Lo mismo con `app/comun/rutas/admin_usuarios.py` (1.111 líneas), ahora un paquete: `comun` (fila de
+  la tabla, `gestiona_vinculos`, `SIN_PERMISO`), `cuentas`, `importar_cuentas`, `roles`, `ficha`,
+  `vinculo` e `historial`. `fecha_local`, que usaban otros cinco módulos, pasó a
+  `app/comun/componentes/registros.py`. Mismas 270 rutas y en el mismo orden; suite completa (529).

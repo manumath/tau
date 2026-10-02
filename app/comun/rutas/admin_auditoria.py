@@ -9,9 +9,8 @@ from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, Option, P, S
 from monsterui.all import H2, Card, Input, Table, TextPresets, Th
 
 from app.comun.componentes.layout import pagina
-from app.comun.componentes.registros import url_filtrada
+from app.comun.componentes.registros import fecha_local, url_filtrada
 from app.comun.db import get_db, sin_tildes
-from app.comun.rutas.admin_usuarios import fecha_local
 
 rt = APIRouter()
 POR_PAGINA = 50

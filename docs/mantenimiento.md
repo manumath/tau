@@ -287,6 +287,6 @@ o una restauración). No ejecuta las tareas horarias.
 - **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se
   usa (`q`, `execute`, `t.<tabla>.insert/update`); el resto de lo propio de SQLite está en
   `app/comun/db.py` (ver su docstring).
-- El mayor archivo de rutas es `app/comun/rutas/admin_usuarios.py` (unas 1.100 líneas); le siguen
-  `acreditacion/rutas/informes.py` (700) y `investigacion/rutas/propuestas.py` (620). El formulario de
-  productos ya se dividió (`productos/campos.py`, `formulario.py`, `importar.py`).
+- Los mayores archivos de rutas son `acreditacion/rutas/informes.py` (unas 700 líneas) e
+  `investigacion/rutas/propuestas.py` (620). Las rutas de usuarios, productos y proyectos ya son
+  paquetes con un módulo por flujo; su `__init__` los registra en orden.

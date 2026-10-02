@@ -22,9 +22,8 @@ from app.investigacion.componentes.lineas import casillas_lineas
 from app.comun.componentes.etapas import etapas
 from app.comun.componentes.layout import ID_MODAL, boton_espera, mensaje_error, modal, pagina
 from app.investigacion.componentes.perfil import texto_con_parrafos
-from app.comun.componentes.registros import dato, insignia
+from app.comun.componentes.registros import dato, fecha_local, insignia
 from app.comun.db import auditar
-from app.comun.rutas.admin_usuarios import fecha_local
 
 rt = APIRouter()
 
