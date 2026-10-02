@@ -9,7 +9,7 @@ from monsterui.all import H2, H3, Button, ButtonT, TextPresets, UkIcon
 from app.academico import carga, gestiones, oferta
 from app.academico.componentes import pestanas
 from app.comun import permisos, vinculos
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import get_db
 
@@ -81,7 +81,7 @@ def get(auth, gestion: str = ""):
                   "prevista / asignada en la oferta (32 h/mes por materia como titular, de grado o maestría); no suman "
                   "los auxiliares ni los cursos de verano e invierno.", cls=TextPresets.muted_sm)),
             Div(Select(*[Option(gestiones.codigo(x), value=str(x["id"]), selected=x["id"] == g["id"]) for x in _semestres()],
-                       aria_label="Semestre", cls="uk-select w-40", onchange=f"location.href='{BASE}?gestion='+this.value"),
+                       aria_label="Semestre", cls="uk-select w-40", data_navegar=f"{BASE}?gestion="),
                 A(UkIcon("refresh-cw", height=14, width=14), "Renovar contratos", href="/docencia/renovaciones",
                   cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1") if _edita(auth) else "",
                 A(UkIcon("file-text", height=14, width=14), "Informe imprimible y XLSX",
@@ -135,6 +135,6 @@ def get(auth, gid: int, uid: int):
             cls="space-y-2"),
         Div(Button(UkIcon("pencil", height=14, width=14), "Registrar o cambiar la carga en el vínculo",
                    cls=ButtonT.primary, hx_get=_url_vinculo(uid), hx_target=f"#{ID_MODAL}") if _edita(auth) else "",
-            Button("Cerrar", type="button", cls=ButtonT.default, onclick=JS_CERRAR),
+            Button("Cerrar", type="button", cls=ButtonT.default, data_accion="cerrar-modal"),
             cls="flex justify-end gap-2 mt-4"),
         ancho="max-w-2xl")

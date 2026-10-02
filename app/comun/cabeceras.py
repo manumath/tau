@@ -4,16 +4,18 @@ La política de contenido (CSP) solo admite recursos del propio portal: ningún 
 fuente ni imagen de otros sitios, ninguna conexión a otros sitios desde la página, y el portal no
 se puede incrustar en otra página.
 
-Limitación conocida: `script-src` admite 'unsafe-inline' y 'unsafe-eval'. Las páginas tienen
-manejadores en el HTML (onclick=…, hx-on…: unos 50) y scripts en línea (tema, avisos, KaTeX), y
-htmx evalúa los hx-on con `Function`. Quitarlos permitiría una política estricta con nonces (ver
-PLAN.md, sección 22, fase 1).
+Política estricta para los scripts: solo archivos propios ('self'); ni código en línea ni `eval`.
+Por eso el HTML no lleva manejadores (onclick, hx-on) ni <script> en línea: los comportamientos están en
+static/js/acciones.js (atributos data-*), los avisos en static/js/avisos.js, el tema inicial en
+static/js/tema-inicial.js y KaTeX en static/js/katex.mjs; htmx corre con allowEval=false.
+tests/test_csp.py lo vigila. Los estilos sí admiten 'unsafe-inline' (atributos style= de Franken UI,
+htmx y los gráficos SVG); no ejecutan código.
 """
 from app.comun import config
 
 CSP = "; ".join([
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data:",   # íconos SVG en data: de Franken UI
     "font-src 'self'",

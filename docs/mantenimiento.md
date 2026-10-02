@@ -214,7 +214,11 @@ Política:
   Beforeware, `APIRouter`, `fast_app(default_hdrs=False, …)` y la ruta estática genérica que
   `recursos.montar` quita. Tras actualizarlo, revise esos cuatro puntos.
 - Una actualización de MonsterUI puede cambiar clases que arma en tiempo de ejecución: recompile
-  los estilos (4.4) y ejecute las pruebas en navegador.
+  los estilos (4.4) y ejecute las pruebas en navegador. Si cambia su script de tema
+  (`headers_theme`), `tests/test_csp.py` falla: regenere `static/js/tema-inicial.js` con el código
+  nuevo (la CSP no admite el script en línea que MonsterUI usaba).
+- FastHTML: los avisos emergentes no usan `setup_toasts` (que agrega código en línea), sino
+  `app/comun/componentes/avisos_emergentes.py` con el mismo `add_toast`.
 
 ## 5. Operación
 
@@ -280,8 +284,6 @@ o una restauración). No ejecuta las tareas horarias.
 
 ## 7. Deuda conocida
 
-- **CSP no del todo estricta:** admite scripts en línea y `eval` por unos 50 manejadores `onclick`
-  y `hx-on` en el HTML. Reemplazarlos por un script propio permitiría una política estricta.
 - **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se
   usa (`q`, `execute`, `t.<tabla>.insert/update`); el resto de lo propio de SQLite está en
   `app/comun/db.py` (ver su docstring).

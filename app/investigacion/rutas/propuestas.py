@@ -20,7 +20,7 @@ from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
 from app.investigacion.componentes.lineas import casillas_lineas
 from app.comun.componentes.etapas import etapas
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, boton_espera, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, boton_espera, mensaje_error, modal, pagina
 from app.investigacion.componentes.perfil import texto_con_parrafos
 from app.comun.componentes.registros import dato, insignia
 from app.comun.db import auditar
@@ -109,7 +109,7 @@ def _form_nueva(nombre="", error=None, clase=""):
                cls=TextPresets.muted_sm),
              opciones,
              LabelInput("Nombre del proyecto", id="nombre", value=nombre, required=True, maxlength=300),
-             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Crear borrador", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
              hx_post="/propuestas", hx_target=f"#{ID_MODAL}", cls="space-y-4"))
 
@@ -149,7 +149,7 @@ def post(auth, sess, pid: int):
 def _boton_quitar(etiqueta):
     return fh.Button(UkIcon("x", height=14, width=14), type="button", aria_label=etiqueta, title=etiqueta,
                      cls="p-2 rounded hover:bg-muted hover:text-red-600 shrink-0",
-                     onclick="this.closest('.fila-repetible').remove()")
+                     data_accion="quitar", data_quitar=".fila-repetible")
 
 
 def fila_objetivo(texto=""):
@@ -561,7 +561,7 @@ def get(auth, periodo: str = "", estado: str = ""):
             Div(Select(*[Option(f"Periodo {inst.periodo_texto(x)}", value=str(x), selected=x == periodo)
                          for x in periodos],
                        name="periodo", cls="uk-select w-52", aria_label="Periodo",
-                       onchange="location.href='/admin/propuestas?periodo='+this.value"),
+                       data_navegar="/admin/propuestas?periodo="),
                 A(UkIcon("download", height=14, width=14), "Descargar XLSX", href=f"/admin/propuestas/{periodo}/xlsx",
                   cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1") if props or n else "",
                 cls="flex items-center gap-2"),

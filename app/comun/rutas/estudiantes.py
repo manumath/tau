@@ -10,7 +10,7 @@ from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInpu
                            UkIcon)
 
 from app.comun import estudiantes, permisos, personas
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia, url_filtrada
 from app.comun.db import auditar, get_db, sin_tildes
 
@@ -70,7 +70,7 @@ def get(auth, q: str = "", nivel: str = "", estado: str = ""):
                        Option("Egresados", value="egresado", selected=estado == "egresado"),
                        name="estado", cls="uk-select w-52", aria_label="Estado"),
                 hx_get="/estudiantes/lista", hx_target=f"#{ID_LISTA}", hx_swap="outerHTML",
-                hx_trigger="input delay:300ms, change, search", onsubmit="return false", cls="flex flex-wrap gap-3 mb-4"),
+                hx_trigger="input delay:300ms, change, search", data_sin_envio=True, cls="flex flex-wrap gap-3 mb-4"),
         Card(lista(q, nivel, estado)),
         usuario=auth, seccion="investigadores")
 
@@ -118,7 +118,7 @@ def _form_nuevo(d=None, errores=()):
              Div(Input(type="search", name="persona_q", placeholder="Buscar persona externa por nombre…", autocomplete="off",
                        cls="uk-input", aria_label="Buscar persona", hx_get="/estudiantes/buscar-persona",
                        hx_trigger="input changed delay:250ms, search", hx_target="#personas-encontradas",
-                       onkeydown="if(event.key==='Enter')event.preventDefault()"),
+                       data_enter="prevenir"),
                  Div(id="personas-encontradas"), cls="relative"),
              Div(_elegida(d.get("externo_id")) if d.get("externo_id") else "", id="persona-elegida"),
              Div(LabelInput("Nombres", id="nombres", value=d.get("nombres") or ""),
@@ -127,7 +127,7 @@ def _form_nuevo(d=None, errores=()):
                  cls="grid grid-cols-1 sm:grid-cols-3 gap-3"),
              H3("Estudios", cls="text-base font-semibold"),
              _campos_periodo(d),
-             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Registrar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
              hx_post="/estudiantes", hx_target=f"#{ID_MODAL}", cls="space-y-4"),
         ancho="max-w-3xl")
@@ -141,7 +141,7 @@ def _elegida(externo_id):
                Span("Persona elegida: ", cls=TextPresets.muted_sm), Span(f"{p['nombres']} {p['apellidos']}", cls="font-medium"),
                Span(f" · {p['afiliacion']}" if p.get("afiliacion") else "", cls=TextPresets.muted_sm),
                fh.Button("Quitar", type="button", cls="text-sm text-primary hover:underline ml-2",
-                         onclick="document.getElementById('persona-elegida').innerHTML=''"),
+                         data_accion="vaciar", data_objetivo="persona-elegida"),
                cls="rounded-md border border-border px-3 py-2")
 
 
@@ -165,7 +165,7 @@ def get(auth, persona_q: str = ""):
                              Span(f['institucion'] or "", cls=TextPresets.muted_sm), type="button",
                              cls="w-full text-left flex flex-col px-3 py-2 hover:bg-muted",
                              hx_get=f"/estudiantes/elegir/{f['id']}", hx_target="#persona-elegida",
-                             hx_on__after_request="document.getElementById('personas-encontradas').innerHTML=''"))
+                             data_tras_pedido_limpiar=",personas-encontradas"))
                 for f in filas],
               cls="absolute z-30 w-full mt-1 max-h-72 overflow-y-auto rounded-md border border-border bg-background "
                   "shadow-lg divide-y divide-border")

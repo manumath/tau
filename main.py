@@ -7,7 +7,6 @@ import os
 import time
 
 from fasthtml.common import Beforeware, Meta, fast_app, serve
-from fasthtml.toaster import setup_toasts
 
 from app.comun import config
 
@@ -23,7 +22,8 @@ from app.investigacion import institucionales  # noqa: E402
 from app.acreditacion import programados  # noqa: E402
 from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
 from app.comun.auth import rt as rutas_auth
-from app.comun.componentes.errores import JS_AVISOS, no_encontrado, paginas_de_error
+from app.comun.componentes import avisos_emergentes
+from app.comun.componentes.errores import no_encontrado, paginas_de_error
 from app.comun.cabeceras import CabecerasSeguridad
 from app.comun.componentes.recursos import encabezados
 from app.comun.componentes.recursos import montar as montar_estaticos
@@ -78,8 +78,8 @@ def create_app(db_path=config.DB_PATH):
               # Sin herencia de atributos hx-*: cada elemento declara su propio destino y swap.
               # Evita que, p. ej., un botón dentro de un contenedor con hx-swap="outerHTML"
               # herede ese swap sin querer (es además el comportamiento por defecto en htmx 4).
-              Meta(name="htmx-config", content=json.dumps({"disableInheritance": True})),
-              JS_AVISOS),
+              # allowEval: no evaluar código (hx-on, filtros de eventos): la CSP no admite 'unsafe-eval'.
+              Meta(name="htmx-config", content=json.dumps({"disableInheritance": True, "allowEval": False}))),
         exception_handlers={404: no_encontrado},
         before=[beforeware_origen, beforeware_solo_lectura, beforeware, Beforeware(_mantenimiento)],
         secret_key=config.SECRET_KEY,
@@ -91,7 +91,7 @@ def create_app(db_path=config.DB_PATH):
         htmlkw={"lang": "es"},
         title=config.NOMBRE_SISTEMA,
     )
-    setup_toasts(app)
+    avisos_emergentes.montar(app)
     app.after.append(paginas_de_error)
     montar_estaticos(app)
     app.add_middleware(CabecerasSeguridad)

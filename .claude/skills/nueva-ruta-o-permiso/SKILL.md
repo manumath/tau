@@ -32,6 +32,12 @@ description: Agregar una pantalla, ruta HTMX o acción con permisos en TAU (Fast
 
 ## HTMX y componentes
 
+- **Nada de JavaScript en el HTML** (la CSP es `script-src 'self'`): ni `onclick=`, `onchange=`,
+  `hx_on…` ni `Script("…")` en línea; el navegador los bloquearía sin aviso visible. Use los
+  atributos que atiende `static/js/acciones.js` (`data_accion="cerrar-modal"`, `"vaciar"`,
+  `"copiar"`, `"imprimir"`…, `data_navegar`, `data_enter`, `data_sin_envio`,
+  `data_tras_pedido_limpiar`); si falta un comportamiento, agréguelo ahí. Botón que cierra el
+  modal: `**CERRAR` de `layout.py`. `tests/test_csp.py` lo vigila.
 - Sin herencia de atributos: cada elemento declara `hx_target` y `hx_swap`.
 - Modales: `modal(...)` de `app/comun/componentes/layout.py` con `hx_target=f"#{ID_MODAL}"`;
   cerrar con `JS_CERRAR`. Filas o fragmentos fuera de banda: `Template(x(hx_swap_oob="true"))`.

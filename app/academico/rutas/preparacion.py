@@ -65,7 +65,7 @@ def get(auth, semestre: str = ""):
     g = est["gestion"]
     selector = Select(*[Option(f"{t}-{a}", value=f"{t}-{a}", selected=(a, t) == (anio, tipo))
                         for a, t in preparacion.semestres_elegibles()],
-                      aria_label="Semestre", cls="uk-select w-36", onchange=f"location.href='{BASE}?semestre='+this.value")
+                      aria_label="Semestre", cls="uk-select w-36", data_navegar=f"{BASE}?semestre=")
     cuando = (f"{gestiones.nombre(g)} · {'empezó' if est['empezado'] else 'empieza'} el {g['fecha_inicio']}" if g
               else f"{gestiones.TIPOS[tipo]} {anio} · aún sin gestión creada")
     return pagina(

@@ -25,7 +25,7 @@ def seccion_adjuntos(entidad: str, entidad_id: int, editable: bool, error: str |
     subir = fh.Form(
         Button(UkIcon("paperclip", height=14, width=14), "Adjuntar archivo", type="button",
                cls=(ButtonT.default, ButtonT.sm),
-               onclick="this.closest('form').querySelector('input[type=file]').click()"),
+               data_accion="elegir-archivo"),
         Input(type="file", name="archivo", accept="application/pdf,image/png,image/jpeg",
               cls="hidden", aria_label="Archivo adjunto"),
         Span("PDF, PNG o JPG hasta 20 MB.", cls=TextPresets.muted_sm),

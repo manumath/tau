@@ -401,7 +401,7 @@ def seccion_foto(p, error=None):
             Div(Button(UkIcon("camera", height=14, width=14),
                        "Cambiar foto" if p["foto"] else "Subir foto", type="button",
                        cls=(ButtonT.default, ButtonT.sm),
-                       onclick="this.closest('form').querySelector('input[type=file]').click()"),
+                       data_accion="elegir-archivo"),
                 Button(UkIcon("trash-2", height=14, width=14), "Quitar", type="button",
                        cls=(ButtonT.ghost, ButtonT.sm), hx_delete="/perfil/foto",
                        hx_target="#seccion-foto", hx_swap="outerHTML",

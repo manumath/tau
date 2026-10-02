@@ -14,7 +14,7 @@ from app.investigacion import actividades, lineas, productos, proyectos
 from app.comun import permisos, personas
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes import personas as selector_personas
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import dato, enlace_persona, filtros, insignia, url_filtrada
 from app.investigacion.componentes.registros import casillas_proyectos, insignias_proyectos, seccion_adjuntos
 from app.comun.db import auditar, get_db
@@ -105,7 +105,7 @@ def form_actividad(auth, d, participantes_, errores=(), aid=None, proyectos_sel=
         campo("Enlace (URL)", "url", type="url", placeholder="https://…"),
         LabelTextArea("Descripción", id="descripcion", value=d.get("descripcion") or "", rows=3),
         casillas_proyectos("actividad", aid, auth, proyectos_sel, preseleccion),
-        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
             Button("Guardar", type="submit", cls=ButtonT.primary),
             cls="flex justify-end gap-2"),
         hx_put=f"/actividades/{aid}" if aid else None, hx_post=None if aid else "/actividades",
@@ -251,8 +251,8 @@ def get(auth, q: str = "", anio: str = "", tipo: str = ""):
 def get(auth, proyecto: int = None):
     d = dict(tipo_id=actividades.tipos()[0]["id"], fecha_inicio=date.today().isoformat(),
              modalidad="presencial", ambito="nacional")
-    yo = {**personas.por_ref(f"i:{auth['id']}"), "rol": "expositor"}
-    return _modal_form(auth, d, [yo], preseleccion=proyecto)
+    yo = personas.por_ref(f"i:{auth['id']}")   # sin perfil de investigador, empieza sin participantes
+    return _modal_form(auth, d, [{**yo, "rol": "expositor"}] if yo else [], preseleccion=proyecto)
 
 
 @rt("/actividades")

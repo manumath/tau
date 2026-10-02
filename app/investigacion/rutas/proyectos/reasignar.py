@@ -6,7 +6,7 @@ from monsterui.all import Button, ButtonT, Form, FormLabel, TextPresets
 
 from app.investigacion import proyectos
 from app.comun import usuarios
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal
 from app.comun.db import auditar
 
 rt = APIRouter()
@@ -33,7 +33,7 @@ def form_reasignar(p, errores=(), nuevo="", anterior="co_investigador"):
                    for v, t in (("co_investigador", "sigue en el proyecto como co-investigador(a)"),
                                 ("baja", "deja el proyecto (se le da de baja con fecha de hoy)"))],
                  cls="space-y-2"),
-             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Reasignar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
              hx_post=f"/proyectos/{p['id']}/responsable", hx_target=f"#{ID_MODAL}", cls="space-y-4"))
 

@@ -163,3 +163,53 @@ def test_campana_de_avisos(page):
     page.get_by_role("link", name="Ver todos los avisos y elegir cómo recibirlos").click()
     page.wait_for_url("**/avisos")
     expect(page.get_by_text("Cómo recibir los avisos")).to_be_visible()
+
+
+def test_acciones_sin_codigo_en_linea(page):
+    """Lo que antes era JavaScript en el HTML (CSP estricta): modal, filas, avisos y selectores."""
+    entrar(page, "investigadora")
+    page.goto("/actividades")
+    modal = page.locator("#modal")
+    abrir = lambda: page.get_by_role("button", name="Nueva actividad").click()  # noqa: E731
+    abrir()
+    expect(modal.locator("form")).to_have_count(1)
+    page.keyboard.press("Escape")                                   # Escape lo cierra
+    expect(modal.locator("form")).to_have_count(0)
+    abrir()
+    modal.get_by_role("dialog").get_by_text("Nueva actividad").click()   # un clic dentro no lo cierra
+    expect(modal.locator("form")).to_have_count(1)
+    modal.locator("[data-fondo-modal]").click(position={"x": 5, "y": 5})  # un clic fuera, sí
+    expect(modal.locator("form")).to_have_count(0)
+    abrir()
+    modal.get_by_role("button", name="Cancelar").click()
+    expect(modal.locator("form")).to_have_count(0)
+
+    # Filas repetibles de una propuesta: «Quitar» la elimina; el aviso de la creación aparece y se va.
+    page.goto("/proyectos")
+    page.get_by_role("button", name="Proponer proyecto institucional").click()
+    page.locator("#modal").get_by_label("Investigación").check()
+    page.locator("#modal input[name=nombre]").fill("Prueba de filas")
+    page.locator("#modal").get_by_role("button", name="Crear borrador").click()
+    page.wait_for_url("**/propuestas/*")
+    aviso = page.locator("#fh-toast-container .fh-toast")
+    expect(aviso).to_contain_text("Borrador creado")
+    expect(aviso).to_have_count(0, timeout=8000)                    # se retira solo
+    editor = page.locator("#editor-propuesta")
+    editor.get_by_role("button", name="Agregar objetivo").click()
+    expect(editor.locator("input[name=objetivo]")).to_have_count(2)
+    editor.get_by_role("button", name="Quitar objetivo").first.click()
+    expect(editor.locator("input[name=objetivo]")).to_have_count(1)
+
+
+def test_selector_de_periodo_de_la_memoria(page):
+    entrar(page, "admin")
+    # Un selector que navega (data-navegar): el periodo de la bandeja de propuestas.
+    page.goto("/admin/propuestas")
+    opciones = page.locator("select[aria-label=Periodo] option")
+    otro = opciones.nth(opciones.count() - 1).get_attribute("value")
+    page.locator("select[aria-label=Periodo]").select_option(otro)
+    page.wait_for_url(f"**/admin/propuestas?periodo={otro}")
+    page.goto("/informes/memoria")
+    page.locator("select[name=modo]").select_option("periodo")
+    expect(page.locator("[data-modo=periodo]")).to_be_visible()
+    expect(page.locator("[data-modo=anio]")).to_be_hidden()

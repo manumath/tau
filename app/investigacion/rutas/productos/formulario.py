@@ -13,7 +13,7 @@ from app.investigacion import actividades, importacion, productos, proyectos, re
 from app.comun import personas
 from app.investigacion import filiacion as filiacion_mod
 from app.investigacion.componentes import personas as selector_personas
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, boton_espera, mensaje_error, modal
+from app.comun.componentes.layout import ID_MODAL, boton_espera, mensaje_error, modal
 from app.comun.componentes.registros import insignia
 from app.investigacion.componentes.registros import casillas_proyectos
 from app.comun.db import auditar
@@ -73,7 +73,7 @@ def bloque_revista(revista_id, anio, nueva):
         Input(type="search", name="revista_q", placeholder="Buscar revista del catálogo por título o ISSN…",
               autocomplete="off", cls="uk-input", aria_label="Buscar revista",
               hx_get="/productos/revistas", hx_trigger="input changed delay:250ms, search",
-              hx_target="#resultados-revista", onkeydown="if(event.key==='Enter')event.preventDefault()"),
+              hx_target="#resultados-revista", data_enter="prevenir"),
         Div(id="resultados-revista"), cls="relative")
     propuesta = fh.Details(
         fh.Summary("¿No está en el catálogo? Propóngala", cls="cursor-pointer text-sm text-primary"),
@@ -159,8 +159,7 @@ def caja_importar(valor="", error=None, contenido=None):
         Div(Input(id="identificador", name="identificador", value=valor, autocomplete="off",
                   placeholder="10.1090/S0002-9947-1965-0170805-7  ·  2401.01234  ·  o la URL",
                   cls="uk-input", aria_label="DOI o identificador arXiv",
-                  onkeydown="if(event.key==='Enter'){event.preventDefault();"
-                            "document.getElementById('boton-importar').click()}"),
+                  data_enter="clic:boton-importar"),
             boton_espera("Importar", type="button", id="boton-importar",
                          cls=(ButtonT.primary, "shrink-0"), hx_post="/productos/importar",
                    hx_include="#identificador, input[name=proyecto]:checked", hx_target=f"#{ID_MODAL}",
@@ -255,7 +254,7 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
         LabelTextArea("Resumen", id="resumen", value=d.get("resumen") or "", rows=4,
                       placeholder="Admite LaTeX: $\\zeta(s)$"),
         casillas_proyectos("producto", pid, auth, proyectos_sel, preseleccion, d.get("_agradece")),
-        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
             Button("Guardar", type="submit", cls=ButtonT.primary),
             cls="flex justify-end gap-2"),
         hx_put=f"/productos/{pid}" if pid else None, hx_post=None if pid else "/productos",

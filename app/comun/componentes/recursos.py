@@ -14,7 +14,7 @@ import hashlib
 from functools import cache
 
 from fasthtml.common import Link, Meta, Script
-from monsterui.core import ThemeFont, ThemeRadii, ThemeShadows, headers_theme, scrollspy_style
+from monsterui.core import scrollspy_style
 from starlette.staticfiles import StaticFiles
 
 from app.comun import config
@@ -22,22 +22,6 @@ from app.comun import config
 VERSIONES = {"htmx": "2.0.7", "fasthtml-js": "1.0.12", "franken-ui": "2.0.0", "katex": "0.16.21",
              "tailwind": "3.4.17"}
 
-# KaTeX: renderiza \( \), $ $ y $$ $$ en todo contenido nuevo (carga inicial y swaps de HTMX).
-_KATEX_JS = """
-import renderMathInElement from '{auto_render}';
-const opciones = {{
-  delimiters: [
-    {{left: '$$', right: '$$', display: true}},
-    {{left: '\\\\(', right: '\\\\)', display: false}},
-    {{left: '$', right: '$', display: false}},
-  ],
-  ignoredClasses: ['nomath'],
-  throwOnError: false,
-}};
-const render = el => renderMathInElement(el || document.body, opciones);
-render(document.body);
-document.addEventListener('htmx:load', e => render(e.detail.elt));
-"""
 
 
 CARPETA = config.RAIZ / "static"
@@ -79,12 +63,15 @@ def encabezados():
         Link(rel="stylesheet", href=url("vendor/franken-ui/core.min.css")),
         Script(type="module", src=url("vendor/franken-ui/core.iife.js")),
         Link(rel="stylesheet", href=url("css/tailwind.css")),
-        # Tema de Franken UI (azul; claro u oscuro según la elección guardada o, si no hay, el sistema).
-        headers_theme("blue", mode="auto", radii=ThemeRadii.sm, shadows=ThemeShadows.sm, font=ThemeFont.sm),
+        # Tema de Franken UI (azul; claro u oscuro según la elección guardada o, si no hay, el sistema):
+        # el mismo código que headers_theme de MonsterUI, en un archivo (sin defer: antes de pintar).
+        Script(src=url("js/tema-inicial.js")),
         scrollspy_style,
         Script(type="module", src=url("vendor/franken-ui/icon.iife.js")),
         Script(src=url("js/tema.js"), defer=True),  # selector de tema claro / oscuro / sistema
         Script(src=url("js/tablas.js"), defer=True),  # orden, filtro y CSV en <table data-tabla>
+        Script(src=url("js/acciones.js"), defer=True),  # botones, selects y modal (data-accion…)
+        Script(src=url("js/avisos.js"), defer=True),  # avisos emergentes y errores de HTMX
         Link(rel="stylesheet", href=url("vendor/katex/katex.min.css")),
-        Script(_KATEX_JS.format(auto_render=url("vendor/katex/contrib/auto-render.mjs")), type="module"),
+        Script(type="module", src=url("js/katex.mjs")),  # fórmulas LaTeX
     ]

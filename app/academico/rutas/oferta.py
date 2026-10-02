@@ -11,7 +11,7 @@ from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 from app.academico import gestiones, importar_oferta, oferta
 from app.academico.componentes import pestanas
 from app.comun import permisos
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, transaccion
 
@@ -28,7 +28,7 @@ def _selector(g):
     return Select(*[Option(f"{gestiones.codigo(x)} · {gestiones.TIPOS[x['tipo']]}", value=str(x["id"]),
                            selected=x["id"] == g["id"]) for x in gestiones.listar()],
                   name="gestion", aria_label="Gestión", cls="uk-select w-72",
-                  onchange=f"location.href='{BASE}?gestion='+this.value")
+                  data_navegar=f"{BASE}?gestion=")
 
 
 def _docente(d, g, puede):
@@ -161,7 +161,7 @@ def get(auth, gid: int):
             fh.Label(fh.Input(type="checkbox", name="con_docentes", value="1", checked=True, cls="uk-checkbox"),
                      Span("Con sus docentes (titulares y auxiliares). Se aplican las mismas reglas que al asignar a mano: "
                           "en verano e invierno, solo titulares.", cls="text-sm"), cls="flex items-start gap-2"),
-            Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+            Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                 Button(UkIcon("copy", height=14, width=14), "Copiar", type="submit", cls=ButtonT.primary),
                 cls="flex justify-end gap-2"),
             hx_post=f"{BASE}/{gid}/copiar", hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML", cls="space-y-4"))
@@ -419,7 +419,7 @@ def _form_importar(errores=()):
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href=f"{BASE}/plantilla",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
         fh.Form(Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
-                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                     Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
                 hx_post=f"{BASE}/importar/revisar", hx_encoding="multipart/form-data", hx_target=f"#{ID_MODAL}",
                 cls="space-y-4"),
@@ -477,7 +477,7 @@ async def post(auth, archivo: UploadFile = None):
                      cls="uk-table uk-table-divider uk-table-small"),
             cls="max-h-96 overflow-y-auto border border-border rounded-md mb-4"),
         fh.Form(Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),
-                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                     Button(f"Importar {len(listas)} gestión(es)", type="submit", cls=ButtonT.primary,
                            disabled=not listas), cls="flex justify-end gap-2"),
                 hx_post=f"{BASE}/importar/confirmar", hx_target=f"#{ID_MODAL}"),

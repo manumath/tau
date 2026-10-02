@@ -113,27 +113,24 @@ def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = 
             Div(id=ID_MODAL))
 
 
-# --- Modal ligero sin dependencias JS: el servidor lo inserta en #modal y
-# cerrarlo es vaciar ese contenedor. -----------------------------------------
+# --- Modal ligero: el servidor lo inserta en #modal y cerrarlo es vaciar ese contenedor. Los botones
+# usan data-accion="cerrar-modal"; el fondo (data-fondo-modal) lo cierra con un clic fuera del cuadro o
+# con Escape (static/js/acciones.js; sin JavaScript en el HTML por la CSP). -----------------------------
 
-JS_CERRAR = f"document.getElementById('{ID_MODAL}').innerHTML=''"
+CERRAR = {"data_accion": "cerrar-modal"}   # atributos de un botón que cierra el modal
 
 
 def modal(titulo: str, *contenido, ancho="max-w-lg"):
     return Div(
         Div(
             Div(H3(titulo, cls="text-lg"),
-                Button(UkIcon("x"), cls=ButtonT.ghost, onclick=JS_CERRAR, aria_label="Cerrar",
-                       type="button"),
+                Button(UkIcon("x"), cls=ButtonT.ghost, aria_label="Cerrar", type="button", **CERRAR),
                 cls="flex items-center justify-between mb-4"),
             *contenido,
             cls=f"bg-background rounded-lg shadow-xl w-full {ancho} p-6 max-h-[90vh] overflow-y-auto",
-            role="dialog", aria_modal="true", onclick="event.stopPropagation()"),
+            role="dialog", aria_modal="true"),
         cls="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4",
-        onclick=JS_CERRAR,
-        hx_on_keydown=f"if(event.key==='Escape'){{{JS_CERRAR}}}", tabindex="-1",
-        # Foco al abrir para que Escape funcione sin clic previo.
-        hx_on_htmx_load="this.focus()")
+        data_fondo_modal=True, tabindex="-1")
 
 
 def cerrar_modal():

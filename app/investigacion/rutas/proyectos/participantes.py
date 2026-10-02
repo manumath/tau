@@ -169,7 +169,7 @@ def get(auth, pid: int, ref: str = ""):
                    name="carga", cls="uk-select h-9 w-40", aria_label="Carga en el proyecto"),
             Button("Agregar", type="submit", cls=(ButtonT.primary, ButtonT.sm)),
             Button("Cancelar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
-                   onclick="document.getElementById('resultados-miembro').innerHTML=''"),
+                   data_accion="vaciar", data_objetivo="resultados-miembro"),
             cls="flex flex-wrap items-center gap-2"),
         P(ayuda, cls=TextPresets.muted_sm),
         Input(type="hidden", name="ref", value=ref),

@@ -16,11 +16,6 @@ from app.comun import estudiantes
 from app.investigacion.actividades import ROLES
 from app.investigacion.filiacion import OPCIONES as OPCIONES_FILIACION
 
-JS_SUBIR = ("const li=this.closest('li');"
-            "if(li.previousElementSibling)li.parentNode.insertBefore(li,li.previousElementSibling)")
-JS_BAJAR = ("const li=this.closest('li');"
-            "if(li.nextElementSibling)li.parentNode.insertBefore(li.nextElementSibling,li)")
-JS_QUITAR = "this.closest('li').remove()"
 CLS_ICONO = "p-1 rounded hover:bg-muted text-muted-foreground"
 
 
@@ -28,14 +23,11 @@ def ids(campo):
     return f"lista-{campo}", f"resultados-{campo}", f"buscar-{campo}"
 
 
-def js_limpiar(campo):
-    """Vacía el buscador y sus resultados tras agregar a alguien (salvo si el servidor
-    devolvió un error redirigido con HX-Retarget)."""
+def limpiar_tras_agregar(campo):
+    """«buscador,resultados» que static/js/acciones.js vacía tras agregar a alguien (salvo si el
+    servidor devolvió un error redirigido con HX-Retarget)."""
     _, resultados_id, buscar_id = ids(campo)
-    return ("if(!event.detail.xhr.getResponseHeader('HX-Retarget')){"
-            f"document.getElementById('{buscar_id}').value='';"
-            f"document.getElementById('{resultados_id}').innerHTML='';"
-            f"document.getElementById('{buscar_id}').focus()}}")
+    return f"{buscar_id},{resultados_id}"
 
 
 def selector_filiacion(p: dict, valor):
@@ -69,11 +61,11 @@ def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):
             cls="min-w-0 flex-1"),
         selector_rol,
         Div(fh.Button(UkIcon("chevron-up", height=14, width=14), type="button", cls=CLS_ICONO,
-                      onclick=JS_SUBIR, title="Subir", aria_label="Subir"),
+                      data_accion="subir", title="Subir", aria_label="Subir"),
             fh.Button(UkIcon("chevron-down", height=14, width=14), type="button", cls=CLS_ICONO,
-                      onclick=JS_BAJAR, title="Bajar", aria_label="Bajar"),
+                      data_accion="bajar", title="Bajar", aria_label="Bajar"),
             fh.Button(UkIcon("x", height=14, width=14), type="button", cls=CLS_ICONO + " hover:text-red-600",
-                      onclick=JS_QUITAR, title="Quitar", aria_label="Quitar"),
+                      data_accion="quitar", title="Quitar", aria_label="Quitar"),
             cls="flex shrink-0"),
         cls="flex items-center gap-3 px-3 py-2")
 
@@ -93,7 +85,7 @@ def selector(campo: str, elegidas: list[dict], titulo: str, ayuda: str = ""):
                   hx_trigger="input changed delay:250ms, search",
                   hx_include=f"#{lista_id} input[name={campo}]",
                   # Enter no debe enviar el formulario principal.
-                  onkeydown="if(event.key==='Enter')event.preventDefault()"),
+                  data_enter="prevenir"),
             Div(id=resultados_id),
             cls="relative"),
         cls="space-y-2")
@@ -109,7 +101,7 @@ def resultados(campo: str, texto: str, encontradas: list[dict]):
              + (f" · {p['afiliacion']}" if p.get("afiliacion") else ""), cls=TextPresets.muted_sm),
         type="button", cls="w-full text-left flex flex-col px-3 py-2 hover:bg-muted focus:bg-muted",
         hx_get=f"/personas/fila?campo={campo}&ref={p['ref']}", hx_target=f"#{lista_id}",
-        hx_swap="beforeend", hx_on__after_request=js_limpiar(campo))) for p in encontradas]
+        hx_swap="beforeend", data_tras_pedido_limpiar=limpiar_tras_agregar(campo))) for p in encontradas]
     opciones.append(Li(fh.Button(
         UkIcon("user-plus", height=14, width=14), f"Registrar a «{texto.strip()}» como persona externa",
         type="button", cls="w-full text-left flex items-center gap-2 px-3 py-2 text-primary hover:bg-muted",
@@ -141,12 +133,12 @@ def form_externo(campo: str, texto: str, errores=(), url: str | None = None, des
             Input(name="ext_pais", placeholder="País", cls="uk-input", aria_label="País"),
             cls="grid grid-cols-1 sm:grid-cols-2 gap-2"),
         Div(Button("Cancelar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
-                   onclick=f"document.getElementById('{resultados_id}').innerHTML=''"),
+                   data_accion="vaciar", data_objetivo=resultados_id),
             Button("Agregar", type="button", cls=(ButtonT.primary, ButtonT.sm),
                    hx_include=f"#{bloque}",
                    **({"hx_post": url, "hx_target": destino} if url else
                       {"hx_post": f"/personas/externo?campo={campo}", "hx_target": f"#{lista_id}",
-                       "hx_swap": "beforeend", "hx_on__after_request": js_limpiar(campo)})),
+                       "hx_swap": "beforeend", "data_tras_pedido_limpiar": limpiar_tras_agregar(campo)})),
             cls="flex justify-end gap-2"),
         id=bloque,
         cls="absolute z-30 w-full mt-1 rounded-md border border-border bg-background shadow-lg p-3 space-y-2")

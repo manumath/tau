@@ -11,7 +11,7 @@ from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, Input
 
 from app.comun import config
 from app.investigacion import importar_revistas, revistas
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia, url_filtrada
 from app.comun.db import auditar
 
@@ -74,7 +74,7 @@ def get(auth, q: str = "", estado: str = ""):
                                                      for v, t in revistas.ESTADOS.items()],
                        name="estado", cls="uk-select w-56", aria_label="Estado"),
                 hx_get=f"{BASE}/lista", hx_target=f"#{ID_LISTA}", hx_swap="outerHTML",
-                hx_trigger="input delay:300ms, change, search", onsubmit="return false",
+                hx_trigger="input delay:300ms, change, search", data_sin_envio=True,
                 cls="flex flex-wrap gap-3 mb-4"),
         Card(lista(q, estado)),
         usuario=auth, seccion="revistas")
@@ -166,7 +166,7 @@ def _campos(d):
 
 def _form(d, errores=(), rid=None):
     return Form(mensaje_error(*errores), *_campos(d),
-                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                     Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
                 **({"hx_put": f"{BASE}/{rid}"} if rid else {"hx_post": BASE}), hx_target=f"#{ID_MODAL}",
                 cls="space-y-4")
@@ -334,7 +334,7 @@ def _form_archivo(errores=()):
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href=f"{BASE}/plantilla",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
         Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
-        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
             Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
         hx_post=f"{BASE}/importar/revisar", hx_encoding="multipart/form-data", hx_target=f"#{ID_MODAL}",
         cls="space-y-4")
@@ -375,7 +375,7 @@ async def post(archivo: UploadFile = None):
                   cls="uk-table-divider uk-table-small"),
             cls="max-h-96 overflow-y-auto border border-border rounded-md mb-4"),
         Form(Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),
-             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button(f"Cargar {len(listas)} revista(s)", type="submit", cls=ButtonT.primary, disabled=not listas),
                  cls="flex justify-end gap-2"),
              hx_post=f"{BASE}/importar/confirmar", hx_target=f"#{ID_MODAL}"),

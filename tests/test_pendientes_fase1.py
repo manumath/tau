@@ -46,7 +46,10 @@ def test_404_de_registro_y_api_quedan_como_estan(client, admin):
 
 
 def test_aviso_de_error_htmx_incluido(client, app):
-    assert "htmx:responseError" in client.get("/login").text
+    """Los errores de HTMX muestran un aviso (static/js/avisos.js, cargado en todas las páginas)."""
+    import re
+    ruta = re.search(r'src="(/static/js/avisos\.js\?v=\w+)"', client.get("/login").text).group(1)
+    assert "htmx:responseError" in client.get(ruta).text
 
 
 # --- Desbloqueo manual -------------------------------------------------------------------------------

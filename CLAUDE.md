@@ -88,8 +88,9 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
 - Plantillas XLSX ajenas (la Guía de Antecedentes): nunca con openpyxl al guardar, que borra gráficos e
   imágenes; use `app/comun/xlsx_plantilla.py`, que escribe solo las celdas pedidas.
 - Nunca edite una migración aplicada; nunca borre una prueba para que pase.
-- Seguridad: autorización en el servidor en cada ruta; CSRF por `Origin`; CSP propia
-  (`app/comun/cabeceras.py`), sin recursos de otros sitios.
+- Seguridad: autorización en el servidor en cada ruta; CSRF por `Origin`; CSP propia y estricta
+  (`app/comun/cabeceras.py`), sin recursos de otros sitios ni JavaScript en el HTML: nada de
+  `onclick`/`hx_on`/scripts en línea; use `data-accion` y compañía (`static/js/acciones.js`).
 
 ## Forma de trabajo
 

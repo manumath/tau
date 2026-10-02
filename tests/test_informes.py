@@ -86,7 +86,7 @@ def test_pagina_cv(client, datos):
     r = client.get("/informes/cv?desde=2026&hasta=2026")
     assert "Artículos en revistas indexadas (1)" in r.text and "Anillos noetherianos" in r.text
     assert "<strong>Noether, E.</strong>" in r.text  # la persona del CV, destacada
-    assert "Scopus, MathSciNet" in r.text and "window.print()" in r.text
+    assert "Scopus, MathSciNet" in r.text and 'data-accion="imprimir"' in r.text
     assert "Del año pasado" not in r.text
 
 

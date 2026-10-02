@@ -146,7 +146,7 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
                   cls=TextPresets.muted_sm)),
             Div(A(UkIcon("download", height=16, width=16), "Exportar BibTeX", href="/productos/bibtex",
                   # Exporta lo que se ve: agrega los filtros vigentes (están en la URL de la página).
-                  onclick="this.href='/productos/bibtex'+location.search",
+                  data_accion="con-busqueda",
                   cls="uk-btn uk-btn-default inline-flex items-center gap-1"),
                 Button(UkIcon("file-up", height=16, width=16), "Importar BibTeX", cls=ButtonT.default,
                        hx_get="/productos/importar-bibtex", hx_target=f"#{ID_MODAL}"),

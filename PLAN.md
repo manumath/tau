@@ -1442,3 +1442,20 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
 - Pantalla: `/personas/externos/duplicados` («Duplicados y cuentas») con la sección «Ya tienen cuenta»;
   vinculación manual desde la lista de externos. Tablero de calidad: «Coautores externos que ya tienen
   cuenta».
+
+## 43. Política de seguridad de contenido estricta (2-oct-2026)
+
+- `script-src 'self'`: sin 'unsafe-inline' ni 'unsafe-eval'. Los estilos siguen admitiendo
+  'unsafe-inline' (atributos `style=` de Franken UI, htmx y los gráficos SVG; no ejecutan código).
+- Unos 60 manejadores en el HTML (`onclick`, `onchange`, `onsubmit`, `onkeydown`, `hx-on`) pasaron a
+  atributos `data-*` que atiende `static/js/acciones.js` por delegación (modal, filas, buscadores,
+  copiar, imprimir, selects que navegan, pestañas). El modal se cierra con Escape o con un clic fuera
+  del cuadro (`data-fondo-modal`); la constante `JS_CERRAR` se reemplazó por `CERRAR`.
+- Scripts en línea a archivos: tema inicial (`static/js/tema-inicial.js`, el de `headers_theme` de
+  MonsterUI), KaTeX (`static/js/katex.mjs`), errores de HTMX y avisos (`static/js/avisos.js`). Los avisos
+  de `add_toast` se sirven sin `hx-on` (`avisos_emergentes.py`, en lugar de `setup_toasts`).
+- htmx con `allowEval: false`. `tests/test_csp.py`: cabecera estricta, páginas y modales sin código en
+  línea, ninguna línea con manejadores en `app/`, tema inicial igual al de MonsterUI. Pruebas en
+  navegador del modal, las filas, los avisos y los selectores (fallan con cualquier violación).
+- De paso: «Nueva actividad» daba error 500 a una cuenta sin perfil de investigador; ahora empieza sin
+  participantes.

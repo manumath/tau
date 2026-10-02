@@ -97,7 +97,7 @@ def _gestion_y_selector(uid, gestion, base):
         or (lista[0] if lista else None)
     selector = Select(*[Option(gestiones.codigo(x), value=str(x["id"]), selected=g and x["id"] == g["id"]) for x in lista],
                       aria_label="Gestión", cls="uk-select w-40",
-                      onchange=f"location.href='{base}?gestion='+this.value") if len(lista) > 1 else ""
+                      data_navegar=f"{base}?gestion=") if len(lista) > 1 else ""
     return g, selector
 
 

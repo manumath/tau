@@ -5,7 +5,7 @@ from monsterui.all import Button, ButtonT, Card, Form, FormLabel, LabelInput, La
 
 from app.investigacion import proyectos
 from app.comun import config
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
+from app.comun.componentes.layout import CERRAR, ID_MODAL, mensaje_error, modal
 from app.comun.db import auditar
 from app.investigacion.rutas.proyectos.base import ID_TAB, _proyecto_o_error
 
@@ -71,7 +71,7 @@ def form_datos(d, errores=(), pid=None):
                       rows=2),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost,
                    **({"hx_get": f"/proyectos/{pid}/tab/resumen", "hx_target": f"#{ID_TAB}"} if pid
-                      else {"onclick": JS_CERRAR})),
+                      else CERRAR)),
             Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
         **({"hx_put": f"/proyectos/{pid}/datos", "hx_target": f"#{ID_TAB}"} if pid
            else {"hx_post": "/proyectos", "hx_target": f"#{ID_MODAL}"}),

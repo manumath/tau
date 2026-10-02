@@ -43,7 +43,7 @@ def pagina_renovaciones(auth, g, errores=()):
                    fh.Td(vinculos.texto_periodo(v), cls="text-sm whitespace-nowrap"),
                    fh.Td(vinculos.texto_carga(v) or "Sin carga", cls="text-sm")) for v in candidatos]
     selector = Select(*[Option(gestiones.codigo(x), value=str(x["id"]), selected=x["id"] == g["id"]) for x in _semestres()],
-                      aria_label="Semestre", cls="uk-select w-40", onchange=f"location.href='{BASE}?gestion='+this.value")
+                      aria_label="Semestre", cls="uk-select w-40", data_navegar=f"{BASE}?gestion=")
     return pagina(
         "Renovar contratos",
         pestanas("carga", auth),

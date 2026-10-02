@@ -34,9 +34,7 @@ def nav_pestanas(p, auth, activa):
                             href=f"/proyectos/{p['id']}?tab={t}",
                             hx_get=f"/proyectos/{p['id']}/tab/{t}", hx_target=f"#{ID_TAB}",
                             # Marca la pestaña activa en el navegador, sin volver a pedir la barra.
-                            hx_on__before_request="this.closest('ul').querySelectorAll('li')"
-                                                  ".forEach(li=>li.classList.remove('uk-active'));"
-                                                  "this.parentElement.classList.add('uk-active')"),
+                            data_pestana=True),
                           cls="uk-active" if t == activa else ""))
     return fh.Ul(*enlaces, cls="uk-tab mb-6")
 

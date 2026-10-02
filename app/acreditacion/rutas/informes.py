@@ -81,7 +81,7 @@ def barra(filtros=(), descargas=()):
                 method="get", cls="flex flex-wrap items-center gap-3") if filtros else Div(),
         Div(Div(*descargas,
                 Button(UkIcon("printer", height=16, width=16), "Imprimir / Guardar PDF", type="button",
-                       cls=ButtonT.primary, onclick="window.print()"),
+                       cls=ButtonT.primary, data_accion="imprimir"),
                 cls="flex flex-wrap justify-end gap-2"),
             P("Para el PDF con membrete: destino «Guardar como PDF» y, en «Más opciones», desmarque "
               "«Encabezados y pies de página» del navegador.", cls="text-xs text-muted-foreground text-right"),
@@ -624,7 +624,7 @@ def selector_periodo(r, anios):
         Select(*[Option(t, value=v, selected=v == modo) for v, t in
                  (("anio", "Año calendario"), ("periodo", "Periodo oct–sep"), ("rango", "Rango de fechas"))],
                name="modo", cls="uk-select w-44", aria_label="Tipo de periodo",
-               onchange="this.form.querySelectorAll('[data-modo]').forEach(e => e.classList.toggle('hidden', e.dataset.modo != this.value))"),
+               data_mostrar_modo=True),
         grupo("anio", Select(*[Option(str(a), value=str(a), selected=r["params"].get("anio") == a) for a in anios],
                              name="anio", cls="uk-select w-28", aria_label="Año")),
         grupo("periodo", Select(*[Option(f"{a}–{a + 1}", value=str(a), selected=r["params"].get("periodo") == a)

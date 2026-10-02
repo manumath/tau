@@ -41,7 +41,7 @@ def filtros(id_form: str, url_lista: str, id_destino: str, texto: str, anio: str
         # La URL de la página la actualiza el servidor (cabecera HX-Replace-Url): así se puede
         # recargar o compartir la vista filtrada.
         id=id_form, hx_get=url_lista, hx_target=f"#{id_destino}", hx_swap="outerHTML",
-        hx_trigger="input delay:300ms, search", onsubmit="return false",
+        hx_trigger="input delay:300ms, search", data_sin_envio=True,
         cls="flex flex-wrap gap-3 items-center mb-6")
 
 

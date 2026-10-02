@@ -4,9 +4,9 @@
   `paginas_de_error` las convierte en una página completa si la petición no es de HTMX.
 - Las rutas que no existen pasan por `no_encontrado` (manejador de 404 de la app).
 - En peticiones HTMX, htmx ignora por defecto las respuestas 4xx/5xx (no pasa nada en pantalla);
-  `JS_AVISOS` muestra entonces un aviso rojo con un mensaje comprensible.
+  static/js/avisos.js muestra entonces un aviso rojo con un mensaje comprensible.
 """
-from fasthtml.common import A, Div, FtResponse, JSONResponse, P, Response, Script
+from fasthtml.common import A, Div, FtResponse, JSONResponse, P, Response
 from monsterui.all import H2, ButtonT, UkIcon
 from starlette.responses import FileResponse, StreamingResponse
 
@@ -61,29 +61,3 @@ def no_encontrado(req, exc):
     return pagina_error(req, 404)
 
 
-JS_AVISOS = Script("""
-(() => {
-  const mensajes = {
-    403: 'No tiene permiso para esta acción.',
-    404: 'No se encontró: puede que lo hayan eliminado. Recargue la página.',
-    413: 'El archivo es demasiado grande.',
-    503: 'El sistema está en mantenimiento: por ahora solo se puede consultar.',
-  };
-  function aviso(texto) {
-    let c = document.getElementById('fh-toast-container');
-    if (!c) { c = document.createElement('div'); c.id = 'fh-toast-container'; document.body.appendChild(c); }
-    const d = document.createElement('div');
-    d.className = 'fh-toast fh-toast-error';
-    d.setAttribute('role', 'alert');
-    d.textContent = texto;
-    c.appendChild(d);
-    setTimeout(() => d.remove(), 6000);
-  }
-  document.addEventListener('htmx:responseError', e => {
-    const s = e.detail.xhr.status;
-    aviso(mensajes[s] || (s >= 500 ? 'Ocurrió un error en el servidor. Intente de nuevo; si persiste, '
-                                    + 'avise a la administración.' : `Error ${s}.`));
-  });
-  document.addEventListener('htmx:sendError', () => aviso('Sin conexión con el servidor. Revise su red.'));
-})();
-""")

@@ -14,7 +14,7 @@ from monsterui.all import (H2, H3, Button, ButtonT, Form, FormLabel, Input, Labe
 from app.comun import (academicos, config, correo, importar_usuarios, importar_vinculos, permisos, tokens,
                        unidades, usuarios, vinculos)
 from app.comun.componentes import grados as grados_ui
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.db import auditar
 from app.comun.seguridad import password_temporal
 
@@ -211,7 +211,7 @@ def form_usuario(datos=None, errores=(), con_vinculo=False):
               "nadie más la conoce. Sin invitación, se muestra una contraseña temporal para entregarla "
               "a mano; deberá cambiarla en su primer ingreso.", cls=TextPresets.muted_sm),
             cls="space-y-1 rounded-md border border-border p-3"),
-        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
             Button("Crear cuenta", type="submit", cls=ButtonT.primary),
             cls="flex justify-end gap-2"),
         hx_post="/admin/usuarios", hx_target=f"#{ID_MODAL}", cls="space-y-4")
@@ -228,13 +228,11 @@ def modal_credenciales(titulo, u, password, nota):
             Div(Code(password, id="pass-temporal", cls="text-lg font-mono tracking-wide"),
                 Button(UkIcon("copy", height=16, width=16), "Copiar", cls=ButtonT.ghost,
                        type="button",
-                       onclick="navigator.clipboard.writeText("
-                               "document.getElementById('pass-temporal').innerText);"
-                               "this.lastChild.textContent=' Copiada'"),
+                       data_accion="copiar", data_copiar_de="pass-temporal", data_copiado="Copiada"),
                 cls="flex items-center justify-between"),
             cls="rounded-md border border-border p-4 bg-muted/40"),
         P(nota, cls=(TextPresets.muted_sm, "mt-3")),
-        Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+        Div(Button("Listo", cls=ButtonT.primary, data_accion="cerrar-modal", type="button"),
             cls="flex justify-end mt-4"))
 
 
@@ -335,7 +333,7 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
         return (modal("Persona registrada",
                       P(f"{u['nombres']} {u['apellidos']} quedó registrada sin acceso al sistema. Para darle acceso, "
                         "use «Habilitar acceso» en su fila."),
-                      Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+                      Div(Button("Listo", cls=ButtonT.primary, data_accion="cerrar-modal", type="button"),
                           cls="flex justify-end mt-4")),
                 tabla())
     if invitar:
@@ -346,7 +344,7 @@ def post(auth, nombres: str = "", apellidos: str = "", email: str = "", categori
         return (modal("Invitación enviada",
                       P(f"Enviamos a {u['email']} un enlace para que {u['nombres']} defina su contraseña. "
                         "Vale 3 días; si vence, use «Restablecer» o pídale que use «¿Olvidó su contraseña?»."),
-                      Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+                      Div(Button("Listo", cls=ButtonT.primary, data_accion="cerrar-modal", type="button"),
                           cls="flex justify-end mt-4")),
                 tabla())
     password = password_temporal()
@@ -379,7 +377,7 @@ def modal_desactivar(u, errores=(), termina="si", fecha="", motivo=""):
                  cls="space-y-2"),
              P("El vínculo define qué producción cuenta en los informes: lo publicado mientras estuvo vinculado "
                "sigue contando después.", cls=TextPresets.muted_sm),
-             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Desactivar", type="submit", cls=ButtonT.destructive), cls="flex justify-end gap-2"),
              hx_post=f"{BASE}/{u["id"]}/activo", hx_target=f"#usuario-{u["id"]}", hx_swap="outerHTML",
              cls="space-y-4"))
@@ -469,7 +467,7 @@ def _form_archivo(errores=()):
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/plantilla",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
         Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
-        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
             Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
         hx_post="/admin/usuarios/importar/revisar", hx_encoding="multipart/form-data",
         hx_target=f"#{ID_MODAL}", cls="space-y-4")
@@ -539,7 +537,7 @@ async def post(auth, archivo: UploadFile = None):
                            checked=config.CORREO_MODO != "desactivado"),
             P("Sin invitación, se mostrará una contraseña temporal por cuenta para entregarla a mano.",
               cls=TextPresets.muted_sm),
-            Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+            Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                 Button(f"Crear {nuevas} cuenta(s)", type="submit", cls=ButtonT.primary, disabled=not nuevas),
                 cls="flex justify-end gap-2"),
             hx_post="/admin/usuarios/importar/confirmar", hx_target=f"#{ID_MODAL}", cls="space-y-2"),
@@ -569,11 +567,10 @@ def post(auth, sess, contenido: str = "", invitar: bool = False):
                       cls="uk-table-divider uk-table-small"),
                 cls="max-h-80 overflow-y-auto border border-border rounded-md"),
             Button(UkIcon("copy", height=16, width=16), "Copiar todo (correo y contraseña)", type="button",
-                   cls=(ButtonT.default, "mt-3"), data_credenciales=credenciales,
-                   onclick="navigator.clipboard.writeText(this.dataset.credenciales);"
-                           "this.lastChild.textContent=' Copiado'"))
+                   cls=(ButtonT.default, "mt-3"), data_accion="copiar", data_copiar=credenciales,
+                   data_copiado="Copiado"))
     return (modal("Importación terminada", cuerpo,
-                  Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+                  Div(Button("Listo", cls=ButtonT.primary, data_accion="cerrar-modal", type="button"),
                       cls="flex justify-end mt-4"), ancho="max-w-2xl"),
             tabla)
 
@@ -635,7 +632,7 @@ def modal_roles(u, auth, errores=(), datos=None):
         ayuda,
         Div(tabla, cls="overflow-x-auto mb-4"),
         formulario,
-        Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
+        Div(Button("Listo", type="button", cls=ButtonT.default, data_accion="cerrar-modal"), cls="flex justify-end mt-4"),
         Template(fila(usuarios.con_perfil(uid), auth)(hx_swap_oob="true")),
         ancho="max-w-4xl")
 
@@ -721,7 +718,7 @@ def modal_ficha(u, auth):
             Ul(*[Li(academicos.texto_grado(g), cls="text-sm py-1") for g in academicos.grados(uid)])
             if academicos.grados(uid) else P("Sin grados registrados.", cls=TextPresets.muted_sm)),
         seccion_datos_personales(uid) if permisos.puede(auth, "ver_datos_personales") else "",
-        Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
+        Div(Button("Listo", type="button", cls=ButtonT.default, data_accion="cerrar-modal"), cls="flex justify-end mt-4"),
         ancho="max-w-3xl")
 
 
@@ -906,7 +903,7 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None):
           cls=(TextPresets.muted_sm, "mb-3")),
         Div(tabla, cls="overflow-x-auto mb-4"),
         Div(*acciones, cls="space-y-2"),
-        Div(Button("Listo", type="button", cls=ButtonT.default, onclick=JS_CERRAR), cls="flex justify-end mt-4"),
+        Div(Button("Listo", type="button", cls=ButtonT.default, data_accion="cerrar-modal"), cls="flex justify-end mt-4"),
         Template(fila(usuarios.con_perfil(uid), auth)(hx_swap_oob="true")),
         ancho="max-w-4xl")
 
@@ -1044,7 +1041,7 @@ def _form_historial(errores=()):
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/historial/plantilla",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
         Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
-        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
             Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
         hx_post="/admin/usuarios/historial/revisar", hx_encoding="multipart/form-data",
         hx_target=f"#{ID_MODAL}", cls="space-y-4")
@@ -1092,7 +1089,7 @@ async def post(auth, archivo: UploadFile = None):
                   cls="uk-table-divider uk-table-small"),
             cls="max-h-96 overflow-y-auto border border-border rounded-md mb-4"),
         Form(Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),
-             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button(f"Actualizar {len(listas)} persona(s)", type="submit", cls=ButtonT.primary,
                         disabled=not listas), cls="flex justify-end gap-2"),
              hx_post="/admin/usuarios/historial/confirmar", hx_target=f"#{ID_MODAL}"),
@@ -1109,6 +1106,6 @@ def post(auth, sess, contenido: str = ""):
     n = importar_vinculos.aplicar(personas, auth["id"])
     add_toast(sess, f"Historial actualizado para {n} persona(s).", "success")
     return (modal("Historial importado", P(f"Se actualizó el historial de {n} persona(s)."),
-                  Div(Button("Listo", cls=ButtonT.primary, onclick=JS_CERRAR, type="button"),
+                  Div(Button("Listo", cls=ButtonT.primary, data_accion="cerrar-modal", type="button"),
                       cls="flex justify-end mt-4")),
             Template(cuerpo_tabla(usuarios.listar(), auth, oob=True)))

@@ -155,7 +155,7 @@ def get(auth, pid: int, tipo: str, rid: int):
         LabelTextArea("Motivo del rechazo", id=f"comentario-{tipo}-{rid}", name="comentario", rows=2,
                       required=True, placeholder="Por ejemplo: el artículo no menciona el financiamiento del proyecto."),
         Div(Button("Cancelar", type="button", cls=(ButtonT.ghost, ButtonT.sm),
-                   onclick=f"document.getElementById('motivo-{tipo}-{rid}').innerHTML=''"),
+                   data_accion="vaciar", data_objetivo=f"motivo-{tipo}-{rid}"),
             Button("Rechazar", type="submit", cls=(ButtonT.destructive, ButtonT.sm)),
             cls="flex justify-end gap-2"),
         hx_post=f"/proyectos/{pid}/pendientes/{tipo}/{rid}/rechazar", hx_target=f"#{ID_TAB}",

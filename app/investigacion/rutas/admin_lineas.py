@@ -5,7 +5,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelInput, LabelTextArea, TextPresets, UkIcon
 
 from app.investigacion import lineas
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
 
@@ -106,7 +106,7 @@ def form_linea(d, errores=(), lid=None):
                  cls="grid grid-cols-2 gap-4"),
              P("Deje «desde» en blanco si la línea ya regía antes del sistema, y «hasta» en blanco mientras siga "
                "vigente. La vigencia la fija la resolución que aprueba las líneas.", cls=TextPresets.muted_sm),
-             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
              **({"hx_put": f"{BASE}/{lid}"} if lid else {"hx_post": BASE}), hx_target=f"#{ID_MODAL}",
              cls="space-y-4"))
@@ -168,7 +168,7 @@ def form_cerrar(x, error=None, fecha=""):
              P(f"«{x['nombre']}» dejará de poder elegirse en propuestas, proyectos y perfiles después de esta "
                "fecha. Quienes ya la usaban la conservan.", cls="text-sm"),
              LabelInput("Vigente hasta", id="fecha", type="date", value=fecha or lineas.hoy(), required=True),
-             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
              hx_post=f"{BASE}/{x['id']}/cerrar", hx_target=f"#{ID_MODAL}", cls="space-y-4"))
 

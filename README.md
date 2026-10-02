@@ -245,8 +245,10 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
   (`app/comun/auth.py`, `beforeware_origen`). Complementa la cookie `SameSite=Lax`, que no protege de
   otros subdominios del mismo sitio (p. ej. `*.umsa.bo`). Sin tokens: los formularios no cambian.
 - **Cabeceras y CSP** (`app/comun/cabeceras.py`): solo recursos del propio sistema, sin conexiones a
-  otros sitios ni incrustación en marcos. `script-src` aún admite scripts en línea y `eval` (los
-  manejadores `onclick`/`hx-on` los necesitan); quitarlos permitiría una política estricta.
+  otros sitios ni incrustación en marcos. `script-src 'self'` estricto: sin scripts en línea ni
+  `eval`. El HTML no lleva `onclick`, `hx-on` ni `<script>` en línea; los comportamientos se declaran
+  con atributos `data-accion`, `data-navegar`, etc., que atiende `static/js/acciones.js` (ver su
+  encabezado). htmx corre con `allowEval: false`. `tests/test_csp.py` lo vigila.
 
 ## Partes públicas y API
 

@@ -6,7 +6,7 @@ from monsterui.all import H2, Button, ButtonT, Card, Table, Tbody, Td, TextPrese
 
 from app.comun import paises, permisos, personas
 from app.investigacion.componentes import personas as ui
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, boton_espera, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, boton_espera, modal, pagina
 from app.comun.db import auditar, get_db
 
 rt = APIRouter()
@@ -118,7 +118,7 @@ def get(auth, q: str = "", sin_pais: bool = True, todos: bool = False):
                 fh.Label(fh.Input(type="checkbox", name="todos", value="1", checked=not sin_pais, cls="uk-checkbox"),
                          Span("Mostrar también las que ya tienen país", cls="text-sm"), cls="flex items-center gap-2"),
                 hx_get="/personas/externos/tabla", hx_target="#tabla-externos", hx_swap="outerHTML",
-                hx_trigger="input delay:300ms, change, search", onsubmit="return false", cls="flex flex-wrap gap-3 mb-4"),
+                hx_trigger="input delay:300ms, change, search", data_sin_envio=True, cls="flex flex-wrap gap-3 mb-4"),
         fh.Datalist(*[fh.Option(value=x) for x in paises.nombres()], id="lista-paises"),
         Card(tabla_externos(q, sin_pais, _fusiona(auth))),
         usuario=auth, seccion="investigadores")
@@ -301,7 +301,7 @@ def get(auth, eid: int):
                 fh.Select(*[fh.Option(f"{c['apellidos']}, {c['nombres']} · {c['email']}", value=str(c["id"]))
                             for c in opciones], name="usuario", cls="uk-select", aria_label="Cuenta"),
                 Input(type="hidden", name="externo", value=str(eid)), Input(type="hidden", name="desde", value="tabla"),
-                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+                Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                     boton_espera("Vincular", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2 mt-4"),
                 hx_post="/personas/externos/vincular", hx_swap="none", hx_disabled_elt="find button[type='submit']",
                 hx_confirm="¿Vincular? No se puede deshacer."))

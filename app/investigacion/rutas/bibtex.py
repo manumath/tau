@@ -13,7 +13,7 @@ from monsterui.all import (Button, ButtonT, Form, Label, LabelT, LabelTextArea, 
 from app.comun import permisos
 from app.investigacion import bibtex, productos
 from app.acreditacion import informes
-from app.comun.componentes.layout import ID_MODAL, JS_CERRAR, mensaje_error, modal
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal
 from app.comun.db import auditar, sin_tildes
 
 rt = APIRouter()
@@ -60,7 +60,7 @@ def _form_origen(errores=()):
         LabelTextArea("…o pegue aquí las entradas", id="texto", rows=6,
                       placeholder="@article{clave,\n  author = {Noether, Emmy},\n  title = {…},\n  …\n}",
                       cls="space-y-2 font-mono text-xs"),
-        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+        Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
             Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
         hx_post="/productos/importar-bibtex/revisar", hx_encoding="multipart/form-data",
         hx_target=f"#{ID_MODAL}", cls="space-y-4")
@@ -135,7 +135,7 @@ async def post(auth, archivo: UploadFile = None, texto: str = ""):
                       Tbody(*[_fila(x, auth["id"]) for x in entradas]),
                       cls="uk-table-divider uk-table-small uk-table-middle"),
                 cls="max-h-[50vh] overflow-y-auto border border-border rounded-md"),
-            Div(Button("Cancelar", type="button", cls=ButtonT.ghost, onclick=JS_CERRAR),
+            Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                 Button("Importar lo marcado", type="submit", cls=ButtonT.primary,
                        disabled=not (cuenta["nueva"] or cuenta["duplicada"])),
                 cls="flex justify-end gap-2 mt-4"),
