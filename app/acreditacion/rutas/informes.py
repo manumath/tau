@@ -19,10 +19,11 @@ from app.investigacion import (actividades, cosecha, importacion, institucionale
                                revistas)
 from app.comun import config, permisos, unidades
 from app.comun.componentes import recursos
-from app.acreditacion import informes
+from app.acreditacion import informes, programados
 from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import boton_espera, pagina
 from app.comun.db import auditar
+from app.comun.rutas.admin_usuarios import fecha_local
 from app.investigacion.identificadores import IDENTIFICADORES
 
 rt = APIRouter()
@@ -226,7 +227,34 @@ def get(auth):
                       P("Documentos generados a partir de lo registrado en el sistema.", cls=TextPresets.muted_sm),
                       cls="mb-6 space-y-1"),
                   Div(*tarjetas, cls="grid grid-cols-1 md:grid-cols-3 gap-4"),
+                  seccion_programados(auth),
                   usuario=auth, seccion="informes")
+
+
+def seccion_programados(auth):
+    """Los informes que la persona recibe solos (por su rol): próximos envíos y los últimos."""
+    suyos = programados.suyos(auth)
+    if not suyos:
+        return ""
+    proximos = [x for x in programados.proximos() if x[0] in suyos]
+    ultimos = [x for x in programados.ultimos(10) if x["informe"] in suyos]
+    return Card(
+        H3("Informes que recibe automáticamente", cls="text-base font-semibold"),
+        P("Le llegan como avisos (campana y correo, según su preferencia en «Avisos»), con las cifras clave y "
+          "el enlace al informe. Las fechas son fijas; si nadie usa el sistema ese día, salen en el siguiente "
+          "acceso.", cls=TextPresets.muted_sm),
+        Div(Div(Strong("Próximos", cls="text-sm"),
+                Ul(*[Li(Span(f"{d:%d-%m-%Y}", cls="font-mono text-sm mr-2"),
+                        Span(f"{programados.NOMBRES[i]} ({detalle})", cls="text-sm")) for i, d, detalle in proximos],
+                   cls="space-y-1 mt-1")),
+            Div(Strong("Últimos envíos", cls="text-sm"),
+                Ul(*[Li(Span(fecha_local(x["enviado_en"])[:10], cls="font-mono text-sm mr-2"),
+                        Span(f"{programados.NOMBRES[x['informe']]} ({x['ocasion']})", cls="text-sm"),
+                        Span(" · sin novedades" if not x["destinatarios"] else "", cls=TextPresets.muted_sm))
+                     for x in ultimos], cls="space-y-1 mt-1") if ultimos
+                else P("Todavía ninguno.", cls=(TextPresets.muted_sm, "mt-1"))),
+            cls="grid grid-cols-1 md:grid-cols-2 gap-6 mt-3"),
+        cls="mt-8")
 
 
 # --- CV ----------------------------------------------------------------------------------------------------

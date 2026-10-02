@@ -38,6 +38,19 @@ plazos de continuidad. Al abrir uno, el sistema lo marca como leído y lo lleva 
 **al momento**, en un **resumen semanal** (los que aún no leyó) o **solo en el sistema**. Aunque elija
 no recibir correos, los avisos siempre quedan en la campana.
 
+**Informes que llegan solos.** Según su rol, el sistema le envía como aviso (con las cifras clave y el
+enlace al informe, que pide iniciar sesión; los datos de las personas no viajan en el correo):
+
+| Informe | Cuándo | A quién |
+|---|---|---|
+| Preparación del semestre | 4 semanas y 1 semana antes del inicio de cada semestre | Dirección de Carrera y Coordinación académica |
+| Carga docente del semestre | Al inicio de cada semestre (en sus 3 primeras semanas) | Dirección de Carrera |
+| Memoria anual del Instituto | Desde el 10 de enero, la del año anterior | Dirección del Instituto |
+| Calidad de datos | Una vez al mes, solo si hay registros por completar | Quienes ven el tablero de calidad |
+
+Las fechas son fijas. Si nadie entra al sistema ese día, el informe sale en el siguiente acceso.
+«Informes» muestra los próximos envíos y los últimos realizados.
+
 ## Tablas
 
 En las tablas principales (carga horaria, oferta, usuarios, propuestas, revistas, participantes,

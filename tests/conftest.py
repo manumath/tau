@@ -5,6 +5,7 @@ from pathlib import Path
 # Antes de importar la app: que el import de main.py no toque la BD de desarrollo.
 os.environ["PORTAL_DB"] = str(Path(tempfile.mkdtemp()) / "import.db")
 os.environ["PORTAL_CORREO_MODO"] = "memoria"  # los correos quedan en app.correo.ENVIADOS
+os.environ["PORTAL_INFORMES_PROGRAMADOS"] = "0"  # se prueban llamando a programados.revisar(hoy)
 
 import pytest  # noqa: E402
 from starlette.testclient import TestClient  # noqa: E402

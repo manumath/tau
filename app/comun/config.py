@@ -63,6 +63,8 @@ SMTP_STARTTLS = os.environ.get("PORTAL_SMTP_STARTTLS", "1") == "1"
 
 # Modo solo lectura (mudanzas y mantenimiento): se puede consultar, pero ningún cambio se guarda.
 SOLO_LECTURA = os.environ.get("PORTAL_SOLO_LECTURA", "0") == "1"
+# Informes que se envían solos a las direcciones (app.acreditacion.programados). Las pruebas los apagan.
+INFORMES_PROGRAMADOS = os.environ.get("PORTAL_INFORMES_PROGRAMADOS", "1") == "1"
 
 # Bloqueo de login: N intentos fallidos por email dentro de la ventana.
 LOGIN_MAX_FALLOS = 5

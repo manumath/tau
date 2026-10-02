@@ -1353,3 +1353,26 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   muestran como dato pero no impiden dar la oferta por cargada (la Dirección puede quitar una a
   propósito); sin gestión, las demás etapas quedan a la espera; los cursos de verano e invierno no
   entran.
+
+## 39. Informes programados (1-oct-2026)
+
+- Decisiones de la Dirección (1-oct-2026): se envían solos la **preparación del semestre** (4 y 1
+  semana antes del inicio, a la Dirección de Carrera y la Coordinación académica), la **carga docente**
+  (al inicio de cada semestre, a la Dirección de Carrera), la **memoria anual** (desde el 10 de enero,
+  a la Dirección del Instituto) y la **calidad de datos** (mensual, a quienes ven el tablero). Cada
+  correo lleva **cifras clave y el enlace** (sin adjuntos: los datos personales no salen del sistema),
+  en **fechas fijas** y a quienes tienen el **rol** en ese momento.
+- `app/acreditacion/programados.py`: `pendientes_de_hoy`, `revisar(hoy)` (envía como aviso con
+  `notificaciones.avisar`: campana y correo según la preferencia de cada persona), `proximos`, `suyos`.
+  Se revisa a lo más una vez por hora con el mantenimiento de `main.py`; `PORTAL_INFORMES_PROGRAMADOS=0`
+  lo apaga (las pruebas lo hacen y llaman a `revisar` con la fecha que necesitan).
+- Migración 0037: tabla `informe_programado` (informe, ocasión, fecha, destinatarios) para que cada
+  envío salga una sola vez.
+- «Informes» muestra a cada persona los informes que recibe: próximos envíos y últimos realizados.
+- Decisiones del equipo (confirmar):
+  - Ventanas: la memoria se envía entre el 10 de enero y el 31 de marzo; la carga, en las 3 semanas
+    siguientes al inicio; si en la ventana nadie usa el sistema, ese envío no ocurre (no hay tareas
+    programadas en el servidor).
+  - Calidad de datos: si no hay nada que corregir, no se envía (se registra para no reintentar).
+  - Sin nadie con el rol, el envío no se registra y se reintenta en la siguiente revisión.
+  - Los cursos de verano e invierno no generan informes.

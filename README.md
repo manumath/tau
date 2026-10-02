@@ -173,6 +173,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_SMTP_HOST` / `_PUERTO` / `_USUARIO` / `_CLAVE` | `localhost` / `587` / — / — | Servidor SMTP |
 | `PORTAL_SMTP_STARTTLS` | `1` | `0` para desactivar STARTTLS |
 | `PORTAL_SOLO_LECTURA` | `0` | `1` durante mudanzas o mantenimiento: se consulta, pero no se guardan cambios |
+| `PORTAL_INFORMES_PROGRAMADOS` | `1` | `0` desactiva los informes que se envían solos (las pruebas lo usan) |
 
 ## Pruebas
 

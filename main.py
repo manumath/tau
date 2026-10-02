@@ -20,6 +20,7 @@ if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not 
           "se usa UTC.", flush=True)
 
 from app.investigacion import institucionales  # noqa: E402
+from app.acreditacion import programados  # noqa: E402
 from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
 from app.comun.auth import rt as rutas_auth
 from app.comun.componentes.errores import JS_AVISOS, no_encontrado, paginas_de_error
@@ -62,6 +63,7 @@ def _mantenimiento(req):
     """Vigencia de proyectos institucionales y recordatorios (a lo más una vez por hora)."""
     if not config.SOLO_LECTURA:
         institucionales.mantenimiento()
+        programados.mantenimiento()  # informes que se envían solos (a lo más una revisión por hora)
 
 
 def create_app(db_path=config.DB_PATH):
