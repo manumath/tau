@@ -234,8 +234,8 @@ el 1-oct-2026 sin cambios.
   falta probarla en la plataforma, con Tigris como réplica.
 
 **Funcionalidad que el plan original incluía y aún no está:**
-- Administrar los catálogos (tipos de actividad y de producto, índices) desde la interfaz. Hoy
-  se cambian con una migración.
+- *(Hecho el 2-oct-2026, §47.)* Administrar los catálogos (tipos de actividad y de producto, índices)
+  desde la interfaz.
 - *(Hecho el 1-oct-2026, §41 y §42.)* Fusionar personas externas duplicadas, y vincular una persona
   externa a su cuenta si luego la recibe.
 - *(Hecho el 2-oct-2026, §45.)* Áreas MSC en los productos.
@@ -1545,3 +1545,35 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
 - La API pública aplica la misma regla que el perfil público.
 - El aviso de Calidad de datos sugiere pares con un autor del instituto en común, títulos muy parecidos y
   la versión del año anterior al preprint o posterior.
+
+## 47. Catálogos desde la interfaz (2-oct-2026)
+
+**Decisiones de la Dirección (2-oct-2026):**
+- Los tipos y los índices que ya existían son **del sistema**: se reordenan y se activan o desactivan;
+  su nombre queda fijo, porque el anexo, la Guía de Antecedentes, el CV y las importaciones los reconocen
+  por él (84 lugares del código).
+- Un tipo **nuevo** cuenta de forma genérica: formularios, listas, CV y memoria (los productos, según su
+  nivel de revisión); no entra en las categorías del anexo ni de la Guía.
+- En **cualquier índice** se puede cambiar si cuenta como «indexado» o «arbitrado», con aviso y auditoría.
+- Los administra la **Dirección del Instituto** (permiso «gestionar catálogos», como revistas y líneas).
+
+**Implementación:**
+- Migración 0041: columna `del_sistema` en `tipo_actividad`, `tipo_producto` e `indice`, en 1 para todo
+  lo existente.
+- `app/investigacion/catalogos.py` (listar con uso, validar nombre único sin distinguir tildes ni
+  mayúsculas, crear, actualizar, activar, mover, eliminar solo lo agregado y sin uso,
+  `reclasificar_indice`) y la pantalla `/admin/catalogos` («Tipos e índices» en el menú).
+- Al cambiar la política de un índice, el nivel de revisión guardado en los artículos de las revistas
+  verificadas que figuran en él se recalcula con `revistas.reclasificar`; los de revistas sin verificar
+  conservan lo declarado por sus autores. La auditoría registra el cambio y cuántos artículos cambiaron.
+- Desactivar no rompe lo registrado: al editar, el formulario ofrece el tipo o los índices que el registro
+  ya tenía (`tipos(incluir=…)`, `indices(incluir=…)`) y la validación los acepta; un registro nuevo con un
+  tipo desactivado (p. ej., uno importado) recibe «El tipo … está desactivado: elija otro». Los filtros de
+  las listas ofrecen también los inactivos.
+
+**Decisiones del equipo (confirmar):**
+- Un tipo o índice nuevo se agrega al final del orden y activo.
+- Un tipo de producto nuevo pregunta solo si «puede ser indexado o arbitrado»; uno de actividad, solo el
+  nombre (usa los campos generales del formulario).
+- En los tipos del sistema no se puede cambiar «puede ser indexado o arbitrado»: es parte de las reglas del
+  CV y la memoria.

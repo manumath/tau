@@ -84,7 +84,7 @@ def form_actividad(auth, d, participantes_, errores=(), aid=None, proyectos_sel=
     def campo(etiqueta, nombre, **kw):
         return LabelInput(etiqueta, id=nombre, value=d.get(nombre) or "", **kw)
 
-    tipos = {t["id"]: t["nombre"] for t in actividades.tipos()}
+    tipos = {t["id"]: t["nombre"] for t in actividades.tipos(incluir=d.get("tipo_id"))}
     tipo = Div(FormLabel("Tipo", fr="tipo_id"),
                # Al cambiar el tipo, el servidor devuelve los campos que corresponden (con lo ya escrito).
                Select(*[Option(t, value=v, selected=str(v) == str(d.get("tipo_id"))) for v, t in tipos.items()],
@@ -202,7 +202,7 @@ def _guardar(auth, sess, aid, d, participante, rol, proyecto):
         d["cantidad"] = None
     if tipo != actividades.SERVICIO:
         d.update(monto=None, moneda=None, financiamiento=None, ingresos=None)
-    errores = list(dict.fromkeys(errores)) + actividades.validar(d, pares)
+    errores = list(dict.fromkeys(errores)) + actividades.validar(d, pares, aid)
     if errores:
         return _modal_form(auth, d, _participantes_de(participante, rol), errores, aid, proyecto or [])
     nueva = aid is None
@@ -236,7 +236,7 @@ def get(auth, q: str = "", anio: str = "", tipo: str = ""):
                    hx_get="/actividades/nueva", hx_target=f"#{ID_MODAL}"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         filtros(ID_FILTROS, "/actividades/lista", ID_LISTA, q, anio, actividades.anios_de(uid),
-                tipo, actividades.tipos()),
+                tipo, actividades.tipos(todos=True)),
         Card(lista(uid, q, anio, tipo)),
         usuario=auth, seccion="actividades")
 

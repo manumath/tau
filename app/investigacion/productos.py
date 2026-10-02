@@ -23,8 +23,11 @@ TIPO_PREPRINT = "Preprint"
 NO_SON_VERSION = (TIPO_PREPRINT, TIPO_PRESENTACION, "Tesis dirigida", "Patente")
 
 
-def tipos() -> list[dict]:
-    return get_db().q("SELECT * FROM tipo_producto WHERE activo = 1 ORDER BY orden, nombre")
+def tipos(incluir=None, todos: bool = False) -> list[dict]:
+    """Los activos (para ofrecer en formularios), más `incluir` (el tipo que ya tiene un producto, aunque se
+    haya desactivado); con `todos`, también los inactivos (para filtrar)."""
+    return get_db().q("SELECT * FROM tipo_producto WHERE activo = 1 OR id = ? OR ? ORDER BY orden, nombre",
+                      [incluir, int(todos)])
 
 
 def tipo(tipo_id) -> dict | None:
@@ -32,8 +35,11 @@ def tipo(tipo_id) -> dict | None:
     return filas[0] if filas else None
 
 
-def indices() -> list[dict]:
-    return get_db().q("SELECT * FROM indice WHERE activo = 1 ORDER BY orden, nombre")
+def indices(incluir=()) -> list[dict]:
+    """Los activos, más los de `incluir` (los que ya tiene un producto, aunque se hayan desactivado)."""
+    ids = [int(i) for i in incluir if str(i).isdigit()]
+    return get_db().q(f"""SELECT * FROM indice WHERE activo = 1 OR id IN ({','.join('?' * len(ids)) or 'NULL'})
+                          ORDER BY orden, nombre""", ids)
 
 
 # --- Identificadores -----------------------------------------------------------------
@@ -131,8 +137,10 @@ def preparar(datos: dict, autores_refs: list[str], indices_ids: list[int],
         d["_msc"], errores_msc = msc.validar(codigos_msc)
         errores += errores_msc
     t = tipo(d.get("tipo_id")) if str(d.get("tipo_id") or "").isdigit() else None
-    if not t or not t["activo"]:
+    if not t:
         errores.append("Seleccione un tipo de producto.")
+    elif not t["activo"] and not (pid and (obtener(pid) or {}).get("tipo_id") == t["id"]):
+        errores.append(f"El tipo «{t['nombre']}» está desactivado: elija otro.")
     if not d.get("titulo"):
         errores.append("El título es obligatorio.")
     anio = str(d.get("anio") or "")

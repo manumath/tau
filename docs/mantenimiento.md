@@ -115,11 +115,13 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0040). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0041). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.
-3. Datos iniciales (catálogos) en la misma migración, con `INSERT`.
+3. Datos iniciales (catálogos) en la misma migración, con `INSERT`. Un tipo de actividad, de producto o
+   un índice que el código reconozca por su nombre va con `del_sistema = 1`: así la Dirección no puede
+   renombrarlo ni eliminarlo desde «Tipos e índices» (PLAN.md §47). Los demás los agrega la Dirección.
 4. `uv run pytest`: `test_migraciones_aplicadas` comprueba que se aplicó.
 5. Si los datos de ejemplo deben reflejarla, agregue un paso idempotente en `scripts/seed.py`.
 

@@ -17,8 +17,11 @@ FINANCIAMIENTOS = {"interno": "Interno (de la universidad)", "externo": "Externo
 CAMPOS_PROPIOS = ("cantidad", "revista_id", "monto", "moneda", "financiamiento", "ingresos")
 
 
-def tipos() -> list[dict]:
-    return get_db().q("SELECT * FROM tipo_actividad WHERE activo = 1 ORDER BY orden, nombre")
+def tipos(incluir=None, todos: bool = False) -> list[dict]:
+    """Los activos (para ofrecer en formularios), más `incluir` (el tipo que ya tiene una actividad, aunque se
+    haya desactivado); con `todos`, también los inactivos (para filtrar)."""
+    return get_db().q("SELECT * FROM tipo_actividad WHERE activo = 1 OR id = ? OR ? ORDER BY orden, nombre",
+                      [incluir, int(todos)])
 
 
 def obtener(aid: int) -> dict | None:
@@ -50,13 +53,16 @@ def anual(a: dict) -> bool:
         and a["fecha_inicio"][:4] == a["fecha_fin"][:4]
 
 
-def validar(d: dict, participantes_: list[tuple[str, str]]) -> list[str]:
+def validar(d: dict, participantes_: list[tuple[str, str]], aid: int | None = None) -> list[str]:
     errores = []
     tipo = nombre_tipo(d["tipo_id"])
     if not d["titulo"]:
         errores.append("El título es obligatorio.")
-    if not get_db().q("SELECT 1 FROM tipo_actividad WHERE id = ? AND activo = 1", [d["tipo_id"]]):
+    t = get_db().q("SELECT * FROM tipo_actividad WHERE id = ?", [d["tipo_id"]])
+    if not t:
         errores.append("Seleccione un tipo de actividad.")
+    elif not t[0]["activo"] and not (aid and (obtener(aid) or {}).get("tipo_id") == t[0]["id"]):
+        errores.append(f"El tipo «{t[0]['nombre']}» está desactivado: elija otro.")
     try:
         inicio = date.fromisoformat(d["fecha_inicio"])
         if d["fecha_fin"] and date.fromisoformat(d["fecha_fin"]) < inicio:

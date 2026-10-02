@@ -112,7 +112,7 @@ def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revist
                               Span("(no cuenta como indexado)", cls=TextPresets.muted_sm)
                               if not i["cuenta_como_indexado"] else "",
                               cls="flex items-center gap-2")
-                        for i in productos.indices()]
+                        for i in productos.indices(incluir=indices_sel)]
             partes.append(Div(FormLabel("Índices en que figura"),
                               Div(*casillas, cls="grid grid-cols-1 sm:grid-cols-2 gap-2"),
                               cls="space-y-2"))

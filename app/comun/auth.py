@@ -32,7 +32,7 @@ REGLAS_ADMIN = [
     (r"/admin/usuarios(/lista|/filas)?", ("administrar_cuentas", "gestionar_vinculos", "gestionar_fichas")),
     (r"/admin/usuarios/.+", ("administrar_cuentas",)),
     (r"/admin/auditoria(/.+)?", ("ver_auditoria",)),
-    (r"/admin/(revistas|lineas)(/.+)?", ("gestionar_catalogos",)),
+    (r"/admin/(revistas|lineas|catalogos)(/.+)?", ("gestionar_catalogos",)),
     (r"/admin/propuestas/\d+/plazo(/.+)?", ("gestionar_convocatoria",)),
     (r"/admin/propuestas(/.+)?", ("decidir_propuestas",)),
 ]

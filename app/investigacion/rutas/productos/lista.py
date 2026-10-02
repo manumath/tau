@@ -172,7 +172,7 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         filtros(ID_FILTROS, "/productos/lista", ID_LISTA, q, anio, productos.anios_de(uid), tipo,
-                productos.tipos(), extra=[selector_area(productos.areas_de(uid), area), casilla_informe,
+                productos.tipos(todos=True), extra=[selector_area(productos.areas_de(uid), area), casilla_informe,
                                           casilla_filiacion]),
         Card(lista(uid, q, anio, tipo, informe, sin_filiacion, area)),
         usuario=auth, seccion="productos")

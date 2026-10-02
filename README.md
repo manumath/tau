@@ -95,6 +95,7 @@ app/
     identificadores.py         ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
     msc.py                     catálogo MSC2020: búsqueda y clasificación de los productos
     lineas.py                  líneas de investigación institucionales con vigencia
+    catalogos.py               tipos de actividad y de producto e índices administrables (del sistema o agregados)
     actividades.py             actividades y participantes
     productos.py               productos, autores, reglas de revisión e informe, DOI/arXiv, citas
     filiacion.py               filiación IIMAT/UMSA por autor: detección y declaración
@@ -111,7 +112,8 @@ app/
     componentes/               perfil, selector de autores y participantes, líneas, registros (adjuntos y
                                vinculación a proyectos)
     rutas/                     perfil, investigadores, actividades, bibtex, adjuntos, propuestas, publico (+ API),
-                               personas (coautores externos), admin_revistas, admin_lineas
+                               personas (coautores externos), admin_revistas, admin_lineas,
+                               admin_catalogos
       proyectos/               un módulo por pestaña: lista, datos, resumen, participantes, registros,
                                pendientes, plan, reasignar y ficha (registrada al final)
       productos/               lista, formulario, carga_openalex y ficha (registrada al final)

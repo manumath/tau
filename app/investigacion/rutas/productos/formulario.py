@@ -89,7 +89,7 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
         Div(Div(FormLabel("Tipo", fr="tipo_id"),
                 Select(*[Option(t["nombre"], value=str(t["id"]),
                                 selected=str(t["id"]) == str(d.get("tipo_id")))
-                         for t in productos.tipos()],
+                         for t in productos.tipos(incluir=d.get("tipo_id"))],
                        id="tipo_id", name="tipo_id", cls="uk-select",
                        hx_get="/productos/campos", hx_include="closest form",
                        hx_target="#campos-dependientes", hx_swap="outerHTML"),

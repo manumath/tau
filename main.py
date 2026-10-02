@@ -34,6 +34,7 @@ from app.investigacion.rutas.bibtex import rt as rutas_bibtex
 from app.comun.rutas.admin_auditoria import rt as rutas_admin_auditoria
 from app.investigacion.rutas.admin_revistas import rt as rutas_admin_revistas
 from app.investigacion.rutas.admin_lineas import rt as rutas_admin_lineas
+from app.investigacion.rutas.admin_catalogos import rt as rutas_admin_catalogos
 from app.acreditacion.rutas.anexo import rt as rutas_acreditacion
 from app.comun.rutas.estudiantes import rt as rutas_estudiantes
 from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
@@ -99,7 +100,7 @@ def create_app(db_path=config.DB_PATH):
     for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
                    rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_acreditacion, rutas_informes, rutas_publico,
-                   rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_mis_datos,
+                   rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
                    rutas_guia_antecedentes, rutas_preparacion):
         router.to_app(app)

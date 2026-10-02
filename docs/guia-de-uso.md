@@ -619,6 +619,17 @@ proyecto y ser del mismo periodo).
   IAC-CINDA: datos y métodos transparentes). Una revista **verificada** define el nivel de revisión
   y los índices de los artículos publicados en ella; una **pendiente** todavía no. Se cargan una a
   una o por CSV (una fila por revista e índice; las existentes se completan).
+- **Tipos e índices** (Dirección del Instituto; menú con su nombre): los tipos de actividad, los tipos
+  de producto y los índices que se ofrecen en los formularios.
+  - Los **del sistema** (los que trae el sistema) se pueden **reordenar** y **desactivar**: dejan de
+    ofrecerse en los formularios, pero lo ya registrado los conserva y se puede seguir editando. Su
+    nombre no cambia, porque el anexo, la Guía de Antecedentes, el CV y las importaciones los reconocen
+    por él.
+  - Los **agregados** aquí se pueden además renombrar y, si nadie los usó, eliminar. Un tipo nuevo
+    cuenta en la memoria y en el CV, pero no en las categorías del anexo ni de la Guía.
+  - En los **índices** se decide si cuentan como «indexado» o «arbitrado». Cambiarlo reclasifica los
+    artículos de las revistas verificadas que figuran en ese índice (los de revistas sin verificar
+    conservan lo que declararon sus autores) y queda en la auditoría.
 
 ## Preguntas frecuentes
 
