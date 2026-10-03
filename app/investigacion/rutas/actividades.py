@@ -15,7 +15,8 @@ from app.comun import permisos, personas
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes import personas as selector_personas
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
-from app.comun.componentes.registros import dato, enlace_persona, filtros, insignia, url_filtrada
+from app.comun.componentes.registros import (POR_PAGINA, cargar_mas, dato, enlace_persona, filtros, insignia,
+                                            url_filtrada)
 from app.investigacion.componentes.registros import casillas_proyectos, insignias_proyectos, seccion_adjuntos
 from app.comun.db import auditar, get_db
 
@@ -55,14 +56,20 @@ def item(a, uid):
             Div(*etiquetas, *insignias_proyectos(proyectos.vinculos_de("actividad", a["id"])),
                 cls="flex flex-wrap gap-1.5"),
             cls="min-w-0 flex-1 space-y-1"),
-        acciones, cls="flex gap-4 py-4")
+        acciones, id=f"actividad-{a['id']}", cls="flex gap-4 py-4")
+
+
+def pagina_de_items(uid, items, desde):
+    """Las actividades desde `desde` (una página), y el botón para las siguientes."""
+    return [*[item(a, uid) for a in items[desde:desde + POR_PAGINA]],
+            cargar_mas("/actividades/mas", desde + POR_PAGINA, len(items), f"#{ID_FILTROS}")]
 
 
 def lista(uid, q="", anio="", tipo=""):
     items = actividades.de_investigador(uid, q, anio, tipo)
     contenido = (
         [P(f"{len(items)} actividad{'es' if len(items) != 1 else ''}", cls=TextPresets.muted_sm),
-         Div(*[item(a, uid) for a in items], cls="divide-y divide-border")]
+         Div(*pagina_de_items(uid, items, 0), cls="divide-y divide-border")]
         if items else [P("No hay actividades que coincidan." if (q or anio or tipo)
                          else "Aún no registra actividades. Use «Nueva actividad» para empezar.",
                          cls=(TextPresets.muted_sm, "py-8 text-center"))])
@@ -239,6 +246,12 @@ def get(auth, q: str = "", anio: str = "", tipo: str = ""):
                 tipo, actividades.tipos(todos=True)),
         Card(lista(uid, q, anio, tipo)),
         usuario=auth, seccion="actividades")
+
+
+@rt("/actividades/mas")
+def get(auth, desde: int = 0, q: str = "", anio: str = "", tipo: str = ""):
+    """Siguiente página de la lista (botón «Cargar más»), con los mismos filtros."""
+    return tuple(pagina_de_items(auth["id"], actividades.de_investigador(auth["id"], q, anio, tipo), max(desde, 0)))
 
 
 @rt("/actividades/lista")

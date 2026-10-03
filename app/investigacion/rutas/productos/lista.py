@@ -6,7 +6,7 @@ from monsterui.all import H2, Button, ButtonT, Card, CheckboxX, TextPresets, UkI
 
 from app.investigacion import filiacion, productos, proyectos
 from app.comun.componentes.layout import ID_MODAL, pagina
-from app.comun.componentes.registros import enlace_persona, filtros, insignia, url_filtrada
+from app.comun.componentes.registros import POR_PAGINA, cargar_mas, enlace_persona, filtros, insignia, url_filtrada
 from app.investigacion.componentes.registros import insignias_proyectos
 from app.comun.db import auditar
 
@@ -107,8 +107,14 @@ def _confirmacion_eliminar(p):
     return f"¿Eliminar «{p['titulo']}»?{aviso}"
 
 
+def pagina_de_items(uid, filas, desde):
+    """Los productos de `filas` desde `desde` (una página), y el botón para los siguientes."""
+    return [*[item(productos.obtener(f["id"]), uid) for f in filas[desde:desde + POR_PAGINA]],
+            cargar_mas("/productos/mas", desde + POR_PAGINA, len(filas), f"#{ID_FILTROS}")]
+
+
 def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False, area=""):
-    items = productos.de_investigador(uid, q, anio, tipo, informe, sin_filiacion, area)
+    items = productos.buscar(uid, q, anio, tipo, informe, sin_filiacion, area)
     n_informe = sum(productos.cuenta_para_informe(p) for p in items)
     contenido = (
         [P(f"{len(items)} producto{'s' if len(items) != 1 else ''} · {n_informe} cuenta"
@@ -123,7 +129,7 @@ def lista(uid, q="", anio="", tipo="", informe=False, sin_filiacion=False, area=
                                                     f"{len(items)} productos de esta lista?"),
              cls="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-300 "
                  "bg-amber-50 dark:bg-amber-950 p-3 mt-3") if sin_filiacion else "",
-         Div(*[item(p, uid) for p in items], cls="divide-y divide-border")]
+         Div(*pagina_de_items(uid, items, 0), cls="divide-y divide-border")]
         if items else [P("No hay productos que coincidan." if (q or anio or tipo or informe or sin_filiacion or area)
                          else "Aún no registra productos. Use «Nuevo producto» para empezar.",
                          cls=(TextPresets.muted_sm, "py-8 text-center"))])
@@ -187,11 +193,19 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
                                                          sin_filiacion="1" if sin_filiacion else "")))
 
 
+@rt("/productos/mas")
+def get(auth, desde: int = 0, q: str = "", anio: str = "", tipo: str = "", informe: bool = False,
+        sin_filiacion: bool = False, area: str = ""):
+    """Siguiente página de la lista (botón «Cargar más»), con los mismos filtros."""
+    filas = productos.buscar(auth["id"], q, anio, tipo, informe, sin_filiacion, area)
+    return tuple(pagina_de_items(auth["id"], filas, max(desde, 0)))
+
+
 @rt("/productos/filiacion/todos")
 def post(auth, sess, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, area: str = ""):
     """Declara la filiación propia en todos los productos pendientes que muestra la lista."""
     uid = auth["id"]
-    ids = [p["id"] for p in productos.de_investigador(uid, q, anio, tipo, informe, sin_filiacion=True, area=area)]
+    ids = [p["id"] for p in productos.buscar(uid, q, anio, tipo, informe, sin_filiacion=True, area=area)]
     n = filiacion.declarar(uid, ids, 1)
     auditar(uid, "declarar_filiacion", "producto", None, f"{n} producto(s)")
     add_toast(sess, f"Filiación declarada en {n} producto(s).", "success")

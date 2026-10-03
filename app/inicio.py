@@ -43,7 +43,7 @@ def _cifra(valor, texto):
 
 def _tarjetas_produccion(uid):
     anio = date.today().year
-    prods = productos.de_investigador(uid)
+    prods = productos.buscar(uid)  # para contar basta el año, la revisión y el estado
     del_anio = [p for p in prods if p["anio"] == anio]
     acts = [a for a in actividades.de_investigador(uid) if a["fecha_inicio"].startswith(str(anio))]
     pendientes = filiacion.pendientes(uid)

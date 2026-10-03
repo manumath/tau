@@ -17,6 +17,8 @@ from app.investigacion.actividades import ROLES
 from app.investigacion.filiacion import OPCIONES as OPCIONES_FILIACION
 
 CLS_ICONO = "p-1 rounded hover:bg-muted text-muted-foreground"
+# En pantallas chicas, el selector (rol o filiación) baja a su propia línea con los botones a la derecha.
+CLS_SELECTOR = "uk-select h-8 text-sm flex-1 min-w-0 sm:flex-none"
 
 
 def ids(campo):
@@ -38,7 +40,7 @@ def selector_filiacion(p: dict, valor):
     return Select(*[Option(t, value=v, selected=v == actual) for v, t in OPCIONES_FILIACION.items()],
                   name="filiacion", aria_label=f"Filiación de {p['nombres']} {p['apellidos']}",
                   title="¿Firmó la publicación con la filiación del instituto (IIMAT, CMAT, FCPN o UMSA)?",
-                  cls="uk-select w-52 h-8 text-sm" + (" border-amber-400 text-amber-700" if actual == "" else ""))
+                  cls=f"{CLS_SELECTOR} sm:w-52" + (" border-amber-400 text-amber-700" if actual == "" else ""))
 
 
 def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):
@@ -50,7 +52,7 @@ def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):
                         + ("bg-primary/15 text-primary" if p["interno"] else "bg-muted"))
     selector_rol = Select(*[Option(t, value=v, selected=v == (rol or "asistente"))
                             for v, t in ROLES.items()],
-                          name="rol", cls="uk-select w-40 h-8 text-sm",
+                          name="rol", cls=f"{CLS_SELECTOR} sm:w-40",
                           aria_label=f"Rol de {p['nombres']} {p['apellidos']}") \
         if campo == "participante" else selector_filiacion(p, filiacion) if campo == "autor" else ""
     return Li(
@@ -58,7 +60,7 @@ def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):
         Div(Div(Span(f"{p['nombres']} {p['apellidos']}", cls="font-medium"), etiqueta,
                 cls="flex items-center gap-2"),
             P(p["afiliacion"] or "", cls=TextPresets.muted_sm) if p.get("afiliacion") else "",
-            cls="min-w-0 flex-1"),
+            cls="min-w-0 basis-full sm:basis-auto sm:flex-1"),
         selector_rol,
         Div(fh.Button(UkIcon("chevron-up", height=14, width=14), type="button", cls=CLS_ICONO,
                       data_accion="subir", title="Subir", aria_label="Subir"),
@@ -66,8 +68,8 @@ def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):
                       data_accion="bajar", title="Bajar", aria_label="Bajar"),
             fh.Button(UkIcon("x", height=14, width=14), type="button", cls=CLS_ICONO + " hover:text-red-600",
                       data_accion="quitar", title="Quitar", aria_label="Quitar"),
-            cls="flex shrink-0"),
-        cls="flex items-center gap-3 px-3 py-2")
+            cls="flex shrink-0 ml-auto"),
+        cls="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-1.5 px-3 py-2")
 
 
 def selector(campo: str, elegidas: list[dict], titulo: str, ayuda: str = ""):

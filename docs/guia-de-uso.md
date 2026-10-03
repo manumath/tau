@@ -207,6 +207,12 @@ del preprint. El preprint sigue en «Mis productos», con la etiqueta «Con vers
 - «Desenlazar» en la ficha deshace el enlace. **Calidad de datos** avisa de los preprints que parecen
   tener su versión publicada registrada sin enlazar.
 
+### Listas largas
+
+«Mis productos» y «Mis actividades» muestran los primeros 50; «Cargar más» trae los siguientes, con los
+mismos filtros. El total aparece arriba de la lista, y «Exportar BibTeX» y «Firmé todos estos» abarcan
+toda la lista filtrada, no solo lo cargado.
+
 ### Clasificación MSC2020
 
 Clasifique cada producto con la **Mathematics Subject Classification (MSC2020)**: un código

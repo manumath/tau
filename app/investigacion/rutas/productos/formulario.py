@@ -93,7 +93,7 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
                        id="tipo_id", name="tipo_id", cls="uk-select",
                        hx_get="/productos/campos", hx_include="closest form",
                        hx_target="#campos-dependientes", hx_swap="outerHTML"),
-                cls="space-y-2 sm:col-span-2"),
+                cls="space-y-2 col-span-2"),
             campo("Año", "anio", type="number", min=1900, max=date.today().year + 1, required=True,
                   hx_trigger="change", **RECARGAR),  # el año cambia la clasificación según el catálogo
             Div(FormLabel("Mes (opcional)", fr="mes"),

@@ -271,6 +271,23 @@ def test_enlazar_preprint_con_su_version_publicada(page):
     expect(modal.locator("form")).to_have_count(0)
     ficha = page.locator("#ficha-producto")
     expect(ficha.get_by_role("link", name="Cuerpos de clases y reciprocidad.")).to_be_visible()
-    page.once("dialog", lambda d: d.accept())
     ficha.get_by_role("button", name="Desenlazar").click()
     expect(ficha.get_by_role("button", name="Enlazar con su versión publicada")).to_be_visible()
+
+
+def test_cargar_mas_y_fila_de_autor_en_el_telefono(page):
+    """Listas largas de 50 en 50 (htmx reemplaza el botón por los siguientes) y la fila de un autor en
+    pantalla de teléfono: el selector de filiación baja a su línea sin tapar el nombre."""
+    entrar(page, "prolifico")
+    page.goto("/productos")
+    filas = page.locator("#lista-productos [id^=producto-]")
+    expect(filas).to_have_count(50)
+    page.get_by_role("button", name="Cargar 5 más").click()
+    expect(filas).to_have_count(55)
+    expect(page.get_by_role("button", name=re.compile("Cargar"))).to_have_count(0)
+    page.set_viewport_size({"width": 375, "height": 812})
+    page.get_by_role("button", name="Nuevo producto").click()
+    fila = page.locator("#lista-autor li").first
+    nombre, selector = fila.get_by_text("Alan Turing"), fila.locator("select[name=filiacion]")
+    expect(selector).to_be_visible()
+    assert selector.bounding_box()["y"] >= nombre.bounding_box()["y"] + nombre.bounding_box()["height"]

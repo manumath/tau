@@ -94,15 +94,16 @@ def get(q: str = "", categoria: str = ""):
 
 def _produccion(uid):
     """Productos (primero los que cuentan para el informe) y actividades recientes."""
-    prods = productos.de_investigador(uid)
+    prods = productos.buscar(uid)
     prods.sort(key=lambda x: (not productos.cuenta_para_informe(x), -x["anio"]))
+    primeros = [productos.obtener(x["id"]) for x in prods[:15]]  # solo se arman los que se muestran
     acts = actividades.de_investigador(uid)[:8]
     return Div(
         seccion("pub-productos", f"Productos ({len(prods)})",
                 Ul(*[Li(A(productos.cita(x), href=f"/productos/{x['id']}", cls="hover:underline"),
                         Span(" ✓ informe", cls="text-xs text-green-600")
                         if productos.cuenta_para_informe(x) else "",
-                        cls="text-sm py-1") for x in prods[:15]], cls="space-y-1")
+                        cls="text-sm py-1") for x in primeros], cls="space-y-1")
                 if prods else P("Sin productos registrados.", cls=TextPresets.muted_sm)),
         seccion("pub-actividades", "Actividades recientes",
                 Ul(*[Li(Span(actividades.fechas_texto(a), cls=(TextPresets.muted_sm, "mr-2")),

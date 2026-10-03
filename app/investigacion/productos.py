@@ -356,6 +356,12 @@ def puede_eliminar(p: dict, uid: int) -> bool:
 
 def de_investigador(uid: int, texto: str = "", anio: str = "", tipo_id: str = "",
                     solo_informe: bool = False, sin_filiacion: bool = False, area: str = "") -> list[dict]:
+    """Los productos completos (ver `buscar`)."""
+    return [obtener(f["id"]) for f in buscar(uid, texto, anio, tipo_id, solo_informe, sin_filiacion, area)]
+
+
+def buscar(uid: int, texto: str = "", anio: str = "", tipo_id: str = "",
+           solo_informe: bool = False, sin_filiacion: bool = False, area: str = "") -> list[dict]:
     """Productos de los que es autor o que registró, más recientes primero. `sin_filiacion`: solo
     aquellos en que es autor(a) y no ha declarado si firmó con la filiación del instituto. `area`:
     sección MSC ('11'), en su código principal o en uno secundario."""
@@ -379,12 +385,13 @@ def de_investigador(uid: int, texto: str = "", anio: str = "", tipo_id: str = ""
         filtros.append("p.revision IN ('indexado', 'arbitrado') AND EXISTS (SELECT 1 FROM producto_autor "
                        "WHERE producto_id = p.id AND investigador_id = :u AND filiacion_instituto IS NULL)")
     where = "".join(f" AND {f}" for f in filtros)
-    filas = get_db().q(
-        f"""SELECT p.id FROM producto p
+    # Solo id, año, revisión y estado: una lista larga se pagina (o se cuenta) y solo se arma completo lo
+    # que se muestra.
+    return get_db().q(
+        f"""SELECT p.id, p.anio, p.revision, p.estado_publicacion FROM producto p
             WHERE (p.creado_por = :u OR EXISTS (SELECT 1 FROM producto_autor
                      WHERE producto_id = p.id AND investigador_id = :u)){where}
             ORDER BY p.anio DESC, p.id DESC""", params)
-    return [obtener(f["id"]) for f in filas]
 
 
 def anios_de(uid: int) -> list[int]:

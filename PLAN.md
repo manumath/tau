@@ -1577,3 +1577,31 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   nombre (usa los campos generales del formulario).
 - En los tipos del sistema no se puede cambiar «puede ser indexado o arbitrado»: es parte de las reglas del
   CV y la memoria.
+
+## 48. Valoración de usabilidad y buenas prácticas (3-oct-2026)
+
+Valoración del stack y de la experiencia de uso, con mediciones sobre una base ampliada a unos 3.000
+productos y capturas en pantalla de teléfono (sin usuarios reales ni auditoría con lector de pantalla).
+Veredicto: el stack es adecuado; los problemas son de terminación y escala. Orden acordado:
+
+1. **Hecho (3-oct-2026):** fila de autores en el teléfono y «Cargar más» en las listas largas.
+2. Accesibilidad del modal (foco, `aria-labelledby`, enlace «Saltar al contenido») y de los errores
+   (asociados a su campo); botones que se desactivan al guardar (evita envíos dobles).
+3. Registros de actividad y de errores (requisito del despliegue).
+4. Búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
+5. «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
+6. Deuda técnica: armar productos en lote (N+1), modelo de formulario compartido para alta y edición,
+   `ruff` y `pyright`.
+
+Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas reales y cinco tareas.
+
+**Paso 1, implementación y mediciones:**
+- Fila de autores y participantes (`componentes/personas.py`): en pantallas chicas el selector de
+  filiación o de rol baja a su propia línea; antes tapaba el nombre y cortaba los botones.
+- «Cargar más» de 50 en 50 (`registros.cargar_mas`, rutas `/productos/mas` y `/actividades/mas`, con los
+  mismos filtros). `productos.buscar` devuelve solo id, año, revisión y estado; el producto completo se
+  arma solo para lo que se muestra. Lo usan también el inicio, la ficha del investigador (15 productos) y
+  el CV (que filtra por periodo antes de armar).
+- Con 3.000 productos: «Mis productos» de 1,8 s y 5,9 MB a 20 ms y 109 KB; el inicio de 196 ms a 5 ms.
+- La lista de usuarios no se pagina: con 300 cuentas responde en unos 100 ms (726 KB), y su tabla
+  ordena, filtra y exporta en el navegador, lo que con páginas abarcaría solo lo cargado.

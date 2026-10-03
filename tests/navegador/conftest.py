@@ -18,7 +18,7 @@ import urllib.request
 import pytest
 
 from app.comun import config
-from tests.navegador.preparar import ADMIN, CLAVE, INVESTIGADORA
+from tests.navegador.preparar import ADMIN, CLAVE, INVESTIGADORA, PROLIFICO
 
 
 def _puerto_libre() -> int:
@@ -78,8 +78,8 @@ def sin_errores_en_la_pagina(page):
 
 
 def entrar(page, quien: str):
-    """Ingresa como 'admin' o 'investigadora' con las cuentas de preparar.py."""
-    email = {"admin": ADMIN, "investigadora": INVESTIGADORA}[quien]
+    """Ingresa como 'admin', 'investigadora' o 'prolifico' con las cuentas de preparar.py."""
+    email = {"admin": ADMIN, "investigadora": INVESTIGADORA, "prolifico": PROLIFICO}[quien]
     page.goto("/login")
     page.fill("#email", email)
     page.fill("#password", CLAVE)
