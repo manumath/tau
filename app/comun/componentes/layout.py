@@ -108,16 +108,23 @@ def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = 
                 cls="flex items-center justify-center gap-2 px-4 py-2 text-sm bg-amber-100 text-amber-900 "
                     "dark:bg-amber-950 dark:text-amber-200 no-imprimir", role="status") \
         if config.SOLO_LECTURA else ""
+    # «Saltar al contenido»: invisible hasta recibir el foco con Tab; evita recorrer toda la navegación.
+    saltar = A("Saltar al contenido", href="#contenido",
+               cls="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:rounded-md "
+                   "focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg focus:ring-2 focus:ring-primary") \
+        if usuario else ""
     return (Title(f"{titulo} · {config.NOMBRE_SISTEMA}"),
+            saltar,
             aviso,
             barra_navegacion(usuario, seccion) if usuario else "",
-            Main(cuerpo),
+            Main(cuerpo, id="contenido", tabindex="-1", cls="outline-none"),
             Div(id=ID_MODAL))
 
 
 # --- Modal ligero: el servidor lo inserta en #modal y cerrarlo es vaciar ese contenedor. Los botones
 # usan data-accion="cerrar-modal"; el fondo (data-fondo-modal) lo cierra con un clic fuera del cuadro o
-# con Escape (static/js/acciones.js; sin JavaScript en el HTML por la CSP). -----------------------------
+# con Escape. static/js/acciones.js (sin JavaScript en el HTML por la CSP) además pone el foco en el primer
+# campo al abrirlo, lo retiene dentro con Tab y lo devuelve al botón que lo abrió al cerrarlo. ------------
 
 CERRAR = {"data_accion": "cerrar-modal"}   # atributos de un botón que cierra el modal
 
@@ -125,12 +132,12 @@ CERRAR = {"data_accion": "cerrar-modal"}   # atributos de un botón que cierra e
 def modal(titulo: str, *contenido, ancho="max-w-lg"):
     return Div(
         Div(
-            Div(H3(titulo, cls="text-lg"),
+            Div(H3(titulo, id="modal-titulo", cls="text-lg"),
                 Button(UkIcon("x"), cls=ButtonT.ghost, aria_label="Cerrar", type="button", **CERRAR),
                 cls="flex items-center justify-between mb-4"),
             *contenido,
             cls=f"bg-background rounded-lg shadow-xl w-full {ancho} p-6 max-h-[90vh] overflow-y-auto",
-            role="dialog", aria_modal="true"),
+            role="dialog", aria_modal="true", aria_labelledby="modal-titulo", tabindex="-1"),
         cls="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4",
         data_fondo_modal=True, tabindex="-1")
 
@@ -154,10 +161,12 @@ def boton_espera(*contenido, cls=ButtonT.default, **kwargs):
 
 
 def mensaje_error(*errores):
+    """Resumen de errores. Al llegar en una respuesta, static/js/acciones.js le pasa el foco (y el lector de
+    pantalla lo anuncia: role=alert), para que no quede fuera de la vista en un formulario largo."""
     if not errores:
         return ""
     return Div(*[Div(UkIcon("circle-alert", height=16, width=16, cls="shrink-0"), Span(e),
                      cls="flex gap-2 items-start") for e in errores],
                cls="rounded-md border border-red-300 bg-red-50 text-red-800 "
-                   "dark:bg-red-950 dark:text-red-200 dark:border-red-800 p-3 text-sm space-y-1",
-               role="alert")
+                   "dark:bg-red-950 dark:text-red-200 dark:border-red-800 p-3 text-sm space-y-1 outline-none",
+               role="alert", tabindex="-1", data_resumen_errores=True)

@@ -291,3 +291,47 @@ def test_cargar_mas_y_fila_de_autor_en_el_telefono(page):
     nombre, selector = fila.get_by_text("Alan Turing"), fila.locator("select[name=filiacion]")
     expect(selector).to_be_visible()
     assert selector.bounding_box()["y"] >= nombre.bounding_box()["y"] + nombre.bounding_box()["height"]
+
+
+def test_accesibilidad_del_modal_errores_y_envio(page):
+    """Paso 2 de la valoración de usabilidad (PLAN.md §48): saltar al contenido, foco del modal (entra en el
+    primer campo, no sale con Tab, vuelve a quien lo abrió), foco en el resumen de errores y el botón de
+    guardar deshabilitado mientras se envía."""
+    entrar(page, "investigadora")
+    page.goto("/actividades")
+    page.keyboard.press("Tab")
+    saltar = page.get_by_role("link", name="Saltar al contenido")
+    expect(saltar).to_be_focused()
+    expect(saltar).to_be_visible()
+    page.keyboard.press("Enter")
+    expect(page.locator("main#contenido")).to_be_focused()
+
+    abrir = page.get_by_role("button", name="Nueva actividad")
+    abrir.click()
+    dialogo = page.get_by_role("dialog", name="Nueva actividad")
+    expect(dialogo).to_be_visible()                                  # aria-labelledby: el título lo nombra
+    expect(dialogo.locator("select[name=tipo_id]")).to_be_focused()  # el primer campo
+    for _ in range(40):
+        page.keyboard.press("Tab")
+    expect(dialogo.locator(":focus")).to_have_count(1)               # el foco no sale del modal
+    page.keyboard.press("Escape")
+    expect(abrir).to_be_focused()                                    # vuelve a quien lo abrió
+
+    abrir.click()
+    dialogo.locator("input[name=titulo]").fill("Seminario de prueba")
+    dialogo.locator("input[name=fecha_inicio]").fill("2026-03-10")
+    dialogo.locator("input[name=fecha_fin]").fill("2026-03-01")   # error que solo detecta el servidor
+    dialogo.get_by_role("button", name="Guardar").click()
+    expect(page.locator("[data-resumen-errores]")).to_be_focused()
+    dialogo.locator("input[name=fecha_fin]").fill("2026-03-11")
+    # Mientras la petición está en curso, «Guardar» queda deshabilitado (se retiene la respuesta).
+    pendientes = []
+    page.route(re.compile(r".*/actividades$"), lambda route: pendientes.append(route)
+               if route.request.method == "POST" else route.continue_())
+    guardar = dialogo.get_by_role("button", name="Guardar")
+    guardar.click()
+    expect(guardar).to_be_disabled()
+    assert len(pendientes) == 1
+    pendientes[0].continue_()
+    expect(page.locator("#modal form")).to_have_count(0)
+    expect(abrir).to_be_focused()                                    # el servidor cerró el modal al guardar

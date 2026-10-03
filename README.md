@@ -213,6 +213,13 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
   página y no al fragmento.
 - **Errores:** a HTMX se le responde con el código (403, 404…) y el navegador muestra un aviso
   (`app/comun/componentes/errores.py`). A las peticiones normales, una página con el estilo del sistema.
+- **Modales:** el servidor responde con `modal(...)` dentro de `#modal`; cerrar es vaciarlo (botones con
+  `**CERRAR`, Escape o un clic fuera). El cuadro lleva `role="dialog"` nombrado por su título;
+  `acciones.js` pone el foco en el primer campo, lo retiene dentro con Tab y lo devuelve a quien lo abrió.
+- **Errores de formulario:** use `mensaje_error(...)`: un resumen con `role="alert"` que recibe el foco al
+  llegar en una respuesta (en un formulario largo no queda fuera de la vista).
+- **Envíos:** mientras dura una petición que no es GET, su botón (o los de envío del formulario) queda
+  deshabilitado; `boton_espera` agrega el ícono girando, para las que tardan.
 
 **Tablas**
 - Una `<table data-tabla="nombre-del-archivo">` gana orden por columna, filtro por texto y «Descargar

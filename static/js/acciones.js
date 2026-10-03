@@ -17,9 +17,26 @@
 //   data-fondo-modal                  fondo del modal: un clic fuera del cuadro lo cierra; Escape también
 //   data-tras-pedido-limpiar="b,r"    tras una petición HTMX exitosa: vacía el campo #b y el contenido de #r
 //   data-pestana                      en un enlace de pestañas HTMX: la marca activa al pedirla
+//   data-resumen-errores              resumen de errores: al llegar en una respuesta recibe el foco
+//
+// Además (accesibilidad y envíos):
+//   - el modal recibe el foco al abrirse (en el primer campo), lo retiene con Tab y, al cerrarse, lo
+//     devuelve al elemento que lo abrió;
+//   - mientras dura una petición que envía datos, su botón (o los de envío del formulario) queda
+//     deshabilitado: un doble clic con la red lenta no registra dos veces.
 (() => {
   const MODAL = 'modal';
-  const cerrarModal = () => { const m = document.getElementById(MODAL); if (m) m.innerHTML = ''; };
+  const ENFOCABLES = 'a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), ' +
+    'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  let abridor = null;  // quien abrió el modal: recupera el foco al cerrarlo
+  const modal = () => document.getElementById(MODAL);
+  const dialogo = () => document.querySelector('#' + MODAL + ' [role=dialog]');
+  const visibles = raiz => [...raiz.querySelectorAll(ENFOCABLES)].filter(x => x.offsetParent !== null);
+  const devolverFoco = () => {
+    if (abridor && abridor.isConnected) abridor.focus();
+    abridor = null;
+  };
+  const cerrarModal = () => { const m = modal(); if (m) m.innerHTML = ''; devolverFoco(); };
 
   document.addEventListener('click', e => {
     const fondo = e.target.closest('[data-fondo-modal]');
@@ -65,6 +82,17 @@
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && document.querySelector('[data-fondo-modal]')) { cerrarModal(); return; }
+    // Con el modal abierto, Tab recorre solo sus elementos (no la página de atrás).
+    const d = e.key === 'Tab' ? dialogo() : null;
+    if (d) {
+      const lista = visibles(d);
+      if (!lista.length) return;
+      const primero = lista[0], ultimo = lista[lista.length - 1];
+      if (!d.contains(document.activeElement)) { e.preventDefault(); primero.focus(); }
+      else if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+      else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
+      return;
+    }
     const modo = e.key === 'Enter' && e.target.dataset ? e.target.dataset.enter : null;
     if (!modo) return;
     e.preventDefault();
@@ -75,6 +103,17 @@
 
   document.addEventListener('htmx:beforeRequest', e => {
     const el = e.detail.elt;
+    // Quien pide algo para el modal (vacío) es quien lo abre.
+    const destino = e.detail.target;
+    const m = modal();
+    if (destino && destino.id === MODAL && m && !m.children.length) abridor = document.activeElement;
+    // Envíos: deshabilita el botón o los botones de envío del formulario mientras dura la petición.
+    const verbo = (e.detail.requestConfig && e.detail.requestConfig.verb) || 'get';
+    if (verbo !== 'get' && el) {
+      const botones = el.tagName === 'FORM' ? [...el.querySelectorAll('button[type=submit], button:not([type])')]
+        : (el.tagName === 'BUTTON' ? [el] : []);
+      botones.filter(b => !b.disabled).forEach(b => { b.disabled = true; b.dataset.enEnvio = '1'; });
+    }
     if (el && el.matches && el.matches('[data-pestana]')) {
       el.closest('ul').querySelectorAll('li').forEach(li => li.classList.remove('uk-active'));
       el.parentElement.classList.add('uk-active');
@@ -83,6 +122,10 @@
 
   document.addEventListener('htmx:afterRequest', e => {
     const el = e.detail.elt;
+    if (el && el.querySelectorAll) {
+      [...(el.dataset && el.dataset.enEnvio ? [el] : []), ...el.querySelectorAll('[data-en-envio]')]
+        .forEach(b => { b.disabled = false; delete b.dataset.enEnvio; });
+    }
     const ids = el && el.dataset ? el.dataset.trasPedidoLimpiar : null;
     // Si el servidor redirigió un error a otro lugar (HX-Retarget), no se limpia lo escrito.
     if (!ids || !e.detail.successful || e.detail.xhr.getResponseHeader('HX-Retarget')) return;
@@ -93,10 +136,24 @@
     if (r) r.innerHTML = '';
   });
 
-  // El modal recibe el foco al abrirse (para que Escape funcione sin hacer clic antes).
+  // Lo que llega en una respuesta: un resumen de errores recibe el foco (el lector de pantalla lo anuncia);
+  // un modal recién abierto, en su primer campo (o en el cuadro, si no tiene campos).
   document.addEventListener('htmx:load', e => {
-    const f = e.detail.elt && e.detail.elt.querySelector ? (e.detail.elt.matches('[data-fondo-modal]')
-      ? e.detail.elt : e.detail.elt.querySelector('[data-fondo-modal]')) : null;
-    if (f) f.focus();
+    const el = e.detail.elt;
+    if (!el || !el.querySelector || el === document.body) return;
+    const errores = el.matches('[data-resumen-errores]') ? el : el.querySelector('[data-resumen-errores]');
+    if (errores) { errores.focus(); return; }
+    const fondo = el.matches('[data-fondo-modal]') ? el : el.querySelector('[data-fondo-modal]');
+    if (fondo) {
+      const d = fondo.querySelector('[role=dialog]');
+      const campo = d && visibles(d).find(x => x.matches('input, select, textarea'));
+      (campo || d || fondo).focus();
+    }
+  });
+
+  // El servidor también cierra el modal (lo vacía al guardar): el foco vuelve a quien lo abrió.
+  document.addEventListener('htmx:afterSettle', () => {
+    const m = modal();
+    if (abridor && m && !m.children.length) devolverFoco();
   });
 })();

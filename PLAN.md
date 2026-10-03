@@ -1585,8 +1585,8 @@ productos y capturas en pantalla de teléfono (sin usuarios reales ni auditoría
 Veredicto: el stack es adecuado; los problemas son de terminación y escala. Orden acordado:
 
 1. **Hecho (3-oct-2026):** fila de autores en el teléfono y «Cargar más» en las listas largas.
-2. Accesibilidad del modal (foco, `aria-labelledby`, enlace «Saltar al contenido») y de los errores
-   (asociados a su campo); botones que se desactivan al guardar (evita envíos dobles).
+2. **Hecho (3-oct-2026):** accesibilidad del modal (foco, `aria-labelledby`, enlace «Saltar al
+   contenido»), foco en el resumen de errores y botones que se desactivan mientras se envía.
 3. Registros de actividad y de errores (requisito del despliegue).
 4. Búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
 5. «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
@@ -1605,3 +1605,17 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
 - Con 3.000 productos: «Mis productos» de 1,8 s y 5,9 MB a 20 ms y 109 KB; el inicio de 196 ms a 5 ms.
 - La lista de usuarios no se pagina: con 300 cuentas responde en unos 100 ms (726 KB), y su tabla
   ordena, filtra y exporta en el navegador, lo que con páginas abarcaría solo lo cargado.
+
+**Paso 2, implementación:**
+- `pagina()`: enlace «Saltar al contenido» (visible al recibir el foco con Tab) hacia `<main id="contenido">`.
+- `modal()`: `aria-labelledby` con su título. `acciones.js`: el foco entra en el primer campo al abrirlo,
+  Tab y Mayús+Tab recorren solo el cuadro y, al cerrarlo (botón, Escape, clic fuera o el servidor al
+  guardar), el foco vuelve al elemento que lo abrió.
+- `mensaje_error()`: `tabindex="-1"` y `data-resumen-errores`; al llegar en una respuesta recibe el foco y el
+  lector de pantalla lo anuncia (`role="alert"`). Asociar cada error a su campo (`aria-describedby`,
+  `aria-invalid`) exigiría que las validaciones devuelvan el campo además del texto: queda para después.
+- Envíos: mientras dura una petición que no es GET, su botón o los de envío del formulario quedan
+  deshabilitados. Corrección a la valoración: htmx ya encola un segundo envío del mismo formulario y lo
+  descarta si la respuesta lo reemplaza o cierra el modal, así que el riesgo de envío doble era menor de lo
+  dicho (solo en formularios que siguen en pantalla). Lo principal es la señal de que se está guardando.
+- La prueba en navegador falla sin el cambio de los envíos (comprobado quitándolo).
