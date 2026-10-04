@@ -67,7 +67,9 @@ def _fila(f, sistema):
     tipo = "" if f["tipo"] == "obligatoria" else insignia(planes.TIPOS[f["tipo"]],
                                                          "azul" if "electiva" in f["tipo"] else "gris")
     return fh.Tr(fh.Td(sigla, cls="font-mono text-sm whitespace-nowrap"), fh.Td(nombre, tipo, cls="text-sm"),
-                 *_horas(f, sistema), fh.Td(", ".join(f["requisitos"]) or "—", cls="text-sm whitespace-nowrap"))
+                 *_horas(f, sistema), fh.Td(", ".join(f["requisitos"]) or "—", cls="text-sm whitespace-nowrap"),
+                 id=f"asignatura-{sigla}" if sigla else None,  # destino de la búsqueda global
+                 cls="target:bg-amber-50 dark:target:bg-amber-950")
 
 
 def _encabezado(sistema):

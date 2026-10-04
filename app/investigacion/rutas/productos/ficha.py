@@ -28,8 +28,7 @@ def version_publicada(p, editable):
         return Div(A(pub["titulo"], href=f"/productos/{pub['id']}", cls="text-primary hover:underline"),
                    Span(f"({pub['anio']})", cls=(TextPresets.muted_sm, "ml-1")),
                    Button("Desenlazar", type="button", cls=(ButtonT.ghost, ButtonT.xs, "ml-2"),
-                          hx_delete=f"/productos/{p['id']}/version",
-                          hx_confirm="¿Desenlazar el preprint de su versión publicada? Volverá a listarse aparte.")
+                          hx_delete=f"/productos/{p['id']}/version")  # sin confirmación: el aviso ofrece «Deshacer»
                    if editable else "", cls="flex flex-wrap items-center")
     if not editable:
         return None

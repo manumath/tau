@@ -1588,7 +1588,7 @@ Veredicto: el stack es adecuado; los problemas son de terminación y escala. Ord
 2. **Hecho (3-oct-2026):** accesibilidad del modal (foco, `aria-labelledby`, enlace «Saltar al
    contenido»), foco en el resumen de errores y botones que se desactivan mientras se envía.
 3. **Hecho (4-oct-2026):** registros de actividad y de errores (requisito del despliegue).
-4. Búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
+4. **Hecho (4-oct-2026):** búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
 5. «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
 6. Deuda técnica: armar productos en lote (N+1), modelo de formulario compartido para alta y edición,
    `ruff` y `pyright`.
@@ -1636,3 +1636,23 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
 - Los registros se guardan junto a la base y rotan (unos 60 MB como máximo); no se envían a servicios
   externos.
 - El aviso por correo de errores es opcional y se limita a uno cada 15 minutos.
+
+**Paso 4, implementación:**
+- Búsqueda global (`app/busqueda.py`, rutas `/buscar/sugerencias` y `/buscar`): campo en la barra (desde
+  1280 px; más angosto, una lupa que lleva a /buscar), tecla «/», Escape y clic fuera cierran las
+  sugerencias. Grupos: personas (directorio), cuentas que no son de investigadores (solo con
+  «ver_usuarios»), productos (título, DOI o arXiv), actividades, proyectos (solo los que `puede_ver`) y
+  asignaturas (llevan a su fila, resaltada, en el plan más reciente que la incluye).
+- Confirmaciones: `htmx:confirm` abre un `<dialog>` nativo (foco retenido, Escape cancela) en lugar de
+  `confirm()`. El botón toma el verbo de la pregunta («Eliminar», «Quitar»…; «Continuar» si no lo hay), es
+  rojo si la acción destruye algo y, entonces, el foco empieza en «Cancelar». Sin cambios en las 35
+  preguntas existentes.
+- «Deshacer» (`aviso_con_deshacer`): en lugar de confirmar, en desactivar un tipo o índice, desactivar
+  una cuenta sin terminar su vínculo y desenlazar un preprint. Las rutas aceptan el estado explícito
+  (`activo=0|1`), así que deshacer dos veces no revierte el deshacer.
+
+**Decisiones del equipo (confirmar):**
+- Qué se busca y quién: lo de arriba. No se buscan las revistas del catálogo, las líneas ni los avisos.
+- Solo esas tres acciones pasan a «Deshacer»; el resto sigue pidiendo confirmación (no se pueden revertir
+  con lo que hay, o revertirlas no deja todo igual, como quitar un rol o dar de baja a un participante).
+- El aviso con «Deshacer» dura 10 segundos.

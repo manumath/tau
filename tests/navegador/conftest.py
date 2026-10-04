@@ -85,3 +85,11 @@ def entrar(page, quien: str):
     page.fill("#password", CLAVE)
     page.click("button:has-text('Ingresar')")
     page.wait_for_url("**/")
+
+
+def confirmar(page, boton: str | None = None):
+    """Acepta el diálogo de confirmación propio (hx-confirm, static/js/acciones.js): pulsa su botón de acción
+    (o el indicado)."""
+    dialogo = page.locator("dialog.confirmacion")
+    dialogo.get_by_role("button", name=boton).click() if boton else \
+        dialogo.get_by_role("button").filter(has_not_text="Cancelar").click()

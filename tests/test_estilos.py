@@ -12,7 +12,7 @@ CSS = "".join((RAIZ / "static" / f).read_text() for f in ("css/tailwind.css", "v
 # Clases propias (con estilos en línea o usadas solo como marca) y de Franken UI sin regla propia.
 SIN_REGLA = {"hoja", "no-imprimir", "citas", "apagado", "nomath", "htmx-indicator", "monster-navbar",
              "fila-repetible", "uk-table-small", "grafico", "membrete", "membrete-logo",
-             "fh-toast", "fh-toast-"}   # los avisos emergentes traen su propio CSS (fasthtml.toaster)
+             "fh-toast", "fh-toast-", "fh-toast-success"}   # los avisos emergentes traen su propio CSS (fasthtml.toaster)
 
 
 def test_paginas_sin_recursos_externos(client):

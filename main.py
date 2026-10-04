@@ -42,6 +42,7 @@ from app.comun.rutas.estudiantes import rt as rutas_estudiantes
 from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
 from app.acreditacion.rutas.informes import rt as rutas_informes
 from app.inicio import rt as rutas_inicio
+from app.busqueda import rt as rutas_busqueda
 from app.investigacion.rutas.investigadores import rt as rutas_investigadores
 from app.investigacion.rutas.perfil import rt as rutas_perfil
 from app.investigacion.rutas.personas import rt as rutas_personas
@@ -111,7 +112,7 @@ def create_app(db_path=config.DB_PATH):
             return Response("La base de datos no responde", status_code=503)
         return Response("ok", media_type="text/plain")
     # rutas_bibtex va antes que rutas_productos: /productos/bibtex coincidiría con /productos/{pid}.
-    for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
+    for router in (rutas_auth, rutas_inicio, rutas_busqueda, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
                    rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_acreditacion, rutas_informes, rutas_publico,
                    rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,

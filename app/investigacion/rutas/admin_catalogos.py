@@ -8,6 +8,7 @@ from monsterui.all import H2, Button, ButtonT, Card, Form, LabelCheckboxX, Label
 
 from app.investigacion import catalogos
 from app.investigacion.catalogos import CATALOGOS, POLITICA
+from app.comun.componentes.avisos_emergentes import aviso_con_deshacer
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
@@ -51,10 +52,8 @@ def fila(cat, x, primera, ultima):
         Div(_boton("arrow-up", "Subir", hx_post=f"{url}/subir", disabled=primera),
             _boton("arrow-down", "Bajar", hx_post=f"{url}/bajar", disabled=ultima),
             _boton("pencil", "Editar", hx_get=f"{url}/editar", hx_target=f"#{ID_MODAL}") if editable else "",
-            _boton("eye-off", "Desactivar (deja de ofrecerse)", hx_post=f"{url}/activo",
-                   hx_confirm=f"¿Desactivar «{x['nombre']}»? Deja de ofrecerse en los formularios; lo ya "
-                              "registrado lo conserva.") if x["activo"] else
-            _boton("eye", "Activar", hx_post=f"{url}/activo"),
+            _boton("eye-off", "Desactivar (deja de ofrecerse)", hx_post=f"{url}/activo", hx_vals='{"activo": "0"}')
+            if x["activo"] else _boton("eye", "Activar", hx_post=f"{url}/activo", hx_vals='{"activo": "1"}'),
             _boton("trash-2", "Eliminar", hx_delete=url, hx_confirm=f"¿Eliminar «{x['nombre']}»?")
             if not x["del_sistema"] and not x["uso"] else "",
             cls="flex shrink-0 items-start"),
@@ -196,14 +195,22 @@ def post(auth, cat: str, xid: int):
 
 
 @rt(f"{BASE}/{{cat}}/{{xid}}/activo")
-def post(auth, sess, cat: str, xid: int):
+def post(auth, sess, cat: str, xid: int, activo: str = ""):
+    """Activa (activo=1) o desactiva (activo=0). Desactivar no pide confirmación: el aviso ofrece «Deshacer»."""
     x, error = _catalogo_o_404(cat, xid)
     if error:
         return error
-    catalogos.activar(cat, xid, not x["activo"])
-    auditar(auth["id"], "desactivar_catalogo" if x["activo"] else "activar_catalogo", CATALOGOS[cat]["tabla"], xid,
+    nuevo = activo == "1" if activo in ("0", "1") else not x["activo"]
+    if nuevo == bool(x["activo"]):
+        return Redirect(BASE)
+    catalogos.activar(cat, xid, nuevo)
+    auditar(auth["id"], "activar_catalogo" if nuevo else "desactivar_catalogo", CATALOGOS[cat]["tabla"], xid,
             x["nombre"])
-    add_toast(sess, f"«{x['nombre']}» " + ("desactivado." if x["activo"] else "activado."), "success")
+    if nuevo:
+        add_toast(sess, f"«{x['nombre']}» activado.", "success")
+    else:
+        aviso_con_deshacer(sess, f"«{x['nombre']}» desactivado: ya no se ofrece en los formularios.",
+                           hx_post=f"{BASE}/{cat}/{xid}/activo", hx_vals='{"activo": "1"}')
     return Redirect(BASE)
 
 

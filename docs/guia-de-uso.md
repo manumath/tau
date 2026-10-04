@@ -59,6 +59,21 @@ informes…) puede **ordenar** haciendo clic en el título de una columna (otro 
 **filtrar** escribiendo en «Filtrar…» (no distingue tildes ni mayúsculas) y **descargar en CSV** lo
 que ve, con el orden y el filtro aplicados. El CSV se abre en Excel con las tildes correctas.
 
+## Buscar
+
+El campo **«Buscar…»** de la barra superior (o la tecla **/**) busca a la vez personas, productos (por
+título, DOI o arXiv), actividades, proyectos y asignaturas; quien administra cuentas, también las cuentas
+que no son de investigadores. Muestra pocos resultados por grupo mientras escribe; **Enter** (o «Ver
+todos») abre la página de resultados. Solo aparece lo que usted puede abrir: por ejemplo, los proyectos en
+que participa. En pantallas angostas, la lupa lleva a la misma página.
+
+## Confirmar y deshacer
+
+Lo que no se puede revertir (eliminar, fusionar, enviar o retirar una propuesta…) pide confirmación en un
+cuadro con el botón de la acción («Eliminar», «Quitar»…); el foco queda en «Cancelar» y Escape cancela.
+Lo que se puede revertir no pregunta: el aviso que aparece ofrece **«Deshacer»** durante unos segundos
+(desactivar un tipo o un índice, desactivar una cuenta sin terminar su vínculo, desenlazar un preprint).
+
 ## Inicio
 
 Al ingresar, **Para hoy** muestra lo que requiere su atención según su rol, con enlace directo:

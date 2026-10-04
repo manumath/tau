@@ -10,3 +10,19 @@
     color: hsl(var(--foreground));
   }
 }
+
+/* Diálogo de confirmación (static/js/acciones.js, en lugar del confirm() del navegador). */
+@layer components {
+  dialog.confirmacion {
+    @apply w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-border bg-background p-6 text-foreground shadow-xl;
+  }
+  dialog.confirmacion::backdrop {
+    background: rgb(0 0 0 / 0.5);
+  }
+  dialog.confirmacion p {
+    @apply text-sm leading-relaxed;
+  }
+  .confirmacion-botones {
+    @apply mt-5 flex justify-end gap-2;
+  }
+}

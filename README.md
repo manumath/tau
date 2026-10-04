@@ -222,6 +222,12 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
   llegar en una respuesta (en un formulario largo no queda fuera de la vista).
 - **Envíos:** mientras dura una petición que no es GET, su botón (o los de envío del formulario) queda
   deshabilitado; `boton_espera` agrega el ícono girando, para las que tardan.
+- **Confirmar o deshacer:** `hx-confirm` abre el diálogo propio de `acciones.js` (botón con el verbo de la
+  pregunta, rojo si destruye algo). Para lo reversible, en lugar de confirmar, responda con
+  `aviso_con_deshacer(sess, mensaje, hx_post=…, hx_vals=…)` (`componentes/avisos_emergentes.py`), cuya
+  petición debe ser explícita e idempotente (p. ej., `activo=1`, no «alternar»).
+- **Búsqueda global** (`app/busqueda.py`): un grupo nuevo es una función `(q, auth, límite)` en `GRUPOS`,
+  que debe filtrar por lo que la persona puede abrir.
 
 **Tablas**
 - Una `<table data-tabla="nombre-del-archivo">` gana orden por columna, filtro por texto y «Descargar

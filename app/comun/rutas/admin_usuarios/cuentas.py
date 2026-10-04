@@ -11,6 +11,7 @@ from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, LabelChe
                            TextPresets, UkIcon)
 
 from app.comun import config, correo, permisos, tokens, usuarios, vinculos
+from app.comun.componentes.avisos_emergentes import aviso_con_deshacer
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.db import auditar
 from app.comun.rutas.admin_usuarios.comun import (BASE, ID_TBODY, SIN_PERMISO, cuerpo_tabla, fila, gestiona_vinculos,
@@ -244,10 +245,14 @@ def get(uid: int, auth):
 
 
 @rt(BASE + "/{uid}/activo")
-def post(uid: int, auth, termina: str = "", fecha: str = "", motivo: str = ""):
+def post(uid: int, auth, sess, termina: str = "", fecha: str = "", motivo: str = "", activo: str = ""):
+    """Activa (activo=1) o desactiva (activo=0) la cuenta. Desactivar sin terminar el vínculo no pide
+    confirmación: el aviso ofrece «Deshacer»."""
     u = usuarios.con_perfil(uid)
     if not u or uid == auth["id"]:
         return fila(u, auth) if u else ""
+    if activo in ("0", "1") and (activo == "1") == bool(u["activo"]):
+        return fila(u, auth)  # ya está así (p. ej., «Deshacer» pulsado dos veces)
     if u["activo"] and termina == "si":
         if not gestiona_vinculos(auth):
             return SIN_PERMISO
@@ -259,6 +264,10 @@ def post(uid: int, auth, termina: str = "", fecha: str = "", motivo: str = ""):
                 fecha + (f" ({vinculos.MOTIVOS_TERMINO[motivo].lower()})" if motivo else ""))
     usuarios.set_activo(uid, not u["activo"])
     auditar(auth["id"], "desactivar_usuario" if u["activo"] else "activar_usuario", "usuario", uid)
+    if u["activo"] and termina != "si":
+        aviso_con_deshacer(sess, f"Cuenta de {u['nombres']} {u['apellidos']} desactivada: no podrá ingresar.",
+                           hx_post=f"{BASE}/{uid}/activo", hx_vals='{"activo": "1"}', hx_target=f"#usuario-{uid}",
+                           hx_swap="outerHTML")
     return fila(usuarios.con_perfil(uid), auth), Div(id=ID_MODAL, hx_swap_oob="true")
 
 

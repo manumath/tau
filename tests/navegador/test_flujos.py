@@ -8,7 +8,7 @@ import re
 import openpyxl
 from playwright.sync_api import expect
 
-from tests.navegador.conftest import entrar
+from tests.navegador.conftest import confirmar, entrar
 from tests.navegador.preparar import CLAVE, INVESTIGADORA
 
 
@@ -56,6 +56,7 @@ def proponer(page, nombre: str) -> str:
     editor = page.locator("#editor-propuesta")
     # Incompleta: no se envía y dice qué falta.
     page.get_by_role("button", name="Enviar propuesta").click()
+    confirmar(page)
     expect(editor).to_contain_text("Antes de enviar, complete")
     editor.get_by_label("Sistemas Dinámicos").check()
     editor.locator("textarea[name=descripcion]").fill("Dinámica simbólica de autómatas celulares.")
@@ -68,7 +69,8 @@ def proponer(page, nombre: str) -> str:
     editor.locator("select[name=act_mes]").select_option(index=1)
     editor.locator("input[name=act_desc]").fill("Seminario de lanzamiento.")
     editor.locator("textarea[name=bibliografia]").fill("Lind, D. y Marcus, B. (1995).")
-    page.get_by_role("button", name="Enviar propuesta").click()  # confirma el diálogo (conftest)
+    page.get_by_role("button", name="Enviar propuesta").click()
+    confirmar(page)
     expect(page.locator("main")).to_contain_text("Enviada")
     return page.url
 
@@ -335,3 +337,56 @@ def test_accesibilidad_del_modal_errores_y_envio(page):
     pendientes[0].continue_()
     expect(page.locator("#modal form")).to_have_count(0)
     expect(abrir).to_be_focused()                                    # el servidor cerró el modal al guardar
+
+
+def test_confirmacion_busqueda_y_deshacer(page):
+    """Paso 4 (PLAN.md §48): diálogo de confirmación propio, búsqueda global y «Deshacer»."""
+    entrar(page, "investigadora")
+    page.goto("/productos")
+    page.get_by_role("button", name="Nuevo producto").click()
+    modal = page.locator("#modal")
+    modal.locator("select[name=tipo_id]").select_option(label="Preprint")
+    modal.locator("input[name=titulo]").fill("Teoría de invariantes")
+    modal.get_by_role("button", name="Guardar").click()
+    expect(modal.locator("form")).to_have_count(0)
+    # Eliminar pregunta en el diálogo propio: botón «Eliminar» en rojo, el foco en «Cancelar».
+    page.get_by_role("button", name="Eliminar Teoría de invariantes").click()
+    dialogo = page.locator("dialog.confirmacion")
+    expect(dialogo).to_contain_text("¿Eliminar «Teoría de invariantes»?")
+    expect(dialogo.get_by_role("button", name="Cancelar")).to_be_focused()
+    expect(dialogo.get_by_role("button", name="Eliminar")).to_have_class(re.compile("uk-btn-destructive"))
+    page.keyboard.press("Escape")                                        # cancela
+    expect(dialogo).to_have_count(0)
+    expect(page.locator("#lista-productos")).to_contain_text("Teoría de invariantes")
+
+    # Búsqueda global: «/» lleva al campo; las sugerencias aparecen y Escape las cierra.
+    page.locator("main").click()
+    page.keyboard.press("/")
+    campo = page.locator("#busqueda-global")
+    expect(campo).to_be_focused()
+    campo.fill("invariantes")
+    sugerencias = page.locator("#sugerencias-busqueda")
+    expect(sugerencias.get_by_role("link", name=re.compile("Teoría de invariantes"))).to_be_visible()
+    campo.press("Escape")
+    expect(sugerencias.locator("a")).to_have_count(0)
+    campo.fill("invariantes")
+    campo.press("Enter")                                                 # Enter abre todos los resultados
+    page.wait_for_url("**/buscar?q=invariantes")
+    expect(page.locator("main")).to_contain_text("Productos (1)")
+
+    # Ahora sí, eliminar (confirmando en el diálogo).
+    page.goto("/productos")
+    page.get_by_role("button", name="Eliminar Teoría de invariantes").click()
+    confirmar(page, "Eliminar")
+    expect(page.locator("#lista-productos")).not_to_contain_text("Teoría de invariantes")
+
+    # «Deshacer»: desactivar un tipo no pregunta; el aviso permite revertirlo.
+    page.context.clear_cookies()
+    entrar(page, "admin")
+    page.goto("/admin/catalogos")
+    fila = page.locator("#catalogo-actividades li", has_text="Escuela")
+    fila.get_by_role("button", name="Desactivar (deja de ofrecerse)").click()
+    aviso = page.locator("#fh-toast-container .fh-toast", has_text="«Escuela» desactivado")
+    expect(page.locator("#catalogo-actividades li", has_text="Escuela")).to_contain_text("Inactivo")
+    aviso.get_by_role("button", name="Deshacer").click()
+    expect(page.locator("#catalogo-actividades li", has_text="Escuela")).not_to_contain_text("Inactivo")

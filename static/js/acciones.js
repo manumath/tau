@@ -18,12 +18,17 @@
 //   data-tras-pedido-limpiar="b,r"    tras una petición HTMX exitosa: vacía el campo #b y el contenido de #r
 //   data-pestana                      en un enlace de pestañas HTMX: la marca activa al pedirla
 //   data-resumen-errores              resumen de errores: al llegar en una respuesta recibe el foco
+//   data-escape-vaciar="id"           en un campo: Escape vacía #id (p. ej., las sugerencias de la búsqueda)
+//   data-cerrar-fuera                 desplegable: un clic fuera de él lo vacía
+//   tecla «/»                         lleva a la búsqueda global (#busqueda-global), salvo al escribir
 //
 // Además (accesibilidad y envíos):
 //   - el modal recibe el foco al abrirse (en el primer campo), lo retiene con Tab y, al cerrarse, lo
 //     devuelve al elemento que lo abrió;
 //   - mientras dura una petición que envía datos, su botón (o los de envío del formulario) queda
 //     deshabilitado: un doble clic con la red lenta no registra dos veces.
+//   - las confirmaciones (hx-confirm) se preguntan en un diálogo propio, no en el confirm() del navegador:
+//     el botón dice qué hace («Eliminar», «Quitar»…) y es rojo si la acción destruye algo.
 (() => {
   const MODAL = 'modal';
   const ENFOCABLES = 'a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), ' +
@@ -39,6 +44,9 @@
   const cerrarModal = () => { const m = modal(); if (m) m.innerHTML = ''; devolverFoco(); };
 
   document.addEventListener('click', e => {
+    document.querySelectorAll('[data-cerrar-fuera]').forEach(d => {
+      if (d.children.length && !d.parentElement.contains(e.target)) d.innerHTML = '';
+    });
     const fondo = e.target.closest('[data-fondo-modal]');
     if (fondo && e.target === fondo) { cerrarModal(); return; }
     const el = e.target.closest('[data-accion]');
@@ -81,6 +89,17 @@
   });
 
   document.addEventListener('keydown', e => {
+    const escribiendo = e.target.closest && e.target.closest('input, textarea, select, [contenteditable]');
+    if (e.key === '/' && !escribiendo && !e.ctrlKey && !e.metaKey && !dialogo()) {
+      const b = document.getElementById('busqueda-global');
+      if (b && b.offsetParent !== null) { e.preventDefault(); b.focus(); }
+      return;
+    }
+    if (e.key === 'Escape' && e.target.dataset && e.target.dataset.escapeVaciar) {
+      const r = document.getElementById(e.target.dataset.escapeVaciar);
+      if (r) r.innerHTML = '';
+      return;
+    }
     if (e.key === 'Escape' && document.querySelector('[data-fondo-modal]')) { cerrarModal(); return; }
     // Con el modal abierto, Tab recorre solo sus elementos (no la página de atrás).
     const d = e.key === 'Tab' ? dialogo() : null;
@@ -149,6 +168,45 @@
       const campo = d && visibles(d).find(x => x.matches('input, select, textarea'));
       (campo || d || fondo).focus();
     }
+  });
+
+  // Confirmaciones: un <dialog> nativo (retiene el foco, Escape cancela). El texto va con textContent.
+  const DESTRUCTIVAS = /^¿?(Eliminar|Quitar|Retirar|Fusionar|Desactivar|Dar de baja|Desvincular)/i;
+  function confirmar(pregunta, verbo) {
+    return new Promise(resolver => {
+      const d = document.createElement('dialog');
+      d.className = 'confirmacion';
+      d.setAttribute('aria-labelledby', 'confirmacion-texto');
+      const texto = document.createElement('p');
+      texto.id = 'confirmacion-texto';
+      texto.textContent = pregunta;
+      const accion = (pregunta.match(/^¿?\s*([A-Za-zÁÉÍÓÚÑáéíóúñ]+)/) || [])[1];
+      const destructiva = verbo === 'delete' || DESTRUCTIVAS.test(pregunta.trim());
+      const si = document.createElement('button');
+      si.type = 'button';
+      si.className = 'uk-btn ' + (destructiva ? 'uk-btn-destructive' : 'uk-btn-primary');
+      si.textContent = accion && accion.length > 2 && pregunta.trim().startsWith('¿') ? accion : 'Continuar';
+      const no = document.createElement('button');
+      no.type = 'button';
+      no.className = 'uk-btn uk-btn-ghost';
+      no.textContent = 'Cancelar';
+      const botones = document.createElement('div');
+      botones.className = 'confirmacion-botones';
+      botones.append(no, si);
+      d.append(texto, botones);
+      document.body.appendChild(d);
+      const fin = ok => { d.close(); d.remove(); resolver(ok); };
+      si.addEventListener('click', () => fin(true));
+      no.addEventListener('click', () => fin(false));
+      d.addEventListener('cancel', e => { e.preventDefault(); fin(false); });
+      d.showModal();
+      (destructiva ? no : si).focus();  // en lo destructivo, Enter no confirma sin querer
+    });
+  }
+  document.addEventListener('htmx:confirm', e => {
+    if (!e.detail.question) return;
+    e.preventDefault();
+    confirmar(e.detail.question, e.detail.verb).then(ok => { if (ok) e.detail.issueRequest(true); });
   });
 
   // El servidor también cierra el modal (lo vacía al guardar): el foco vuelve a quien lo abrió.

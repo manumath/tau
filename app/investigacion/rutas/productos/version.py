@@ -5,6 +5,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, Form, TextPresets
 
 from app.investigacion import productos
+from app.comun.componentes.avisos_emergentes import aviso_con_deshacer
 from app.comun.componentes.layout import ID_MODAL, cerrar_modal, mensaje_error, modal
 from app.comun.db import auditar
 from app.investigacion.rutas.productos.formulario import caja_importar
@@ -79,7 +80,10 @@ def delete(auth, sess, pid: int):
     pre, error = _preprint(pid, auth["id"])
     if error:
         return error
+    publicada = pre["publicado_como"]
     productos.desenlazar_version(pid)
     auditar(auth["id"], "desenlazar_version", "producto", pid)
-    add_toast(sess, "El preprint ya no está enlazado con una versión publicada.", "success")
+    if publicada:
+        aviso_con_deshacer(sess, "El preprint ya no está enlazado con su versión publicada.",
+                           hx_post=f"/productos/{pid}/version", hx_vals=f'{{"publicada": "{publicada["id"]}"}}')
     return "", HtmxResponseHeaders(trigger=EVENTO)

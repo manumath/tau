@@ -107,8 +107,7 @@ def fila(u, auth: dict):
         aria_label="Desactivar cuenta" if u["activo"] else "Activar cuenta",
         **({"hx_get": f"/admin/usuarios/{uid}/desactivar", "hx_target": f"#{ID_MODAL}"} if con_vinculo else
            {"hx_post": f"/admin/usuarios/{uid}/activo", "hx_target": f"#usuario-{uid}", "hx_swap": "outerHTML"}),
-        hx_confirm=(f"¿Desactivar la cuenta de {u['nombres']} {u['apellidos']}? "
-                    "No podrá ingresar hasta que se reactive.") if u["activo"] and not con_vinculo else None,
+        hx_vals='{"activo": "0"}' if u["activo"] and not con_vinculo else '{"activo": "1"}' if not u["activo"] else None,
         disabled=es_yo,
         title="No puede desactivar su propia cuenta" if es_yo else
               ("Desactivar cuenta" if u["activo"] else "Activar cuenta"))

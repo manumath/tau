@@ -1,6 +1,6 @@
 """Estructura común de las páginas: barra de navegación, contenedor y modal."""
 import fasthtml.common as fh
-from fasthtml.common import A, Div, Form, Main, Span, Title
+from fasthtml.common import A, Div, Form, Input, Main, Span, Title
 from monsterui.all import (H3, Button, ButtonT, Container, ContainerT, DivHStacked, NavBar,
                            TextPresets, UkIcon)
 
@@ -65,6 +65,17 @@ def _menu_usuario(usuario: dict):
             uk_dropdown="mode: click; pos: bottom-right", cls="uk-drop uk-dropdown w-60 p-1"))
 
 
+def campo_busqueda(q: str = "", sugerencias: bool = True):
+    """Búsqueda global (app/busqueda.py). Con `sugerencias`, despliega resultados mientras se escribe; Enter
+    abre /buscar. La tecla «/» lleva a él y Escape cierra las sugerencias (static/js/acciones.js)."""
+    extra = dict(hx_get="/buscar/sugerencias", hx_trigger="input changed delay:250ms", hx_target="#sugerencias-busqueda",
+                 data_escape_vaciar="sugerencias-busqueda", id="busqueda-global") if sugerencias else {}
+    return Form(Input(type="search", name="q", value=q, placeholder="Buscar…  /" if sugerencias else "Buscar",
+                      autocomplete="off", aria_label="Buscar en el sistema", cls="uk-input h-9 w-full", **extra),
+                Div(id="sugerencias-busqueda", data_cerrar_fuera=True) if sugerencias else "",
+                action="/buscar", method="get", role="search", cls="relative")
+
+
 def barra_navegacion(usuario: dict, seccion: str = ""):
     enlaces = [_enlace("Inicio", "/", "home", seccion == "inicio")]
     if usuario["es_investigador"]:
@@ -90,6 +101,10 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
                                extra=contador))
     if permisos.puede(usuario, "ver_usuarios"):
         enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
+    # Búsqueda: el campo en pantallas grandes; en las chicas, un enlace a /buscar.
+    enlaces.append(Div(campo_busqueda(), cls="hidden xl:block w-56"))
+    enlaces.append(A(UkIcon("search", height=18, width=18), href="/buscar", aria_label="Buscar", title="Buscar",
+                     cls="xl:hidden flex items-center"))
     # Campana de avisos: se carga aparte (app/comun/rutas/avisos.py), como los contadores.
     enlaces.append(Span(id="campana-avisos", hx_get="/avisos/campana", hx_trigger="load", hx_swap="outerHTML"))
     enlaces.append(_menu_usuario(usuario))
