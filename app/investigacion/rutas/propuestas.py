@@ -15,7 +15,7 @@ from fasthtml.common import (A, APIRouter, Div, H3, Input, Li, Option, P, Redire
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, Progress, TextPresets, UkIcon
 
-from app.comun import permisos
+from app.comun import exportar, permisos
 from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
 from app.investigacion.componentes.lineas import casillas_lineas
@@ -585,8 +585,7 @@ def get(auth, periodo: str = "", estado: str = ""):
 @rt("/admin/propuestas/{periodo}/xlsx")
 def get(auth, periodo: int):
     # Sin extensión en la URL: la ruta de archivos estáticos capturaría «….xlsx».
-    from app.acreditacion.informes import a_xlsx
-    return Response(a_xlsx(inst.hojas_convocatoria(periodo)),
+    return Response(exportar.a_xlsx(inst.hojas_convocatoria(periodo)),
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"Content-Disposition": f'attachment; filename="propuestas-{periodo}-{periodo + 1}.xlsx"',
                              "Cache-Control": "private, no-store"})

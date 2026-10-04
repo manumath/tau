@@ -17,7 +17,7 @@ from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.investigacion import (actividades, cosecha, importacion, institucionales, perfiles, productos, proyectos,
                                revistas)
-from app.comun import config, permisos, unidades
+from app.comun import config, exportar, permisos, unidades
 from app.comun.componentes import recursos
 from app.acreditacion import informes, programados
 from app.comun.componentes.graficos import barras
@@ -422,7 +422,7 @@ def get(auth, pid: int, desde: str = "", hasta: str = ""):
                           "Actividad prevista": f["descripcion"], "Estado": f["estado"].capitalize(),
                           "Actividad registrada": f["realizada_titulo"] or ""}
                          for x in datos["plan"] for f in x["previstas"]]
-    contenido = informes.a_xlsx(hojas)
+    contenido = exportar.a_xlsx(hojas)
     return _archivo(contenido, f"informe-proyecto-{pid}-{d}-{h}.xlsx", XLSX)
 
 
@@ -713,7 +713,7 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
         hojas["Por confirmar"] = informes.filas_productos(m["por_confirmar"])
     if m["otros_resultados"]:
         hojas["Patentes y traducciones"] = informes.filas_productos(m["otros_resultados"])
-    return _archivo(informes.a_xlsx(hojas), f"{m['nombre']}.xlsx", XLSX)
+    return _archivo(exportar.a_xlsx(hojas), f"{m['nombre']}.xlsx", XLSX)
 
 
 @rt("/informes/memoria/csv/{hoja}")
@@ -726,4 +726,4 @@ def get(auth, hoja: str, anio: str = "", periodo: str = "", desde: str = "", has
              "proyectos": lambda: informes.filas_proyectos(m["proyectos"])}.get(hoja)
     if not filas:
         return Response(status_code=404)
-    return _archivo(informes.a_csv(filas()), f"{m['nombre']}-{hoja}.csv", "text/csv; charset=utf-8")
+    return _archivo(exportar.a_csv(filas()), f"{m['nombre']}-{hoja}.csv", "text/csv; charset=utf-8")

@@ -1589,7 +1589,7 @@ Veredicto: el stack es adecuado; los problemas son de terminación y escala. Ord
    contenido»), foco en el resumen de errores y botones que se desactivan mientras se envía.
 3. **Hecho (4-oct-2026):** registros de actividad y de errores (requisito del despliegue).
 4. **Hecho (4-oct-2026):** búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
-5. «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
+5. **Hecho (4-oct-2026):** «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
 6. Deuda técnica: armar productos en lote (N+1), modelo de formulario compartido para alta y edición,
    `ruff` y `pyright`.
 
@@ -1656,3 +1656,22 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
 - Solo esas tres acciones pasan a «Deshacer»; el resto sigue pidiendo confirmación (no se pueden revertir
   con lo que hay, o revertirlas no deja todo igual, como quitar un rol o dar de baja a un participante).
 - El aviso con «Deshacer» dura 10 segundos.
+
+**Paso 5, implementación:**
+- Calidad de datos: cada ítem sabe a quién corresponde (`para`): la persona (sin grado, perfil
+  incompleto), los autores del instituto (publicaciones por confirmar, sin MSC, preprints sin enlazar) o
+  los responsables (proyectos sin ámbito o sin línea). `calidad.avisar(clave, por)` envía a cada uno, por el
+  centro de avisos, la lista de lo suyo (hasta 10, y «… y N más»), con enlace al registro si es uno solo o a
+  su página («Mi perfil», «Mis productos», «Proyectos»). No se repite a quien recibió el mismo aviso en los
+  últimos 7 días (se consulta `notificacion`; sin tabla nueva). Botón «Avisar a N personas», con
+  confirmación; queda en la auditoría.
+- Auditoría: filtros por fechas (incluyen ambos días; sobre la fecha UTC del registro) y «Descargar CSV» con
+  todo lo filtrado (UTF-8 con BOM, fórmulas neutralizadas, encabezado aunque no haya filas); la exportación
+  se audita. La exportación a CSV y XLSX pasa a `app/comun/exportar.py` (la usan los informes y la auditoría).
+
+**Decisiones del equipo (confirmar):**
+- Avisan las direcciones (Instituto y Carrera) y la Coordinación académica (permiso nuevo «avisar_calidad»).
+  El Comité de acreditación solo mira y Administración del sistema no decide sobre contenido.
+- Lo que corrigen las direcciones o la administración (vínculos, fecha de nacimiento, oferta, planes,
+  coautores externos) no tiene «Avisar»: lo ve quien lo corrige.
+- Un aviso por revisión y persona cada 7 días como máximo.

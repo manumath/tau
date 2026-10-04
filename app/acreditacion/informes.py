@@ -1,4 +1,4 @@
-"""Datos de los informes (CV, informe de proyecto, memoria anual) y exportación a CSV/XLSX.
+"""Datos de los informes (CV, informe de proyecto, memoria anual); la exportación está en app/comun/exportar.py.
 
 Reglas:
 - Un producto pertenece al periodo según su año; una actividad, según su fecha de inicio; un
@@ -7,13 +7,7 @@ Reglas:
   (indexados o arbitrados, aceptados o publicados). Cada producto se cuenta una vez, aunque
   tenga varios autores del instituto.
 """
-import csv
-import io
 from datetime import date
-
-from openpyxl import Workbook
-from openpyxl.styles import Font
-from openpyxl.utils import get_column_letter
 
 from app.investigacion import (actividades, filiacion, institucionales, lineas, msc, perfiles, productos, proyectos,
                                revistas)
@@ -452,45 +446,3 @@ def filas_proyectos(proys: list[dict]) -> list[dict]:
         "Contrapartes": "; ".join(f"{c['institucion']} ({c['pais'] or '?'})" for c in proyectos.contrapartes(p["id"])),
         "Participantes vigentes": p.get("n_part", ""),
     } for p in proys]
-
-
-def celda_segura(valor):
-    """Evita la «inyección de fórmulas»: Excel ejecuta como fórmula un texto que empieza con
-    = + - @ (y openpyxl lo guardaría como fórmula). Se antepone un apóstrofo."""
-    if isinstance(valor, str) and valor[:1] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + valor
-    return valor
-
-
-def a_csv(filas: list[dict]) -> bytes:
-    """CSV en UTF-8 con BOM (Excel reconoce así las tildes)."""
-    buf = io.StringIO()
-    if filas:
-        w = csv.DictWriter(buf, fieldnames=list(filas[0]))
-        w.writeheader()
-        w.writerows({k: celda_segura(v) for k, v in f.items()} for f in filas)
-    return buf.getvalue().encode("utf-8-sig")
-
-
-def a_xlsx(hojas: dict[str, list[dict]]) -> bytes:
-    wb = Workbook()
-    wb.remove(wb.active)
-    for nombre, filas in hojas.items():
-        ws = wb.create_sheet(nombre[:31])
-        if not filas:
-            ws.append(["Sin datos"])
-            continue
-        columnas = list(filas[0])
-        ws.append(columnas)
-        for c in ws[1]:
-            c.font = Font(bold=True)
-        for f in filas:
-            ws.append([celda_segura(f[c]) for c in columnas])
-        for i, c in enumerate(columnas, start=1):
-            ancho = max(len(str(c)), *(len(str(f[c])) for f in filas))
-            ws.column_dimensions[get_column_letter(i)].width = min(60, max(10, ancho + 2))
-        ws.freeze_panes = "A2"
-        ws.auto_filter.ref = ws.dimensions
-    buf = io.BytesIO()
-    wb.save(buf)
-    return buf.getvalue()

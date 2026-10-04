@@ -1,15 +1,19 @@
 """Calidad de datos (PLAN.md, sección 31): lo que falta o no cuadra antes de generar informes.
 
 Cada chequeo dice qué revisa, a qué afecta (el anexo, la docencia, los informes), quién lo corrige y
-qué registros lo incumplen, con un enlace para corregirlos. No cambia nada: solo consulta. Reutiliza
+qué registros lo incumplen, con un enlace para corregirlos. No cambia nada: solo consulta.
+
+Los que corrigen las personas o los responsables de proyecto saben a quién corresponde cada registro
+(`para` en cada ítem): `avisar(clave, …)` envía a cada una, por el centro de avisos, un aviso con lo suyo
+(PLAN.md §48, paso 5), a lo más uno por revisión cada `DIAS_ENTRE_AVISOS` días. Reutiliza
 las reglas de los informes (p. ej., `informes.memoria(...)["por_confirmar"]`) para no duplicarlas.
 """
-from datetime import date
+from datetime import date, timedelta
 from urllib.parse import quote
 
 from app.academico import carga
 from app.acreditacion import anexo, informes
-from app.comun import academicos, personas, vinculos
+from app.comun import academicos, notificaciones, personas, usuarios, vinculos
 from app.comun.db import get_db
 from app.investigacion import perfiles, productos
 
@@ -17,15 +21,31 @@ QUIEN = {"carrera": "Dirección de Carrera", "instituto": "Dirección del Instit
          "administracion": "Administración del sistema", "personas": "Cada persona (en su perfil o sus registros)",
          "responsables": "Responsables de proyecto"}
 MAX_ITEMS = 50
+DIAS_ENTRE_AVISOS = 7
 
 
 def _chequeo(clave, grupo, titulo, explicacion, quien, afecta, items):
+    destinatarios = {}  # usuario → sus registros (de todos los ítems, no solo los que se muestran)
+    for i in items:
+        for uid in i["para"]:
+            destinatarios.setdefault(uid, []).append(i)
     return {"clave": clave, "grupo": grupo, "titulo": titulo, "explicacion": explicacion, "quien": quien,
-            "afecta": afecta, "items": items[:MAX_ITEMS], "n": len(items)}
+            "afecta": afecta, "items": items[:MAX_ITEMS], "n": len(items), "destinatarios": destinatarios}
 
 
-def _item(texto, href, detalle=None):
-    return {"texto": texto, "href": href, "detalle": detalle}
+def _item(texto, href, detalle=None, para=()):
+    """`para`: ids de quienes deben corregirlo (para «Avisar a los responsables»)."""
+    return {"texto": texto, "href": href, "detalle": detalle, "para": tuple(dict.fromkeys(para))}
+
+
+def _autores_internos(pid):
+    return [f["investigador_id"] for f in get_db().q(
+        "SELECT investigador_id FROM producto_autor WHERE producto_id = ? AND investigador_id IS NOT NULL", [pid])]
+
+
+def _responsables(pid):
+    from app.investigacion import proyectos
+    return [p["id"] for p in proyectos.responsables(pid) if p.get("interno", True)]
 
 
 def _persona(f):
@@ -82,7 +102,7 @@ def investigadores_sin_vinculo():
 # --- Personas -----------------------------------------------------------------------------------------
 
 def sin_grado():
-    items = [_item(*_persona(p)) for p in _vigentes() if not academicos.grados(p["id"])]
+    items = [_item(*_persona(p), para=[p["id"]]) for p in _vigentes() if not academicos.grados(p["id"])]
     return _chequeo("sin_grado", "Personas", "Académicos vinculados sin grado registrado",
                     "El porcentaje de doctores y de posgrado se calcula con los grados.", "personas",
                     "Indicadores del cuerpo académico", items)
@@ -104,7 +124,7 @@ def perfiles_incompletos():
         pct, faltan = perfiles.completitud(perfil, len(perfiles.areas(p["id"])))
         if "ORCID" in faltan or pct < 50:
             items.append(_item(f"{p['apellidos']}, {p['nombres']}", f"/investigadores/{p['id']}",
-                               f"{pct} % · falta: {', '.join(faltan)}"))
+                               f"{pct} % · falta: {', '.join(faltan)}", para=[p["id"]]))
     return _chequeo("perfiles", "Personas", "Perfiles de investigación incompletos (sin ORCID o bajo el 50 %)",
                     "El ORCID permite cargar y verificar la producción; el perfil alimenta el CV y el directorio.",
                     "personas", "CV, directorio, carga desde OpenAlex", items)
@@ -115,7 +135,8 @@ def perfiles_incompletos():
 def productos_por_confirmar():
     d, h = anexo.ventana_por_omision()
     m = informes.memoria(desde=f"{d}-01-01", hasta=f"{h}-12-31", exigir_verificada=True)
-    items = [_item(f"{x['titulo']} ({x['anio']})", f"/productos/{x['id']}", x["motivo"]) for x in m["por_confirmar"]]
+    items = [_item(f"{x['titulo']} ({x['anio']})", f"/productos/{x['id']}", x["motivo"], para=_autores_internos(x["id"]))
+             for x in m["por_confirmar"]]
     return _chequeo("por_confirmar", "Producción", f"Publicaciones que no cuentan hasta completarse ({d}–{h})",
                     "Filiación sin declarar, revista sin verificar en el catálogo o mes faltante cuando el "
                     "vínculo cubre solo parte del año.", "personas", "Memoria y anexo de I+D+i", items)
@@ -133,7 +154,8 @@ def productos_sin_msc():
     return _chequeo("sin_msc", "Producción", f"Publicaciones indexadas o arbitradas sin clasificación MSC2020 ({d}–{h})",
                     "La memoria agrupa la producción por la sección de su código MSC2020 principal; sin él, "
                     "el producto figura como «sin clasificar».", "personas", "Memoria (producción por área)",
-                    [_item(f"{f['titulo']} ({f['anio']})", f"/productos/{f['id']}") for f in filas])
+                    [_item(f"{f['titulo']} ({f['anio']})", f"/productos/{f['id']}", para=_autores_internos(f["id"]))
+                     for f in filas])
 
 
 def preprints_sin_enlazar():
@@ -143,7 +165,8 @@ def preprints_sin_enlazar():
                     "perfil público y la exportación BibTeX. Enlácelos desde la ficha del preprint.", "personas",
                     "CV, perfil público y BibTeX",
                     [_item(f"{pre['titulo']} ({pre['anio']})", f"/productos/{pre['id']}",
-                           f"posible versión publicada: «{pub['titulo']}» ({pub['anio']})") for pre, pub in pares])
+                           f"posible versión publicada: «{pub['titulo']}» ({pub['anio']})",
+                           para=_autores_internos(pre["id"])) for pre, pub in pares])
 
 
 # --- Docencia -----------------------------------------------------------------------------------------
@@ -187,7 +210,8 @@ def proyectos_sin_ambito():
                           ORDER BY p.nombre""")
     return _chequeo("sin_ambito", "Proyectos", "Proyectos vigentes sin ámbito (nacional o internacional)",
                     "Sin ámbito ni contrapartes no se sabe si es internacional.", "responsables",
-                    "Anexo (proyectos internacionales)", [_item(f["nombre"], f"/proyectos/{f['id']}") for f in filas])
+                    "Anexo (proyectos internacionales)",
+                    [_item(f["nombre"], f"/proyectos/{f['id']}", para=_responsables(f["id"])) for f in filas])
 
 
 def proyectos_sin_lineas():
@@ -197,7 +221,8 @@ def proyectos_sin_lineas():
                           ORDER BY p.nombre""")
     return _chequeo("sin_lineas", "Proyectos", "Proyectos de investigación vigentes sin línea de investigación",
                     "Los proyectos de investigación se adscriben a las líneas institucionales.", "responsables",
-                    "Líneas de investigación", [_item(f["nombre"], f"/proyectos/{f['id']}") for f in filas])
+                    "Líneas de investigación",
+                    [_item(f["nombre"], f"/proyectos/{f['id']}", para=_responsables(f["id"])) for f in filas])
 
 
 def externos_duplicados():
@@ -222,6 +247,44 @@ CHEQUEOS = (sin_termino, sin_carga, sin_ingreso, investigadores_sin_vinculo, sin
             perfiles_incompletos, productos_por_confirmar, productos_sin_msc, preprints_sin_enlazar,
             externos_duplicados, externos_con_cuenta, oferta_incompleta, observaciones_de_planes,
             proyectos_sin_ambito, proyectos_sin_lineas)
+
+
+AVISABLES = {"sin_grado": sin_grado, "perfiles": perfiles_incompletos, "por_confirmar": productos_por_confirmar,
+             "sin_msc": productos_sin_msc, "preprints": preprints_sin_enlazar, "sin_ambito": proyectos_sin_ambito,
+             "sin_lineas": proyectos_sin_lineas}
+
+
+def avisar(clave: str, por: int) -> dict:
+    """Avisa a cada responsable de los registros de la revisión `clave` (centro de avisos y, según su
+    preferencia, correo), salvo a quien ya se avisó de esta revisión en los últimos días.
+    → {"avisadas": n, "ya_avisadas": n}."""
+    c = AVISABLES[clave]()
+    asunto = f"Calidad de datos: {c['titulo']}"
+    desde = (date.today() - timedelta(days=DIAS_ENTRE_AVISOS)).isoformat()
+    avisadas = ya = 0
+    for uid, items in c["destinatarios"].items():
+        if uid == por:
+            continue
+        if get_db().q("SELECT 1 FROM notificacion WHERE usuario_id = ? AND asunto = ? AND creada_en >= ?",
+                      [uid, asunto, desde]):
+            ya += 1
+            continue
+        u = usuarios.con_perfil(uid)
+        lista = "\n".join(f"- {i['texto']}" + (f" ({i['detalle']})" if i["detalle"] else "") for i in items[:10])
+        mas = f"\n… y {len(items) - 10} más." if len(items) > 10 else ""
+        url = items[0]["href"] if len(items) == 1 else _donde(clave, u)
+        notificaciones.avisar(u, asunto, f"{c['explicacion']} Le corresponde completar:\n{lista}{mas}", url)
+        avisadas += 1
+    return {"avisadas": avisadas, "ya_avisadas": ya}
+
+
+def _donde(clave, u):
+    """Adónde llevar a quien tiene varios registros por completar."""
+    if clave in ("sin_grado", "perfiles"):
+        return "/perfil" if u and u["es_investigador"] else "/mis-datos"
+    if clave in ("sin_ambito", "sin_lineas"):
+        return "/proyectos"
+    return "/productos"
 
 
 def revisar() -> list[dict]:

@@ -514,7 +514,10 @@ Menú «Informes»:
   también aparece en el inicio): 16 revisiones de lo que falta o no cuadra antes de generar informes,
   agrupadas en vínculos y carga, personas, producción, docencia y proyectos. Cada una dice a qué
   afecta y quién lo corrige; al abrirla muestra los registros con un enlace para corregirlos. La
-  página no cambia nada.
+  página no cambia datos. En las revisiones que corrigen las personas o los responsables de proyecto,
+  las direcciones y la Coordinación académica tienen **«Avisar a N personas»**: cada una recibe en sus
+  avisos (y por correo, según su preferencia) la lista de lo suyo por completar. A quien ya se avisó de
+  esa revisión en los últimos 7 días no se le repite.
 - **Memoria del instituto** (administración): ver abajo.
 
 ### Plan de actividades (proyectos institucionales)
@@ -628,7 +631,9 @@ proyecto y ser del mismo periodo).
   con DOI. La sección «Impacto» las suma y el XLSX las trae por producto, con su fecha.
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se
   envió (resumen, textos completos, objetivos y actividades previstas), para el comité.
-- **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros.
+- **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros por persona, acción, texto y
+  fechas. **«Descargar CSV»** exporta todo lo filtrado (no solo lo que se ve), para una revisión externa;
+  la exportación también queda en la auditoría.
 - **Artículos sin revista:** desde el catálogo, los artículos registrados sin revista del catálogo,
   agrupados por el nombre declarado, para vincularlos a una revista o crearla.
 - **Líneas de investigación** (menú con su nombre): el catálogo de líneas institucionales, con su

@@ -72,6 +72,8 @@ ACCIONES = {
     "ver_informes_institucionales": {"direccion_instituto", "direccion_carrera", "comite_acreditacion"},
     "ver_calidad_datos": {"direccion_instituto", "direccion_carrera", "coordinacion_academica", "comite_acreditacion",
                           "administracion_sistema"},
+    # «Avisar a los responsables» desde Calidad de datos (el Comité solo mira; Administración no decide contenido).
+    "avisar_calidad": {"direccion_instituto", "direccion_carrera", "coordinacion_academica"},
 }
 
 

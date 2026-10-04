@@ -10,7 +10,7 @@ from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, R
 
 from app.acreditacion import anexo as acreditacion, informes
 from app.investigacion import actividades, productos, proyectos
-from app.comun import config, estudiantes, permisos, unidades, vinculos
+from app.comun import config, estudiantes, exportar, permisos, unidades, vinculos
 from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import pagina
 from monsterui.all import H2 as Titulo, Card, TextPresets, UkIcon
@@ -339,7 +339,7 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
               {"Tema": "Cuerpo académico", "Descripción": "Personas con vínculo vigente al 31 de diciembre de cada año; "
                "JCE = carga contratada (h/mes) / 160; sin carga registrada, jornada del vínculo × 4."},
               {"Tema": "Citas", "Descripción": "OpenAlex, en la fecha de actualización de cada producto."}]
-    contenido = informes.a_xlsx({
+    contenido = exportar.a_xlsx({
         "Resumen por año": resumen, "2.2.1 Cuerpo académico": cuerpo,
         "3.6.3 a Publicaciones": informes.filas_productos(a["articulos"]),
         "3.6.3 b Libros y capítulos": informes.filas_productos(a["libros"]),

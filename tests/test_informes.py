@@ -5,6 +5,7 @@ import pytest
 from openpyxl import load_workbook
 
 from app.acreditacion import informes
+from app.comun import exportar
 from app.investigacion import perfiles, productos, proyectos
 from app.comun import personas, usuarios
 from app.comun.db import get_db
@@ -149,8 +150,8 @@ def test_memoria_solo_admin_y_descargas(client, datos):
 
 def test_inyeccion_de_formulas_neutralizada(client, datos):
     _producto(datos["emmy"], [f"i:{datos['emmy']}"], "=HYPERLINK(\"http://malo\")")
-    assert informes.celda_segura("=1+1") == "'=1+1" and informes.celda_segura("-x") == "'-x"
-    assert informes.celda_segura(5) == 5 and informes.celda_segura("Normal") == "Normal"
+    assert exportar.celda_segura("=1+1") == "'=1+1" and exportar.celda_segura("-x") == "'-x"
+    assert exportar.celda_segura(5) == 5 and exportar.celda_segura("Normal") == "Normal"
     login(client, "admin@test.cl", PASS_ADMIN)
     libro = load_workbook(io.BytesIO(client.get("/informes/memoria/xlsx?anio=2026").content))
     valores = [c.value for fila in libro["Productos"].iter_rows() for c in fila]

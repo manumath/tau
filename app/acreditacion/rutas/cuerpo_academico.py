@@ -7,10 +7,10 @@ import fasthtml.common as fh
 from fasthtml.common import APIRouter, Div, H1, H2, Option, P, Response, Select, Span, Table, Tbody, Td, Th, Thead, Tr
 
 from app.academico import carga as carga_mod, gestiones
-from app.acreditacion import cuerpo_academico as ca, informes
+from app.acreditacion import cuerpo_academico as ca
 from app.acreditacion.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _selector_anio, barra, descarga,
                                              hoja)
-from app.comun import permisos, vinculos
+from app.comun import exportar, permisos, vinculos
 from app.comun.componentes.layout import pagina
 
 rt = APIRouter()
@@ -99,7 +99,7 @@ def get(auth, gestion: str = ""):
     g = gestiones.obtener(int(gestion)) if gestion.isdigit() else carga_mod.semestre_de_referencia()
     if not g or g["tipo"] not in carga_mod.SEMESTRES:
         return Response("Semestre no encontrado", status_code=404)
-    return _archivo(informes.a_xlsx(ca.filas_xlsx(ca.carga_docente(g))), f"carga-docente-{gestiones.codigo(g)}.xlsx", XLSX)
+    return _archivo(exportar.a_xlsx(ca.filas_xlsx(ca.carga_docente(g))), f"carga-docente-{gestiones.codigo(g)}.xlsx", XLSX)
 
 
 # --- Indicadores del cuerpo académico ---------------------------------------------------------------------
@@ -174,5 +174,5 @@ def get(auth, desde: str = "", hasta: str = ""):
     if not permisos.puede(auth, "ver_informes_institucionales"):
         return Response("No autorizado", status_code=403)
     d, h = _ventana(desde, hasta)
-    return _archivo(informes.a_xlsx(ca.filas_indicadores(ca.indicadores(d, h))), f"cuerpo-academico-{d}-{h}.xlsx", XLSX)
+    return _archivo(exportar.a_xlsx(ca.filas_indicadores(ca.indicadores(d, h))), f"cuerpo-academico-{d}-{h}.xlsx", XLSX)
 
