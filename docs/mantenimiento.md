@@ -271,6 +271,23 @@ o una restauración). No ejecuta las tareas horarias.
 `data/correos/`, útil para revisar sin enviar), `smtp` (producción; ver `PORTAL_SMTP_*`) o `memoria`
 (pruebas).
 
+### 5.5 Registros y errores
+
+`app/comun/registros.py` escribe en la consola y en `data/registros/portal.log` (rota a los 10 MB y guarda
+5 archivos; `PORTAL_REGISTROS=consola` solo usa la consola):
+
+- **Una línea por petición:** `GET /productos 200 21 ms usuario=12`. Sin la consulta (`?q=…`) ni el cuerpo,
+  y con los tokens de `/recuperar/…` ocultos. Las que tardan 1 s o más van como `WARNING … (lenta)`. No se
+  anotan `/static` ni `/salud`.
+- **Errores no controlados:** `ERROR … Error a1b2c3 en POST /productos (usuario 12)` y la traza. La persona
+  ve una página de error (o un aviso, en HTMX) con ese **código de referencia**: búsquelo con
+  `grep a1b2c3 data/registros/portal.log*`.
+- **Aviso por correo:** con `PORTAL_AVISO_ERRORES=sistemas@…`, cada error avisa por correo, a lo más uno
+  cada 15 minutos (los demás quedan solo en el registro).
+- **Salud:** `GET /salud` responde `ok` si la base contesta (503 si no); lo usa el chequeo de Fly.io.
+- Arranque con `uvicorn … --no-access-log` (ya en `scripts/iniciar.sh` y en el servicio de
+  `docs/despliegue.md`): el registro de uvicorn duplicaría cada línea y anotaría la consulta.
+
 ## 6. Problemas frecuentes
 
 | Síntoma | Causa probable | Qué hacer |
@@ -282,6 +299,7 @@ o una restauración). No ejecuta las tareas horarias.
 | El sistema no arranca tras actualizar | Falló una migración | Lea el error; restaure el respaldo previo (5.2) y corrija la migración en una nueva |
 | Una página de administración responde 403 | A la cuenta le falta el rol | «Usuarios» → «Roles» (lo hace Administración del sistema) |
 | Los correos no llegan | `PORTAL_CORREO_MODO` no es `smtp`, o credenciales SMTP | Revise `data/correos/` y la configuración SMTP |
+| Alguien ve «Error del sistema» con un código de referencia | Error no controlado | Busque el código en `data/registros/portal.log*` (5.5): la traza dice dónde falló |
 | Una prueba en navegador falla solo en su equipo | Chrome no instalado o muy antiguo | `uv run playwright install chromium` y `PLAYWRIGHT_CANAL=` |
 
 ## 7. Deuda conocida

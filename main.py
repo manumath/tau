@@ -6,7 +6,7 @@ import json
 import os
 import time
 
-from fasthtml.common import Beforeware, Meta, fast_app, serve
+from fasthtml.common import Beforeware, Meta, Response, fast_app, serve
 
 from app.comun import config
 
@@ -23,11 +23,13 @@ from app.acreditacion import programados  # noqa: E402
 from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
 from app.comun.auth import rt as rutas_auth
 from app.comun.componentes import avisos_emergentes
-from app.comun.componentes.errores import no_encontrado, paginas_de_error
+from app.comun.componentes.errores import error_interno, no_encontrado, paginas_de_error
 from app.comun.cabeceras import CabecerasSeguridad
+from app.comun import registros
+from app.comun.registros import RegistroPeticiones
 from app.comun.componentes.recursos import encabezados
 from app.comun.componentes.recursos import montar as montar_estaticos
-from app.comun.db import init_db
+from app.comun.db import get_db, init_db
 from app.investigacion.rutas.actividades import rt as rutas_actividades
 from app.investigacion.rutas.adjuntos import rt as rutas_adjuntos
 from app.investigacion.rutas.bibtex import rt as rutas_bibtex
@@ -81,7 +83,7 @@ def create_app(db_path=config.DB_PATH):
               # herede ese swap sin querer (es además el comportamiento por defecto en htmx 4).
               # allowEval: no evaluar código (hx-on, filtros de eventos): la CSP no admite 'unsafe-eval'.
               Meta(name="htmx-config", content=json.dumps({"disableInheritance": True, "allowEval": False}))),
-        exception_handlers={404: no_encontrado},
+        exception_handlers={404: no_encontrado, 500: error_interno},
         before=[beforeware_origen, beforeware_solo_lectura, beforeware, Beforeware(_mantenimiento)],
         secret_key=config.SECRET_KEY,
         key_fname=str(config.RAIZ / ".sesskey"),
@@ -96,6 +98,18 @@ def create_app(db_path=config.DB_PATH):
     app.after.append(paginas_de_error)
     montar_estaticos(app)
     app.add_middleware(CabecerasSeguridad)
+    app.add_middleware(RegistroPeticiones)  # el último agregado es el más externo: registra todo lo demás
+    registros.configurar()
+
+    @app.get("/salud")
+    def salud():
+        """Para el chequeo del hosting: responde si la base contesta (sin sesión ni registro)."""
+        try:
+            get_db().q("SELECT 1")
+        except Exception:
+            registros.log.exception("Chequeo de salud: la base no responde")
+            return Response("La base de datos no responde", status_code=503)
+        return Response("ok", media_type="text/plain")
     # rutas_bibtex va antes que rutas_productos: /productos/bibtex coincidiría con /productos/{pid}.
     for router in (rutas_auth, rutas_inicio, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,

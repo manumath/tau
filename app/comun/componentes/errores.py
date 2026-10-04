@@ -6,7 +6,7 @@
 - En peticiones HTMX, htmx ignora por defecto las respuestas 4xx/5xx (no pasa nada en pantalla);
   static/js/avisos.js muestra entonces un aviso rojo con un mensaje comprensible.
 """
-from fasthtml.common import A, Div, FtResponse, JSONResponse, P, Response
+from fasthtml.common import A, Div, FtResponse, JSONResponse, P, Response, Span
 from monsterui.all import H2, ButtonT, UkIcon
 from starlette.responses import FileResponse, StreamingResponse
 
@@ -19,6 +19,9 @@ TEXTOS = {
     503: ("En mantenimiento", "wrench", "El sistema está en mantenimiento: por ahora solo se puede "
                                         "consultar. Intente el cambio más tarde."),
 }
+ERROR_INTERNO = ("Error del sistema", "triangle-alert", "Ocurrió un error inesperado y no se pudo completar la "
+                 "operación. Intente de nuevo; si se repite, avise a la administración indicando el código de "
+                 "referencia.")
 
 
 def _usuario(req):
@@ -33,13 +36,18 @@ def _usuario(req):
     return u if u and u["activo"] and not u["debe_cambiar_pass"] else None
 
 
-def pagina_error(req, codigo: int):
-    titulo, icono, texto = TEXTOS[codigo]
-    usuario = _usuario(req)
+def pagina_error(req, codigo: int, referencia: str | None = None):
+    titulo, icono, texto = ERROR_INTERNO if codigo == 500 else TEXTOS[codigo]
+    try:
+        usuario = _usuario(req)
+    except Exception:  # si el error vino de la base, la página de error no debe fallar también
+        usuario = None
     contenido = Div(
         Div(UkIcon(icono, height=48, width=48), cls="flex justify-center text-muted-foreground"),
         H2(titulo, cls="mt-4"),
         P(texto, cls="text-muted-foreground max-w-md mx-auto mt-2"),
+        P("Código de referencia: ", Span(referencia, cls="font-mono font-semibold"), cls="text-sm mt-4")
+        if referencia else "",
         A(UkIcon("arrow-left", height=14, width=14), "Volver al inicio" if usuario else "Ir al ingreso",
           href="/" if usuario else "/login", cls=f"uk-btn {ButtonT.default} inline-flex gap-1 mt-6"),
         cls="text-center py-16")
@@ -61,3 +69,11 @@ def no_encontrado(req, exc):
     return pagina_error(req, 404)
 
 
+def error_interno(req, exc):
+    """Manejador de errores no controlados (500): página con el código de referencia que registró
+    app/comun/registros.py; a HTMX, texto y la cabecera X-Referencia (static/js/avisos.js la muestra)."""
+    referencia = req.scope.get("referencia") or "-"
+    if "hx-request" in req.headers or req.url.path.startswith("/api/"):
+        return Response(f"Error del sistema (referencia {referencia})", status_code=500,
+                        headers={"X-Referencia": referencia})
+    return FtResponse(pagina_error(req, 500, referencia), status_code=500)

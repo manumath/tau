@@ -1587,7 +1587,7 @@ Veredicto: el stack es adecuado; los problemas son de terminación y escala. Ord
 1. **Hecho (3-oct-2026):** fila de autores en el teléfono y «Cargar más» en las listas largas.
 2. **Hecho (3-oct-2026):** accesibilidad del modal (foco, `aria-labelledby`, enlace «Saltar al
    contenido»), foco en el resumen de errores y botones que se desactivan mientras se envía.
-3. Registros de actividad y de errores (requisito del despliegue).
+3. **Hecho (4-oct-2026):** registros de actividad y de errores (requisito del despliegue).
 4. Búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
 5. «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
 6. Deuda técnica: armar productos en lote (N+1), modelo de formulario compartido para alta y edición,
@@ -1619,3 +1619,20 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
   descarta si la respuesta lo reemplaza o cierra el modal, así que el riesgo de envío doble era menor de lo
   dicho (solo en formularios que siguen en pantalla). Lo principal es la señal de que se está guardando.
 - La prueba en navegador falla sin el cambio de los envíos (comprobado quitándolo).
+
+**Paso 3, implementación (`app/comun/registros.py`):**
+- Middleware ASGI con una línea por petición (método, ruta, código, ms, id del usuario); WARNING si tarda
+  1 s o más. Sin la consulta ni el cuerpo, y con los tokens de `/recuperar/…` ocultos. Sin `/static` ni
+  `/salud`. A consola y a `data/registros/portal.log` (10 MB × 5).
+- Error no controlado: traza con un código de referencia de 6 caracteres; página «Error del sistema» con
+  el código (antes, el texto plano de Starlette) y, en HTMX, la cabecera `X-Referencia` que el aviso muestra.
+  `PORTAL_AVISO_ERRORES`: correo a la administración, a lo más uno cada 15 minutos.
+- `GET /salud` (pública, comprueba la base) para el chequeo del hosting; `fly.toml` pasa de `/login` a
+  `/salud`. uvicorn arranca con `--no-access-log`.
+
+**Decisiones del equipo (confirmar):**
+- No se registra la consulta de las búsquedas (`?q=…`) ni el contenido de los formularios: puede traer
+  nombres o datos personales. Se registra el id del usuario, no su correo.
+- Los registros se guardan junto a la base y rotan (unos 60 MB como máximo); no se envían a servicios
+  externos.
+- El aviso por correo de errores es opcional y se limita a uno cada 15 minutos.

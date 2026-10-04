@@ -86,7 +86,7 @@ After=network.target
 User=TU_USUARIO
 WorkingDirectory=/opt/portal
 EnvironmentFile=/etc/portal.env
-ExecStart=/home/TU_USUARIO/.local/bin/uv run uvicorn main:app --host 127.0.0.1 --port 5001
+ExecStart=/home/TU_USUARIO/.local/bin/uv run uvicorn main:app --host 127.0.0.1 --port 5001 --no-access-log
 Restart=always
 
 [Install]
@@ -97,6 +97,13 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload && sudo systemctl enable --now portal
 journalctl -u portal -f        # registros del servicio
 ```
+
+Los registros del sistema también quedan en `data/registros/portal.log` (rotan a los 10 MB; se guardan 5
+archivos): una línea por petición y, en los errores, la traza con su **código de referencia** (el que ve
+el usuario en la página de error). `--no-access-log` evita que uvicorn duplique cada línea (y que anote la
+consulta de las búsquedas, que puede traer nombres). Para recibir un correo cuando ocurra un error, defina
+`PORTAL_AVISO_ERRORES` en `/etc/portal.env`. El chequeo de salud es `GET /salud` (responde `ok` si la base
+contesta).
 
 Use `uvicorn` directamente: `python main.py` es el modo de desarrollo, con recarga automática.
 Con SQLite basta un proceso; el sistema atiende sin problema a un instituto.

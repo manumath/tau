@@ -6,6 +6,7 @@ from pathlib import Path
 os.environ["PORTAL_DB"] = str(Path(tempfile.mkdtemp()) / "import.db")
 os.environ["PORTAL_CORREO_MODO"] = "memoria"  # los correos quedan en app.correo.ENVIADOS
 os.environ["PORTAL_INFORMES_PROGRAMADOS"] = "0"  # se prueban llamando a programados.revisar(hoy)
+os.environ["PORTAL_REGISTROS"] = "consola"  # sin archivos de registro (pytest captura la consola)
 
 import pytest  # noqa: E402
 from starlette.testclient import TestClient  # noqa: E402

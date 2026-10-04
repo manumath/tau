@@ -38,8 +38,10 @@
   }
   document.addEventListener('htmx:responseError', e => {
     const s = e.detail.xhr.status;
+    const ref = e.detail.xhr.getResponseHeader('X-Referencia');
     aviso(mensajes[s] || (s >= 500 ? 'Ocurrió un error en el servidor. Intente de nuevo; si persiste, '
-                                    + 'avise a la administración.' : `Error ${s}.`));
+                                    + 'avise a la administración' + (ref ? ` (referencia ${ref}).` : '.')
+                                  : `Error ${s}.`));
   });
   document.addEventListener('htmx:sendError', () => aviso('Sin conexión con el servidor. Revise su red.'));
 })();

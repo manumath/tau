@@ -35,7 +35,7 @@ primary_region = "gru"
     interval = "30s"
     method = "GET"
     timeout = "5s"
-    path = "/login"
+    path = "/salud"   # responde si la base contesta (main.py)
 
 [[vm]]
   cpu_kind = "shared"

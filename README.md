@@ -177,6 +177,8 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_SMTP_STARTTLS` | `1` | `0` para desactivar STARTTLS |
 | `PORTAL_SOLO_LECTURA` | `0` | `1` durante mudanzas o mantenimiento: se consulta, pero no se guardan cambios |
 | `PORTAL_INFORMES_PROGRAMADOS` | `1` | `0` desactiva los informes que se envían solos (las pruebas lo usan) |
+| `PORTAL_REGISTROS` | `archivo` | `archivo`: consola y `data/registros/portal.log` (con rotación); `consola`: solo consola |
+| `PORTAL_AVISO_ERRORES` | (vacío) | Correo que recibe un aviso de cada error del servidor (a lo más uno cada 15 min) |
 
 ## Pruebas
 

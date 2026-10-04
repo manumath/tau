@@ -17,7 +17,9 @@ fi
 # X-Forwarded-*. Se confía en cualquier origen porque el tráfico solo llega por ese proxy.
 # (Va como variable de entorno y no como opción, para que el «*» no lo expanda el shell.)
 export FORWARDED_ALLOW_IPS="*"
-PORTAL="uvicorn main:app --host 0.0.0.0 --port 8080 --proxy-headers"
+# --no-access-log: el registro de peticiones lo lleva el sistema (app/comun/registros.py), sin la consulta
+# (?q=…), que puede traer nombres; el de uvicorn la incluiría y duplicaría cada línea.
+PORTAL="uvicorn main:app --host 0.0.0.0 --port 8080 --proxy-headers --no-access-log"
 
 if [ -z "$LITESTREAM_REPLICA_URL" ] && [ -n "$BUCKET_NAME" ]; then
   export LITESTREAM_REPLICA_URL="s3://${BUCKET_NAME}/portal.db?endpoint=fly.storage.tigris.dev&region=auto"
