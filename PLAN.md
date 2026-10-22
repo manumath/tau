@@ -1898,7 +1898,7 @@ Decisiones de la etapa 3 confirmadas el 21-oct-2026.
 
 ### Etapa 5: tutoría, directorio, mentoría y anexo (implementada, 21-oct-2026)
 
-Decisiones de la etapa 4 confirmadas el 21-oct-2026. Migración 0047.
+Decisiones de la etapa 4 confirmadas el 21-oct-2026. Migración 0047. **Las 7 decisiones de esta etapa, confirmadas el 21-oct-2026.**
 
 - **Tutoría** (`app/estudiantil/tutoria.py`): `tutoria_asignacion` (un tutor vigente por estudiante que cursa; el tutor es un docente con
   vínculo vigente) y `tutoria_reunion` (fecha, modalidad, tema, resumen, derivación, acuerdos). Asignan la Dirección de Carrera y la
