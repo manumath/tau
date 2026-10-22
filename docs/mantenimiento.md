@@ -108,6 +108,8 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
   `permisos.puede(usuario, accion, unidad)`; no hay otra marca de administración.
 - **Estilos:** clases de Tailwind y de Franken UI (`uk-…`). Una clase de Tailwind nueva exige
   recompilar (sección 4.4).
+- **Revisión del código:** `uvx ruff check app scripts tests main.py` debe quedar sin avisos (reglas en
+  `pyproject.toml`: errores de Python, estilo básico y errores frecuentes de bugbear).
 - **Cada cambio con su prueba.** Una regla nueva, una prueba en `tests/`; un flujo nuevo de
   pantallas críticas, considere una en `tests/navegador/`.
 

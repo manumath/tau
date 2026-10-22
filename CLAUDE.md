@@ -27,7 +27,7 @@ la fase 0): no proponga Django, PostgreSQL ni SPA salvo que el usuario lo pida.
 uv run python main.py                 # servidor de desarrollo (puerto 5001, lo suele tener abierto el usuario)
 uv run pytest -q                      # ~500 pruebas, cada una con base temporal
 uv run pytest -q --navegador          # + flujos en Chrome (Playwright)
-uvx pyflakes app scripts tests        # «redefinition of unused get/post» es normal en rutas
+uvx ruff check app scripts tests main.py   # reglas en pyproject.toml; debe quedar sin avisos
 scripts/estilos.sh                    # recompilar Tailwind tras usar una clase nueva
 PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
 ```

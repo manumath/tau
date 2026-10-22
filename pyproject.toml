@@ -32,3 +32,23 @@ package = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+# Revisión de código: `uvx ruff check app scripts tests main.py` (reemplaza a pyflakes; PLAN.md §48, paso 6).
+# Reglas: pyflakes (F), pycodestyle (E, W) y bugbear (B, errores frecuentes). Sin el largo de línea (E501),
+# que es solo estilo. F811 se omite en las rutas: FastHTML define varias funciones `get`/`post` a propósito.
+[tool.ruff]
+line-length = 120
+extend-exclude = [".herramientas", "data", "static"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "B"]
+# E501: largo de línea (estilo). B905: zip() sin strict=; varias listas paralelas se completan a propósito.
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/rutas/**" = ["F811"]
+"app/comun/auth.py" = ["F811"]
+"main.py" = ["E402"]   # la zona horaria se fija antes de importar la aplicación
+"app/inicio.py" = ["F811"]
+"app/busqueda.py" = ["F811"]
+"tests/**" = ["F811", "F401"]   # los fixtures se importan de otras pruebas (pytest los usa por nombre)

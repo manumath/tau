@@ -71,7 +71,7 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
         if linea > MAX_FILAS + 1:
             return [], [f"Se procesan hasta {MAX_FILAS} filas; divida el archivo."]
 
-        def celda(campo):
+        def celda(campo, registro=registro):  # se usa en esta misma vuelta del bucle
             i = indice[campo]
             return registro[i].strip() if i is not None and i < len(registro) else ""
 

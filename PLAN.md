@@ -1590,8 +1590,8 @@ Veredicto: el stack es adecuado; los problemas son de terminación y escala. Ord
 3. **Hecho (4-oct-2026):** registros de actividad y de errores (requisito del despliegue).
 4. **Hecho (4-oct-2026):** búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
 5. **Hecho (4-oct-2026):** «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
-6. Deuda técnica. **Hecho (21-oct-2026):** armar productos en lote (N+1) y formulario compartido para alta
-   y edición. Pendiente: `ruff` y `pyright` (requieren descargar herramientas: lo decide el usuario).
+6. **Hecho (21-oct-2026):** deuda técnica: productos en lote (N+1), formulario compartido para alta y
+   edición, y `ruff` en lugar de pyflakes. `pyright` no se incorporó (decisión del usuario, 21-oct-2026).
 
 Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas reales y cinco tareas.
 
@@ -1687,3 +1687,10 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
   cada fecha: mejorarlo rinde poco.
 - Alta y edición de productos leen el formulario con `leer_formulario` (antes, unos 20 parámetros repetidos en
   cada ruta): un campo nuevo se agrega en un solo lugar.
+- `ruff` reemplaza a pyflakes (`uvx ruff check app scripts tests main.py`; configuración en `pyproject.toml`):
+  pyflakes (F), pycodestyle (E, W) y bugbear (B), sin el largo de línea (E501) ni `zip(strict=)` (B905); F811
+  solo se omite en las rutas. Lo que encontró: cuatro errores relanzados sin su causa (ahora `from e`, la traza
+  del registro muestra el original), funciones internas que capturan la variable del bucle en los cuatro
+  importadores CSV (falso positivo: se usan en la misma vuelta; se hizo explícito) y una prueba que pasaba por
+  casualidad: `pytest.raises(Exception)` aceptaba «no existe la columna investigador.categoria» (la categoría
+  pasó al vínculo) en lugar del rechazo del CHECK. Ahora prueba el CHECK de `vinculo`.

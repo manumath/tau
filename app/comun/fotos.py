@@ -33,8 +33,8 @@ def procesar(contenido: bytes) -> bytes:
         if img.format not in FORMATOS:
             raise ValueError("Use una imagen JPG, PNG o WebP.")
         img.load()
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
-        raise ValueError("El archivo no es una imagen válida.")
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as e:
+        raise ValueError("El archivo no es una imagen válida.") from e
     img = ImageOps.exif_transpose(img).convert("RGB")
     img = ImageOps.fit(img, (LADO, LADO), Image.Resampling.LANCZOS)
     salida = io.BytesIO()

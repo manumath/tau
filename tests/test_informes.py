@@ -211,7 +211,7 @@ def test_memoria_externos_solo_con_proyecto_institucional(datos):
     """Un investigador de categoría «Externo» figura solo con lo ligado a un proyecto institucional."""
     from app.investigacion import perfiles
     externo = usuarios.crear("ext@test.cl", "Hermann", "Minkowski", CLAVE, categoria="externo")["id"]
-    solo = _producto(externo, [f"i:{externo}"], "Solo del externo")
+    _producto(externo, [f"i:{externo}"], "Solo del externo")
     ligado = _producto(externo, [f"i:{externo}"], "Del externo en proyecto")
     perfiles.cambiar_categoria(datos["emmy"], "titular")
 

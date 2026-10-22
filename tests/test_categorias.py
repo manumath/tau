@@ -1,9 +1,10 @@
 """Ajustes, etapa A: categoría de cada investigador(a)."""
+import apsw
 import base64
 
 import pytest
 
-from app.comun import importar_usuarios, permisos, usuarios
+from app.comun import importar_usuarios, permisos, unidades, usuarios
 from app.investigacion import perfiles
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
@@ -19,8 +20,10 @@ def test_cuenta_nueva_sin_categoria_por_omision(app):
 
 
 def test_la_base_rechaza_categorias_desconocidas(app):
-    with pytest.raises(Exception):
-        get_db().execute("UPDATE investigador SET categoria = 'emerito' WHERE usuario_id = ?", [_uid()])
+    # La categoría vive en el vínculo (antes, en investigador.categoria): su CHECK la rechaza.
+    with pytest.raises(apsw.ConstraintError):
+        get_db().execute("INSERT INTO vinculo (usuario_id, unidad_id, categoria) VALUES (?, ?, 'emerito')",
+                         [_uid(), unidades.id_de("CMAT")])
     with pytest.raises(ValueError):
         perfiles.cambiar_categoria(_uid(), "emerito")
 

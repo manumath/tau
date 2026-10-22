@@ -57,9 +57,9 @@ def detectar(texto: str) -> tuple[str, str]:
         pass
     try:
         return "doi", productos.normalizar_doi(t)
-    except ValueError:
+    except ValueError as e:
         raise ErrorImportacion("No reconozco el identificador. Use un DOI (10.1234/abcd, o la URL "
-                               "https://doi.org/…) o un arXiv (2401.01234, o la URL de arxiv.org).")
+                               "https://doi.org/…) o un arXiv (2401.01234, o la URL de arxiv.org).") from e
 
 
 # --- Acceso HTTP (aislado para poder simularlo en los tests) --------------------------------------
@@ -69,10 +69,10 @@ def _get(url: str, params: dict | None = None) -> httpx2.Response:
     try:
         return httpx2.get(url, params=params, timeout=TIMEOUT, follow_redirects=True,
                           headers={"User-Agent": agente})
-    except httpx2.TimeoutException:
-        raise ErrorImportacion("El servicio tardó demasiado en responder. Intente de nuevo en un momento.")
-    except httpx2.HTTPError:
-        raise ErrorImportacion("No se pudo conectar con el servicio. Revise la conexión e intente de nuevo.")
+    except httpx2.TimeoutException as e:
+        raise ErrorImportacion("El servicio tardó demasiado en responder. Intente de nuevo en un momento.") from e
+    except httpx2.HTTPError as e:
+        raise ErrorImportacion("No se pudo conectar con el servicio. Revise la conexión e intente de nuevo.") from e
 
 
 # --- Utilidades de texto ---------------------------------------------------------------------------
@@ -186,8 +186,8 @@ def desde_arxiv(arxiv_id: str) -> dict:
         raise ErrorImportacion(f"arXiv respondió con un error ({r.status_code}). Intente más tarde.")
     try:
         raiz = ET.fromstring(r.content)
-    except ET.ParseError:
-        raise ErrorImportacion("arXiv devolvió una respuesta que no se pudo leer.")
+    except ET.ParseError as e:
+        raise ErrorImportacion("arXiv devolvió una respuesta que no se pudo leer.") from e
     entrada = raiz.find("a:entry", NS)
     if entrada is None or "api/errors" in (entrada.findtext("a:id", "", NS)) \
             or not entrada.findtext("a:title", "", NS).strip():

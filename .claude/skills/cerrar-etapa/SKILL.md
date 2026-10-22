@@ -10,7 +10,7 @@ El usuario pide un commit por etapa. Antes de hacerlo:
 ## 1. Código
 
 ```bash
-uvx pyflakes app scripts tests 2>&1 | grep -v "redefinition of unused"   # las rutas repiten get/post: normal
+uvx ruff check app scripts tests main.py   # sin avisos (reglas en pyproject.toml)
 ```
 Sin variables sin usar, imports que sobran ni nombres indefinidos.
 

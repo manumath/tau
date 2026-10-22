@@ -32,7 +32,7 @@ def test_unidad_o_grupo_en_orden(app, hoy):
     assert adscripcion.grupos(emmy) == ["Olimpiadas de matemática", "Jefatura de estudios"]
     participa = proyectos.crear(dict(nombre="Trompos", estado="vigente"), otra, otra)
     proyectos.agregar_participante(participa, f"i:{emmy}", "co_investigador")
-    dirige = proyectos.crear(dict(nombre="Anillos", estado="vigente"), emmy, emmy)
+    proyectos.crear(dict(nombre="Anillos", estado="vigente"), emmy, emmy)  # lo dirige
     proyectos.crear(dict(nombre="Terminado", estado="finalizado"), emmy, emmy)  # no cuenta
     assert adscripcion.grupos(emmy) == ["Anillos", "Trompos", "Olimpiadas de matemática", "Jefatura de estudios"]
     assert adscripcion.unidad(emmy) == "Anillos · Trompos · Olimpiadas de matemática · Jefatura de estudios"

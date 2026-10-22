@@ -127,7 +127,7 @@ def test_producto_del_anio_en_curso_sin_mes_cuenta(datos):
 def test_trazabilidad_cada_cifra_coincide_con_sus_registros(datos):
     a = acreditacion.anexo(2022, 2026)
     for fila in a["anios"]:
-        for k, (_, clase, _) in acreditacion.INDICADORES.items():
+        for k in acreditacion.INDICADORES:
             d = acreditacion.detalle(k, fila["anio"], "2026-12-31")
             assert d["valor"] == fila[k], (k, fila["anio"])
             if k not in acreditacion.SUMAS:
