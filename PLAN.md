@@ -1286,9 +1286,9 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   centro, desde `config`: `UNIVERSIDAD`, `FACULTAD`, `NOMBRE_CARRERA`, `NOMBRE_INSTITUTO`) y, con
   cajas de margen de `@page`, el pie de cada página: título del informe (del primer H1) y «Página X
   de Y». Chrome y Edge las dibujan; los demás navegadores las omiten.
-- Logos: los originales que entregó la Dirección están en `static/img/membrete/logo_*.png` (también
-  el de la UMSA, por ahora sin uso; el de la FCPN, que tampoco se usaba, se retiró el 21-oct-2026 y queda
-  en el historial de git); el membrete usa copias recortadas de 300 px de alto (`iimat.png`,
+- Logos: los originales que entregó la Dirección (`logo_*.png`, también el de la UMSA, sin uso) siguen en local
+  en `static/img/membrete/` pero **no se versionan** (se quitaron del repositorio el 21-oct-2026 para publicarlo; el de la
+  FCPN, que tampoco se usaba, se retiró antes y queda en el historial de git); el membrete usa copias recortadas de 300 px de alto (`iimat.png`,
   `cmat.png`, ≈50 KB). Para cambiar un logo, reemplace el original y regenere la copia con el mismo
   alto.
 - Impresión: tablas anchas sin recorte (8 pt), sin flechas de ordenar, leyendas de gráficos en SVG

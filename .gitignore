@@ -13,3 +13,18 @@ data/
 
 # Diagramas generados con Archify (se regeneran; no son parte del sistema).
 .archify/
+
+# Originales de los logos que entregó la Dirección (sin uso: el membrete usa las copias recortadas
+# cmat.png e iimat.png). Se conservan en local; no se versionan.
+static/img/membrete/logo_*
+
+# Caches, bases de datos, registros y configuración local de editores.
+.ruff_cache/
+.env
+.env.*
+*.db
+*.db-*
+*.log
+*.tar.gz
+.idea/
+.vscode/
