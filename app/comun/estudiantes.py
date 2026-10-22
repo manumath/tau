@@ -100,8 +100,10 @@ def eliminar(eid: int):
 
 # --- Consultas -------------------------------------------------------------------------------------------------
 
-def listar(texto: str = "", nivel: str = "", estado: str = "") -> list[dict]:
-    """Personas con algún periodo de estudios. `estado`: 'cursando' | 'egresado'."""
+def listar(texto: str = "", nivel: str = "", estado: str = "", con_seguimiento: bool = True) -> list[dict]:
+    """Personas con algún periodo de estudios. `estado`: 'cursando' | 'egresado'. Sin `con_seguimiento`, se omiten
+    los estudiantes de la Carrera cargados desde Seguimiento Académico (con RU) que no participan en la
+    investigación: su situación académica no es para quien solo mira la investigación (PLAN §49)."""
     from datetime import date
     hoy = date.today().year
     patron = f"%{sin_tildes(texto.strip())}%"
@@ -117,8 +119,20 @@ def listar(texto: str = "", nivel: str = "", estado: str = "") -> list[dict]:
         cursando = any(p["desde"] <= hoy and (p["hasta"] is None or hoy <= p["hasta"]) for p in ps)
         if estado == "cursando" and not cursando or estado == "egresado" and cursando:
             continue
-        res.append({**f, "periodos": ps, "cursando": cursando, "participacion": resumen_participacion(f["id"])})
+        part = resumen_participacion(f["id"])
+        if not con_seguimiento and _solo_seguimiento(ps, part):
+            continue
+        res.append({**f, "periodos": ps, "cursando": cursando, "participacion": part})
     return res
+
+
+def _solo_seguimiento(ps: list[dict], participacion: dict) -> bool:
+    return any(p["registro_universitario"] for p in ps) and not any(participacion.values())
+
+
+def visible(externo_id: int, con_seguimiento: bool) -> bool:
+    """¿Puede verse la ficha? Ver `listar`."""
+    return con_seguimiento or not _solo_seguimiento(periodos(externo_id), resumen_participacion(externo_id))
 
 
 def resumen_participacion(externo_id: int) -> dict:

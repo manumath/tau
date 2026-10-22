@@ -130,10 +130,14 @@ app/
     oferta.py                  oferta por gestión y paralelo, asignación docente y horas
     importar_oferta.py         carga de la oferta de gestiones pasadas desde CSV
     rutas/                     planes, oferta y gestiones (/docencia/…)
+  estudiantil/                 seguimiento estudiantil (PLAN §49 y §50)
+    cohortes.py                cohortes de ingreso, egreso, titulación y deserción (ciclos I y II)
+    importar.py                carga del CSV de Seguimiento Académico (vista previa y aplicar)
+    rutas/                     cohortes (/docencia/cohortes: tablero y carga)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 
-Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion` y
-`academico` pueden usar `comun`. `app/inicio.py` y `main.py` reúnen todo.
+Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion`,
+`academico` y `estudiantil` pueden usar `comun` (y `acreditacion` usa `estudiantil` para la Guía). `app/inicio.py` y `main.py` reúnen todo.
 static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
 static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
 datos/planes/                  planes de estudio en CSV (formato en su README)

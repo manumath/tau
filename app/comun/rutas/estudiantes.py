@@ -29,9 +29,13 @@ def _periodo_texto(p):
 
 # --- Lista ---------------------------------------------------------------------------------------------------
 
-def lista(q="", nivel="", estado=""):
+def _con_seguimiento(auth) -> bool:
+    return permisos.puede(auth, "ver_seguimiento_estudiantil")
+
+
+def lista(auth, q="", nivel="", estado=""):
     filas = []
-    for e in estudiantes.listar(q, nivel, estado):
+    for e in estudiantes.listar(q, nivel, estado, _con_seguimiento(auth)):
         part = e["participacion"]
         filas.append(Tr(
             Td(A(f"{e['apellidos']}, {e['nombres']}", href=f"/estudiantes/{e['id']}", cls="font-medium hover:underline"),
@@ -71,7 +75,7 @@ def get(auth, q: str = "", nivel: str = "", estado: str = ""):
                        name="estado", cls="uk-select w-52", aria_label="Estado"),
                 hx_get="/estudiantes/lista", hx_target=f"#{ID_LISTA}", hx_swap="outerHTML",
                 hx_trigger="input delay:300ms, change, search", data_sin_envio=True, cls="flex flex-wrap gap-3 mb-4"),
-        Card(lista(q, nivel, estado)),
+        Card(lista(auth, q, nivel, estado)),
         usuario=auth, seccion="investigadores")
 
 
@@ -79,7 +83,7 @@ def get(auth, q: str = "", nivel: str = "", estado: str = ""):
 def get(auth, q: str = "", nivel: str = "", estado: str = ""):
     if not _permitido(auth):
         return Response("No autorizado", status_code=403)
-    return lista(q, nivel, estado), HtmxResponseHeaders(replace_url=url_filtrada("/estudiantes", q=q, nivel=nivel,
+    return lista(auth, q, nivel, estado), HtmxResponseHeaders(replace_url=url_filtrada("/estudiantes", q=q, nivel=nivel,
                                                                                     estado=estado))
 
 
@@ -247,7 +251,7 @@ def get(auth, externo_id: int):
     if not _permitido(auth):
         return Response("No autorizado", status_code=403)
     p = get_db().q("SELECT * FROM persona_externa WHERE id = ?", [externo_id])
-    if not p:
+    if not p or not estudiantes.visible(externo_id, _con_seguimiento(auth)):
         return pagina("No encontrado", P("Esa persona no existe."), usuario=auth)
     p = p[0]
     part = estudiantes.participacion(externo_id)

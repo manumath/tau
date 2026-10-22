@@ -127,9 +127,9 @@ def test_guia_con_los_datos_del_sistema(guia_llena):
     assert libro[H["redes"]]["B7"].value == "Red andina" and libro[H["redes"]]["C7"].value == "Internacional"
 
     # Fórmulas de la plantilla corregidas y ciclos de las hojas de cohortes.
-    assert libro[H["egresados"]]["L7"].value == "=SUM(B7:K7)/'4. Cohortes ciclo-semestre'!B8"
-    assert libro[H["titulados"]]["M9"].value == "=SUM(B9:D9)/'4. Cohortes ciclo-semestre'!B8"
-    assert libro[H["cohortes"]]["AA18"].value == "=(L18-R18)/L18"
+    assert libro[H["egresados"]]["L7"].value == "=IFERROR(SUM(B7:K7)/'4. Cohortes ciclo-semestre'!B8,\"\")"
+    assert libro[H["titulados"]]["M9"].value == "=IFERROR(SUM(B9:D9)/'4. Cohortes ciclo-semestre'!B8,\"\")"
+    assert libro[H["cohortes"]]["AA18"].value == '=IFERROR((L18-R18)/L18,"")'
     assert [libro[H["egresados"]][c].value for c in ("B6", "K6", "A7")] == ["2022-I", "2026-II", "2017-I"]
 
 

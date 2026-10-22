@@ -47,6 +47,9 @@ RUTAS = {  # ruta → quienes reciben 200 (el resto, 403)
     "/informes/acreditacion?desde=2022&hasta=2026": {"instituto", "comite"},
     "/informes/guia-antecedentes": {"instituto", "carrera", "comite"},
     "/docencia/preparacion": {"carrera"},
+    "/docencia/cohortes": {"carrera", "datos_cmat", "comite"},
+    "/docencia/cohortes/importar": {"carrera", "datos_cmat"},
+    "/docencia/cohortes/plantilla": {"carrera", "datos_cmat"},
     "/personas/externos/duplicados": {"instituto", "datos_cmat"},
 }
 

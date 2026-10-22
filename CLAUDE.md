@@ -41,6 +41,8 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   líneas, revistas, importaciones (DOI, arXiv, BibTeX, OpenAlex).
 - `app/academico`: planes de estudio, gestiones, oferta y asignación docente, carga horaria.
 - `app/acreditacion`: CV, memoria, anexo de I+D+i, estudiantes.
+- `app/estudiantil`: seguimiento estudiantil (PLAN §49 y §50): cohortes y carga del CSV de Seguimiento
+  Académico; después actividad estudiantil, encuestas y egresados. Sin materias ni notas.
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
   `main.py`. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
   `datos/planes/` (planes de estudio en CSV), `datos/iac-cinda/` (plantilla vacía de la Guía de
@@ -73,6 +75,10 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   Investigador» con carga de investigación, si no «Docente»; unidad = proyectos que dirige, en que
   participa, detalle de extensión y de gestión del vínculo, o «Carrera de Matemática».
 - Fecha de nacimiento: la ve la administración y la propia persona; los informes usan tramos.
+- **Estudiantes (PLAN §49):** TAU no guarda materias ni notas (son de Seguimiento Académico); la clave de
+  unión es el registro universitario (RU). De los estudiantes solo se guarda la edad al ingresar (no la
+  fecha de nacimiento ni el CI). El tablero de cohortes es agregado; la situación académica individual la
+  ve solo quien tiene `ver_seguimiento_estudiantil`.
 
 ## Cuidados al trabajar aquí
 

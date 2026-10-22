@@ -52,6 +52,9 @@ ACCIONES = {
     # Datos de personas (por unidad)
     "gestionar_vinculos": {"direccion_carrera"},  # categoría y vínculo: solo la Dirección de Carrera
     "gestionar_estudiantes": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
+    # Cohortes de la licenciatura (PLAN §49): cargar el CSV de Seguimiento Académico; ver el tablero (agregados).
+    "gestionar_cohortes": {"direccion_carrera", "gestion_datos"},
+    "ver_seguimiento_estudiantil": {"direccion_carrera", "coordinacion_academica", "gestion_datos", "comite_acreditacion"},
     "gestionar_personas_externas": {"direccion_instituto", "gestion_datos"},
     "gestionar_fichas": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
     # Investigación (Instituto)

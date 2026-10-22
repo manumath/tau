@@ -1696,9 +1696,9 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
   casualidad: `pytest.raises(Exception)` aceptaba «no existe la columna investigador.categoria» (la categoría
   pasó al vínculo) en lugar del rechazo del CHECK. Ahora prueba el CHECK de `vinculo`.
 
-## 49. Módulo Estudiantes (propuesta, 21-oct-2026)
+## 49. Módulo Estudiantes (21-oct-2026)
 
-**Estado: propuesta, sin código.** Las decisiones marcadas ⚠ esperan la confirmación de la Dirección de Carrera.
+**Estado: decisiones confirmadas el 21-oct-2026 (las del texto marcadas ⚠ se aceptaron como se proponen); en construcción por etapas (§51).**
 
 **Alcance y volumen:** unos 300 usuarios esporádicos. Este módulo **no registra las materias que cursa cada
 estudiante ni sus notas** (en esta primera versión): eso es del sistema de Seguimiento Académico. TAU registra
@@ -1750,9 +1750,46 @@ agregados, no datos individuales. Pruebas por rol.
 5. ⚠ **Datos sensibles** (tutorías, causas de abandono): registrarlos en TAU o dejarlos fuera.
 6. ⚠ **Correo masivo:** revisar el límite del proveedor de `correo.py` y enviar las encuestas por lotes.
 
-## 50. Módulo Egresados o alumni (propuesta, 21-oct-2026)
+### Etapa 1: cohortes, estado, carga del CSV y tablero (implementada, 21-oct-2026)
 
-**Estado: propuesta, sin código.** Mismas reservas que §49. Volumen: unos 10 titulados por año. Con tan pocos
+- **Migración 0042** (`estudiante`): `registro_universitario` (RU, único), `cohorte_anio/ciclo`, `plan_id`, `estado`
+  (cursando, egresado, titulado, retirado, congelado), `ultimo_anio/ciclo` (último ciclo matriculado), `fecha_egreso`,
+  `fecha_titulacion`, `modalidad_titulacion`, `motivo_retiro` y, para la hoja 3, `via_ingreso`, `sexo`, `edad_ingreso`,
+  `otra_ciudad`, `extranjero` y `colegio`. Lo que ya había se marcó: `titulado = 1` → «titulado»; con año de egreso y sin
+  titulación → «egresado». Sin cohorte no entra a los indicadores.
+- **`app/estudiantil/cohortes.py`:** ciclos I (enero a julio) y II (agosto a diciembre) con su ordinal; matrícula,
+  egreso, titulación y deserción por cohorte; admisión de primer año. **Deserción** según IAC-CINDA: retirado, o congelado
+  que no volvió en los dos ciclos siguientes.
+- **`app/estudiantil/importar.py`:** CSV de Seguimiento Académico con vista previa (`leer` / `aplicar`), clave RU; si no
+  existe se busca a la persona por correo y por nombre (se vincula con la ficha de tesista existente) y, si no, se
+  registra. Reglas por estado (retirado: último ciclo y motivo; egresado: fecha de egreso; titulado: fecha de titulación).
+  Se audita (`importar_cohortes`).
+- **Pantalla:** pestaña **Docencia → Cohortes estudiantiles** (`/docencia/cohortes`): totales, tasas de egreso, titulación y
+  deserción por cohorte, solo agregados. Carga del CSV con plantilla descargable.
+- **Permisos:** `ver_seguimiento_estudiantil` (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité
+  de acreditación) y `gestionar_cohortes` (Dirección de Carrera y Gestión de datos).
+- **Guía de Antecedentes:** hojas 3 (admisión de primer año), 4 (matrícula por ciclo, deserción por motivo; tasas con
+  `IFERROR`), 5 (egresados) y 6 (titulados) se llenan desde el tablero; las cohortes sin estudiantes cargados quedan en
+  blanco y las **vacantes** (hoja 3, columnas B y D) se siguen completando a mano.
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. No se guarda el **CI** (la unión es solo el RU) ni la fecha de nacimiento: del CSV se conserva únicamente la edad al
+   ingresar (privacidad; basta para los tramos de la hoja 3).
+2. **No hay tabla de matrícula por ciclo:** un estudiante estuvo matriculado desde su cohorte hasta su último ciclo matriculado;
+   los congelamientos intermedios no se registran (es un límite conocido; si hace falta, una tabla `matricula_ciclo` sin materias).
+3. Sin dato de vía de ingreso, el estudiante cuenta como ingreso por vía **ordinaria** en la hoja 3.
+4. En **Investigadores → Estudiantes y tesistas**, los estudiantes con RU que no participan en la investigación quedan ocultos
+   para quien no tiene `ver_seguimiento_estudiantil` (su estado académico no es para todos los investigadores).
+5. Las hojas 5 y 6 siguen el diseño de la plantilla: cohortes de los 10 ciclos más antiguos de la ventana de 20, egresos y
+   titulaciones en los 10 últimos ciclos.
+6. El tablero cuenta solo licenciatura del programa propio con cohorte (`nivel = 'licenciatura'`, `del_programa = 1`).
+
+Pendiente de las etapas siguientes: acceso del estudiante por enlace al correo (etapa 2), motor de encuestas (3), egresados (4),
+tutoría, directorio y sección del anexo (5).
+
+## 50. Módulo Egresados o alumni (21-oct-2026)
+
+**Estado: decisiones confirmadas el 21-oct-2026, como en §49; sin código aún (etapa 4).** Volumen: unos 10 titulados por año. Con tan pocos
 casos importa el seguimiento personalizado y la tasa de respuesta, no los flujos masivos.
 
 **Características:**
@@ -1786,8 +1823,8 @@ logro del perfil de egreso, y sección nueva en el anexo.
 
 | Etapa | Contenido | Resultado |
 |---|---|---|
-| 0 | Confirmar decisiones de §49 y §50 | Reglas fijadas |
-| 1 | Cohortes, estado, importación CSV y tablero | Hojas 3 a 6 de la Guía |
+| 0 | Confirmar decisiones de §49 y §50 | Reglas fijadas ✔ (21-oct-2026) |
+| 1 | Cohortes, estado, importación CSV y tablero | Hojas 3 a 6 de la Guía ✔ (21-oct-2026) |
 | 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante |
 | 3 | Motor de encuestas (anónimas y nominales) | Base común |
 | 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni |

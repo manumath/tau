@@ -18,7 +18,8 @@ from app.acreditacion import estudiantes as ind_estudiantes
 from app.acreditacion.cuerpo_academico import _grado_hasta
 from app.comun import academicos, adscripcion, config, estudiantes, vinculos
 from app.comun.db import get_db
-from app.comun.xlsx_plantilla import Plantilla
+from app.comun.xlsx_plantilla import Plantilla, numero_a_columna
+from app.estudiantil import cohortes
 from app.investigacion import actividades, lineas, productos, proyectos, revistas
 
 PLANTILLA = config.RAIZ / "datos" / "iac-cinda" / "Guia-de-Antecedentes-pregrado-2025.xlsx"
@@ -26,7 +27,7 @@ CATEGORIAS = ("titular", "contratado", "interino", "invitado")   # académicos d
 N_CICLOS = 10
 H = {  # nombres de las hojas en la plantilla (algunos terminan en espacio)
     "id": "1. Identificación carrera", "lineas": "2. Líneas de investigación ",
-    "cohortes": "4. Cohortes ciclo-semestre", "egresados": "5.Egresados ciclo-semestre",
+    "admision": "3. Admisión ciclo-semestre", "cohortes": "4. Cohortes ciclo-semestre", "egresados": "5.Egresados ciclo-semestre",
     "titulados": "6. Titulados ciclo-semestre", "asignaturas": "7.a. Asignaturas y actividades ",
     "optativas": "7.b. Asignaturas optativas", "academicos": "10. Académicos",
     "caracterizacion": "11. Caracterización académicos ", "jefes": "12. Jefes de práctica",
@@ -41,8 +42,11 @@ COBERTURA = [
     ("1. Identificación", "Programa, institución, créditos u horas del plan, área OCDE y los 10 ciclos. "
                           "Falta: matrícula, sede, jornada, modalidad, duración oficial y año de inicio."),
     ("2. Líneas de investigación", "Las líneas vigentes. Falta: perfiles de ingreso y egreso y objetivos."),
-    ("3 a 6. Admisión, cohortes, egreso y titulación", "No: son datos del sistema académico de la UMSA. El "
-                                                       "sistema solo ajusta los ciclos y corrige las fórmulas."),
+    ("3 a 6. Admisión, cohortes, egreso y titulación", "Del tablero de cohortes (PLAN §49), cargado del sistema de "
+                                                       "Seguimiento Académico: matrícula de primer año por vía, sexo, "
+                                                       "origen y edad; matrícula por ciclo, deserción, egresados y "
+                                                       "titulados por cohorte. Falta: vacantes. Las cohortes sin "
+                                                       "estudiantes cargados quedan en blanco."),
     ("7.a y 7.b. Asignaturas", "Del plan vigente: semestre, requisitos, créditos y veces que se dictó en el último "
                                "año. Falta: cupo por sección y línea formativa."),
     ("8 y 9. Plan de estudios y consejo", "No."),
@@ -172,23 +176,54 @@ def _lineas(x: Plantilla, hasta: str):
 
 
 def _cohortes(x: Plantilla, ciclos):
-    """Ciclos de las hojas 4 a 6 y fórmulas corregidas (la plantilla apunta a otro libro en 5 y 6 y
-    usa la fila equivocada en la deserción al tercer año de la cohorte de la fila 18)."""
+    """Ciclos y datos de las hojas 3 a 6, y fórmulas corregidas (la plantilla apunta a otro libro en 5 y 6 y
+    usa la fila equivocada en la deserción al tercer año de la cohorte de la fila 18). Los datos salen de
+    `app.estudiantil.cohortes`; las cohortes sin estudiantes cargados quedan en blanco."""
     previos = ciclos_hasta(*ciclos[-1], n=20)          # 19 cohortes + el último ciclo
     for i, (ca, ct) in enumerate(previos[:-1]):
         x.escribir(H["cohortes"], f"A{8 + i}", texto_ciclo(ca, ct))
-    x.formula(H["cohortes"], "AA18", "(L18-R18)/L18")
-    for hoja, fila_cab, fila_ini in ((H["egresados"], 6, 7), (H["titulados"], 8, 9)):
+    ords = [cohortes.ordinal(a, t) for a, t in previos]
+    todos = cohortes.alumnos()
+    por_cohorte = cohortes.resumen(ords, todos)
+
+    def col(k: int) -> str:
+        return numero_a_columna(2 + k)                 # columna B = ciclo 0
+    # Hoja 4: matrícula por ciclo y deserción; las tasas (primer, segundo y tercer año) con IFERROR.
+    for i, c in enumerate(por_cohorte):
+        r = 8 + i
+        if c["n"]:
+            for j in range(i, 20):
+                x.escribir(H["cohortes"], f"{col(j)}{r}", c["matricula"][j])
+            x.escribir(H["cohortes"], f"V{r}", c["desercion_academica"])
+            x.escribir(H["cohortes"], f"W{r}", c["desercion_no_academica"])
+            x.escribir(H["cohortes"], f"X{r}", c["desertores"])
+        for destino, saltos in (("Y", 2), ("Z", 4), ("AA", 6)):
+            if i + saltos < 20:
+                x.formula(H["cohortes"], f"{destino}{r}", f'IFERROR(({col(i)}{r}-{col(i + saltos)}{r})/{col(i)}{r},"")')
+    # Hoja 3: matrícula de primer año de cada uno de los 10 ciclos.
+    for k, o in enumerate(ords[-10:]):
+        if not por_cohorte[10 + k]["n"]:
+            continue
+        a = cohortes.admision(o, todos)
+        r = 9 + k
+        for celda, valor in (("C", a["ordinaria"]), ("E", a["especial"]), ("H", a["hombres"]), ("I", a["mujeres"]),
+                             ("J", a["otra_ciudad"]), ("K", a["extranjeros"]), ("L", a["publico"]), ("M", a["privado"]),
+                             *zip("NOPQ", a["tramos"])):
+            x.escribir(H["admision"], f"{celda}{r}", valor)
+    # Hojas 5 y 6: egresados y titulados de las 10 primeras cohortes en los últimos 10 ciclos.
+    for hoja, fila_cab, fila_ini, clave in ((H["egresados"], 6, 7, "egresados"), (H["titulados"], 8, 9, "titulados")):
         for j, (ca, ct) in enumerate(ciclos):
             x.escribir(hoja, f"{chr(66 + j)}{fila_cab}", texto_ciclo(ca, ct))
         for i, (ca, ct) in enumerate(previos[:10]):
             x.escribir(hoja, f"A{fila_ini + i}", texto_ciclo(ca, ct))
-            f = x.valor_original(hoja, f"L{fila_ini + i}")
-            if f and "[1]" in f:
-                x.formula(hoja, f"L{fila_ini + i}", f.replace("'[1]4.b.Cohortes semestre-ciclo'", f"'{H['cohortes']}'"))
-            f = x.valor_original(hoja, f"M{fila_ini + i}")
-            if f and "[1]" in f:
-                x.formula(hoja, f"M{fila_ini + i}", f.replace("'[1]4.b.Cohortes semestre-ciclo'", f"'{H['cohortes']}'"))
+            if por_cohorte[i]["n"]:
+                for j in range(10):
+                    x.escribir(hoja, f"{chr(66 + j)}{fila_ini + i}", por_cohorte[i][clave][10 + j])
+            for celda in ("L", "M"):
+                f = x.valor_original(hoja, f"{celda}{fila_ini + i}")
+                if f and "[1]" in f:
+                    f = f.replace("'[1]4.b.Cohortes semestre-ciclo'", f"'{H['cohortes']}'")
+                    x.formula(hoja, f"{celda}{fila_ini + i}", f'IFERROR({f.lstrip("=")},"")')
     x.quitar_vinculos_externos()
 
 

@@ -156,6 +156,34 @@ graduado en la fecha de cada producto.
 Registre las **tesis que dirige** como producto «Tesis dirigida»: primero el tesista y luego quienes
 la dirigen; «En preparación» si está en curso y «Publicado» cuando se defendió.
 
+Los estudiantes que la Carrera carga desde el sistema de Seguimiento Académico (ver más abajo) solo
+aparecen en esta lista si participan en la investigación: su situación académica la ve únicamente
+quien tiene acceso al seguimiento estudiantil.
+
+### Cohortes estudiantiles (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
+
+En **Docencia → Cohortes estudiantiles** está el tablero de la licenciatura por cohorte (semestre de
+ingreso): cuántos ingresaron, cuántos siguen cursando, egresaron, se titularon o desertaron, con sus
+tasas y los años medios hasta la titulación. Son cifras agregadas: el tablero no muestra nombres y no
+incluye materias ni notas, que están en el sistema de Seguimiento Académico.
+
+La **Dirección de Carrera** y **Gestión de datos** cargan los datos con **Cargar CSV**: un archivo
+exportado de Seguimiento Académico con una fila por estudiante. Son obligatorios `ru` (registro
+universitario), `nombres`, `apellidos`, `cohorte` (AAAA-I o AAAA-II) y `estado` (cursando, egresado,
+titulado, retirado o congelado). Opcionales: correo, sexo, fecha de nacimiento (solo se guarda la edad
+al ingresar), vía de ingreso (ordinaria o especial), otra ciudad, extranjero, colegio (público o
+privado), plan, último ciclo matriculado, fechas de egreso y titulación, modalidad de titulación y
+motivo del retiro. Reglas: un estudiante retirado necesita el último ciclo y el motivo (académico o no
+académico); un congelado, el último ciclo; un egresado, la fecha de egreso; un titulado, la fecha de
+titulación. Descargue la plantilla desde la misma ventana. Antes de guardar verá una vista previa con
+lo que se crea, lo que se actualiza y los errores (las filas con errores se omiten).
+
+Si el estudiante ya figura (por RU, correo o nombre, como tesista, por ejemplo), se actualiza su
+ficha en lugar de crear otra. Se vuelve a cargar el archivo cada vez que cambie la situación.
+**Desertor** es quien se retiró o quien congeló sus estudios y no volvió en los dos ciclos siguientes
+(definición de IAC-CINDA). El sistema considera matriculado a un estudiante desde su cohorte hasta su
+último ciclo matriculado; no registra los congelamientos intermedios.
+
 ### Coautores externos
 
 En **Investigadores → Coautores externos** se completa la institución y el **país** de las personas
@@ -622,8 +650,9 @@ proyecto y ser del mismo periodo).
   blanco) y pulse «Descargar la Guía (XLSX)». La pantalla detalla qué llena el sistema en cada hoja:
   identificación, líneas, asignaturas del plan, académicos y su caracterización por ciclo, auxiliares,
   proyectos, artículos, libros, patentes, redes, desarrollo académico y profesional, y extensión. Lo
-  demás (admisión, cohortes, egreso y titulación, consejo, becas, bienestar, recursos, impacto y
-  difusión de cada actividad) se completa a mano en el archivo. El resumen estadístico y sus gráficos
+  demás (vacantes, consejo, becas, bienestar, recursos, impacto y difusión de cada actividad) se
+  completa a mano en el archivo. Las hojas 3 a 6 (admisión, cohortes, egreso y titulación) salen del
+  tablero de cohortes estudiantiles; las cohortes sin estudiantes cargados quedan en blanco. El resumen estadístico y sus gráficos
   se calculan solos al abrirlo en Excel. Criterios: horas en **horas semanales** (la carga mensual ÷ 4);
   jornada completa desde 160 h/mes, media jornada de 80 a 159, por horas bajo 80. Revise el archivo
   antes de enviarlo.

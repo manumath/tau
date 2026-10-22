@@ -319,6 +319,38 @@ def _cargar_estudiantes():
     return True
 
 
+COHORTES_EJEMPLO = """ru,nombres,apellidos,sexo,cohorte,via,otra_ciudad,extranjero,colegio,estado,ultimo_ciclo,fecha_egreso,fecha_titulacion,modalidad,motivo
+9100001,María,Quispe,mujer,2022-I,ordinaria,no,no,publico,cursando,,,,,
+9100002,Carlos,Mamani,hombre,2022-I,ordinaria,si,no,publico,cursando,,,,,
+9100003,Lucía,Flores,mujer,2022-I,especial,no,no,privado,retirado,2023-I,,,,academico
+9100004,Jorge,Choque,hombre,2022-II,ordinaria,no,no,publico,cursando,,,,,
+9100005,Valeria,Rojas,mujer,2022-II,ordinaria,no,si,privado,congelado,2023-II,,,,
+9100006,Diego,Condori,hombre,2021-I,ordinaria,no,no,publico,egresado,,2025-12-10,,,
+9100007,Andrea,Limachi,mujer,2021-I,ordinaria,si,no,publico,cursando,,,,,
+9100008,Pablo,Ticona,hombre,2021-II,ordinaria,no,no,privado,retirado,2022-II,,,,no_academico
+9100009,Camila,Huanca,mujer,2020-I,ordinaria,no,no,publico,titulado,,2024-07-15,2025-03-20,tesis,
+9100010,Rodrigo,Nina,hombre,2020-I,especial,si,no,publico,titulado,,2024-12-05,2025-09-12,trabajo_dirigido,
+9100011,Daniela,Apaza,mujer,2019-II,ordinaria,no,no,publico,titulado,,2024-01-18,2024-10-30,examen_grado,
+9100012,Mateo,Cruz,hombre,2023-I,ordinaria,no,no,publico,cursando,,,,,
+9100013,Sofía,Vargas,mujer,2023-II,ordinaria,no,no,privado,cursando,,,,,
+9100014,Hugo,Mendoza,hombre,2024-I,ordinaria,si,no,publico,cursando,,,,,
+9100015,Paola,Gutiérrez,mujer,2024-II,ordinaria,no,no,publico,cursando,,,,,
+9100016,Iván,Salazar,hombre,2025-I,ordinaria,no,no,publico,cursando,,,,,
+"""
+
+
+def _cargar_cohortes() -> bool:
+    """Estudiantes de la Carrera con cohorte, estado y datos de admisión (como si vinieran del CSV de Seguimiento
+    Académico). Solo si aún no hay ninguno. María Quispe se une a su ficha de tesista. True si los cargó."""
+    from app.estudiantil import importar
+    if get_db().q("SELECT 1 FROM estudiante WHERE cohorte_anio IS NOT NULL LIMIT 1"):
+        return False
+    filas, errores = importar.leer(COHORTES_EJEMPLO.encode())
+    assert not errores and not [f["errores"] for f in filas if f["errores"]], errores
+    importar.aplicar(filas, None)
+    return True
+
+
 def _cargar_revistas():
     """Catálogo de ejemplo (solo si está vacío): una revista real verificada y la ficticia de los
     datos de ejemplo, pendiente de verificar. True si lo cargó."""
@@ -494,6 +526,7 @@ def main():
     con_propuestas = _cargar_institucionales()
     con_revistas = _cargar_revistas()
     con_estudiantes = _cargar_estudiantes()
+    con_cohortes = _cargar_cohortes()
     con_lineas = _cargar_lineas()
     con_docencia = _cargar_docencia()
     _cargar_carga_en_proyectos()
@@ -552,7 +585,7 @@ def main():
     if categorias and not creados:
         print(f"Categoría asignada a {categorias} cuenta(s) de demostración.")
     if not creados and not produccion and not con_proyectos and not categorias and not tipos and not con_propuestas \
-            and not con_vinculos and not con_revistas and not con_estudiantes and not con_lineas \
+            and not con_vinculos and not con_revistas and not con_estudiantes and not con_cohortes and not con_lineas \
             and not con_docencia:
         print("No hay nada que agregar: los datos de demostración ya existen.")
         return
@@ -566,6 +599,8 @@ def main():
         print("Historial de vínculo de ejemplo cargado (Emmy fue contratada y luego titular, y es docente de la Carrera; Ramanujan es invitado).")
     if con_estudiantes:
         print("Estudiante de ejemplo: María Quispe, tesista de licenciatura dirigida por Emmy.")
+    if con_cohortes:
+        print("Cohortes de ejemplo: 16 estudiantes de licenciatura (2019 a 2025) con estado y datos de admisión.")
     if con_docencia:
         print("Docencia de ejemplo: gestiones 2026 y oferta de II-2026 (una asignatura sin docente).")
     if con_lineas:
