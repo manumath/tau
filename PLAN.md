@@ -1630,7 +1630,7 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
 - `GET /salud` (pública, comprueba la base) para el chequeo del hosting; `fly.toml` pasa de `/login` a
   `/salud`. uvicorn arranca con `--no-access-log`.
 
-**Decisiones del equipo (confirmar):**
+**Decisiones confirmadas por la Dirección (21-oct-2026):**
 - No se registra la consulta de las búsquedas (`?q=…`) ni el contenido de los formularios: puede traer
   nombres o datos personales. Se registra el id del usuario, no su correo.
 - Los registros se guardan junto a la base y rotan (unos 60 MB como máximo); no se envían a servicios
@@ -1651,7 +1651,7 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
   una cuenta sin terminar su vínculo y desenlazar un preprint. Las rutas aceptan el estado explícito
   (`activo=0|1`), así que deshacer dos veces no revierte el deshacer.
 
-**Decisiones del equipo (confirmar):**
+**Decisiones confirmadas por la Dirección (21-oct-2026):**
 - Qué se busca y quién: lo de arriba. No se buscan las revistas del catálogo, las líneas ni los avisos.
 - Solo esas tres acciones pasan a «Deshacer»; el resto sigue pidiendo confirmación (no se pueden revertir
   con lo que hay, o revertirlas no deja todo igual, como quitar un rol o dar de baja a un participante).
@@ -1669,7 +1669,7 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
   todo lo filtrado (UTF-8 con BOM, fórmulas neutralizadas, encabezado aunque no haya filas); la exportación
   se audita. La exportación a CSV y XLSX pasa a `app/comun/exportar.py` (la usan los informes y la auditoría).
 
-**Decisiones del equipo (confirmar):**
+**Decisiones confirmadas por la Dirección (21-oct-2026):**
 - Avisan las direcciones (Instituto y Carrera) y la Coordinación académica (permiso nuevo «avisar_calidad»).
   El Comité de acreditación solo mira y Administración del sistema no decide sobre contenido.
 - Lo que corrigen las direcciones o la administración (vínculos, fecha de nacimiento, oferta, planes,
