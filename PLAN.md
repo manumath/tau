@@ -1695,3 +1695,102 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
   importadores CSV (falso positivo: se usan en la misma vuelta; se hizo explícito) y una prueba que pasaba por
   casualidad: `pytest.raises(Exception)` aceptaba «no existe la columna investigador.categoria» (la categoría
   pasó al vínculo) en lugar del rechazo del CHECK. Ahora prueba el CHECK de `vinculo`.
+
+## 49. Módulo Estudiantes (propuesta, 21-oct-2026)
+
+**Estado: propuesta, sin código.** Las decisiones marcadas ⚠ esperan la confirmación de la Dirección de Carrera.
+
+**Alcance y volumen:** unos 300 usuarios esporádicos. Este módulo **no registra las materias que cursa cada
+estudiante ni sus notas** (en esta primera versión): eso es del sistema de Seguimiento Académico. TAU registra
+trayectoria, participación y percepción; complementa a ese sistema para el monitoreo interno de la actividad
+estudiantil y para la evidencia de IAC-CINDA.
+
+**Integración con Seguimiento Académico:** la unión es una clave estable (registro universitario + CI). El único
+dato académico que entra es un CSV periódico con cohorte de ingreso y estado (cursando, egresado, titulado,
+retirado, congelado), sin materias ni notas. Usa la importación CSV existente, con auditoría.
+
+**Punto de partida:** la tabla `estudiante` (migración 0019, PLAN §18) son periodos de estudio de personas
+externas; §42 ya permite que reciban cuenta sin perder la ficha. No tiene cohorte, estado, plan ni fecha de
+titulación. La Guía de Antecedentes deja en blanco las hojas 3 a 6 (admisión, cohortes, egresados, titulados).
+
+**Características, por orden de valor:**
+1. **Ficha y cohorte:** plan de estudios (2017 o nuevo), año y gestión de ingreso, estado, contacto y consentimiento.
+2. **Mi trayectoria:** vista de solo lectura de lo que TAU ya sabe (tesis, proyectos, actividades y productos, §18).
+3. **Actividad estudiantil declarada:** ayudantías, olimpiadas, congresos, pasantías, becas, movilidad, semilleros
+   y charlas, con evidencia adjunta. La persona la registra y la coordinación la **verifica** (pendiente →
+   verificada).
+4. **Encuestas** (motor común con Egresados, §50): satisfacción, clima, bienestar y causas de abandono, por
+   cohorte y periodo; anónimas o nominales; con enlace por token.
+5. **Tutoría y orientación:** el docente tutor registra reuniones y derivaciones; acceso restringido a tutor y
+   Dirección; el Comité ve solo agregados. Va después del núcleo.
+6. **Avisos** por el centro de avisos existente.
+7. **Tablero de cohortes** (Dirección y Coordinación): ingreso, permanencia, egreso, titulación, tiempo medio de
+   titulación y abandono. Alimenta las hojas 3 a 6 de la Guía y el anexo.
+
+**Fuera de la versión 1:** materias por periodo, notas, alertas predictivas, trámites, chat.
+
+**Acceso:** enlace al correo institucional (`tokens.py`, propósito nuevo), sin contraseña propia; interfaz pensada
+para el celular. El rol «estudiante» es **derivado** (ficha activa + cuenta), no se asigna.
+
+**Datos:** migración nueva (no se edita la 0019) que amplía `estudiante` con `registro_universitario`,
+`cohorte_anio`, `cohorte_gestion`, `plan_id`, `estado`, `fecha_titulacion`, `modalidad_titulacion`; tablas
+`actividad_estudiantil` (con verificación), `tutoria` y `consentimiento`. Paquete `app/estudiantil/`
+(`app/comun` no importa de él).
+
+**Permisos nuevos (`ACCIONES`):** `ver_seguimiento_estudiantil`, `verificar_actividad`, `gestionar_tutorias`,
+`ver_datos_sensibles_estudiantes`. Regla general: cada estudiante ve solo lo suyo; el Comité de acreditación ve
+agregados, no datos individuales. Pruebas por rol.
+
+### Decisiones abiertas (⚠ por confirmar)
+1. ⚠ **Acceso:** enlace al correo, sin contraseña propia (propuesto) frente a cuenta con contraseña.
+2. ⚠ **Fuente de cohortes:** CSV periódico exportado del Seguimiento Académico (propuesto) frente a digitación manual.
+3. ⚠ **Dueño de los datos:** la Dirección de Carrera. ¿Quién verifica actividades y tutorías: la Coordinación
+   académica o una unidad nueva?
+4. ⚠ **Encuestas:** anónimas por defecto en bienestar y abandono; nominales en el seguimiento de egresados.
+5. ⚠ **Datos sensibles** (tutorías, causas de abandono): registrarlos en TAU o dejarlos fuera.
+6. ⚠ **Correo masivo:** revisar el límite del proveedor de `correo.py` y enviar las encuestas por lotes.
+
+## 50. Módulo Egresados o alumni (propuesta, 21-oct-2026)
+
+**Estado: propuesta, sin código.** Mismas reservas que §49. Volumen: unos 10 titulados por año. Con tan pocos
+casos importa el seguimiento personalizado y la tasa de respuesta, no los flujos masivos.
+
+**Características:**
+1. **Transición automática:** al marcar «titulado» (fecha y modalidad: tesis, trabajo dirigido, examen de grado,
+   excelencia) la persona pasa a egresada, con la misma identidad e historial. Se cargan los titulados históricos
+   (hoy solo `titulado = 1` en `estudiante`).
+2. **Seguimiento programado:** encuestas a los 6 meses, 1, 3 y 5 años (informes programados y avisos), con
+   situación laboral, sector, relación con la formación, posgrado y país. Responden **sin cuenta**, con enlace por
+   token enviado por correo o WhatsApp.
+3. **Perfil de egreso:** encuesta de logro de competencias frente al perfil declarado; opcionalmente, una breve
+   encuesta a empleadores.
+4. **Directorio opcional** (solo con consentimiento) y **mentoría:** egresados que ofrecen charlas, pasantías u
+   ofertas de posgrado a estudiantes.
+5. **Indicadores:** tasa y tiempo de titulación por cohorte, empleabilidad, porcentaje con posgrado y tasa de
+   respuesta, **siempre con el n**. Con 10 por año se agrupan en trienios para no inventar tendencias.
+
+**Datos:** `seguimiento_egresado` y, compartidas con §49, `encuesta`, `pregunta`, `respuesta` e
+`invitacion_encuesta`. Paquete `app/egresados/` (importa de `app/estudiantil/`, no al revés). Permiso nuevo:
+`gestionar_egresados`. El rol «egresado» es derivado.
+
+**Evidencia IAC-CINDA:** egresados y titulados por cohorte (hojas 5 y 6 de la Guía), seguimiento de egresados y
+logro del perfil de egreso, y sección nueva en el anexo.
+
+### Decisiones abiertas (⚠ por confirmar)
+1. ⚠ **Cuenta de egresado:** solo con enlace por token; cuenta únicamente si piden figurar en el directorio (propuesto).
+2. ⚠ **Canal de contacto:** correo y WhatsApp. ¿Quién envía y registra el seguimiento: Dirección o Coordinación?
+3. ⚠ **Encuesta a empleadores:** incluirla en la primera versión o dejarla para después.
+4. ⚠ **Directorio y mentoría:** ¿se publican dentro del sistema o solo se usan internamente?
+
+## 51. Etapas previstas de los módulos de estudiantes y egresados (21-oct-2026)
+
+| Etapa | Contenido | Resultado |
+|---|---|---|
+| 0 | Confirmar decisiones de §49 y §50 | Reglas fijadas |
+| 1 | Cohortes, estado, importación CSV y tablero | Hojas 3 a 6 de la Guía |
+| 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante |
+| 3 | Motor de encuestas (anónimas y nominales) | Base común |
+| 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni |
+| 5 | Tutoría, directorio y mentoría, sección del anexo | Cierre |
+
+Un commit por etapa, con las pruebas por rol y la guía de uso al día.
