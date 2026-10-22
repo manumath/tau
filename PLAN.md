@@ -1287,7 +1287,8 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   cajas de margen de `@page`, el pie de cada página: título del informe (del primer H1) y «Página X
   de Y». Chrome y Edge las dibujan; los demás navegadores las omiten.
 - Logos: los originales que entregó la Dirección están en `static/img/membrete/logo_*.png` (también
-  UMSA y FCPN, por ahora sin uso); el membrete usa copias recortadas de 300 px de alto (`iimat.png`,
+  el de la UMSA, por ahora sin uso; el de la FCPN, que tampoco se usaba, se retiró el 21-oct-2026 y queda
+  en el historial de git); el membrete usa copias recortadas de 300 px de alto (`iimat.png`,
   `cmat.png`, ≈50 KB). Para cambiar un logo, reemplace el original y regenere la copia con el mismo
   alto.
 - Impresión: tablas anchas sin recorte (8 pt), sin flechas de ordenar, leyendas de gráficos en SVG
@@ -1571,7 +1572,7 @@ en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)
   tipo desactivado (p. ej., uno importado) recibe «El tipo … está desactivado: elija otro». Los filtros de
   las listas ofrecen también los inactivos.
 
-**Decisiones del equipo (confirmar):**
+**Decisiones confirmadas por la Dirección (21-oct-2026):**
 - Un tipo o índice nuevo se agrega al final del orden y activo.
 - Un tipo de producto nuevo pregunta solo si «puede ser indexado o arbitrado»; uno de actividad, solo el
   nombre (usa los campos generales del formulario).
