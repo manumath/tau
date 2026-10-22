@@ -24,8 +24,8 @@ Google Chrome (solo para las pruebas en navegador).
 uv sync                                   # dependencias, incluidas las de desarrollo
 uv run python scripts/seed.py             # base de ejemplo en data/portal.db, con cuentas de demostración
 uv run python main.py                     # http://127.0.0.1:5001
-uv run pytest                             # ~400 pruebas, un minuto
-uv run pytest --navegador                 # además, 5 flujos en Chrome
+uv run pytest                             # ~675 pruebas, unos tres minutos
+uv run pytest --navegador                 # además, 15 flujos en Chrome
 ```
 
 `scripts/seed.py` imprime las cuentas de demostración y su contraseña temporal. Es idempotente:
@@ -292,6 +292,16 @@ o una restauración). No ejecuta las tareas horarias.
 - Arranque con `uvicorn … --no-access-log` (ya en `scripts/iniciar.sh` y en el servicio de
   `docs/despliegue.md`): el registro de uvicorn duplicaría cada línea y anotaría la consulta.
 
+### 5.6 El repositorio público
+
+- Remoto: `origin` = <https://github.com/manumath/tau>. Los commits usan el correo `noreply` de GitHub
+  (`git config user.email`): GitHub rechaza los envíos que exponen un correo privado.
+- **No se versionan** (`.gitignore`): `data/`, `.sesskey`, `.venv/`, cachés, `iac-cinda/`, `.herramientas/`, `.archify/` y los
+  logos originales `static/img/membrete/logo_*`. Para cambiar un logo, reemplace el original en local y regenere la copia
+  recortada (`cmat.png`, `iimat.png`, ≈300 px de alto; ver PLAN.md §35).
+- Antes de publicar algo nuevo, revise que no entren datos personales ni bases de datos (`git status --ignored`) y que
+  los correos de ejemplo sean de dominios de prueba (`test.cl`, `instituto.test`, `correo.bo`).
+
 ## 6. Problemas frecuentes
 
 | Síntoma | Causa probable | Qué hacer |
@@ -308,6 +318,10 @@ o una restauración). No ejecuta las tareas horarias.
 
 ## 7. Deuda conocida
 
+- **Publicación:** falta un `LICENSE`; conviene confirmar con IAC-CINDA que se puede redistribuir la plantilla de la Guía de
+  Antecedentes y con la Dirección que se pueden publicar los logos del membrete (PLAN.md §52).
+- **Seguimiento estudiantil:** el consentimiento de los estudiantes y del directorio se redactó sin revisión de la Dirección; el
+  envío real de correo masivo (encuestas, seguimiento y directorio) no se probó con el proveedor de producción.
 - **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se
   usa (`q`, `execute`, `t.<tabla>.insert/update`); el resto de lo propio de SQLite está en
   `app/comun/db.py` (ver su docstring).

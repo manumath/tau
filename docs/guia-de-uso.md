@@ -12,6 +12,8 @@ la asignación docente y la carga horaria.
 - [Coautores externos: duplicados y cuentas](#coautores-externos-duplicados-y-cuentas)
 - [Actividades](#actividades)
 - [Proyectos](#proyectos)
+- [Docencia](#docencia)
+- [Estudiantes y egresados](#estudiantes-y-egresados)
 - [Informes](#informes)
 - [Administración](#administración)
 - [Preguntas frecuentes](#preguntas-frecuentes)
@@ -26,6 +28,8 @@ la asignación docente y la carga horaria.
   válido por una hora.
 - Tras 5 intentos fallidos el ingreso se bloquea 15 minutos. La administración puede
   desbloquearlo antes.
+- **Estudiantes:** no tienen contraseña. En la pantalla de ingreso use «¿Es estudiante? Ingrese con un enlace a su
+  correo», escriba su correo y abra el enlace que recibe (vale 30 minutos y una sola vez). Ven solo «Mi seguimiento».
 - Para cambiar su contraseña: menú con su nombre (arriba a la derecha) → «Cambiar contraseña».
 - **Tema claro u oscuro:** menú con su nombre → «Tema»: *Claro*, *Oscuro* o *Sistema* (sigue la
   configuración de su computadora o teléfono). La elección se guarda en ese navegador.
@@ -159,129 +163,6 @@ la dirigen; «En preparación» si está en curso y «Publicado» cuando se defe
 Los estudiantes que la Carrera carga desde el sistema de Seguimiento Académico (ver más abajo) solo
 aparecen en esta lista si participan en la investigación: su situación académica la ve únicamente
 quien tiene acceso al seguimiento estudiantil.
-
-### Cohortes estudiantiles (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
-
-En **Docencia → Cohortes estudiantiles** está el tablero de la licenciatura por cohorte (semestre de
-ingreso): cuántos ingresaron, cuántos siguen cursando, egresaron, se titularon o desertaron, con sus
-tasas y los años medios hasta la titulación. Son cifras agregadas: el tablero no muestra nombres y no
-incluye materias ni notas, que están en el sistema de Seguimiento Académico.
-
-La **Dirección de Carrera** y **Gestión de datos** cargan los datos con **Cargar CSV**: un archivo
-exportado de Seguimiento Académico con una fila por estudiante. Son obligatorios `ru` (registro
-universitario), `nombres`, `apellidos`, `cohorte` (AAAA-I o AAAA-II) y `estado` (cursando, egresado,
-titulado, retirado o congelado). Opcionales: correo, sexo, fecha de nacimiento (solo se guarda la edad
-al ingresar), vía de ingreso (ordinaria o especial), otra ciudad, extranjero, colegio (público o
-privado), plan, último ciclo matriculado, fechas de egreso y titulación, modalidad de titulación y
-motivo del retiro. Reglas: un estudiante retirado necesita el último ciclo y el motivo (académico o no
-académico); un congelado, el último ciclo; un egresado, la fecha de egreso; un titulado, la fecha de
-titulación. Descargue la plantilla desde la misma ventana. Antes de guardar verá una vista previa con
-lo que se crea, lo que se actualiza y los errores (las filas con errores se omiten).
-
-**Dar acceso a estudiantes.** Con **Dar acceso a estudiantes** (Dirección de Carrera y Gestión de datos) el
-sistema crea una cuenta para cada estudiante que cursa, tiene correo y aún no tiene acceso. No hay
-contraseñas: el estudiante entra a **Ingreso de estudiantes** (enlace «¿Es estudiante?» de la pantalla de
-ingreso), escribe su correo y recibe un enlace que vale 30 minutos y una sola vez. Si el correo ya lo usa otra
-cuenta (por ejemplo, la de un docente), esa ficha queda sin acceso y el aviso lo cuenta: revise el correo.
-
-Si el estudiante ya figura (por RU, correo o nombre, como tesista, por ejemplo), se actualiza su
-ficha en lugar de crear otra. Se vuelve a cargar el archivo cada vez que cambie la situación.
-**Desertor** es quien se retiró o quien congeló sus estudios y no volvió en los dos ciclos siguientes
-(definición de IAC-CINDA). El sistema considera matriculado a un estudiante desde su cohorte hasta su
-último ciclo matriculado; no registra los congelamientos intermedios.
-
-### Portal del estudiante («Mi seguimiento»)
-
-Quien tiene cuenta de estudiante solo ve **Mi seguimiento**; no entra al resto del sistema. La primera vez
-lee y acepta el uso de sus datos. Ve su ficha (RU, cohorte, plan y estado), su participación en la
-investigación (tesis, proyectos y actividades del instituto) y su **actividad estudiantil**: ayudantías,
-olimpiadas, congresos, pasantías, becas, movilidad, semilleros, charlas, voluntariado y otras. Cada una lleva
-título, fechas, institución, descripción y, si quiere, evidencia (PDF, PNG o JPG de hasta 20 MB). El estado
-puede ser «Por verificar», «Verificada» o «Con observaciones»; si el estudiante corrige una actividad o cambia
-su evidencia, vuelve a quedar por verificar. Puede eliminar lo que registró. El sistema no muestra ni guarda
-materias ni notas.
-
-### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
-
-En **Docencia → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes
-declararon, con su evidencia. **Verificar** la da por válida; **Observar** pide escribir qué debe corregir. En
-los dos casos el estudiante recibe un aviso (en el sistema y, según su preferencia, por correo).
-
-### Encuestas a estudiantes y egresados (Dirección de Carrera y Coordinación académica)
-
-En **Docencia → Encuestas** se arman, abren y envían las encuestas (satisfacción, clima, bienestar, abandono,
-seguimiento de egresados, logro del perfil de egreso). Ven los resultados también Gestión de datos y el Comité de
-acreditación, que solo ven cifras agregadas.
-
-1. **Crear:** parta de una encuesta de ejemplo (todas son borradores que puede cambiar) o en blanco. Indique el
-   tipo, a quién va dirigida (estudiantes que cursan, o egresados y titulados), si quiere limitarla a ciertos años
-   de ingreso, una fecha límite y si es **anónima**. Las preguntas pueden ser escala de 1 a 5, sí o no, una opción,
-   varias opciones o texto libre, obligatorias u opcionales; se reordenan con las flechas.
-2. **Abrir:** al abrirla, el sistema prepara un enlace personal por cada persona con correo (le dice cuántas no lo
-   tienen). Desde ese momento no se pueden cambiar las preguntas ni los datos.
-3. **Enviar:** «Enviar invitaciones pendientes» manda los correos en lotes de 50 (los proveedores limitan los envíos
-   masivos): repita hasta que no queden pendientes. «Enviar recordatorio» escribe a quienes no respondieron, una vez por
-   semana como máximo. Cada persona responde desde su celular o computador, **sin cuenta**; el enlace sirve una vez.
-4. **Cerrar:** los enlaces dejan de servir. También dejan de servir al llegar la fecha límite.
-5. **Resultados:** promedios y distribución de cada pregunta, comentarios y promedio por año de ingreso; se descargan
-   en CSV.
-
-**Anonimato.** En una encuesta anónima la respuesta no se asocia con la persona (el sistema ni siquiera guarda la hora),
-y los resultados aparecen **solo desde 5 respuestas**; el promedio por año de ingreso, solo para los años con 5 o más. Así
-nadie puede deducir quién respondió qué. En las nominales (p. ej. el seguimiento de egresados) la Dirección ve las
-respuestas persona por persona.
-
-### Egresados (Dirección de Carrera y Coordinación académica; el Comité ve los indicadores)
-
-En **Docencia → Egresados** están los indicadores de quienes se titularon, el seguimiento y la lista de egresados.
-
-- **Quién es egresado.** Quien tiene estado «titulado» con fecha de titulación: llega por el CSV de cohortes o con
-  **Registrar titulación** (elija al estudiante, la fecha de titulación, la de egreso si es distinta y la modalidad). Al
-  titularse deja de contar como estudiante que cursa y entra solo al seguimiento. Los estudiantes egresados que aún no se
-  titulan no se siguen todavía.
-- **Seguimiento a los 6 meses, 1, 3 y 5 años.** Con **Activar el seguimiento** el sistema abre una encuesta por hito (a partir
-  de la de egresados; puede ajustarla en Encuestas, pero no cambie las opciones de las preguntas de situación, posgrado,
-  utilidad y satisfacción: los indicadores las leen). Desde entonces, cada egresado recibe por correo la invitación al
-  cumplir cada hito: las invitaciones salen solas, en la revisión horaria del sistema (o con **Invitar ahora a quienes
-  corresponde**, hasta 50 por vez). Si al activar el seguimiento ya pasaron varios hitos de un egresado, se le invita solo
-  al último y los anteriores quedan «omitidos». Las respuestas son nominales: la Dirección las ve una por una en la encuesta.
-- **Indicadores por trienio de titulación** (los trienios terminan en el año actual): titulados, años desde el ingreso hasta
-  titularse, cuántos respondieron, **con empleo**, **en su área**, **posgrado**, utilidad y satisfacción de la formación (1 a 5).
-  Usan la **última respuesta de cada egresado** y siempre muestran el n: con diez titulados por año, tres años juntos dan
-  una cifra más honesta que cada año por separado.
-
-### Tutoría
-
-La Dirección de Carrera y la Coordinación académica asignan un **tutor** (un docente con vínculo vigente) a cada estudiante que
-cursa, en **Docencia → Tutoría**: uno por uno o a toda una cohorte que aún no tiene tutor. Esa pantalla muestra también la
-cobertura (cuántos tienen tutor), las reuniones por año, los temas y las derivaciones; el Comité ve esas cifras, sin nombres.
-
-El **tutor** ve **Tutoría → Mis tutorados** en la barra y, en cada estudiante, registra sus **reuniones**: fecha, modalidad,
-tema (académico, económico, salud, vocacional, convivencia, otro), un resumen, la **derivación** si corresponde (bienestar,
-apoyo psicológico, académico, ayuda económica, salud) y los acuerdos. Las reuniones son **confidenciales**: las ve su autor y la
-Dirección de Carrera (cada vez que ésta las abre queda en la auditoría). El estudiante ve quién es su tutor, pero no las notas. Si
-cambia el tutor, el nuevo no ve las notas del anterior.
-
-### Directorio de egresados y mentoría
-
-- **Invitar.** En **Docencia → Egresados**, «Invitar» (o «Invitar al directorio a quienes faltan», hasta 50) crea la cuenta del
-  egresado, sin contraseña, y le manda un enlace de ingreso válido por 7 días. Figurar es **opcional**.
-- **Perfil.** El egresado ingresa con el enlace, acepta el uso general de sus datos y abre **Mi perfil de egresado**: a qué se
-  dedica, dónde, áreas de interés y qué ofrece (charlas, mentoría, pasantías, orientación sobre posgrados, ofertas de empleo).
-  Solo figura si marca «Quiero figurar» y acepta que lo vean estudiantes y personal de la Carrera dentro del sistema; puede
-  retirarse cuando quiera.
-- **Pedir ayuda.** Los estudiantes con cuenta ven el **Directorio de egresados** desde «Mi seguimiento», buscan y envían una
-  solicitud (hasta 3 pendientes a la vez). El egresado la recibe como aviso y la **acepta o no** en su perfil. El correo de cada
-  uno solo se comparte cuando el egresado acepta: a cada quien le llega el del otro.
-- El personal que gestiona egresados ve el directorio en **Egresados → Ver el directorio**.
-
-### Anexo de seguimiento estudiantil (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
-
-En **Informes → Seguimiento estudiantil** hay un documento imprimible (con membrete) y su XLSX con **solo cifras agregadas**, sin
-nombres: cohortes (ingreso, egreso, titulación y deserción), actividad estudiantil verificada por tipo y año, encuestas (tasa de
-respuesta y promedio; las anónimas con menos de 5 respuestas aparecen como «reservado»), tutoría (cobertura, reuniones y
-derivaciones, sin el contenido), egresados (indicadores por trienio y seguimiento) y directorio y mentoría. Se elige el rango de
-años de ingreso.
 
 ### Coautores externos
 
@@ -614,6 +495,137 @@ auxiliares ni los cursos de verano e invierno). Avisa si faltan materias por asi
 de las previstas. La consultan la Dirección de Carrera, la Coordinación académica, la Dirección
 del Instituto y el Comité de acreditación. La jornada completa equivalente del anexo de
 acreditación es la carga contratada / 160.
+
+## Estudiantes y egresados
+
+Los módulos de seguimiento estudiantil complementan al sistema de **Seguimiento Académico**, que es el dueño de las
+materias y las notas: TAU **no los registra**. Guarda la trayectoria (cohorte, estado y plan), la actividad estudiantil, las
+encuestas, la tutoría y el seguimiento de egresados. Quién ve qué: la **Dirección de Carrera** y la **Coordinación
+académica** gestionan; **Gestión de datos** carga los datos; el **Comité de acreditación** ve solo cifras agregadas; los
+**estudiantes y egresados** ven únicamente lo suyo (y el directorio, si participan).
+
+### Cohortes estudiantiles (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
+
+En **Docencia → Cohortes estudiantiles** está el tablero de la licenciatura por cohorte (semestre de
+ingreso): cuántos ingresaron, cuántos siguen cursando, egresaron, se titularon o desertaron, con sus
+tasas y los años medios hasta la titulación. Son cifras agregadas: el tablero no muestra nombres y no
+incluye materias ni notas, que están en el sistema de Seguimiento Académico.
+
+La **Dirección de Carrera** y **Gestión de datos** cargan los datos con **Cargar CSV**: un archivo
+exportado de Seguimiento Académico con una fila por estudiante. Son obligatorios `ru` (registro
+universitario), `nombres`, `apellidos`, `cohorte` (AAAA-I o AAAA-II) y `estado` (cursando, egresado,
+titulado, retirado o congelado). Opcionales: correo, sexo, fecha de nacimiento (solo se guarda la edad
+al ingresar), vía de ingreso (ordinaria o especial), otra ciudad, extranjero, colegio (público o
+privado), plan, último ciclo matriculado, fechas de egreso y titulación, modalidad de titulación y
+motivo del retiro. Reglas: un estudiante retirado necesita el último ciclo y el motivo (académico o no
+académico); un congelado, el último ciclo; un egresado, la fecha de egreso; un titulado, la fecha de
+titulación. Descargue la plantilla desde la misma ventana. Antes de guardar verá una vista previa con
+lo que se crea, lo que se actualiza y los errores (las filas con errores se omiten).
+
+**Dar acceso a estudiantes.** Con **Dar acceso a estudiantes** (Dirección de Carrera y Gestión de datos) el
+sistema crea una cuenta para cada estudiante que cursa, tiene correo y aún no tiene acceso. No hay
+contraseñas: el estudiante entra a **Ingreso de estudiantes** (enlace «¿Es estudiante?» de la pantalla de
+ingreso), escribe su correo y recibe un enlace que vale 30 minutos y una sola vez. Si el correo ya lo usa otra
+cuenta (por ejemplo, la de un docente), esa ficha queda sin acceso y el aviso lo cuenta: revise el correo.
+
+Si el estudiante ya figura (por RU, correo o nombre, como tesista, por ejemplo), se actualiza su
+ficha en lugar de crear otra. Se vuelve a cargar el archivo cada vez que cambie la situación.
+**Desertor** es quien se retiró o quien congeló sus estudios y no volvió en los dos ciclos siguientes
+(definición de IAC-CINDA). El sistema considera matriculado a un estudiante desde su cohorte hasta su
+último ciclo matriculado; no registra los congelamientos intermedios.
+
+### Portal del estudiante («Mi seguimiento»)
+
+Quien tiene cuenta de estudiante solo ve **Mi seguimiento**; no entra al resto del sistema. La primera vez
+lee y acepta el uso de sus datos. Ve su ficha (RU, cohorte, plan y estado), su participación en la
+investigación (tesis, proyectos y actividades del instituto) y su **actividad estudiantil**: ayudantías,
+olimpiadas, congresos, pasantías, becas, movilidad, semilleros, charlas, voluntariado y otras. Cada una lleva
+título, fechas, institución, descripción y, si quiere, evidencia (PDF, PNG o JPG de hasta 20 MB). El estado
+puede ser «Por verificar», «Verificada» o «Con observaciones»; si el estudiante corrige una actividad o cambia
+su evidencia, vuelve a quedar por verificar. Puede eliminar lo que registró. El sistema no muestra ni guarda
+materias ni notas.
+
+### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
+
+En **Docencia → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes
+declararon, con su evidencia. **Verificar** la da por válida; **Observar** pide escribir qué debe corregir. En
+los dos casos el estudiante recibe un aviso (en el sistema y, según su preferencia, por correo).
+
+### Encuestas a estudiantes y egresados (Dirección de Carrera y Coordinación académica)
+
+En **Docencia → Encuestas** se arman, abren y envían las encuestas (satisfacción, clima, bienestar, abandono,
+seguimiento de egresados, logro del perfil de egreso). Ven los resultados también Gestión de datos y el Comité de
+acreditación, que solo ven cifras agregadas.
+
+1. **Crear:** parta de una encuesta de ejemplo (todas son borradores que puede cambiar) o en blanco. Indique el
+   tipo, a quién va dirigida (estudiantes que cursan, o egresados y titulados), si quiere limitarla a ciertos años
+   de ingreso, una fecha límite y si es **anónima**. Las preguntas pueden ser escala de 1 a 5, sí o no, una opción,
+   varias opciones o texto libre, obligatorias u opcionales; se reordenan con las flechas.
+2. **Abrir:** al abrirla, el sistema prepara un enlace personal por cada persona con correo (le dice cuántas no lo
+   tienen). Desde ese momento no se pueden cambiar las preguntas ni los datos.
+3. **Enviar:** «Enviar invitaciones pendientes» manda los correos en lotes de 50 (los proveedores limitan los envíos
+   masivos): repita hasta que no queden pendientes. «Enviar recordatorio» escribe a quienes no respondieron, una vez por
+   semana como máximo. Cada persona responde desde su celular o computador, **sin cuenta**; el enlace sirve una vez.
+4. **Cerrar:** los enlaces dejan de servir. También dejan de servir al llegar la fecha límite.
+5. **Resultados:** promedios y distribución de cada pregunta, comentarios y promedio por año de ingreso; se descargan
+   en CSV.
+
+**Anonimato.** En una encuesta anónima la respuesta no se asocia con la persona (el sistema ni siquiera guarda la hora),
+y los resultados aparecen **solo desde 5 respuestas**; el promedio por año de ingreso, solo para los años con 5 o más. Así
+nadie puede deducir quién respondió qué. En las nominales (p. ej. el seguimiento de egresados) la Dirección ve las
+respuestas persona por persona.
+
+### Egresados (Dirección de Carrera y Coordinación académica; el Comité ve los indicadores)
+
+En **Docencia → Egresados** están los indicadores de quienes se titularon, el seguimiento y la lista de egresados.
+
+- **Quién es egresado.** Quien tiene estado «titulado» con fecha de titulación: llega por el CSV de cohortes o con
+  **Registrar titulación** (elija al estudiante, la fecha de titulación, la de egreso si es distinta y la modalidad). Al
+  titularse deja de contar como estudiante que cursa y entra solo al seguimiento. Los estudiantes egresados que aún no se
+  titulan no se siguen todavía.
+- **Seguimiento a los 6 meses, 1, 3 y 5 años.** Con **Activar el seguimiento** el sistema abre una encuesta por hito (a partir
+  de la de egresados; puede ajustarla en Encuestas, pero no cambie las opciones de las preguntas de situación, posgrado,
+  utilidad y satisfacción: los indicadores las leen). Desde entonces, cada egresado recibe por correo la invitación al
+  cumplir cada hito: las invitaciones salen solas, en la revisión horaria del sistema (o con **Invitar ahora a quienes
+  corresponde**, hasta 50 por vez). Si al activar el seguimiento ya pasaron varios hitos de un egresado, se le invita solo
+  al último y los anteriores quedan «omitidos». Las respuestas son nominales: la Dirección las ve una por una en la encuesta.
+- **Indicadores por trienio de titulación** (los trienios terminan en el año actual): titulados, años desde el ingreso hasta
+  titularse, cuántos respondieron, **con empleo**, **en su área**, **posgrado**, utilidad y satisfacción de la formación (1 a 5).
+  Usan la **última respuesta de cada egresado** y siempre muestran el n: con diez titulados por año, tres años juntos dan
+  una cifra más honesta que cada año por separado.
+
+### Tutoría
+
+La Dirección de Carrera y la Coordinación académica asignan un **tutor** (un docente con vínculo vigente) a cada estudiante que
+cursa, en **Docencia → Tutoría**: uno por uno o a toda una cohorte que aún no tiene tutor. Esa pantalla muestra también la
+cobertura (cuántos tienen tutor), las reuniones por año, los temas y las derivaciones; el Comité ve esas cifras, sin nombres.
+
+El **tutor** ve **Tutoría → Mis tutorados** en la barra y, en cada estudiante, registra sus **reuniones**: fecha, modalidad,
+tema (académico, económico, salud, vocacional, convivencia, otro), un resumen, la **derivación** si corresponde (bienestar,
+apoyo psicológico, académico, ayuda económica, salud) y los acuerdos. Las reuniones son **confidenciales**: las ve su autor y la
+Dirección de Carrera (cada vez que ésta las abre queda en la auditoría). El estudiante ve quién es su tutor, pero no las notas. Si
+cambia el tutor, el nuevo no ve las notas del anterior.
+
+### Directorio de egresados y mentoría
+
+- **Invitar.** En **Docencia → Egresados**, «Invitar» (o «Invitar al directorio a quienes faltan», hasta 50) crea la cuenta del
+  egresado, sin contraseña, y le manda un enlace de ingreso válido por 7 días. Figurar es **opcional**.
+- **Perfil.** El egresado ingresa con el enlace, acepta el uso general de sus datos y abre **Mi perfil de egresado**: a qué se
+  dedica, dónde, áreas de interés y qué ofrece (charlas, mentoría, pasantías, orientación sobre posgrados, ofertas de empleo).
+  Solo figura si marca «Quiero figurar» y acepta que lo vean estudiantes y personal de la Carrera dentro del sistema; puede
+  retirarse cuando quiera.
+- **Pedir ayuda.** Los estudiantes con cuenta ven el **Directorio de egresados** desde «Mi seguimiento», buscan y envían una
+  solicitud (hasta 3 pendientes a la vez). El egresado la recibe como aviso y la **acepta o no** en su perfil. El correo de cada
+  uno solo se comparte cuando el egresado acepta: a cada quien le llega el del otro.
+- El personal que gestiona egresados ve el directorio en **Egresados → Ver el directorio**.
+
+### Anexo de seguimiento estudiantil (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
+
+En **Informes → Seguimiento estudiantil** hay un documento imprimible (con membrete) y su XLSX con **solo cifras agregadas**, sin
+nombres: cohortes (ingreso, egreso, titulación y deserción), actividad estudiantil verificada por tipo y año, encuestas (tasa de
+respuesta y promedio; las anónimas con menos de 5 respuestas aparecen como «reservado»), tutoría (cobertura, reuniones y
+derivaciones, sin el contenido), egresados (indicadores por trienio y seguimiento) y directorio y mentoría. Se elige el rango de
+años de ingreso.
 
 ## Informes
 

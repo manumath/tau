@@ -33,6 +33,12 @@ el servicio `portal` y la aplicación de Fly.io).
   productos, con bandeja de pendientes y avisos por correo.
 - **Informes:** CV, informe de proyecto (con el plan de actividades de los institucionales) y memoria del
   instituto por año, periodo octubre–septiembre o rango, imprimibles; descargas XLSX, CSV y BibTeX.
+- **Docencia:** planes de estudio, oferta y asignación docente por gestión, carga horaria, preparación del semestre.
+- **Estudiantes y egresados** (complementan a Seguimiento Académico; sin materias ni notas): cohortes de ingreso, egreso,
+  titulación y deserción cargadas desde un CSV (alimentan las hojas 3 a 6 de la Guía de Antecedentes); portal del estudiante
+  con ingreso por enlace al correo; actividad estudiantil con verificación; encuestas anónimas o nominales con enlace personal;
+  tutoría con reuniones confidenciales; egresados con seguimiento a los 6 meses, 1, 3 y 5 años, directorio opcional y mentoría;
+  y un informe de seguimiento estudiantil con solo cifras agregadas.
 - **Administración:** cuentas, proyectos, auditoría. **API JSON** de solo lectura para perfiles públicos.
 
 ## Puesta en marcha (desarrollo)
@@ -43,7 +49,7 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # 382 pruebas
+uv run pytest                            # ~675 pruebas (+15 en navegador con --navegador)
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan
@@ -299,7 +305,15 @@ Lo público se limita a quienes activaron «Perfil público» en «Mi perfil».
 
 La API responde con `Access-Control-Allow-Origin: *`, así la web del instituto puede consumirla.
 
+## Repositorio
+
+El código está en <https://github.com/manumath/tau>. No se versionan `data/` (la base y los correos de desarrollo),
+`.sesskey`, `.venv/`, los PDF de IAC-CINDA (`iac-cinda/`) ni los logos originales (`static/img/membrete/logo_*`): el
+membrete usa las copias recortadas `cmat.png` e `iimat.png`. Los commits usan el correo `noreply` de GitHub del autor.
+**Aún no tiene archivo `LICENSE`**: hasta que se agregue, el código se puede leer pero no hay permiso para reutilizarlo.
+
 ## Licencias de datos
 
 El catálogo MSC2020 (`catalogos/MSC2020.tsv`) es de Mathematical Reviews y zbMATH Open, bajo
-CC BY-NC-SA 4.0; ver [catalogos/README.md](catalogos/README.md).
+CC BY-NC-SA 4.0; ver [catalogos/README.md](catalogos/README.md). La plantilla vacía de la Guía de Antecedentes
+(`datos/iac-cinda/`) es un documento de IAC-CINDA; los logos del membrete son de la UMSA, el IIMAT y la Carrera.

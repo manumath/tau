@@ -25,7 +25,7 @@ la fase 0): no proponga Django, PostgreSQL ni SPA salvo que el usuario lo pida.
 
 ```bash
 uv run python main.py                 # servidor de desarrollo (puerto 5001, lo suele tener abierto el usuario)
-uv run pytest -q                      # ~500 pruebas, cada una con base temporal
+uv run pytest -q                      # ~675 pruebas, cada una con base temporal
 uv run pytest -q --navegador          # + flujos en Chrome (Playwright)
 uvx ruff check app scripts tests main.py   # reglas en pyproject.toml; debe quedar sin avisos
 scripts/estilos.sh                    # recompilar Tailwind tras usar una clase nueva
@@ -104,7 +104,11 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   ni use contraseñas del sistema operativo o cuentas reales.
 - Descargas e instalaciones (paquetes, binarios, plugins): pida permiso explícito antes.
 - No versione `data/`, `.herramientas/`, ni los PDF de IAC-CINDA (`/iac-cinda/`). La plantilla vacía de
-  la Guía de Antecedentes sí va versionada, en `datos/iac-cinda/`.
+  la Guía de Antecedentes sí va versionada, en `datos/iac-cinda/`. Tampoco los logos originales
+  (`static/img/membrete/logo_*`, solo en local).
+- **El repositorio es público** (<https://github.com/manumath/tau>): nada de datos reales, bases, correos ni contraseñas
+  reales en commits, pruebas, seed ni documentación. Los commits usan el correo `noreply` de GitHub del autor
+  (`git config user.email`); no lo cambie. No reescriba el historial ni haga `push --force` sin que el usuario lo pida.
 - Plantillas XLSX ajenas (la Guía de Antecedentes): nunca con openpyxl al guardar, que borra gráficos e
   imágenes; use `app/comun/xlsx_plantilla.py`, que escribe solo las celdas pedidas.
 - Nunca edite una migración aplicada; nunca borre una prueba para que pase.

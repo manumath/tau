@@ -1973,9 +1973,29 @@ logro del perfil de egreso, y sección nueva en el anexo.
 |---|---|---|
 | 0 | Confirmar decisiones de §49 y §50 | Reglas fijadas ✔ (21-oct-2026) |
 | 1 | Cohortes, estado, importación CSV y tablero | Hojas 3 a 6 de la Guía ✔ (21-oct-2026) |
-| 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante | ✔ (21-oct-2026)
-| 3 | Motor de encuestas (anónimas y nominales) | Base común | ✔ (21-oct-2026)
-| 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni | ✔ (21-oct-2026)
-| 5 | Tutoría, directorio y mentoría, sección del anexo | Cierre | ✔ (21-oct-2026)
+| 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante ✔ (21-oct-2026) |
+| 3 | Motor de encuestas (anónimas y nominales) | Base común ✔ (21-oct-2026) |
+| 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni ✔ (21-oct-2026) |
+| 5 | Tutoría, directorio y mentoría, informe de seguimiento estudiantil | Cierre ✔ (21-oct-2026) |
 
-Un commit por etapa, con las pruebas por rol y la guía de uso al día.
+Un commit por etapa, con las pruebas por rol y la guía de uso al día. Las cinco etapas están hechas y sus decisiones, confirmadas.
+Estado a fin de la etapa 5: migraciones 0042 a 0047, unas 675 pruebas.
+
+## 52. Publicación del repositorio en GitHub (21-22-oct-2026)
+
+- **Dónde:** <https://github.com/manumath/tau>, rama `main`. Se creó **privado** y, por decisión del autor (22-oct-2026), se
+  pasó a **público**.
+- **Limpieza previa:** se revisaron los archivos versionados y el historial: sin secretos, bases de datos ni correos reales
+  (los correos son de dominios de ejemplo; las contraseñas del seed están documentadas en el README). Se quitaron del repositorio
+  los **logos originales** sin uso (`static/img/membrete/logo_*`, 1,6 MB; siguen en local y quedan en commits antiguos) y se completó
+  el `.gitignore` (cachés, `.env*`, `*.db`, registros, editores).
+- **Autor de los commits:** GitHub bloqueó el envío porque los commits llevaban el correo privado del autor. Se **reescribió el
+  historial** (116 commits, mismo contenido, nuevos hashes) para usar el correo `noreply` de GitHub como autor y quien confirma, y
+  el repositorio usa ese correo (`git config user.email`). Quedó una rama local de respaldo y la referencia `refs/original/` de
+  `filter-branch` (no se subieron).
+- **Pendientes antes de difundirlo (decisiones del autor y las direcciones):**
+  1. **Licencia:** no hay `LICENSE`; sin él nadie tiene permiso para reutilizar el código. Elegir una (MIT, Apache-2.0, AGPL-3.0…).
+  2. **Guía de Antecedentes de IAC-CINDA** (`datos/iac-cinda/`): documento de la agencia, versionado y en el historial. Confirmar con
+     IAC-CINDA que se puede redistribuir; si no, quitarlo (y reescribir el historial).
+  3. **Logos** de la UMSA, el IIMAT y la Carrera (membrete): pedir autorización de la Dirección para publicarlos.
+  4. El correo personal del autor sigue en `pyproject.toml` (autor del paquete).
