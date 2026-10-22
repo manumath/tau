@@ -133,7 +133,9 @@ app/
   estudiantil/                 seguimiento estudiantil (PLAN §49 y §50)
     cohortes.py                cohortes de ingreso, egreso, titulación y deserción (ciclos I y II)
     importar.py                carga del CSV de Seguimiento Académico (vista previa y aplicar)
-    rutas/                     cohortes (/docencia/cohortes: tablero y carga)
+    actividad.py               actividad estudiantil declarada: tipos, validación, verificación y avisos
+    rutas/                     cohortes (/docencia/cohortes: tablero y carga), actividades (verificación),
+                               estudiante (/estudiante: portal del estudiante)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 
 Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion`,

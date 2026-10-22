@@ -50,6 +50,7 @@ RUTAS = {  # ruta → quienes reciben 200 (el resto, 403)
     "/docencia/cohortes": {"carrera", "datos_cmat", "comite"},
     "/docencia/cohortes/importar": {"carrera", "datos_cmat"},
     "/docencia/cohortes/plantilla": {"carrera", "datos_cmat"},
+    "/docencia/cohortes/actividades": {"carrera"},
     "/personas/externos/duplicados": {"instituto", "datos_cmat"},
 }
 

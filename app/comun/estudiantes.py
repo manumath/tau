@@ -7,7 +7,7 @@ en tesis, publicaciones, proyectos y actividades (IAC-CINDA 2.3.2, 2.3.4 y 3.6.1
   del instituto son quienes la dirigen. En curso = «en preparación»; defendida = «publicado».
 """
 from app.comun import config
-from app.comun.db import get_db, sin_tildes
+from app.comun.db import AHORA, get_db, sin_tildes, transaccion
 
 NIVELES = {"licenciatura": "Licenciatura", "maestria": "Maestría", "doctorado": "Doctorado"}
 TIPO_TESIS = "Tesis dirigida"
@@ -191,3 +191,66 @@ def graduado_de(p: dict, anio: int) -> dict | None:
 def es_estudiante_ref(autores: list[dict], anio: int) -> list[dict]:
     """Autores de un producto que eran estudiantes ese año (también quien luego recibió cuenta)."""
     return [a for a in autores if estudiante_de(a, anio)]
+
+
+# --- Cuentas de estudiante (PLAN §49, etapa 2) ---------------------------------------------------------------------
+# La cuenta se une a la ficha por `cuenta_estudiante` (no por `persona_externa.usuario_id`, que es el paso de
+# externo a investigador, PLAN §42). Se crea sin contraseña: se ingresa con un enlace al correo.
+
+def cuenta_de(uid: int) -> int | None:
+    """Ficha (persona externa) de la cuenta de estudiante del usuario, o None."""
+    filas = get_db().q("SELECT externo_id FROM cuenta_estudiante WHERE usuario_id = ?", [uid])
+    return filas[0]["externo_id"] if filas else None
+
+
+def usuario_de(externo_id: int) -> dict | None:
+    filas = get_db().q("""SELECT u.* FROM usuario u JOIN cuenta_estudiante c ON c.usuario_id = u.id
+                          WHERE c.externo_id = ?""", [externo_id])
+    return filas[0] if filas else None
+
+
+def solo_estudiante(usuario: dict) -> bool:
+    """¿Es una cuenta solo de estudiante? Tiene ficha de estudiante y nada del personal: ni perfil de investigador,
+    ni roles vigentes, ni vínculo con la Carrera, ni administración. Solo ve su propio seguimiento."""
+    return bool(cuenta_de(usuario["id"]) and not usuario.get("es_investigador") and not usuario.get("es_admin")
+                and not usuario.get("categoria") and not usuario.get("roles"))
+
+
+def crear_cuenta(externo_id: int, creada_por: int | None) -> dict | None:
+    """Crea la cuenta (sin contraseña) de un estudiante con correo. None si no se puede: sin correo, ya tiene
+    cuenta o el correo ya lo usa otra cuenta (no se vincula sola: podría ser un correo mal escrito)."""
+    from app.comun import usuarios
+    filas = get_db().q("SELECT * FROM persona_externa WHERE id = ?", [externo_id])
+    if not filas or not (filas[0]["email"] or "").strip() or usuario_de(externo_id) \
+            or usuarios.por_email(filas[0]["email"]):
+        return None
+    p = filas[0]
+    with transaccion():
+        u = usuarios.crear(p["email"], p["nombres"], p["apellidos"], None, es_investigador=False)
+        get_db().t.cuenta_estudiante.insert(externo_id=externo_id, usuario_id=u["id"], creada_por=creada_por)
+    return u
+
+
+def crear_cuentas(creada_por: int | None) -> dict:
+    """Cuentas para los estudiantes de la Carrera que cursan (o están congelados), tienen correo y aún no tienen
+    cuenta. → cuántas creó y cuántos quedaron sin correo o con el correo en uso."""
+    creadas = sin_correo = en_uso = 0
+    for f in get_db().q("""SELECT DISTINCT pe.id, pe.email FROM persona_externa pe JOIN estudiante e ON e.externo_id = pe.id
+                           WHERE e.cohorte_anio IS NOT NULL AND e.estado IN ('cursando', 'congelado')
+                             AND pe.id NOT IN (SELECT externo_id FROM cuenta_estudiante)"""):
+        if not (f["email"] or "").strip():
+            sin_correo += 1
+        elif crear_cuenta(f["id"], creada_por):
+            creadas += 1
+        else:
+            en_uso += 1
+    return {"creadas": creadas, "sin_correo": sin_correo, "en_uso": en_uso}
+
+
+def aceptar_consentimiento(externo_id: int):
+    get_db().execute(f"UPDATE cuenta_estudiante SET consentimiento_en = {AHORA} WHERE externo_id = ?", [externo_id])
+
+
+def consintio(externo_id: int) -> bool:
+    filas = get_db().q("SELECT consentimiento_en FROM cuenta_estudiante WHERE externo_id = ?", [externo_id])
+    return bool(filas and filas[0]["consentimiento_en"])

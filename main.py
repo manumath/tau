@@ -57,7 +57,9 @@ from app.acreditacion.rutas.cuerpo_academico import rt as rutas_cuerpo_academico
 from app.acreditacion.rutas.calidad import rt as rutas_calidad
 from app.acreditacion.rutas.guia_antecedentes import rt as rutas_guia_antecedentes
 from app.academico.rutas.preparacion import rt as rutas_preparacion
+from app.estudiantil.rutas.actividades import rt as rutas_actividades_estudiantiles
 from app.estudiantil.rutas.cohortes import rt as rutas_cohortes
+from app.estudiantil.rutas.estudiante import rt as rutas_estudiante
 from app.investigacion.rutas.productos import rt as rutas_productos
 from app.investigacion.rutas.propuestas import rt as rutas_propuestas
 from app.investigacion.rutas.proyectos import rt as rutas_proyectos
@@ -118,7 +120,8 @@ def create_app(db_path=config.DB_PATH):
                    rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_acreditacion, rutas_informes, rutas_publico,
                    rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
-                   rutas_guia_antecedentes, rutas_preparacion, rutas_cohortes):
+                   rutas_guia_antecedentes, rutas_preparacion, rutas_cohortes,
+                   rutas_actividades_estudiantiles, rutas_estudiante):
         router.to_app(app)
     return app
 

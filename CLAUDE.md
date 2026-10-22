@@ -75,6 +75,10 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   Investigador» con carga de investigación, si no «Docente»; unidad = proyectos que dirige, en que
   participa, detalle de extensión y de gestión del vínculo, o «Carrera de Matemática».
 - Fecha de nacimiento: la ve la administración y la propia persona; los informes usan tramos.
+- **Cuentas de estudiante (PLAN §49):** sin contraseña, ingresan por enlace al correo (`/acceso`) y solo llegan a
+  `/estudiante`, `/avisos` y `/logout` (`auth.RUTAS_ESTUDIANTE`): una ruta nueva del personal queda cerrada para ellos
+  sin tocar nada, pero toda ruta nueva de `/estudiante` debe sacar la ficha de `estudiantes.cuenta_de(auth["id"])`, nunca de
+  un id en la dirección. Se unen a la ficha por `cuenta_estudiante`, no por `persona_externa.usuario_id`.
 - **Estudiantes (PLAN §49):** TAU no guarda materias ni notas (son de Seguimiento Académico); la clave de
   unión es el registro universitario (RU). De los estudiantes solo se guarda la edad al ingresar (no la
   fecha de nacimiento ni el CI). El tablero de cohortes es agregado; la situación académica individual la

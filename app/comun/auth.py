@@ -5,7 +5,7 @@ from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets)
 
-from app.comun import academicos, config, correo, permisos, tokens, usuarios
+from app.comun import academicos, config, correo, estudiantes, permisos, tokens, usuarios
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.comun.db import auditar
 from app.comun.seguridad import errores_password, verificar_password
@@ -15,10 +15,12 @@ from app.comun.seguridad import errores_password, verificar_password
 # cualquier ruta que termine en .png.
 # Los archivos estáticos (/static) no pasan por aquí: están montados aparte (componentes/recursos.py).
 RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico", r"/salud",
-                  r"/recuperar", r"/recuperar/[\w\-]+",
+                  r"/recuperar", r"/recuperar/[\w\-]+", r"/acceso", r"/acceso/[\w\-]+",
                   r"/publico", r"/publico/.*", r"/api/v1/.*"]
 # Rutas permitidas mientras la contraseña es temporal.
 RUTAS_CAMBIO_PASS = {"/cambiar-password", "/logout"}
+# Lo único que ve una cuenta solo de estudiante: su seguimiento, sus avisos y salir (PLAN §49).
+RUTAS_ESTUDIANTE = r"/(estudiante|avisos|logout)(/.*)?"
 
 
 # Rutas /admin: la primera regla cuyo patrón coincide con la ruta completa decide qué acción se
@@ -60,6 +62,9 @@ def _cargar_usuario(req, sess):
     ruta = req.url.path
     if usuario["debe_cambiar_pass"] and ruta not in RUTAS_CAMBIO_PASS:
         return Redirect("/cambiar-password")
+    usuario["solo_estudiante"] = estudiantes.solo_estudiante(usuario)
+    if usuario["solo_estudiante"] and not re.fullmatch(RUTAS_ESTUDIANTE, ruta):
+        return Redirect("/estudiante")
     if ruta.startswith("/admin") and not acceso_admin(usuario, ruta):
         return Response("No autorizado", status_code=403)
     if ruta.startswith("/perfil") and not usuario["es_investigador"]:
@@ -148,6 +153,8 @@ def form_login(email: str = "", error: str = ""):
                    autocomplete="current-password", autofocus=bool(email)),
         Button("Ingresar", cls=(ButtonT.primary, "w-full"), type="submit"),
         P(A("¿Olvidó su contraseña?", href="/recuperar", cls="text-primary hover:underline"),
+          cls=(TextPresets.muted_sm, "text-center")),
+        P("¿Es estudiante? ", A("Ingrese con un enlace a su correo", href="/acceso", cls="text-primary hover:underline"),
           cls=(TextPresets.muted_sm, "text-center")),
         method="post", action="/login", hx_post="/login", hx_swap="outerHTML",
         cls="space-y-4", id="form-login")
@@ -325,6 +332,81 @@ def _enlace_invalido():
         "Enlace no válido", "El enlace venció o ya se usó.",
         P(A("Solicitar uno nuevo", href="/recuperar", cls="text-primary hover:underline"),
           cls="text-center text-sm")))
+
+
+# --- Ingreso de estudiantes con un enlace al correo (sin contraseña; PLAN §49) ------------------------------------------
+
+def form_acceso(email="", error=None):
+    return Form(
+        mensaje_error(error) if error else "",
+        LabelInput("Correo con el que está registrado(a)", id="email", type="email", value=email, required=True,
+                   autocomplete="username", autofocus=True),
+        Button("Enviar enlace", cls=(ButtonT.primary, "w-full"), type="submit"),
+        P(A("Volver al ingreso", href="/login", cls="text-primary hover:underline"),
+          cls=(TextPresets.muted_sm, "text-center")),
+        method="post", action="/acceso", hx_post="/acceso", hx_swap="outerHTML", cls="space-y-4", id="form-acceso")
+
+
+@rt("/acceso")
+def get(sess):
+    if sess.get("uid"):
+        return Redirect("/")
+    return pagina("Ingreso de estudiantes", _tarjeta_acceso(
+        "Ingreso de estudiantes", "Le enviaremos un enlace a su correo; no necesita contraseña.", form_acceso()))
+
+
+@rt("/acceso")
+def post(req, htmx, email: str = ""):
+    email = email.strip().lower()
+    u = usuarios.por_email(email) if email else None
+    # Misma respuesta exista o no la cuenta (no se puede averiguar quién está registrado).
+    if u and u["activo"] and estudiantes.cuenta_de(u["id"]) and not tokens.demasiados_pedidos(u["id"], "acceso"):
+        enlace = f"{config.URL_BASE}/acceso/{tokens.emitir(u['id'], 'acceso')}"
+        correo.enviar(u["email"], f"Su enlace de ingreso a {config.NOMBRE_SISTEMA}",
+                      f"Hola, {u['nombres']}:\n\nPara ingresar a {config.NOMBRE_SISTEMA}, abra este enlace "
+                      f"(vale una vez y durante 30 minutos):\n\n{enlace}\n\n"
+                      "Si no lo solicitó, ignore este mensaje: nadie puede ingresar sin el enlace.")
+        auditar(u["id"], "solicitar_acceso_enlace", "usuario", u["id"], req.client.host if req.client else None)
+    listo = Div(P("Si el correo corresponde a un estudiante registrado, le enviamos un enlace para ingresar. "
+                  "Revise su bandeja de entrada (y la de spam).", cls="text-sm"),
+                P(A("Volver al ingreso", href="/login", cls="text-primary hover:underline"),
+                  cls=(TextPresets.muted_sm, "text-center mt-4")), id="form-acceso")
+    return listo if htmx.request else pagina("Ingreso de estudiantes", _tarjeta_acceso(
+        "Ingreso de estudiantes", "Revise su correo.", listo))
+
+
+def _acceso_invalido():
+    return pagina("Enlace no válido", _tarjeta_acceso(
+        "Enlace no válido", "El enlace venció o ya se usó.",
+        P(A("Solicitar uno nuevo", href="/acceso", cls="text-primary hover:underline"), cls="text-center text-sm")))
+
+
+@rt("/acceso/{token}")
+def get(token: str):
+    # El enlace no se consume al abrirlo (los programas de seguridad del correo lo abren antes que la persona):
+    # se consume al pulsar «Ingresar».
+    t = tokens.vigente(token, ("acceso",))
+    if not t:
+        return _acceso_invalido()
+    u = usuarios.por_id(t["usuario_id"])
+    return pagina("Ingresar", _tarjeta_acceso(
+        f"Hola, {u['nombres']}", u["email"],
+        Form(Button("Ingresar", cls=(ButtonT.primary, "w-full"), type="submit"),
+             method="post", action=f"/acceso/{token}")))
+
+
+@rt("/acceso/{token}")
+def post(sess, req, token: str):
+    t = tokens.vigente(token, ("acceso",))
+    u = usuarios.por_id(t["usuario_id"]) if t else None
+    if not t or not u or not u["activo"] or not estudiantes.cuenta_de(u["id"]):
+        return _acceso_invalido()
+    tokens.consumir(token, ("acceso",))
+    usuarios.registrar_acceso(u["id"])
+    sess.clear()  # evita fijación de sesión
+    sess["uid"] = u["id"]
+    auditar(u["id"], "login_enlace", "usuario", u["id"], req.client.host if req.client else None)
+    return Redirect("/")
 
 
 @rt("/recuperar/{token}")

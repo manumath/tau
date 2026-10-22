@@ -4,7 +4,7 @@
   `<directorio de la base>/registros/portal.log` (rota a los 10 MB y guarda 5 archivos).
 - `RegistroPeticiones` (middleware ASGI): una línea por petición con método, ruta, código, duración y el id de
   quien la hizo. Por privacidad no registra la consulta (`?q=…` puede traer nombres) ni el cuerpo, y oculta
-  los tokens de `/recuperar/…`. Las de más de `LENTA_MS` van como WARNING. No registra `/static` ni `/salud`.
+  los tokens de `/recuperar/…` y `/acceso/…`. Las de más de `LENTA_MS` van como WARNING. No registra `/static` ni `/salud`.
 - Un error no controlado se registra con su traza y un **código de referencia** corto, que la página de
   error muestra a quien lo sufrió (y el aviso de htmx, por la cabecera X-Referencia): así la administración
   encuentra la traza en el registro. Con `PORTAL_AVISO_ERRORES=correo@…`, además se avisa por correo (a lo
@@ -24,7 +24,7 @@ log_peticiones = logging.getLogger("portal.peticiones")
 LENTA_MS = 1000
 AVISO_CADA_S = 15 * 60
 _SIN_REGISTRO = re.compile(r"/static/.*|/salud|/favicon\.ico")
-_TOKENS = re.compile(r"^(/recuperar/)[^/]+")
+_TOKENS = re.compile(r"^(/(?:recuperar|acceso)/)[^/]+")
 _ultimo_aviso = 0.0
 
 

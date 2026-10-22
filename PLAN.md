@@ -1784,8 +1784,46 @@ agregados, no datos individuales. Pruebas por rol.
    titulaciones en los 10 últimos ciclos.
 6. El tablero cuenta solo licenciatura del programa propio con cohorte (`nivel = 'licenciatura'`, `del_programa = 1`).
 
-Pendiente de las etapas siguientes: acceso del estudiante por enlace al correo (etapa 2), motor de encuestas (3), egresados (4),
-tutoría, directorio y sección del anexo (5).
+Pendiente de las etapas siguientes: motor de encuestas (3), egresados (4), tutoría, directorio y sección del anexo (5).
+
+### Etapa 2: acceso por enlace, ficha, trayectoria y actividad estudiantil (implementada, 21-oct-2026)
+
+Decisiones de la etapa 1 confirmadas el 21-oct-2026.
+
+- **Cuentas:** `cuenta_estudiante(externo_id, usuario_id, consentimiento_en)` une la cuenta con la ficha. **No** se usa
+  `persona_externa.usuario_id` (es el paso a investigador, §42, y sacaría a la persona de los selectores de tesistas y
+  coautores). La cuenta se crea **sin contraseña** (`SIN_ACCESO`, como las personas sin acceso): no entra por `/login` ni
+  puede «recuperar» una contraseña. «Dar acceso a estudiantes» (Dirección de Carrera y Gestión de datos) la crea para quien
+  cursa o está congelado, con correo y sin cuenta; si el correo ya es de otra cuenta, **no se vincula sola** (podría estar
+  mal escrito) y se cuenta aparte.
+- **Ingreso por enlace** (`/acceso`): el estudiante escribe su correo y recibe un enlace de un solo uso, de 30 minutos
+  (`token_acceso`, propósito «acceso»; hasta 3 por hora y cuenta). La respuesta es la misma exista o no la cuenta. **Abrir el
+  enlace no lo consume** (los programas de seguridad del correo lo abren antes que la persona): se consume al pulsar «Ingresar».
+  Un token de acceso no sirve en `/recuperar/…` (`tokens.vigente` recibe los propósitos válidos; por omisión, los de definir
+  contraseña) y viceversa. El registro de peticiones oculta también `/acceso/…`.
+- **Aislamiento:** una cuenta «solo estudiante» (tiene ficha y no es investigadora, ni administradora, ni tiene vínculo vigente
+  ni roles) solo llega a `/estudiante…`, `/avisos…` y `/logout`; cualquier otra ruta la redirige a `/estudiante`
+  (`auth.RUTAS_ESTUDIANTE`, en el Beforeware). Su barra muestra solo «Mi seguimiento». Quien es personal y además estudiante
+  conserva su acceso.
+- **Portal** (`/estudiante`): consentimiento la primera vez; ficha (RU, cohorte, plan, estado), participación en la
+  investigación (solo lectura, sin enlaces) y **actividad estudiantil** (`actividad_estudiantil`): 10 tipos, fechas, institución,
+  descripción y evidencia (PDF, PNG o JPG como adjunto `actividad_estudiantil`, servida solo a su dueña y a quien verifica).
+  Estados: por verificar, verificada, con observaciones; editar o cambiar la evidencia la devuelve a «por verificar».
+- **Verificación** (`/docencia/cohortes/actividades`, permiso `verificar_actividad`: Dirección de Carrera y Coordinación
+  académica): lista de pendientes con evidencia, «Verificar» y «Observar» (con texto); el estudiante recibe un aviso del centro
+  de avisos. La pantalla de cohortes muestra cuántas hay por verificar.
+- **Migraciones 0043** (`cuenta_estudiante`, `actividad_estudiantil`; recrea `token_acceso` para admitir «acceso») **y 0044**
+  (recrea `adjunto` para admitir `actividad_estudiantil`).
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. El **consentimiento** es una aceptación por cuenta (`consentimiento_en`) del texto de uso de datos, la primera vez que ingresa.
+   El texto lo redacté yo: conviene que la Dirección lo revise.
+2. **Sin aviso a los verificadores** cuando llega una actividad nueva (solo el contador en la pantalla de cohortes), para no
+   saturar con 300 estudiantes.
+3. Las cuentas se crean **solo para quienes cursan o están congelados**; los egresados y titulados las recibirán con el módulo de
+   egresados (etapa 4).
+4. El estudiante puede **eliminar** sus actividades aunque estén verificadas (queda en la auditoría).
+5. La **fecha de inicio** de una actividad no puede ser futura.
 
 ## 50. Módulo Egresados o alumni (21-oct-2026)
 
@@ -1825,7 +1863,7 @@ logro del perfil de egreso, y sección nueva en el anexo.
 |---|---|---|
 | 0 | Confirmar decisiones de §49 y §50 | Reglas fijadas ✔ (21-oct-2026) |
 | 1 | Cohortes, estado, importación CSV y tablero | Hojas 3 a 6 de la Guía ✔ (21-oct-2026) |
-| 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante |
+| 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante | ✔ (21-oct-2026)
 | 3 | Motor de encuestas (anónimas y nominales) | Base común |
 | 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni |
 | 5 | Tutoría, directorio y mentoría, sección del anexo | Cierre |

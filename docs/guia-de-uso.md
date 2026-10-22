@@ -178,11 +178,34 @@ académico); un congelado, el último ciclo; un egresado, la fecha de egreso; un
 titulación. Descargue la plantilla desde la misma ventana. Antes de guardar verá una vista previa con
 lo que se crea, lo que se actualiza y los errores (las filas con errores se omiten).
 
+**Dar acceso a estudiantes.** Con **Dar acceso a estudiantes** (Dirección de Carrera y Gestión de datos) el
+sistema crea una cuenta para cada estudiante que cursa, tiene correo y aún no tiene acceso. No hay
+contraseñas: el estudiante entra a **Ingreso de estudiantes** (enlace «¿Es estudiante?» de la pantalla de
+ingreso), escribe su correo y recibe un enlace que vale 30 minutos y una sola vez. Si el correo ya lo usa otra
+cuenta (por ejemplo, la de un docente), esa ficha queda sin acceso y el aviso lo cuenta: revise el correo.
+
 Si el estudiante ya figura (por RU, correo o nombre, como tesista, por ejemplo), se actualiza su
 ficha en lugar de crear otra. Se vuelve a cargar el archivo cada vez que cambie la situación.
 **Desertor** es quien se retiró o quien congeló sus estudios y no volvió en los dos ciclos siguientes
 (definición de IAC-CINDA). El sistema considera matriculado a un estudiante desde su cohorte hasta su
 último ciclo matriculado; no registra los congelamientos intermedios.
+
+### Portal del estudiante («Mi seguimiento»)
+
+Quien tiene cuenta de estudiante solo ve **Mi seguimiento**; no entra al resto del sistema. La primera vez
+lee y acepta el uso de sus datos. Ve su ficha (RU, cohorte, plan y estado), su participación en la
+investigación (tesis, proyectos y actividades del instituto) y su **actividad estudiantil**: ayudantías,
+olimpiadas, congresos, pasantías, becas, movilidad, semilleros, charlas, voluntariado y otras. Cada una lleva
+título, fechas, institución, descripción y, si quiere, evidencia (PDF, PNG o JPG de hasta 20 MB). El estado
+puede ser «Por verificar», «Verificada» o «Con observaciones»; si el estudiante corrige una actividad o cambia
+su evidencia, vuelve a quedar por verificar. Puede eliminar lo que registró. El sistema no muestra ni guarda
+materias ni notas.
+
+### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
+
+En **Docencia → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes
+declararon, con su evidencia. **Verificar** la da por válida; **Observar** pide escribir qué debe corregir. En
+los dos casos el estudiante recibe un aviso (en el sistema y, según su preferencia, por correo).
 
 ### Coautores externos
 

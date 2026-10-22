@@ -33,6 +33,15 @@ def _menu_usuario(usuario: dict):
     """Nombre del usuario con un desplegable: perfil, contraseña y salir."""
     item = "flex items-center gap-2 px-3 py-2 rounded hover:bg-muted w-full text-left text-sm"
     opciones = []
+    if usuario.get("solo_estudiante"):          # solo ve su seguimiento: sin perfil, datos personales ni contraseña
+        return Div(
+            Button(Span(usuario["nombres"], cls="max-w-40 truncate"),
+                   UkIcon("chevron-down", height=14, width=14), cls=(ButtonT.ghost, "gap-1"),
+                   type="button", aria_haspopup="true"),
+            Div(Div(Span(usuario["email"], cls=(TextPresets.muted_sm, "block px-3 py-2 truncate")), selector_tema(),
+                    Form(fh.Button(UkIcon("log-out", height=16, width=16), "Salir", type="submit", cls=item),
+                         method="post", action="/logout", hx_post="/logout"), cls="flex flex-col"),
+                uk_dropdown="mode: click; pos: bottom-right", cls="uk-drop uk-dropdown w-60 p-1"))
     if usuario["es_investigador"]:
         opciones.append(A(UkIcon("user-round", height=16, width=16), "Mi perfil", href="/perfil",
                           cls=item))
@@ -77,6 +86,14 @@ def campo_busqueda(q: str = "", sugerencias: bool = True):
 
 
 def barra_navegacion(usuario: dict, seccion: str = ""):
+    if usuario.get("solo_estudiante"):
+        enlaces = [_enlace("Mi seguimiento", "/estudiante", "graduation-cap", seccion == "estudiante"),
+                   Span(id="campana-avisos", hx_get="/avisos/campana", hx_trigger="load", hx_swap="outerHTML"),
+                   _menu_usuario(usuario)]
+        marca = A(DivHStacked(Span("τ", cls="font-serif italic text-3xl leading-none text-primary", aria_hidden="true"),
+                              H3(config.NOMBRE_SISTEMA, cls="text-lg tracking-wide")),
+                  href="/estudiante", title=config.DESCRIPCION_SISTEMA, aria_label=config.NOMBRE_COMPLETO)
+        return NavBar(*enlaces, brand=marca, sticky=True, cls="px-6 py-3 border-b border-border")
     enlaces = [_enlace("Inicio", "/", "home", seccion == "inicio")]
     if usuario["es_investigador"]:
         enlaces += [_enlace("Actividades", "/actividades", "calendar-days", seccion == "actividades"),

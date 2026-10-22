@@ -10,10 +10,11 @@ from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, Label, LabelT
                            UkIcon)
 
 from app.academico.componentes import pestanas
-from app.comun import permisos, vinculos
+from app.comun import estudiantes, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
-from app.estudiantil import cohortes, importar
+from app.comun.db import auditar
+from app.estudiantil import actividad, cohortes, importar
 
 rt = APIRouter()
 BASE = "/docencia/cohortes"
@@ -30,6 +31,10 @@ def _puede_cargar(auth) -> bool:
 
 def _pct(x):
     return "—" if x is None else f"{x * 100:.0f} %"
+
+
+def _puede_verificar(auth) -> bool:
+    return permisos.puede(auth, "verificar_actividad", vinculos.carrera())
 
 
 def _tablero(auth):
@@ -75,8 +80,16 @@ def get(auth):
                 P("Ingreso, egreso, titulación y deserción de la licenciatura por cohorte (semestre de ingreso). Son cifras "
                   "agregadas: no incluyen materias ni notas, que están en el sistema de Seguimiento Académico. Alimentan "
                   "las hojas 3 a 6 de la Guía de Antecedentes de IAC-CINDA.", cls=(TextPresets.muted_sm, "max-w-3xl"))),
-            Button(UkIcon("upload", height=16, width=16), "Cargar CSV", cls=ButtonT.primary, hx_get=f"{BASE}/importar",
-                   hx_target=f"#{ID_MODAL}") if _puede_cargar(auth) else "",
+            Div(A(UkIcon("badge-check", height=16, width=16), f"Actividades por verificar ({actividad.n_pendientes()})",
+                  href=f"{BASE}/actividades", cls="uk-btn uk-btn-default inline-flex items-center gap-1")
+                if _puede_verificar(auth) else "",
+                Button(UkIcon("key-round", height=16, width=16), "Dar acceso a estudiantes", cls=ButtonT.default,
+                       hx_post=f"{BASE}/accesos", hx_confirm="Se creará una cuenta para cada estudiante que cursa, tiene "
+                       "correo y aún no tiene acceso. Ingresarán con un enlace a su correo. ¿Continuar?")
+                if _puede_cargar(auth) else "",
+                Button(UkIcon("upload", height=16, width=16), "Cargar CSV", cls=ButtonT.primary, hx_get=f"{BASE}/importar",
+                       hx_target=f"#{ID_MODAL}") if _puede_cargar(auth) else "",
+                cls="flex flex-wrap items-center gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         resumen, tabla,
         P("Solo cuenta a estudiantes de la licenciatura del programa propio con cohorte de ingreso. Un estudiante cuenta "
@@ -169,4 +182,19 @@ def post(auth, sess, contenido: str = ""):
     filas, _ = importar.leer(datos)
     nuevas, actualizadas = importar.aplicar(filas, auth["id"])
     add_toast(sess, f"Cohortes cargadas: {nuevas} nueva(s) y {actualizadas} actualizada(s).", "success")
+    return Redirect(BASE)
+
+
+@rt(f"{BASE}/accesos")
+def post(auth, sess):
+    if not _puede_cargar(auth):
+        return Response("No autorizado", status_code=403)
+    r = estudiantes.crear_cuentas(auth["id"])
+    auditar(auth["id"], "crear_cuentas_estudiantes", "usuario", None, f"{r['creadas']} cuenta(s)")
+    partes = [f"{r['creadas']} cuenta(s) creada(s)"]
+    if r["sin_correo"]:
+        partes.append(f"{r['sin_correo']} sin correo")
+    if r["en_uso"]:
+        partes.append(f"{r['en_uso']} con un correo que ya usa otra cuenta")
+    add_toast(sess, "Acceso de estudiantes: " + ", ".join(partes) + ".", "success" if r["creadas"] else "info")
     return Redirect(BASE)
