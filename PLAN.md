@@ -1590,8 +1590,8 @@ Veredicto: el stack es adecuado; los problemas son de terminación y escala. Ord
 3. **Hecho (4-oct-2026):** registros de actividad y de errores (requisito del despliegue).
 4. **Hecho (4-oct-2026):** búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
 5. **Hecho (4-oct-2026):** «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
-6. Deuda técnica: armar productos en lote (N+1), modelo de formulario compartido para alta y edición,
-   `ruff` y `pyright`.
+6. Deuda técnica. **Hecho (21-oct-2026):** armar productos en lote (N+1) y formulario compartido para alta
+   y edición. Pendiente: `ruff` y `pyright` (requieren descargar herramientas: lo decide el usuario).
 
 Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas reales y cinco tareas.
 
@@ -1675,3 +1675,15 @@ Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas r
 - Lo que corrigen las direcciones o la administración (vínculos, fecha de nacimiento, oferta, planes,
   coautores externos) no tiene «Avisar»: lo ve quien lo corrige.
 - Un aviso por revisión y persona cada 7 días como máximo.
+
+**Paso 6, implementación:**
+- `productos.obtener_varios(ids)`: arma muchos productos con una consulta por parte (base, autores, revistas,
+  índices, MSC, enlace preprint–versión) en lugar de unas nueve por producto; `obtener(pid)` es su caso
+  particular (un solo camino, no dos que puedan divergir). `personas.por_refs` resuelve muchas personas a la
+  vez y calcula la unidad de cada investigador una sola vez; `msc.de_productos` igual. Lo usan las listas, el
+  CV, la memoria, la Guía, las tesis, el perfil público y la API. Se eliminó `productos.autores`, sin uso.
+- Con 3.000 productos: CV de 27.065 consultas y 297 ms a 53 y 108 ms; memoria de 27.170 y 284 ms a 3.188 y
+  106 ms; Calidad de datos de 27.613 y 255 ms a 7.626 y 100 ms. Lo que queda es el vínculo de cada autor en
+  cada fecha: mejorarlo rinde poco.
+- Alta y edición de productos leen el formulario con `leer_formulario` (antes, unos 20 parámetros repetidos en
+  cada ruta): un campo nuevo se agrega en un solo lugar.

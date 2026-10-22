@@ -64,25 +64,63 @@ def normalizar_arxiv(valor: str) -> str:
 # --- Lectura -------------------------------------------------------------------------
 
 def obtener(pid: int) -> dict | None:
-    filas = get_db().q(
-        """SELECT p.*, t.nombre AS tipo, t.admite_revision FROM producto p
-           JOIN tipo_producto t ON t.id = p.tipo_id WHERE p.id = ?""", [pid])
-    if not filas:
-        return None
-    p = filas[0]
-    p["autores"] = autores(pid)
+    """El producto completo: tipo, autores, revista del catálogo, índices, MSC y enlace preprint–versión."""
+    lista = obtener_varios([pid])
+    return lista[0] if lista else None
+
+
+def obtener_varios(ids) -> list[dict]:
+    """Varios productos completos, en el orden de `ids` (los que no existen se omiten). Arma todos a la vez
+    —una consulta por parte (autores, índices, MSC…) en lugar de unas nueve por producto—: el CV, la memoria
+    y Calidad de datos recorren miles."""
+    ids = list(dict.fromkeys(int(i) for i in ids))
+    if not ids:
+        return []
+    db = get_db()
+
+    def en(sql, valores, extra=()):
+        """Filas de `sql` (con IN (…) en {}) para todos los valores, de a lotes."""
+        filas = []
+        for lote in personas._lotes(list(valores)):
+            filas += db.q(sql.format(",".join("?" * len(lote))), [*lote, *extra])
+        return filas
+
+    base = {f["id"]: f for f in en("""SELECT p.*, t.nombre AS tipo, t.admite_revision FROM producto p
+                                       JOIN tipo_producto t ON t.id = p.tipo_id WHERE p.id IN ({})""", ids)}
+    autores_de, refs = {}, []
+    for f in en("SELECT * FROM producto_autor WHERE producto_id IN ({}) ORDER BY producto_id, orden", base):
+        r = personas.ref(f["investigador_id"], f["externo_id"])
+        autores_de.setdefault(f["producto_id"], []).append((r, f["filiacion_instituto"]))
+        refs.append(r)
+    gente = personas.por_refs(refs)
     # Revista del catálogo (si la tiene): si está verificada, la revisión y los índices vienen de ella.
-    p["revista"] = revistas.obtener(p["revista_id"]) if p.get("revista_id") else None
-    p["clasificacion_catalogo"] = bool(p["revista"] and p["revista"]["estado"] == "verificada")
-    p["indices"] = get_db().q(
-        """SELECT i.* FROM producto_indice pi JOIN indice i ON i.id = pi.indice_id
-           WHERE pi.producto_id = ? ORDER BY i.orden""", [pid])
-    p["msc"] = msc.de_producto(pid)
+    revistas_de = {r["id"]: r for r in en("SELECT * FROM revista WHERE id IN ({})",
+                                          {f["revista_id"] for f in base.values() if f["revista_id"]})}
+    indices_de = {}
+    for f in en("""SELECT pi.producto_id, i.* FROM producto_indice pi JOIN indice i ON i.id = pi.indice_id
+                   WHERE pi.producto_id IN ({}) ORDER BY i.orden""", base):
+        indices_de.setdefault(f.pop("producto_id"), []).append(f)
+    msc_de = msc.de_productos(list(base))
     # Preprint y versión publicada (PLAN.md §46): el preprint apunta a su versión publicada.
-    p["publicado_como"] = _resumen(p["publicado_como_id"])
-    filas = get_db().q("SELECT id FROM producto WHERE publicado_como_id = ?", [pid])
-    p["preprint"] = _resumen(filas[0]["id"]) if filas else None
-    return p
+    resumen = "id, titulo, anio, doi, arxiv_id"
+    publicadas = {f["id"]: f for f in en(f"SELECT {resumen} FROM producto WHERE id IN ({{}})",
+                                         {f["publicado_como_id"] for f in base.values() if f["publicado_como_id"]})}
+    preprints = {f.pop("publicado_como_id"): f for f in en(
+        f"SELECT {resumen}, publicado_como_id FROM producto WHERE publicado_como_id IN ({{}})", base)}
+    res = []
+    for pid in ids:
+        if pid not in base:
+            continue
+        p = base[pid]
+        p["autores"] = [{**gente[r], "filiacion": fil} for r, fil in autores_de.get(pid, []) if r in gente]
+        p["revista"] = revistas_de.get(p["revista_id"])
+        p["clasificacion_catalogo"] = bool(p["revista"] and p["revista"]["estado"] == "verificada")
+        p["indices"] = indices_de.get(pid, [])
+        p["msc"] = msc_de.get(pid, [])
+        p["publicado_como"] = publicadas.get(p["publicado_como_id"])
+        p["preprint"] = preprints.get(pid)
+        res.append(p)
+    return res
 
 
 def _resumen(pid) -> dict | None:
@@ -96,16 +134,6 @@ def _resumen(pid) -> dict | None:
 def arxiv_de(p: dict) -> str | None:
     """El arXiv del producto o, en una versión publicada, el de su preprint enlazado."""
     return p.get("arxiv_id") or (p.get("preprint") or {}).get("arxiv_id")
-
-
-def autores(pid: int) -> list[dict]:
-    filas = get_db().q("SELECT * FROM producto_autor WHERE producto_id = ? ORDER BY orden", [pid])
-    res = []
-    for f in filas:
-        p = personas.por_ref(personas.ref(f["investigador_id"], f["externo_id"]))
-        if p:
-            res.append({**p, "filiacion": f["filiacion_instituto"]})
-    return res
 
 
 def cuenta_para_informe(p: dict) -> bool:
@@ -357,7 +385,7 @@ def puede_eliminar(p: dict, uid: int) -> bool:
 def de_investigador(uid: int, texto: str = "", anio: str = "", tipo_id: str = "",
                     solo_informe: bool = False, sin_filiacion: bool = False, area: str = "") -> list[dict]:
     """Los productos completos (ver `buscar`)."""
-    return [obtener(f["id"]) for f in buscar(uid, texto, anio, tipo_id, solo_informe, sin_filiacion, area)]
+    return obtener_varios(f["id"] for f in buscar(uid, texto, anio, tipo_id, solo_informe, sin_filiacion, area))
 
 
 def buscar(uid: int, texto: str = "", anio: str = "", tipo_id: str = "",

@@ -484,12 +484,11 @@ def _productos_del_programa(anio_ini: int, anio_fin: int, tipos) -> list[dict]:
     """Productos de los tipos, enviados, aceptados o publicados en los años, con al menos un autor
     del programa (vínculo vigente en la fecha de publicación)."""
     res = []
-    for f in get_db().q(
+    for p in productos.obtener_varios(f["id"] for f in get_db().q(
             f"""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
                 WHERE p.anio BETWEEN ? AND ? AND t.nombre IN ({','.join('?' * len(tipos))})
                   AND p.estado_publicacion IN ('enviado', 'aceptado', 'publicado')
-                ORDER BY p.anio, p.titulo""", [anio_ini, anio_fin, *tipos]):
-        p = productos.obtener(f["id"])
+                ORDER BY p.anio, p.titulo""", [anio_ini, anio_fin, *tipos])):
         internos = _internos(p["autores"], p["anio"], p["mes"])
         if internos:
             res.append({**p, "internos": internos,

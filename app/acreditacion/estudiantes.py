@@ -12,10 +12,9 @@ def tesis(desde_anio: int, hasta_anio: int) -> list[dict]:
     """Tesis dirigidas del periodo con al menos un director del instituto vinculado en la fecha.
     Cada una: producto, tesistas (con nivel), directores y estado (defendida / en curso)."""
     res = []
-    for f in get_db().q("""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
-                           WHERE t.nombre = ? AND p.anio BETWEEN ? AND ? ORDER BY p.anio, p.id""",
-                        [TIPO_TESIS, desde_anio, hasta_anio]):
-        x = productos.obtener(f["id"])
+    for x in productos.obtener_varios(f["id"] for f in get_db().q(
+            """SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
+               WHERE t.nombre = ? AND p.anio BETWEEN ? AND ? ORDER BY p.anio, p.id""", [TIPO_TESIS, desde_anio, hasta_anio])):
         directores = [a for a in x["autores"] if a["interno"] and vinculos.en_fecha(a["id"], x["anio"], x["mes"])[0] == "si"]
         if not directores:
             continue

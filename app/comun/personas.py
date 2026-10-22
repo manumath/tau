@@ -68,25 +68,35 @@ def columnas(r: str) -> dict:
 
 def por_ref(r: str) -> dict | None:
     """Datos para mostrar una persona: nombre, afiliación y si es interna."""
-    if (r or "").startswith("n:"):
-        d = _datos_nueva(r)
-        return {**d, "id": None, "ref": r, "interno": False, "nueva": True} if d else None
-    p = parsear_ref(r)
-    if not p:
-        return None
-    tipo, num = p
-    if tipo == "i":
-        filas = get_db().q(
-            """SELECT u.id, u.nombres, u.apellidos FROM usuario u
-               JOIN investigador i ON i.usuario_id = u.id WHERE u.id = ?""", [num])
-        for f in filas:
+    return por_refs([r]).get(r)
+
+
+def por_refs(refs) -> dict[str, dict]:
+    """Varias personas a la vez (ref → datos; las que no existen no aparecen): una consulta por clase de
+    persona, y la unidad de cada investigador se calcula una sola vez aunque figure en muchos registros."""
+    res, internos, externos = {}, set(), set()
+    for r in dict.fromkeys(refs):
+        if (r or "").startswith("n:"):
+            d = _datos_nueva(r)
+            if d:
+                res[r] = {**d, "id": None, "ref": r, "interno": False, "nueva": True}
+        elif (p := parsear_ref(r)):
+            (internos if p[0] == "i" else externos).add(p[1])
+    for lote in _lotes(sorted(internos)):
+        for f in get_db().q(f"""SELECT u.id, u.nombres, u.apellidos FROM usuario u JOIN investigador i ON i.usuario_id = u.id
+                                WHERE u.id IN ({','.join('?' * len(lote))})""", lote):
             f["afiliacion"] = adscripcion.unidad(f["id"])
-    else:
-        filas = get_db().q("SELECT id, nombres, apellidos, institucion AS afiliacion "
-                           "FROM persona_externa WHERE id = ?", [num])
-    if not filas:
-        return None
-    return {**filas[0], "ref": r, "interno": tipo == "i"}
+            res[f"i:{f['id']}"] = {**f, "ref": f"i:{f['id']}", "interno": True}
+    for lote in _lotes(sorted(externos)):
+        for f in get_db().q(f"""SELECT id, nombres, apellidos, institucion AS afiliacion FROM persona_externa
+                                WHERE id IN ({','.join('?' * len(lote))})""", lote):
+            res[f"e:{f['id']}"] = {**f, "ref": f"e:{f['id']}", "interno": False}
+    return res
+
+
+def _lotes(ids, tam=500):
+    """De a `tam` (SQLite limita la cantidad de parámetros de una consulta)."""
+    return [ids[i:i + tam] for i in range(0, len(ids), tam)]
 
 
 def buscar(texto: str, excluir: set[str] = frozenset(), limite: int = 8) -> list[dict]:

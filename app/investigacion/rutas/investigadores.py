@@ -96,7 +96,7 @@ def _produccion(uid):
     """Productos (primero los que cuentan para el informe) y actividades recientes."""
     prods = productos.buscar(uid)
     prods.sort(key=lambda x: (not productos.cuenta_para_informe(x), -x["anio"]))
-    primeros = [productos.obtener(x["id"]) for x in prods[:15]]  # solo se arman los que se muestran
+    primeros = productos.obtener_varios(x["id"] for x in prods[:15])  # solo se arman los que se muestran
     acts = actividades.de_investigador(uid)[:8]
     return Div(
         seccion("pub-productos", f"Productos ({len(prods)})",

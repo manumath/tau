@@ -156,13 +156,22 @@ def modal_form(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, pro
                  ancho="max-w-3xl")
 
 
-def _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                paginas, doi, arxiv_id, url, resumen, actividad_id, mes="", revista_id="", codigos_msc=None):
-    return dict(tipo_id=tipo_id, titulo=titulo, anio=anio, mes=mes, revista_id=revista_id,
-                estado_publicacion=estado_publicacion,
-                revision=revision, medio=medio, volumen=volumen, numero=numero, paginas=paginas,
-                doi=doi, arxiv_id=arxiv_id, url=url, resumen=resumen, actividad_id=actividad_id,
-                msc=codigos_msc or [])
+# Lo que envía el formulario de productos (alta y edición leen lo mismo, en un solo lugar).
+CAMPOS = ("tipo_id", "titulo", "anio", "mes", "revista_id", "estado_publicacion", "revision", "medio", "volumen",
+          "numero", "paginas", "doi", "arxiv_id", "url", "resumen", "actividad_id")
+REVISTA_NUEVA = ("revista_nueva_titulo", "revista_nueva_issn", "revista_nueva_eissn")
+
+
+def leer_formulario(form) -> dict:
+    """Campos del producto (`datos`, con la clasificación MSC en orden), la revista propuesta (`nueva`) y las
+    listas del formulario: autores y su filiación (paralelas), índices, proyectos y agradecimientos; y, en el
+    alta, el preprint del que es versión publicada."""
+    return {"datos": {**{k: form.get(k, "") for k in CAMPOS}, "msc": form.getlist("msc")},
+            "nueva": {k: form.get(k, "") for k in REVISTA_NUEVA},
+            "autor": form.getlist("autor"), "filiacion": form.getlist("filiacion"),
+            "indice": form.getlist("indice"), "agradece": form.getlist("agradece"),
+            "proyecto": [int(x) for x in form.getlist("proyecto") if str(x).isdigit()],
+            "preprint": int(form["preprint"]) if str(form.get("preprint", "")).isdigit() else None}
 
 
 def msc_elegidos(valor) -> list[dict]:
@@ -248,18 +257,8 @@ def _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion=None, ag
 
 
 @rt("/productos")
-def post(auth, sess, tipo_id: str = "", titulo: str = "", anio: str = "",
-         estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
-         numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
-         resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
-         indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
-         agradece: list[str] = None, revista_id: str = "", revista_nueva_titulo: str = "",
-         revista_nueva_issn: str = "", revista_nueva_eissn: str = "", msc: list[str] = None, preprint: int = None):
-    datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id, msc)
-    nueva = dict(revista_nueva_titulo=revista_nueva_titulo, revista_nueva_issn=revista_nueva_issn,
-                 revista_nueva_eissn=revista_nueva_eissn)
-    return _guardar(auth, sess, None, datos, autor, indice, proyecto, filiacion, agradece, nueva, preprint)
+async def post(auth, sess, req):
+    return _guardar(auth, sess, None, **leer_formulario(await req.form()))
 
 
 @rt("/productos/{pid}/editar")
@@ -271,21 +270,11 @@ def get(auth, pid: int):
 
 
 @rt("/productos/{pid}")
-def put(auth, sess, pid: int, tipo_id: str = "", titulo: str = "", anio: str = "",
-        estado_publicacion: str = "", revision: str = "", medio: str = "", volumen: str = "",
-        numero: str = "", paginas: str = "", doi: str = "", arxiv_id: str = "", url: str = "",
-        resumen: str = "", actividad_id: str = "", mes: str = "", autor: list[str] = None,
-        indice: list[str] = None, proyecto: list[int] = None, filiacion: list[str] = None,
-        agradece: list[str] = None, revista_id: str = "", revista_nueva_titulo: str = "",
-        revista_nueva_issn: str = "", revista_nueva_eissn: str = "", msc: list[str] = None):
+async def put(auth, sess, req, pid: int):
     p = productos.obtener(pid)
     if not p or not productos.puede_editar(p, auth["id"]):
         return Response("No autorizado", status_code=403)
-    datos = _datos_form(tipo_id, titulo, anio, estado_publicacion, revision, medio, volumen, numero,
-                        paginas, doi, arxiv_id, url, resumen, actividad_id, mes, revista_id, msc)
-    nueva = dict(revista_nueva_titulo=revista_nueva_titulo, revista_nueva_issn=revista_nueva_issn,
-                 revista_nueva_eissn=revista_nueva_eissn)
-    return _guardar(auth, sess, pid, datos, autor, indice, proyecto, filiacion, agradece, nueva)
+    return _guardar(auth, sess, pid, **leer_formulario(await req.form()))  # el preprint solo cuenta en el alta
 
 
 

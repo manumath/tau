@@ -71,8 +71,8 @@ def cv(uid: int, desde: int, hasta: int, solo_informe: bool = False, solo_filiac
     """CV personal: toda su producción del periodo (también la anterior a su ingreso). Con
     `solo_filiacion`, solo los productos que firmó con la filiación del instituto."""
     perfil = perfiles.obtener(uid)
-    prods = [productos.obtener(f["id"]) for f in productos.buscar(uid) if desde <= f["anio"] <= hasta
-             and productos.es_autor(f["id"], uid)]  # en el CV, solo aquello de lo que es autor
+    prods = [p for p in productos.obtener_varios(f["id"] for f in productos.buscar(uid) if desde <= f["anio"] <= hasta)
+             if any(a["interno"] and a["id"] == uid for a in p["autores"])]  # en el CV, solo aquello de lo que es autor
     prods = productos.sin_preprints_publicados(prods)  # el preprint, solo si su versión publicada no está
     if solo_informe:
         prods = [p for p in prods if productos.cuenta_para_informe(p)]
@@ -164,10 +164,10 @@ def otros_resultados(desde: str, hasta: str, tipos=("Patente", "Traducción")) -
     """Otros resultados de I+D+i (IAC-CINDA 3.6.3 d, e) de autores vinculados en la fecha."""
     marcas = ",".join("?" * len(tipos))
     res = []
-    for f in get_db().q(f"""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
-                            WHERE t.nombre IN ({marcas}) AND p.anio BETWEEN ? AND ?
-                            ORDER BY t.nombre, p.anio""", [*tipos, int(desde[:4]), int(hasta[:4])]):
-        x = productos.obtener(f["id"])
+    for x in productos.obtener_varios(f["id"] for f in get_db().q(
+            f"""SELECT p.id FROM producto p JOIN tipo_producto t ON t.id = p.tipo_id
+                WHERE t.nombre IN ({marcas}) AND p.anio BETWEEN ? AND ?
+                ORDER BY t.nombre, p.anio""", [*tipos, int(desde[:4]), int(hasta[:4])])):
         if ubicar_producto(x, desde, hasta) == "dentro" and any(
                 a["interno"] and vinculos.en_fecha(a["id"], x["anio"], x["mes"])[0] == "si" for a in x["autores"]):
             res.append(x)
@@ -217,8 +217,8 @@ def memoria(anio: int | None = None, *, periodo: int | None = None, desde: str |
            ORDER BY p.revision, p.id""", [int(desde[:4]), int(hasta[:4])])]
     # Autores del instituto que figuran con cada producto: id → {usuario: categoría a la fecha}.
     internos_prod, prods, por_confirmar = {}, [], []
-    for i in ids:
-        x = productos.obtener(i)
+    for x in productos.obtener_varios(ids):
+        i = x["id"]
         lugar = ubicar_producto(x, desde, hasta)
         if lugar == "fuera":
             continue

@@ -109,7 +109,7 @@ def _confirmacion_eliminar(p):
 
 def pagina_de_items(uid, filas, desde):
     """Los productos de `filas` desde `desde` (una página), y el botón para los siguientes."""
-    return [*[item(productos.obtener(f["id"]), uid) for f in filas[desde:desde + POR_PAGINA]],
+    return [*[item(p, uid) for p in productos.obtener_varios(f["id"] for f in filas[desde:desde + POR_PAGINA])],
             cargar_mas("/productos/mas", desde + POR_PAGINA, len(filas), f"#{ID_FILTROS}")]
 
 

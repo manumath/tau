@@ -335,8 +335,8 @@ def ficha(a, auth):
     uid = auth["id"]
     editable = actividades.puede_editar(a, uid)
     participantes_ = actividades.participantes(a["id"])
-    presentaciones = [productos.obtener(r["id"]) for r in get_db().q(
-        "SELECT id FROM producto WHERE actividad_id = ? ORDER BY anio DESC", [a["id"]])]
+    presentaciones = productos.obtener_varios(r["id"] for r in get_db().q(
+        "SELECT id FROM producto WHERE actividad_id = ? ORDER BY anio DESC", [a["id"]]))
     acciones = Div(
         Button(UkIcon("pencil", height=14, width=14), "Editar", cls=(ButtonT.default, ButtonT.sm),
                hx_get=f"/actividades/{a['id']}/editar", hx_target=f"#{ID_MODAL}") if editable else "",

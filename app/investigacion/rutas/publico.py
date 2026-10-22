@@ -39,7 +39,7 @@ def productos_publicos(uid: int) -> list[dict]:
         f"""SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
             WHERE pa.investigador_id = ? AND {FILTRO_PUBLICO}
             ORDER BY p.anio DESC, p.id DESC""", [uid])
-    return productos.sin_preprints_publicados([productos.obtener(f["id"]) for f in filas])
+    return productos.sin_preprints_publicados(productos.obtener_varios(f["id"] for f in filas))
 
 
 def ids_publicos() -> set[int]:
@@ -219,5 +219,5 @@ def get(anio: str = ""):
         f"""SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
             WHERE pa.investigador_id IN ({marcas}) AND {FILTRO_PUBLICO}
             {filtro} ORDER BY p.anio DESC, p.id DESC""", [*publicos, *params])
-    lista = productos.sin_preprints_publicados([productos.obtener(f["id"]) for f in filas])
+    lista = productos.sin_preprints_publicados(productos.obtener_varios(f["id"] for f in filas))
     return _json([_producto_json(p, publicos) for p in lista])

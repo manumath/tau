@@ -46,9 +46,19 @@ MAX_PRODUCTO = 5
 
 def de_producto(pid: int) -> list[dict]:
     """Códigos del producto en orden; el primero es el principal."""
-    return get_db().q(
-        """SELECT m.*, pm.orden = 0 AS principal FROM producto_msc pm JOIN msc m ON m.codigo = pm.codigo
-           WHERE pm.producto_id = ? ORDER BY pm.orden""", [pid])
+    return de_productos([pid]).get(pid, [])
+
+
+def de_productos(pids: list[int]) -> dict[int, list[dict]]:
+    """Los códigos de varios productos (producto → códigos en orden), de a lotes."""
+    res = {}
+    for i in range(0, len(pids), 500):
+        lote = pids[i:i + 500]
+        for f in get_db().q(f"""SELECT pm.producto_id, m.*, pm.orden = 0 AS principal FROM producto_msc pm
+                                JOIN msc m ON m.codigo = pm.codigo WHERE pm.producto_id IN ({','.join('?' * len(lote))})
+                                ORDER BY pm.producto_id, pm.orden""", lote):
+            res.setdefault(f.pop("producto_id"), []).append(f)
+    return res
 
 
 def validar(codigos: list[str]) -> tuple[list[str], list[str]]:
