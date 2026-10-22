@@ -139,10 +139,14 @@ app/
     rutas/                     cohortes (/docencia/cohortes: tablero y carga), actividades (verificación),
                                estudiante (/estudiante: portal del estudiante), encuestas (/docencia/encuestas),
                                responder (/encuesta/<enlace>, pública)
+  egresados/                   egresados (PLAN §50)
+    egresados.py               titulación, hitos de seguimiento (6 meses, 1, 3 y 5 años), invitaciones programadas e indicadores
+    rutas/                     egresados (/docencia/egresados)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 
 Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion`,
-`academico` y `estudiantil` pueden usar `comun` (y `acreditacion` usa `estudiantil` para la Guía). `app/inicio.py` y `main.py` reúnen todo.
+`academico`, `estudiantil` y `egresados` pueden usar `comun` (`acreditacion` usa `estudiantil` para la Guía y `egresados`
+usa `estudiantil` para el motor de encuestas). `app/inicio.py` y `main.py` reúnen todo.
 static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
 static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
 datos/planes/                  planes de estudio en CSV (formato en su README)

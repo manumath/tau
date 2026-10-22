@@ -41,8 +41,9 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   líneas, revistas, importaciones (DOI, arXiv, BibTeX, OpenAlex).
 - `app/academico`: planes de estudio, gestiones, oferta y asignación docente, carga horaria.
 - `app/acreditacion`: CV, memoria, anexo de I+D+i, estudiantes.
-- `app/estudiantil`: seguimiento estudiantil (PLAN §49 y §50): cohortes y carga del CSV de Seguimiento
-  Académico; después actividad estudiantil, encuestas y egresados. Sin materias ni notas.
+- `app/estudiantil`: seguimiento estudiantil (PLAN §49): cohortes, carga del CSV de Seguimiento Académico,
+  actividad estudiantil y encuestas. Sin materias ni notas. `app/egresados`: titulación, seguimiento y
+  indicadores de egresados (PLAN §50).
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
   `main.py`. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
   `datos/planes/` (planes de estudio en CSV), `datos/iac-cinda/` (plantilla vacía de la Guía de
@@ -82,6 +83,9 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
 - **Encuestas (PLAN §49 y §50):** las anónimas no enlazan la respuesta con la invitación ni guardan la hora, y no
   muestran resultados con menos de 5 respuestas (`encuestas.MIN_ANONIMO`): cualquier vista o exportación nueva debe
   respetarlo. El enlace de `/encuesta/<enlace>` es público y personal; se borra al responder o cerrar.
+- **Egresados (PLAN §50):** egresado = estudiante con estado «titulado» y fecha de titulación (se deduce). El seguimiento
+  (encuestas con `encuesta.hito`) invita solo al último hito cumplido; los indicadores se calculan por `pregunta.clave` y
+  muestran siempre el n. No cambie las opciones de las preguntas con clave en la plantilla de egresados.
 - **Estudiantes (PLAN §49):** TAU no guarda materias ni notas (son de Seguimiento Académico); la clave de
   unión es el registro universitario (RU). De los estudiantes solo se guarda la edad al ingresar (no la
   fecha de nacimiento ni el CI). El tablero de cohortes es agregado; la situación académica individual la

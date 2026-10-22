@@ -24,6 +24,8 @@ TIPOS_PREGUNTA = {"escala": "Escala de 1 a 5", "si_no": "Sí o no", "opcion": "U
 ESTADOS = {"borrador": "Borrador", "abierta": "Abierta", "cerrada": "Cerrada"}
 ESCALA = ((1, "Totalmente en desacuerdo"), (2, "En desacuerdo"), (3, "Ni de acuerdo ni en desacuerdo"),
           (4, "De acuerdo"), (5, "Totalmente de acuerdo"))
+HITOS = ("6m", "1a", "3a", "5a")      # seguimiento de egresados: encuestas continuas por hito (PLAN §50)
+CLAVES = ("situacion", "sector", "primer_empleo", "utilidad", "posgrado", "ubicacion", "satisfaccion", "perfil")
 MIN_ANONIMO = 5            # respuestas mínimas para mostrar resultados de una encuesta anónima (o de un grupo)
 LOTE_CORREOS = 50          # correos por envío: el proveedor limita los envíos masivos
 DIAS_ENTRE_RECORDATORIOS = 7
@@ -78,6 +80,7 @@ def validar(d: dict) -> tuple[dict, list[str]]:
             errores.append("La fecha límite no es válida.")
     return {"titulo": titulo, "descripcion": (d.get("descripcion") or "").strip()[:2000] or None, "tipo": tipo,
             "anonima": int(str(d.get("anonima") or "0") in ("1", "on", "true")), "publico": publico,
+            "hito": d.get("hito") if d.get("hito") in HITOS else None,
             "cohorte_desde": int(desde) if desde.isdigit() else None,
             "cohorte_hasta": int(hasta) if hasta.isdigit() else None, "cierra_el": cierra or None}, errores
 
@@ -91,14 +94,18 @@ def crear(d: dict, uid: int | None) -> tuple[int | None, list[str]]:
     return eid, []
 
 
-def crear_desde_plantilla(clave: str, uid: int | None) -> int | None:
+def crear_desde_plantilla(clave: str, uid: int | None, **cambios) -> int | None:
+    """Borrador a partir de una plantilla; `cambios` (p. ej., título o hito) reemplaza datos de la plantilla."""
     p = PLANTILLAS.get(clave)
     if not p:
         return None
     with transaccion():
-        eid, _ = crear({**{k: p[k] for k in ("titulo", "descripcion", "tipo", "publico")}, "anonima": int(p["anonima"])}, uid)
-        for texto, tipo, opciones in p["preguntas"]:
-            agregar_pregunta(eid, {"texto": texto, "tipo": tipo, "opciones": "\n".join(opciones or []), "obligatoria": "1"})
+        eid, errores = crear({**{k: p[k] for k in ("titulo", "descripcion", "tipo", "publico")}, "anonima": int(p["anonima"]),
+                              **cambios}, uid)
+        assert not errores, errores
+        for texto, tipo, opciones, *clave_pregunta in p["preguntas"]:
+            agregar_pregunta(eid, {"texto": texto, "tipo": tipo, "opciones": "\n".join(opciones or []), "obligatoria": "1",
+                                   "clave": clave_pregunta[0] if clave_pregunta else None})
     return eid
 
 
@@ -107,6 +114,7 @@ def actualizar(eid: int, d: dict) -> list[str]:
     if not e or e["estado"] != "borrador":
         return ["Solo se puede editar una encuesta en borrador."]
     datos, errores = validar(d)
+    datos.pop("hito")                       # el hito no se cambia después de crearla
     if not errores:
         get_db().t.encuesta.update(id=eid, **datos)
     return errores
@@ -138,7 +146,8 @@ def validar_pregunta(d: dict) -> tuple[dict, list[str]]:
     else:
         opciones = []
     return {"texto": texto, "tipo": tipo, "opciones": json.dumps(opciones, ensure_ascii=False) if opciones else None,
-            "obligatoria": int(str(d.get("obligatoria") or "0") in ("1", "on", "true"))}, errores
+            "obligatoria": int(str(d.get("obligatoria") or "0") in ("1", "on", "true")),
+            "clave": d.get("clave") if d.get("clave") in CLAVES else None}, errores
 
 
 def agregar_pregunta(eid: int, d: dict) -> list[str]:
@@ -207,6 +216,10 @@ def abrir(eid: int, uid: int | None) -> tuple[int, int, list[str]]:
         return 0, 0, ["Agregue al menos una pregunta antes de abrirla."]
     if e["cierra_el"] and e["cierra_el"] < date.today().isoformat():
         return 0, 0, ["La fecha límite ya pasó: corríjala antes de abrir la encuesta."]
+    if e["hito"]:        # seguimiento continuo: se abre sin invitar a nadie; las invitaciones salen al cumplirse el hito
+        get_db().execute(f"UPDATE encuesta SET estado = 'abierta', abierta_en = {AHORA} WHERE id = ?", [eid])
+        auditar(uid, "abrir_encuesta", "encuesta", eid, f"seguimiento {e['hito']}")
+        return 0, 0, []
     gente, sin_correo = destinatarios(e)
     if not gente:
         return 0, sin_correo, ["No hay a quién invitar: ningún estudiante del público elegido tiene correo registrado."]
@@ -217,6 +230,20 @@ def abrir(eid: int, uid: int | None) -> tuple[int, int, list[str]]:
         get_db().execute(f"UPDATE encuesta SET estado = 'abierta', abierta_en = {AHORA} WHERE id = ?", [eid])
     auditar(uid, "abrir_encuesta", "encuesta", eid, f"{len(gente)} invitada(s)")
     return len(gente), sin_correo, []
+
+
+def invitar(eid: int, externo_id: int, email: str, grupo: int | None) -> dict | None:
+    """Invita a una persona a una encuesta abierta y le envía el correo en el acto. None si ya estaba invitada."""
+    e = obtener(eid)
+    if not e or e["estado"] != "abierta" or not (email or "").strip() or get_db().q(
+            "SELECT 1 FROM invitacion_encuesta WHERE encuesta_id = ? AND externo_id = ?", [eid, externo_id]):
+        return None
+    inv = get_db().t.invitacion_encuesta.insert(encuesta_id=eid, externo_id=externo_id, email=email.strip(), grupo=grupo,
+                                                token=secrets.token_urlsafe(24))
+    asunto, cuerpo = _correo(e, inv, False)
+    correo.enviar(inv["email"], asunto, cuerpo)
+    get_db().execute(f"UPDATE invitacion_encuesta SET enviada_en = {AHORA} WHERE id = ?", [inv["id"]])
+    return inv
 
 
 def resumen_invitaciones(eid: int) -> dict:

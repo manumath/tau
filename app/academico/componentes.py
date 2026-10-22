@@ -27,6 +27,7 @@ PESTANAS = (("mia", "Mi docencia", "/docencia/mia", tiene_docencia),
             ("carga", "Carga horaria", "/docencia/carga", "ver_carga"),
             ("cohortes", "Cohortes estudiantiles", "/docencia/cohortes", "ver_seguimiento_estudiantil"),
             ("encuestas", "Encuestas", "/docencia/encuestas", "ver_seguimiento_estudiantil"),
+            ("egresados", "Egresados", "/docencia/egresados", "ver_seguimiento_estudiantil"),
             ("gestiones", "Gestiones", "/docencia/gestiones", None))
 
 

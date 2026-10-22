@@ -72,6 +72,7 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
   | `app/investigacion` | Perfiles, producción, actividades, proyectos, propuestas institucionales, revistas, OpenAlex, líneas |
   | `app/acreditacion` | Memoria, CV, informes y anexo de I+D+i para IAC-CINDA |
   | `app/academico` | Vacío: docencia y currículo (fase 3 del plan de ampliación) |
+  | `app/egresados` | Egresados (PLAN §50): titulación, seguimiento a los 6 meses, 1, 3 y 5 años e indicadores |
   | `app/estudiantil` | Seguimiento estudiantil (PLAN §49 y §50): cohortes, carga del CSV de Seguimiento Académico y, en etapas siguientes, actividad estudiantil, encuestas y egresados |
 
   `comun` no importa de los demás paquetes (desde la fase 2); `app/inicio.py` reúne las tarjetas de
@@ -118,7 +119,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0045). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0046). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.

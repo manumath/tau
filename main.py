@@ -20,6 +20,7 @@ if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not 
 
 from app.investigacion import institucionales  # noqa: E402
 from app.acreditacion import programados  # noqa: E402
+from app.egresados import egresados as seguimiento_egresados  # noqa: E402
 from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
 from app.comun.auth import rt as rutas_auth
 from app.comun.componentes import avisos_emergentes
@@ -57,6 +58,7 @@ from app.acreditacion.rutas.cuerpo_academico import rt as rutas_cuerpo_academico
 from app.acreditacion.rutas.calidad import rt as rutas_calidad
 from app.acreditacion.rutas.guia_antecedentes import rt as rutas_guia_antecedentes
 from app.academico.rutas.preparacion import rt as rutas_preparacion
+from app.egresados.rutas.egresados import rt as rutas_egresados
 from app.estudiantil.rutas.actividades import rt as rutas_actividades_estudiantiles
 from app.estudiantil.rutas.cohortes import rt as rutas_cohortes
 from app.estudiantil.rutas.encuestas import rt as rutas_encuestas
@@ -73,6 +75,7 @@ def _mantenimiento(req):
     if not config.SOLO_LECTURA:
         institucionales.mantenimiento()
         programados.mantenimiento()  # informes que se envían solos (a lo más una revisión por hora)
+        seguimiento_egresados.mantenimiento()  # invitaciones del seguimiento de egresados (idem)
 
 
 def create_app(db_path=config.DB_PATH):
@@ -123,7 +126,7 @@ def create_app(db_path=config.DB_PATH):
                    rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
                    rutas_guia_antecedentes, rutas_preparacion, rutas_cohortes,
-                   rutas_actividades_estudiantiles, rutas_estudiante, rutas_encuestas, rutas_responder):
+                   rutas_actividades_estudiantiles, rutas_estudiante, rutas_encuestas, rutas_responder, rutas_egresados):
         router.to_app(app)
     return app
 

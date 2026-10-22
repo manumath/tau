@@ -1784,7 +1784,7 @@ agregados, no datos individuales. Pruebas por rol.
    titulaciones en los 10 últimos ciclos.
 6. El tablero cuenta solo licenciatura del programa propio con cohorte (`nivel = 'licenciatura'`, `del_programa = 1`).
 
-Pendiente de las etapas siguientes: egresados (4), tutoría, directorio y sección del anexo (5).
+Pendiente de las etapas siguientes: tutoría, directorio y mentoría de egresados y sección del anexo (5).
 
 ### Etapa 2: acceso por enlace, ficha, trayectoria y actividad estudiantil (implementada, 21-oct-2026)
 
@@ -1861,9 +1861,44 @@ Decisiones de la etapa 2 confirmadas el 21-oct-2026.
 6. El público «estudiantes» son los que **cursan** (no los congelados) y el de «egresados» incluye a egresados y titulados.
 7. La escala de 1 a 5 es siempre de acuerdo/desacuerdo (las preguntas se redactan como afirmaciones).
 
+### Etapa 4: egresados (implementada, 21-oct-2026)
+
+Decisiones de la etapa 3 confirmadas el 21-oct-2026.
+
+- **Transición:** quien tiene estado «titulado» con fecha de titulación **es** egresado (se deduce, sin tabla aparte). Llega por
+  el CSV de cohortes o con **Registrar titulación** (`egresados.titular`: estado, fechas de egreso y titulación, modalidad,
+  último ciclo; se audita). Los titulados históricos se cargan con el CSV de cohortes.
+- **Seguimiento programado** (migración 0046): `encuesta.hito` ('6m', '1a', '3a', '5a') marca una encuesta de seguimiento
+  continuo: se abre sin invitar a nadie y recibe una invitación por egresado al cumplirse el hito (titulación + 6, 12, 36 o 60
+  meses). Solo una abierta por hito. `seguimiento_egresado` registra a quién se invitó a qué hito. **Activar el seguimiento**
+  crea y abre las cuatro encuestas desde la plantilla de egresados; la revisión horaria de `main._mantenimiento`
+  (`egresados.mantenimiento`, apagada con `PORTAL_INFORMES_PROGRAMADOS=0`) o **Invitar ahora** (hasta 50 por vez) envían los
+  correos. Si al activar ya pasaron varios hitos de un egresado, se le invita solo al **último** y los anteriores quedan
+  «omitidos» (no se le escribe cuatro veces).
+- **Indicadores** (`egresados.indicadores`): por trienio de titulación (terminan en el año actual): titulados, años desde el
+  ingreso hasta titularse, respondieron, **con empleo** (trabajo en o fuera del área, o trabajo y estudio), **en su área**,
+  **posgrado** (cursó o cursa, en Bolivia o en el extranjero), utilidad y satisfacción (1 a 5). Se calculan con la **última
+  respuesta de cada egresado** y siempre con el n. `pregunta.clave` (situación, posgrado, utilidad, satisfacción…) permite
+  calcularlos sin depender del texto de la pregunta; las opciones de esas preguntas deben conservarse.
+- **Pantalla** (pestaña **Docencia → Egresados**): indicadores y estado del seguimiento (ven el Comité y quienes ven el
+  seguimiento estudiantil); lista de egresados con su seguimiento, registrar titulación, activar e invitar (`gestionar_egresados`:
+  Dirección de Carrera y Coordinación académica).
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. **Las invitaciones del seguimiento salen solas** (revisión horaria, hasta 50 por vez), a diferencia de las encuestas de la
+   etapa 3, que se envían a mano. Es la naturaleza del seguimiento programado; se activa una vez con «Activar el seguimiento».
+2. **Solo los titulados entran al seguimiento** (el hito cuenta desde la fecha de titulación). Los egresados que aún no se
+   titulan no se siguen.
+3. **Hito vigente más reciente:** al activar el seguimiento se invita solo al último hito cumplido y se omiten los anteriores.
+4. **Indicadores con la última respuesta de cada egresado**, en trienios que terminan en el año actual, y la **definición de
+   «con empleo»** (trabajo en el área, en otra área o trabajo y estudio) y de **posgrado** (cursó o cursa).
+5. **No hay cuenta de egresado ni acceso al portal** por este módulo: responden por enlace. La cuenta de quien fue estudiante
+   sigue funcionando (muestra «Titulado(a)»); el directorio y la mentoría llegan en la etapa 5.
+6. **Las respuestas son nominales** (la Dirección ve a cada persona con sus respuestas), como pide §50; no hay umbral mínimo.
+
 ## 50. Módulo Egresados o alumni (21-oct-2026)
 
-**Estado: decisiones confirmadas el 21-oct-2026, como en §49; sin código aún (etapa 4).** Volumen: unos 10 titulados por año. Con tan pocos
+**Estado: decisiones confirmadas el 21-oct-2026, como en §49; transición, seguimiento e indicadores hechos (etapa 4, ver arriba); directorio y mentoría en la etapa 5.** Volumen: unos 10 titulados por año. Con tan pocos
 casos importa el seguimiento personalizado y la tasa de respuesta, no los flujos masivos.
 
 **Características:**
@@ -1901,7 +1936,7 @@ logro del perfil de egreso, y sección nueva en el anexo.
 | 1 | Cohortes, estado, importación CSV y tablero | Hojas 3 a 6 de la Guía ✔ (21-oct-2026) |
 | 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante | ✔ (21-oct-2026)
 | 3 | Motor de encuestas (anónimas y nominales) | Base común | ✔ (21-oct-2026)
-| 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni |
+| 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni | ✔ (21-oct-2026)
 | 5 | Tutoría, directorio y mentoría, sección del anexo | Cierre |
 
 Un commit por etapa, con las pruebas por rol y la guía de uso al día.

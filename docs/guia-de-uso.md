@@ -231,6 +231,25 @@ y los resultados aparecen **solo desde 5 respuestas**; el promedio por año de i
 nadie puede deducir quién respondió qué. En las nominales (p. ej. el seguimiento de egresados) la Dirección ve las
 respuestas persona por persona.
 
+### Egresados (Dirección de Carrera y Coordinación académica; el Comité ve los indicadores)
+
+En **Docencia → Egresados** están los indicadores de quienes se titularon, el seguimiento y la lista de egresados.
+
+- **Quién es egresado.** Quien tiene estado «titulado» con fecha de titulación: llega por el CSV de cohortes o con
+  **Registrar titulación** (elija al estudiante, la fecha de titulación, la de egreso si es distinta y la modalidad). Al
+  titularse deja de contar como estudiante que cursa y entra solo al seguimiento. Los estudiantes egresados que aún no se
+  titulan no se siguen todavía.
+- **Seguimiento a los 6 meses, 1, 3 y 5 años.** Con **Activar el seguimiento** el sistema abre una encuesta por hito (a partir
+  de la de egresados; puede ajustarla en Encuestas, pero no cambie las opciones de las preguntas de situación, posgrado,
+  utilidad y satisfacción: los indicadores las leen). Desde entonces, cada egresado recibe por correo la invitación al
+  cumplir cada hito: las invitaciones salen solas, en la revisión horaria del sistema (o con **Invitar ahora a quienes
+  corresponde**, hasta 50 por vez). Si al activar el seguimiento ya pasaron varios hitos de un egresado, se le invita solo
+  al último y los anteriores quedan «omitidos». Las respuestas son nominales: la Dirección las ve una por una en la encuesta.
+- **Indicadores por trienio de titulación** (los trienios terminan en el año actual): titulados, años desde el ingreso hasta
+  titularse, cuántos respondieron, **con empleo**, **en su área**, **posgrado**, utilidad y satisfacción de la formación (1 a 5).
+  Usan la **última respuesta de cada egresado** y siempre muestran el n: con diez titulados por año, tres años juntos dan
+  una cifra más honesta que cada año por separado.
+
 ### Coautores externos
 
 En **Investigadores → Coautores externos** se completa la institución y el **país** de las personas
