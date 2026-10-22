@@ -207,6 +207,30 @@ En **Docencia → Cohortes estudiantiles → Actividades por verificar** aparece
 declararon, con su evidencia. **Verificar** la da por válida; **Observar** pide escribir qué debe corregir. En
 los dos casos el estudiante recibe un aviso (en el sistema y, según su preferencia, por correo).
 
+### Encuestas a estudiantes y egresados (Dirección de Carrera y Coordinación académica)
+
+En **Docencia → Encuestas** se arman, abren y envían las encuestas (satisfacción, clima, bienestar, abandono,
+seguimiento de egresados, logro del perfil de egreso). Ven los resultados también Gestión de datos y el Comité de
+acreditación, que solo ven cifras agregadas.
+
+1. **Crear:** parta de una encuesta de ejemplo (todas son borradores que puede cambiar) o en blanco. Indique el
+   tipo, a quién va dirigida (estudiantes que cursan, o egresados y titulados), si quiere limitarla a ciertos años
+   de ingreso, una fecha límite y si es **anónima**. Las preguntas pueden ser escala de 1 a 5, sí o no, una opción,
+   varias opciones o texto libre, obligatorias u opcionales; se reordenan con las flechas.
+2. **Abrir:** al abrirla, el sistema prepara un enlace personal por cada persona con correo (le dice cuántas no lo
+   tienen). Desde ese momento no se pueden cambiar las preguntas ni los datos.
+3. **Enviar:** «Enviar invitaciones pendientes» manda los correos en lotes de 50 (los proveedores limitan los envíos
+   masivos): repita hasta que no queden pendientes. «Enviar recordatorio» escribe a quienes no respondieron, una vez por
+   semana como máximo. Cada persona responde desde su celular o computador, **sin cuenta**; el enlace sirve una vez.
+4. **Cerrar:** los enlaces dejan de servir. También dejan de servir al llegar la fecha límite.
+5. **Resultados:** promedios y distribución de cada pregunta, comentarios y promedio por año de ingreso; se descargan
+   en CSV.
+
+**Anonimato.** En una encuesta anónima la respuesta no se asocia con la persona (el sistema ni siquiera guarda la hora),
+y los resultados aparecen **solo desde 5 respuestas**; el promedio por año de ingreso, solo para los años con 5 o más. Así
+nadie puede deducir quién respondió qué. En las nominales (p. ej. el seguimiento de egresados) la Dirección ve las
+respuestas persona por persona.
+
 ### Coautores externos
 
 En **Investigadores → Coautores externos** se completa la institución y el **país** de las personas

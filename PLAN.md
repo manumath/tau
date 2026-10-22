@@ -1784,7 +1784,7 @@ agregados, no datos individuales. Pruebas por rol.
    titulaciones en los 10 últimos ciclos.
 6. El tablero cuenta solo licenciatura del programa propio con cohorte (`nivel = 'licenciatura'`, `del_programa = 1`).
 
-Pendiente de las etapas siguientes: motor de encuestas (3), egresados (4), tutoría, directorio y sección del anexo (5).
+Pendiente de las etapas siguientes: egresados (4), tutoría, directorio y sección del anexo (5).
 
 ### Etapa 2: acceso por enlace, ficha, trayectoria y actividad estudiantil (implementada, 21-oct-2026)
 
@@ -1825,6 +1825,42 @@ Decisiones de la etapa 1 confirmadas el 21-oct-2026.
 4. El estudiante puede **eliminar** sus actividades aunque estén verificadas (queda en la auditoría).
 5. La **fecha de inicio** de una actividad no puede ser futura.
 
+### Etapa 3: motor de encuestas (implementada, 21-oct-2026)
+
+Decisiones de la etapa 2 confirmadas el 21-oct-2026.
+
+- **Modelo (migración 0045):** `encuesta` (tipo, anónima o nominal, público, filtro por año de ingreso, fecha límite, estado
+  borrador → abierta → cerrada), `pregunta` (escala 1 a 5, sí o no, una opción, varias opciones, texto libre),
+  `invitacion_encuesta`, `respuesta` y `respuesta_item`. Es el motor común de §49 y §50: el seguimiento de egresados y el logro
+  del perfil de egreso son plantillas con público «egresados y titulados».
+- **Plantillas** (`plantillas_encuesta.py`): satisfacción estudiantil, clima y bienestar, permanencia y abandono (anónimas),
+  seguimiento de egresados y logro del perfil de egreso (nominales). Son borradores: la Dirección las ajusta antes de abrirlas.
+- **Flujo:** crear → armar → **abrir** (una invitación por persona con correo, del público elegido: «cursando» o «egresado y
+  titulado», con filtro por año de ingreso) → **enviar** (lotes de 50) y **recordar** (a quien no respondió, cada 7 días como
+  máximo) → **cerrar**. Cada persona responde en `/encuesta/<enlace>`, **sin cuenta**; abrir el enlace no lo gasta, enviar la
+  respuesta sí. Los enlaces se borran al responder y al cerrar; también dejan de servir al pasar la fecha límite. El registro
+  de peticiones oculta `/encuesta/…`.
+- **Anonimato:** la respuesta anónima no se enlaza con su invitación y las fechas van sin hora (no se puede cruzar con la
+  hora de otras tablas); solo se conoce el año de ingreso. Los resultados de una encuesta anónima se muestran desde **5
+  respuestas**, y el promedio por año de ingreso solo para los años con 5 o más. Los comentarios se listan en orden alfabético
+  (no en el de llegada). Las nominales enlazan la respuesta con la persona y la Dirección las ve una por una.
+- **Permisos:** `gestionar_encuestas` (Dirección de Carrera y Coordinación académica: armar, abrir, enviar, cerrar, ver
+  respuestas nominales) y `ver_seguimiento_estudiantil` (resultados agregados, incluido el Comité). Pestaña **Docencia →
+  Encuestas**.
+- **Resultados:** distribución y promedio por pregunta, comentarios y CSV agregado (`/docencia/encuestas/<id>/resultados`).
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. **Umbral de 5 respuestas** para mostrar resultados anónimos (y por año de ingreso). Es una regla mía de buena práctica.
+2. **Gestión de datos no arma ni envía encuestas** (solo las ve): las gestiona la Dirección de Carrera y la Coordinación académica.
+3. El enlace personal se **guarda tal cual** en la base mientras sirve (hace falta reenviarlo en los recordatorios) y se borra al
+   responder o cerrar; no se guarda su hash como el de recuperar contraseña.
+4. **Las invitaciones salen por correo, en lotes de 50 por pulsación**, sin envío automático ni programado. Con 300 estudiantes
+   son 6 pulsaciones; si el proveedor lo permite, se sube `LOTE_CORREOS`.
+5. **Los estudiantes con cuenta no ven sus encuestas pendientes en «Mi seguimiento»:** solo les llega el correo (queda para
+   una mejora si hace falta).
+6. El público «estudiantes» son los que **cursan** (no los congelados) y el de «egresados» incluye a egresados y titulados.
+7. La escala de 1 a 5 es siempre de acuerdo/desacuerdo (las preguntas se redactan como afirmaciones).
+
 ## 50. Módulo Egresados o alumni (21-oct-2026)
 
 **Estado: decisiones confirmadas el 21-oct-2026, como en §49; sin código aún (etapa 4).** Volumen: unos 10 titulados por año. Con tan pocos
@@ -1864,7 +1900,7 @@ logro del perfil de egreso, y sección nueva en el anexo.
 | 0 | Confirmar decisiones de §49 y §50 | Reglas fijadas ✔ (21-oct-2026) |
 | 1 | Cohortes, estado, importación CSV y tablero | Hojas 3 a 6 de la Guía ✔ (21-oct-2026) |
 | 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante | ✔ (21-oct-2026)
-| 3 | Motor de encuestas (anónimas y nominales) | Base común |
+| 3 | Motor de encuestas (anónimas y nominales) | Base común | ✔ (21-oct-2026)
 | 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni |
 | 5 | Tutoría, directorio y mentoría, sección del anexo | Cierre |
 

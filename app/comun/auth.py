@@ -15,7 +15,7 @@ from app.comun.seguridad import errores_password, verificar_password
 # cualquier ruta que termine en .png.
 # Los archivos estáticos (/static) no pasan por aquí: están montados aparte (componentes/recursos.py).
 RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico", r"/salud",
-                  r"/recuperar", r"/recuperar/[\w\-]+", r"/acceso", r"/acceso/[\w\-]+",
+                  r"/recuperar", r"/recuperar/[\w\-]+", r"/acceso", r"/acceso/[\w\-]+", r"/encuesta/[\w\-]+",
                   r"/publico", r"/publico/.*", r"/api/v1/.*"]
 # Rutas permitidas mientras la contraseña es temporal.
 RUTAS_CAMBIO_PASS = {"/cambiar-password", "/logout"}

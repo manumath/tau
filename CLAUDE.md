@@ -79,6 +79,9 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   `/estudiante`, `/avisos` y `/logout` (`auth.RUTAS_ESTUDIANTE`): una ruta nueva del personal queda cerrada para ellos
   sin tocar nada, pero toda ruta nueva de `/estudiante` debe sacar la ficha de `estudiantes.cuenta_de(auth["id"])`, nunca de
   un id en la dirección. Se unen a la ficha por `cuenta_estudiante`, no por `persona_externa.usuario_id`.
+- **Encuestas (PLAN §49 y §50):** las anónimas no enlazan la respuesta con la invitación ni guardan la hora, y no
+  muestran resultados con menos de 5 respuestas (`encuestas.MIN_ANONIMO`): cualquier vista o exportación nueva debe
+  respetarlo. El enlace de `/encuesta/<enlace>` es público y personal; se borra al responder o cerrar.
 - **Estudiantes (PLAN §49):** TAU no guarda materias ni notas (son de Seguimiento Académico); la clave de
   unión es el registro universitario (RU). De los estudiantes solo se guarda la edad al ingresar (no la
   fecha de nacimiento ni el CI). El tablero de cohortes es agregado; la situación académica individual la

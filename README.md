@@ -134,8 +134,11 @@ app/
     cohortes.py                cohortes de ingreso, egreso, titulación y deserción (ciclos I y II)
     importar.py                carga del CSV de Seguimiento Académico (vista previa y aplicar)
     actividad.py               actividad estudiantil declarada: tipos, validación, verificación y avisos
+    encuestas.py               motor de encuestas: armado, invitaciones por correo, respuesta con enlace y resultados
+    plantillas_encuesta.py     encuestas de partida (satisfacción, bienestar, abandono, egresados, perfil de egreso)
     rutas/                     cohortes (/docencia/cohortes: tablero y carga), actividades (verificación),
-                               estudiante (/estudiante: portal del estudiante)
+                               estudiante (/estudiante: portal del estudiante), encuestas (/docencia/encuestas),
+                               responder (/encuesta/<enlace>, pública)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 
 Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion`,
