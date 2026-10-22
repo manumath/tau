@@ -54,6 +54,8 @@ ACCIONES = {
     "gestionar_estudiantes": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
     # Cohortes de la licenciatura (PLAN §49): cargar el CSV de Seguimiento Académico; ver el tablero (agregados).
     "gestionar_cohortes": {"direccion_carrera", "gestion_datos"},
+    "gestionar_tutorias": {"direccion_carrera", "coordinacion_academica"},   # asignar tutores y ver cifras de tutoría
+    "ver_tutorias_detalle": {"direccion_carrera"},    # las reuniones de cualquier estudiante (queda en la auditoría)
     "gestionar_egresados": {"direccion_carrera", "coordinacion_academica"},   # titulación y seguimiento de egresados
     "gestionar_encuestas": {"direccion_carrera", "coordinacion_academica"},   # armar, abrir, enviar y cerrar
     "verificar_actividad": {"direccion_carrera", "coordinacion_academica"},   # actividad estudiantil declarada

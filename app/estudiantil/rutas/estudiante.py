@@ -121,6 +121,21 @@ def _pagina_consentimiento(auth):
         usuario=auth, seccion="estudiante")
 
 
+def _tarjeta_apoyo(externo: int):
+    """Tutor(a) del estudiante y enlaces al directorio de egresados (estudiantes) o a su perfil (egresados)."""
+    tutor = estudiantes.tutor_de(externo)
+    egresado = estudiantes.es_egresado(externo)
+    contenido = []
+    if tutor:
+        contenido.append(P(Span("Su tutor(a): ", cls="font-medium"), f"{tutor['nombres']} {tutor['apellidos']} · {tutor['email']}", cls="text-sm"))
+    contenido.append(A(UkIcon("book-user", height=14, width=14), "Directorio de egresados", href=f"{BASE}/directorio",
+                       cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"))
+    if egresado:
+        contenido.append(A(UkIcon("id-card", height=14, width=14), "Mi perfil de egresado", href=f"{BASE}/perfil-egresado",
+                           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"))
+    return Card(H3("Apoyo y comunidad", cls="text-base font-semibold mb-2"), Div(*contenido, cls="flex flex-col gap-2"))
+
+
 @rt(BASE)
 def get(auth):
     externo = _externo(auth)
@@ -138,7 +153,8 @@ def get(auth):
         H2(f"{p['nombres']} {p['apellidos']}"),
         P(" · ".join(x for x in datos if x) or "Sin datos de cohorte todavía.", cls=(TextPresets.muted_sm, "mb-6")),
         Div(tarjeta_actividades(externo),
-            Card(H3("Mi participación en la investigación", cls="text-base font-semibold mb-2"), _participacion(externo)),
+            Div(Card(H3("Mi participación en la investigación", cls="text-base font-semibold mb-2"), _participacion(externo)),
+                _tarjeta_apoyo(externo), cls="space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"),
         P("TAU no registra sus materias ni sus notas. Si algún dato de arriba no es correcto, avise a la Dirección de Carrera.",
           cls=(TextPresets.muted_sm, "mt-6")),

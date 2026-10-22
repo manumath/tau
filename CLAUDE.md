@@ -83,6 +83,9 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
 - **Encuestas (PLAN §49 y §50):** las anónimas no enlazan la respuesta con la invitación ni guardan la hora, y no
   muestran resultados con menos de 5 respuestas (`encuestas.MIN_ANONIMO`): cualquier vista o exportación nueva debe
   respetarlo. El enlace de `/encuesta/<enlace>` es público y personal; se borra al responder o cerrar.
+- **Tutoría (PLAN §49):** las notas de las reuniones son confidenciales: las ve el tutor autor y la Dirección de Carrera
+  (con auditoría); nunca van a informes, exportaciones ni a la pantalla del Comité. **Directorio de egresados (PLAN §50):** opcional y
+  solo dentro del sistema; el correo de un estudiante y el de un egresado solo se comparten cuando el egresado acepta una solicitud.
 - **Egresados (PLAN §50):** egresado = estudiante con estado «titulado» y fecha de titulación (se deduce). El seguimiento
   (encuestas con `encuesta.hito`) invita solo al último hito cumplido; los indicadores se calculan por `pregunta.clave` y
   muestran siempre el n. No cambie las opciones de las preguntas con clave en la plantilla de egresados.

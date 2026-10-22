@@ -108,6 +108,8 @@ def barra_navegacion(usuario: dict, seccion: str = ""):
     enlaces.append(_enlace("Investigadores", "/investigadores", "book-user",
                            seccion == "investigadores"))
     enlaces.append(_enlace("Docencia", "/docencia", "graduation-cap", seccion == "docencia"))
+    if usuario.get("es_tutor"):
+        enlaces.append(_enlace("Tutoría", "/tutoria", "message-circle", seccion == "tutoria"))
     if (usuario["es_investigador"] or permisos.puede(usuario, "ver_informes_institucionales")
             or permisos.puede(usuario, "ver_cv_ajeno")):
         enlaces.append(_enlace("Informes", "/informes", "file-text", seccion == "informes"))

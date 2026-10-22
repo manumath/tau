@@ -1784,7 +1784,7 @@ agregados, no datos individuales. Pruebas por rol.
    titulaciones en los 10 últimos ciclos.
 6. El tablero cuenta solo licenciatura del programa propio con cohorte (`nivel = 'licenciatura'`, `del_programa = 1`).
 
-Pendiente de las etapas siguientes: tutoría, directorio y mentoría de egresados y sección del anexo (5).
+Etapa 5 (tutoría, directorio, mentoría y anexo): implementada más abajo.
 
 ### Etapa 2: acceso por enlace, ficha, trayectoria y actividad estudiantil (implementada, 21-oct-2026)
 
@@ -1896,9 +1896,48 @@ Decisiones de la etapa 3 confirmadas el 21-oct-2026.
    sigue funcionando (muestra «Titulado(a)»); el directorio y la mentoría llegan en la etapa 5.
 6. **Las respuestas son nominales** (la Dirección ve a cada persona con sus respuestas), como pide §50; no hay umbral mínimo.
 
+### Etapa 5: tutoría, directorio, mentoría y anexo (implementada, 21-oct-2026)
+
+Decisiones de la etapa 4 confirmadas el 21-oct-2026. Migración 0047.
+
+- **Tutoría** (`app/estudiantil/tutoria.py`): `tutoria_asignacion` (un tutor vigente por estudiante que cursa; el tutor es un docente con
+  vínculo vigente) y `tutoria_reunion` (fecha, modalidad, tema, resumen, derivación, acuerdos). Asignan la Dirección de Carrera y la
+  Coordinación académica (`gestionar_tutorias`), por estudiante o por cohorte (solo a quien no tiene tutor; el tutor recibe un aviso).
+  El tutor ve **Tutoría → Mis tutorados** (`/tutoria`, enlace en la barra solo para tutores) y registra sus reuniones. **Confidencial:**
+  las ve su autor y la Dirección de Carrera (`ver_tutorias_detalle`; cada consulta de la Dirección queda en la auditoría,
+  `ver_tutorias`); el estudiante ve quién es su tutor pero no las notas; un tutor nuevo no ve las del anterior; el Comité ve solo cifras
+  (cobertura, reuniones por año, temas, derivaciones). Pestaña **Docencia → Tutoría**.
+- **Directorio de egresados** (`app/egresados/directorio.py`, `perfil_egresado`): opcional y solo dentro del sistema (estudiantes y
+  egresados con cuenta, y el personal que gestiona egresados). **Invitar** (por egresado o a quienes faltan, hasta 50) crea la cuenta sin
+  contraseña si falta y envía un enlace de ingreso de 7 días (`tokens.emitir(…, vigencia)`); si el correo ya es de otra cuenta, no se
+  vincula. El egresado acepta el uso de sus datos al ingresar, abre **Mi perfil de egresado** (a qué se dedica, institución, ciudad, áreas,
+  qué ofrece) y solo figura si marca «Quiero figurar» y acepta; puede retirarse (conserva la fecha de su aceptación).
+- **Mentoría** (`solicitud_mentoria`): el estudiante pide mentoría, charla, pasantía, orientación de posgrado u oferta de empleo (hasta 3
+  pendientes; una por egresado); el egresado la acepta o no desde su perfil. **El correo de cada uno se comparte solo al aceptar** (a cada
+  quien le llega el del otro, por el centro de avisos). Todo bajo `/estudiante/…`, que ya está permitido a las cuentas solo de estudiante.
+- **Anexo de seguimiento estudiantil** (`app/acreditacion/seguimiento_estudiantil.py`, `/informes/seguimiento-estudiantil` y su XLSX;
+  `ver_seguimiento_estudiantil`): solo agregados, sin nombres: cohortes, actividad estudiantil verificada, encuestas (las anónimas con
+  menos de 5 respuestas, «reservado»), tutoría (sin contenido), egresados (trienios y seguimiento) y directorio y mentoría. Es un informe
+  aparte del anexo de I+D+i (que es del Instituto); en `/informes` aparece como «Seguimiento estudiantil».
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. **Quién ve las notas de tutoría:** el tutor autor y solo la **Dirección de Carrera** (no la Coordinación académica, que asigna y ve cifras),
+   con registro en la auditoría. Un tutor nuevo no hereda las notas del anterior.
+2. **Quién puede ser tutor:** cualquier cuenta activa con vínculo vigente con la Carrera (no solo titulares). Solo se asigna tutor a
+   quien **cursa** (no a congelados).
+3. **El egresado entra con enlace de 7 días** (el de los estudiantes dura 30 minutos) y se le **crea la cuenta** al invitarlo, aunque
+   nunca figure en el directorio (puede ver el directorio y su perfil). La invitación no se repite sola: se reenvía con «Reenviar».
+4. **Límite de 3 solicitudes pendientes** por estudiante y una por egresado, y el estudiante no ve cuándo el egresado «no puede ayudar»
+   más que como aviso amable (sin motivo).
+5. **El anexo es un informe aparte** («Seguimiento estudiantil»), no una sección del anexo de I+D+i, porque ese anexo es del Instituto y
+   éste de la Carrera. No numera criterios de IAC-CINDA: cada sección dice de qué trata (las cohortes se corresponden con las hojas 3 a 6 de
+   la Guía). Conviene que quien lleva la acreditación diga a qué criterio va cada cifra.
+6. **Encuestas en el anexo:** solo título, modalidad, tasa de respuesta y el promedio de sus preguntas de escala (sin comentarios).
+7. **Mi seguimiento** del egresado sigue mostrando «Mi actividad estudiantil» (la que declaró siendo estudiante).
+
 ## 50. Módulo Egresados o alumni (21-oct-2026)
 
-**Estado: decisiones confirmadas el 21-oct-2026, como en §49; transición, seguimiento e indicadores hechos (etapa 4, ver arriba); directorio y mentoría en la etapa 5.** Volumen: unos 10 titulados por año. Con tan pocos
+**Estado: decisiones confirmadas el 21-oct-2026, como en §49; transición, seguimiento e indicadores hechos (etapa 4, ver arriba); directorio y mentoría hechos en la etapa 5.** Volumen: unos 10 titulados por año. Con tan pocos
 casos importa el seguimiento personalizado y la tasa de respuesta, no los flujos masivos.
 
 **Características:**
@@ -1937,6 +1976,6 @@ logro del perfil de egreso, y sección nueva en el anexo.
 | 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante | ✔ (21-oct-2026)
 | 3 | Motor de encuestas (anónimas y nominales) | Base común | ✔ (21-oct-2026)
 | 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni | ✔ (21-oct-2026)
-| 5 | Tutoría, directorio y mentoría, sección del anexo | Cierre |
+| 5 | Tutoría, directorio y mentoría, sección del anexo | Cierre | ✔ (21-oct-2026)
 
 Un commit por etapa, con las pruebas por rol y la guía de uso al día.

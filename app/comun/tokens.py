@@ -18,14 +18,14 @@ def _hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def emitir(usuario_id: int, proposito: str) -> str:
+def emitir(usuario_id: int, proposito: str, vigencia: timedelta | None = None) -> str:
     db = get_db()
     db.execute(f"""UPDATE token_acceso SET usado_en = {AHORA}
                   WHERE usuario_id = ? AND proposito = ? AND usado_en IS NULL""", [usuario_id, proposito])
     token = secrets.token_urlsafe(32)
     db.execute("""INSERT INTO token_acceso (usuario_id, token_hash, proposito, expira_en)
                   VALUES (?, ?, ?, ?)""",
-               [usuario_id, _hash(token), proposito, marca_tiempo(VIGENCIA[proposito])])
+               [usuario_id, _hash(token), proposito, marca_tiempo(vigencia or VIGENCIA[proposito])])
     return token
 
 

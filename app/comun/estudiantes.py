@@ -254,3 +254,21 @@ def aceptar_consentimiento(externo_id: int):
 def consintio(externo_id: int) -> bool:
     filas = get_db().q("SELECT consentimiento_en FROM cuenta_estudiante WHERE externo_id = ?", [externo_id])
     return bool(filas and filas[0]["consentimiento_en"])
+
+
+def es_tutor(uid: int) -> bool:
+    """¿Tiene estudiantes asignados como tutor? (para mostrar «Tutoría» en la barra)."""
+    return bool(get_db().q("SELECT 1 FROM tutoria_asignacion WHERE tutor_id = ? AND hasta IS NULL LIMIT 1", [uid]))
+
+
+def tutor_de(externo_id: int) -> dict | None:
+    """Tutor(a) vigente del estudiante (nombre y correo), o None."""
+    filas = get_db().q("""SELECT u.id, u.nombres, u.apellidos, u.email FROM tutoria_asignacion t JOIN usuario u ON u.id = t.tutor_id
+                          WHERE t.externo_id = ? AND t.hasta IS NULL""", [externo_id])
+    return filas[0] if filas else None
+
+
+def es_egresado(externo_id: int) -> bool:
+    """¿Se tituló de la licenciatura de la Carrera?"""
+    return bool(get_db().q("""SELECT 1 FROM estudiante WHERE externo_id = ? AND nivel = 'licenciatura' AND del_programa = 1
+                              AND estado = 'titulado' LIMIT 1""", [externo_id]))

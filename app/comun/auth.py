@@ -63,6 +63,7 @@ def _cargar_usuario(req, sess):
     if usuario["debe_cambiar_pass"] and ruta not in RUTAS_CAMBIO_PASS:
         return Redirect("/cambiar-password")
     usuario["solo_estudiante"] = estudiantes.solo_estudiante(usuario)
+    usuario["es_tutor"] = not usuario["solo_estudiante"] and estudiantes.es_tutor(uid)
     if usuario["solo_estudiante"] and not re.fullmatch(RUTAS_ESTUDIANTE, ruta):
         return Redirect("/estudiante")
     if ruta.startswith("/admin") and not acceso_admin(usuario, ruta):

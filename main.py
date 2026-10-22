@@ -57,13 +57,16 @@ from app.comun.rutas.avisos import rt as rutas_avisos
 from app.acreditacion.rutas.cuerpo_academico import rt as rutas_cuerpo_academico
 from app.acreditacion.rutas.calidad import rt as rutas_calidad
 from app.acreditacion.rutas.guia_antecedentes import rt as rutas_guia_antecedentes
+from app.acreditacion.rutas.seguimiento_estudiantil import rt as rutas_seguimiento_estudiantil
 from app.academico.rutas.preparacion import rt as rutas_preparacion
+from app.egresados.rutas.directorio import rt as rutas_directorio
 from app.egresados.rutas.egresados import rt as rutas_egresados
 from app.estudiantil.rutas.actividades import rt as rutas_actividades_estudiantiles
 from app.estudiantil.rutas.cohortes import rt as rutas_cohortes
 from app.estudiantil.rutas.encuestas import rt as rutas_encuestas
 from app.estudiantil.rutas.estudiante import rt as rutas_estudiante
 from app.estudiantil.rutas.responder import rt as rutas_responder
+from app.estudiantil.rutas.tutoria import rt as rutas_tutoria
 from app.investigacion.rutas.productos import rt as rutas_productos
 from app.investigacion.rutas.propuestas import rt as rutas_propuestas
 from app.investigacion.rutas.proyectos import rt as rutas_proyectos
@@ -126,7 +129,8 @@ def create_app(db_path=config.DB_PATH):
                    rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
                    rutas_guia_antecedentes, rutas_preparacion, rutas_cohortes,
-                   rutas_actividades_estudiantiles, rutas_estudiante, rutas_encuestas, rutas_responder, rutas_egresados):
+                   rutas_actividades_estudiantiles, rutas_estudiante, rutas_encuestas, rutas_responder, rutas_egresados, rutas_directorio, rutas_tutoria,
+                   rutas_seguimiento_estudiantil):
         router.to_app(app)
     return app
 

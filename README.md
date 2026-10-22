@@ -122,6 +122,7 @@ app/
     anexo.py                   anexo de I+D+i para la acreditación, por criterio y año
     estudiantes.py             tesis e indicadores de participación de estudiantes
     guia_antecedentes.py       Guía de Antecedentes de IAC-CINDA: la plantilla oficial llenada con los datos
+    seguimiento_estudiantil.py anexo de seguimiento estudiantil: cohortes, actividad, encuestas, tutoría y egresados (agregados)
     rutas/                     informes, anexo, guia_antecedentes
   academico/                   docencia y currículo (fase 3)
     planes.py                  programas, planes de estudio, asignaturas, electivas, requisitos, observaciones
@@ -134,14 +135,17 @@ app/
     cohortes.py                cohortes de ingreso, egreso, titulación y deserción (ciclos I y II)
     importar.py                carga del CSV de Seguimiento Académico (vista previa y aplicar)
     actividad.py               actividad estudiantil declarada: tipos, validación, verificación y avisos
+    tutoria.py                 tutoría: asignación de tutores, reuniones confidenciales y cifras agregadas
     encuestas.py               motor de encuestas: armado, invitaciones por correo, respuesta con enlace y resultados
     plantillas_encuesta.py     encuestas de partida (satisfacción, bienestar, abandono, egresados, perfil de egreso)
     rutas/                     cohortes (/docencia/cohortes: tablero y carga), actividades (verificación),
-                               estudiante (/estudiante: portal del estudiante), encuestas (/docencia/encuestas),
+                               estudiante (/estudiante: portal del estudiante), tutoria (/tutoria y /docencia/tutoria),
+                               encuestas (/docencia/encuestas),
                                responder (/encuesta/<enlace>, pública)
   egresados/                   egresados (PLAN §50)
     egresados.py               titulación, hitos de seguimiento (6 meses, 1, 3 y 5 años), invitaciones programadas e indicadores
-    rutas/                     egresados (/docencia/egresados)
+    directorio.py              directorio opcional de egresados, invitación y solicitudes de mentoría
+    rutas/                     egresados (/docencia/egresados), directorio (/estudiante/directorio, /estudiante/perfil-egresado)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
 
 Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion`,

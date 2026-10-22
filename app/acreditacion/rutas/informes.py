@@ -215,6 +215,12 @@ def get(auth):
                                      "sistema: plan, cuerpo académico, proyectos, publicaciones y actividades.",
                                      cls=TextPresets.muted_sm))),
                           href="/informes/guia-antecedentes", cls="block hover:shadow-md transition"))
+    if permisos.puede(auth, "ver_seguimiento_estudiantil"):
+        tarjetas.append(A(Card(Div(UkIcon("graduation-cap", height=22, width=22, cls="text-primary"),
+                                   H3("Seguimiento estudiantil", cls="text-base font-semibold mt-2"),
+                                   P("Cohortes, actividad estudiantil, encuestas, tutoría, egresados y mentoría: solo cifras "
+                                     "agregadas, sin nombres. Descarga en XLSX.", cls=TextPresets.muted_sm))),
+                          href="/informes/seguimiento-estudiantil", cls="block hover:shadow-md transition"))
     if permisos.puede(auth, "ver_calidad_datos"):
         tarjetas.append(A(Card(Div(UkIcon("list-checks", height=22, width=22, cls="text-primary"),
                                    H3("Calidad de datos", cls="text-base font-semibold mt-2"),

@@ -250,6 +250,39 @@ En **Docencia → Egresados** están los indicadores de quienes se titularon, el
   Usan la **última respuesta de cada egresado** y siempre muestran el n: con diez titulados por año, tres años juntos dan
   una cifra más honesta que cada año por separado.
 
+### Tutoría
+
+La Dirección de Carrera y la Coordinación académica asignan un **tutor** (un docente con vínculo vigente) a cada estudiante que
+cursa, en **Docencia → Tutoría**: uno por uno o a toda una cohorte que aún no tiene tutor. Esa pantalla muestra también la
+cobertura (cuántos tienen tutor), las reuniones por año, los temas y las derivaciones; el Comité ve esas cifras, sin nombres.
+
+El **tutor** ve **Tutoría → Mis tutorados** en la barra y, en cada estudiante, registra sus **reuniones**: fecha, modalidad,
+tema (académico, económico, salud, vocacional, convivencia, otro), un resumen, la **derivación** si corresponde (bienestar,
+apoyo psicológico, académico, ayuda económica, salud) y los acuerdos. Las reuniones son **confidenciales**: las ve su autor y la
+Dirección de Carrera (cada vez que ésta las abre queda en la auditoría). El estudiante ve quién es su tutor, pero no las notas. Si
+cambia el tutor, el nuevo no ve las notas del anterior.
+
+### Directorio de egresados y mentoría
+
+- **Invitar.** En **Docencia → Egresados**, «Invitar» (o «Invitar al directorio a quienes faltan», hasta 50) crea la cuenta del
+  egresado, sin contraseña, y le manda un enlace de ingreso válido por 7 días. Figurar es **opcional**.
+- **Perfil.** El egresado ingresa con el enlace, acepta el uso general de sus datos y abre **Mi perfil de egresado**: a qué se
+  dedica, dónde, áreas de interés y qué ofrece (charlas, mentoría, pasantías, orientación sobre posgrados, ofertas de empleo).
+  Solo figura si marca «Quiero figurar» y acepta que lo vean estudiantes y personal de la Carrera dentro del sistema; puede
+  retirarse cuando quiera.
+- **Pedir ayuda.** Los estudiantes con cuenta ven el **Directorio de egresados** desde «Mi seguimiento», buscan y envían una
+  solicitud (hasta 3 pendientes a la vez). El egresado la recibe como aviso y la **acepta o no** en su perfil. El correo de cada
+  uno solo se comparte cuando el egresado acepta: a cada quien le llega el del otro.
+- El personal que gestiona egresados ve el directorio en **Egresados → Ver el directorio**.
+
+### Anexo de seguimiento estudiantil (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
+
+En **Informes → Seguimiento estudiantil** hay un documento imprimible (con membrete) y su XLSX con **solo cifras agregadas**, sin
+nombres: cohortes (ingreso, egreso, titulación y deserción), actividad estudiantil verificada por tipo y año, encuestas (tasa de
+respuesta y promedio; las anónimas con menos de 5 respuestas aparecen como «reservado»), tutoría (cobertura, reuniones y
+derivaciones, sin el contenido), egresados (indicadores por trienio y seguimiento) y directorio y mentoría. Se elige el rango de
+años de ingreso.
+
 ### Coautores externos
 
 En **Investigadores → Coautores externos** se completa la institución y el **país** de las personas

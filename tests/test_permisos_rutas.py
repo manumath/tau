@@ -54,6 +54,9 @@ RUTAS = {  # ruta → quienes reciben 200 (el resto, 403)
     "/docencia/encuestas": {"carrera", "datos_cmat", "comite"},
     "/docencia/egresados": {"carrera", "datos_cmat", "comite"},
     "/docencia/egresados/titular": {"carrera"},
+    "/docencia/egresados/directorio": {"carrera"},
+    "/docencia/tutoria": {"carrera", "datos_cmat", "comite"},
+    "/informes/seguimiento-estudiantil": {"carrera", "datos_cmat", "comite"},
     "/personas/externos/duplicados": {"instituto", "datos_cmat"},
 }
 

@@ -10,11 +10,12 @@ from app.academico.componentes import pestanas
 from app.comun import permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
-from app.egresados import egresados
+from app.egresados import directorio, egresados
 from app.estudiantil import cohortes
 
 rt = APIRouter()
 BASE = "/docencia/egresados"
+directorio_base = f"{BASE}/directorio"
 TONOS = {"respondido": "verde", "invitado": "azul", "omitido": "gris"}
 ETIQUETAS = {"respondido": "Respondió", "invitado": "Invitado(a)", "omitido": "Omitido"}
 
@@ -91,19 +92,38 @@ def _chips(seguimiento: dict):
                  for h in egresados.HITOS if h in seguimiento], cls="flex flex-wrap items-center gap-2")
 
 
+def _directorio(g):
+    estado = directorio.estado_directorio(g["externo_id"])
+    if estado == "visible":
+        return insignia("Figura", "verde")
+    if not (g["email"] or "").strip():
+        return Span("Sin correo", cls=TextPresets.muted_sm)
+    return Div(insignia("Invitado(a)", "azul") if estado == "invitado" else "",
+               _boton("Reenviar" if estado == "invitado" else "Invitar", f"{directorio_base}/invitar/{g['externo_id']}",
+                      cls=(ButtonT.ghost, ButtonT.sm)), cls="flex items-center gap-1")
+
+
 def _lista(auth):
     gente = egresados.titulados()
     filas = [Tr(Td(f"{g['apellidos']}, {g['nombres']}", cls="font-medium"),
                 Td(cohortes.texto(g["cohorte_anio"], g["cohorte_ciclo"]), cls="text-sm"), Td(g["fecha_titulacion"], cls="text-sm"),
                 Td(cohortes.MODALIDADES.get(g["modalidad_titulacion"], "—"), cls="text-sm"),
-                Td(_chips(g["seguimiento"])))
+                Td(_chips(g["seguimiento"])),
+                Td(_directorio(g)))
              for g in gente]
     return Card(
         Div(H3(f"Egresados titulados ({len(gente)})", cls="text-base font-semibold"),
-            Button(UkIcon("graduation-cap", height=16, width=16), "Registrar titulación", cls=(ButtonT.primary, ButtonT.sm),
-                   hx_get=f"{BASE}/titular", hx_target=f"#{ID_MODAL}"), cls="flex flex-wrap items-center justify-between gap-2 mb-3"),
-        Div(Table(Thead(Tr(Th("Egresado"), Th("Cohorte"), Th("Titulación"), Th("Modalidad"), Th("Seguimiento"))),
-                  Tbody(*filas) if filas else Tbody(Tr(Td("Aún no hay egresados titulados.", colspan=5,
+            Div(A(UkIcon("book-user", height=14, width=14), "Ver el directorio", href=directorio_base,
+                  cls="uk-btn uk-btn-default uk-btn-small inline-flex items-center gap-1"),
+                _boton("Invitar al directorio a quienes faltan", f"{directorio_base}/invitar-pendientes", icono="send",
+                       cls=(ButtonT.default, ButtonT.sm),
+                       confirmar="Se enviará la invitación al directorio (y se creará su cuenta) a los egresados con correo que aún no la "
+                                 "recibieron, hasta 50. ¿Continuar?"),
+                Button(UkIcon("graduation-cap", height=16, width=16), "Registrar titulación", cls=(ButtonT.primary, ButtonT.sm),
+                       hx_get=f"{BASE}/titular", hx_target=f"#{ID_MODAL}"), cls="flex flex-wrap items-center gap-2"),
+            cls="flex flex-wrap items-center justify-between gap-2 mb-3"),
+        Div(Table(Thead(Tr(Th("Egresado"), Th("Cohorte"), Th("Titulación"), Th("Modalidad"), Th("Seguimiento"), Th("Directorio"))),
+                  Tbody(*filas) if filas else Tbody(Tr(Td("Aún no hay egresados titulados.", colspan=6,
                                                           cls=(TextPresets.muted_sm, "text-center py-6")))),
                   cls="uk-table-divider uk-table-middle", data_tabla="lista-egresados", data_tabla_filtro="no"),
             cls="overflow-x-auto"))
