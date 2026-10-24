@@ -2078,7 +2078,7 @@ por la tarjeta «Egresados» (Mi perfil de egresado y el directorio, como botone
 puede editarlas (`gestionar_oferta`): para los demás era una lista de fechas y la oferta ya elige la gestión; la ruta
 sigue abierta para todos.
 
-**Decisiones del equipo (confirmar):** (1) el egresado conserva la posibilidad de agregar actividades de cuando
+**Decisiones confirmadas por el usuario (24-oct-2026):** (1) el egresado conserva la posibilidad de agregar actividades de cuando
 estudiaba, en segundo plano, en vez de perderla; (2) «Gestiones» solo en el menú de la Dirección de Carrera y la
 Coordinación; (3) el formulario de grados queda abierto cuando la persona aún no tiene ninguno; (4) en artículos, sin
 revista del catálogo, el nombre publicado se escribe en «Nombre de la revista» (no se propone solo al catálogo).
