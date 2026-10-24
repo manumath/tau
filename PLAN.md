@@ -2028,7 +2028,7 @@ lateral, la franja superior y las pestañas), estilos en `estilos/entrada.css` y
 pestañas, ids únicos, impresión, cuenta de estudiante) y una en navegador (página actual, plegado que se recuerda,
 panel en el teléfono).
 
-**Decisiones del equipo (confirmar):**
+**Decisiones confirmadas por el usuario (24-oct-2026):**
 - Grupos y orden de arriba; «Mis tutorados» (el tutor) va primero en Estudiantes.
 - En el teléfono, las tres secciones de abajo salen de este orden de prioridad: Productos, Proyectos, Mi docencia,
   Investigadores, Informes, Usuarios, Cohortes.
