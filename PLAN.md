@@ -2033,3 +2033,24 @@ panel en el teléfono).
 - En el teléfono, las tres secciones de abajo salen de este orden de prioridad: Productos, Proyectos, Mi docencia,
   Investigadores, Informes, Usuarios, Cohortes.
 - El menú se despliega por omisión; plegarlo es una elección de cada persona en su navegador.
+
+## 54. Valoración de la experiencia por rol y ajustes (24-oct-2026)
+
+Pedido del usuario: valorar la experiencia de cada tipo de usuario, detectar lo sobrecargado y aplicar los ajustes.
+Se evaluó con una **base temporal** (no versionada: el repositorio es público) armada sobre el seed, con una cuenta
+de cada rol (docente sin investigación y tutor, Coordinación, Dirección de Carrera, Dirección del Instituto que
+además investiga, Administración del sistema, Comité, Gestión de datos), 24 estudiantes (cursando, retirados,
+congelados, egresados y titulados), cuentas de estudiante y de egresado, tutorías, actividad estudiantil por
+verificar y el seguimiento de egresados; se recorrió con capturas en escritorio y teléfono.
+
+**Hallazgos:** inicio sobrecargado en los roles combinados (hasta 4 tarjetas de pendientes y 6 de accesos que
+repetían el menú) y avisos repetidos en 4 o 5 lugares; pendientes que faltaban (tutorados sin reuniones,
+actividad estudiantil por verificar, fichas sin grado para Gestión de datos); un aviso de carga que no decía quién
+la registra; la tarjeta «Usuarios» prometía crear cuentas a quien no puede; el formulario de producto mostraba todo
+siempre; barra de «Mis productos» densa; formularios de alta siempre abiertos en fichas; textos explicativos largos;
+el egresado veía «Registrar actividad estudiantil».
+
+**Etapa 1, inicio como bandeja única:** una tarjeta «Pendientes» con un subtítulo por rol (solo los que tienen algo;
+si no, «Todo al día»), pendientes nuevos de Estudiantes y Fichas académicas, y una fila de cifras con enlace en lugar
+de las tarjetas de accesos (los da el menú). El aviso de carga sin registrar dice que la registra la Dirección de
+Carrera.

@@ -1,94 +1,55 @@
-"""Inicio: «Para hoy» según el rol (lo que requiere atención, con enlace directo) y los accesos a
-los módulos con el estado del perfil."""
+"""Inicio (PLAN.md §54): una sola bandeja de pendientes, con un subtítulo por rol (lo que requiere atención, con
+enlace directo), y una fila de cifras con enlace. Los accesos a los módulos los da el menú lateral: el inicio no
+los repite."""
 from datetime import date, timedelta
 
 from fasthtml.common import A, APIRouter, Div, Li, P, Span, Ul
-from monsterui.all import H2, H3, H4, Card, Grid, Label, LabelT, Progress, TextPresets, UkIcon
+from monsterui.all import H2, H3, Card, TextPresets, UkIcon
 
 from app.academico import carga, gestiones, preparacion
 from app.academico.componentes import tiene_docencia
 from app.acreditacion import anexo, calidad
-from app.comun import permisos, vinculos
+from app.comun import estudiantes, permisos, vinculos
+from app.estudiantil import actividad as actividad_estudiantil, tutoria
 from app.comun.db import get_db
-from app.investigacion import actividades, filiacion, institucionales, perfiles, productos, proyectos
+from app.investigacion import filiacion, institucionales, perfiles, productos, proyectos
 from app.comun.componentes.layout import pagina
 
 rt = APIRouter()
 
-# (icono, título, descripción, fase en que se habilita, enlace si ya está disponible)
-MODULO_DIRECTORIO = ("book-user", "Investigadores",
-                     "Directorio interno: busque colegas por nombre o área MSC.", 2, "/investigadores")
-MODULO_USUARIOS = ("users", "Usuarios", "Crear cuentas, restablecer contraseñas y desactivar accesos.",
-                   1, "/admin/usuarios")
+def _cifra(valor, texto, href=None):
+    contenido = (Span(str(valor), cls="text-2xl font-semibold tabular-nums"), Span(texto, cls=TextPresets.muted_sm))
+    cls = "flex flex-col rounded-lg border border-border px-4 py-3"
+    return A(*contenido, href=href, cls=cls + " hover:bg-muted") if href else Div(*contenido, cls=cls)
 
 
-def _tarjeta(icono, titulo, descripcion, fase, href, extra=None):
-    disponible = href is not None
-    contenido = Div(
-        Div(UkIcon(icono, height=22, width=22, cls="text-primary"),
-            "" if disponible else Label(f"Fase {fase}", cls=LabelT.secondary),
-            cls="flex items-center justify-between"),
-        H4(titulo, cls="mt-3"),
-        P(descripcion, cls=TextPresets.muted_sm),
-        extra or "",
-    )
-    tarjeta = Card(contenido, cls="h-full" + ("" if disponible else " opacity-70"))
-    return A(tarjeta, href=href, cls="block hover:shadow-md transition") if disponible else tarjeta
+def _cifras_mias(auth):
+    """Para quien investiga: su producción del año, sus proyectos y su perfil."""
+    if not auth["es_investigador"]:
+        return None
+    uid, anio = auth["id"], date.today().year
+    del_anio = [p for p in productos.buscar(uid) if p["anio"] == anio]  # para contar basta año, revisión y estado
+    mios = [p for p in proyectos.de_investigador(uid) if p["vigente"] and p["estado"] != "finalizado"]
+    pct, _ = perfiles.completitud(perfiles.obtener(uid), len(perfiles.areas(uid)))
+    return ("Mi producción", [
+        _cifra(len(del_anio), f"productos en {anio}", "/productos"),
+        _cifra(sum(productos.cuenta_para_informe(p) for p in del_anio), "cuentan para el informe", "/productos?informe=1"),
+        _cifra(len(mios), "proyectos vigentes", "/proyectos"),
+        _cifra(f"{pct} %", "perfil completo", "/perfil")])
 
 
-def _cifra(valor, texto):
-    return Div(Span(str(valor), cls="text-2xl font-semibold"), Span(texto, cls=TextPresets.muted_sm),
-               cls="flex flex-col")
-
-
-def _tarjetas_produccion(uid):
+def _cifras_acreditacion(auth):
+    """Quien ve los informes institucionales: el cuerpo académico del año."""
+    if not permisos.puede(auth, "ver_informes_institucionales"):
+        return None
     anio = date.today().year
-    prods = productos.buscar(uid)  # para contar basta el año, la revisión y el estado
-    del_anio = [p for p in prods if p["anio"] == anio]
-    acts = [a for a in actividades.de_investigador(uid) if a["fecha_inicio"].startswith(str(anio))]
-    pendientes = filiacion.pendientes(uid)
-    extra_p = Div(Div(_cifra(len(del_anio), f"en {anio}"),
-                      _cifra(sum(productos.cuenta_para_informe(p) for p in del_anio), "para el informe"),
-                      _cifra(len(prods), "en total"), cls="grid grid-cols-3 gap-2 mt-3"),
-                  P(f"{pendientes} sin filiación declarada: indique si los firmó con IIMAT/UMSA.",
-                    cls="text-sm text-amber-600 mt-2") if pendientes else "")
-    extra_a = Div(_cifra(len(acts), f"en {anio}"),
-                  _cifra(sum(a["ambito"] == "internacional" for a in acts), "internacionales"),
-                  cls="grid grid-cols-3 gap-2 mt-3")
-    return [
-        _tarjeta("book-open", "Mis productos", "Artículos indexados o arbitrados, reportes de "
-                 "investigación, libros y presentaciones.", 3,
-                 "/productos?sin_filiacion=1" if pendientes else "/productos", extra_p),
-        _tarjeta("calendar-days", "Mis actividades", "Seminarios, congresos, visitas y escuelas.",
-                 3, "/actividades", extra_a),
-    ]
-
-
-def _tarjeta_proyectos(auth):
-    mios = [p for p in proyectos.de_investigador(auth["id"]) if p["vigente"] and p["estado"] != "finalizado"]
-    por_revisar = proyectos.n_pendientes_para(auth)
-    propias = proyectos.mis_propuestas(auth["id"])
-    rechazadas = sum(v["estado"] == "rechazado" for v in propias)
-    extra = Div(
-        Div(_cifra(len(mios), "vigentes"), _cifra(por_revisar, "por revisar"),
-            _cifra(len(propias), "propuestas mías"), cls="grid grid-cols-3 gap-2 mt-3"),
-        P(f"{rechazadas} propuesta{'s' if rechazadas != 1 else ''} rechazada{'s' if rechazadas != 1 else ''}: "
-          "revise el motivo en «Proyectos».", cls="text-sm text-red-600 mt-2") if rechazadas else "",
-        P(f"Tiene {por_revisar} propuesta{'s' if por_revisar != 1 else ''} por revisar.",
-          cls="text-sm text-amber-600 mt-2") if por_revisar else "")
-    return _tarjeta("folder-kanban", "Mis proyectos", "Proyectos en que participa y el flujo de "
-                    "propuestas y aprobaciones.", 4, "/proyectos", extra)
-
-
-def _tarjeta_perfil(uid):
-    p = perfiles.obtener(uid)
-    porcentaje, faltan = perfiles.completitud(p, len(perfiles.areas(uid)))
-    extra = Div(Progress(value=str(porcentaje), cls="mt-3 mb-1"),
-                P(f"{porcentaje} % completo" + (f" · falta: {', '.join(faltan[:3])}"
-                                                 + ("…" if len(faltan) > 3 else "") if faltan else ""),
-                  cls=TextPresets.muted_sm))
-    return _tarjeta("user-round", "Mi perfil", "Datos básicos, ORCID, MathSciNet, zbMATH, áreas MSC "
-                    "y foto.", 2, "/perfil", extra)
+    cuerpo = anexo.cuerpo_academico(anio, date.today().isoformat())
+    vigentes = get_db().q("SELECT COUNT(*) n FROM proyecto WHERE estado = 'vigente'")[0]["n"]
+    return (f"Acreditación · {anio}", [
+        _cifra(cuerpo["total"], "académicos vinculados", "/informes/cuerpo-academico"),
+        _cifra(cuerpo["jce"], "jornadas completas eq.", "/informes/cuerpo-academico"),
+        _cifra(vigentes, "proyectos vigentes", "/informes/memoria"),
+        _cifra("Anexo", "de I+D+i", "/informes/acreditacion")])
 
 
 # --- Para hoy ---------------------------------------------------------------------------------------
@@ -108,12 +69,8 @@ def _item(texto, href, tono="ambar", detalle=None):
 
 
 def _grupo(icono, titulo, items):
-    items = [x for x in items if x]
-    return Card(Div(UkIcon(icono, height=18, width=18, cls="text-primary"), H3(titulo, cls="text-base font-semibold"),
-                    cls="flex items-center gap-2 mb-2"),
-                Ul(*items, cls="-mx-2") if items else
-                P(UkIcon("check", height=14, width=14, cls="inline mr-1 text-green-600"), "Nada pendiente.",
-                  cls=TextPresets.muted_sm))
+    """Una sección de la bandeja: (icono, título, ítems no vacíos)."""
+    return (icono, titulo, [x for x in items if x])
 
 
 def _nombres(filas, n=3):
@@ -191,23 +148,6 @@ def _para_instituto(auth):
     return _grupo("landmark", "Dirección del Instituto", items)
 
 
-def _para_acreditacion(auth):
-    """Quien ve los informes institucionales: el cuerpo académico del año, en cifras."""
-    if not permisos.puede(auth, "ver_informes_institucionales"):
-        return None
-    anio = date.today().year
-    cuerpo = anexo.cuerpo_academico(anio, date.today().isoformat())
-    vigentes = get_db().q("SELECT COUNT(*) n FROM proyecto WHERE estado = 'vigente'")[0]["n"]
-    cifras = Div(_cifra(cuerpo["total"], "académicos vinculados"), _cifra(cuerpo["jce"], "jornadas completas eq."),
-                 _cifra(vigentes, "proyectos vigentes"), cls="grid grid-cols-3 gap-2")
-    return Card(Div(UkIcon("chart-column", height=18, width=18, cls="text-primary"),
-                    H3(f"Acreditación · {anio}", cls="text-base font-semibold"), cls="flex items-center gap-2 mb-3"),
-                cifras,
-                Div(A("Memoria", href="/informes/memoria", cls="text-sm text-primary hover:underline"),
-                    A("Anexo de I+D+i", href="/informes/acreditacion", cls="text-sm text-primary hover:underline"),
-                    cls="flex gap-4 mt-3"))
-
-
 def _para_mi(auth):
     """Lo que le toca a la persona: revisar, corregir, declarar y su docencia."""
     uid, items = auth["id"], []
@@ -240,6 +180,34 @@ def _para_mi(auth):
     return _grupo("list-checks", "Lo mío", items) if items or auth["es_investigador"] else None
 
 
+def _para_estudiantes(auth):
+    """El tutor: tutorados sin reuniones. La Dirección de Carrera y la Coordinación: actividad estudiantil por
+    verificar."""
+    items = []
+    if estudiantes.es_tutor(auth["id"]):
+        sin = [t for t in tutoria.tutorados(auth["id"]) if not t["reuniones"]]
+        if sin:
+            items.append(_item(f"{_plural(len(sin), 'tutorado')} sin reuniones registradas", "/tutoria",
+                               detalle=_nombres(sin)))
+    if permisos.puede(auth, "verificar_actividad", vinculos.carrera()):
+        n = actividad_estudiantil.n_pendientes()
+        if n:
+            items.append(_item(f"{_plural(n, 'actividad estudiantil', 'actividades estudiantiles')} por verificar",
+                               "/docencia/cohortes/actividades"))
+    return _grupo("users-round", "Estudiantes", items) if items else None
+
+
+def _para_fichas(auth):
+    """Gestión de datos (y quien gestiona fichas sin otra bandeja que lo muestre): académicos sin grado."""
+    if not permisos.puede(auth, "gestionar_fichas") or permisos.puede(auth, "ver_calidad_datos"):
+        return None   # las direcciones lo ven en «Calidad de datos»
+    c = calidad.sin_grado()
+    return _grupo("id-card", "Fichas académicas", [
+        _item(f"{_plural(c['n'], 'académico vinculado', 'académicos vinculados')} sin grado registrado", "/admin/usuarios",
+              detalle=_nombres([{"nombres": i["texto"].split(", ")[-1], "apellidos": i["texto"].split(", ")[0]}
+                                for i in c["items"]]))] if c["n"] else [])
+
+
 def _para_calidad(auth):
     """Quien ve la calidad de datos: cuántos registros quedan por completar (enlace al tablero)."""
     if not permisos.puede(auth, "ver_calidad_datos"):
@@ -251,25 +219,30 @@ def _para_calidad(auth):
     return _grupo("list-checks", "Calidad de datos", [item])
 
 
+def _bandeja(secciones):
+    """Todos los pendientes en una tarjeta: un subtítulo por rol, o «Todo al día»."""
+    con_algo = [(i, t, items) for i, t, items in secciones if items]
+    if not con_algo:
+        return Card(P(UkIcon("circle-check", height=18, width=18, cls="inline mr-2 text-green-600"),
+                      "Todo al día: no tiene pendientes.", cls="text-sm"))
+    bloques = [Div(Div(UkIcon(icono, height=16, width=16, cls="text-primary"),
+                       H3(titulo, cls="text-xs font-semibold uppercase tracking-wide text-muted-foreground"),
+                       cls="flex items-center gap-2 px-2"),
+                   Ul(*items, cls="mt-1"), cls="py-3 first:pt-0 last:pb-0")
+               for icono, titulo, items in con_algo]
+    return Card(Div(*bloques, cls="divide-y divide-border -mx-2"))
+
+
 @rt("/")
 def get(auth):
-    grupos = [x for x in (_para_mi(auth), _para_carrera(auth), _para_instituto(auth), _para_acreditacion(auth),
-                          _para_calidad(auth)) if x]
-    tarjetas = []
-    if auth["es_investigador"]:
-        tarjetas += [_tarjeta_proyectos(auth), *_tarjetas_produccion(auth["id"]),
-                     _tarjeta_perfil(auth["id"])]
-    tarjetas.append(_tarjeta(*MODULO_DIRECTORIO))
-    if permisos.puede(auth, "ver_usuarios"):
-        tarjetas.append(_tarjeta(*MODULO_USUARIOS))
+    secciones = [x for x in (_para_mi(auth), _para_carrera(auth), _para_instituto(auth), _para_estudiantes(auth),
+                             _para_fichas(auth), _para_calidad(auth)) if x]
+    cifras = [x for x in (_cifras_mias(auth), _cifras_acreditacion(auth)) if x]
     return pagina(
         "Inicio",
-        Div(H2(f"Hola, {auth['nombres']}"),
-            P("Lo que requiere su atención y sus accesos.", cls=TextPresets.muted_sm),
+        Div(H2(f"Hola, {auth['nombres']}"), P("Lo que requiere su atención.", cls=TextPresets.muted_sm),
             cls="mb-6 space-y-1"),
-        Div(H4("Para hoy", cls="mb-3"),
-            Div(*grupos, cls="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"),
-            cls="mb-8") if grupos else "",
-        H4("Accesos", cls="mb-3"),
-        Grid(*tarjetas, cols_sm=1, cols_md=2, cols_lg=3, gap=4),
+        Div(H3("Pendientes", cls="text-base font-semibold mb-3"), _bandeja(secciones), cls="mb-8 max-w-3xl"),
+        *[Div(H3(titulo, cls="text-base font-semibold mb-3"), Div(*tiles, cls="grid grid-cols-2 md:grid-cols-4 gap-3"),
+              cls="mb-8 max-w-3xl") for titulo, tiles in cifras],
         usuario=auth, seccion="inicio")

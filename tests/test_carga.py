@@ -63,7 +63,7 @@ def test_resumen_por_semestre(g, emmy, cmat):
     r = carga.resumen(alan, g["I"])
     assert (r["contratada"], r["asignada"], r["avisos"]) == (None, 32, ["Sin vínculo con la Carrera al inicio del semestre."])
     vinculos.agregar(emmy, "titular", "2020-01-01")
-    assert carga.resumen(emmy, g["I"])["avisos"] == ["Falta registrar la carga contratada en su vínculo con la Carrera."]
+    assert carga.resumen(emmy, g["I"])["avisos"] == ["Falta registrar la carga contratada en su vínculo con la Carrera (la registra la Dirección de Carrera)."]
     vid = vinculos.vigente(emmy)["id"]
     vinculos.editar(vid, "titular", "2020-01-01", None, carga=_carga(160, docencia=64, investigacion=64, extension=32))
     _dictar(g["I"], emmy, "MAT-251")

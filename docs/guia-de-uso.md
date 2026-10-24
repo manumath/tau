@@ -93,7 +93,9 @@ Lo que se puede revertir no pregunta: el aviso que aparece ofrece **«Deshacer»
 
 ## Inicio
 
-Al ingresar, **Para hoy** muestra lo que requiere su atención según su rol, con enlace directo:
+Al ingresar, **Pendientes** reúne en una sola lista lo que requiere su atención, con enlace directo y un
+subtítulo por cada rol que usted tenga (solo aparecen los que tienen algo pendiente; si no hay nada, dice
+«Todo al día»):
 
 - **Lo mío** (todos): pendientes por revisar en sus proyectos, propuestas aceptadas con condiciones,
   publicaciones sin filiación declarada, la convocatoria abierta y su docencia del semestre.
@@ -103,10 +105,14 @@ Al ingresar, **Para hoy** muestra lo que requiere su atención según su rol, co
   preparar el próximo semestre.
 - **Dirección del Instituto:** propuestas por decidir, proyectos institucionales que terminan en los
   próximos 60 días, participantes con carga que quedaron sin vínculo y publicaciones sin filiación.
-- **Acreditación** (quien ve los informes institucionales): académicos vinculados, jornadas
-  completas equivalentes y proyectos vigentes del año, con acceso a la memoria y al anexo.
+- **Estudiantes:** al tutor, los tutorados sin reuniones registradas; a la Dirección de Carrera y la
+  Coordinación, la actividad estudiantil por verificar.
+- **Fichas académicas** (Gestión de datos): académicos vinculados sin grado registrado.
+- **Calidad de datos** (quien la ve): cuántos registros faltan completar.
 
-Debajo siguen los accesos a sus módulos.
+Debajo, unas **cifras** con enlace: su producción del año, proyectos vigentes y perfil (si investiga) y, para
+quien ve los informes institucionales, el cuerpo académico del año y el anexo de I+D+i. A los módulos se llega
+por el menú.
 
 ## Mi docencia
 

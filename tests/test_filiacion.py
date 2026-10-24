@@ -87,7 +87,7 @@ def test_declarar_desde_la_lista(client, emmy):
     _producto([f"i:{emmy}"], [1], "Declarado")
     assert filiacion.pendientes(emmy) == 2
     login(client, "inv@test.cl", PASS_TEMP)
-    assert "2 sin filiación declarada" in client.get("/").text
+    assert "2 publicaciones sin filiación declarada" in client.get("/").text   # en la bandeja «Pendientes»
     r = client.get("/productos/lista?sin_filiacion=1", headers=HX)
     assert "Pendiente" in r.text and "Declarado" not in r.text and "¿Firmó con IIMAT/UMSA?" in r.text
     r = client.post(f"/productos/{pendiente}/filiacion", headers=HX, data={"valor": "0"})

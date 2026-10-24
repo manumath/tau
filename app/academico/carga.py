@@ -40,7 +40,7 @@ def resumen(usuario_id: int, gestion: dict) -> dict:
         avisos.append("Sin vínculo con la Carrera al inicio del semestre.")
     elif not c:
         if v["categoria"] not in SIN_CARGA_OBLIGATORIA or materias:
-            avisos.append("Falta registrar la carga contratada en su vínculo con la Carrera.")
+            avisos.append("Falta registrar la carga contratada en su vínculo con la Carrera (la registra la Dirección de Carrera).")
     elif asignada != prevista:
         n = abs(prevista - asignada) // oferta.HORAS_POR_MATERIA
         materias_txt = "1 materia" if n == 1 else f"{n} materias"
