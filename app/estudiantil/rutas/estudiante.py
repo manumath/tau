@@ -81,9 +81,13 @@ def _fila_actividad(a):
 
 def tarjeta_actividades(externo_id: int):
     filas = actividad.listar(externo_id)
+    # Al egresado le queda como registro de cuando estudiaba (PLAN.md §54): puede agregar una que falte, sin
+    # que compita con su perfil de egresado.
+    egresado = estudiantes.es_egresado(externo_id)
     return Card(
-        Div(H3("Mi actividad estudiantil", cls="text-base font-semibold"),
-            Button(UkIcon("plus", height=16, width=16), "Registrar actividad", cls=(ButtonT.primary, ButtonT.sm),
+        Div(H3("Mi actividad cuando estudiaba" if egresado else "Mi actividad estudiantil", cls="text-base font-semibold"),
+            Button(UkIcon("plus", height=16, width=16), "Agregar una que falte" if egresado else "Registrar actividad",
+                   cls=(ButtonT.ghost if egresado else ButtonT.primary, ButtonT.sm),
                    hx_get=f"{BASE}/actividades/nueva", hx_target=f"#{ID_MODAL}"),
             cls="flex flex-wrap items-center justify-between gap-2 mb-1"),
         P("Ayudantías, olimpiadas, congresos, pasantías, becas, movilidad, semilleros y otras actividades. La Dirección "
@@ -109,6 +113,10 @@ def _participacion(externo_id: int):
         cls="space-y-3")
 
 
+def _tarjeta_participacion(externo: int):
+    return Card(H3("Mi participación en la investigación", cls="text-base font-semibold mb-2"), _participacion(externo))
+
+
 def _pagina_consentimiento(auth):
     return pagina(
         "Mi seguimiento",
@@ -128,12 +136,19 @@ def _tarjeta_apoyo(externo: int):
     contenido = []
     if tutor:
         contenido.append(P(Span("Su tutor(a): ", cls="font-medium"), f"{tutor['nombres']} {tutor['apellidos']} · {tutor['email']}", cls="text-sm"))
-    contenido.append(A(UkIcon("book-user", height=14, width=14), "Directorio de egresados", href=f"{BASE}/directorio",
-                       cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"))
     if egresado:
-        contenido.append(A(UkIcon("id-card", height=14, width=14), "Mi perfil de egresado", href=f"{BASE}/perfil-egresado",
+        contenido += [P("Mantenga al día su perfil: la Carrera lo usa para el seguimiento de egresados, y en el "
+                        "directorio puede ofrecer orientación a estudiantes.", cls=TextPresets.muted_sm),
+                      Div(A(UkIcon("id-card", height=16, width=16), "Mi perfil de egresado", href=f"{BASE}/perfil-egresado",
+                            cls="uk-btn uk-btn-primary uk-btn-sm inline-flex items-center gap-1"),
+                          A(UkIcon("book-user", height=16, width=16), "Directorio de egresados", href=f"{BASE}/directorio",
+                            cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1"),
+                          cls="flex flex-wrap gap-2")]
+    else:
+        contenido.append(A(UkIcon("book-user", height=14, width=14), "Directorio de egresados", href=f"{BASE}/directorio",
                            cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"))
-    return Card(H3("Apoyo y comunidad", cls="text-base font-semibold mb-2"), Div(*contenido, cls="flex flex-col gap-2"))
+    return Card(H3("Egresados" if egresado else "Apoyo y comunidad", cls="text-base font-semibold mb-2"),
+                Div(*contenido, cls="flex flex-col gap-2"))
 
 
 @rt(BASE)
@@ -152,9 +167,10 @@ def get(auth):
         "Mi seguimiento",
         H2(f"{p['nombres']} {p['apellidos']}"),
         P(" · ".join(x for x in datos if x) or "Sin datos de cohorte todavía.", cls=(TextPresets.muted_sm, "mb-6")),
-        Div(tarjeta_actividades(externo),
-            Div(Card(H3("Mi participación en la investigación", cls="text-base font-semibold mb-2"), _participacion(externo)),
-                _tarjeta_apoyo(externo), cls="space-y-6"),
+        # El egresado empieza por su perfil de egresado; el estudiante, por su actividad (PLAN.md §54).
+        Div(*([_tarjeta_apoyo(externo), Div(tarjeta_actividades(externo), _tarjeta_participacion(externo), cls="space-y-6")]
+              if estudiantes.es_egresado(externo) else
+              [tarjeta_actividades(externo), Div(_tarjeta_participacion(externo), _tarjeta_apoyo(externo), cls="space-y-6")]),
             cls="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"),
         P("TAU no registra sus materias ni sus notas. Si algún dato de arriba no es correcto, avise a la Dirección de Carrera.",
           cls=(TextPresets.muted_sm, "mt-6")),

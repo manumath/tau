@@ -1,6 +1,8 @@
 """Estructura común de las páginas: menú lateral, barra superior, pestañas del teléfono, contenedor y modal."""
+import unicodedata
+
 import fasthtml.common as fh
-from fasthtml.common import A, Div, Form, Input, Li, Main, P, Span, Title, Ul
+from fasthtml.common import A, Div, Form, Input, Li, Main, Span, Title, Ul
 from monsterui.all import H3, Button, ButtonT, Container, ContainerT, TextPresets, UkIcon
 
 from app.comun import config
@@ -96,11 +98,27 @@ def _enlace_menu(item):
                     "hover:bg-muted hover:text-foreground"))
 
 
+def _clave_grupo(titulo: str) -> str:
+    """'Acreditación' → 'acreditacion' (la usan estilos/entrada.css y static/js/disposicion-inicial.js)."""
+    return unicodedata.normalize("NFKD", titulo).encode("ascii", "ignore").decode().lower()
+
+
+def _grupo_menu(titulo, items):
+    """Grupo del menú; con título, se pliega con su encabezado (PLAN.md §54) y el navegador lo recuerda."""
+    lista = Ul(*[_enlace_menu(i) for i in items], cls="space-y-0.5")
+    if not titulo:
+        return Div(lista)
+    clave = _clave_grupo(titulo)
+    return Div(fh.Button(Span(titulo), UkIcon("chevron-down", height=14, width=14, cls="flecha-grupo"),
+                         type="button", data_accion="plegar-grupo", aria_expanded="true",
+                         cls="lateral-grupo grupo-plegable flex w-full items-center justify-between rounded px-3 pt-4 "
+                             "pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground "
+                             "hover:text-foreground"),
+               lista, data_grupo=clave, cls="menu-grupo")
+
+
 def menu_lateral(usuario: dict):
-    grupos = [Div(P(titulo, cls="lateral-grupo px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide "
-                                "text-muted-foreground") if titulo else "",
-                  Ul(*[_enlace_menu(i) for i in items], cls="space-y-0.5"))
-              for titulo, items in MENU(usuario)]
+    grupos = [_grupo_menu(titulo, items) for titulo, items in MENU(usuario)]
     plegar = fh.Button(UkIcon("panel-left-close", height=18, width=18, cls="icono-plegar"),
                        UkIcon("panel-left-open", height=18, width=18, cls="icono-desplegar"),
                        type="button", data_accion="plegar-lateral", aria_label="Plegar o desplegar el menú",

@@ -42,6 +42,14 @@
   .enlace-menu[aria-current="page"] { @apply bg-primary/10 font-medium text-primary; }
   .pestanas-movil .enlace-menu[aria-current="page"] { @apply bg-transparent; }
   .lateral .icono-desplegar { @apply hidden; }
+  /* Grupos plegados (html[data-grupos~=clave], lo pone static/js/disposicion-inicial.js antes de pintar); el
+     de la página actual (.actual) queda abierto. Una regla por grupo de app/navegacion.py. */
+  html[data-grupos~="investigacion"] [data-grupo="investigacion"]:not(.actual) > ul,
+  html[data-grupos~="docencia"] [data-grupo="docencia"]:not(.actual) > ul,
+  html[data-grupos~="estudiantes"] [data-grupo="estudiantes"]:not(.actual) > ul,
+  html[data-grupos~="acreditacion"] [data-grupo="acreditacion"]:not(.actual) > ul,
+  html[data-grupos~="administracion"] [data-grupo="administracion"]:not(.actual) > ul { @apply hidden; }
+  .grupo-plegable[aria-expanded="false"] .flecha-grupo { @apply -rotate-90; }
 
   @media (min-width: 1024px) {
     .lateral { @apply translate-x-0 transition-[width]; }
@@ -52,6 +60,9 @@
     html[data-lateral="plegado"] .columna-contenido { @apply pl-16; }
     html[data-lateral="plegado"] .lateral .lateral-texto,
     html[data-lateral="plegado"] .lateral .lateral-grupo { @apply sr-only; }
+    /* Solo íconos: todos los grupos a la vista (plegarlos ahí escondería íconos sin decir cuáles). */
+    html[data-lateral="plegado"] .lateral .grupo-plegable { @apply hidden; }
+    html[data-lateral="plegado"] .lateral .menu-grupo > ul { @apply block; }
     html[data-lateral="plegado"] .lateral .enlace-menu { @apply relative justify-center px-0; }
     /* Contadores (propuestas por revisar…): sobre el ícono, en chico. */
     html[data-lateral="plegado"] .lateral .enlace-menu > span:not(.lateral-texto) {

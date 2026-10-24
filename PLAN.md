@@ -2069,3 +2069,16 @@ de grados (perfil y ficha académica) queda plegada en «+ Agregar grado» cuand
 hubo un error), y la de contrapartes del proyecto en «+ Agregar contraparte». Los textos largos de «Calidad de datos»
 y «Cohortes» quedan en una línea con «¿Cómo funciona?» / «¿Cómo se calcula?» plegado. Los demás textos de entrada
 (Mis tutorados, actividad del estudiante) ya eran de una o dos líneas y se dejaron.
+
+**Etapa 4, perfil, menú y egresados:** en «Mi perfil», cada cosa de «Falta: …» enlaza a su sección. Los grupos del
+menú lateral se pliegan con su título y el navegador lo recuerda (`tau-grupos`, aplicado antes de pintar); el grupo de
+la página abierta se ve siempre y, con el menú en solo íconos, se ven todos. En «Mi seguimiento», el egresado empieza
+por la tarjeta «Egresados» (Mi perfil de egresado y el directorio, como botones) y su actividad estudiantil pasa a
+«Mi actividad cuando estudiaba», con «Agregar una que falte» en segundo plano. «Gestiones» sale del menú de quien no
+puede editarlas (`gestionar_oferta`): para los demás era una lista de fechas y la oferta ya elige la gestión; la ruta
+sigue abierta para todos.
+
+**Decisiones del equipo (confirmar):** (1) el egresado conserva la posibilidad de agregar actividades de cuando
+estudiaba, en segundo plano, en vez de perderla; (2) «Gestiones» solo en el menú de la Dirección de Carrera y la
+Coordinación; (3) el formulario de grados queda abierto cuando la persona aún no tiene ninguno; (4) en artículos, sin
+revista del catálogo, el nombre publicado se escribe en «Nombre de la revista» (no se propone solo al catálogo).

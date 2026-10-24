@@ -27,6 +27,9 @@ def test_cada_rol_ve_sus_grupos(app):
     assert "actividades" not in admin["Investigación"]                        # no es investigadora
     permisos.asignar(usuarios.por_email("inv@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
     assert "cohortes" in _grupos(_auth("inv@test.cl"))["Estudiantes"]         # ve el seguimiento estudiantil
+    # «Gestiones» solo para quien las prepara (PLAN.md §54): para los demás era una lista de fechas.
+    assert "gestiones" not in emmy.get("Docencia", []) and "gestiones" not in admin["Docencia"]
+    assert "gestiones" in _grupos(_auth("inv@test.cl"))["Docencia"]
 
 
 def test_pestanas_del_telefono(app):
@@ -46,6 +49,9 @@ def test_pagina_con_menu_unico(client):
     assert 'data-accion="plegar-lateral"' in r and 'data-accion="abrir-menu"' in r
     assert "<span>Más</span>" in r                                              # la barra del teléfono termina en «Más»
     assert "js/disposicion-inicial.js" in r                                     # el plegado, antes de pintar
+    assert 'data-grupo="investigacion"' in r and 'data-accion="plegar-grupo"' in r  # grupos plegables (§54)
+    r = client.get("/perfil").text                                              # cada «Falta» lleva a su sección
+    assert 'href="#seccion-identificadores"' in r and 'id="seccion-identificadores"' in r
     assert re.search(r'class="[^"]*\blateral\b[^"]*no-imprimir', r)              # el menú no sale en los PDF
 
 

@@ -67,10 +67,11 @@ que ve, con el orden y el filtro aplicados. El CSV se abre en Excel con las tild
 
 En una pantalla grande, el **menú lateral** reúne todo lo que usted puede abrir, agrupado: **Investigación**
 (actividades, productos, proyectos, investigadores, propuestas), **Docencia** (mi docencia, preparación del
-semestre, planes, oferta, carga horaria, gestiones), **Estudiantes** (cohortes, encuestas, tutoría, egresados),
+semestre, planes, oferta, carga horaria y, para quien prepara el semestre, gestiones), **Estudiantes** (cohortes, encuestas, tutoría, egresados),
 **Acreditación** (informes y calidad de datos) y **Administración** (usuarios, auditoría, revistas, líneas, tipos e
 índices). Cada persona ve solo los grupos que le corresponden. El botón junto a «TAU» lo **pliega** a solo íconos
-(útil con tablas anchas); el sistema recuerda la elección en ese navegador.
+(útil con tablas anchas); el sistema recuerda la elección en ese navegador. Cada grupo se **pliega** tocando su
+título (la flecha lo indica); el grupo de la página abierta se ve siempre, y con el menú en solo íconos se ven todos.
 
 En el **teléfono**, abajo hay una barra con el inicio y sus tres secciones principales; **«Más»** abre el menú
 completo (se cierra con la ✕, tocando fuera o con Escape). Arriba quedan la búsqueda, la campana de avisos y su
@@ -153,7 +154,7 @@ Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Ed
   - *Avisos por correo*: sobre propuestas en proyectos que usted dirige y sobre la revisión de
     las suyas.
 
-El indicador «Perfil completo» muestra qué falta. Los demás investigadores ven su perfil en
+El indicador «Perfil completo» muestra qué falta; cada cosa que falta lleva a la sección donde se completa. Los demás investigadores ven su perfil en
 «Investigadores», el directorio interno, que se puede filtrar por categoría.
 
 Su **vínculo** con el instituto (desde cuándo y con qué categoría: titular, contratado(a),
@@ -464,7 +465,7 @@ electivas; los totales del documento frente a la suma del plan; y las **observac
 cuadra en el documento (se cargó tal como está). La Dirección de Carrera y la Coordinación
 académica las marcan como resueltas indicando cómo se resolvió.
 
-**Gestiones** (pestaña «Gestiones»): I y II (semestres), INV (invierno, julio) y VER (verano, en
+**Gestiones** (en el menú, para la Dirección de Carrera y la Coordinación): I y II (semestres), INV (invierno, julio) y VER (verano, en
 enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la gestión 2026). «Crear
 las gestiones del año» propone fechas que se ajustan al calendario aprobado y oferta ambos
 semestres (I y II) con todas las troncales de las licenciaturas (obligatorias y proyecto de grado de
@@ -637,7 +638,8 @@ cambia el tutor, el nuevo no ve las notas del anterior.
 
 - **Invitar.** En **Estudiantes → Egresados**, «Invitar» (o «Invitar al directorio a quienes faltan», hasta 50) crea la cuenta del
   egresado, sin contraseña, y le manda un enlace de ingreso válido por 7 días. Figurar es **opcional**.
-- **Perfil.** El egresado ingresa con el enlace, acepta el uso general de sus datos y abre **Mi perfil de egresado**: a qué se
+- **Perfil.** El egresado ingresa con el enlace, acepta el uso general de sus datos y abre **Mi perfil de egresado** (es lo
+  primero que ve en «Mi seguimiento»; su actividad estudiantil queda como «Mi actividad cuando estudiaba»): a qué se
   dedica, dónde, áreas de interés y qué ofrece (charlas, mentoría, pasantías, orientación sobre posgrados, ofertas de empleo).
   Solo figura si marca «Quiero figurar» y acepta que lo vean estudiantes y personal de la Carrera dentro del sistema; puede
   retirarse cuando quiera.

@@ -22,6 +22,7 @@
 //   data-cerrar-fuera                 desplegable: un clic fuera de él lo vacía
 //   tecla «/»                         lleva a la búsqueda global (#busqueda-global), salvo al escribir
 //   data-accion="plegar-lateral"      pliega o despliega el menú lateral (se recuerda en el navegador)
+//   data-accion="plegar-grupo"        pliega o despliega un grupo del menú (se recuerda en el navegador)
 //   data-accion="abrir-menu" | "cerrar-menu"   el menú lateral como panel en el teléfono (Escape lo cierra)
 //   data-nav                          enlace del menú: el de la página actual recibe aria-current="page"
 //
@@ -71,6 +72,14 @@
       const mejor = [...grupo].filter(coincide).sort((x, y) => largo(y) - largo(x))[0];
       if (mejor) mejor.setAttribute('aria-current', 'page');
     }
+    // Grupos plegados: el de la página actual se ve igual; cada encabezado dice si está abierto.
+    const actual = document.querySelector('#menu-lateral [aria-current="page"]');
+    if (actual && actual.closest('[data-grupo]')) actual.closest('[data-grupo]').classList.add('actual');
+    const plegados = (document.documentElement.dataset.grupos || '').split(' ');
+    document.querySelectorAll('#menu-lateral [data-grupo]').forEach(g => {
+      const abierto = g.classList.contains('actual') || !plegados.includes(g.dataset.grupo);
+      g.querySelector('[data-accion="plegar-grupo"]').setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', marcarActual);
   else marcarActual();
@@ -113,6 +122,18 @@
         const plegado = raiz.dataset.lateral !== 'plegado';
         if (plegado) raiz.dataset.lateral = 'plegado'; else delete raiz.dataset.lateral;
         try { localStorage.setItem('tau-menu', plegado ? 'plegado' : 'abierto'); } catch (err) { /* sin almacenamiento */ }
+        break;
+      }
+      case 'plegar-grupo': {
+        const grupo = el.closest('[data-grupo]');
+        const raiz = document.documentElement;
+        const plegados = new Set((raiz.dataset.grupos || '').split(' ').filter(Boolean));
+        const plegar = el.getAttribute('aria-expanded') === 'true';
+        if (plegar) plegados.add(grupo.dataset.grupo); else plegados.delete(grupo.dataset.grupo);
+        grupo.classList.remove('actual');          // el de la página actual también se puede plegar
+        raiz.dataset.grupos = [...plegados].join(' ');
+        el.setAttribute('aria-expanded', plegar ? 'false' : 'true');
+        try { localStorage.setItem('tau-grupos', raiz.dataset.grupos); } catch (err) { /* sin almacenamiento */ }
         break;
       }
       case 'abrir-menu': abrirMenu(el); break;

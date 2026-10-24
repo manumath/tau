@@ -415,3 +415,28 @@ def test_menu_lateral_y_telefono(page):
     expect(lateral.get_by_role("link", name="Inicio")).to_be_focused()
     page.keyboard.press("Escape")
     expect(page.locator("html")).not_to_have_class(re.compile(r"\bmenu-abierto\b"))
+
+
+def test_grupos_del_menu_plegables(page):
+    """PLAN.md §54: un grupo del menú se pliega con su encabezado y se recuerda; el de la página actual se ve
+    igual, y con el menú en solo íconos se ven todos."""
+    entrar(page, "investigadora")
+    page.goto("/productos")
+    lateral = page.get_by_role("navigation", name="Menú principal")
+    docencia = lateral.get_by_role("button", name="Docencia")
+    expect(docencia).to_have_attribute("aria-expanded", "true")
+    docencia.click()
+    expect(docencia).to_have_attribute("aria-expanded", "false")
+    expect(lateral.get_by_role("link", name="Planes de estudio")).to_be_hidden()
+    page.reload()
+    expect(lateral.get_by_role("link", name="Planes de estudio")).to_be_hidden()
+    page.get_by_role("button", name="Plegar o desplegar el menú").click()          # solo íconos: todos a la vista
+    expect(lateral.get_by_role("link", name="Planes de estudio")).to_be_visible()
+    page.get_by_role("button", name="Plegar o desplegar el menú").click()
+    page.goto("/docencia/planes")                                               # el grupo de la página actual
+    expect(lateral.get_by_role("link", name="Planes de estudio")).to_be_visible()
+    expect(docencia).to_have_attribute("aria-expanded", "true")
+    docencia.click()                                                            # se deja como estaba
+    docencia.click()
+    page.goto("/productos")
+    expect(lateral.get_by_role("link", name="Planes de estudio")).to_be_visible()

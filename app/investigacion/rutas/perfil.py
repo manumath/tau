@@ -51,9 +51,18 @@ def _form(nombre, *campos):
                 hx_target=f"#seccion-{nombre}", hx_swap="outerHTML", cls="space-y-4")
 
 
+# Dónde se completa cada cosa que falta (PLAN.md §54: cada «Falta» lleva a su sección).
+SECCION_FALTA = {"grado académico": "seccion-grados", "ORCID": "seccion-identificadores",
+                 "MathSciNet o zbMATH": "seccion-identificadores", "áreas MSC": "seccion-areas",
+                 "resumen de investigación": "seccion-bio", "foto": "seccion-foto"}
+
+
 def tarjeta_completitud(p, oob=False):
     porcentaje, faltan = perfiles.completitud(p, len(perfiles.areas(p["id"])))
-    detalle = (P("Falta: " + ", ".join(faltan) + ".", cls=TextPresets.muted_sm) if faltan
+    enlaces = [A(f, href=f"#{SECCION_FALTA[f]}", cls="text-primary hover:underline") if f in SECCION_FALTA else f
+               for f in faltan]
+    detalle = (P("Falta: ", *[x for i, e in enumerate(enlaces) for x in ((", " if i else ""), e)], ".",
+                 cls=TextPresets.muted_sm) if faltan
                else P("¡Perfil completo!", cls="text-sm text-green-600"))
     return Div(Div(Span("Perfil completo", cls="text-sm font-medium"),
                    Span(f"{porcentaje} %", cls="text-sm font-semibold"),
