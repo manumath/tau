@@ -29,15 +29,25 @@ RECARGAR = dict(hx_get="/productos/campos", hx_include="closest form", hx_target
                 hx_swap="outerHTML")
 
 
-def bloque_revista(revista_id, anio, nueva):
+# Cómo se llama el «medio» según el tipo de producto (PLAN.md §54: una sola etiqueta clara en vez de «Revista,
+# editorial o medio» para todo).
+ETIQUETA_MEDIO = {"Artículo en actas de congreso": "Actas o congreso", "Libro": "Editorial",
+                  "Capítulo de libro": "Libro y editorial", "Reporte de investigación": "Serie o institución",
+                  "Preprint": "Repositorio (p. ej., arXiv)", "Presentación": "Evento", "Software": "Repositorio o sitio",
+                  "Tesis dirigida": "Programa e institución", "Patente": "Oficina de patentes", "Traducción": "Editorial"}
+
+
+def bloque_revista(revista_id, anio, nueva, medio=None):
     """Artículos en revista: la revista del catálogo (o la propuesta de una nueva). Devuelve
-    (bloque, clasificación según el catálogo o None)."""
+    (bloque, clasificación según el catálogo o None). Sin revista del catálogo, el nombre publicado va en un solo
+    campo (`medio`); con ella, ese nombre lo da el catálogo."""
     r = revistas.obtener(int(revista_id)) if str(revista_id or "").isdigit() else None
     if r:
         verificada = r["estado"] == "verificada"
         c = revistas.clasificacion(r["id"], int(anio)) if verificada and str(anio or "").isdigit() else None
         bloque = Div(
             FormLabel("Revista"),
+            Input(type="hidden", name="medio", value=r["titulo"]),
             Div(Input(type="hidden", name="revista_id", value=str(r["id"])),
                 Div(Span(r["titulo"], cls="font-medium"),
                     Span(" · " + " / ".join(x for x in (r["issn"], r["eissn"]) if x), cls="font-mono text-xs")
@@ -68,16 +78,19 @@ def bloque_revista(revista_id, anio, nueva):
             P("Se agregará al catálogo como pendiente; la administración la verificará.", cls=TextPresets.muted_sm),
             cls="space-y-2 mt-2"),
         open=bool(nueva.get("titulo")), cls="rounded-md border border-border p-3")
-    return Div(FormLabel("Revista"), buscador, propuesta, cls="space-y-2"), None
+    nombre = LabelInput("Nombre de la revista (si no está en el catálogo)", id="medio", value=medio or "",
+                        placeholder="Como figura en la publicación")
+    return Div(FormLabel("Revista"), buscador, nombre, propuesta, cls="space-y-2"), None
 
 
-def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revista_id=None, anio=None, nueva=None):
-    """Campos que dependen del tipo: revista (en artículos), nivel de revisión, índices y actividad
-    asociada."""
+def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revista_id=None, anio=None, nueva=None,
+                       medio=None):
+    """Campos que dependen del tipo: el medio (con su nombre según el tipo; en artículos, la revista del catálogo),
+    nivel de revisión, índices y actividad asociada."""
     t = productos.tipo(tipo_id) if str(tipo_id).isdigit() else None
     partes = []
     if t and t["nombre"] == revistas.TIPO_ARTICULO:
-        bloque, c = bloque_revista(revista_id, anio, nueva or {})
+        bloque, c = bloque_revista(revista_id, anio, nueva or {}, medio)
         partes.append(bloque)
         if c:  # clasificación del catálogo: no se declara
             nombres = ", ".join(x["indice"] for x in c["indices"]) or "ningún índice"
@@ -88,6 +101,9 @@ def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revist
                   Span(productos.REVISIONES[c["revision"]].lower(), cls="font-medium"), ".", cls="text-sm"),
                 cls="rounded-md bg-muted/50 p-3"))
             return Div(*partes, id="campos-dependientes", cls="space-y-4")
+    else:
+        partes.append(LabelInput(ETIQUETA_MEDIO.get(t["nombre"] if t else "", "Revista, editorial o medio"), id="medio",
+                                 value=medio or ""))
     if t and not t["admite_revision"]:
         partes.append(P(UkIcon("info", height=14, width=14, cls="inline mr-1"),
                         f"«{t['nombre']}» se registra como sin arbitraje y no cuenta como artículo para el "
@@ -139,9 +155,10 @@ def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revist
 @rt("/productos/campos")
 def get(auth, tipo_id: str = "", revision: str = "", indice: list[str] = None,
         actividad_id: str = "", revista_id: str = "", anio: str = "", revista_nueva_titulo: str = "",
-        revista_nueva_issn: str = "", revista_nueva_eissn: str = ""):
+        revista_nueva_issn: str = "", revista_nueva_eissn: str = "", medio: str = ""):
     return bloque_dependiente(auth["id"], tipo_id, revision, indice or [], actividad_id, revista_id, anio,
-                              {"titulo": revista_nueva_titulo, "issn": revista_nueva_issn, "eissn": revista_nueva_eissn})
+                              {"titulo": revista_nueva_titulo, "issn": revista_nueva_issn, "eissn": revista_nueva_eissn},
+                              medio)
 
 
 @rt("/productos/revistas")

@@ -1,6 +1,7 @@
 """Catálogo de revistas, etapa R2 (revista de cada artículo y clasificación derivada) y tipos de
 productos y actividades de IAC-CINDA."""
 import copy
+import re
 
 import pytest
 
@@ -196,3 +197,23 @@ def test_patente_en_cv_y_memoria(client, emmy):
     client.post("/logout")
     login(client, "admin@test.cl", PASS_ADMIN)
     assert "Patentes y traducciones (1)" in client.get("/informes/memoria?anio=2026").text
+
+
+def test_el_medio_se_llama_segun_el_tipo(client, emmy, jsl):
+    """PLAN.md §54: un solo campo para el medio, con el nombre que corresponde al tipo; en los artículos, la revista."""
+    login(client, "inv@test.cl", PASS_TEMP)
+    libro = client.get(f"/productos/campos?tipo_id={_id('tipo_producto', 'Libro')}&medio=Springer", headers=HX).text
+    assert "Editorial" in libro and 'value="Springer"' in libro
+    charla = client.get(f"/productos/campos?tipo_id={_id('tipo_producto', 'Presentación')}", headers=HX).text
+    assert "Evento" in charla
+    articulo = str(_id("tipo_producto", "Artículo en revista"))
+    r = client.get(f"/productos/campos?tipo_id={articulo}&medio=J.%20Symb.%20Log.", headers=HX).text
+    assert r.count('name="medio"') == 1 and "Nombre de la revista" in r and 'value="J. Symb. Log."' in r
+    r = client.get(f"/productos/campos?tipo_id={articulo}&revista_id={jsl}", headers=HX).text
+    assert r.count('name="medio"') == 1 and re.search(r'<input[^>]*type="hidden"[^>]*name="medio"', r)
+
+
+def test_datos_opcionales_plegados(client, emmy):
+    login(client, "inv@test.cl", PASS_TEMP)
+    r = client.get("/productos/nuevo", headers=HX).text
+    assert "Más datos de la publicación" in r and "<details open" not in r

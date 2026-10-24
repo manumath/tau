@@ -202,6 +202,11 @@ es suya en las próximas búsquedas. Por omisión se buscan los últimos 5 años
 
 ### Registrar un producto
 
+El formulario muestra lo esencial: tipo, año, título, autores, estado, el medio y el DOI o arXiv. El
+**medio** cambia de nombre según el tipo (Editorial, Evento, Repositorio, Oficina de patentes…). Volumen,
+número, páginas, enlace y resumen están en **«Más datos de la publicación»**, que se abre solo si ya tienen
+algo (al importar o al editar).
+
 El **mes de publicación** es opcional, pero conviene indicarlo: sin él, un producto no se puede
 ubicar en los informes por periodo octubre–septiembre (queda «por confirmar»).
 
@@ -209,9 +214,10 @@ ubicar en los informes por periodo octubre–septiembre (queda «por confirmar»
 o ISSN. Si la revista está **verificada**, el nivel de revisión y los índices se toman del catálogo
 según el año de publicación (no se declaran). Si no está en el catálogo, «Propóngala» con su título
 e ISSN: quedará pendiente hasta que la administración la verifique, y mientras tanto rige lo que
-usted declare. Al importar por DOI, la revista se reconoce sola por su ISSN.
+usted declare. Al importar por DOI, la revista se reconoce sola por su ISSN. Si no la elige del catálogo,
+escriba su nombre en «Nombre de la revista».
 
-**Otros resultados:** registre también **patentes** (oficina en «medio», número en «Número»;
+**Otros resultados:** registre también **patentes** (oficina en «Oficina de patentes», número en «Número»;
 «Enviado» = solicitada, «Publicado» = concedida) y **traducciones**. No cuentan como artículos,
 pero la memoria las informa aparte.
 

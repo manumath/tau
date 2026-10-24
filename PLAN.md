@@ -2054,3 +2054,10 @@ el egresado veía «Registrar actividad estudiantil».
 si no, «Todo al día»), pendientes nuevos de Estudiantes y Fichas académicas, y una fila de cifras con enlace en lugar
 de las tarjetas de accesos (los da el menú). El aviso de carga sin registrar dice que la registra la Dirección de
 Carrera.
+
+**Etapa 2, formulario de producto:** el medio deja de ser un campo genérico «Revista, editorial o medio»: va en el
+bloque que depende del tipo, con su nombre (Actas o congreso, Editorial, Libro y editorial, Serie o institución,
+Repositorio, Evento, Repositorio o sitio, Programa e institución, Oficina de patentes). En los artículos ya no hay
+dos campos para la revista: con revista del catálogo el nombre lo da el catálogo; sin ella, «Nombre de la revista»
+(la propuesta al catálogo sigue aparte y no se rellena sola). Volumen, número, páginas, enlace y resumen van en
+«Más datos de la publicación», abierto si alguno tiene valor; DOI y arXiv siguen a la vista (avisan de duplicados).

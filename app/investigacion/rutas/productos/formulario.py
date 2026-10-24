@@ -4,6 +4,7 @@ arXiv y los avisos de duplicado, en `importar`."""
 import json
 from datetime import date
 
+import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, HtmxResponseHeaders, Input, Option, P, Redirect, Response, Select, Span
 from fasthtml.toaster import add_toast
 from monsterui.all import Button, ButtonT, Form, FormLabel, LabelInput, LabelTextArea, TextPresets, UkIcon
@@ -112,22 +113,27 @@ def form_producto(auth, d, autores_elegidos, indices_sel, errores=(), pid=None, 
                          for v, t in productos.ESTADOS.items()],
                        id="estado_publicacion", name="estado_publicacion", cls="uk-select"),
                 cls="space-y-2"),
-            campo("Revista, editorial o medio", "medio"),
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
         bloque_dependiente(uid, d.get("tipo_id"), d.get("revision"), indices_sel,
                            d.get("actividad_id"), d.get("revista_id"), d.get("anio"),
-                           {k: d.get(f"revista_nueva_{k}") for k in ("titulo", "issn", "eissn")}),
-        Div(campo("Volumen", "volumen"), campo("Número", "numero"), campo("Páginas", "paginas"),
-            cls="grid grid-cols-3 gap-4"),
+                           {k: d.get(f"revista_nueva_{k}") for k in ("titulo", "issn", "eissn")}, d.get("medio")),
         Div(campo("DOI", "doi", placeholder="10.1234/abcd", hx_post="/productos/verificar",
                   hx_trigger="change", hx_target="#aviso-duplicado"),
             campo("arXiv", "arxiv_id", placeholder="2401.01234", hx_post="/productos/verificar",
                   hx_trigger="change", hx_target="#aviso-duplicado"),
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
         Div(id="aviso-duplicado"),
-        campo("Enlace (URL)", "url", type="url", placeholder="https://…"),
-        LabelTextArea("Resumen", id="resumen", value=d.get("resumen") or "", rows=4,
-                      placeholder="Admite LaTeX: $\\zeta(s)$"),
+        # Lo opcional, plegado (PLAN.md §54): abierto si ya tiene algo (al importar o al editar).
+        fh.Details(fh.Summary("Más datos de la publicación: volumen, páginas, enlace y resumen",
+                              cls="cursor-pointer text-sm font-medium text-primary"),
+                   Div(Div(campo("Volumen", "volumen"), campo("Número", "numero"), campo("Páginas", "paginas"),
+                           cls="grid grid-cols-3 gap-4"),
+                       campo("Enlace (URL)", "url", type="url", placeholder="https://…"),
+                       LabelTextArea("Resumen", id="resumen", value=d.get("resumen") or "", rows=4,
+                                     placeholder="Admite LaTeX: $\\zeta(s)$"),
+                       cls="space-y-4 mt-3"),
+                   open=any(d.get(k) for k in ("volumen", "numero", "paginas", "url", "resumen")),
+                   cls="rounded-md border border-border p-3"),
         msc_ui.selector(msc_elegidos(d.get("msc")), d.get("_msc_origen", "")),
         casillas_proyectos("producto", pid, auth, proyectos_sel, preseleccion, d.get("_agradece")),
         Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
