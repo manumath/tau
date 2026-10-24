@@ -192,7 +192,7 @@ institución y unifica variantes como «USA» o «EE. UU.».
 
 ### Buscar su producción en OpenAlex
 
-**«Buscar en OpenAlex»** (en «Mis productos») usa el ORCID de su perfil para encontrar sus obras en
+**«Buscar en OpenAlex»** (en «Mis productos», menú «Importar o exportar») usa el ORCID de su perfil para encontrar sus obras en
 OpenAlex, un catálogo abierto de publicaciones. Muestra cuáles son nuevas, cuáles ya están en el
 sistema y cuáles no se importan (p. ej., su tesis doctoral). Marque las que quiere registrar y
 presione **«Registrar las seleccionadas»**: se crean con sus coautores, la revista del catálogo (o
@@ -225,7 +225,7 @@ pero la memoria las informa aparte.
 filiación del instituto** (IIMAT, CMAT, FCPN o UMSA; vale la doble filiación). En los informes
 institucionales solo cuenta un producto si al menos un autor vinculado (Carrera e Instituto) en esa fecha
 firmó con ella. Al importar por DOI, se marca sola cuando la afiliación publicada menciona al
-instituto o a la UMSA; revísela. En la lista de productos, **«Sin filiación declarada»** muestra
+instituto o a la UMSA; revísela. En la lista de productos, **«Sin filiación declarada»** (en «Más filtros»; un punto naranja avisa si hay pendientes) muestra
 sus artículos indexados o arbitrados pendientes, con botones Sí / No y «Firmé todos estos con
 IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar.
 
@@ -234,7 +234,7 @@ IIMAT/UMSA». Las marcas junto a los autores: ✓ firmó, ✗ no, ? sin declarar
   revista, año, mes y páginas; revíselo y guarde.
   - Si importa un preprint que ya tiene versión publicada, aparece el botón «Importar versión
     publicada»: queda como artículo y conserva el arXiv.
-- **Desde BibTeX:** «Importar BibTeX» → suba su archivo `.bib` (el de LaTeX, o el que exportan
+- **Desde BibTeX:** «Importar o exportar» → «Importar BibTeX» → suba su archivo `.bib` (el de LaTeX, o el que exportan
   Google Scholar, MathSciNet o Zotero) o pegue las entradas. Verá cada entrada como *nueva*, *ya
   registrada* o *con error* antes de confirmar.
 - **A mano:** complete el formulario.
@@ -300,7 +300,9 @@ se cambia con las flechas.
   los ven quienes pueden editar el registro y la administración.
 - Pueden editar el producto quien lo registró y sus autores del instituto; solo quien lo
   registró puede eliminarlo.
-- «Exportar BibTeX» descarga lo que está viendo, con los filtros aplicados.
+- «Importar o exportar» → «Exportar BibTeX» descarga lo que está viendo, con los filtros aplicados. El
+  área MSC y las casillas «Solo los que cuentan para el informe» y «Sin filiación declarada» están en
+  «Más filtros», que indica cuántos hay activos.
 
 ## Coautores externos: duplicados y cuentas
 

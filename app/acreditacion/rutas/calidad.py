@@ -64,10 +64,13 @@ def get(auth):
     return pagina(
         "Calidad de datos",
         Div(H2("Calidad de datos"),
-            P("Lo que falta o no cuadra antes de generar la memoria, el anexo o los informes de docencia. Cada "
-              "revisión dice a qué afecta y quién lo corrige; abra una para ver los registros, con enlace para "
-              "corregirlos. Esta página no cambia datos; en lo que corrigen las personas o los responsables de proyecto, "
-              "«Avisar» les envía un aviso con sus registros por completar.", cls=TextPresets.muted_sm),
+            P("Lo que falta o no cuadra antes de generar la memoria, el anexo o los informes de docencia.",
+              cls=TextPresets.muted_sm),
+            fh.Details(fh.Summary("¿Cómo funciona?", cls="cursor-pointer text-sm text-primary"),
+                       P("Cada revisión dice a qué afecta y quién lo corrige; abra una para ver los registros, con enlace "
+                         "para corregirlos. Esta página no cambia datos; en lo que corrigen las personas o los responsables "
+                         "de proyecto, «Avisar» les envía un aviso con sus registros por completar.",
+                         cls=(TextPresets.muted_sm, "mt-1 max-w-3xl"))),
             cls="mb-6 space-y-1"),
         Div(Card(Div(Span(str(r["con_observaciones"]), cls="text-3xl font-semibold tabular-nums"),
                      Span(f" de {r['chequeos']} revisiones con observaciones", cls="text-sm"))),

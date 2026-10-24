@@ -2061,3 +2061,11 @@ Repositorio, Evento, Repositorio o sitio, Programa e institución, Oficina de pa
 dos campos para la revista: con revista del catálogo el nombre lo da el catálogo; sin ella, «Nombre de la revista»
 (la propuesta al catálogo sigue aparte y no se rellena sola). Volumen, número, páginas, enlace y resumen van en
 «Más datos de la publicación», abierto si alguno tiene valor; DOI y arXiv siguen a la vista (avisan de duplicados).
+
+**Etapa 3, barras y formularios en la página:** en «Mis productos», Importar BibTeX, Buscar en OpenAlex y Exportar
+BibTeX van en un desplegable «Importar o exportar» (queda a la vista solo «Nuevo producto»), y el área MSC y las dos
+casillas en «Más filtros», que dice cuántos están activos y muestra un punto si hay filiaciones por declarar. El alta
+de grados (perfil y ficha académica) queda plegada en «+ Agregar grado» cuando ya hay alguno (abierta si no hay o si
+hubo un error), y la de contrapartes del proyecto en «+ Agregar contraparte». Los textos largos de «Calidad de datos»
+y «Cohortes» quedan en una línea con «¿Cómo funciona?» / «¿Cómo se calcula?» plegado. Los demás textos de entrada
+(Mis tutorados, actividad del estudiante) ya eran de una o dos líneas y se dejaron.

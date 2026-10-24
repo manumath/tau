@@ -4,6 +4,7 @@ Coordinación académica, Gestión de datos y el Comité de acreditación; carga
 Gestión de datos. Sin materias ni notas."""
 import base64
 
+import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Code, Div, P, Redirect, Response, Thead, Tr, UploadFile
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, Label, LabelT, Table, Tbody, Td, TextPresets, Th,
@@ -75,9 +76,8 @@ def get(auth):
     return pagina(
         "Cohortes estudiantiles",
         Div(Div(H2("Cohortes estudiantiles"),
-                P("Ingreso, egreso, titulación y deserción de la licenciatura por cohorte (semestre de ingreso). Son cifras "
-                  "agregadas: no incluyen materias ni notas, que están en el sistema de Seguimiento Académico. Alimentan "
-                  "las hojas 3 a 6 de la Guía de Antecedentes de IAC-CINDA.", cls=(TextPresets.muted_sm, "max-w-3xl"))),
+                P("Ingreso, egreso, titulación y deserción de la licenciatura por cohorte (semestre de ingreso).",
+                  cls=(TextPresets.muted_sm, "max-w-3xl"))),
             Div(A(UkIcon("badge-check", height=16, width=16), f"Actividades por verificar ({actividad.n_pendientes()})",
                   href=f"{BASE}/actividades", cls="uk-btn uk-btn-default inline-flex items-center gap-1")
                 if _puede_verificar(auth) else "",
@@ -90,9 +90,14 @@ def get(auth):
                 cls="flex flex-wrap items-center gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         resumen, tabla,
-        P("Solo cuenta a estudiantes de la licenciatura del programa propio con cohorte de ingreso. Un estudiante cuenta "
-          "como matriculado desde su cohorte hasta su último ciclo matriculado; los congelamientos intermedios no se "
-          "registran. Desertor: retirado, o congelado que no volvió en los dos ciclos siguientes (definición de IAC-CINDA). Las tasas son sobre los ingresantes de cada cohorte.", cls=(TextPresets.muted_sm, "mt-3 max-w-3xl")),
+        fh.Details(fh.Summary("¿Cómo se calcula?", cls="cursor-pointer text-sm text-primary"),
+                   P("Son cifras agregadas: no incluyen materias ni notas, que están en el sistema de Seguimiento "
+                     "Académico, y alimentan las hojas 3 a 6 de la Guía de Antecedentes de IAC-CINDA. Solo cuenta a "
+                     "estudiantes de la licenciatura del programa propio con cohorte de ingreso. Un estudiante cuenta "
+                     "como matriculado desde su cohorte hasta su último ciclo matriculado; los congelamientos intermedios "
+                     "no se registran. Desertor: retirado, o congelado que no volvió en los dos ciclos siguientes "
+                     "(definición de IAC-CINDA). Las tasas son sobre los ingresantes de cada cohorte.",
+                     cls=(TextPresets.muted_sm, "mt-1 max-w-3xl")), cls="mt-3"),
         usuario=auth, seccion="docencia")
 
 

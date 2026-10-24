@@ -42,7 +42,9 @@ def seccion_grados(uid: int, url: str, id_: str, envoltura, errores=(), datos=No
             cls="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center"),
         Datalist(*[Option(value=x) for x in paises.nombres()], id=lista_paises),
         hx_post=url, hx_target=f"#{id_}", hx_swap="outerHTML", cls="space-y-2 mt-3")
+    # El alta, plegada cuando ya hay grados (PLAN.md §54); abierta si no hay ninguno o si hubo un error.
     return envoltura(
         id_,
         Ul(*filas, cls="divide-y divide-border") if filas else P("Sin grados registrados.", cls=TextPresets.muted_sm),
-        formulario)
+        fh.Details(fh.Summary("+ Agregar grado", cls="cursor-pointer text-sm font-medium text-primary mt-2"), formulario,
+                   open=bool(errores) or not filas))

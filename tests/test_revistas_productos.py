@@ -217,3 +217,10 @@ def test_datos_opcionales_plegados(client, emmy):
     login(client, "inv@test.cl", PASS_TEMP)
     r = client.get("/productos/nuevo", headers=HX).text
     assert "Más datos de la publicación" in r and "<details open" not in r
+
+
+def test_mis_productos_agrupa_importar_y_filtros(client, emmy):
+    """PLAN.md §54, etapa 3: lo ocasional va en un desplegable y los filtros secundarios en «Más filtros»."""
+    login(client, "inv@test.cl", PASS_TEMP)
+    r = client.get("/productos").text
+    assert "Importar o exportar" in r and "Más filtros" in r and 'name="area"' in r and 'name="informe"' in r

@@ -147,6 +147,37 @@ def selector_area(areas, area):
                   name="area", cls="uk-select w-56", aria_label="Área MSC2020")
 
 
+def _importar_exportar():
+    """BibTeX y OpenAlex en un desplegable (PLAN.md §54): se usan de vez en cuando y no compiten con «Nuevo producto»."""
+    item = "flex items-center gap-2 px-3 py-2 rounded hover:bg-muted w-full text-left text-sm"
+    return Div(
+        Button(UkIcon("arrow-down-up", height=16, width=16), "Importar o exportar",
+               UkIcon("chevron-down", height=14, width=14), cls=(ButtonT.default, "gap-1"), type="button",
+               aria_haspopup="true"),
+        Div(Div(fh.Button(UkIcon("file-up", height=16, width=16), "Importar BibTeX", type="button", cls=item,
+                          hx_get="/productos/importar-bibtex", hx_target=f"#{ID_MODAL}"),
+                A(UkIcon("scan-search", height=16, width=16), "Buscar en OpenAlex (por ORCID)", href="/productos/openalex",
+                  cls=item),
+                # Exporta lo que se ve: agrega los filtros vigentes (están en la URL de la página).
+                A(UkIcon("download", height=16, width=16), "Exportar BibTeX", href="/productos/bibtex",
+                  data_accion="con-busqueda", cls=item),
+                cls="flex flex-col"),
+            uk_dropdown="mode: click; pos: bottom-right", cls="uk-drop uk-dropdown w-72 p-1"))
+
+
+def _mas_filtros(activos: int, n_pend: int, *campos):
+    """Área y casillas, plegadas: el número dice cuántos están activos; el punto, si hay filiaciones por declarar."""
+    resumen = Span("Más filtros", Span(f" · {activos} activo{'s' if activos != 1 else ''}", cls="font-medium")
+                   if activos else "",
+                   Span(cls="inline-block size-2 rounded-full bg-amber-500 ml-1", title="Filiaciones por declarar")
+                   if n_pend and not activos else "")
+    return fh.Details(fh.Summary(UkIcon("sliders-horizontal", height=16, width=16), resumen,
+                                 cls="uk-btn uk-btn-default inline-flex items-center gap-1 cursor-pointer list-none"),
+                      Div(*campos, cls="absolute left-0 sm:left-auto sm:right-0 z-20 mt-2 flex w-80 flex-col gap-3 rounded-md border border-border "
+                                       "bg-background p-3 shadow-lg"),
+                      cls="relative")
+
+
 @rt("/productos")
 def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False, sin_filiacion: bool = False,
         area: str = ""):
@@ -161,25 +192,17 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
     return pagina(
         "Mis productos",
         Div(Div(H2("Mis productos"),
-                P("Artículos, libros, reportes, presentaciones y más. Un producto con varios autores "
-                  "del instituto se registra una sola vez y aparece en el perfil de cada uno.",
+                P("Artículos, libros, presentaciones y más; uno con varios autores del instituto se registra una sola vez.",
                   cls=TextPresets.muted_sm)),
-            Div(A(UkIcon("download", height=16, width=16), "Exportar BibTeX", href="/productos/bibtex",
-                  # Exporta lo que se ve: agrega los filtros vigentes (están en la URL de la página).
-                  data_accion="con-busqueda",
-                  cls="uk-btn uk-btn-default inline-flex items-center gap-1"),
-                Button(UkIcon("file-up", height=16, width=16), "Importar BibTeX", cls=ButtonT.default,
-                       hx_get="/productos/importar-bibtex", hx_target=f"#{ID_MODAL}"),
-                A(UkIcon("scan-search", height=16, width=16), "Buscar en OpenAlex", href="/productos/openalex",
-                  cls="uk-btn uk-btn-default inline-flex items-center gap-1",
-                  title="Buscar su producción por ORCID y registrar la que falta"),
+            Div(_importar_exportar(),
                 Button(UkIcon("plus", height=16, width=16), "Nuevo producto", cls=ButtonT.primary,
                        hx_get="/productos/nuevo", hx_target=f"#{ID_MODAL}"),
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         filtros(ID_FILTROS, "/productos/lista", ID_LISTA, q, anio, productos.anios_de(uid), tipo,
-                productos.tipos(todos=True), extra=[selector_area(productos.areas_de(uid), area), casilla_informe,
-                                          casilla_filiacion]),
+                productos.tipos(todos=True),
+                extra=[_mas_filtros(sum(map(bool, (area, informe, sin_filiacion))), n_pend,
+                                    selector_area(productos.areas_de(uid), area), casilla_informe, casilla_filiacion)]),
         Card(lista(uid, q, anio, tipo, informe, sin_filiacion, area)),
         usuario=auth, seccion="productos")
 

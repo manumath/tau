@@ -248,6 +248,7 @@ def test_clasificacion_msc_del_producto(page):
     modal.get_by_role("button", name="Guardar").click()
     expect(modal.locator("form")).to_have_count(0)
     page.reload()                                                  # el filtro ofrece las áreas al cargar
+    page.get_by_text("Más filtros").click()                        # área y casillas, plegadas (PLAN.md §54)
     page.locator("select[name=area]").select_option("11")
     expect(page.locator("#lista-productos")).to_contain_text("Funciones zeta de anillos")
     page.get_by_role("link", name="Funciones zeta de anillos").click()

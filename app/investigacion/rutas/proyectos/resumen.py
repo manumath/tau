@@ -67,7 +67,9 @@ def tarjeta_contrapartes(p, auth):
                       fh.Datalist(*[Option(value=x) for x in paises.nombres()], id="lista-paises"),
                       Button("Agregar", type="submit", cls=(ButtonT.default, ButtonT.sm)),
                       hx_post=f"/proyectos/{pid}/contrapartes", hx_target=f"#{ID_TAB}",
-                      cls="flex flex-wrap gap-2 mt-3") if gestiona else ""
+                      cls="flex flex-wrap gap-2 mt-3")
+    agregar = fh.Details(fh.Summary("+ Agregar contraparte", cls="cursor-pointer text-sm font-medium text-primary mt-2"),
+                         agregar) if gestiona else ""
     return Card(H3("Instituciones contraparte", cls="text-base font-semibold mb-1"),
                 P("Instituciones con las que se colabora o que cofinancian (con su país): definen si el proyecto es "
                   "internacional.", cls=(TextPresets.muted_sm, "mb-2")),
