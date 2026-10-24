@@ -26,3 +26,44 @@
     @apply mt-5 flex justify-end gap-2;
   }
 }
+
+/* Navegación (PLAN.md §53, app/comun/componentes/layout.py). Pantallas grandes (lg): menú lateral fijo de
+   16rem, plegable a 4rem (html[data-lateral=plegado]). Teléfono: el mismo menú es un panel que se abre sobre
+   la página (html.menu-abierto) y abajo van las pestañas. */
+@layer components {
+  .lateral {
+    @apply fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-background
+           -translate-x-full transition-transform duration-200 ease-out;
+  }
+  html.menu-abierto .lateral { @apply translate-x-0 shadow-xl; }
+  .fondo-menu { @apply fixed inset-0 z-40 hidden bg-black/40; }
+  html.menu-abierto .fondo-menu { @apply block; }
+  html.menu-abierto body { @apply overflow-hidden; }
+  .enlace-menu[aria-current="page"] { @apply bg-primary/10 font-medium text-primary; }
+  .pestanas-movil .enlace-menu[aria-current="page"] { @apply bg-transparent; }
+  .lateral .icono-desplegar { @apply hidden; }
+
+  @media (min-width: 1024px) {
+    .lateral { @apply translate-x-0 transition-[width]; }
+    .fondo-menu, html.menu-abierto .fondo-menu { @apply hidden; }
+    html.menu-abierto body { @apply overflow-auto; }
+    .columna-contenido { @apply pl-64; }
+    html[data-lateral="plegado"] .lateral { @apply w-16; }
+    html[data-lateral="plegado"] .columna-contenido { @apply pl-16; }
+    html[data-lateral="plegado"] .lateral .lateral-texto,
+    html[data-lateral="plegado"] .lateral .lateral-grupo { @apply sr-only; }
+    html[data-lateral="plegado"] .lateral .enlace-menu { @apply relative justify-center px-0; }
+    /* Contadores (propuestas por revisar…): sobre el ícono, en chico. */
+    html[data-lateral="plegado"] .lateral .enlace-menu > span:not(.lateral-texto) {
+      @apply absolute right-1.5 top-0.5 ml-0 px-1 py-0 text-[9px] leading-4;
+    }
+    html[data-lateral="plegado"] .lateral-cabecera { @apply flex-col justify-center gap-1 px-0 h-auto py-3; }
+    html[data-lateral="plegado"] .lateral .icono-plegar { @apply hidden; }
+    html[data-lateral="plegado"] .lateral .icono-desplegar { @apply block; }
+  }
+
+  @media print {
+    .lateral, .fondo-menu, .barra-superior, .pestanas-movil { display: none !important; }
+    .columna-contenido { padding: 0 !important; }
+  }
+}

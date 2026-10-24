@@ -21,6 +21,9 @@
 //   data-escape-vaciar="id"           en un campo: Escape vacía #id (p. ej., las sugerencias de la búsqueda)
 //   data-cerrar-fuera                 desplegable: un clic fuera de él lo vacía
 //   tecla «/»                         lleva a la búsqueda global (#busqueda-global), salvo al escribir
+//   data-accion="plegar-lateral"      pliega o despliega el menú lateral (se recuerda en el navegador)
+//   data-accion="abrir-menu" | "cerrar-menu"   el menú lateral como panel en el teléfono (Escape lo cierra)
+//   data-nav                          enlace del menú: el de la página actual recibe aria-current="page"
 //
 // Además (accesibilidad y envíos):
 //   - el modal recibe el foco al abrirse (en el primer campo), lo retiene con Tab y, al cerrarse, lo
@@ -42,6 +45,35 @@
     abridor = null;
   };
   const cerrarModal = () => { const m = modal(); if (m) m.innerHTML = ''; devolverFoco(); };
+
+  // Menú lateral como panel (teléfono): se abre sobre la página; Escape, la ✕ o un toque fuera lo cierran.
+  let abridorMenu = null;
+  function abrirMenu(boton) {
+    abridorMenu = boton;
+    document.documentElement.classList.add('menu-abierto');
+    const primero = document.querySelector('#menu-lateral [data-nav]');
+    if (primero) primero.focus();
+  }
+  function cerrarMenu() {
+    if (!document.documentElement.classList.contains('menu-abierto')) return false;
+    document.documentElement.classList.remove('menu-abierto');
+    if (abridorMenu && abridorMenu.isConnected) abridorMenu.focus();
+    abridorMenu = null;
+    return true;
+  }
+
+  // Enlace de la página actual: el de prefijo más largo de la dirección («/» solo en el inicio).
+  function marcarActual() {
+    const ruta = location.pathname;
+    const coincide = a => { const h = a.getAttribute('href'); return h === '/' ? ruta === '/' : ruta === h || ruta.startsWith(h + '/'); };
+    const largo = a => a.getAttribute('href').length;
+    for (const grupo of [document.querySelectorAll('#menu-lateral [data-nav]'), document.querySelectorAll('.pestanas-movil [data-nav]')]) {
+      const mejor = [...grupo].filter(coincide).sort((x, y) => largo(y) - largo(x))[0];
+      if (mejor) mejor.setAttribute('aria-current', 'page');
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', marcarActual);
+  else marcarActual();
 
   document.addEventListener('click', e => {
     document.querySelectorAll('[data-cerrar-fuera]').forEach(d => {
@@ -76,6 +108,15 @@
         break;
       }
       case 'con-busqueda': el.href = el.getAttribute('href').split('?')[0] + location.search; break;
+      case 'plegar-lateral': {
+        const raiz = document.documentElement;
+        const plegado = raiz.dataset.lateral !== 'plegado';
+        if (plegado) raiz.dataset.lateral = 'plegado'; else delete raiz.dataset.lateral;
+        try { localStorage.setItem('tau-menu', plegado ? 'plegado' : 'abierto'); } catch (err) { /* sin almacenamiento */ }
+        break;
+      }
+      case 'abrir-menu': abrirMenu(el); break;
+      case 'cerrar-menu': cerrarMenu(); break;
     }
   });
 
@@ -101,6 +142,7 @@
       return;
     }
     if (e.key === 'Escape' && document.querySelector('[data-fondo-modal]')) { cerrarModal(); return; }
+    if (e.key === 'Escape' && cerrarMenu()) return;
     // Con el modal abierto, Tab recorre solo sus elementos (no la página de atrás).
     const d = e.key === 'Tab' ? dialogo() : null;
     if (d) {

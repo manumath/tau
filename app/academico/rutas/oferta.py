@@ -9,7 +9,6 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.academico import gestiones, importar_oferta, oferta
-from app.academico.componentes import pestanas
 from app.comun import permisos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -108,7 +107,7 @@ def seccion_oferta(g, auth, errores=()):
 def get(auth, gestion: str = ""):
     g = gestiones.obtener(int(gestion)) if gestion.isdigit() else gestiones.actual()
     if not g:
-        return pagina("Oferta y docentes", pestanas("oferta", auth),
+        return pagina("Oferta y docentes",
                       P("Todavía no hay gestiones registradas. ", A("Crear las gestiones de un año", href="/docencia/gestiones",
                                                                     cls="text-primary hover:underline"),
                         cls="text-sm"), usuario=auth, seccion="docencia")
@@ -119,7 +118,6 @@ def get(auth, gestion: str = ""):
         if g["tipo"] in oferta.TEMPORADA else ""
     return pagina(
         "Oferta y docentes",
-        pestanas("oferta", auth),
         Div(Div(H2(gestiones.codigo(g)), P(f"{gestiones.nombre(g)} · del {g['fecha_inicio']} al {g['fecha_fin']}",
                                            cls=TextPresets.muted_sm)),
             Div(_selector(g),
@@ -203,7 +201,6 @@ def _pagina_grilla(g, auth, errores=()):
                            fh.Td(", ".join(auxiliares) or "—", cls="text-xs text-muted-foreground")))
     return pagina(
         f"Grilla de docentes {gestiones.codigo(g)}",
-        pestanas("oferta", auth),
         A(UkIcon("arrow-left", height=14, width=14), "Oferta y docentes", href=f"{BASE}?gestion={g['id']}",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         Div(H2(f"Docentes titulares de {gestiones.codigo(g)}"),
@@ -366,7 +363,7 @@ def seccion_gestiones(auth, errores=()):
 
 @rt("/docencia/gestiones")
 def get(auth):
-    return pagina("Gestiones académicas", pestanas("gestiones", auth), H2("Gestiones académicas"),
+    return pagina("Gestiones académicas", H2("Gestiones académicas"),
                   P("Semestres (I, II) y cursos de temporada (INV en julio; VER en enero del año siguiente, que se "
                     "cuenta con la gestión anterior). Las fechas propuestas se ajustan al calendario aprobado. Al "
                     "crear las gestiones, los semestres se ofertan con las troncales de las licenciaturas "

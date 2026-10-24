@@ -4,7 +4,7 @@ from fasthtml.common import A, APIRouter, Div, Li, Option, P, Response, Select, 
 from monsterui.all import H2, H3, Card, Progress, TextPresets, UkIcon
 
 from app.academico import gestiones, preparacion
-from app.academico.componentes import pestanas, prepara_semestres
+from app.academico.componentes import prepara_semestres
 from app.comun import permisos, vinculos
 from app.comun.componentes.etapas import etapas
 from app.comun.componentes.layout import pagina
@@ -70,7 +70,6 @@ def get(auth, semestre: str = ""):
               else f"{gestiones.TIPOS[tipo]} {anio} · aún sin gestión creada")
     return pagina(
         "Preparación del semestre",
-        pestanas("preparacion", auth),
         Div(Div(H2(f"Preparación de {est['codigo']}"),
                 P(cuando, cls=TextPresets.muted_sm),
                 P("Lo necesario para que el semestre arranque: gestión, oferta, contratos, docentes y carga. Cada "

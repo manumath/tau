@@ -4,7 +4,6 @@ import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, P, Response, Span, Thead, Tr
 from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, Table, Tbody, Td, TextPresets, Th, UkIcon
 
-from app.academico.componentes import pestanas
 from app.comun import permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, cerrar_modal, mensaje_error, modal, pagina
 from app.estudiantil import actividad
@@ -49,7 +48,6 @@ def get(auth):
         return Response("No autorizado", status_code=403)
     return pagina(
         "Actividad estudiantil por verificar",
-        pestanas("cohortes", auth),
         A(UkIcon("arrow-left", height=14, width=14), "Cohortes estudiantiles", href="/docencia/cohortes",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         H2("Actividad estudiantil por verificar"),

@@ -22,8 +22,8 @@ def test_ingreso_y_salida(page):
     page.fill("#password", CLAVE)
     page.click("button:has-text('Ingresar')")
     page.wait_for_url("**/")
-    expect(page.locator("nav").get_by_role("button", name="Emmy")).to_be_visible()
-    page.locator("nav").get_by_role("button", name="Emmy").click()
+    expect(page.get_by_role("banner").get_by_role("button", name="Emmy")).to_be_visible()
+    page.get_by_role("banner").get_by_role("button", name="Emmy").click()
     page.get_by_role("button", name="Salir").click()
     page.wait_for_url("**/login**")
     page.goto("/productos")
@@ -118,7 +118,7 @@ def test_cambiar_tema(page):
     """Claro, oscuro o el del sistema, desde el menú del usuario; la elección se mantiene al recargar."""
     entrar(page, "investigadora")
     html = page.locator("html")
-    menu = page.locator("nav").get_by_role("button", name="Emmy")
+    menu = page.get_by_role("banner").get_by_role("button", name="Emmy")
     menu.click()
     page.get_by_role("button", name="Oscuro").click()
     expect(html).to_have_class(re.compile(r"\bdark\b"))
@@ -360,7 +360,7 @@ def test_confirmacion_busqueda_y_deshacer(page):
     expect(page.locator("#lista-productos")).to_contain_text("Teoría de invariantes")
 
     # Búsqueda global: «/» lleva al campo; las sugerencias aparecen y Escape las cierra.
-    page.locator("main").click()
+    page.get_by_role("heading", name="Mis productos").click()           # fuera de cualquier campo
     page.keyboard.press("/")
     campo = page.locator("#busqueda-global")
     expect(campo).to_be_focused()
@@ -390,3 +390,27 @@ def test_confirmacion_busqueda_y_deshacer(page):
     expect(page.locator("#catalogo-actividades li", has_text="Escuela")).to_contain_text("Inactivo")
     aviso.get_by_role("button", name="Deshacer").click()
     expect(page.locator("#catalogo-actividades li", has_text="Escuela")).not_to_contain_text("Inactivo")
+
+
+def test_menu_lateral_y_telefono(page):
+    """PLAN.md §53: el menú lateral marca la página actual y se pliega (se recuerda al recargar); en el teléfono,
+    «Más» lo abre como panel y Escape lo cierra."""
+    entrar(page, "investigadora")
+    page.goto("/productos")
+    lateral = page.get_by_role("navigation", name="Menú principal")
+    expect(lateral.get_by_role("link", name="Productos")).to_have_attribute("aria-current", "page")
+    expect(lateral.get_by_role("link", name="Inicio")).not_to_have_attribute("aria-current", "page")
+    page.get_by_role("button", name="Plegar o desplegar el menú").click()
+    page.reload()
+    expect(page.locator("html")).to_have_attribute("data-lateral", "plegado")
+    page.get_by_role("button", name="Plegar o desplegar el menú").click()          # se deja como estaba
+    expect(page.locator("html")).not_to_have_attribute("data-lateral", "plegado")
+    page.set_viewport_size({"width": 375, "height": 812})
+    abajo = page.get_by_role("navigation", name="Secciones principales")
+    expect(abajo.get_by_role("link", name="Productos")).to_have_attribute("aria-current", "page")
+    expect(lateral).not_to_be_in_viewport()
+    abajo.get_by_role("button", name="Más").click()
+    expect(lateral).to_be_in_viewport()
+    expect(lateral.get_by_role("link", name="Inicio")).to_be_focused()
+    page.keyboard.press("Escape")
+    expect(page.locator("html")).not_to_have_class(re.compile(r"\bmenu-abierto\b"))

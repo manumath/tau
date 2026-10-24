@@ -4,7 +4,7 @@ from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response
 from monsterui.all import H2, H3, Button, ButtonT, Card, Progress, TextPresets, UkIcon
 
 from app.academico import carga, gestiones, oferta
-from app.academico.componentes import pestanas, tiene_docencia
+from app.academico.componentes import tiene_docencia
 from app.comun import adscripcion, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, pagina
 from app.comun.db import get_db
@@ -116,7 +116,6 @@ def get(auth, gestion: str = ""):
     g, selector = _gestion_y_selector(uid, gestion, BASE)
     return pagina(
         "Mi docencia",
-        pestanas("mia", auth),
         Div(Div(H2("Mi docencia"),
                 P("Sus materias, su carga horaria y su vínculo con la Carrera. Solo usted y las direcciones ven esta "
                   "información.", cls=TextPresets.muted_sm)),
@@ -145,7 +144,6 @@ def get(auth, uid: int, gestion: str = ""):
     edita_vinculo = permisos.puede(auth, "gestionar_vinculos", vinculos.carrera())
     return pagina(
         f"{p['nombres']} {p['apellidos']}",
-        pestanas("carga", auth),
         A(UkIcon("arrow-left", height=14, width=14), "Carga horaria",
           href="/docencia/carga" + (f"?gestion={g['id']}" if g and g["tipo"] in carga.SEMESTRES else ""),
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),

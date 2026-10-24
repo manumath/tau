@@ -7,7 +7,6 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.academico import planes
-from app.academico.componentes import pestanas
 from app.comun import permisos
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.comun.componentes.registros import insignia
@@ -39,7 +38,6 @@ def get(auth):
              for p in planes.listar()]
     return pagina(
         "Planes de estudio",
-        pestanas("planes", auth),
         H2("Planes de estudio"),
         P("Programas de la Carrera de Matemática y sus planes vigentes. Las inconsistencias de los documentos "
           "quedan marcadas para revisión de la Dirección Académica.", cls=(TextPresets.muted_sm, "mb-6")),

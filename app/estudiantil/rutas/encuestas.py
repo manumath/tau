@@ -9,7 +9,6 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelCheckboxX, LabelInput, Table, Tbody, Td,
                            TextPresets, Th, UkIcon)
 
-from app.academico.componentes import pestanas
 from app.comun import permisos, vinculos
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.comun.componentes.registros import insignia
@@ -67,7 +66,7 @@ def get(auth):
              Button("Crear borrador", type="submit", cls=ButtonT.primary), hx_post=BASE, hx_swap="none",
              cls="space-y-3")) if _gestiona(auth) else ""
     return pagina(
-        "Encuestas", pestanas("encuestas", auth),
+        "Encuestas",
         H2("Encuestas"),
         P("Encuestas a estudiantes y egresados (satisfacción, clima, bienestar, abandono, seguimiento de egresados). Cada "
           "persona responde con un enlace personal que recibe por correo, sin necesidad de cuenta. Las anónimas no "
@@ -195,7 +194,7 @@ def _detalle(auth, e, errores_datos=(), errores_pregunta=()):
     editable = e["estado"] == "borrador" and _gestiona(auth)
     qs = encuestas.preguntas(e["id"])
     return pagina(
-        e["titulo"], pestanas("encuestas", auth),
+        e["titulo"],
         A(UkIcon("arrow-left", height=14, width=14), "Encuestas", href=BASE,
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         Div(Div(H2(e["titulo"]), Div(insignia(encuestas.ESTADOS[e["estado"]], TONOS[e["estado"]]),
@@ -376,7 +375,7 @@ def get(auth, eid: int):
     r = encuestas.resultados(eid)
     individuales = encuestas.individuales(eid) if _gestiona(auth) else []
     return pagina(
-        f"Resultados: {e['titulo']}", pestanas("encuestas", auth),
+        f"Resultados: {e['titulo']}",
         A(UkIcon("arrow-left", height=14, width=14), e["titulo"], href=f"{BASE}/{eid}",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         Div(Div(H2("Resultados"), P(f"{e['titulo']} · {r['n']} respuesta(s) de {r['invitadas']} invitada(s) "

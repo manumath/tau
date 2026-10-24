@@ -63,6 +63,19 @@ informes…) puede **ordenar** haciendo clic en el título de una columna (otro 
 **filtrar** escribiendo en «Filtrar…» (no distingue tildes ni mayúsculas) y **descargar en CSV** lo
 que ve, con el orden y el filtro aplicados. El CSV se abre en Excel con las tildes correctas.
 
+## Menú
+
+En una pantalla grande, el **menú lateral** reúne todo lo que usted puede abrir, agrupado: **Investigación**
+(actividades, productos, proyectos, investigadores, propuestas), **Docencia** (mi docencia, preparación del
+semestre, planes, oferta, carga horaria, gestiones), **Estudiantes** (cohortes, encuestas, tutoría, egresados),
+**Acreditación** (informes y calidad de datos) y **Administración** (usuarios, auditoría, revistas, líneas, tipos e
+índices). Cada persona ve solo los grupos que le corresponden. El botón junto a «TAU» lo **pliega** a solo íconos
+(útil con tablas anchas); el sistema recuerda la elección en ese navegador.
+
+En el **teléfono**, abajo hay una barra con el inicio y sus tres secciones principales; **«Más»** abre el menú
+completo (se cierra con la ✕, tocando fuera o con Escape). Arriba quedan la búsqueda, la campana de avisos y su
+nombre, con su perfil, la contraseña, el tema (claro u oscuro) y «Salir».
+
 ## Buscar
 
 El campo **«Buscar…»** de la barra superior (o la tecla **/**) busca a la vez personas, productos (por
@@ -396,7 +409,7 @@ el equipo lo integran sus participantes, del instituto o externos.
 
 ### Si es responsable o co-responsable
 
-- El número junto a «Proyectos» en la barra indica cuántas propuestas debe revisar.
+- El número junto a «Proyectos» en el menú indica cuántas propuestas debe revisar.
 - En la pestaña **Pendientes** del proyecto, apruebe o rechace cada propuesta. Al rechazar,
   indique el motivo. Al aprobar una actividad puede asignar su responsable. Un aviso señala
   lo que cae fuera del periodo del proyecto.
@@ -429,7 +442,7 @@ el equipo lo integran sus participantes, del instituto o externos.
 
 ## Docencia
 
-**Planes de estudio** («Docencia» en la barra): los programas de la Carrera (Licenciatura en
+**Planes de estudio** (grupo «Docencia» del menú): los programas de la Carrera (Licenciatura en
 Matemática, Licenciatura en Matemática Aplicada, Maestría en Matemática y Maestría en Matemática
 Aplicada) con su plan vigente. La ficha de cada plan muestra las asignaturas por semestre y ciclo,
 con sus horas (teóricas, prácticas y de laboratorio) o créditos y sus requisitos; las listas de
@@ -506,7 +519,7 @@ académica** gestionan; **Gestión de datos** carga los datos; el **Comité de a
 
 ### Cohortes estudiantiles (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
 
-En **Docencia → Cohortes estudiantiles** está el tablero de la licenciatura por cohorte (semestre de
+En **Estudiantes → Cohortes estudiantiles** está el tablero de la licenciatura por cohorte (semestre de
 ingreso): cuántos ingresaron, cuántos siguen cursando, egresaron, se titularon o desertaron, con sus
 tasas y los años medios hasta la titulación. Son cifras agregadas: el tablero no muestra nombres y no
 incluye materias ni notas, que están en el sistema de Seguimiento Académico.
@@ -547,13 +560,13 @@ materias ni notas.
 
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
-En **Docencia → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes
+En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes
 declararon, con su evidencia. **Verificar** la da por válida; **Observar** pide escribir qué debe corregir. En
 los dos casos el estudiante recibe un aviso (en el sistema y, según su preferencia, por correo).
 
 ### Encuestas a estudiantes y egresados (Dirección de Carrera y Coordinación académica)
 
-En **Docencia → Encuestas** se arman, abren y envían las encuestas (satisfacción, clima, bienestar, abandono,
+En **Estudiantes → Encuestas** se arman, abren y envían las encuestas (satisfacción, clima, bienestar, abandono,
 seguimiento de egresados, logro del perfil de egreso). Ven los resultados también Gestión de datos y el Comité de
 acreditación, que solo ven cifras agregadas.
 
@@ -577,7 +590,7 @@ respuestas persona por persona.
 
 ### Egresados (Dirección de Carrera y Coordinación académica; el Comité ve los indicadores)
 
-En **Docencia → Egresados** están los indicadores de quienes se titularon, el seguimiento y la lista de egresados.
+En **Estudiantes → Egresados** están los indicadores de quienes se titularon, el seguimiento y la lista de egresados.
 
 - **Quién es egresado.** Quien tiene estado «titulado» con fecha de titulación: llega por el CSV de cohortes o con
   **Registrar titulación** (elija al estudiante, la fecha de titulación, la de egreso si es distinta y la modalidad). Al
@@ -597,10 +610,10 @@ En **Docencia → Egresados** están los indicadores de quienes se titularon, el
 ### Tutoría
 
 La Dirección de Carrera y la Coordinación académica asignan un **tutor** (un docente con vínculo vigente) a cada estudiante que
-cursa, en **Docencia → Tutoría**: uno por uno o a toda una cohorte que aún no tiene tutor. Esa pantalla muestra también la
+cursa, en **Estudiantes → Tutoría**: uno por uno o a toda una cohorte que aún no tiene tutor. Esa pantalla muestra también la
 cobertura (cuántos tienen tutor), las reuniones por año, los temas y las derivaciones; el Comité ve esas cifras, sin nombres.
 
-El **tutor** ve **Tutoría → Mis tutorados** en la barra y, en cada estudiante, registra sus **reuniones**: fecha, modalidad,
+El **tutor** ve **«Mis tutorados»** en el menú (grupo Estudiantes) y, en cada estudiante, registra sus **reuniones**: fecha, modalidad,
 tema (académico, económico, salud, vocacional, convivencia, otro), un resumen, la **derivación** si corresponde (bienestar,
 apoyo psicológico, académico, ayuda económica, salud) y los acuerdos. Las reuniones son **confidenciales**: las ve su autor y la
 Dirección de Carrera (cada vez que ésta las abre queda en la auditoría). El estudiante ve quién es su tutor, pero no las notas. Si
@@ -608,7 +621,7 @@ cambia el tutor, el nuevo no ve las notas del anterior.
 
 ### Directorio de egresados y mentoría
 
-- **Invitar.** En **Docencia → Egresados**, «Invitar» (o «Invitar al directorio a quienes faltan», hasta 50) crea la cuenta del
+- **Invitar.** En **Estudiantes → Egresados**, «Invitar» (o «Invitar al directorio a quienes faltan», hasta 50) crea la cuenta del
   egresado, sin contraseña, y le manda un enlace de ingreso válido por 7 días. Figurar es **opcional**.
 - **Perfil.** El egresado ingresa con el enlace, acepta el uso general de sus datos y abre **Mi perfil de egresado**: a qué se
   dedica, dónde, áreas de interés y qué ofrece (charlas, mentoría, pasantías, orientación sobre posgrados, ofertas de empleo).
@@ -771,21 +784,21 @@ proyecto y ser del mismo periodo).
   con DOI. La sección «Impacto» las suma y el XLSX las trae por producto, con su fecha.
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se
   envió (resumen, textos completos, objetivos y actividades previstas), para el comité.
-- **Auditoría** (menú con su nombre): quién hizo qué y cuándo, con filtros por persona, acción, texto y
+- **Auditoría** (menú, grupo Administración): quién hizo qué y cuándo, con filtros por persona, acción, texto y
   fechas. **«Descargar CSV»** exporta todo lo filtrado (no solo lo que se ve), para una revisión externa;
   la exportación también queda en la auditoría.
 - **Artículos sin revista:** desde el catálogo, los artículos registrados sin revista del catálogo,
   agrupados por el nombre declarado, para vincularlos a una revista o crearla.
-- **Líneas de investigación** (menú con su nombre): el catálogo de líneas institucionales, con su
+- **Líneas de investigación** (menú, grupo Administración): el catálogo de líneas institucionales, con su
   vigencia. Cuando una línea deja de regir, póngale **fecha de término** en lugar de eliminarla: ya
   no se podrá elegir, pero los proyectos, propuestas y perfiles que la usaban la conservan. Solo se
   elimina una línea que nadie ha usado. La ficha de cada línea muestra sus proyectos e investigadores.
-- **Catálogo de revistas** (menú con su nombre): las revistas donde publica el instituto y los
+- **Catálogo de revistas** (menú, grupo Administración): las revistas donde publica el instituto y los
   índices en que figuran **cada año**, con la fuente consultada y un enlace de evidencia (lo pide
   IAC-CINDA: datos y métodos transparentes). Una revista **verificada** define el nivel de revisión
   y los índices de los artículos publicados en ella; una **pendiente** todavía no. Se cargan una a
   una o por CSV (una fila por revista e índice; las existentes se completan).
-- **Tipos e índices** (Dirección del Instituto; menú con su nombre): los tipos de actividad, los tipos
+- **Tipos e índices** (Dirección del Instituto; menú, grupo Administración): los tipos de actividad, los tipos
   de producto y los índices que se ofrecen en los formularios.
   - Los **del sistema** (los que trae el sistema) se pueden **reordenar** y **desactivar**: dejan de
     ofrecerse en los formularios, pero lo ya registrado los conserva y se puede seguir editando. Su

@@ -6,7 +6,6 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.academico import carga, gestiones
-from app.academico.componentes import pestanas
 from app.comun import permisos, vinculos
 from app.comun.componentes.layout import mensaje_error, pagina
 from app.comun.db import auditar
@@ -46,7 +45,6 @@ def pagina_renovaciones(auth, g, errores=()):
                       aria_label="Semestre", cls="uk-select w-40", data_navegar=f"{BASE}?gestion=")
     return pagina(
         "Renovar contratos",
-        pestanas("carga", auth),
         Div(Div(H2(f"Renovar contratos para {gestiones.codigo(g)}"),
                 P("Contratados, interinos e invitados cuyo periodo terminó en los meses previos al semestre y que aún no "
                   "tienen uno nuevo. Se abre un periodo con la misma categoría y la misma carga contratada; la carga en "

@@ -40,7 +40,11 @@ description: Agregar una pantalla, ruta HTMX o acción con permisos en TAU (Fast
   modal: `**CERRAR` de `layout.py`. `tests/test_csp.py` lo vigila.
 - Sin herencia de atributos: cada elemento declara `hx_target` y `hx_swap`.
 - Modales: `modal(...)` de `app/comun/componentes/layout.py` con `hx_target=f"#{ID_MODAL}"`;
-  cerrar con `JS_CERRAR`. Filas o fragmentos fuera de banda: `Template(x(hx_swap_oob="true"))`.
+  cerrar con `**CERRAR`. Filas o fragmentos fuera de banda: `Template(x(hx_swap_oob="true"))`.
+- **Menú:** una pantalla que deba aparecer en el menú lateral se agrega en `app/navegacion.py` (en su grupo:
+  Investigación, Docencia, Estudiantes, Acreditación o Administración) con **la misma condición de permiso**
+  que su ruta; las de Docencia y Estudiantes, en `PESTANAS` de `app/academico/componentes.py`. El enlace activo lo
+  marca `acciones.js` por la dirección: no hace falta `seccion=`.
 - Tras crear algo con página propia: `return Redirect(url)` (HTMX recibe `HX-Redirect`).
   Avisos: `add_toast(sess, "…", "success")`.
 - Campos dinámicos del formulario (p. ej. varias actividades): `async def post(auth, req, …)` y

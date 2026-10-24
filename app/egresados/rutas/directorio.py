@@ -5,7 +5,6 @@ from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelCheckboxX, LabelInput, TextPresets, UkIcon
 
-from app.academico.componentes import pestanas
 from app.comun import estudiantes, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -217,7 +216,7 @@ def get(auth, q: str = "", ofrece: str = ""):
     ind = directorio.indicadores()
     lista = directorio.visibles(q, ofrece)
     return pagina(
-        "Directorio de egresados", pestanas("egresados", auth),
+        "Directorio de egresados",
         A(UkIcon("arrow-left", height=14, width=14), "Egresados", href="/docencia/egresados", cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         H2("Directorio de egresados"),
         P(f"{ind['visibles']} egresado(s) figuran de {ind['invitados']} invitado(s) · {ind['solicitudes']} solicitud(es) de estudiantes, "

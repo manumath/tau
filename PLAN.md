@@ -1999,3 +1999,37 @@ Estado a fin de la etapa 5: migraciones 0042 a 0047, unas 675 pruebas.
      IAC-CINDA que se puede redistribuir; si no, quitarlo (y reescribir el historial).
   3. **Logos** de la UMSA, el IIMAT y la Carrera (membrete): pedir autorización de la Dirección para publicarlos.
   4. El correo personal del autor sigue en `pyproject.toml` (autor del paquete).
+
+## 53. Menú lateral y pestañas en el teléfono (24-oct-2026)
+
+**Decisión del usuario (24-oct-2026):** pasar de la barra superior a un menú lateral, como el de ICMAM, «confiando en
+el buen gusto» del diseño. La barra ya estaba casi llena a 1280 px y los módulos de estudiantes y egresados no cabían.
+
+**Diseño:**
+- Pantallas grandes (≥ 1024 px): menú lateral fijo de 16 rem, agrupado en Investigación, Docencia, Estudiantes,
+  Acreditación y Administración (cada persona ve solo sus grupos). Se pliega a solo íconos (4 rem) para las tablas
+  anchas; la elección se guarda en el navegador y `static/js/disposicion-inicial.js` la aplica antes de pintar. Los
+  contadores (propuestas por revisar) quedan sobre el ícono al plegar.
+- Teléfono: barra de pestañas abajo con Inicio, las tres primeras secciones de `PRIORIDAD_MOVIL` que la persona ve
+  y «Más», que abre el mismo menú lateral como panel (se cierra con la ✕, tocando fuera o con Escape; el foco entra
+  al primer enlace y vuelve al botón).
+- Arriba, una franja con la búsqueda, la campana y el menú del usuario (perfil o datos, contraseña, tema, salir).
+  Lo administrativo (auditoría, revistas, líneas, tipos e índices) pasó del menú del usuario al grupo
+  Administración. Cada pieza con id (contadores, campana, búsqueda) existe una sola vez en la página.
+- El enlace de la página actual lo marca `acciones.js` (`aria-current="page"`, el de prefijo más largo), así que el
+  parámetro `seccion` de `pagina()` ya no decide nada. Al imprimir no aparece ninguna parte del menú.
+- Las pestañas propias de Docencia (`pestanas()`) se eliminaron: repetían el menú lateral y mezclaban Docencia con
+  Estudiantes. `PESTANAS` queda como la lista de esas secciones y sus permisos, que usa el menú.
+
+**Implementación:** `app/navegacion.py` (qué ve cada rol; vive fuera de `comun` porque necesita los permisos de
+Docencia y Estudiantes; `main.py` se lo entrega a `layout.MENU` y `layout.MENU_MOVIL`), `layout.py` (dibuja el
+lateral, la franja superior y las pestañas), estilos en `estilos/entrada.css` y comportamiento en `acciones.js`
+(`plegar-lateral`, `abrir-menu`, `cerrar-menu`, `data-nav`). Pruebas: `tests/test_navegacion.py` (grupos por rol,
+pestañas, ids únicos, impresión, cuenta de estudiante) y una en navegador (página actual, plegado que se recuerda,
+panel en el teléfono).
+
+**Decisiones del equipo (confirmar):**
+- Grupos y orden de arriba; «Mis tutorados» (el tutor) va primero en Estudiantes.
+- En el teléfono, las tres secciones de abajo salen de este orden de prioridad: Productos, Proyectos, Mi docencia,
+  Investigadores, Informes, Usuarios, Cohortes.
+- El menú se despliega por omisión; plegarlo es una elección de cada persona en su navegador.

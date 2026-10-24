@@ -9,7 +9,6 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, Label, LabelT, Table, Tbody, Td, TextPresets, Th,
                            UkIcon)
 
-from app.academico.componentes import pestanas
 from app.comun import estudiantes, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -75,7 +74,6 @@ def get(auth):
     resumen, tabla = _tablero(auth)
     return pagina(
         "Cohortes estudiantiles",
-        pestanas("cohortes", auth),
         Div(Div(H2("Cohortes estudiantiles"),
                 P("Ingreso, egreso, titulación y deserción de la licenciatura por cohorte (semestre de ingreso). Son cifras "
                   "agregadas: no incluyen materias ni notas, que están en el sistema de Seguimiento Académico. Alimentan "

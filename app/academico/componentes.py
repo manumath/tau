@@ -1,5 +1,4 @@
 """Piezas comunes de la sección Docencia."""
-from fasthtml.common import A, Div
 
 from app.comun import permisos, vinculos
 from app.comun.db import get_db
@@ -19,6 +18,7 @@ def prepara_semestres(auth: dict | None) -> bool:
                            or permisos.puede(auth, "gestionar_vinculos", vinculos.carrera()))
 
 
+# Secciones de Docencia y Estudiantes en el menú lateral (app/navegacion.py, PLAN.md §53).
 # (clave, texto, url, condición): la condición es una acción de permisos o una función de auth.
 PESTANAS = (("mia", "Mi docencia", "/docencia/mia", tiene_docencia),
             ("preparacion", "Preparación del semestre", "/docencia/preparacion", prepara_semestres),
@@ -32,14 +32,8 @@ PESTANAS = (("mia", "Mi docencia", "/docencia/mia", tiene_docencia),
             ("gestiones", "Gestiones", "/docencia/gestiones", None))
 
 
-def _visible(condicion, auth) -> bool:
+def visible(condicion, auth) -> bool:
+    """¿Ve la persona una pestaña? `condicion`: None (todos), una acción de permisos o una función de auth."""
     if condicion is None:
         return True
     return condicion(auth) if callable(condicion) else permisos.puede(auth, condicion)
-
-
-def pestanas(activa: str, auth: dict | None = None):
-    visibles = [(c, t, u) for c, t, u, condicion in PESTANAS if _visible(condicion, auth)]
-    return Div(*[A(texto, href=url, cls="px-3 py-2 text-sm border-b-2 " + (
-        "border-primary text-primary font-medium" if clave == activa else "border-transparent hover:text-primary"))
-        for clave, texto, url in visibles], cls="flex flex-wrap gap-2 border-b border-border mb-6")

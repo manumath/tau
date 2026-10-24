@@ -66,6 +66,7 @@ def encabezados():
         # Tema de Franken UI (azul; claro u oscuro según la elección guardada o, si no hay, el sistema):
         # el mismo código que headers_theme de MonsterUI, en un archivo (sin defer: antes de pintar).
         Script(src=url("js/tema-inicial.js")),
+        Script(src=url("js/disposicion-inicial.js")),  # menú lateral plegado o no (sin defer: antes de pintar)
         scrollspy_style,
         Script(type="module", src=url("vendor/franken-ui/icon.iife.js")),
         Script(src=url("js/tema.js"), defer=True),  # selector de tema claro / oscuro / sistema

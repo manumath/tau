@@ -1,17 +1,11 @@
-"""Estructura común de las páginas: barra de navegación, contenedor y modal."""
+"""Estructura común de las páginas: menú lateral, barra superior, pestañas del teléfono, contenedor y modal."""
 import fasthtml.common as fh
-from fasthtml.common import A, Div, Form, Input, Main, Span, Title
-from monsterui.all import (H3, Button, ButtonT, Container, ContainerT, DivHStacked, NavBar,
-                           TextPresets, UkIcon)
+from fasthtml.common import A, Div, Form, Input, Li, Main, P, Span, Title, Ul
+from monsterui.all import H3, Button, ButtonT, Container, ContainerT, TextPresets, UkIcon
 
-from app.comun import config, permisos
+from app.comun import config
 
 ID_MODAL = "modal"
-
-
-def _enlace(texto, href, icono, activo=False, extra=""):
-    cls = "flex items-center gap-1 " + ("font-semibold text-primary" if activo else "")
-    return A(UkIcon(icono, height=16, width=16), texto, extra, href=href, cls=cls)
 
 
 def selector_tema():
@@ -48,16 +42,6 @@ def _menu_usuario(usuario: dict):
     if not usuario["es_investigador"]:
         opciones.append(A(UkIcon("id-card", height=16, width=16), "Mis datos personales", href="/mis-datos",
                           cls=item))
-    if permisos.puede(usuario, "ver_auditoria"):
-        opciones.append(A(UkIcon("scroll-text", height=16, width=16), "Auditoría", href="/admin/auditoria",
-                          cls=item))
-    if permisos.puede(usuario, "gestionar_catalogos"):
-        opciones.append(A(UkIcon("library", height=16, width=16), "Catálogo de revistas", href="/admin/revistas",
-                          cls=item))
-        opciones.append(A(UkIcon("route", height=16, width=16), "Líneas de investigación", href="/admin/lineas",
-                          cls=item))
-        opciones.append(A(UkIcon("list-checks", height=16, width=16), "Tipos e índices", href="/admin/catalogos",
-                          cls=item))
     opciones += [
         A(UkIcon("key-round", height=16, width=16), "Cambiar contraseña", href="/cambiar-password",
           cls=item),
@@ -85,56 +69,90 @@ def campo_busqueda(q: str = "", sugerencias: bool = True):
                 action="/buscar", method="get", role="search", cls="relative")
 
 
-def barra_navegacion(usuario: dict, seccion: str = ""):
-    if usuario.get("solo_estudiante"):
-        enlaces = [_enlace("Mi seguimiento", "/estudiante", "graduation-cap", seccion == "estudiante"),
-                   Span(id="campana-avisos", hx_get="/avisos/campana", hx_trigger="load", hx_swap="outerHTML"),
-                   _menu_usuario(usuario)]
-        marca = A(DivHStacked(Span("τ", cls="font-serif italic text-3xl leading-none text-primary", aria_hidden="true"),
-                              H3(config.NOMBRE_SISTEMA, cls="text-lg tracking-wide")),
-                  href="/estudiante", title=config.DESCRIPCION_SISTEMA, aria_label=config.NOMBRE_COMPLETO)
-        return NavBar(*enlaces, brand=marca, sticky=True, cls="px-6 py-3 border-b border-border")
-    enlaces = [_enlace("Inicio", "/", "home", seccion == "inicio")]
-    if usuario["es_investigador"]:
-        enlaces += [_enlace("Actividades", "/actividades", "calendar-days", seccion == "actividades"),
-                    _enlace("Productos", "/productos", "book-open", seccion == "productos")]
-    if usuario["es_investigador"] or permisos.puede(usuario, "ver_todos_los_proyectos"):
-        # Contador de propuestas por revisar: se carga aparte y se refresca solo (ver
-        # /proyectos/pendientes/contador), para no consultar la BD en cada página.
-        contador = Span(id="badge-pendientes", cls="hidden", hx_get="/proyectos/pendientes/contador",
-                        hx_trigger="load", hx_swap="outerHTML")
-        enlaces.append(_enlace("Proyectos", "/proyectos", "folder-kanban", seccion == "proyectos",
-                               extra=contador))
-    enlaces.append(_enlace("Investigadores", "/investigadores", "book-user",
-                           seccion == "investigadores"))
-    enlaces.append(_enlace("Docencia", "/docencia", "graduation-cap", seccion == "docencia"))
-    if usuario.get("es_tutor"):
-        enlaces.append(_enlace("Tutoría", "/tutoria", "message-circle", seccion == "tutoria"))
-    if (usuario["es_investigador"] or permisos.puede(usuario, "ver_informes_institucionales")
-            or permisos.puede(usuario, "ver_cv_ajeno")):
-        enlaces.append(_enlace("Informes", "/informes", "file-text", seccion == "informes"))
-    if permisos.puede(usuario, "decidir_propuestas"):
-        contador = Span(id="badge-propuestas", cls="hidden", hx_get="/admin/propuestas/contador",
-                        hx_trigger="load", hx_swap="outerHTML")
-        enlaces.append(_enlace("Propuestas", "/admin/propuestas", "landmark", seccion == "propuestas",
-                               extra=contador))
-    if permisos.puede(usuario, "ver_usuarios"):
-        enlaces.append(_enlace("Usuarios", "/admin/usuarios", "users", seccion == "usuarios"))
-    # Búsqueda: el campo en pantallas grandes; en las chicas, un enlace a /buscar.
-    enlaces.append(Div(campo_busqueda(), cls="hidden xl:block w-56"))
-    enlaces.append(A(UkIcon("search", height=18, width=18), href="/buscar", aria_label="Buscar", title="Buscar",
-                     cls="xl:hidden flex items-center"))
-    # Campana de avisos: se carga aparte (app/comun/rutas/avisos.py), como los contadores.
-    enlaces.append(Span(id="campana-avisos", hx_get="/avisos/campana", hx_trigger="load", hx_swap="outerHTML"))
-    enlaces.append(_menu_usuario(usuario))
-    marca = A(DivHStacked(Span("τ", cls="font-serif italic text-3xl leading-none text-primary", aria_hidden="true"),
-                          H3(config.NOMBRE_SISTEMA, cls="text-lg tracking-wide")),
-              href="/", title=config.DESCRIPCION_SISTEMA, aria_label=config.NOMBRE_COMPLETO)
-    return NavBar(*enlaces, brand=marca, sticky=True, cls="px-6 py-3 border-b border-border")
+# --- Navegación (PLAN.md §53) ----------------------------------------------------------------------------
+# Pantallas grandes: menú lateral fijo y agrupado, que se pliega a solo íconos (la elección se recuerda en el
+# navegador: static/js/disposicion-inicial.js la aplica antes de pintar). Teléfono: barra de pestañas abajo y
+# «Más», que abre el mismo menú lateral como panel. Arriba, una franja con la búsqueda, la campana y el menú
+# del usuario: cada pieza con id (contadores, campana) existe una sola vez en la página. Qué ve cada persona
+# lo decide app/navegacion.py (`comun` no importa de los otros paquetes): main.py fija MENU y MENU_MOVIL.
+# static/js/acciones.js marca el enlace de la página actual (aria-current) y abre, cierra y pliega el menú.
+
+MENU = lambda usuario: []        # noqa: E731  usuario → [(título del grupo o None, [ítems])]
+MENU_MOVIL = lambda usuario: []  # noqa: E731  usuario → ítems de la barra de abajo
+
+
+def _marca(usuario):
+    return A(Span("τ", cls="font-serif italic text-3xl leading-none text-primary", aria_hidden="true"),
+             Span(config.NOMBRE_SISTEMA, cls="lateral-texto text-lg font-semibold tracking-wide"),
+             href="/estudiante" if usuario.get("solo_estudiante") else "/", title=config.DESCRIPCION_SISTEMA,
+             aria_label=config.NOMBRE_COMPLETO, cls="flex items-center gap-2 min-w-0")
+
+
+def _enlace_menu(item):
+    return Li(A(UkIcon(item["icono"], height=18, width=18, cls="shrink-0"),
+                Span(item["texto"], cls="lateral-texto truncate"), item["insignia"] or "",
+                href=item["href"], title=item["texto"], data_nav=True,
+                cls="enlace-menu flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground/80 "
+                    "hover:bg-muted hover:text-foreground"))
+
+
+def menu_lateral(usuario: dict):
+    grupos = [Div(P(titulo, cls="lateral-grupo px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide "
+                                "text-muted-foreground") if titulo else "",
+                  Ul(*[_enlace_menu(i) for i in items], cls="space-y-0.5"))
+              for titulo, items in MENU(usuario)]
+    plegar = fh.Button(UkIcon("panel-left-close", height=18, width=18, cls="icono-plegar"),
+                       UkIcon("panel-left-open", height=18, width=18, cls="icono-desplegar"),
+                       type="button", data_accion="plegar-lateral", aria_label="Plegar o desplegar el menú",
+                       title="Plegar o desplegar el menú",
+                       cls="hidden lg:inline-flex rounded p-1.5 text-muted-foreground hover:bg-muted")
+    cerrar = fh.Button(UkIcon("x", height=18, width=18), type="button", data_accion="cerrar-menu",
+                       aria_label="Cerrar el menú", cls="lg:hidden rounded p-1.5 hover:bg-muted")
+    return fh.Nav(Div(_marca(usuario), plegar, cerrar, cls="lateral-cabecera flex items-center justify-between "
+                                                         "gap-2 px-4 h-14 border-b border-border shrink-0"),
+                  Div(*grupos, cls="flex-1 overflow-y-auto px-2 py-2"),
+                  id="menu-lateral", aria_label="Menú principal", cls="lateral no-imprimir")
+
+
+def barra_superior(usuario: dict):
+    """Franja de arriba: menú (teléfono), búsqueda, campana y usuario."""
+    menu = fh.Button(UkIcon("menu", height=20, width=20), type="button", data_accion="abrir-menu",
+                     aria_label="Abrir el menú", aria_controls="menu-lateral",
+                     cls="lg:hidden rounded p-2 -ml-2 hover:bg-muted")
+    estudiante = usuario.get("solo_estudiante")
+    busqueda = "" if estudiante else (
+        Div(campo_busqueda(), cls="hidden sm:block flex-1 max-w-xl"),
+        A(UkIcon("search", height=20, width=20), href="/buscar", aria_label="Buscar", title="Buscar",
+          cls="sm:hidden rounded p-2 hover:bg-muted"))
+    return fh.Header(menu, Div(_marca(usuario), cls="lg:hidden"), *busqueda, Div(cls="flex-1 sm:hidden lg:hidden"),
+                     Div(Span(id="campana-avisos", hx_get="/avisos/campana", hx_trigger="load", hx_swap="outerHTML"),
+                         _menu_usuario(usuario), cls="ml-auto flex items-center gap-1"),
+                     cls="barra-superior no-imprimir sticky top-0 z-30 flex items-center gap-3 h-14 px-4 sm:px-6 "
+                         "border-b border-border bg-background/95 backdrop-blur")
+
+
+COLUMNAS = {1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4", 5: "grid-cols-5"}
+
+
+def pestanas_movil(usuario: dict):
+    """Barra de abajo en el teléfono: las secciones principales y «Más», que abre el menú lateral."""
+    items = [A(UkIcon(i["icono"], height=20, width=20), Span(i["texto"], cls="truncate max-w-full"),
+               href=i["href"], data_nav=True,
+               cls="enlace-menu flex flex-col items-center justify-center gap-0.5 px-1 text-[11px] "
+                   "text-muted-foreground") for i in MENU_MOVIL(usuario)]
+    if not usuario.get("solo_estudiante"):
+        items.append(fh.Button(UkIcon("ellipsis", height=20, width=20), Span("Más"), type="button",
+                               data_accion="abrir-menu", aria_controls="menu-lateral",
+                               cls="flex flex-col items-center justify-center gap-0.5 px-1 text-[11px] "
+                                   "text-muted-foreground"))
+    return fh.Nav(*items, aria_label="Secciones principales",
+                  cls="pestanas-movil no-imprimir lg:hidden fixed inset-x-0 bottom-0 z-30 grid h-16 border-t "
+                      "border-border bg-background " + COLUMNAS[len(items)])
 
 
 def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = ""):
-    """Página completa. Con usuario muestra la navegación; sin él, un lienzo centrado."""
+    """Página completa. Con usuario muestra la navegación; sin él, un lienzo centrado. `seccion` ya no
+    decide el enlace activo (lo marca acciones.js según la dirección); se conserva por compatibilidad."""
     cuerpo = Container(*contenido, cls=(ContainerT.xl, "py-8")) if usuario else Div(
         *contenido, cls="min-h-screen flex items-center justify-center p-4 bg-muted/40")
     aviso = Div(UkIcon("wrench", height=16, width=16, cls="shrink-0"),
@@ -147,11 +165,17 @@ def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = 
                cls="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:rounded-md "
                    "focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg focus:ring-2 focus:ring-primary") \
         if usuario else ""
+    if not usuario:
+        return (Title(f"{titulo} · {config.NOMBRE_SISTEMA}"), aviso,
+                Main(cuerpo, id="contenido", tabindex="-1", cls="outline-none"), Div(id=ID_MODAL))
     return (Title(f"{titulo} · {config.NOMBRE_SISTEMA}"),
             saltar,
-            aviso,
-            barra_navegacion(usuario, seccion) if usuario else "",
-            Main(cuerpo, id="contenido", tabindex="-1", cls="outline-none"),
+            menu_lateral(usuario),
+            Div(data_accion="cerrar-menu", cls="fondo-menu no-imprimir", aria_hidden="true"),
+            Div(aviso, barra_superior(usuario),
+                Main(cuerpo, id="contenido", tabindex="-1", cls="outline-none"),
+                cls="columna-contenido min-h-screen pb-16 lg:pb-0"),
+            pestanas_movil(usuario),
             Div(id=ID_MODAL))
 
 

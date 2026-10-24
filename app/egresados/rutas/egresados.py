@@ -6,7 +6,6 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelInput, Table, Tbody, Td, TextPresets, Th,
                            UkIcon)
 
-from app.academico.componentes import pestanas
 from app.comun import permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -143,7 +142,7 @@ def get(auth):
     mod = P("Modalidad de titulación: " + " · ".join(f"{cohortes.MODALIDADES.get(k, k)}: {v}" for k, v in ind["modalidades"].items()),
             cls=(TextPresets.muted_sm, "mt-3")) if ind["modalidades"] else ""
     return pagina(
-        "Egresados", pestanas("egresados", auth),
+        "Egresados",
         H2("Egresados"),
         P("Titulación y seguimiento de los egresados de la licenciatura. Quien se titula entra solo al seguimiento. Los "
           "indicadores usan la última respuesta de cada egresado y siempre muestran cuántos respondieron (n): con pocos "

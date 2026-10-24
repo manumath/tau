@@ -7,7 +7,6 @@ from fasthtml.common import A, APIRouter, Div, Li, Option, P, Response, Select, 
 from monsterui.all import H2, H3, Button, ButtonT, TextPresets, UkIcon
 
 from app.academico import carga, gestiones, oferta
-from app.academico.componentes import pestanas
 from app.comun import permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -52,7 +51,7 @@ def get(auth, gestion: str = ""):
         return Response("No autorizado", status_code=403)
     g = gestiones.obtener(int(gestion)) if gestion.isdigit() else _semestre_actual()
     if not g or g["tipo"] not in carga.SEMESTRES:
-        return pagina("Carga horaria", pestanas("carga", auth),
+        return pagina("Carga horaria",
                       P("La carga se consulta por semestre. Cree primero las gestiones del año en «Gestiones».",
                         cls="text-sm"), usuario=auth, seccion="docencia")
     filas = []
@@ -75,7 +74,6 @@ def get(auth, gestion: str = ""):
              cls=(TextPresets.muted_sm, "flex items-start gap-1 mb-4"))
     return pagina(
         "Carga horaria",
-        pestanas("carga", auth),
         Div(Div(H2(f"Carga horaria {gestiones.codigo(g)}"),
                 P("En h/mes (unidades de 32), según el vínculo con la Carrera al inicio del semestre. Docencia: "
                   "prevista / asignada en la oferta (32 h/mes por materia como titular, de grado o maestría); no suman "

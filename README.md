@@ -153,6 +153,7 @@ app/
     directorio.py              directorio opcional de egresados, invitación y solicitudes de mentoría
     rutas/                     egresados (/docencia/egresados), directorio (/estudiante/directorio, /estudiante/perfil-egresado)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
+  navegacion.py                menú lateral y pestañas del teléfono: qué secciones ve cada rol (PLAN §53)
 
 Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion`,
 `academico`, `estudiantil` y `egresados` pueden usar `comun` (`acreditacion` usa `estudiantil` para la Guía y `egresados`
@@ -249,6 +250,10 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
   pregunta, rojo si destruye algo). Para lo reversible, en lugar de confirmar, responda con
   `aviso_con_deshacer(sess, mensaje, hx_post=…, hx_vals=…)` (`componentes/avisos_emergentes.py`), cuya
   petición debe ser explícita e idempotente (p. ej., `activo=1`, no «alternar»).
+- **Navegación** (`app/navegacion.py`, PLAN §53): menú lateral agrupado y plegable en pantallas grandes; en el
+  teléfono, pestañas abajo y «Más», que abre el mismo menú. Una pantalla nueva entra al menú en
+  `navegacion.menu` con la misma condición de permiso que su ruta. `layout.py` solo dibuja (`comun` no importa
+  de los otros paquetes): `main.py` le entrega `MENU` y `MENU_MOVIL`.
 - **Búsqueda global** (`app/busqueda.py`): un grupo nuevo es una función `(q, auth, límite)` en `GRUPOS`,
   que debe filtrar por lo que la persona puede abrir.
 

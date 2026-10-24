@@ -44,6 +44,8 @@ from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
 from app.acreditacion.rutas.informes import rt as rutas_informes
 from app.inicio import rt as rutas_inicio
 from app.busqueda import rt as rutas_busqueda
+from app import navegacion
+from app.comun.componentes import layout
 from app.investigacion.rutas.investigadores import rt as rutas_investigadores
 from app.investigacion.rutas.perfil import rt as rutas_perfil
 from app.investigacion.rutas.personas import rt as rutas_personas
@@ -83,6 +85,8 @@ def _mantenimiento(req):
 
 def create_app(db_path=config.DB_PATH):
     init_db(db_path)
+    # Menú de navegación: lo arma app/navegacion.py (sabe qué ve cada rol en todos los paquetes).
+    layout.MENU, layout.MENU_MOVIL = navegacion.menu, navegacion.movil
     if not config.SOLO_LECTURA:
         institucionales.mantenimiento(forzar=True)
     app, _ = fast_app(

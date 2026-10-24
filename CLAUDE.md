@@ -45,7 +45,8 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
   actividad estudiantil y encuestas. Sin materias ni notas. `app/egresados`: titulación, seguimiento y
   indicadores de egresados (PLAN §50).
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
-  `main.py`. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
+  `main.py`. El menú lateral se arma en `app/navegacion.py`: una pantalla nueva se agrega ahí, con el mismo
+  permiso que su ruta. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
   `datos/planes/` (planes de estudio en CSV), `datos/iac-cinda/` (plantilla vacía de la Guía de
   Antecedentes), `static/` (vendor con versión fija), `estilos/`.
 

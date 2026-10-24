@@ -9,7 +9,6 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelInput, Table, Tbody, Td, TextPresets, Th,
                            UkIcon)
 
-from app.academico.componentes import pestanas
 from app.comun import estudiantes, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -263,7 +262,7 @@ def get(auth, cohorte: str = "", solo: str = ""):
                  Div(Table(Thead(Tr(Th("Estudiante"), Th("Cohorte"), Th("Reuniones"), Th("Última"), Th("Tutor(a)"))), Tbody(*filas),
                            cls="uk-table-divider uk-table-middle"), cls="overflow-x-auto")))
     return pagina(
-        "Tutoría", pestanas("tutoria", auth),
+        "Tutoría",
         H2("Tutoría"),
         P("Cada estudiante que cursa tiene un tutor (docente con vínculo vigente) que registra sus reuniones y derivaciones. Aquí "
           "se asignan los tutores y se ve la cobertura; las notas de las reuniones son confidenciales.",
