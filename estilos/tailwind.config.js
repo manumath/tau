@@ -24,5 +24,14 @@ module.exports = {
     "./estilos/clases_dinamicas.txt",
     `${process.env.MONSTERUI_DIR}/**/*.py`,
   ],
-  theme: { extend: { colors: colores } },
+  theme: {
+    extend: {
+      colors: colores,
+      // Tipografía de la marca (PLAN.md §55): las caras están en estilos/entrada.css.
+      fontFamily: {
+        marca: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],
+        documento: ['"EB Garamond"', "Georgia", "serif"],
+      },
+    },
+  },
 };

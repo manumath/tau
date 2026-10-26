@@ -33,3 +33,14 @@ def test_tema_generado_al_dia():
     assert (config.RAIZ / "estilos/tema-cmat.css").read_text() == modulo.generar()
     assert "#2563eb" not in modulo.generar().replace("%23", "#")                # sin el azul de Franken UI
     assert "uk-theme-cmat" in (config.RAIZ / "static/css/tailwind.css").read_text()
+
+
+def test_fuentes_de_la_marca():
+    """Equivalentes libres de Gotham y Garamond Pro (PLAN.md §55), propios (la CSP solo admite font-src 'self')."""
+    fuentes = config.RAIZ / "static/vendor/fonts"
+    for carpeta, archivos in {"montserrat": ("montserrat-400", "montserrat-500", "montserrat-700"),
+                              "eb-garamond": ("eb-garamond-400", "eb-garamond-400-italic", "eb-garamond-600")}.items():
+        assert "Open Font License" in (fuentes / carpeta / "OFL.txt").read_text()
+        for nombre in archivos:
+            assert (fuentes / carpeta / f"{nombre}.woff2").read_bytes()[:4] == b"wOF2"
+            assert f"../vendor/fonts/{carpeta}/{nombre}.woff2" in (config.RAIZ / "static/css/tailwind.css").read_text()

@@ -29,7 +29,12 @@ from app.investigacion.identificadores import IDENTIFICADORES
 rt = APIRouter()
 
 ESTILO_IMPRESION = Style("""
-.hoja { background: #fff; color: #18181b; }
+.hoja { background: #fff; color: #18181b; font-family: "EB Garamond", Georgia, serif; font-size: 1.05rem;
+        font-variant-numeric: lining-nums; }
+/* Títulos y membrete con la letra de la marca; tablas, cifras y gráficos en sans: se leen mejor. */
+.hoja h1, .hoja h2, .hoja h3, .hoja .membrete { font-family: Montserrat, ui-sans-serif, system-ui, sans-serif; }
+.hoja table, .hoja .grafico, .hoja .cifra, .hoja .no-imprimir, .hoja .apagado.text-xs {
+  font-family: ui-sans-serif, system-ui, sans-serif; font-size: .875rem; font-variant-numeric: tabular-nums; }
 .hoja a { color: #273353; }
 .hoja h1 { font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
 .hoja h2 { font-size: 1.15rem; font-weight: 700; margin-top: 1.75rem; padding-bottom: .25rem;
@@ -160,9 +165,9 @@ def _cifra(valor, texto, href=None):
     """Cifra destacada; con `href`, enlaza a los registros que la componen."""
     contenido = (Div(str(valor), cls="text-2xl font-bold"), Div(texto, cls="apagado text-xs"))
     if href:
-        return A(*contenido, href=href, cls="block border border-zinc-200 rounded p-3 text-center hover:bg-zinc-50",
+        return A(*contenido, href=href, cls="cifra block border border-zinc-200 rounded p-3 text-center hover:bg-zinc-50",
                  style="color: inherit")
-    return Div(*contenido, cls="border border-zinc-200 rounded p-3 text-center")
+    return Div(*contenido, cls="cifra border border-zinc-200 rounded p-3 text-center")
 
 
 # --- Índice de informes -----------------------------------------------------------------------------

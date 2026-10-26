@@ -13,6 +13,26 @@
   }
 }
 
+/* Tipografía de la marca (PLAN.md §55), con equivalentes libres de las del manual (licencia OFL, en
+   static/vendor/fonts): Montserrat por Gotham en los títulos de página y la marca; EB Garamond por Garamond Pro en
+   el cuerpo de los informes (app/acreditacion/rutas/informes.py). El resto de la interfaz, con la fuente del
+   sistema, que en tablas densas se lee mejor. */
+@layer base {
+  @font-face { font-family: "Montserrat"; font-style: normal; font-weight: 400; font-display: swap;
+               src: url("../vendor/fonts/montserrat/montserrat-400.woff2") format("woff2"); }
+  @font-face { font-family: "Montserrat"; font-style: normal; font-weight: 500; font-display: swap;
+               src: url("../vendor/fonts/montserrat/montserrat-500.woff2") format("woff2"); }
+  @font-face { font-family: "Montserrat"; font-style: normal; font-weight: 700; font-display: swap;
+               src: url("../vendor/fonts/montserrat/montserrat-700.woff2") format("woff2"); }
+  @font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 400; font-display: swap;
+               src: url("../vendor/fonts/eb-garamond/eb-garamond-400.woff2") format("woff2"); }
+  @font-face { font-family: "EB Garamond"; font-style: italic; font-weight: 400; font-display: swap;
+               src: url("../vendor/fonts/eb-garamond/eb-garamond-400-italic.woff2") format("woff2"); }
+  @font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 600; font-display: swap;
+               src: url("../vendor/fonts/eb-garamond/eb-garamond-600.woff2") format("woff2"); }
+  h1, h2, .uk-h1, .uk-h2 { @apply font-marca; }
+}
+
 /* Diálogo de confirmación (static/js/acciones.js, en lugar del confirm() del navegador). */
 @layer components {
   dialog.confirmacion {

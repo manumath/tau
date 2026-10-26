@@ -180,7 +180,8 @@ está al día y que cada par de texto y fondo cumple el contraste AA (4,5:1) en 
 
 ### 4.5 Actualizar una librería de `static/vendor/`
 
-htmx, fasthtml.js, Franken UI y KaTeX tienen versión fija (`VERSIONES` en
+htmx, fasthtml.js, Franken UI, KaTeX y las fuentes de la marca (Montserrat y EB Garamond, subconjunto
+latino en woff2, de `@fontsource/…`, con su licencia OFL al lado) tienen versión fija (`VERSIONES` en
 `app/comun/componentes/recursos.py`). Para actualizar una:
 
 1. Lea las notas de la versión (cambios incompatibles).

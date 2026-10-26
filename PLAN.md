@@ -2121,3 +2121,10 @@ principal es un azul aclarado del mismo matiz sobre un fondo azul muy oscuro, y 
 azul marino; los `text-red-600` de errores y botones de quitar pasan a `text-destructive`.
 `tests/test_marca.py` exige contraste AA en cada par de texto y fondo, en ambos modos.
 
+**Etapa 2, tipografía (hecha):** Montserrat (400, 500, 700) y EB Garamond (400, cursiva, 600), subconjunto
+latino en woff2 de `@fontsource/…@5.2.5` (≈ 127 KB en total), con su licencia OFL, en `static/vendor/fonts/`
+(descarga autorizada por el usuario el 25-oct-2026). En la interfaz, Montserrat en los títulos de página
+(`h1`, `h2`) y la clase `font-marca`; el resto, con la fuente del sistema. En los informes (`hoja()`), cuerpo en
+EB Garamond con cifras alineadas, títulos y membrete en Montserrat, y tablas, cifras destacadas y gráficos en
+sans; Chrome incrusta las fuentes en el PDF.
+

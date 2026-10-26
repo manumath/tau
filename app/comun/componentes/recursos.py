@@ -3,7 +3,8 @@
 Se sirven en /static (ver `montar`), fuera del control de sesión.
 
 - static/vendor/: librerías de terceros con versión fija (htmx 2.0.7, fasthtml.js 1.0.12,
-  Franken UI 2.0.0, KaTeX 0.16.21). Para actualizar una, reemplace sus archivos y la versión aquí.
+  Franken UI 2.0.0, KaTeX 0.16.21; fuentes Montserrat y EB Garamond, OFL, en static/vendor/fonts, que
+  cargan las @font-face de estilos/entrada.css). Para actualizar una, reemplace sus archivos y la versión aquí.
 - static/css/tailwind.css: las clases de Tailwind que usa el código, compiladas con
   scripts/estilos.sh (MonsterUI usaba el compilador de Tailwind en el navegador, desde un CDN).
 
@@ -20,7 +21,7 @@ from starlette.staticfiles import StaticFiles
 from app.comun import config
 
 VERSIONES = {"htmx": "2.0.7", "fasthtml-js": "1.0.12", "franken-ui": "2.0.0", "katex": "0.16.21",
-             "tailwind": "3.4.17"}
+             "tailwind": "3.4.17", "@fontsource/montserrat": "5.2.5", "@fontsource/eb-garamond": "5.2.5"}
 
 
 
