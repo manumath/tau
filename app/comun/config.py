@@ -12,6 +12,9 @@ NOMBRE_INSTITUTO = os.environ.get("PORTAL_INSTITUTO", "Instituto de Investigaci�
 UNIVERSIDAD = os.environ.get("PORTAL_UNIVERSIDAD", "Universidad Mayor de San Andrés")
 FACULTAD = os.environ.get("PORTAL_FACULTAD", "Facultad de Ciencias Puras y Naturales")
 NOMBRE_CARRERA = os.environ.get("PORTAL_CARRERA", "Carrera de Matemática")
+# Dirección, teléfonos y sitio de la Carrera para el pie del membrete de los informes (PLAN.md §55), como en la
+# hoja membretada oficial. Vacío: el pie no la muestra.
+DIRECCION = os.environ.get("PORTAL_DIRECCION", "")
 
 # Contexto local: zona horaria de las fechas (plazos, «hoy», horas mostradas) y moneda de los montos.
 ZONA_HORARIA = os.environ.get("PORTAL_ZONA_HORARIA", "America/La_Paz")

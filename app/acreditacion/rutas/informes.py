@@ -48,7 +48,10 @@ ESTILO_IMPRESION = Style("""
 .hoja th.text-right, .hoja td.text-right { text-align: right; }
 .hoja ol.citas { list-style: decimal; padding-left: 1.5rem; }
 .hoja ol.citas li { margin: .35rem 0; }
-.hoja .membrete-logo { height: 4.5rem; width: auto; }
+.hoja .membrete { border-color: #be141b; }               /* rojo de la marca: acento del membrete (§55) */
+.hoja .membrete-marca { height: 3.25rem; width: auto; }    /* ≈ 200 px de ancho: el manual pide al menos 100 */
+.hoja .membrete-logo { height: 3.5rem; width: auto; }
+.hoja .membrete-texto { color: #273353; }
 @media print {
   @page { size: A4; margin: 16mm 15mm; }
   .monster-navbar, nav, .no-imprimir, #fh-toast-container, #modal { display: none !important; }
@@ -58,13 +61,15 @@ ESTILO_IMPRESION = Style("""
   .hoja, .hoja * { color: #000 !important; }
   .hoja a { text-decoration: none; }
   .hoja h2, .hoja h3 { break-after: avoid; }
-  .hoja .membrete-logo { height: 20mm; }
+  .hoja .membrete-marca { height: 13mm; }
+  .hoja .membrete-logo { height: 14mm; }
+  .hoja .membrete-texto { color: #273353 !important; }
   /* Tablas anchas: sin recorte del contenedor con desplazamiento; letra y relleno menores. */
   .hoja .overflow-x-auto { overflow: visible !important; }
   .hoja table, .hoja table * { font-size: 8pt !important; }
   .hoja th, .hoja td { padding: .25rem .3rem; }
   .hoja th { white-space: normal !important; }
-  .hoja .membrete { border-color: #a1a1aa !important; }
+  .hoja .membrete { border-color: #be141b !important; }
   .hoja li, .hoja tr, .hoja .grafico { break-inside: avoid; }
 }
 """)
@@ -103,33 +108,37 @@ def _cadena_css(texto: str) -> str:
     return '"' + texto.replace("\\", "\\\\").replace('"', '\\"').replace("<", "\\3c ").replace("\n", " ") + '"'
 
 
-def membrete():
-    """Logos del IIMAT y de la Carrera con los nombres institucionales (primera página)."""
-    logo = lambda archivo, alt: fh.Img(src=recursos.url(f"img/membrete/{archivo}"), alt=alt,  # noqa: E731
-                                       cls="membrete-logo")
-    return Div(logo("iimat.png", f"Logo del {config.NOMBRE_INSTITUTO}"),
-               Div(Div(config.UNIVERSIDAD, cls="font-semibold uppercase tracking-wide"),
-                   Div(config.FACULTAD),
-                   Div(f"{config.NOMBRE_CARRERA} · {config.NOMBRE_INSTITUTO}", cls="font-medium"),
-                   cls="text-center text-sm leading-snug"),
-               logo("cmat.png", f"Logo de la {config.NOMBRE_CARRERA}"),
-               cls="membrete flex items-center justify-between gap-4 pb-3 mb-6 border-b-2 border-zinc-300")
+def membrete(instituto: bool = False):
+    """Membrete oficial de la Carrera (hoja membretada del Manual de Identidad, PLAN.md §55): su marca a la
+    izquierda y la universidad y la facultad; en los informes de investigación, el logo del IIMAT a la derecha."""
+    universidad = Div(Div(config.UNIVERSIDAD, cls="uppercase tracking-wide"), Div(config.FACULTAD),
+                      Div(config.NOMBRE_INSTITUTO, cls="font-medium") if instituto else "",
+                      cls="membrete-texto text-right text-xs leading-snug")
+    return Div(fh.Img(src=recursos.url("img/marca/logotipo.png"), alt=config.NOMBRE_CARRERA, cls="membrete-marca"),
+               Div(universidad,
+                   fh.Img(src=recursos.url("img/membrete/iimat.png"), alt=f"Logo del {config.NOMBRE_INSTITUTO}",
+                          cls="membrete-logo") if instituto else "",
+                   cls="flex items-center gap-4"),
+               cls="membrete flex items-center justify-between gap-6 pb-3 mb-6 border-b-2")
 
 
-def hoja(*contenido, titulo: str = ""):
+def hoja(*contenido, titulo: str = "", instituto: bool = False):
     """Hoja imprimible con membrete. Al imprimir, el pie de cada página lleva el título del informe
     y «Página X de Y» (cajas de margen de @page: Chrome y Edge; otros navegadores las omiten). Sin
-    `titulo`, usa el del primer H1 del documento."""
+    `titulo`, usa el del primer H1 del documento. `instituto`: informe de investigación (memoria, anexo, informe
+    de proyecto), con el IIMAT en el membrete y en el pie."""
     if not titulo:
         h1 = next((c for c in contenido if getattr(c, "tag", None) == "h1"), None)
         titulo = "".join(x for x in h1.children if isinstance(x, str)) if h1 else ""
-    pie = P(f"Generado el {datetime.now():%d-%m-%Y %H:%M} · {config.NOMBRE_SISTEMA} · "
-            f"{config.NOMBRE_INSTITUTO}", cls="apagado text-xs mt-10 pt-3 border-t border-zinc-200")
-    izquierda = _cadena_css(f"{titulo} · " if titulo else "") + f' {_cadena_css(config.NOMBRE_CARRERA + " · " + config.NOMBRE_INSTITUTO)}'
+    unidad = f"{config.NOMBRE_CARRERA} · {config.NOMBRE_INSTITUTO}" if instituto else config.NOMBRE_CARRERA
+    pie = Div(P(config.DIRECCION, cls="membrete-texto") if config.DIRECCION else "",
+              P(f"Generado el {datetime.now():%d-%m-%Y %H:%M} · {config.NOMBRE_SISTEMA} · {unidad}"),
+              cls="apagado text-xs mt-10 pt-3 border-t border-zinc-200 space-y-1")
+    izquierda = _cadena_css(f"{titulo} · " if titulo else "") + f" {_cadena_css(unidad)}"
     paginas = Style("@media print { @page { @bottom-left { content: " + izquierda + "; font: 8pt sans-serif; "
                     "color: #52525b; } @bottom-right { content: \"Página \" counter(page) \" de \" counter(pages); "
                     "font: 8pt sans-serif; color: #52525b; } } }")
-    return Div(paginas, membrete(), *contenido, pie,
+    return Div(paginas, membrete(instituto), *contenido, pie,
                cls="hoja rounded-lg shadow-lg border border-border p-10 max-w-4xl mx-auto")
 
 
@@ -383,7 +392,7 @@ def documento_proyecto(datos, desde, hasta):
         *([H2(f"Otros productos ({len(datos['productos_otros'])})"),
            Ol(*[cita(x) for x in datos["productos_otros"]], cls="citas")] if datos["productos_otros"] else []),
         H2(f"Actividades ({len(datos['actividades'])})"), acts,
-        *([H2("Plan de actividades: previstas y realizadas"), *plan] if plan else []))
+        *([H2("Plan de actividades: previstas y realizadas"), *plan] if plan else []), instituto=True)
 
 
 def _proyecto_visible(pid, auth):
@@ -626,7 +635,7 @@ def documento_memoria(m, serie=None):
                [p for p in m["proyectos"] if p["tipo"] == "institucional" and p.get("clase") == "interaccion_social"]),
               ("Individuales", [p for p in m["proyectos"] if p["tipo"] == "individual"]))
           if lista] or [P("—", cls="apagado")],
-        seccion_metodo(m))
+        seccion_metodo(m), instituto=True)
 
 
 def _anio(anio):

@@ -4,8 +4,10 @@ import csv
 import io
 
 from openpyxl import Workbook
-from openpyxl.styles import Font
+from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
+
+from app.comun import marca
 
 
 def celda_segura(valor):
@@ -27,6 +29,9 @@ def a_csv(filas: list[dict], columnas: list[str] | None = None) -> bytes:
     return buf.getvalue().encode("utf-8-sig")
 
 
+ENCABEZADO = (Font(bold=True, color="FFFFFF"), PatternFill("solid", fgColor=marca.AZUL.lstrip("#").upper()))
+
+
 def a_xlsx(hojas: dict[str, list[dict]]) -> bytes:
     wb = Workbook()
     wb.remove(wb.active)
@@ -37,8 +42,8 @@ def a_xlsx(hojas: dict[str, list[dict]]) -> bytes:
             continue
         columnas = list(filas[0])
         ws.append(columnas)
-        for c in ws[1]:
-            c.font = Font(bold=True)
+        for c in ws[1]:    # encabezado con el azul marino de la Carrera (PLAN.md §55)
+            c.font, c.fill = ENCABEZADO
         for f in filas:
             ws.append([celda_segura(f[c]) for c in columnas])
         for i, c in enumerate(columnas, start=1):

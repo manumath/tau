@@ -188,6 +188,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_SISTEMA_DESCRIPCION` | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática | Descripción (ingreso, correos) |
 | `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre del instituto en informes y memoria |
 | `PORTAL_UNIVERSIDAD` | Universidad Mayor de San Andrés | Universidad a la que pertenece el instituto |
+| `PORTAL_DIRECCION` | (vacío) | Dirección, teléfonos y sitio de la Carrera para el pie del membrete de los informes, en una línea |
 | `PORTAL_ZONA_HORARIA` | `America/La_Paz` | Zona horaria de plazos, vigencias y horas mostradas (la base guarda UTC) |
 | `PORTAL_MONEDA` | `BOB` | Moneda de los montos de proyectos (se muestra como «Bs») |
 | `PORTAL_PAIS` | `Bolivia` | Las revistas de este país son «nacionales» en los informes |
@@ -314,7 +315,7 @@ La API responde con `Access-Control-Allow-Origin: *`, así la web del instituto 
 
 El código está en <https://github.com/manumath/tau>. No se versionan `data/` (la base y los correos de desarrollo),
 `.sesskey`, `.venv/`, los PDF de IAC-CINDA (`iac-cinda/`) ni los logos originales (`static/img/membrete/logo_*`): el
-membrete usa las copias recortadas `cmat.png` e `iimat.png`. Los commits usan el correo `noreply` de GitHub del autor.
+membrete usa la copia recortada `iimat.png` y la marca de la Carrera de `static/img/marca/` (PLAN.md §55). Los commits usan el correo `noreply` de GitHub del autor.
 **Aún no tiene archivo `LICENSE`**: hasta que se agregue, el código se puede leer pero no hay permiso para reutilizarlo.
 
 ## Licencias de datos

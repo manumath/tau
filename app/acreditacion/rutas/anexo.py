@@ -269,7 +269,7 @@ def documento(a):
             Ul(Li("Impacto de la vinculación con el medio (3.4.1)."),
                cls="list-disc pl-5 space-y-1 text-sm"),
             P("Estos criterios deben documentarse por otros medios hasta que el sistema los registre.", cls="apagado text-sm")),
-        seccion_metodo(m))
+        seccion_metodo(m), instituto=True)
 
 
 def _ventana(desde, hasta):

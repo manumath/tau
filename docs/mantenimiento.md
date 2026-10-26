@@ -324,8 +324,9 @@ o una restauración). No ejecuta las tareas horarias.
 - Remoto: `origin` = <https://github.com/manumath/tau>. Los commits usan el correo `noreply` de GitHub
   (`git config user.email`): GitHub rechaza los envíos que exponen un correo privado.
 - **No se versionan** (`.gitignore`): `data/`, `.sesskey`, `.venv/`, cachés, `iac-cinda/`, `.herramientas/`, `.archify/` y los
-  logos originales `static/img/membrete/logo_*`. Para cambiar un logo, reemplace el original en local y regenere la copia
-  recortada (`cmat.png`, `iimat.png`, ≈300 px de alto; ver PLAN.md §35).
+  logos originales `static/img/membrete/logo_*`. Para cambiar el del IIMAT, reemplace el original en local y regenere la
+  copia recortada (`iimat.png`, ≈300 px de alto; ver PLAN.md §35). Los de la Carrera salen del PDF oficial de su
+  marca (`static/img/marca/`, ver 4.4).
 - Antes de publicar algo nuevo, revise que no entren datos personales ni bases de datos (`git status --ignored`) y que
   los correos de ejemplo sean de dominios de prueba (`test.cl`, `instituto.test`, `correo.bo`).
 

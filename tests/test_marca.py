@@ -56,3 +56,21 @@ def test_marca_en_la_interfaz(client):
         assert (config.RAIZ / "static/img/marca" / archivo).stat().st_size > 1000
     assert (config.RAIZ / "static/favicon.svg").read_text() == (config.RAIZ / "static/img/marca/isotipo.svg").read_text()
     assert "<image" not in (config.RAIZ / "static/img/marca/isotipo.svg").read_text()      # vectorial, sin mapas de bits
+
+
+def test_membrete_y_exportaciones(app, monkeypatch):
+    """Membrete oficial: la marca de la Carrera siempre, el IIMAT solo en los de investigación, y la dirección al
+    pie si está configurada; encabezados XLSX en azul marino."""
+    import io
+
+    from fasthtml.common import H1, to_xml
+    from openpyxl import load_workbook
+
+    from app.acreditacion.rutas import informes
+    from app.comun import exportar
+    monkeypatch.setattr(config, "DIRECCION", "Av. Ejemplo 123, La Paz")
+    docencia, investigacion = to_xml(informes.hoja(H1("Carga"))), to_xml(informes.hoja(H1("Memoria"), instituto=True))
+    assert "img/marca/logotipo.png" in docencia and "iimat.png" not in docencia and "Av. Ejemplo 123" in docencia
+    assert "iimat.png" in investigacion and config.NOMBRE_INSTITUTO in investigacion
+    celda = load_workbook(io.BytesIO(exportar.a_xlsx({"Hoja": [{"a": 1}]})))["Hoja"]["A1"]
+    assert celda.fill.fgColor.rgb.endswith(marca.AZUL[1:].upper()) and celda.font.bold

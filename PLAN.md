@@ -2135,3 +2135,17 @@ las encuestas públicas, con 240 px de ancho (el manual pide al menos 100). En e
 como pide el manual. El favicon es el isotipo. Se eligió la versión plana del isotipo y no la de volumen: sus
 degradados se empastan en tamaño chico. Ver la receta en `docs/mantenimiento.md`.
 
+**Etapa 4, membrete y exportaciones (hecha):** `membrete()` sigue la hoja membretada: la marca horizontal de la
+Carrera a la izquierda (13 mm de alto al imprimir), la universidad y la facultad a la derecha en azul marino, y
+una línea roja de la marca debajo. Con `hoja(…, instituto=True)` (memoria, anexo de I+D+i, informe de proyecto)
+se agregan el nombre y el logo del IIMAT, y el pie y la línea de pie de página nombran Carrera e Instituto; el CV,
+la carga docente, el cuerpo académico y el seguimiento estudiantil llevan solo la Carrera. La dirección de la
+Carrera va al pie si se configura `PORTAL_DIRECCION` (vacía por omisión: el repositorio es público). Los
+encabezados de las exportaciones XLSX van en azul marino con letra blanca. El correo es solo texto: su firma ya
+nombra a la Carrera y no cambia. Se retira `static/img/membrete/cmat.png` (la versión vertical de la marca), que
+ya no se usa.
+
+**Decisiones del equipo (confirmar), etapa 4:** (4) el CV va con el membrete de la Carrera, sin el IIMAT (sirve
+al cuerpo académico, que es de la Carrera); el informe de proyecto, con el IIMAT; (5) la dirección del pie se
+configura en el despliegue y no se escribe en el código.
+

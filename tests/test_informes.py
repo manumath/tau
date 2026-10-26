@@ -127,8 +127,9 @@ def test_memoria_solo_admin_y_descargas(client, datos):
     client.post("/logout")
     login(client, "admin@test.cl", PASS_ADMIN)
     r = client.get("/informes/memoria?anio=2026")
-    # Membrete (logos del IIMAT y de la Carrera) y pie de página impreso con el título y la numeración.
-    logos = re.findall(r'src="(/static/img/membrete/(?:iimat|cmat)\.png\?v=\w+)"', r.text)
+    # Membrete (marca de la Carrera y, por ser de investigación, logo del IIMAT; PLAN.md §55) y pie de página
+    # impreso con el título y la numeración.
+    logos = re.findall(r'src="(/static/img/(?:marca/logotipo|membrete/iimat)\.png\?v=\w+)"', r.text)
     assert len(logos) == 2 and all(client.get(x).status_code == 200 for x in logos)
     assert '@bottom-left { content: "Memoria anual 2026 · "' in r.text and 'counter(pages)' in r.text
     assert "Memoria anual 2026" in r.text and "Evolución 2022–2026" in r.text and "<svg" in r.text
