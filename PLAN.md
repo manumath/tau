@@ -2103,7 +2103,7 @@ blanca sobre fondos oscuros.
 - Membrete oficial (Carrera a la izquierda, UMSA y FCPN, dirección al pie) con el logo del IIMAT a la derecha
   en los informes de investigación (memoria, anexo); los de docencia y estudiantes, solo la Carrera.
 
-**Decisiones del equipo (confirmar):**
+**Decisiones confirmadas por el usuario (25-oct-2026):**
 1. El color principal de la interfaz es el azul marino; el rojo queda para la marca, los acentos del
    membrete y las acciones destructivas o los errores (botones rojos confundirían «Guardar» con «Eliminar»).
 2. Los originales de la marca no entran al repositorio; solo los derivados, como ya pasa con `cmat.png`.
@@ -2132,7 +2132,7 @@ sans; Chrome incrusta las fuentes en el PDF.
 oficial con `pdftocairo`) junto a «TAU» en el menú lateral y en la barra del teléfono; con el menú en solo
 íconos queda el isotipo. La marca horizontal (PNG transparente) encabeza el ingreso, el acceso de estudiantes y
 las encuestas públicas, con 240 px de ancho (el manual pide al menos 100). En el tema oscuro, ambas en blanco,
-como pide el manual. El favicon es el isotipo. Se eligió la versión plana del isotipo y no la de volumen: sus
+como pide el manual. El favicon es el isotipo. Se eligió (confirmado el 25-oct-2026) la versión plana del isotipo y no la de volumen: sus
 degradados se empastan en tamaño chico. Ver la receta en `docs/mantenimiento.md`.
 
 **Etapa 4, membrete y exportaciones (hecha):** `membrete()` sigue la hoja membretada: la marca horizontal de la
@@ -2145,7 +2145,7 @@ encabezados de las exportaciones XLSX van en azul marino con letra blanca. El co
 nombra a la Carrera y no cambia. Se retira `static/img/membrete/cmat.png` (la versión vertical de la marca), que
 ya no se usa.
 
-**Decisiones del equipo (confirmar), etapa 4:** (4) el CV va con el membrete de la Carrera, sin el IIMAT (sirve
+**Decisiones confirmadas por el usuario (25-oct-2026), etapa 4:** (4) el CV va con el membrete de la Carrera, sin el IIMAT (sirve
 al cuerpo académico, que es de la Carrera); el informe de proyecto, con el IIMAT; (5) la dirección del pie se
 configura en el despliegue y no se escribe en el código.
 
