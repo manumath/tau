@@ -167,6 +167,17 @@ y confirme el CSS en el mismo commit. Las clases que MonsterUI arma en tiempo de
 misma propiedad en un elemento (p. ej., `border-border` y `border-amber-300`): gana la que aparezca
 después en el CSS, no la que usted espera.
 
+**Colores de la marca.** La paleta de la Carrera vive en `app/comun/marca.py` (colores del manual,
+variables del tema en claro y oscuro, series de los gráficos). Para cambiarla:
+
+```sh
+uv run python scripts/tema_marca.py && scripts/estilos.sh
+```
+
+El script escribe `estilos/tema-cmat.css` (no se edita a mano). `tests/test_marca.py` comprueba que
+está al día y que cada par de texto y fondo cumple el contraste AA (4,5:1) en ambos modos. Use
+`text-destructive` para errores y acciones de quitar, no `text-red-*`: se ajusta al modo oscuro.
+
 ### 4.5 Actualizar una librería de `static/vendor/`
 
 htmx, fasthtml.js, Franken UI y KaTeX tienen versión fija (`VERSIONES` en
@@ -222,7 +233,7 @@ Política:
 - Una actualización de MonsterUI puede cambiar clases que arma en tiempo de ejecución: recompile
   los estilos (4.4) y ejecute las pruebas en navegador. Si cambia su script de tema
   (`headers_theme`), `tests/test_csp.py` falla: regenere `static/js/tema-inicial.js` con el código
-  nuevo (la CSP no admite el script en línea que MonsterUI usaba).
+  nuevo de `headers_theme("cmat", …)` (la CSP no admite el script en línea que MonsterUI usaba).
 - FastHTML: los avisos emergentes no usan `setup_toasts` (que agrega código en línea), sino
   `app/comun/componentes/avisos_emergentes.py` con el mismo `add_toast`.
 

@@ -185,7 +185,7 @@ def form_identificadores(valores, errores=None):
             LabelInput(etiqueta, id=campo, value=valores.get(campo) or "", placeholder=ejemplo,
                        aria_invalid="true" if error else None,
                        input_cls="border-red-500" if error else ""),
-            P(error, cls="text-sm text-red-600 mt-1") if error else ""))
+            P(error, cls="text-sm text-destructive mt-1") if error else ""))
     return seccion("seccion-identificadores", "Identificadores de autor", _form(
         "identificadores",
         P("Puede pegar la dirección de su perfil; se guarda solo el identificador.",
@@ -322,7 +322,7 @@ def seccion_areas(uid, error=None):
             title="Marcar como área principal", aria_label=f"Marcar {codigo} como principal",
             hx_post=f"/perfil/msc/{codigo}/principal", hx_target="#seccion-areas",
             hx_swap="outerHTML")
-        quitar = fh.Button(UkIcon("x", height=12, width=12), cls="hover:text-red-600 p-0.5",
+        quitar = fh.Button(UkIcon("x", height=12, width=12), cls="hover:text-destructive p-0.5",
                            type="button",
                         title="Quitar", aria_label=f"Quitar {codigo}",
                         hx_delete=f"/perfil/msc/{codigo}", hx_target="#seccion-areas",

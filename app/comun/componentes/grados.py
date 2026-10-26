@@ -19,7 +19,7 @@ def seccion_grados(uid: int, url: str, id_: str, envoltura, errores=(), datos=No
                     Span(f" · {g['nivel_texto']}", cls=TextPresets.muted_sm) if g.get("titulo") else "",
                     cls="flex-1"),
                 fh.Button(UkIcon("x", height=14, width=14), type="button", aria_label="Quitar grado",
-                          title="Quitar grado", cls="p-1 rounded hover:bg-muted hover:text-red-600",
+                          title="Quitar grado", cls="p-1 rounded hover:bg-muted hover:text-destructive",
                           hx_delete=f"{url}/{g['id']}", hx_target=f"#{id_}", hx_swap="outerHTML",
                           hx_confirm="¿Quitar este grado?"),
                 cls="flex items-start gap-2 py-1.5") for g in lista]

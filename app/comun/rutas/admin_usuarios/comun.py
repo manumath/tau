@@ -78,7 +78,7 @@ def _estado(u, bloqueada=False):
     if bloqueada:
         return Span(UkIcon("lock", height=14, width=14), "Bloqueada por intentos fallidos",
                     title=f"Se desbloquea sola a los {config.LOGIN_VENTANA_MIN} minutos, o con el botón del candado.",
-                    cls="inline-flex items-center gap-1 text-red-600 text-sm whitespace-nowrap")
+                    cls="inline-flex items-center gap-1 text-destructive text-sm whitespace-nowrap")
     if u["debe_cambiar_pass"]:
         return Span(UkIcon("clock", height=14, width=14), "Sin primer ingreso",
                     cls="inline-flex items-center gap-1 text-amber-600 text-sm whitespace-nowrap")

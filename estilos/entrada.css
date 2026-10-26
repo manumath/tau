@@ -1,4 +1,6 @@
 /* Estilos de Tailwind del portal. Se compilan a static/css/tailwind.css con scripts/estilos.sh. */
+/* Tema con los colores de la Carrera (PLAN.md §55): lo genera scripts/tema_marca.py desde app/comun/marca.py. */
+@import "./tema-cmat.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

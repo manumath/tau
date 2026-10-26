@@ -30,7 +30,7 @@ rt = APIRouter()
 
 ESTILO_IMPRESION = Style("""
 .hoja { background: #fff; color: #18181b; }
-.hoja a { color: #1d4ed8; }
+.hoja a { color: #273353; }
 .hoja h1 { font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
 .hoja h2 { font-size: 1.15rem; font-weight: 700; margin-top: 1.75rem; padding-bottom: .25rem;
            border-bottom: 1px solid #d4d4d8; }

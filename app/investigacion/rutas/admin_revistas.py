@@ -258,7 +258,7 @@ def tarjeta_indexaciones(r, errores=(), datos=None):
                      cls="text-xs text-primary hover:underline") if x["evidencia_url"] else "",
                    Div(f"verificó {x['verificador'] or '—'} · {x['verificado_en'][:10]}", cls="text-xs text-muted-foreground")),
                 Td(fh.Button(UkIcon("trash-2", height=14, width=14), type="button", aria_label="Quitar",
-                             cls="p-1 rounded hover:bg-muted hover:text-red-600",
+                             cls="p-1 rounded hover:bg-muted hover:text-destructive",
                              hx_delete=f"{BASE}/{rid}/indexacion/{x['id']}", hx_target="#indexaciones",
                              hx_swap="outerHTML", hx_confirm="¿Quitar esta indexación?")))
              for x in revistas.indexaciones(rid)]
@@ -364,7 +364,7 @@ async def post(archivo: UploadFile = None):
                    Div(g["datos"].get("issn") or g["datos"].get("eissn") or "sin ISSN", cls="font-mono text-xs")),
                 Td("; ".join(f"{x['indice']} {x['desde']}–{x['hasta'] or 'hoy'}" for x in g["indexaciones"]) or "—",
                    cls="text-sm"),
-                Td(Div(*[P(e, cls="text-sm text-red-600") for e in g["errores"]]) if g["errores"] else
+                Td(Div(*[P(e, cls="text-sm text-destructive") for e in g["errores"]]) if g["errores"] else
                    Span("Se completa la existente" if g["existente"] else "Nueva", cls="text-sm")))
              for g in grupos]
     return modal(

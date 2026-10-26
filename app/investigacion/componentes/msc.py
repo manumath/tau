@@ -48,7 +48,7 @@ def fila(m: dict):
                       data_accion="subir", title="Subir", aria_label=f"Subir {m['codigo']}"),
             fh.Button(UkIcon("chevron-down", height=14, width=14), type="button", cls=CLS_ICONO,
                       data_accion="bajar", title="Bajar", aria_label=f"Bajar {m['codigo']}"),
-            fh.Button(UkIcon("x", height=14, width=14), type="button", cls=CLS_ICONO + " hover:text-red-600",
+            fh.Button(UkIcon("x", height=14, width=14), type="button", cls=CLS_ICONO + " hover:text-destructive",
                       data_accion="quitar", title="Quitar", aria_label=f"Quitar {m['codigo']}"),
             cls="flex shrink-0"),
         cls="group flex items-center gap-3 px-3 py-2")

@@ -98,7 +98,7 @@ def _fila(x, uid):
                      cls="text-xs text-primary hover:underline")]
     else:
         casilla = ""
-        detalle = [Span(e, cls="text-xs text-red-600 block") for e in x["errores"]]
+        detalle = [Span(e, cls="text-xs text-destructive block") for e in x["errores"]]
     tipo = productos.tipo(d["tipo_id"])["nombre"] if d.get("tipo_id") else f"@{x['tipo_bib']}"
     return Tr(Td(casilla), Td(Code(x["clave"], cls="text-xs")),
               Td(Div(d.get("titulo") or "—", cls="font-medium text-sm"),

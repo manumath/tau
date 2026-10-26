@@ -156,7 +156,7 @@ def get(auth, pid: int, ref: str = ""):
     persona = personas.por_ref(ref)
     cols = personas.columnas(ref) if persona else {}
     if not persona or not cols.get("investigador_id"):
-        return P("Persona no válida.", cls="text-sm text-red-600")
+        return P("Persona no válida.", cls="text-sm text-destructive")
     uid = cols["investigador_id"]
     d = carga_proyectos.disponible(uid, p)
     act = vinculos.ACTIVIDADES[d["actividad"]].lower()

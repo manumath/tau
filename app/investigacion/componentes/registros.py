@@ -17,7 +17,7 @@ def seccion_adjuntos(entidad: str, entidad_id: int, editable: bool, error: str |
         A(a["nombre"], href=f"/adjuntos/{a['id']}", cls="text-primary hover:underline truncate"),
         Span(adjuntos.tamano_texto(a["tamano"]), cls=(TextPresets.muted_sm, "shrink-0")),
         fh.Button(UkIcon("trash-2", height=14, width=14), type="button",
-                  cls="ml-auto p-1 rounded hover:bg-muted hover:text-red-600",
+                  cls="ml-auto p-1 rounded hover:bg-muted hover:text-destructive",
                   hx_delete=f"/adjuntos/{a['id']}", hx_target=f"#{seccion_id}",
                   hx_swap="outerHTML", hx_confirm=f"¿Eliminar «{a['nombre']}»?",
                   title="Eliminar", aria_label=f"Eliminar {a['nombre']}") if editable else "",
@@ -86,7 +86,7 @@ def casillas_proyectos(tipo: str, registro_id: int | None, usuario: dict,
             nota = Span("propuesta pendiente de aprobación", cls="text-sm text-amber-600")
         elif v and v["estado"] == "rechazado":
             nota = Span(f"rechazado: «{v['comentario']}». Si lo deja marcado, se vuelve a proponer.",
-                        cls="text-sm text-red-600")
+                        cls="text-sm text-destructive")
         elif directo:
             nota = Span("usted es responsable: se vincula directamente", cls=TextPresets.muted_sm)
         else:

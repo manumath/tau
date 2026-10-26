@@ -35,7 +35,7 @@ def _docente(d, g, puede):
                  title="No tiene vínculo vigente con la Carrera al inicio de la gestión") \
         if oferta.sin_vinculo_con_la_carrera(d["usuario_id"], g) else ""
     quitar = fh.Button(UkIcon("x", height=12, width=12), type="button", aria_label="Quitar docente",
-                       cls="p-0.5 rounded hover:text-red-600", hx_delete=f"{BASE}/docentes/{d['id']}",
+                       cls="p-0.5 rounded hover:text-destructive", hx_delete=f"{BASE}/docentes/{d['id']}",
                        hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
                        hx_confirm=f"¿Quitar a {d['nombres']} {d['apellidos']} de este paralelo?") if puede else ""
     carga = (f" · {oferta.HORAS_POR_MATERIA} h/mes" if d["rol"] == "titular" and g["tipo"] not in oferta.TEMPORADA
@@ -64,7 +64,7 @@ def seccion_oferta(g, auth, errores=()):
     filas = []
     for o in oferta.listar(g["id"]):
         quitar = fh.Button(UkIcon("trash-2", height=14, width=14), type="button", aria_label="Quitar de la oferta",
-                           cls="p-1 rounded hover:bg-muted hover:text-red-600", hx_delete=f"{BASE}/{o['id']}",
+                           cls="p-1 rounded hover:bg-muted hover:text-destructive", hx_delete=f"{BASE}/{o['id']}",
                            hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
                            hx_confirm=f"¿Quitar {o['sigla']} paralelo {o['paralelo']} de la oferta?") if puede else ""
         filas.append(fh.Tr(

@@ -67,7 +67,7 @@ def get(auth, pid: int, tab: str = "resumen"):
                 Div(A(UkIcon("file-text", height=14, width=14), "Informe", href=f"/proyectos/{pid}/informe",
                       cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1"),
                     fh.Button(UkIcon("trash-2", height=14, width=14), "Eliminar", type="button",
-                              cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1 text-red-600",
+                              cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1 text-destructive",
                               hx_delete=f"/proyectos/{pid}",
                               hx_confirm=f"¿Eliminar el proyecto «{p['nombre']}»? Se borran sus participantes, "
                                          "objetivos y contrapartes. Los productos y actividades enlazados no se "

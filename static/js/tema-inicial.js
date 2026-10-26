@@ -1,6 +1,6 @@
-// Tema inicial de Franken UI (lo que MonsterUI ponía en línea con headers_theme): clases de tema y
+// Tema inicial de Franken UI (tema «cmat»: colores de la Carrera, estilos/tema-cmat.css) (lo que MonsterUI ponía en línea con headers_theme): clases de tema y
 // modo oscuro antes de pintar la página. Se carga sin defer en <head>. tests/test_csp.py comprueba que
-// coincide con headers_theme('blue', mode='auto', radii/shadows/font = sm).
+// coincide con headers_theme('cmat', mode='auto', radii/shadows/font = sm).
 const htmlElement = document.documentElement;
         
           
@@ -16,7 +16,7 @@ const htmlElement = document.documentElement;
             htmlElement.classList.remove("dark");
           }
         
-          htmlElement.classList.add(__FRANKEN__.theme || "uk-theme-blue");
+          htmlElement.classList.add(__FRANKEN__.theme || "uk-theme-cmat");
           htmlElement.classList.add(__FRANKEN__.radii || "uk-radii-sm");
           htmlElement.classList.add(__FRANKEN__.shadows || "uk-shadows-sm");
           htmlElement.classList.add(__FRANKEN__.font || "uk-font-sm");

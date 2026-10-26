@@ -1,10 +1,12 @@
 """Gráficos de series en SVG hechos en el servidor: sin JavaScript ni recursos de otros sitios (la
 CSP no los admite), se imprimen igual que en pantalla y cada barra puede enlazar a los registros
-que la componen. Colores fijos: van sobre la hoja blanca de los informes."""
+que la componen. Colores de la marca (app/comun/marca.py): van sobre la hoja blanca de los informes."""
 from fasthtml import svg
 from fasthtml.common import Div, Span
 
-COLORES = ("#2563eb", "#f59e0b", "#10b981", "#8b5cf6", "#ef4444")
+from app.comun import marca
+
+COLORES = marca.GRAFICOS
 _TEXTO, _EJE = "#52525b", "#d4d4d8"
 
 

@@ -57,7 +57,7 @@ def tarjeta_contrapartes(p, auth):
     filas = [Li(Div(Span(c["institucion"], cls="font-medium"), Span(f" · {c['pais'] or 'país sin indicar'}",
                                                                    cls=TextPresets.muted_sm)),
                 fh.Button(UkIcon("x", height=14, width=14), type="button", aria_label="Quitar contraparte",
-                          cls="p-1 rounded hover:bg-muted hover:text-red-600",
+                          cls="p-1 rounded hover:bg-muted hover:text-destructive",
                           hx_delete=f"/proyectos/{pid}/contrapartes/{c['id']}", hx_target=f"#{ID_TAB}")
                 if gestiona else "", cls="flex justify-between items-center py-1")
              for c in proyectos.contrapartes(pid)]
@@ -159,7 +159,7 @@ def tab_resumen(p, auth):
                 if r["editado_despues"]]
     lista_obj = fh.Ol(*[Li(Div(Span(o["texto"], cls="flex-1"),
                             fh.Button(UkIcon("x", height=14, width=14), type="button",
-                                      cls="p-1 rounded hover:bg-muted hover:text-red-600",
+                                      cls="p-1 rounded hover:bg-muted hover:text-destructive",
                                       hx_delete=f"/proyectos/{pid}/objetivos/{o['id']}",
                                       hx_target=f"#{ID_TAB}", hx_confirm="¿Quitar este objetivo?",
                                       aria_label="Quitar objetivo") if gestiona and not institucional else "",

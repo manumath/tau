@@ -63,7 +63,7 @@ def encabezados():
         Link(rel="stylesheet", href=url("vendor/franken-ui/core.min.css")),
         Script(type="module", src=url("vendor/franken-ui/core.iife.js")),
         Link(rel="stylesheet", href=url("css/tailwind.css")),
-        # Tema de Franken UI (azul; claro u oscuro según la elección guardada o, si no hay, el sistema):
+        # Tema de Franken UI (colores de la Carrera, estilos/tema-cmat.css; claro u oscuro según la elección guardada o, si no hay, el sistema):
         # el mismo código que headers_theme de MonsterUI, en un archivo (sin defer: antes de pintar).
         Script(src=url("js/tema-inicial.js")),
         Script(src=url("js/disposicion-inicial.js")),  # menú lateral plegado o no (sin defer: antes de pintar)

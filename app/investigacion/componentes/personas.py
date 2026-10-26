@@ -66,7 +66,7 @@ def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):
                       data_accion="subir", title="Subir", aria_label="Subir"),
             fh.Button(UkIcon("chevron-down", height=14, width=14), type="button", cls=CLS_ICONO,
                       data_accion="bajar", title="Bajar", aria_label="Bajar"),
-            fh.Button(UkIcon("x", height=14, width=14), type="button", cls=CLS_ICONO + " hover:text-red-600",
+            fh.Button(UkIcon("x", height=14, width=14), type="button", cls=CLS_ICONO + " hover:text-destructive",
                       data_accion="quitar", title="Quitar", aria_label="Quitar"),
             cls="flex shrink-0 ml-auto"),
         cls="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-1.5 px-3 py-2")
@@ -125,7 +125,7 @@ def form_externo(campo: str, texto: str, errores=(), url: str | None = None, des
     bloque = f"externo-{campo}"
     return Div(
         P("Nueva persona externa", cls="font-medium text-sm"),
-        *[P(e, cls="text-sm text-red-600") for e in errores],
+        *[P(e, cls="text-sm text-destructive") for e in errores],
         Div(Input(name="ext_nombres", value=nombres, placeholder="Nombres", cls="uk-input",
                   aria_label="Nombres"),
             Input(name="ext_apellidos", value=apellidos, placeholder="Apellidos", cls="uk-input",

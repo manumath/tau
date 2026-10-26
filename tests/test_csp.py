@@ -62,7 +62,7 @@ def test_el_codigo_no_vuelve_a_usar_manejadores():
 def test_tema_inicial_igual_al_de_monsterui():
     """static/js/tema-inicial.js reemplaza al script en línea de headers_theme: si MonsterUI lo cambia
     al actualizarse, hay que regenerar el archivo (docs/mantenimiento.md)."""
-    esperado = "".join(str(c) for c in headers_theme("blue", mode="auto", radii=ThemeRadii.sm,
+    esperado = "".join(str(c) for c in headers_theme("cmat", mode="auto", radii=ThemeRadii.sm,
                                                      shadows=ThemeShadows.sm, font=ThemeFont.sm).children).strip()
     archivo = Path(config.RAIZ / "static/js/tema-inicial.js").read_text()
     assert esperado in archivo

@@ -147,7 +147,7 @@ def post(auth, sess, pid: int):
 
 def _boton_quitar(etiqueta):
     return fh.Button(UkIcon("x", height=14, width=14), type="button", aria_label=etiqueta, title=etiqueta,
-                     cls="p-2 rounded hover:bg-muted hover:text-red-600 shrink-0",
+                     cls="p-2 rounded hover:bg-muted hover:text-destructive shrink-0",
                      data_accion="quitar", data_quitar=".fila-repetible")
 
 

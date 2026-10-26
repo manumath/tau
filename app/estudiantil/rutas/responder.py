@@ -25,7 +25,7 @@ def _invalido():
 
 def _campo(q, previo):
     nombre = f"p{q['id']}"
-    marca = Span(" *", cls="text-red-600", aria_hidden="true") if q["obligatoria"] else ""
+    marca = Span(" *", cls="text-destructive", aria_hidden="true") if q["obligatoria"] else ""
     titulo = H3(q["texto"], marca, cls="text-base font-medium")
 
     def opcion(tipo, valor, texto):

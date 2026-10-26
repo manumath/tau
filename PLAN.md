@@ -2082,3 +2082,42 @@ sigue abierta para todos.
 estudiaba, en segundo plano, en vez de perderla; (2) «Gestiones» solo en el menú de la Dirección de Carrera y la
 Coordinación; (3) el formulario de grados queda abierto cuando la persona aún no tiene ninguno; (4) en artículos, sin
 revista del catálogo, el nombre publicado se escribe en «Nombre de la revista» (no se propone solo al catálogo).
+
+## 55. Identidad visual de la Carrera de Matemática (25-oct-2026)
+
+Pedido del usuario: adecuar el sistema a la marca de la Carrera (Manual de Identidad Institucional, marca
+principal y secundaria, papelería y señalética). Los originales (EPS, PDF y fuentes) no se versionan: son
+archivos de diseño y las fuentes son comerciales; solo entran derivados (SVG y PNG recortados).
+
+**Lo que fija el manual:** azul marino Pantone 2767C (`#273353`) y rojo 485C (`#be141b`) como colores
+principales; turquesa 7713C (`#007c8f`) y gris 424C (`#6c6c6c`) como secundarios. Tipografía Gotham (marca),
+Helvetica Neue (complementaria) y Garamond Pro (cuerpo de documentos formales). Marca principal horizontal
+(mínimo 100 px en pantalla) y secundaria vertical (mínimo 50 px), con un área de reserva de 1X; versión
+blanca sobre fondos oscuros.
+
+**Decisiones del usuario (25-oct-2026):**
+- Tipografía con equivalentes libres (licencia OFL): Montserrat por Gotham en títulos y marca; EB Garamond
+  para el cuerpo de los informes formales; la interfaz sigue con la fuente del sistema.
+- En la barra del sistema, el isotipo de la Carrera junto a «TAU»; la marca completa en el ingreso, el pie y
+  los informes.
+- Membrete oficial (Carrera a la izquierda, UMSA y FCPN, dirección al pie) con el logo del IIMAT a la derecha
+  en los informes de investigación (memoria, anexo); los de docencia y estudiantes, solo la Carrera.
+
+**Decisiones del equipo (confirmar):**
+1. El color principal de la interfaz es el azul marino; el rojo queda para la marca, los acentos del
+   membrete y las acciones destructivas o los errores (botones rojos confundirían «Guardar» con «Eliminar»).
+2. Los originales de la marca no entran al repositorio; solo los derivados, como ya pasa con `cmat.png`.
+3. El sello de los 50 años y los triángulos decorativos de la hoja membretada no van en los informes en
+   pantalla (son de la papelería); se agregan si la Dirección lo pide.
+
+**Etapas:** 1 colores del tema; 2 tipografía; 3 marca en la interfaz (isotipo, ingreso, favicon); 4
+membrete, exportaciones y correo; 5 revisión por rol y documentación.
+
+**Etapa 1, colores (hecha):** `app/comun/marca.py` reúne la paleta; `scripts/tema_marca.py` genera
+`estilos/tema-cmat.css`, el tema «cmat» de Franken UI (variables en claro y oscuro, y las casillas, radios y
+viñetas, que Franken UI dibuja con el color escrito). `tema-inicial.js` aplica `uk-theme-cmat`. En oscuro, el
+principal es un azul aclarado del mismo matiz sobre un fondo azul muy oscuro, y el rojo de error se aclara
+(como texto no se leía: 2,8:1). Los gráficos usan azul, turquesa, rojo y gris; los enlaces de los informes, el
+azul marino; los `text-red-600` de errores y botones de quitar pasan a `text-destructive`.
+`tests/test_marca.py` exige contraste AA en cada par de texto y fondo, en ambos modos.
+

@@ -59,7 +59,7 @@ def _plural(n, singular, plural=None):
 
 
 def _item(texto, href, tono="ambar", detalle=None):
-    color = {"ambar": "text-amber-600", "rojo": "text-red-600", "info": "text-primary"}[tono]
+    color = {"ambar": "text-amber-600", "rojo": "text-destructive", "info": "text-primary"}[tono]
     return Li(A(Div(UkIcon("circle-alert" if tono != "info" else "info", height=16, width=16, cls=f"shrink-0 mt-0.5 {color}"),
                     Div(Span(texto, cls="text-sm"),
                         P(detalle, cls=TextPresets.muted_sm) if detalle else "", cls="min-w-0"),

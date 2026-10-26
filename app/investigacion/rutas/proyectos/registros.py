@@ -30,7 +30,7 @@ def _desvincular(p, tipo, rid, gestiona):
         return ""
     return fh.Button(UkIcon("unlink", height=14, width=14), type="button", title="Desvincular del proyecto",
                      aria_label="Desvincular del proyecto",
-                     cls="p-1 rounded hover:bg-muted hover:text-red-600",
+                     cls="p-1 rounded hover:bg-muted hover:text-destructive",
                      hx_post=f"/proyectos/{p['id']}/{tipo}/{rid}/desvincular", hx_target=f"#{ID_TAB}",
                      hx_confirm="¿Desvincular del proyecto? El registro sigue en el perfil de sus autores.")
 
