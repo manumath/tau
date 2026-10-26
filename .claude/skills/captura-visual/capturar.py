@@ -105,12 +105,13 @@ def capturar(url: str, rutas: list[str], args, salida: Path) -> int:
         pagina = navegador.new_page(viewport={"width": ancho, "height": alto},
                                     color_scheme="dark" if args.oscuro else "light")
         pagina.on("pageerror", lambda e: errores_js.append(str(e)))
-        pagina.goto(f"{url}/login")
-        pagina.fill("input[name=email]", args.como)
-        pagina.fill("input[name=password]", args.clave)
-        pagina.click("button[type=submit]")
-        pagina.wait_for_load_state("networkidle")
-        if "/login" in pagina.url:
+        if not args.sin_sesion:
+            pagina.goto(f"{url}/login")
+            pagina.fill("input[name=email]", args.como)
+            pagina.fill("input[name=password]", args.clave)
+            pagina.click("button[type=submit]")
+            pagina.wait_for_load_state("networkidle")
+        if not args.sin_sesion and "/login" in pagina.url:
             navegador.close()
             sys.exit("No se pudo ingresar: revise --como / --clave (o use --clave-prueba).")
         for i, espec in enumerate(rutas, start=1):
@@ -151,6 +152,7 @@ def main():
     ap.add_argument("--movil", action="store_true")
     ap.add_argument("--pagina-completa", action="store_true")
     ap.add_argument("--oscuro", action="store_true")
+    ap.add_argument("--sin-sesion", action="store_true", help="páginas públicas (ingreso, encuestas) sin ingresar")
     ap.add_argument("--pdf", action="store_true", help="guardar el PDF impreso (A4, con @page) en vez de PNG")
     args = ap.parse_args()
 

@@ -44,3 +44,15 @@ def test_fuentes_de_la_marca():
         for nombre in archivos:
             assert (fuentes / carpeta / f"{nombre}.woff2").read_bytes()[:4] == b"wOF2"
             assert f"../vendor/fonts/{carpeta}/{nombre}.woff2" in (config.RAIZ / "static/css/tailwind.css").read_text()
+
+
+def test_marca_en_la_interfaz(client):
+    """Isotipo junto a «TAU» en el menú; marca horizontal en el ingreso; las dos versiones (color y blanco, que el
+    tema oscuro muestra) y el favicon con el isotipo."""
+    r = client.get("/login").text
+    assert "img/marca/logotipo.png" in r and "img/marca/logotipo-blanco.png" in r
+    assert f'alt="{config.NOMBRE_CARRERA}"' in r
+    for archivo in ("isotipo.svg", "isotipo-blanco.svg", "logotipo.png", "logotipo-blanco.png"):
+        assert (config.RAIZ / "static/img/marca" / archivo).stat().st_size > 1000
+    assert (config.RAIZ / "static/favicon.svg").read_text() == (config.RAIZ / "static/img/marca/isotipo.svg").read_text()
+    assert "<image" not in (config.RAIZ / "static/img/marca/isotipo.svg").read_text()      # vectorial, sin mapas de bits

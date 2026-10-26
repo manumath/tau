@@ -178,6 +178,21 @@ El script escribe `estilos/tema-cmat.css` (no se edita a mano). `tests/test_marc
 está al día y que cada par de texto y fondo cumple el contraste AA (4,5:1) en ambos modos. Use
 `text-destructive` para errores y acciones de quitar, no `text-red-*`: se ajusta al modo oscuro.
 
+**Logos de la marca.** `static/img/marca/` tiene derivados del PDF oficial de la marca (los originales
+EPS y PDF no se versionan): `isotipo.svg` (versión plana, vectorial; también es `static/favicon.svg`),
+`logotipo.png` (horizontal, 900 px de ancho, fondo transparente) y sus versiones `-blanco` para el tema
+oscuro, como pide el manual. Se regeneran con poppler (`pdftocairo`) sobre la página 1 de «Marca de la
+Carrera de Matemática.pdf», con el recorte en puntos de cada versión:
+
+```sh
+pdftocairo -svg -r 72 -f 1 -l 1 -x 79 -y 432 -W 87 -H 87 -paperw 87 -paperh 87 marca.pdf isotipo.svg
+pdftocairo -png -transp -r 600 -f 1 -l 1 -x 658 -y 3600 -W 2741 -H 725 -singlefile marca.pdf logotipo
+```
+
+Luego se quitan del SVG `width`/`height` (queda el `viewBox`), se reduce el PNG a 900 px y, para las
+versiones blancas, se cambian a blanco el azul y el rojo (no el negro de las máscaras internas). En la
+interfaz se usan con `layout.isotipo()` y `layout.logotipo()`, que ponen las dos versiones.
+
 ### 4.5 Actualizar una librería de `static/vendor/`
 
 htmx, fasthtml.js, Franken UI, KaTeX y las fuentes de la marca (Montserrat y EB Garamond, subconjunto

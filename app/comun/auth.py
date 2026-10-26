@@ -1,12 +1,12 @@
 """Autenticación: Beforeware de sesión, login, logout y cambio de contraseña."""
 import re
 
-from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response, Span
+from fasthtml.common import A, APIRouter, Beforeware, Div, P, Redirect, Response
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, TextPresets)
 
 from app.comun import academicos, config, correo, estudiantes, permisos, tokens, usuarios
-from app.comun.componentes.layout import mensaje_error, pagina
+from app.comun.componentes.layout import logotipo, mensaje_error, pagina
 from app.comun.db import auditar
 from app.comun.seguridad import errores_password, verificar_password
 
@@ -163,8 +163,7 @@ def form_login(email: str = "", error: str = ""):
 
 def _tarjeta_acceso(titulo, subtitulo, *contenido):
     return Card(
-        Div(Div(Span("τ", cls="font-serif italic text-5xl leading-none", aria_hidden="true"),
-                cls="flex justify-center text-primary"),
+        Div(Div(*logotipo("w-60"), cls="flex justify-center pb-4 mb-2 border-b border-border"),
             H2(titulo, cls="text-center text-xl"),
             P(subtitulo, cls=(TextPresets.muted_sm, "text-center")),
             cls="space-y-2 mb-6"),

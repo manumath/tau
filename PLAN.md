@@ -2128,3 +2128,10 @@ latino en woff2 de `@fontsource/…@5.2.5` (≈ 127 KB en total), con su licenci
 EB Garamond con cifras alineadas, títulos y membrete en Montserrat, y tablas, cifras destacadas y gráficos en
 sans; Chrome incrusta las fuentes en el PDF.
 
+**Etapa 3, la marca en la interfaz (hecha):** el isotipo (versión plana, en SVG vectorial sacado del PDF
+oficial con `pdftocairo`) junto a «TAU» en el menú lateral y en la barra del teléfono; con el menú en solo
+íconos queda el isotipo. La marca horizontal (PNG transparente) encabeza el ingreso, el acceso de estudiantes y
+las encuestas públicas, con 240 px de ancho (el manual pide al menos 100). En el tema oscuro, ambas en blanco,
+como pide el manual. El favicon es el isotipo. Se eligió la versión plana del isotipo y no la de volumen: sus
+degradados se empastan en tamaño chico. Ver la receta en `docs/mantenimiento.md`.
+

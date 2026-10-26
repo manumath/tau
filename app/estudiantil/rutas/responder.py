@@ -5,7 +5,7 @@ from fasthtml.common import APIRouter, Div, P, Span
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, TextPresets
 
 from app.comun import config
-from app.comun.componentes.layout import mensaje_error, pagina
+from app.comun.componentes.layout import logotipo, mensaje_error, pagina
 from app.estudiantil import encuestas
 
 rt = APIRouter()
@@ -13,8 +13,7 @@ rt = APIRouter()
 
 def _tarjeta(titulo, *contenido):
     return pagina(titulo, Card(
-        Div(Span("τ", cls="font-serif italic text-4xl leading-none text-primary", aria_hidden="true"),
-            cls="flex justify-center mb-2"), H2(titulo, cls="text-center text-xl"), *contenido,
+        Div(*logotipo("w-52"), cls="flex justify-center mb-2"), H2(titulo, cls="text-center text-xl"), *contenido,
         cls="w-full max-w-2xl space-y-4"))
 
 

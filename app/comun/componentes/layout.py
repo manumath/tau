@@ -2,10 +2,11 @@
 import unicodedata
 
 import fasthtml.common as fh
-from fasthtml.common import A, Div, Form, Input, Li, Main, Span, Title, Ul
+from fasthtml.common import A, Div, Form, Img, Input, Li, Main, Span, Title, Ul
 from monsterui.all import H3, Button, ButtonT, Container, ContainerT, TextPresets, UkIcon
 
 from app.comun import config
+from app.comun.componentes import recursos
 
 ID_MODAL = "modal"
 
@@ -83,9 +84,26 @@ MENU = lambda usuario: []        # noqa: E731  usuario → [(título del grupo o
 MENU_MOVIL = lambda usuario: []  # noqa: E731  usuario → ítems de la barra de abajo
 
 
+def _version_clara_y_oscura(archivo: str, extension: str, alt: str, cls: str):
+    """La marca a color en el tema claro y en blanco en el oscuro, como pide el manual de la Carrera (PLAN.md §55):
+    las dos imágenes van en la página y el tema muestra una (la oculta no se anuncia)."""
+    return (Img(src=recursos.url(f"img/marca/{archivo}.{extension}"), alt=alt, cls=f"{cls} dark:hidden"),
+            Img(src=recursos.url(f"img/marca/{archivo}-blanco.{extension}"), alt=alt, cls=f"{cls} hidden dark:block"))
+
+
+def isotipo(cls: str = "size-7"):
+    """El nudo de la Carrera, sin texto (decorativo: el enlace que lo contiene lleva el nombre)."""
+    return _version_clara_y_oscura("isotipo", "svg", "", f"shrink-0 {cls}")
+
+
+def logotipo(cls: str = "w-60"):
+    """Marca horizontal «Carrera de Matemática» (el manual pide al menos 100 px de ancho en pantalla)."""
+    return _version_clara_y_oscura("logotipo", "png", config.NOMBRE_CARRERA, f"h-auto {cls}")
+
+
 def _marca(usuario):
-    return A(Span("τ", cls="font-serif italic text-3xl leading-none text-primary", aria_hidden="true"),
-             Span(config.NOMBRE_SISTEMA, cls="lateral-texto text-lg font-semibold tracking-wide"),
+    return A(*isotipo(),
+             Span(config.NOMBRE_SISTEMA, cls="lateral-texto font-marca text-lg font-bold tracking-wide"),
              href="/estudiante" if usuario.get("solo_estudiante") else "/", title=config.DESCRIPCION_SISTEMA,
              aria_label=config.NOMBRE_COMPLETO, cls="flex items-center gap-2 min-w-0")
 

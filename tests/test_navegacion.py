@@ -50,6 +50,7 @@ def test_pagina_con_menu_unico(client):
     assert "<span>Más</span>" in r                                              # la barra del teléfono termina en «Más»
     assert "js/disposicion-inicial.js" in r                                     # el plegado, antes de pintar
     assert 'data-grupo="investigacion"' in r and 'data-accion="plegar-grupo"' in r  # grupos plegables (§54)
+    assert "img/marca/isotipo.svg" in r and "img/marca/isotipo-blanco.svg" in r  # marca de la Carrera (§55)
     r = client.get("/perfil").text                                              # cada «Falta» lleva a su sección
     assert 'href="#seccion-identificadores"' in r and 'id="seccion-identificadores"' in r
     assert re.search(r'class="[^"]*\blateral\b[^"]*no-imprimir', r)              # el menú no sale en los PDF
