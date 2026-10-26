@@ -110,6 +110,10 @@ PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
 - **El repositorio es público** (<https://github.com/manumath/tau>): nada de datos reales, bases, correos ni contraseñas
   reales en commits, pruebas, seed ni documentación. Los commits usan el correo `noreply` de GitHub del autor
   (`git config user.email`); no lo cambie. No reescriba el historial ni haga `push --force` sin que el usuario lo pida.
+- **Marca de la Carrera (PLAN §55):** los colores salen de `app/comun/marca.py` (tras cambiarlo:
+  `uv run python scripts/tema_marca.py && scripts/estilos.sh`); errores y botones de quitar con `text-destructive`,
+  nunca `text-red-*`; logos con `layout.isotipo()`/`layout.logotipo()` (versión blanca en oscuro). Los originales de la
+  marca y sus fuentes comerciales (Gotham, Helvetica Neue, Garamond Pro) no se versionan: se usan Montserrat y EB Garamond.
 - Plantillas XLSX ajenas (la Guía de Antecedentes): nunca con openpyxl al guardar, que borra gráficos e
   imágenes; use `app/comun/xlsx_plantilla.py`, que escribe solo las celdas pedidas.
 - Nunca edite una migración aplicada; nunca borre una prueba para que pase.

@@ -2149,3 +2149,8 @@ ya no se usa.
 al cuerpo académico, que es de la Carrera); el informe de proyecto, con el IIMAT; (5) la dirección del pie se
 configura en el despliegue y no se escribe en el código.
 
+**Etapa 5, revisión (hecha):** capturas de cada rol con las cuentas temporales (escritorio y teléfono, claro y
+oscuro), del ingreso sin sesión y de los informes impresos en PDF (memoria con IIMAT, cuerpo académico solo con la
+Carrera). La skill `captura-visual` admite `--sin-sesion` para las páginas públicas. CLAUDE.md resume lo que todo
+agente debe saber de la marca.
+
