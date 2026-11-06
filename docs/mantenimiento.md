@@ -52,8 +52,9 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
                                                         │
                                                         ▼
   rutas (app/*/rutas/)  ──▶  reglas (app/*/*.py)  ──▶  app/comun/db.py  ──▶  SQLite
-  devuelven HTML            validan y guardan          dialecto SQL,
-  (componentes FastHTML)                               transacciones
+  devuelven HTML            validan y guardan          dialecto SQL, una
+  (componentes FastHTML)                               conexión por hilo,
+                                                       transacciones
 ```
 
 - **Una petición = una función.** Cada ruta (`@rt("/productos/{pid}")` con `get`, `post`, `put` o
@@ -90,9 +91,16 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
   | ¿Qué rutas son públicas? | `RUTAS_PUBLICAS` en `app/comun/auth.py` |
   | ¿Qué cifras lleva la memoria o el anexo? | `app/acreditacion/informes.py`, `app/acreditacion/anexo.py` |
 
-- **Tareas periódicas:** no hay programador de tareas. La vigencia de los proyectos institucionales
-  y los recordatorios de continuidad se recalculan en la primera petición de cada hora
-  (`_mantenimiento` en `main.py`).
+- **Tareas periódicas:** no hay programador de tareas. Cada 5 minutos, a lo más, una petición lanza
+  el mantenimiento (`_mantenimiento` en `main.py`) **en un hilo aparte**, que no demora esa petición.
+  Un candado impide que corran dos a la vez, y cada tarea lleva su propio plazo de una hora: vigencias
+  y recordatorios de los proyectos institucionales, informes programados, invitaciones del seguimiento
+  de egresados y resumen semanal. Un error se registra en `portal.log` y no corta la petición.
+- **Una conexión a SQLite por hilo** (`get_db()` en `app/comun/db.py`). Las rutas síncronas corren en
+  un pool de hilos: con una conexión compartida, la transacción de una petición incluía las escrituras
+  de otra, que se perdían si la primera se revertía (PLAN §56). En WAL las lecturas no esperan y las
+  escrituras se turnan hasta `ESPERA_MS` (5 s). **El sistema corre en un solo proceso** (un worker de
+  uvicorn): el candado del mantenimiento y la cola de correo viven en memoria. No agregue `--workers`.
 
 ## 3. Convenciones que conviene no romper
 

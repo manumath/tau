@@ -8,7 +8,7 @@ toque un solo lugar. Qué habría que cambiar en ese caso:
 - `sin_tildes`: aquí es una función de Python registrada en la conexión; en PostgreSQL, una
   función SQL con el mismo nombre (`lower(unaccent($1))`, extensión unaccent). Las consultas no
   cambian.
-- La conexión y la API de fastlite que usa el código: `q`, `execute`, `t.<tabla>.insert` (devuelve
+- La conexión (una por hilo, `get_db`) y la API de fastlite que usa el código: `q`, `execute`, `t.<tabla>.insert` (devuelve
   la fila) y `t.<tabla>.update`, más `transaccion()`. Un adaptador delgado sobre psycopg basta.
 - Las migraciones (`migrations/`), escritas en SQL de SQLite, y `scripts/paquete.py` (copia con
   la API de respaldo de sqlite3).
@@ -16,31 +16,51 @@ toque un solo lugar. Qué habría que cambiar en ese caso:
   `sin_tildes` (que pasa a minúsculas), salvo la del código MSC (`msc.py`, `perfiles.directorio`),
   que en PostgreSQL necesitaría `ILIKE`.
 """
+import threading
 import unicodedata
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import apsw.bestpractice
 from fastlite import database
 from fastmigrate.core import create_db, run_migrations
 
 from app.comun import config
 
-_db = None
+# Una conexión por hilo. Las rutas síncronas corren en un pool de hilos: con una conexión compartida,
+# la transacción de una petición (`with conn:`) abarcaría las escrituras de otra, que se perderían si
+# la primera se revierte (y `last_insert_rowid` sería el de otro hilo). En WAL, las lecturas no se
+# bloquean y las escrituras se turnan esperando hasta ESPERA_MS. `_generacion` cambia con cada
+# init_db (pruebas, scripts): un hilo que tenía abierta la base anterior abre la nueva.
 _ruta: Path | None = None
+_generacion = 0
+_local = threading.local()
+ESPERA_MS = 5000
+# apswutils (bajo fastlite) aplica a toda conexión nueva las «buenas prácticas» de apsw: una espera de
+# 100 ms y en seguida `PRAGMA optimize`, que puede necesitar el turno de escritura. Si otro hilo está
+# escribiendo, abrir la conexión fallaría con «database is locked»: la espera se alarga antes de eso.
+apsw.bestpractice.connection_busy_timeout.__defaults__ = (ESPERA_MS,)
 
 
 def init_db(path: Path | str = config.DB_PATH):
-    """Crea la BD si no existe, aplica migraciones pendientes y abre la conexión."""
-    global _db, _ruta
-    path = _ruta = Path(path)
+    """Crea la BD si no existe, aplica migraciones pendientes y abre la conexión de este hilo."""
+    global _ruta, _generacion
+    path = Path(path)
     create_db(path)
     if not run_migrations(path, config.MIGRACIONES):
         raise RuntimeError(f"Fallaron las migraciones sobre {path}")
-    _db = database(path)
-    _db.execute("PRAGMA foreign_keys = ON")
-    _db.conn.create_scalar_function("sin_tildes", sin_tildes, 1, deterministic=True)
-    return _db
+    _ruta = path
+    _generacion += 1
+    return get_db()
+
+
+def _abrir(path: Path):
+    db = database(path)  # activa WAL (y la espera de ESPERA_MS, ver arriba)
+    db.execute("PRAGMA foreign_keys = ON")
+    db.execute("PRAGMA synchronous = NORMAL")  # seguro en WAL: un corte de luz no corrompe la base
+    db.conn.create_scalar_function("sin_tildes", sin_tildes, 1, deterministic=True)
+    return db
 
 
 def sin_tildes(texto: str | None) -> str | None:
@@ -53,9 +73,12 @@ def sin_tildes(texto: str | None) -> str | None:
 
 
 def get_db():
-    if _db is None:
+    """La conexión de este hilo (la abre la primera vez)."""
+    if _ruta is None:
         raise RuntimeError("Base de datos no inicializada: llame a init_db()")
-    return _db
+    if getattr(_local, "generacion", None) != _generacion:
+        _local.db, _local.generacion = _abrir(_ruta), _generacion
+    return _local.db
 
 
 def dir_datos() -> Path:

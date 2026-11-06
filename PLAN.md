@@ -2154,3 +2154,28 @@ oscuro), del ingreso sin sesión y de los informes impresos en PDF (memoria con 
 Carrera). La skill `captura-visual` admite `--sin-sesion` para las páginas públicas. CLAUDE.md resume lo que todo
 agente debe saber de la marca.
 
+## 56. Auditoría del stack y concurrencia en SQLite (6-nov-2026)
+
+Se auditó el stack: FastHTML + HTMX + SQLite se mantiene. La CSP, el CSRF por `Origin`, los recursos propios con
+versión y las pruebas están bien. El hallazgo grave fue de concurrencia, y esta etapa lo corrige.
+
+**Etapa 1, conexión por hilo y mantenimiento en segundo plano (hecha):**
+
+- **Problema:** `db.py` abría una sola conexión apsw para todo el proceso, y las rutas síncronas corren en un pool
+  de hilos. La transacción de una petición (`with transaccion()`) abarcaba las escrituras simultáneas de otra: si la
+  primera se revertía, **la escritura de la otra se perdía sin error**. Además, `last_insert_rowid` podía ser el de
+  otro hilo. Se reprodujo con dos hilos.
+- **Solución:** `get_db()` devuelve una conexión por hilo (`threading.local`), que se reabre cuando `init_db` cambia
+  la base (pruebas, scripts). Espera de escritura de 5 s (antes 100 ms, el valor de apsw) y `synchronous=NORMAL`
+  (seguro en WAL). La espera se fija en las buenas prácticas de apsw que aplica apswutils, porque su
+  `PRAGMA optimize` al abrir la conexión ya puede necesitar el turno de escritura.
+- **Mantenimiento periódico:** antes corría dentro de la primera petición de cada hora, que lo esperaba, y dos
+  peticiones simultáneas podían ejecutarlo a la vez (avisos duplicados). Ahora una petición lo lanza en un hilo,
+  como mucho cada 5 minutos, con un candado. Cada tarea conserva su plazo horario.
+- Pruebas en `tests/test_concurrencia.py`. Sin migraciones.
+
+**Pendiente de la auditoría (en este orden):** (a) filtros y paginación con `hx-replace-url`, para que recargar, volver
+atrás y compartir el enlace conserven el estado; (b) integración continua en GitHub Actions (ruff y pytest); (c) cola de
+correo persistente con reintentos, si no basta la actual en memoria; (d) imagen Docker: verificar el sha256 de
+Litestream y no correr como root; (e) registro de rutas sin depender del orden (`/productos/{pid:int}`).
+

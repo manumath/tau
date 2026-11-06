@@ -4,6 +4,7 @@ Desarrollo:  uv run python main.py      (recarga automática en http://localhost
 """
 import json
 import os
+import threading
 import time
 
 from fasthtml.common import Beforeware, Meta, Response, fast_app, serve
@@ -75,12 +76,32 @@ from app.investigacion.rutas.proyectos import rt as rutas_proyectos
 from app.investigacion.rutas.publico import rt as rutas_publico
 
 
+_candado_mantenimiento = threading.Lock()
+_ultimo_mantenimiento = float("-inf")
+MANTENIMIENTO_CADA_S = 300  # cada cuánto se mira si toca (cada tarea lleva además su propio plazo horario)
+
+
+def _correr_mantenimiento():
+    try:
+        institucionales.mantenimiento()  # vigencias de proyectos y recordatorios
+        programados.mantenimiento()  # informes que se envían solos
+        seguimiento_egresados.mantenimiento()  # invitaciones del seguimiento de egresados
+    except Exception:
+        registros.log.exception("Falló el mantenimiento periódico")
+    finally:
+        _candado_mantenimiento.release()
+
+
 def _mantenimiento(req):
-    """Vigencia de proyectos institucionales y recordatorios (a lo más una vez por hora)."""
-    if not config.SOLO_LECTURA:
-        institucionales.mantenimiento()
-        programados.mantenimiento()  # informes que se envían solos (a lo más una revisión por hora)
-        seguimiento_egresados.mantenimiento()  # invitaciones del seguimiento de egresados (idem)
+    """Lanza el mantenimiento periódico en un hilo aparte: no demora la petición que lo dispara y
+    el candado impide que dos peticiones simultáneas lo ejecuten a la vez (avisos duplicados)."""
+    global _ultimo_mantenimiento
+    if config.SOLO_LECTURA or time.monotonic() - _ultimo_mantenimiento < MANTENIMIENTO_CADA_S:
+        return
+    if not _candado_mantenimiento.acquire(blocking=False):
+        return
+    _ultimo_mantenimiento = time.monotonic()
+    threading.Thread(target=_correr_mantenimiento, name="mantenimiento", daemon=True).start()
 
 
 def create_app(db_path=config.DB_PATH):
