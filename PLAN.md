@@ -2214,3 +2214,142 @@ responde, el correo se intenta una vez sin cola (sirve para el aviso de un error
   pudo en el equipo de desarrollo: Podman está instalado, pero sin máquina virtual.
 
 **Pendiente de la auditoría:** (e) registro de rutas sin depender del orden (`/productos/{pid:int}`).
+
+
+## 57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)
+
+**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 (ver al final); la 6 sigue abierta. Nada implementado.**
+
+### Propósito
+
+Convertir lo construido para una acreditación concreta (§13–§17, §29, §31, §36, anexos de §49 y §50) en el **Sistema
+Interno de Aseguramiento de la Calidad (SIAC) de la Carrera**, como lo pide la Política de Calidad de la UMSA (Res. HCU
+91/2026). El sistema no nombra a ninguna agencia ni usa sus instrumentos: trabaja con un **marco de calidad propio**,
+guardado como datos y no en el código. Un marco externo, si hiciera falta, se carga aparte y solo como correspondencia.
+
+### Fundamento: lo común a los modelos de la región
+
+Los modelos de acreditación de programas que se usan en América Latina comparten el mismo ciclo y casi los mismos ámbitos.
+Entre ellos están el que la Carrera usó hasta ahora, CNA (Chile), CONEAU (Argentina), SINAES (Costa Rica), ARCU-SUR, la
+norma andina (Decisiones 1514 y 1515 del Parlamento Andino) y la evaluación del Sistema de la Universidad Boliviana. Como
+marcos de gestión se suman ESG (ENQA) e ISO 21001.
+
+- **Ciclo:** autoevaluación con participación, evaluación externa por pares, dictamen, plan de mejora y seguimiento.
+  Es el PHVA que adopta la Política de Calidad.
+- **Ámbitos:** propósitos y gobierno; proceso formativo y currículo; estudiantes; cuerpo académico; investigación;
+  vinculación con el medio; recursos; resultados y egresados; aseguramiento interno.
+- **Evidencia:** datos verificables con su método, series de varios años, percepción de los actores (estudiantes,
+  docentes, egresados y empleadores) y juicios fundados por criterio.
+
+Un marco propio construido sobre ese núcleo sirve para cualquier proceso externo **sin depender de ninguno**.
+
+### Lo que piden las políticas de la UMSA (8 documentos, 2025–2026)
+
+| Política | Lo que entra al SIAC |
+|---|---|
+| **Calidad** (HCU 91/2026) | 9 dimensiones de evaluación; 20 criterios de calidad; indicadores de estructura, proceso, resultado, percepción y contexto (simples, contextualizados, comparables, SMART, éticos); 9 objetivos con indicador, fórmula, meta, método y frecuencia (Anexo 3); PHVA; revisión cada 5 años; rendición de cuentas |
+| **Educativa** (modelo educativo, académico, curricular) | Evaluación curricular «integral, participativa y basada en evidencias»: indicadores de resultado (competencias de los titulados, desempeño docente) y de impacto (inserción laboral, pertinencia), encuestas a titulados, empleadores y docentes, triangulación, fortalezas y debilidades del plan |
+| **Investigación** (HCU 90/2026) | 5 áreas, cada una con sus indicadores: artículos indexados y arbitrados, proyectos activos, redes, coautoría internacional, ponencias, eventos organizados, semilleros, proyectos con formación piramidal, premios y divulgación |
+| **Interacción Social** (HCU 92/2026) | Área 4, «Evaluación, aprendizaje e impacto»: proyectos con impacto comprobable (meta institucional ≥ 30 %) |
+| **Internacionalización** (HCU 467/2025) | Eje 3, «evaluación, acreditación y gestión de la calidad»; movilidad, alianzas, internacionalización en casa |
+| **Posgrado** (HCU 93/2026) | % de docentes Ph.D., retención de Ph.D. por más de 3 años, titulación, auditorías internas |
+| **Emprendimiento e innovación** (HCU 169/2026) | Transferencia, propiedad intelectual, proyectos con el sector productivo |
+| **TIC** (HCU 96/2026) | Eje 7.7, «seguridad de la información y protección de datos personales»: confidencialidad, integridad, disponibilidad y trazabilidad (TAU ya lo cumple: auditoría, CSP, agregados) |
+
+**Decisión de diseño:** las **dimensiones** dan la estructura del marco. Los **20 criterios de la UMSA** (pertinencia,
+equidad, eficacia, impacto…) no son una capa más: son **atributos** que se marcan en cada indicador y en cada juicio.
+Así se puede responder, por ejemplo, «qué evidencia hay de equidad», sin duplicar la estructura.
+
+### Marco propio propuesto para la Carrera (borrador para la Comisión)
+
+| Dimensión de la Carrera | Dimensiones de la UMSA que recoge | Ya se mide en TAU |
+|---|---|---|
+| D1 Propósitos, gobierno, gestión y recursos | 1 | Vínculos, carga horaria, calidad de datos |
+| D2 Formación y currículo centrado en el estudiante | 2, 9 | Planes, oferta, docencia asignada; falta: logro del perfil de egreso |
+| D3 Estudiantes: admisión, trayectoria, bienestar y equidad | 6 | Cohortes, deserción, tutoría, actividad estudiantil, encuestas |
+| D4 Cuerpo académico | 1, 2 | JCE, grados, categorías, edad por tramos, retención; falta: capacitación |
+| D5 Investigación, innovación y transferencia | 3, 4 | Producción, proyectos, líneas, citas, tesis, patentes, transferencia |
+| D6 Vinculación con el medio | 5 | Proyectos de interacción social, divulgación, servicios; falta: impacto y beneficiarios |
+| D7 Internacionalización e interculturalidad | 7, 8, 9 | Coautoría internacional, estancias, redes, movilidad estudiantil; falta: convenios |
+| D8 Resultados y egresados | 2, 6 | Titulación, tiempo de titulación, empleabilidad, posgrado (siempre con el n) |
+| D9 Aseguramiento interno y mejora continua | 1.6.5 | Nuevo: autoevaluación, plan de mejora, seguimiento, cumplimiento de objetivos |
+
+### Qué se reaprovecha
+
+| Hoy | En el módulo |
+|---|---|
+| `app/acreditacion/` (paquete) | Pasa a `app/calidad/`; las rutas `/informes/…` pasan a `/calidad/…`, y las anteriores redirigen |
+| `anexo.py` (I+D+i por criterio externo) | Sus cálculos pasan a ser indicadores de D5 y D7; el documento, a «Informe de investigación» por dimensión, sin códigos externos |
+| `guia_antecedentes.py` | Se divide en dos. Las cifras (ciclos, académicos, caracterización, cohortes) se reúnen en una **Ficha estadística de la Carrera** propia (pantalla y XLSX). El llenado de la plantilla externa se retira ⚠ (ver decisión 4) |
+| `xlsx_plantilla.py` | Se conserva tal cual: es genérico. Sirve de motor para exportar a **cualquier** plantilla con una tabla de correspondencias como dato |
+| `cuerpo_academico.py`, `seguimiento_estudiantil.py`, `estudiantes.py`, indicadores de egresados | Cálculos reutilizados como indicadores automáticos de D3, D4 y D8 |
+| `informes.py` (CV, informe de proyecto, memoria) | Se conservan; además pasan a ser **evidencia** del marco |
+| `calidad.py` (calidad de datos) | Se conserva como requisito de los indicadores: cada indicador declara qué revisiones afectan su cifra |
+| `programados.py` | Se conserva; se agregan el aviso de los indicadores del periodo y los plazos del plan de mejora |
+| Encuestas (`app/estudiantil/encuestas.py`) | Pasan a ser los indicadores de percepción; se agregan los públicos «docentes» y «empleadores» y una plantilla de logro del perfil de egreso |
+| Deserción «según la agencia» (`cohortes.py`) | Pasa a ser la definición de la Carrera, con sus parámetros en el marco (ciclos sin volver: 2) |
+| Ventana de evidencia de 5 años (`cosecha.py`, anexo) | Parámetro del marco |
+| Rol `comite_acreditacion` | Pasa a ser `comision_calidad` (migración de los roles asignados) ⚠ (ver decisión 2) |
+| Textos y docstrings con la agencia o sus códigos (unas 15 frases en pantalla, unos 50 códigos en el código) | Se reescriben neutros. Las **migraciones aplicadas** conservan sus comentarios: no se editan nunca |
+| `datos/iac-cinda/` (plantilla vacía) | Se retira del repositorio ⚠ (ver decisión 4) |
+
+### Qué es nuevo
+
+1. **Marco de calidad como datos:** marco (nombre, versión, vigencia, ventana de años y escala de valoración) →
+   dimensiones → criterios → indicadores. Cada indicador lleva tipo (estructura, proceso, resultado, percepción,
+   contexto), fórmula en texto, fuente (`auto:<clave>` o manual), unidad, frecuencia, responsable, atributos de la UMSA
+   y metas por periodo. Se carga desde un CSV versionado y se edita en pantalla.
+2. **Indicadores automáticos:** un registro en el código, `clave → función(periodo) → (valor, n, detalle)`, que reutiliza
+   los cálculos de hoy. Cada indicador tiene **tablero** con serie anual, meta, semáforo y n, y su exportación. Al cerrar
+   un periodo se guarda una **instantánea** de las cifras, para que un informe ya entregado no cambie si después se
+   corrigen los datos.
+3. **Repositorio de evidencias:** documentos subidos (actas, resoluciones, convenios), informes generados por TAU
+   (con fecha y huella SHA-256) y enlaces, cada uno asociado a uno o más criterios y con vigencia. Reutiliza `adjuntos`.
+4. **Autoevaluación:** un proceso con comisión y etapas. Para cada criterio se registran el nivel en la escala del
+   marco, el juicio fundado, las fortalezas y las debilidades, con la evidencia y los indicadores a la vista. La
+   participación de los actores entra por las encuestas, con resultados agregados.
+5. **Plan de mejora y seguimiento:** cada debilidad o recomendación externa genera acciones con responsable, plazo,
+   indicador y meta. Cada acción tiene su estado y avances con evidencia. Los vencimientos llegan como avisos.
+6. **Evaluación externa:** se registran la visita, el dictamen y las recomendaciones, que pasan al plan de mejora.
+7. **Objetivos de calidad de la UMSA:** los 9 objetivos del Anexo 3 de la Política de Calidad, a escala de la Carrera,
+   con el cálculo automático que se pueda: producción indexada, estudiantes en proyectos, divulgación, propiedad
+   intelectual y cumplimiento del plan.
+8. **Correspondencia con marcos externos (opcional):** un CSV *privado*, que no se versiona, enlaza los criterios
+   propios con los de una agencia y permite exportar a su plantilla con `xlsx_plantilla`. El sistema no trae ninguno.
+
+### Datos que faltan, según las políticas
+
+Capacitación docente (objetivo 4 de la Política de Calidad); convenios y alianzas (Internacionalización); impacto y
+beneficiarios de los proyectos de interacción social (objetivo 6); encuesta a empleadores y logro del perfil de egreso
+(Política Educativa); tiempos de trámite (objetivo 3; solo se pueden medir los procesos que pasan por TAU).
+
+### Etapas (un commit por etapa)
+
+| Etapa | Contenido | Tamaño |
+|---|---|---|
+| 1 | **Neutralizar sin cambiar el comportamiento:** paquete `app/calidad`, rutas `/calidad/…` (las anteriores redirigen), menú «Aseguramiento de la calidad», textos y docstrings neutros, rol renombrado, guía de uso, README y CLAUDE.md | Mediana |
+| 2 | **Marco como datos:** migración (marco, dimensión, criterio, indicador, meta, atributo), CSV del marco de la Carrera, pantalla para editarlo (Dirección de Carrera) | Mediana |
+| 3 | **Indicadores automáticos y tablero:** registro de cálculos, serie, metas, instantáneas por periodo, exportación | Grande |
+| 4 | **Evidencias:** repositorio y asociación a criterios; informes generados con su huella | Mediana |
+| 5 | **Autoevaluación:** proceso, juicios por criterio, informe de autoevaluación imprimible y en XLSX | Grande |
+| 6 | **Plan de mejora y evaluación externa:** acciones, avances, avisos, recomendaciones | Mediana |
+| 7 | **Ficha estadística y exportación por correspondencia:** retiro definitivo de la Guía | Mediana |
+| 8 | **Datos que faltan:** capacitación, convenios, impacto de interacción social, encuestas a empleadores y docentes | Mediana |
+
+La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás construyen el SIAC.
+
+### Decisiones (confirmadas por el usuario el 6-nov-2026, salvo la 6)
+1. **Nombre:** «Aseguramiento de la Calidad» en el menú y «SIAC de la Carrera» en los documentos.
+2. **Comisión de calidad:** la Dirección de Carrera gestiona el marco y el plan de mejora; la Comisión registra juicios y
+   evidencias; Administración solo asigna el rol. Por el cogobierno, la integra **un representante estudiantil con una
+   cuenta de personal limitada a la Comisión** (no una cuenta de estudiante: esas solo llegan a `/estudiante`, §49).
+3. **Escala de valoración:** configurable en el marco; por omisión, 4 niveles (no cumple · cumple parcialmente ·
+   cumple · cumple plenamente).
+4. **La Guía y la plantilla externa:** se retiran del sistema y del repositorio; queda el motor genérico
+   (`xlsx_plantilla`) con correspondencias privadas, que no se versionan.
+5. **Ámbito:** un marco por unidad evaluable, empezando por la Carrera (el Instituto, después).
+6. ⚠ **Transparencia:** ¿se publican indicadores agregados en una página pública (rendición de cuentas) o solo dentro
+   del sistema? **Abierta.**
+7. **Documentación histórica:** las secciones anteriores de este PLAN y las migraciones aplicadas se conservan como
+   historia; todo lo nuevo (código, pantallas, guía, README, pruebas) se escribe neutro.
+8. **Dimensiones:** el borrador D1–D9 de arriba.
