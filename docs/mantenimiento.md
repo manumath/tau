@@ -268,7 +268,19 @@ Política:
 `docs/despliegue.md`, sección 8 (servidor propio) o `docs/despliegue-fly.md` (Fly.io). En corto:
 respaldar, actualizar el código, `uv sync --no-dev`, reiniciar. Las migraciones se aplican al arrancar.
 
-### 5.2 Respaldar y restaurar
+### 5.2 Integración continua
+
+`.github/workflows/pruebas.yml` corre ruff y todas las pruebas (con navegador) en cada push a `main` y en
+cada pull request. Si queda en rojo, el detalle está en la pestaña «Actions» del repositorio; corrija y vuelva a
+hacer push (no desactive la prueba). Para actualizar algo fijado en el workflow:
+
+- **Acciones** (`actions/checkout`, `astral-sh/setup-uv`): van por hash de commit, porque una etiqueta se puede
+  mover. El hash de una versión: `gh api repos/<dueño>/<acción>/commits/<etiqueta> --jq .sha`; deje la etiqueta en
+  el comentario.
+- **uv y ruff:** `version:` de setup-uv y `uvx ruff@X.Y.Z`. Use las mismas que en su equipo
+  (`uv --version`, `uvx ruff --version`), para que lo que pasa aquí pase allá.
+
+### 5.3 Respaldar y restaurar
 
 Dos mecanismos, que se complementan:
 
@@ -299,18 +311,18 @@ Dos mecanismos, que se complementan:
 copia, nunca sobre la base en uso. Un respaldo que nunca se restauró no es un respaldo. Anote aquí
 la fecha y el resultado.
 
-### 5.3 Modo solo lectura
+### 5.4 Modo solo lectura
 
 `PORTAL_SOLO_LECTURA=1` deja el sistema consultable y rechaza todo cambio (útil durante una mudanza
 o una restauración). No ejecuta las tareas horarias.
 
-### 5.4 Correo
+### 5.5 Correo
 
 `PORTAL_CORREO_MODO`: `archivo` (por omisión, guarda cada correo como `.eml` en
 `data/correos/`, útil para revisar sin enviar), `smtp` (producción; ver `PORTAL_SMTP_*`) o `memoria`
 (pruebas).
 
-### 5.5 Registros y errores
+### 5.6 Registros y errores
 
 `app/comun/registros.py` escribe en la consola y en `data/registros/portal.log` (rota a los 10 MB y guarda
 5 archivos; `PORTAL_REGISTROS=consola` solo usa la consola):
@@ -327,7 +339,7 @@ o una restauración). No ejecuta las tareas horarias.
 - Arranque con `uvicorn … --no-access-log` (ya en `scripts/iniciar.sh` y en el servicio de
   `docs/despliegue.md`): el registro de uvicorn duplicaría cada línea y anotaría la consulta.
 
-### 5.6 El repositorio público
+### 5.7 El repositorio público
 
 - Remoto: `origin` = <https://github.com/manumath/tau>. Los commits usan el correo `noreply` de GitHub
   (`git config user.email`): GitHub rechaza los envíos que exponen un correo privado.

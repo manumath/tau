@@ -221,6 +221,10 @@ JavaScript, recursos que no cargan o violaciones de la CSP. Sin `--navegador` se
   `PLAYWRIGHT_CANAL= uv run pytest --navegador`.
 - Para ver el navegador: `--headed --slowmo 300`.
 
+**Integración continua** (`.github/workflows/pruebas.yml`): en cada push a `main` y en cada pull request, GitHub
+Actions instala exactamente `uv.lock`, corre `ruff` y `pytest --navegador` con el Chrome del runner (unos 5 minutos).
+El resultado aparece junto al commit en GitHub. Las acciones y las versiones de uv y ruff van fijadas.
+
 ## Migraciones
 
 Para cambiar el esquema, agregue `migrations/000N-descripcion.sql` (o `.py` para cargar datos,

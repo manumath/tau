@@ -32,6 +32,10 @@ scripts/estilos.sh                    # recompilar Tailwind tras usar una clase 
 PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
 ```
 
+GitHub Actions (`.github/workflows/pruebas.yml`) corre ruff y `pytest --navegador` en cada push a `main`: una prueba
+que solo pasa en este equipo (logos originales, `.herramientas/`, `data/`) falla allí. Las versiones de uv y ruff y
+las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimiento.md` §5.2.
+
 ## Estructura
 
 - `app/comun`: base de datos y dialecto SQL (`db.py`), autenticación (`auth.py`, `REGLAS_ADMIN`),

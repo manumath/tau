@@ -2182,7 +2182,14 @@ parámetros. La paginación «Cargar más» no va en la URL: al recargar se vuel
 Convención para listas nuevas: el fragmento devuelve `replace_url` con la ruta de la página, y la página lee los mismos
 parámetros.
 
-**Pendiente de la auditoría (en este orden):** (b) integración continua en GitHub Actions (ruff y pytest); (c) cola de
+**Etapa 3, integración continua (hecha):** `.github/workflows/pruebas.yml` corre en GitHub Actions, en cada push a
+`main` y en cada pull request: `uv sync --frozen`, `ruff` y `pytest --navegador` con el Chrome que trae el runner de
+Ubuntu. Permisos mínimos (`contents: read`), sin credenciales en el checkout, acciones fijadas por hash de commit y
+versiones de uv (0.13.7) y ruff (0.17.4) fijas. Antes se comprobó en un clon limpio que la suite no depende de
+archivos que solo existen en el equipo del usuario (logos originales, `.herramientas/`, `data/`): 696 pruebas y 17
+de navegador pasan.
+
+**Pendiente de la auditoría (en este orden):** (c) cola de
 correo persistente con reintentos, si no basta la actual en memoria; (d) imagen Docker: verificar el sha256 de
 Litestream y no correr como root; (e) registro de rutas sin depender del orden (`/productos/{pid:int}`).
 
