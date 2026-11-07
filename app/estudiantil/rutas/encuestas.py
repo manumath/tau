@@ -68,8 +68,10 @@ def get(auth):
     return pagina(
         "Encuestas",
         H2("Encuestas"),
-        P("Encuestas a estudiantes y egresados (satisfacción, clima, bienestar, abandono, seguimiento de egresados). Cada "
-          "persona responde con un enlace personal que recibe por correo, sin necesidad de cuenta. Las anónimas no "
+        P("Encuestas a estudiantes, egresados, académicos de la Carrera y empleadores (satisfacción, clima, bienestar, "
+          "abandono, seguimiento de egresados, logro del perfil de egreso). Cada persona responde con un enlace personal que "
+          "recibe por correo, sin necesidad de cuenta. Los empleadores se registran en ",
+          A("Empleadores", href="/docencia/empleadores", cls="text-primary hover:underline"), ". Las anónimas no "
           f"asocian la respuesta con la persona y no muestran resultados hasta tener {encuestas.MIN_ANONIMO} respuestas.",
           cls=(TextPresets.muted_sm, "max-w-3xl mb-6")),
         nueva, Div(cls="h-4"),
@@ -116,9 +118,9 @@ def _datos(e, editable, errores=()):
             Div(FormLabel("Dirigida a"), Select(*[Option(t, value=k, selected=k == e["publico"])
                                                   for k, t in encuestas.PUBLICOS.items()], name="publico", cls="uk-select"),
                 cls="space-y-1"),
-            LabelInput("Ingreso desde (año, opcional)", id="cohorte_desde", type="number", value=e["cohorte_desde"] or "",
+            LabelInput("Ingreso desde (año; estudiantes y egresados)", id="cohorte_desde", type="number", value=e["cohorte_desde"] or "",
                        min="1990", max="2100"),
-            LabelInput("Ingreso hasta (año, opcional)", id="cohorte_hasta", type="number", value=e["cohorte_hasta"] or "",
+            LabelInput("Ingreso hasta (año; estudiantes y egresados)", id="cohorte_hasta", type="number", value=e["cohorte_hasta"] or "",
                        min="1990", max="2100"),
             LabelInput("Se puede responder hasta (opcional)", id="cierra_el", type="date", value=e["cierra_el"] or ""),
             cls="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"),

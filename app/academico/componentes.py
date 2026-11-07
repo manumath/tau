@@ -29,6 +29,7 @@ PESTANAS = (("mia", "Mi docencia", "/docencia/mia", tiene_docencia),
             ("encuestas", "Encuestas", "/docencia/encuestas", "ver_seguimiento_estudiantil"),
             ("tutoria", "Tutoría", "/docencia/tutoria", "ver_seguimiento_estudiantil"),
             ("egresados", "Egresados", "/docencia/egresados", "ver_seguimiento_estudiantil"),
+            ("empleadores", "Empleadores", "/docencia/empleadores", "ver_seguimiento_estudiantil"),
             # Para los demás es una lista de fechas de solo lectura (la oferta ya elige la gestión): PLAN.md §54.
             ("gestiones", "Gestiones", "/docencia/gestiones", "gestionar_oferta"))
 

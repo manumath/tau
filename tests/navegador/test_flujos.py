@@ -440,3 +440,24 @@ def test_grupos_del_menu_plegables(page):
     docencia.click()
     page.goto("/productos")
     expect(lateral.get_by_role("link", name="Planes de estudio")).to_be_visible()
+
+
+def test_llenar_plantilla_con_la_ficha(page, tmp_path):
+    """Formulario con archivos fuera de htmx (pasa la verificación de origen) y descarga de la plantilla llena."""
+    libro = openpyxl.Workbook()
+    libro.active.title = "Antecedentes"
+    libro.save(tmp_path / "formulario.xlsx")
+    (tmp_path / "c.csv").write_text("hoja,celda,clave\nAntecedentes,B2,academicos.total.2025\n", encoding="utf-8")
+    entrar(page, "comision")
+    page.goto("/calidad/ficha")
+    expect(page.locator("main h2").first).to_contain_text("Ficha estadística")
+    page.get_by_role("link", name="Llenar una plantilla").click()
+    page.set_input_files("#plantilla", tmp_path / "formulario.xlsx")
+    page.set_input_files("#correspondencia", tmp_path / "c.csv")
+    page.select_option("select[name=hasta]", "2025")
+    with page.expect_download() as descarga:
+        page.get_by_role("button", name="Llenar y descargar").click()
+    archivo = tmp_path / descarga.value.suggested_filename
+    descarga.value.save_as(archivo)
+    assert archivo.name == "formulario-llena.xlsx"
+    assert openpyxl.load_workbook(archivo)["Antecedentes"]["B2"].value == 1          # Emmy, titular desde 2015

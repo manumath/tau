@@ -131,6 +131,11 @@ app/
     indicadores.py             cifras de los indicadores: cálculos automáticos, manuales, cierres (/calidad/indicadores)
     evidencias.py              evidencias por criterio con huella SHA-256 (/calidad/evidencias; archivos en <datos>/evidencias)
     autoevaluacion.py          autoevaluación: juicios por criterio, síntesis, informe (/calidad/autoevaluaciones)
+    mejora.py                  plan de mejora: acciones, avances, avisos de plazo, evaluaciones externas (/calidad/mejora)
+    ficha.py                   ficha estadística y llenado de plantillas XLSX por correspondencia (/calidad/ficha)
+    capacitacion.py            capacitación del personal (/calidad/capacitacion)
+    convenios.py               convenios y sus actividades (/calidad/convenios)
+    impacto.py                 impacto de los proyectos de interacción social (/calidad/impacto)
     estudiantes.py             tesis e indicadores de participación de estudiantes
     cuerpo_academico.py        carga docente e indicadores del cuerpo académico
     calidad_datos.py           calidad de los datos: lo que falta completar y a quién avisar
@@ -157,7 +162,8 @@ app/
   egresados/                   egresados (PLAN §50)
     egresados.py               titulación, hitos de seguimiento (6 meses, 1, 3 y 5 años), invitaciones programadas e indicadores
     directorio.py              directorio opcional de egresados, invitación y solicitudes de mentoría
-    rutas/                     egresados (/docencia/egresados), directorio (/estudiante/directorio, /estudiante/perfil-egresado)
+    empleadores.py             registro de empleadores, destinatarios de la encuesta a empleadores
+    rutas/                     egresados (/docencia/egresados), empleadores (/docencia/empleadores), directorio (/estudiante/directorio, /estudiante/perfil-egresado)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
   navegacion.py                menú lateral y pestañas del teléfono: qué secciones ve cada rol (PLAN §53)
 

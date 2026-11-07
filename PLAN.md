@@ -2218,7 +2218,7 @@ responde, el correo se intenta una vez sin cola (sirve para el aviso de un error
 
 ## 57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)
 
-**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 (ver al final); la 6 sigue abierta. Etapas 1 a 5 hechas (6-nov-2026).**
+**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 (ver al final); la 6 sigue abierta. Etapas 1 a 8 hechas (7-nov-2026).**
 
 ### Propósito
 
@@ -2321,7 +2321,8 @@ Así se puede responder, por ejemplo, «qué evidencia hay de equidad», sin dup
 
 Capacitación docente (objetivo 4 de la Política de Calidad); convenios y alianzas (Internacionalización); impacto y
 beneficiarios de los proyectos de interacción social (objetivo 6); encuesta a empleadores y logro del perfil de egreso
-(Política Educativa); tiempos de trámite (objetivo 3; solo se pueden medir los procesos que pasan por TAU).
+(Política Educativa); tiempos de trámite (objetivo 3; solo se pueden medir los procesos que pasan por TAU). La etapa 8
+cubrió todos salvo los tiempos de trámite, que siguen como indicador manual (D1.3.b).
 
 ### Etapas (un commit por etapa)
 
@@ -2332,9 +2333,9 @@ beneficiarios de los proyectos de interacción social (objetivo 6); encuesta a e
 | 3 | **Indicadores automáticos y tablero (hecha):** registro de cálculos, serie, metas, instantáneas por periodo, exportación | Grande |
 | 4 | **Evidencias (hecha):** repositorio y asociación a criterios; informes generados con su huella | Mediana |
 | 5 | **Autoevaluación (hecha):** proceso, juicios por criterio, informe de autoevaluación imprimible y en XLSX | Grande |
-| 6 | **Plan de mejora y evaluación externa:** acciones, avances, avisos, recomendaciones | Mediana |
-| 7 | **Ficha estadística y exportación por correspondencia** (la Guía ya se retiró en la etapa 1) | Mediana |
-| 8 | **Datos que faltan:** capacitación, convenios, impacto de interacción social, encuestas a empleadores y docentes | Mediana |
+| 6 | **Plan de mejora y evaluación externa (hecha):** acciones, avances, avisos, recomendaciones | Mediana |
+| 7 | **Ficha estadística y exportación por correspondencia (hecha)** (la Guía ya se retiró en la etapa 1) | Mediana |
+| 8 | **Datos que faltan (hecha):** capacitación, convenios, impacto de interacción social, encuestas a empleadores y docentes | Mediana |
 
 La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás construyen el SIAC.
 
@@ -2458,6 +2459,70 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   los juicios (no son confidenciales, a diferencia de las notas de tutoría); el informe muestra las cifras del tablero, que
   solo quedan fijas en los años cerrados (no se congela nada más al concluir); un representante estudiantil en la Comisión
   juzga con la cuenta de personal de la decisión 2.
+
+### Etapa 6: plan de mejora y evaluación externa (hecha, 7-nov-2026)
+
+- **Migración 0055:** `accion_mejora` (título, descripción, origen autoevaluación · evaluación externa · otro, con la
+  debilidad o la recomendación de que sale; criterio, responsable, plazo, prioridad, indicador y meta; estado pendiente · en
+  curso · cumplida · cancelada, con la fecha en que se cumplió o el motivo de la cancelación), `avance_accion` (fecha, texto,
+  porcentaje y evidencia), `evaluacion_externa` (organismo, tipo, visita, dictamen, resultado, vigencia e informe como
+  evidencia) y `recomendacion_externa` (texto y criterio).
+- **Pantallas** (`app/calidad/mejora.py`, `/calidad/mejora`, menú «Plan de mejora»): lista con filtros y resumen; ficha de la
+  acción con sus avances; debilidades de la autoevaluación (una por línea de cada juicio) con «Crear acción»; evaluaciones
+  externas con sus recomendaciones, de las que salen acciones; XLSX (acciones, avances, evaluaciones).
+- **Avisos** (mantenimiento diario): al responsable 30 días antes del plazo; al vencer, al responsable y a la Dirección de
+  Carrera de la unidad. Uno por acción, plazo y umbral (`aviso_enviado`).
+- **Indicador** «Acciones de mejora cumplidas en plazo» (`auto:acciones_cumplidas`): de las acciones no canceladas con plazo
+  en el año, ya vencido o cumplidas, el % cumplido hasta su plazo. Con él, ningún indicador del marco queda sin cálculo.
+- **Permisos:** `gestionar_plan_mejora` (Dirección de Carrera: acciones, estados y evaluaciones externas) y `ver_plan_mejora`
+  (además, Comisión de calidad, Coordinación académica y Dirección del Instituto). El responsable de una acción, aunque no
+  tenga rol, ve sus acciones y registra y quita sus avances. Todo se audita.
+- **Decisiones tomadas por el agente (por confirmar):** el responsable puede ser cualquier cuenta del personal (no un
+  estudiante); el plazo es obligatorio; marcar cumplida, cancelar y reabrir son de la Dirección, no del responsable; una acción
+  con avances no se elimina, se cancela con motivo; la Comisión de calidad ve el plan pero no crea acciones (decisión 2: el plan
+  lo gestiona la Dirección); el aviso de vencida va también a la Dirección de Carrera.
+
+### Etapa 7: ficha estadística y exportación por correspondencia (hecha, 7-nov-2026)
+
+- **Ficha estadística** (`app/calidad/ficha.py`, `/calidad/ficha`, menú «Ficha estadística»; la ve quien ve el marco): para
+  los años de la ventana del marco, cuerpo académico (vinculados, JCE, grados, categorías, tramos de edad), oferta por
+  semestre (paralelos, inscripciones), admisión por cohorte (vía, sexo, procedencia, colegio, edad al ingresar) y trayectoria
+  de cada cohorte (matriculados al año, cursando, egresados, titulados, desertores). Reúne las cifras que llenaba la Guía
+  retirada en la etapa 1, sin la plantilla de la agencia. XLSX con una hoja por sección, las cifras del tablero y la hoja
+  «Claves».
+- **Claves estables** (`ficha.valores`): `academicos.<campo>.<año>`, `academicos.categoria.<categoría>.<año>`,
+  `academicos.edad.<tramo>.<año>`, `oferta.<paralelos|inscripciones>.<semestre>`, `admision.<campo>.<cohorte>`,
+  `cohorte.<campo>.<cohorte>` e `indicador.<código>.<año>`.
+- **Exportación por correspondencia** (`/calidad/ficha/plantilla`, decisión 4): se suben la plantilla XLSX del organismo y un
+  CSV `hoja,celda,clave`; `xlsx_plantilla` escribe solo esas celdas. Ninguno de los dos archivos se guarda; con una clave
+  desconocida, una hoja que no existe o una celda mal escrita no se genera nada y se dice qué fila corregir. Se audita (sin el
+  contenido).
+- **Decisiones tomadas por el agente (por confirmar):** la ficha la ven quienes ven el marco (incluida Gestión de datos); la
+  correspondencia no se guarda en el sistema (cada vez se sube el CSV); una clave sin dato deja la celda vacía.
+
+### Etapa 8: datos que faltan (hecha, 7-nov-2026)
+
+- **Migración 0056:** `encuesta` admite los públicos «docentes» (académicos con vínculo vigente) y «empleadores», y los tipos
+  «Opinión de los académicos» y «Encuesta a empleadores» (se recreó la tabla para cambiar el CHECK, sin tocar preguntas ni
+  respuestas); tablas `empleador`, `capacitacion`, `convenio` con `actividad_convenio` e `impacto_proyecto`. Seis indicadores
+  del marco de la Carrera pasan de manuales a calculados (si seguían manuales y sin cifras a mano): D2.4.a y D2.4.b (logro
+  del perfil según titulados y empleadores), D4.3.a (personal capacitado), D6.4.a (impacto social comprobado), D7.4.a
+  (convenios con actividad) y D8.3.b (satisfacción de los empleadores). El CSV del marco cambió igual.
+- **Encuestas:** plantillas «Encuesta a empleadores» (competencias del perfil con la clave `perfil`, satisfacción con
+  `satisfaccion`) y «Opinión de los académicos» (anónima). A un académico se le invita mediante una ficha externa enlazada a
+  su cuenta (`persona_externa.usuario_id`), que se crea la primera vez y se reutiliza. Los indicadores de encuestas excluyen
+  las anónimas con menos de 5 respuestas.
+- **Empleadores** (`app/egresados/empleadores.py`, `/docencia/empleadores`): organización, sector y contacto con correo; no se
+  eliminan, se desactivan. Los ve quien ve el seguimiento estudiantil; los registra quien gestiona encuestas.
+- **Capacitación** (`/calidad/capacitacion`, `registrar_capacitacion`: Dirección de Carrera y Gestión de datos), **convenios**
+  (`/calidad/convenios`, `registrar_convenios`: Dirección de Carrera) e **impacto social** (`/calidad/impacto`,
+  `registrar_impacto_proyectos`: las dos direcciones y el responsable o co-responsable del proyecto). Los ven quienes ven el
+  marco; el responsable de un proyecto ve los suyos. Todo se audita.
+- **Decisiones tomadas por el agente (por confirmar):** una capacitación cuenta en el año en que concluyó y no se registran
+  las que siguen en curso; cada académico no registra las suyas (lo hacen la Dirección o Gestión de datos); un convenio
+  «activo» en el año es uno vigente con al menos una actividad registrada en el año; un impacto «comprobado» exige una
+  evidencia y su descripción; la encuesta a empleadores es nominal por omisión (pocos empleadores: con anónima casi nunca se
+  llegaría a 5 respuestas); la encuesta a académicos va a quienes tienen vínculo vigente el día en que se abre.
 
 ### Decisiones (confirmadas por el usuario el 6-nov-2026, salvo la 6)
 1. **Nombre:** «Aseguramiento de la Calidad» en el menú y «SIAC de la Carrera» en los documentos.

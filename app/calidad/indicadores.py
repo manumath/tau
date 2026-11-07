@@ -22,7 +22,7 @@ from app.calidad import estudiantes as ind_estudiantes
 from app.comun import vinculos
 from app.comun.db import get_db, transaccion
 from app.egresados import egresados
-from app.estudiantil import actividad, cohortes, tutoria
+from app.estudiantil import actividad, cohortes, encuestas, tutoria
 
 DURACION_CICLOS, MARGEN_CICLOS = 10, 2   # licenciatura de 10 semestres; «oportuna» = hasta 2 ciclos más
 SATISFECHO = 4                            # en la escala de 1 a 5, «de acuerdo» o más
@@ -64,6 +64,10 @@ class _Anio:
     @property
     def memoria(self):
         return self.anexo[2]
+
+    @cached_property
+    def cuerpo_personas(self):
+        return anexo.cuerpo_academico(self.anio, date.today().isoformat())["personas"]
 
     @cached_property
     def cuerpo(self):
@@ -367,6 +371,84 @@ def _autoevaluacion_vigente(c, a):
     return Resultado(1, None, f"«{f[0]['nombre']}», concluida el {f[0]['fecha']}.")
 
 
+def _acciones_cumplidas(c, a):
+    hoy = date.today().isoformat()
+    f = get_db().q(
+        """SELECT COUNT(*) AS n, COALESCE(SUM(estado = 'cumplida' AND cumplida_en <= plazo), 0) AS en_plazo
+           FROM accion_mejora WHERE estado != 'cancelada' AND (:m IS NULL OR marco_id = :m)
+             AND substr(plazo, 1, 4) = :a AND (plazo < :hoy OR estado = 'cumplida')""",
+        {"m": c.marco_id, "a": str(a), "hoy": hoy})[0]
+    return Resultado(_pct(f["en_plazo"], f["n"]), f["n"], f"{f['en_plazo']} de {f['n']} acciones con plazo en el año "
+                                                          "(ya vencido, o cumplidas) se cumplieron a tiempo.")
+
+
+# --- Datos de la etapa 8: encuestas a empleadores, capacitación, convenios e impacto --------------------------------
+
+def _items_de_encuestas(a, donde: str, clave: str | None) -> tuple[list[int], int, int]:
+    """Valores de escala de las encuestas abiertas en el año que cumplen `donde` (y de las preguntas con `clave`, si se
+    indica). Una encuesta anónima con menos de `MIN_ANONIMO` respuestas no cuenta. → (valores, respuestas, omitidas)."""
+    vals, n, omitidas = [], 0, 0
+    for e in get_db().q(f"SELECT id, anonima FROM encuesta WHERE substr(abierta_en, 1, 4) = ? AND {donde}", [str(a)]):
+        resp = encuestas.n_respuestas(e["id"])
+        if e["anonima"] and resp < encuestas.MIN_ANONIMO:
+            omitidas += 1
+            continue
+        n += resp
+        vals += [int(f["valor"]) for f in get_db().q(
+            """SELECT i.valor FROM respuesta_item i JOIN pregunta p ON p.id = i.pregunta_id
+               WHERE p.encuesta_id = ? AND p.tipo = 'escala' AND (? IS NULL OR p.clave = ?)""", [e["id"], clave, clave])]
+    return vals, n, omitidas
+
+
+def _nota_omitidas(omitidas: int) -> str:
+    return (f" No cuentan {omitidas} encuesta(s) anónima(s) con menos de {encuestas.MIN_ANONIMO} respuestas."
+            if omitidas else "")
+
+
+def _promedio_encuesta(donde, clave, texto):
+    def f(c, a):
+        vals, n, omit = _items_de_encuestas(a, donde, clave)
+        prom = round(sum(vals) / len(vals), 2) if vals else None
+        return Resultado(prom, n, f"Promedio de {len(vals)} valoraciones (1 a 5) en {n} respuestas a {texto} abiertas en "
+                                  f"el año.{_nota_omitidas(omit)}")
+    return f
+
+
+def _satisfaccion_empleadores(c, a):
+    vals, n, omit = _items_de_encuestas(a, "publico = 'empleadores'", "satisfaccion")
+    si = sum(v >= SATISFECHO for v in vals)
+    return Resultado(_pct(si, len(vals)), len(vals), f"{si} de {len(vals)} respuestas de acuerdo o totalmente de acuerdo, "
+                                                     f"en encuestas a empleadores abiertas en el año.{_nota_omitidas(omit)}")
+
+
+def _personal_capacitado(c, a):
+    personas = c.anio(a).cuerpo_personas
+    con = {f["usuario_id"] for f in get_db().q("SELECT usuario_id FROM capacitacion WHERE substr(fecha_fin, 1, 4) = ?",
+                                               [str(a)])}
+    si = sum(p["id"] in con for p in personas)
+    return Resultado(_pct(si, len(personas)), len(personas),
+                     f"{si} de {len(personas)} académicos vinculados concluyeron al menos una capacitación en el año.")
+
+
+def _convenios_activos(c, a):
+    f = get_db().q(
+        """SELECT COUNT(*) AS vigentes,
+                  COALESCE(SUM(EXISTS (SELECT 1 FROM actividad_convenio x WHERE x.convenio_id = v.id
+                                         AND substr(x.fecha, 1, 4) = :a)), 0) AS activos
+           FROM convenio v WHERE v.fecha_firma <= :a || '-12-31'
+             AND (v.vigente_hasta IS NULL OR v.vigente_hasta >= :a || '-01-01')""", {"a": str(a)})[0]
+    return Resultado(f["activos"], f["vigentes"], f"{f['activos']} de {f['vigentes']} convenios vigentes en el año "
+                                                  "registraron alguna actividad.")
+
+
+def _impacto_interaccion_social(c, a):
+    ps = [p for p in c.anio(a).regs["proyectos"] if p.get("clase") == "interaccion_social"]
+    con = {f["proyecto_id"] for f in get_db().q("SELECT proyecto_id FROM impacto_proyecto WHERE comprobado = 1")}
+    si = sum(p["id"] in con for p in ps)
+    return Resultado(_pct(si, len(ps)), len(ps), f"{si} de {len(ps)} proyectos de interacción social vigentes en el año "
+                                                 "tienen impacto comprobado (con su evidencia).")
+
+
 @dataclass
 class Calculo:
     fn: object = None
@@ -419,7 +501,14 @@ CALCULOS = {
                                                  "de acuerdo o totalmente de acuerdo")),
     "tasa_respuesta_encuestas": Calculo(_tasa_respuesta),
     "autoevaluacion_vigente": Calculo(_autoevaluacion_vigente),
-    "acciones_cumplidas": Calculo(pendiente="Se calculará cuando el sistema registre el plan de mejora."),
+    "acciones_cumplidas": Calculo(_acciones_cumplidas),
+    "perfil_titulados": Calculo(_promedio_encuesta("tipo = 'perfil_egreso' AND publico = 'egresados'", None,
+                                                   "encuestas de logro del perfil de egreso a titulados")),
+    "perfil_empleadores": Calculo(_promedio_encuesta("publico = 'empleadores'", "perfil", "encuestas a empleadores")),
+    "satisfaccion_empleadores": Calculo(_satisfaccion_empleadores),
+    "personal_capacitado": Calculo(_personal_capacitado),
+    "convenios_activos": Calculo(_convenios_activos),
+    "impacto_interaccion_social": Calculo(_impacto_interaccion_social),
     "cumplimiento_objetivos": Calculo(),   # lo arma el tablero con las demás cifras del año
 }
 

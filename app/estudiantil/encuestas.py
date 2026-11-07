@@ -11,14 +11,17 @@ import json
 import secrets
 from datetime import date
 
-from app.comun import config, correo
+from app.comun import config, correo, vinculos
 from app.comun.db import AHORA, auditar, get_db, transaccion
 from app.estudiantil.plantillas_encuesta import PLANTILLAS
 
 TIPOS = {"satisfaccion": "Satisfacción estudiantil", "clima": "Clima y convivencia", "bienestar": "Bienestar",
          "abandono": "Causas de abandono", "egresados": "Seguimiento de egresados",
-         "perfil_egreso": "Logro del perfil de egreso", "otra": "Otra"}
-PUBLICOS = {"estudiantes": "Estudiantes que cursan", "egresados": "Egresados y titulados"}
+         "perfil_egreso": "Logro del perfil de egreso", "docentes": "Opinión de los académicos",
+         "empleadores": "Encuesta a empleadores", "otra": "Otra"}
+PUBLICOS = {"estudiantes": "Estudiantes que cursan", "egresados": "Egresados y titulados",
+            "docentes": "Académicos de la Carrera", "empleadores": "Empleadores registrados"}
+CON_COHORTE = ("estudiantes", "egresados")   # públicos que se filtran por año de ingreso
 TIPOS_PREGUNTA = {"escala": "Escala de 1 a 5", "si_no": "Sí o no", "opcion": "Una opción", "multiple": "Varias opciones",
                   "texto": "Texto libre"}
 ESTADOS = {"borrador": "Borrador", "abierta": "Abierta", "cerrada": "Cerrada"}
@@ -81,8 +84,9 @@ def validar(d: dict) -> tuple[dict, list[str]]:
     return {"titulo": titulo, "descripcion": (d.get("descripcion") or "").strip()[:2000] or None, "tipo": tipo,
             "anonima": int(str(d.get("anonima") or "0") in ("1", "on", "true")), "publico": publico,
             "hito": d.get("hito") if d.get("hito") in HITOS else None,
-            "cohorte_desde": int(desde) if desde.isdigit() else None,
-            "cohorte_hasta": int(hasta) if hasta.isdigit() else None, "cierra_el": cierra or None}, errores
+            "cohorte_desde": int(desde) if desde.isdigit() and publico in CON_COHORTE else None,
+            "cohorte_hasta": int(hasta) if hasta.isdigit() and publico in CON_COHORTE else None,
+            "cierra_el": cierra or None}, errores
 
 
 def crear(d: dict, uid: int | None) -> tuple[int | None, list[str]]:
@@ -194,6 +198,37 @@ def mover_pregunta(pid: int, delta: int) -> bool:
 
 def destinatarios(e: dict) -> tuple[list[dict], int]:
     """Personas a las que va dirigida (una por persona) y cuántas no tienen correo."""
+    if e["publico"] == "docentes":
+        filas = _academicos()
+    elif e["publico"] == "empleadores":
+        filas = get_db().q("""SELECT pe.id AS externo_id, pe.email, NULL AS grupo FROM empleador m
+                              JOIN persona_externa pe ON pe.id = m.externo_id WHERE m.activo = 1 ORDER BY pe.id""")
+    else:
+        return _estudiantes(e)
+    con_correo = [f for f in filas if (f["email"] or "").strip()]
+    return con_correo, len(filas) - len(con_correo)
+
+
+def _academicos() -> list[dict]:
+    """Académicos con vínculo vigente hoy. La invitación se dirige a una persona externa enlazada a su cuenta
+    (`persona_externa.usuario_id`), que se crea la primera vez: así las encuestas no necesitan otra tabla de invitados."""
+    hoy = date.today().isoformat()
+    db, filas = get_db(), []
+    for u in vinculos.personas_en_rango(hoy, hoy):
+        if not vinculos.vigente(u["id"], hoy):
+            continue
+        email = db.q("SELECT email FROM usuario WHERE id = ? AND activo = 1", [u["id"]])
+        if not email:
+            continue
+        email = email[0]["email"]
+        pe = db.q("SELECT id FROM persona_externa WHERE usuario_id = ? ORDER BY id LIMIT 1", [u["id"]])
+        xid = pe[0]["id"] if pe else db.t.persona_externa.insert(nombres=u["nombres"], apellidos=u["apellidos"],
+                                                                  email=email, usuario_id=u["id"])["id"]
+        filas.append({"externo_id": xid, "email": email, "grupo": None})
+    return filas
+
+
+def _estudiantes(e: dict) -> tuple[list[dict], int]:
     estados = ("cursando",) if e["publico"] == "estudiantes" else ("egresado", "titulado")
     filas = get_db().q(
         f"""SELECT pe.id AS externo_id, pe.email, MAX(es.cohorte_anio) AS grupo FROM estudiante es

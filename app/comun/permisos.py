@@ -96,6 +96,16 @@ ACCIONES = {
     "gestionar_autoevaluacion": {"direccion_carrera"},
     "registrar_juicios_calidad": {"direccion_carrera", "comision_calidad"},
     "ver_autoevaluacion": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
+    # Plan de mejora y evaluación externa (PLAN §57, etapa 6): los gestiona la Dirección de Carrera (decisión 2); el
+    # responsable de una acción registra sus avances aunque no tenga rol (lo decide la ruta).
+    "gestionar_plan_mejora": {"direccion_carrera"},
+    "ver_plan_mejora": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
+    # Datos que faltaban (PLAN §57, etapa 8): capacitación del personal (Dirección de Carrera y Gestión de datos), convenios
+    # (Dirección de Carrera) e impacto de los proyectos de interacción social (las dos direcciones; también el responsable
+    # del proyecto, lo decide la ruta). Los ven quienes ven el marco de calidad.
+    "registrar_capacitacion": {"direccion_carrera", "gestion_datos"},
+    "registrar_convenios": {"direccion_carrera"},
+    "registrar_impacto_proyectos": {"direccion_carrera", "direccion_instituto"},
     # «Avisar a los responsables» desde Calidad de datos (la Comisión de calidad solo mira; Administración no decide contenido).
     "avisar_calidad": {"direccion_instituto", "direccion_carrera", "coordinacion_academica"},
 }

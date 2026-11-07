@@ -582,15 +582,16 @@ En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** apar
 declararon, con su evidencia. **Verificar** la da por válida; **Observar** pide escribir qué debe corregir. En
 los dos casos el estudiante recibe un aviso (en el sistema y, según su preferencia, por correo).
 
-### Encuestas a estudiantes y egresados (Dirección de Carrera y Coordinación académica)
+### Encuestas a estudiantes, egresados, académicos y empleadores (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Encuestas** se arman, abren y envían las encuestas (satisfacción, clima, bienestar, abandono,
-seguimiento de egresados, logro del perfil de egreso). Ven los resultados también Gestión de datos y la Comisión de
+seguimiento de egresados, logro del perfil de egreso, opinión de los académicos y encuesta a empleadores). Ven los resultados también Gestión de datos y la Comisión de
 calidad, que solo ven cifras agregadas.
 
 1. **Crear:** parta de una encuesta de ejemplo (todas son borradores que puede cambiar) o en blanco. Indique el
-   tipo, a quién va dirigida (estudiantes que cursan, o egresados y titulados), si quiere limitarla a ciertos años
-   de ingreso, una fecha límite y si es **anónima**. Las preguntas pueden ser escala de 1 a 5, sí o no, una opción,
+   tipo, a quién va dirigida (estudiantes que cursan, egresados y titulados, **académicos de la Carrera** —los que tienen
+   vínculo vigente— o **empleadores registrados**), si quiere limitarla a ciertos años de ingreso (solo estudiantes y
+   egresados), una fecha límite y si es **anónima**. Las preguntas pueden ser escala de 1 a 5, sí o no, una opción,
    varias opciones o texto libre, obligatorias u opcionales; se reordenan con las flechas.
 2. **Abrir:** al abrirla, el sistema prepara un enlace personal por cada persona con correo (le dice cuántas no lo
    tienen). Desde ese momento no se pueden cambiar las preguntas ni los datos.
@@ -605,6 +606,18 @@ calidad, que solo ven cifras agregadas.
 y los resultados aparecen **solo desde 5 respuestas**; el promedio por año de ingreso, solo para los años con 5 o más. Así
 nadie puede deducir quién respondió qué. En las nominales (p. ej. el seguimiento de egresados) la Dirección ve las
 respuestas persona por persona.
+
+**Indicadores.** La encuesta de logro del perfil de egreso a titulados y la encuesta a empleadores alimentan los
+indicadores «Logro del perfil de egreso según los titulados», «… según los empleadores» y «Satisfacción de los
+empleadores» del marco de calidad (en el año en que se abrió la encuesta). No cambie la marca de las preguntas de
+competencias y de satisfacción de la plantilla de empleadores: el cálculo las reconoce por ella. Una encuesta anónima con
+menos de 5 respuestas no cuenta.
+
+### Empleadores (los registran la Dirección de Carrera y la Coordinación académica)
+
+En **Estudiantes → Empleadores**, registre las organizaciones donde trabajan o trabajaron los titulados, con la persona
+de contacto (nombre, cargo y correo) y el sector. A ellas va la encuesta a empleadores. Un empleador no se elimina: se
+**desactiva**, y deja de recibir encuestas.
 
 ### Egresados (Dirección de Carrera y Coordinación académica; la Comisión de calidad ve los indicadores)
 
@@ -743,6 +756,60 @@ La página muestra el avance (criterios juzgados y cuántos hay en cada nivel). 
 para imprimir o guardar en PDF (con membrete; dice «Borrador» mientras está en curso) y **XLSX** lo descarga en planilla
 (juicios, dimensiones, indicadores, evidencias y escala). El indicador «Autoevaluación vigente» del marco vale 1 en los años en
 que hay una autoevaluación concluida en los últimos cinco.
+
+### Plan de mejora (lo gestiona la Dirección de Carrera; lo ven la Comisión de calidad, la Coordinación académica y la Dirección del Instituto; cada responsable ve sus acciones)
+
+En **Aseguramiento de la Calidad → Plan de mejora**:
+
+1. **Acciones.** Cada acción tiene responsable (cualquier persona con cuenta del personal), **plazo**, prioridad, el
+   criterio que atiende y, si corresponde, el **indicador** y la **meta** con que se medirá. Se crean de tres maneras:
+   - **Debilidades de la autoevaluación:** muestra cada línea de «debilidades» de los juicios; **Crear acción** abre el
+     formulario con el criterio y la debilidad ya puestos. Las debilidades que ya tienen acción lo indican.
+   - **Evaluaciones externas:** en la ficha de una evaluación, **Crear acción** junto a cada recomendación.
+   - **Nueva acción**, para cualquier otra mejora.
+2. **Avances.** En la ficha de la acción, el responsable (o la Dirección) registra cada avance: qué se hizo, la fecha, el
+   porcentaje logrado si se puede estimar y una evidencia del repositorio (súbala antes en **Evidencias**). El primer avance
+   pasa la acción a «En curso».
+3. **Estado.** La Dirección marca la acción **Cumplida** (con la fecha en que se cumplió) o la **cancela** con su motivo; puede
+   reabrirla. Solo se elimina una acción sin avances; las demás se cancelan, para que quede su historia.
+
+El sistema avisa al responsable **30 días antes** del plazo y, si la acción vence sin cumplirse, a él y a la Dirección de
+Carrera. La lista filtra por estado (abiertas, vencidas, cumplidas, canceladas) y por criterio, resume cuántas se cumplieron
+en plazo y se descarga en **XLSX**. El indicador «Acciones de mejora cumplidas en plazo» del marco se calcula solo.
+
+**Evaluaciones externas** (evaluación por pares o acreditación): registre el organismo, las fechas de la visita y del
+dictamen, el resultado, la vigencia y el informe del organismo (como evidencia). Escriba las **recomendaciones** una por
+línea, con el criterio al que se refieren; de cada una sale una acción del plan. Una evaluación cuyas recomendaciones ya
+tienen acciones no se puede eliminar.
+
+### Ficha estadística (la ven quienes ven el marco de calidad)
+
+En **Aseguramiento de la Calidad → Ficha estadística** están, para los años de la ventana del marco, las cifras que suelen
+pedir los formularios de antecedentes de un proceso de evaluación: cuerpo académico (vinculados, JCE, grados, categorías,
+tramos de edad), oferta por semestre (paralelos e inscripciones), admisión por cohorte (vía, sexo, procedencia, colegio,
+edad) y la trayectoria de cada cohorte (matriculados al año, egresados, titulados, desertores). **XLSX** la descarga con
+las cifras del tablero de indicadores y una hoja **«Claves»**, que da un nombre a cada cifra (por ejemplo,
+`academicos.total.2025` o `admision.mujeres.I-2025`).
+
+**Llenar una plantilla.** Si un organismo entrega su propio formulario XLSX, prepare una vez un CSV de correspondencia con
+las columnas `hoja,celda,clave` (en qué celda va cada cifra) y súbalo junto con la plantilla en **Llenar una plantilla**:
+el sistema escribe solo esas celdas y deja intactos las fórmulas, los gráficos y el formato. Ninguno de los dos archivos
+se guarda en el sistema; la correspondencia es privada de la Carrera. Revise el resultado antes de enviarlo.
+
+### Capacitación, convenios e impacto social
+
+Tres registros que alimentan indicadores del marco y que antes se llevaban aparte. Los ven quienes ven el marco de calidad.
+
+- **Capacitación** (la registran la Dirección de Carrera y Gestión de datos): cursos, talleres, diplomados y pasantías que
+  concluyó cada académico, con su área, sus horas y, si hay, el certificado como evidencia. Cuenta en el año en que
+  concluyó. Indicador: «Personal capacitado» (académicos vinculados con alguna capacitación en el año).
+- **Convenios** (los registra la Dirección de Carrera): contraparte, país, ámbito, tipo, firma, vigencia, objeto y el
+  texto firmado como evidencia. En la ficha de cada convenio se anota lo que se hizo con él (estancias, cursos, proyectos,
+  publicaciones). Indicador: «Convenios con actividad en el año». Un convenio con actividades no se elimina.
+- **Impacto social** (lo registran las direcciones de Carrera y del Instituto y el **responsable** de cada proyecto, que lo
+  ve en su menú): por cada proyecto institucional de interacción social, a cuántas personas llegó, qué cambió y si el
+  impacto está **comprobado**, lo que exige una evidencia (informe de evaluación, encuesta a beneficiarios, registro de la
+  contraparte). Indicador: «Proyectos con impacto social comprobado».
 
 ## Informes
 

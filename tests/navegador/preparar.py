@@ -1,14 +1,14 @@
 """Base de datos de las pruebas en navegador. Uso: python -m tests.navegador.preparar <ruta.db>
 
 Crea una administradora y una investigadora titular (con vínculo desde 2015) con contraseñas de
-prueba definitivas, un investigador con más productos de los que caben en una página (para «Cargar
+prueba definitivas, una integrante de la Comisión de calidad, un investigador con más productos de los que caben en una página (para «Cargar
 más») y deja abierta la convocatoria institucional durante 30 días desde hoy, para
 que el flujo de propuestas no dependa de la fecha en que se ejecuten las pruebas.
 """
 import sys
 from datetime import date, timedelta
 
-from app.comun import usuarios
+from app.comun import permisos, unidades, usuarios
 from app.comun.componentes.registros import POR_PAGINA
 from app.comun.db import get_db, init_db
 from app.investigacion import institucionales, productos
@@ -17,6 +17,7 @@ CLAVE = "Prueba-navegador-1"
 ADMIN = "admin@prueba.test"
 INVESTIGADORA = "emmy@prueba.test"
 PROLIFICO = "alan@prueba.test"
+COMISION = "comision@prueba.test"
 
 
 def preparar(ruta: str):
@@ -25,6 +26,8 @@ def preparar(ruta: str):
                    debe_cambiar_pass=False)
     usuarios.crear(INVESTIGADORA, "Emmy", "Noether", CLAVE, debe_cambiar_pass=False, categoria="titular",
                    fecha_ingreso="2015-03-01")
+    comision = usuarios.crear(COMISION, "Mary", "Somerville", CLAVE, debe_cambiar_pass=False, es_investigador=False)
+    permisos.asignar(comision["id"], "comision_calidad", unidades.id_de("UMSA"))
     alan = usuarios.crear(PROLIFICO, "Alan", "Turing", CLAVE, debe_cambiar_pass=False)["id"]
     preprint = get_db().q("SELECT id FROM tipo_producto WHERE nombre = 'Preprint'")[0]["id"]
     for i in range(POR_PAGINA + 5):

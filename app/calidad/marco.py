@@ -62,6 +62,12 @@ FUENTES_AUTOMATICAS = {
     "autoevaluacion_vigente": "Autoevaluación concluida en los últimos 5 años",
     "tasa_respuesta_encuestas": "Participación en las encuestas del año",
     "acciones_cumplidas": "Acciones del plan de mejora cumplidas en plazo",
+    "perfil_titulados": "Logro del perfil de egreso según los titulados (encuesta de logro del perfil)",
+    "perfil_empleadores": "Logro del perfil de egreso según los empleadores (encuesta a empleadores)",
+    "satisfaccion_empleadores": "Satisfacción de los empleadores (encuesta a empleadores)",
+    "personal_capacitado": "Personal de la Carrera con capacitación concluida en el año",
+    "convenios_activos": "Convenios vigentes con actividad en el año",
+    "impacto_interaccion_social": "Proyectos de interacción social con impacto comprobado",
     "cumplimiento_objetivos": "Indicadores con meta cumplida",
 }
 

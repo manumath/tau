@@ -75,4 +75,34 @@ PLANTILLAS = {
             ("Puedo trabajar en equipos con personas de otras disciplinas.", E, None),
             ("Actúo con ética profesional y responsabilidad social.", E, None),
         ]},
+    "empleadores": {
+        "titulo": "Encuesta a empleadores", "tipo": "empleadores", "anonima": False, "publico": "empleadores",
+        "descripcion": "Su opinión sobre los titulados de la Carrera de Matemática que trabajan o trabajaron con usted nos "
+                       "ayuda a mejorar la formación. Ajuste las competencias al perfil de egreso vigente antes de abrirla.",
+        "preguntas": [
+            ("Los titulados de la Carrera razonan con rigor y resuelven problemas complejos.", E, None, "perfil"),
+            ("Modelan problemas de su organización con herramientas matemáticas.", E, None, "perfil"),
+            ("Usan herramientas computacionales y de programación con solvencia.", E, None, "perfil"),
+            ("Comunican sus ideas con claridad, por escrito y oralmente.", E, None, "perfil"),
+            ("Aprenden por su cuenta y se adaptan a temas nuevos.", E, None, "perfil"),
+            ("Trabajan bien en equipo y con personas de otras disciplinas.", E, None, "perfil"),
+            ("Actúan con ética profesional y responsabilidad.", E, None, "perfil"),
+            ("En general, estoy satisfecho(a) con el desempeño de los titulados de la Carrera.", E, None, "satisfaccion"),
+            ("¿Volvería a contratar a un titulado de la Carrera?", S, None),
+            ("¿Qué conocimientos o habilidades deberían fortalecer?", T, None),
+        ]},
+    "docentes": {
+        "titulo": "Opinión de los académicos", "tipo": "docentes", "anonima": True, "publico": "docentes",
+        "descripcion": "Queremos conocer su opinión sobre las condiciones de trabajo y la gestión de la Carrera. Es anónima.",
+        "preguntas": [
+            ("El plan de estudios es pertinente y está actualizado.", E, None),
+            ("Los estudiantes llegan a mis materias con la preparación necesaria.", E, None),
+            ("Cuento con los recursos (aulas, laboratorios, bibliografía, equipos) que necesito para enseñar.", E, None),
+            ("Tengo tiempo y apoyo para investigar.", E, None),
+            ("La Carrera me ofrece oportunidades de capacitación y actualización.", E, None),
+            ("La gestión de la Carrera es transparente y toma en cuenta la opinión de los académicos.", E, None),
+            ("El clima de trabajo entre colegas es bueno.", E, None),
+            ("En general, estoy satisfecho(a) con mi trabajo en la Carrera.", E, None, "satisfaccion"),
+            ("¿Qué debería mejorar la Carrera?", T, None),
+        ]},
 }

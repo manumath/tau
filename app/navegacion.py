@@ -8,13 +8,15 @@ servidor vuelve a comprobarlo en la ruta.
 from fasthtml.common import Span
 
 from app.academico.componentes import PESTANAS, visible
+from app.calidad import impacto, mejora
 from app.comun import permisos
 
 DOCENCIA = ("mia", "preparacion", "planes", "oferta", "carga", "gestiones")
-ESTUDIANTES = ("cohortes", "encuestas", "tutoria", "egresados")
+ESTUDIANTES = ("cohortes", "encuestas", "tutoria", "egresados", "empleadores")
 ICONOS = {"mia": "presentation", "preparacion": "calendar-check", "planes": "book-marked", "oferta": "layout-list",
           "carga": "clock", "gestiones": "calendar-range", "cohortes": "users-round", "encuestas": "clipboard-list",
-          "tutoria": "message-circle", "egresados": "graduation-cap"}
+          "tutoria": "message-circle", "egresados": "graduation-cap",
+          "empleadores": "building-2"}
 # Las tres secciones de la barra de abajo en el teléfono (además de Inicio y «Más»): las primeras que la persona ve.
 PRIORIDAD_MOVIL = ("productos", "proyectos", "mia", "investigadores", "informes", "usuarios", "cohortes")
 
@@ -62,6 +64,14 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
         calidad.append(_item("evidencias", "Evidencias", "/calidad/evidencias", "folder-open"))
     if puede("ver_autoevaluacion"):
         calidad.append(_item("autoevaluacion", "Autoevaluación", "/calidad/autoevaluaciones", "clipboard-check"))
+    if puede("ver_marco_calidad"):
+        calidad.append(_item("ficha", "Ficha estadística", "/calidad/ficha", "table-2"))
+        calidad.append(_item("capacitacion", "Capacitación", "/calidad/capacitacion", "school"))
+        calidad.append(_item("convenios", "Convenios", "/calidad/convenios", "handshake"))
+    if puede("ver_marco_calidad") or impacto.tiene_proyectos(auth["id"]):
+        calidad.append(_item("impacto", "Impacto social", "/calidad/impacto", "heart-handshake"))
+    if puede("ver_plan_mejora") or mejora.tiene_acciones(auth["id"]):
+        calidad.append(_item("mejora", "Plan de mejora", "/calidad/mejora", "list-todo"))
     if puede("ver_calidad_datos"):
         calidad.append(_item("calidad", "Calidad de datos", "/informes/calidad", "list-checks"))
     administracion = []

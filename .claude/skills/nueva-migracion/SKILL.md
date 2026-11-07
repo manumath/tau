@@ -11,6 +11,10 @@ aplicada no se edita nunca: los cambios van en una nueva.
 
 ## Pasos
 
+0. **Escríbala primero fuera de `migrations/`** (en el scratchpad) y pruébela sobre una copia: el servidor de desarrollo
+   del usuario recarga al guardar cualquier archivo y aplica en el acto lo que encuentre en `migrations/` a
+   `data/portal.db`. Un script que falla a la mitad deja la base a medias (fastmigrate no lo envuelve en una transacción)
+   y sin marcar como aplicado (pasó con la 0056, 7-nov-2026). Cópiela a `migrations/` solo cuando corra limpia.
 1. **Número:** el siguiente a `ls migrations | tail -1`. Nombre descriptivo en español:
    `migrations/0034-algo-claro.sql`. Para cargar datos con lógica, `.py` (ver `0004-msc2020.py`,
    `0028-planes-2017.py`).

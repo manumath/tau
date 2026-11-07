@@ -31,8 +31,8 @@ def _manual():
 def test_registro_cubre_las_fuentes_del_marco(app):
     """Cada fuente automática que ofrece el marco tiene su cálculo, y ninguno sobra."""
     assert set(indicadores.CALCULOS) == set(marco.FUENTES_AUTOMATICAS)
-    # Los pendientes dicen por qué; sin datos, cada cálculo devuelve un resultado sin fallar.
-    assert "plan de mejora" in indicadores.calcular("acciones_cumplidas", HOY).detalle
+    # Ninguno queda pendiente; sin datos, cada cálculo devuelve un resultado sin fallar.
+    assert not [k for k, c in indicadores.CALCULOS.items() if c.pendiente]
     calc = indicadores.Calculadora()
     for clave in indicadores.CALCULOS:
         assert isinstance(indicadores.calcular(clave, HOY - 1, calc), indicadores.Resultado)

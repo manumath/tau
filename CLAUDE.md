@@ -47,8 +47,8 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - `app/calidad`: Aseguramiento de la Calidad (PLAN §57): memoria, informe de I+D+i, cuerpo académico, calidad de
   datos, seguimiento estudiantil. Sin nombres de agencias ni de sus instrumentos (decisión del 6-nov-2026).
 - `app/estudiantil`: seguimiento estudiantil (PLAN §49): cohortes, carga del CSV de Seguimiento Académico,
-  actividad estudiantil y encuestas. Sin materias ni notas. `app/egresados`: titulación, seguimiento y
-  indicadores de egresados (PLAN §50).
+  actividad estudiantil y encuestas. Sin materias ni notas. `app/egresados`: titulación, seguimiento,
+  indicadores de egresados (PLAN §50) y registro de empleadores (PLAN §57).
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
   `main.py`. El menú lateral se arma en `app/navegacion.py`: una pantalla nueva se agrega ahí, con el mismo
   permiso que su ruta. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
@@ -103,7 +103,9 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 
 - **`data/portal.db` es la base del servidor de desarrollo del usuario**, que aplica solas las
   migraciones al recargar. No la modifique ni pruebe contra ella: trabaje sobre copias
-  (`sqlite3 data/portal.db ".backup 'copia.db'"`) y avise qué cambiará cuando su servidor migre.
+  (`sqlite3 data/portal.db ".backup 'copia.db'"`) y avise qué cambiará cuando su servidor migre. Como recarga al guardar,
+  una migración se escribe y se prueba **fuera** de `migrations/` y se copia allí solo cuando corre limpia (skill
+  `nueva-migracion`).
 - No use el puerto 5001 (servidor del usuario): la skill `captura-visual` usa uno libre.
 - Contraseñas: solo las de ejemplo del seed o de prueba fijadas en copias temporales. Nunca pida
   ni use contraseñas del sistema operativo o cuentas reales.
