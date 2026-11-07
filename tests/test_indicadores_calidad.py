@@ -9,8 +9,9 @@ from openpyxl import load_workbook
 from app.calidad import indicadores, marco
 from app.comun import permisos, unidades, usuarios
 from app.comun.db import get_db
+from app.estudiantil import cohortes
 from tests.conftest import HX, login
-from tests.test_cohortes import _cargar
+from tests.test_cohortes import CSV, _cargar
 
 CLAVE = "Clave-indicadores-1"
 HOY = date.today().year
@@ -25,7 +26,9 @@ def _por_fuente(fuente):
 
 
 def _manual():
-    return get_db().q("SELECT * FROM indicador_calidad WHERE fuente = 'manual' AND activo = 1 ORDER BY codigo")[0]
+    # En %: uno de «sí/no» se muestra como «Sí» o «No», no con su cifra.
+    return get_db().q("""SELECT * FROM indicador_calidad WHERE fuente = 'manual' AND activo = 1 AND unidad_medida = '%'
+                         ORDER BY codigo""")[0]
 
 
 def test_registro_cubre_las_fuentes_del_marco(app):
@@ -50,28 +53,44 @@ def test_cifras_de_las_cohortes(app):
     c = indicadores.Calculadora()
     assert indicadores.calcular("ingresantes", 2021, c).valor == 2
     assert indicadores.calcular("ingresantes_mujeres", 2021, c).valor == 100.0
-    # En 2022 dejaron la carrera una retirada y una congelada que no volvió, de cinco matriculados.
-    d = indicadores.calcular("desercion", 2022, c)
-    assert (d.valor, d.n) == (40.0, 5)
-    assert indicadores.calcular("brecha_desercion_genero", 2022, c).valor == 66.7
     t = indicadores.calcular("tiempo_titulacion", 2025, c)
     assert (t.valor, t.n) == (5.0, 1)
 
 
+def test_desercion_por_cohorte(app):
+    """La deserción es de la cohorte (decisión del 7-nov-2026): quienes la dejaron en sus primeros 3 años, contada en el
+    año en que la cifra queda firme (cohortes I y II de cuatro años antes)."""
+    _cargar(CSV + "6666666,Carlos,Ticona,,hombre,,2021-I,,,,,,cursando,,,,,\n"
+                  "7777777,Marta,Apaza,,mujer,,2021-II,,,,,,retirado,2025-I,,,,académico\n")
+    c = indicadores.Calculadora()
+    # Cohorte 2021: Ana (retirada en su 4.º ciclo) y Rosa (congelada en su 2.º, no volvió) desertaron; Carlos sigue
+    # cursando y Marta se retiró en su 8.º ciclo, después del plazo.
+    d = indicadores.calcular("desercion", 2025, c)
+    assert (d.valor, d.n) == (50.0, 4)
+    assert indicadores.calcular("brecha_desercion_genero", 2025, c).valor == 66.7    # 2 de 3 mujeres, 0 de 1 hombre
+    # Cohorte 2020 (Luis titulado, Pedro egresado): ninguno desertó; la brecha necesita mujeres y hombres.
+    assert indicadores.calcular("desercion", 2024, c).valor == 0.0
+    assert indicadores.calcular("brecha_desercion_genero", 2024, c).valor is None
+    # A mitad de 2025 solo es firme la cohorte 2021-I (Ana y Carlos); la 2021-II espera al segundo semestre.
+    c.actual = cohortes.ordinal(2025, "I")
+    d = indicadores.calcular("desercion", 2025, c)
+    assert (d.valor, d.n) == (50.0, 2)
+
+
 def test_meta_semaforo_y_cumplimiento(app):
-    _cargar()
+    _cargar()   # cohorte 2021: sus dos ingresantes desertaron (100 %, firme en 2025)
     mid = _marco()["id"]
     des = _por_fuente("auto:desercion")
     assert des["sentido"] == "menor"
-    marco.guardar_meta(des["id"], {"anio": 2022, "valor": 30, "nota": None})
-    v = indicadores.valores_del_anio(mid, 2022)
-    assert (v[des["id"]]["valor"], v[des["id"]]["meta"], v[des["id"]]["estado"]) == (40.0, 30, "no_cumple")
+    marco.guardar_meta(des["id"], {"anio": 2025, "valor": 30, "nota": None})
+    v = indicadores.valores_del_anio(mid, 2025)
+    assert (v[des["id"]]["valor"], v[des["id"]]["meta"], v[des["id"]]["estado"]) == (100.0, 30, "no_cumple")
     cumpl = _por_fuente("auto:cumplimiento_objetivos")
     assert (v[cumpl["id"]]["valor"], v[cumpl["id"]]["n"]) == (0.0, 1)   # 0 de 1 indicador con meta y cifra
     # La serie de la ficha da lo mismo que el tablero.
-    assert indicadores.serie(marco.indicador(des["id"]), [2022])[2022]["estado"] == "no_cumple"
-    marco.guardar_meta(des["id"], {"anio": 2022, "valor": 45, "nota": None})
-    assert indicadores.valores_del_anio(mid, 2022)[cumpl["id"]]["valor"] == 100.0
+    assert indicadores.serie(marco.indicador(des["id"]), [2025])[2025]["estado"] == "no_cumple"
+    marco.guardar_meta(des["id"], {"anio": 2025, "valor": 100, "nota": None})
+    assert indicadores.valores_del_anio(mid, 2025)[cumpl["id"]]["valor"] == 100.0
 
 
 def test_instantaneas_de_lo_que_solo_se_mide_a_hoy(app):

@@ -709,12 +709,21 @@ marco, agrupadas por dimensión. Elija otro año final arriba y pulse «Ver» pa
 - **Automáticos:** el sistema los calcula con lo que ya está registrado (producción, proyectos, cuerpo académico, oferta,
   cohortes, egresados, encuestas). Algunos solo se pueden medir «a hoy» (por ejemplo, la cobertura de la tutoría): el
   sistema guarda la cifra una vez al día, y para un año pasado muestra la última que guardó en él.
+- **Cifras de las cohortes:** la retención, la titulación oportuna y la deserción siguen a quienes ingresaron juntos. La
+  deserción cuenta a los ingresantes que dejaron la Carrera en sus primeros 3 años (retirados, o congelados que no volvieron
+  en los dos semestres siguientes) y aparece en el año en que la cifra ya no puede cambiar: en 2026, la cohorte de 2022.
+  Para que sea correcta, la carga de Seguimiento Académico debe traer las cohortes completas, también a quienes se fueron.
 - **Manuales:** la Dirección de Carrera y Gestión de datos registran su cifra en la ficha del indicador (año, cifra, base,
   fuente y nota). Guardar otra para el mismo año la reemplaza.
 - **Cierre de los años** (Dirección de Carrera): al final del tablero. Cerrar un año ya terminado congela sus cifras y metas,
   para que lo informado no cambie si después se corrigen los datos; mientras está cerrado, sus cifras manuales no se pueden
   cambiar. «Reabrir» vuelve a calcularlas con los datos de hoy.
 - **Descargar XLSX:** cifras, base, meta y estado por año, el detalle de cada cifra, el método de cada indicador y los cierres.
+- **Página pública** (botón arriba): la página sin inicio de sesión donde la Carrera rinde cuentas. Muestra solo los
+  indicadores que la Dirección de Carrera marcó con «Publicar en la página pública» al editarlos en el marco (en la lista
+  del marco llevan la marca «Público»), y solo en los años cerrados. De cada cifra se publican el valor, la base (n), la
+  meta y si la cumple, con la fórmula del indicador; nunca el detalle de cómo se obtuvo ni una cifra calculada sobre menos
+  de 5 personas o casos (aparece «n < 5»). En la brecha entre mujeres y hombres, la base es el grupo más pequeño.
 
 ### Evidencias (las registran la Dirección de Carrera y la Comisión de calidad; las ven también la Coordinación académica y la Dirección del Instituto)
 

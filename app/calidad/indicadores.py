@@ -25,6 +25,7 @@ from app.egresados import egresados
 from app.estudiantil import actividad, cohortes, encuestas, tutoria
 
 DURACION_CICLOS, MARGEN_CICLOS = 10, 2   # licenciatura de 10 semestres; «oportuna» = hasta 2 ciclos más
+PLAZO_DESERCION = 6   # deserción de la cohorte en sus primeros 3 años (decisión del 7-nov-2026)
 SATISFECHO = 4                            # en la escala de 1 a 5, «de acuerdo» o más
 
 
@@ -182,27 +183,39 @@ def _retencion(c, a):
                      f"Cohortes {a - 1}: {r} de {len(medibles)} siguen matriculados un año después de ingresar.")
 
 
-def _desercion_del_anio(c, a, grupo=None):
+def _cohorte_desercion(a):
+    return a - (PLAZO_DESERCION + cohortes.CICLOS_SIN_VOLVER) // 2
+
+
+def _desercion_cohorte(c, a, grupo=None):
+    """Desertores en los primeros PLAZO_DESERCION ciclos e ingresantes de las cohortes cuya cifra queda firme en el año:
+    el plazo más los ciclos que se esperan a un congelado (cohortes I y II de cuatro años antes)."""
+    firme = PLAZO_DESERCION + cohortes.CICLOS_SIN_VOLVER
     ciclos = (cohortes.ordinal(a, "I"), cohortes.ordinal(a, "II"))
-    matric = [e for e in (grupo if grupo is not None else c.alumnos)
-              if any(cohortes.matriculado(e, k, c.actual) for k in ciclos)]
-    des = [e for e in matric if cohortes.desertor(e, c.actual) and e["ultimo"] in ciclos]
-    return len(des), len(matric)
+    g = [e for e in (grupo if grupo is not None else c.alumnos)
+         if e["ingreso"] + firme in ciclos and e["ingreso"] + firme <= c.actual]
+    d = sum(cohortes.desertor(e, c.actual) and e["ultimo"] is not None and e["ultimo"] < e["ingreso"] + PLAZO_DESERCION
+            for e in g)
+    return d, len(g)
 
 
 def _desercion(c, a):
-    d, n = _desercion_del_anio(c, a)
-    return Resultado(_pct(d, n), n, f"{d} de {n} estudiantes matriculados en el año lo dejaron en ese año (retirados, o "
-                                    "congelados que no volvieron en los dos ciclos siguientes).")
+    d, n = _desercion_cohorte(c, a)
+    if not n:
+        return Resultado(None, 0, f"No hay ingresantes de la cohorte {_cohorte_desercion(a)}, o su cifra aún no es firme.")
+    return Resultado(_pct(d, n), n, f"Cohorte {_cohorte_desercion(a)}: {d} de {n} ingresantes la dejaron en sus primeros "
+                                    f"{PLAZO_DESERCION // 2} años (retirados, o congelados que no volvieron en los "
+                                    f"{cohortes.CICLOS_SIN_VOLVER} ciclos siguientes).")
 
 
 def _brecha_desercion(c, a):
-    dm, nm = _desercion_del_anio(c, a, [e for e in c.alumnos if e["sexo"] == "mujer"])
-    dh, nh = _desercion_del_anio(c, a, [e for e in c.alumnos if e["sexo"] == "hombre"])
+    dm, nm = _desercion_cohorte(c, a, [e for e in c.alumnos if e["sexo"] == "mujer"])
+    dh, nh = _desercion_cohorte(c, a, [e for e in c.alumnos if e["sexo"] == "hombre"])
     if not nm or not nh:
-        return Resultado(None, nm + nh, "Hace falta al menos una mujer y un hombre matriculados en el año.")
-    return Resultado(round(100 * dm / nm - 100 * dh / nh, 1), nm + nh,
-                     f"Mujeres: {dm} de {nm}; hombres: {dh} de {nh}.")
+        return Resultado(None, nm + nh, f"Hace falta al menos una mujer y un hombre en la cohorte {_cohorte_desercion(a)}.")
+    # La base es el grupo más pequeño: con pocas mujeres o pocos hombres, la brecha deja reconocer a alguien.
+    return Resultado(round(100 * dm / nm - 100 * dh / nh, 1), min(nm, nh),
+                     f"Mujeres: {dm} de {nm}; hombres: {dh} de {nh} (n = el grupo más pequeño).")
 
 
 def _cobertura_tutoria(c, a):

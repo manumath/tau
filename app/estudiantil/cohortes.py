@@ -62,10 +62,14 @@ def matriculado(e: dict, ciclo: int, actual: int) -> bool:
     return ciclo <= fin
 
 
+CICLOS_SIN_VOLVER = 2   # un congelado que no vuelve en estos ciclos cuenta como desertor
+
+
 def desertor(e: dict, actual: int) -> bool:
-    """Deserción (definición habitual de los modelos de calidad de la región): abandonó el programa, o congeló sus estudios y no volvió en los dos ciclos siguientes."""
+    """Deserción (definición habitual de los modelos de calidad de la región): abandonó el programa, o congeló sus
+    estudios y no volvió en los dos ciclos siguientes."""
     return e["estado"] == "retirado" or (e["estado"] == "congelado" and e["ultimo"] is not None
-                                          and actual > e["ultimo"] + 2)
+                                          and actual > e["ultimo"] + CICLOS_SIN_VOLVER)
 
 
 def cohortes_hasta(ultimo: tuple[int, str], n: int) -> list[int]:

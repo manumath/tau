@@ -317,12 +317,14 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
 
 ## Partes públicas y API
 
-Lo público se limita a quienes activaron «Perfil público» en «Mi perfil».
+Lo público se limita a quienes activaron «Perfil público» en «Mi perfil» y a los indicadores que la Dirección de Carrera
+marcó como públicos en el marco de calidad (solo años cerrados, sin cifras con base menor que 5: `app/calidad/publico.py`).
 
 | Ruta | Contenido |
 |---|---|
 | `/publico/investigadores` | Directorio público (búsqueda por nombre, unidad o área) |
 | `/publico/investigadores/{id}` | Perfil: cargo, áreas MSC, resumen, publicaciones, identificadores |
+| `/publico/indicadores` | Indicadores de calidad de la Carrera: valor, base, meta y fórmula de los años cerrados |
 | `GET /api/v1/investigadores` | Lista JSON de perfiles públicos (`?q=` para buscar) |
 | `GET /api/v1/investigadores/{id}` | Perfil público con sus productos |
 | `GET /api/v1/productos` | Productos aceptados o publicados con algún autor de perfil público (`?anio=`) |

@@ -7,7 +7,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, H3, H4, Button, ButtonT, Card, CheckboxX, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
 
-from app.calidad import evidencias, indicadores, marco
+from app.calidad import evidencias, indicadores, marco, publico
 from app.calidad.rutas.indicadores import cifra, numero
 from app.calidad.rutas.informes import XLSX, _archivo, descarga
 from app.comun import permisos, unidades
@@ -70,7 +70,8 @@ def _tabla_indicadores(c, gestiona):
         Thead(Tr(Th("Código", cls="w-24"), Th("Indicador"), Th("Tipo", cls="w-28"), Th("Fuente", cls="w-32"),
                  Th("Frecuencia", cls="w-32"), Th("Metas", cls="w-20"))),
         Tbody(*[Tr(Td(A(i["codigo"], href=f"{BASE}/indicadores/{i['id']}", cls="font-mono hover:underline")),
-                   Td(i["nombre"], " ", insignia("Inactivo", "gris") if not i["activo"] else ""),
+                   Td(i["nombre"], " ", insignia("Inactivo", "gris") if not i["activo"] else "",
+                      " ", insignia("Público", "verde", icono="globe") if i["publico"] else ""),
                    Td(marco.TIPOS[i["tipo"]]), Td(_insignia_fuente(i)), Td(marco.FRECUENCIAS[i["frecuencia"]]),
                    Td(", ".join(str(mt["anio"]) for mt in i["metas"]) or "—"),
                    cls="" if i["activo"] else "opacity-60")
@@ -464,6 +465,9 @@ def form_indicador(titulo, d, mid, url, metodo, errores=()):
                              Span(a["nombre"], title=a["descripcion"] or ""), cls="flex items-center gap-2 text-sm")
                        for a in marco.atributos(mid)], cls="grid grid-cols-2 sm:grid-cols-4 gap-2"),
                  cls="space-y-2"),
+             Label(CheckboxX(name="publico", value="1", checked=bool(d.get("publico"))),
+                   Span("Publicar en la página pública de indicadores (solo años cerrados y cifras con base de al menos "
+                        f"{publico.MIN_BASE})"), cls="flex items-center gap-2 text-sm"),
              _botones_modal(), **{f"hx_{metodo}": url}, hx_target=f"#{ID_MODAL}", cls="space-y-4"),
         ancho="max-w-3xl")
 
@@ -471,7 +475,7 @@ def form_indicador(titulo, d, mid, url, metodo, errores=()):
 async def _datos_indicador(req):
     f = await req.form()
     d = {k: f.get(k, "") for k in ("codigo", "nombre", "tipo", "formula", "fuente", "unidad_medida", "frecuencia",
-                                   "sentido", "responsable", "referencia")}
+                                   "sentido", "responsable", "referencia", "publico")}
     d["atributos"] = f.getlist("atributos")
     return d
 
@@ -607,6 +611,8 @@ def get(auth, iid: int):
                      _dato("Lectura", marco.SENTIDOS[i["sentido"]]), cls="grid grid-cols-2 sm:grid-cols-4 gap-4"),
                  Div(_dato("Responsable", i["responsable"] or "—"), _dato("Referencia", i["referencia"] or "—"),
                      cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
+                 _dato("Página pública", A("Se publica", href="/publico/indicadores", cls="text-primary hover:underline")
+                       if i["publico"] else "No se publica"),
                  _dato("Atributos", Div(*[A(insignia(a["nombre"], "azul", titulo=a["descripcion"]),
                                             href=f"{BASE}?atributo={a['clave']}") for a in i["atributos"]],
                                         cls="flex flex-wrap gap-1") if i["atributos"] else "—"),

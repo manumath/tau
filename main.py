@@ -52,6 +52,7 @@ from app.calidad.rutas.ficha import rt as rutas_ficha
 from app.calidad.rutas.capacitacion import rt as rutas_capacitacion
 from app.calidad.rutas.convenios import rt as rutas_convenios
 from app.calidad.rutas.impacto import rt as rutas_impacto
+from app.calidad.rutas.publico import rt as rutas_indicadores_publicos
 from app.egresados.rutas.empleadores import rt as rutas_empleadores
 from app.comun.rutas.estudiantes import rt as rutas_estudiantes
 from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
@@ -167,7 +168,7 @@ def create_app(db_path=config.DB_PATH):
     # rutas_bibtex va antes que rutas_productos: /productos/bibtex coincidiría con /productos/{pid}.
     for router in (rutas_auth, rutas_inicio, rutas_busqueda, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
-                   rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_anexo, rutas_marco, rutas_indicadores, rutas_evidencias, rutas_autoevaluacion, rutas_mejora, rutas_ficha, rutas_capacitacion, rutas_convenios, rutas_impacto, rutas_empleadores, rutas_informes, rutas_publico,
+                   rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_anexo, rutas_marco, rutas_indicadores, rutas_evidencias, rutas_autoevaluacion, rutas_mejora, rutas_ficha, rutas_capacitacion, rutas_convenios, rutas_impacto, rutas_empleadores, rutas_informes, rutas_publico, rutas_indicadores_publicos,
                    rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
                    rutas_preparacion, rutas_cohortes,

@@ -294,7 +294,8 @@ def validar_indicador(d: dict, mid: int, iid: int | None = None) -> tuple[dict, 
          "tipo": _texto(d, "tipo"), "formula": _texto(d, "formula") or None,
          "fuente": _texto(d, "fuente") or "manual", "unidad_medida": _texto(d, "unidad_medida") or None,
          "frecuencia": _texto(d, "frecuencia") or "anual", "sentido": _texto(d, "sentido") or "mayor",
-         "responsable": _texto(d, "responsable") or None, "referencia": _texto(d, "referencia") or None}
+         "responsable": _texto(d, "responsable") or None, "referencia": _texto(d, "referencia") or None,
+         "publico": 1 if d.get("publico") else 0}
     if x["tipo"] not in TIPOS:
         errores.append("Elija el tipo de indicador.")
     if x["fuente"] != "manual" and (not x["fuente"].startswith("auto:") or x["fuente"][5:] not in FUENTES_AUTOMATICAS):

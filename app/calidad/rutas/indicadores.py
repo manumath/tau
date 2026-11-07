@@ -43,7 +43,10 @@ def cifra(x: dict, unidad: str | None = None, detalle: bool = True):
         x["detalle"] if detalle else "", f"n = {x['n']}" if x["n"] is not None else "",
         f"Meta: {numero(x['meta'])}" if x["meta"] is not None else "", indicadores.ORIGENES.get(x["origen"], ""),
         indicadores.ESTADOS[x["estado"]]) if t)
-    texto = numero(x["valor"]) + ("%" if unidad == "%" else f" {unidad}" if unidad else "")
+    if unidad == "sí/no":
+        texto = "Sí" if x["valor"] else "No"
+    else:
+        texto = numero(x["valor"]) + ("%" if unidad == "%" else f" {unidad}" if unidad and unidad != "número" else "")
     tono, icono = TONOS[x["estado"]]
     return insignia(texto, tono, titulo=ayuda, icono=icono)
 
@@ -130,7 +133,9 @@ def get(auth, hasta: str = ""):
                             name="hasta", aria_label="Hasta el año", cls="uk-select uk-form-small w-28"),
                      Button("Ver", type="submit", cls=(ButtonT.default, ButtonT.sm)), method="get", action=BASE,
                      cls="flex gap-2"),
-                descarga("XLSX", f"{BASE}/xlsx?hasta={h}"), cls="flex flex-wrap items-center gap-2"),
+                descarga("XLSX", f"{BASE}/xlsx?hasta={h}"),
+                A(UkIcon("globe", height=14, width=14), "Página pública", href="/publico/indicadores", target="_blank",
+                  cls="uk-btn uk-btn-default uk-btn-sm gap-1"), cls="flex flex-wrap items-center gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-4"),
         P("Cifras del año calendario; la del año en curso es parcial. Cada cifra muestra al pasar el cursor cómo se "
           "obtuvo y su base (n). El semáforo compara la cifra con la meta del mismo año; la definición de cada indicador "

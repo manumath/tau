@@ -50,15 +50,17 @@ def ids_publicos() -> set[int]:
 
 # --- Páginas ---------------------------------------------------------------------------------------------
 
-def pagina_publica(titulo, *contenido):
+def pagina_publica(titulo, *contenido, pie: str | None = None):
     cabecera = Header(Container(Div(
         A(Div(UkIcon("sigma", height=24, width=24), Span(config.NOMBRE_INSTITUTO, cls="font-semibold"),
-              cls="flex items-center gap-2"), href="/publico/investigadores"),
+              cls="flex items-center gap-2"), href="/publico/investigadores", cls="min-w-0"),
         Div(A("Investigadores", href="/publico/investigadores", cls="text-sm hover:underline"),
+            A("Indicadores", href="/publico/indicadores", cls="text-sm hover:underline"),
             A("Ingresar", href="/login", cls="uk-btn uk-btn-default uk-btn-sm"),
             cls="flex items-center gap-4"),
-        cls="flex items-center justify-between py-3"), cls=ContainerT.xl), cls="border-b border-border")
-    pie = Footer(Container(P(f"{config.NOMBRE_INSTITUTO} · Información publicada por cada investigador(a).",
+        cls="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3"), cls=ContainerT.xl),
+        cls="border-b border-border")
+    pie = Footer(Container(P(pie or f"{config.NOMBRE_INSTITUTO} · Información publicada por cada investigador(a).",
                              cls=(TextPresets.muted_sm, "py-6")), cls=ContainerT.xl),
                  cls="border-t border-border mt-12")
     return (Title(f"{titulo} · {config.NOMBRE_INSTITUTO}"), cabecera,

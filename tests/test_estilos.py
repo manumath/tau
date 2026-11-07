@@ -16,7 +16,7 @@ SIN_REGLA = {"hoja", "no-imprimir", "citas", "apagado", "nomath", "htmx-indicato
 
 
 def test_paginas_sin_recursos_externos(client):
-    for url in ("/login", "/publico"):
+    for url in ("/login", "/publico", "/publico/indicadores"):
         html = client.get(url).text
         externos = re.findall(r'<script[^>]+src="(https?://[^"]+)"', html) + re.findall(
             r'<link[^>]+rel="(?:stylesheet|preload|modulepreload)"[^>]+href="(https?://[^"]+)"', html)

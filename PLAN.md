@@ -2218,7 +2218,7 @@ responde, el correo se intenta una vez sin cola (sirve para el aviso de un error
 
 ## 57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)
 
-**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 y la 6 el 7-nov-2026 (ver al final). Etapas 1 a 8 hechas y sus decisiones del agente confirmadas (7-nov-2026). Siguen: la deserción por cohorte y la página pública (etapa 9).**
+**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 y la 6 el 7-nov-2026 (ver al final). Etapas 1 a 8 hechas y sus decisiones del agente confirmadas (7-nov-2026). Etapa 9 (página pública) hecha el mismo día.**
 
 ### Propósito
 
@@ -2413,7 +2413,10 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   (`ver_marco_calidad`); años calendario (no gestiones); la titulación oportuna usa 10 semestres más 2; la satisfacción de
   egresados cuenta 4 o más en la escala de 1 a 5; la retención de doctores mira si tenían vínculo tres años antes del corte.
 - **Deserción:** se calculaba por año (desertores del año / matriculados en el año) mientras la fórmula hablaba de la
-  cohorte; el 7-nov-2026 se decidió por la cohorte (ver «Decisiones del 7-nov-2026»).
+  cohorte; el 7-nov-2026 se decidió por la cohorte (ver «Decisiones del 7-nov-2026»). Hecho el mismo día:
+  `indicadores._desercion_cohorte` (plazo de 6 ciclos, `PLAZO_DESERCION`, más los 2 que se espera a un congelado,
+  `cohortes.CICLOS_SIN_VOLVER`; el año a muestra las cohortes I y II de a − 4) y la **migración 0057**, que cambia el texto
+  de las fórmulas de D3.2.b y D3.4.a si nadie lo editó. Las cifras de los años ya cerrados no cambian.
 
 ### Etapa 4: evidencias (hecha, 6-nov-2026)
 
@@ -2523,6 +2526,22 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   «activo» en el año es uno vigente con al menos una actividad registrada en el año; un impacto «comprobado» exige una
   evidencia y su descripción; la encuesta a empleadores es nominal por omisión (pocos empleadores: con anónima casi nunca se
   llegaría a 5 respuestas); la encuesta a académicos va a quienes tienen vínculo vigente el día en que se abre.
+
+### Etapa 9: página pública de indicadores (hecha, 7-nov-2026)
+- **Migración 0058:** `indicador_calidad.publico` (0 o 1; ninguno se publica hasta marcarlo). La Dirección de Carrera lo
+  marca al editar el indicador en el marco («Publicar en la página pública»); la lista del marco lo señala con «Público» y
+  la ficha lo dice. El cambio queda en la auditoría como toda edición del marco.
+- **Página** `/publico/indicadores` (`app/calidad/publico.py`, sin sesión; enlazada desde la cabecera pública y desde el
+  tablero): el marco vigente de la Carrera, sus indicadores activos marcados, por dimensión, en los últimos años cerrados
+  (tantos como la ventana del marco), con las cifras congeladas al cerrar. De cada cifra, valor, base (n), meta y semáforo;
+  de cada indicador, su fórmula. No se publica el detalle (puede nombrar personas) ni una cifra con base menor que 5
+  (`publico.MIN_BASE`): se ve «n < 5».
+- **Brecha de deserción por sexo:** su base pasó a ser el grupo más pequeño (antes, la suma), para que el resguardo la
+  oculte cuando hay pocas mujeres o pocos hombres. Los años ya cerrados guardan la base anterior.
+- **Tablero y marco:** una cifra «sí/no» se muestra como «Sí» o «No», y la unidad «número» ya no se escribe.
+- **Decisiones tomadas por el agente (por confirmar):** la página es de la Carrera (el Instituto, cuando tenga su marco);
+  va bajo la cabecera pública que ya existía (la de los perfiles); el resguardo de 5 se aplica a toda cifra con base, sea de
+  personas o de otros casos (más simple y más prudente); un indicador sin base declarada (p. ej., un sí/no) se publica.
 
 ### Decisiones (confirmadas por el usuario el 6-nov-2026, salvo la 6)
 1. **Nombre:** «Aseguramiento de la Calidad» en el menú y «SIAC de la Carrera» en los documentos.
