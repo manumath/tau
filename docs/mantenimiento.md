@@ -233,6 +233,18 @@ una versión nueva:
 4. `uv run pytest tests/test_guia_antecedentes.py` y abra en Excel una guía generada con la base de
    ejemplo: debe abrir sin avisos de reparación y con los gráficos del resumen.
 
+### 4.5 ter Actualizar Litestream (imagen Docker)
+
+El `Dockerfile` descarga Litestream y verifica su SHA-256: si no coincide, la construcción falla. Para una versión
+nueva, cambie las tres líneas `ARG LITESTREAM_*` con los valores de su `checksums.txt`:
+
+```sh
+gh release download vX.Y.Z --repo benbjohnson/litestream --pattern checksums.txt --output - \
+  | grep -E 'linux-(x86_64|arm64)\.tar\.gz$'
+```
+
+Lea antes las notas de la versión.
+
 ### 4.6 Actualizar dependencias de Python
 
 FastHTML y MonsterUI están en versiones 0.x/1.0: pueden cambiar su API entre versiones menores.

@@ -6,6 +6,7 @@ import json
 import os
 import threading
 import time
+from pathlib import Path
 
 from fasthtml.common import Beforeware, Meta, Response, fast_app, serve
 
@@ -124,7 +125,9 @@ def create_app(db_path=config.DB_PATH):
         exception_handlers={404: no_encontrado, 500: error_interno},
         before=[beforeware_origen, beforeware_solo_lectura, beforeware, Beforeware(_mantenimiento)],
         secret_key=config.SECRET_KEY,
-        key_fname=str(config.RAIZ / ".sesskey"),
+        # Sin PORTAL_SECRET_KEY, la clave se crea junto a la base: en el contenedor es el volumen (sobrevive a los
+        # despliegues) y el código queda de solo lectura para el usuario sin privilegios que lo ejecuta.
+        key_fname=str(Path(db_path).parent / ".sesskey"),
         session_cookie="portal_sesion",
         max_age=config.SESION_MAX_AGE,
         sess_https_only=config.HTTPS_ONLY,

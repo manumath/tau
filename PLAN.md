@@ -2199,6 +2199,18 @@ enviarse o descartarse, sin historial de mensajes (llevan enlaces de ingreso, re
 responde, el correo se intenta una vez sin cola (sirve para el aviso de un error del servidor). Los modos `archivo` y
 `memoria` no cambian.
 
-**Pendiente de la auditoría (en este orden):** (d) imagen Docker: verificar el sha256 de
-Litestream y no correr como root; (e) registro de rutas sin depender del orden (`/productos/{pid:int}`).
+**Etapa 5, imagen Docker (hecha; sin construir aún, ver abajo):**
 
+- Litestream se verifica contra el SHA-256 de su `checksums.txt`. Los valores se cotejaron con el digest que calcula
+  GitHub.
+- El contenedor corre como el usuario `tau` (uid 1000), sin privilegios. El código y el entorno siguen siendo de root,
+  así que `tau` solo puede escribir en el volumen. `iniciar.sh` arranca como root solo para devolver a `tau` los archivos
+  del volumen que no sean suyos (los volúmenes anteriores eran de root) y luego se vuelve a ejecutar con `setpriv`.
+  `scripts/como-tau.sh` sirve para los scripts que se ejecutan por `fly ssh`.
+- La clave de sesión que se crea sin `PORTAL_SECRET_KEY` pasa de la raíz del código a `.sesskey` junto a la base. En
+  el contenedor, eso es el volumen, así que ya no se pierde en cada despliegue. En desarrollo queda en `data/.sesskey`
+  (la sesión se cierra una vez).
+- **Pendiente de verificar:** construir la imagen y arrancarla, tanto con un volumen vacío como con uno de root. No se
+  pudo en el equipo de desarrollo: Podman está instalado, pero sin máquina virtual.
+
+**Pendiente de la auditoría:** (e) registro de rutas sin depender del orden (`/productos/{pid:int}`).

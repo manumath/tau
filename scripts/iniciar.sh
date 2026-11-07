@@ -7,7 +7,19 @@
 # - Sin réplica: ejecuta el portal directamente (los datos quedan solo en el volumen).
 set -e
 
-mkdir -p "$(dirname "$PORTAL_DB")"
+DATOS="$(dirname "$PORTAL_DB")"
+mkdir -p "$DATOS"
+
+# Arranca como root solo para esto: el volumen (base, fotos, adjuntos, registros, clave de sesión) debe ser del
+# usuario «tau» (Dockerfile). Los volúmenes de antes eran de root, y un script ejecutado por «fly ssh» como root
+# puede dejar archivos suyos; se corrige solo si hace falta. Luego se vuelve a ejecutar este script como «tau».
+if [ "$(id -u)" = 0 ] && id tau >/dev/null 2>&1; then
+  if [ -n "$(find "$DATOS" ! -user tau -print -quit)" ]; then
+    echo "Ajustando los permisos de $DATOS para el usuario tau…" >&2
+    chown -R tau:tau "$DATOS"
+  fi
+  exec setpriv --reuid=tau --regid=tau --init-groups "$0" "$@"
+fi
 
 if [ -z "$PORTAL_SECRET_KEY" ]; then
   echo "AVISO: PORTAL_SECRET_KEY no está definida; las sesiones se cerrarán en cada despliegue." >&2

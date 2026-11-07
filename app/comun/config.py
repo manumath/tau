@@ -6,7 +6,7 @@ RAIZ = Path(__file__).resolve().parents[2]
 MIGRACIONES = RAIZ / "migrations"
 
 DB_PATH = Path(os.environ.get("PORTAL_DB", RAIZ / "data" / "portal.db"))
-SECRET_KEY = os.environ.get("PORTAL_SECRET_KEY")  # None → FastHTML usa/crea .sesskey
+SECRET_KEY = os.environ.get("PORTAL_SECRET_KEY")  # None → FastHTML usa/crea .sesskey junto a la base
 HTTPS_ONLY = os.environ.get("PORTAL_HTTPS_ONLY", "0") == "1"
 NOMBRE_INSTITUTO = os.environ.get("PORTAL_INSTITUTO", "Instituto de Investigación Matemática")
 UNIVERSIDAD = os.environ.get("PORTAL_UNIVERSIDAD", "Universidad Mayor de San Andrés")

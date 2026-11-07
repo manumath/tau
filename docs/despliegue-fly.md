@@ -69,11 +69,16 @@ migraciones. Luego cree el primer administrador:
 
 ```bash
 fly ssh console
-python /app/scripts/crear_admin.py   # dentro de la máquina
+/app/scripts/como-tau.sh python /app/scripts/crear_admin.py   # dentro de la máquina
 exit
 ```
 
 **No use `scripts/seed.py`**: crea cuentas de demostración con contraseñas públicas.
+
+El sistema corre en la máquina como el usuario `tau`, sin privilegios, y `fly ssh console` entra como root. Ejecute
+los scripts con `/app/scripts/como-tau.sh` delante, como arriba, para que lo que escriban en `/data` quede con el
+dueño correcto. Si se le olvida, el siguiente arranque lo corrige: `iniciar.sh` devuelve a `tau` los archivos de
+`/data` que no sean suyos.
 
 ## 3. Dominio propio (recomendado desde el primer día)
 
@@ -106,7 +111,7 @@ CSRF). Si además se entra por `NOMBRE.fly.dev`, agréguela con
 - **Paquete de datos (recomendado, p. ej. semanal):** un archivo con *todo* (base, fotos y
   adjuntos) guardado fuera de Fly:
   ```bash
-  fly ssh console -C "python /app/scripts/paquete.py exportar /data/paquete.tar.gz"
+  fly ssh console -C "/app/scripts/como-tau.sh python /app/scripts/paquete.py exportar /data/paquete.tar.gz"
   fly ssh sftp get /data/paquete.tar.gz ./portal-$(date +%F).tar.gz
   fly ssh console -C "rm /data/paquete.tar.gz"
   ```
@@ -129,7 +134,7 @@ auditoría.
    ```
 3. **Exporte y descargue** el paquete:
    ```bash
-   fly ssh console -C "python /app/scripts/paquete.py exportar /data/paquete.tar.gz"
+   fly ssh console -C "/app/scripts/como-tau.sh python /app/scripts/paquete.py exportar /data/paquete.tar.gz"
    fly ssh sftp get /data/paquete.tar.gz ./portal-mudanza.tar.gz
    ```
 4. **Importe en el servidor** (con el sistema detenido allí):
