@@ -659,6 +659,91 @@ respuesta y promedio; las anónimas con menos de 5 respuestas aparecen como «re
 derivaciones, sin el contenido), egresados (indicadores por trienio y seguimiento) y directorio y mentoría. Se elige el rango de
 años de ingreso.
 
+## Aseguramiento de la Calidad
+
+### Marco de calidad (lo edita la Dirección de Carrera; lo ven la Coordinación académica, la Dirección del Instituto y la Comisión de calidad)
+
+En **Aseguramiento de la Calidad → Marco de calidad** está el marco con que la Carrera evalúa su calidad: **dimensiones**
+(D1 a D9), cada una con sus **criterios**, y cada criterio con sus **indicadores**. El sistema trae un **borrador** para que la
+Comisión de calidad lo discuta; mientras el Consejo de Carrera no lo apruebe, deje su vigencia en blanco.
+
+- **Datos del marco:** nombre, versión, vigencia y los **años de evidencia** (la ventana que usan los informes por omisión).
+- **Escala de valoración:** los niveles con que se juzgará cada criterio en la autoevaluación (por omisión, cuatro: no cumple,
+  cumple parcialmente, cumple y cumple plenamente). Se escribe un nivel por línea, del más bajo al más alto.
+- **Atributos:** son los veinte criterios de calidad de la Política de Calidad de la UMSA (pertinencia, equidad, eficacia…).
+  No son un nivel más: cada indicador marca de cuáles da evidencia. Toque un atributo arriba de las dimensiones para ver solo
+  sus indicadores; por ejemplo, «Equidad» responde qué evidencia hay de equidad.
+- **Indicadores:** cada uno tiene código, tipo (estructura, proceso, resultado, percepción o contexto), fórmula en palabras,
+  fuente, unidad, frecuencia, lectura (mejor si sube, mejor si baja o informativo), responsable y referencia (por ejemplo, el
+  objetivo de la Política de Calidad con el que se corresponde). La fuente es **automática** cuando el sistema calcula la cifra
+  con lo que ya registra, o **manual** cuando hay que registrarla a mano.
+- **Metas por año:** en la ficha de cada indicador. Para uno «mejor si baja», la meta es el máximo aceptable; si no, el mínimo.
+- **Agregar y quitar:** con los botones de cada dimensión y criterio. Solo se elimina una dimensión sin criterios, un criterio
+  sin indicadores y un indicador sin metas; un indicador que ya no se usa se **desactiva**.
+- **Descargar XLSX:** el marco completo, una hoja por nivel, con las mismas columnas del formato de carga.
+
+Todos los cambios quedan en la auditoría. Gestión de datos también ve el marco, para registrar las cifras manuales.
+
+### Indicadores (los ven quienes ven el marco)
+
+En **Aseguramiento de la Calidad → Indicadores** están las cifras de cada indicador activo en los años de evidencia del
+marco, agrupadas por dimensión. Elija otro año final arriba y pulse «Ver» para mirar años anteriores.
+
+- **Cifras:** son del año calendario; la del año en curso dice «parcial». Al pasar el cursor por una cifra verá cómo se
+  obtuvo, su base (n, por ejemplo cuántos estudiantes o respuestas) y la meta. Un guion significa que no hay dato.
+- **Semáforo:** verde si la cifra cumple la meta del mismo año, rojo si no; gris si no tiene meta, y azul si el indicador es
+  informativo. Las metas se fijan en la ficha de cada indicador (Marco de calidad).
+- **Automáticos:** el sistema los calcula con lo que ya está registrado (producción, proyectos, cuerpo académico, oferta,
+  cohortes, egresados, encuestas). Algunos solo se pueden medir «a hoy» (por ejemplo, la cobertura de la tutoría): el
+  sistema guarda la cifra una vez al día, y para un año pasado muestra la última que guardó en él.
+- **Manuales:** la Dirección de Carrera y Gestión de datos registran su cifra en la ficha del indicador (año, cifra, base,
+  fuente y nota). Guardar otra para el mismo año la reemplaza.
+- **Cierre de los años** (Dirección de Carrera): al final del tablero. Cerrar un año ya terminado congela sus cifras y metas,
+  para que lo informado no cambie si después se corrigen los datos; mientras está cerrado, sus cifras manuales no se pueden
+  cambiar. «Reabrir» vuelve a calcularlas con los datos de hoy.
+- **Descargar XLSX:** cifras, base, meta y estado por año, el detalle de cada cifra, el método de cada indicador y los cierres.
+
+### Evidencias (las registran la Dirección de Carrera y la Comisión de calidad; las ven también la Coordinación académica y la Dirección del Instituto)
+
+En **Aseguramiento de la Calidad → Evidencias** se reúne lo que respalda cada criterio del marco. Hay tres clases:
+
+- **Documento:** un archivo PDF, PNG, JPG, XLSX, DOCX o PPTX de hasta 20 MB (actas, resoluciones, convenios…).
+- **Enlace:** una dirección web (por ejemplo, una publicación oficial).
+- **Informe del sistema:** el sistema genera en el momento el tablero de indicadores, el marco, el informe de I+D+i o los
+  indicadores del cuerpo académico (en XLSX) para los años que indique, y lo guarda tal cual. Solo se ofrecen los informes
+  que su cuenta puede ver.
+
+Cada evidencia tiene título, descripción, fecha del documento, **vigencia** (vacía si no vence) y los **criterios** que
+respalda (al menos uno). Una evidencia vencida sigue en la lista, marcada, pero ya no cuenta como respaldo vigente. En el
+marco de calidad, cada criterio muestra cuántas evidencias vigentes tiene y lleva a ellas; arriba de la lista se indica
+cuántos criterios aún no tienen ninguna.
+
+Los documentos e informes guardan su **huella SHA-256**, una especie de firma del contenido exacto del archivo. Por eso el
+archivo no se reemplaza: si hay una versión nueva, registre otra evidencia. Con **Verificar un archivo** puede comprobar si
+un archivo (por ejemplo, el informe que se entregó a una comisión) es idéntico a una evidencia registrada; el archivo que
+elija solo se usa para calcular su huella y no se guarda. Los cambios y eliminaciones quedan en la auditoría. Un criterio
+con evidencias no se puede eliminar del marco.
+
+### Autoevaluación (la abre y la concluye la Dirección de Carrera; juzgan la Comisión de calidad y la Dirección; la ven también la Coordinación académica y la Dirección del Instituto)
+
+En **Aseguramiento de la Calidad → Autoevaluación**:
+
+1. **Nueva autoevaluación** (Dirección de Carrera): nombre y **periodo evaluado** (los años cuyos indicadores se miran).
+   Solo puede haber una en curso. Conviene cerrar antes esos años en el tablero de indicadores, para que sus cifras no
+   cambien mientras se juzga.
+2. **Juicio de cada criterio** (Comisión de calidad y Dirección de Carrera): toque un criterio. Arriba verá sus indicadores en
+   los años del periodo, con su semáforo, y sus evidencias. Elija el **nivel** de la escala del marco, escriba el **juicio
+   fundado** (por qué ese nivel; es obligatorio si elige un nivel), las **fortalezas** y las **debilidades**, una por línea:
+   el plan de mejora partirá de las debilidades. «Anterior» y «Siguiente» recorren los criterios en orden.
+3. **Síntesis** de cada dimensión y **análisis global** de la Carrera, con los botones de la página de la autoevaluación.
+4. **Concluir** (Dirección de Carrera): exige que todos los criterios tengan nivel. Concluida, nada se puede cambiar; la
+   Dirección puede **reabrirla** si hace falta (queda en la auditoría). Solo se elimina una autoevaluación en curso.
+
+La página muestra el avance (criterios juzgados y cuántos hay en cada nivel). **Informe** abre el informe de autoevaluación
+para imprimir o guardar en PDF (con membrete; dice «Borrador» mientras está en curso) y **XLSX** lo descarga en planilla
+(juicios, dimensiones, indicadores, evidencias y escala). El indicador «Autoevaluación vigente» del marco vale 1 en los años en
+que hay una autoevaluación concluida en los últimos cinco.
+
 ## Informes
 
 Menú «Informes»:
@@ -721,8 +806,8 @@ proyecto y ser del mismo periodo).
   de vida de los proyectos institucionales: convocatoria, propuestas, responsables; catálogos,
   coautores externos, memoria e informe de I+D+i), Dirección de Carrera (categoría y vínculo de cada persona,
   con su carga horaria; planes, oferta y docencia), Coordinación académica (planes, oferta y
-  asignación docente), Comisión de calidad (ve todo, no modifica) y Gestión de datos (fichas
-  académicas, estudiantes y coautores externos de su unidad). El sistema no permite quedarse sin
+  asignación docente), Comisión de calidad (ve todo; registra las evidencias y los juicios de la autoevaluación) y Gestión de datos (fichas
+  académicas, estudiantes y coautores externos de su unidad; cifras manuales de los indicadores). El sistema no permite quedarse sin
   Administración del sistema.
 - **Usuarios → Importar CSV:** alta masiva desde una planilla con `email`, `nombres`,
   `apellidos` y, opcionalmente, `categoria`, `investigador` y `admin` (sí/no; «sí» asigna Administración

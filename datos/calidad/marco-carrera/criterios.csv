@@ -1,0 +1,38 @@
+dimension,codigo,nombre,descripcion
+D1,D1.1,"Misión, propósitos y plan de desarrollo","La Carrera tiene propósitos explícitos, coherentes con los de la UMSA, y un plan de desarrollo con metas que se evalúan."
+D1,D1.2,"Gobierno, organización y participación","Las decisiones se toman en instancias de cogobierno, con participación de docentes y estudiantes y reglas conocidas."
+D1,D1.3,Gestión académica y administrativa,La programación académica y los trámites se gestionan a tiempo y con información confiable.
+D1,D1.4,"Recursos físicos, tecnológicos y de información","Las aulas, laboratorios, equipos y recursos bibliográficos son suficientes y adecuados."
+D1,D1.5,Sistemas de información y calidad de los datos,"Los datos de la Carrera están completos, son verificables y se protegen."
+D2,D2.1,Perfil de egreso,"El perfil de egreso está definido, es pertinente y orienta el plan de estudios."
+D2,D2.2,"Plan de estudios: estructura, actualización y flexibilidad","El plan es coherente, se revisa periódicamente y ofrece flexibilidad."
+D2,D2.3,"Enseñanza, aprendizaje y evaluación",Las metodologías y la evaluación de los aprendizajes son adecuadas al perfil y a los estudiantes.
+D2,D2.4,Logro del perfil de egreso,Hay evidencia de que los titulados alcanzan el perfil de egreso.
+D3,D3.1,Admisión e ingreso,La admisión es transparente y se conoce el perfil de los ingresantes.
+D3,D3.2,"Progresión, retención y titulación oportuna",Se siguen las cohortes y se actúa sobre la deserción y el rezago.
+D3,D3.3,"Apoyo académico, tutoría y bienestar","Los estudiantes cuentan con tutoría y apoyo, y se atiende su bienestar."
+D3,D3.4,Equidad e inclusión,Se identifican y reducen las brechas entre grupos de estudiantes.
+D3,D3.5,Participación estudiantil,"Los estudiantes participan en la investigación, la interacción social y la vida de la Carrera."
+D4,D4.1,Suficiencia y dedicación,"El cuerpo académico es suficiente en número y dedicación para la docencia, la investigación y la extensión."
+D4,D4.2,Calificación y trayectoria,Los académicos tienen la formación y la trayectoria que requieren sus funciones.
+D4,D4.3,Desarrollo profesional y evaluación del desempeño,"Hay capacitación, evaluación del desempeño y una carga que permite investigar."
+D4,D4.4,Renovación y estabilidad,La Carrera planifica la renovación de su cuerpo académico y retiene a sus investigadores.
+D5,D5.1,Líneas y proyectos de investigación,La investigación se organiza en líneas y proyectos con participación de los académicos.
+D5,D5.2,Producción científica y su visibilidad,La producción se publica en medios reconocidos y es citada.
+D5,D5.3,Formación en investigación,"Los estudiantes se forman en investigación mediante tesis, proyectos y publicaciones."
+D5,D5.4,"Innovación, transferencia y propiedad intelectual",El conocimiento se transfiere y se protege su propiedad intelectual.
+D6,D6.1,Proyectos de interacción social,La Carrera ejecuta proyectos de interacción social pertinentes.
+D6,D6.2,Divulgación y apropiación social del conocimiento,La Carrera divulga la matemática y su utilidad a la sociedad.
+D6,D6.3,Servicios y relación con el entorno,"La Carrera presta servicios y colabora con el Estado, el sector productivo y la comunidad."
+D6,D6.4,Impacto de la vinculación,El impacto de la vinculación con el medio se evalúa con evidencia.
+D7,D7.1,Colaboración y redes internacionales,La investigación se hace en colaboración y en redes nacionales e internacionales.
+D7,D7.2,Movilidad académica y estudiantil,Académicos y estudiantes participan en estancias e intercambios.
+D7,D7.3,Internacionalización del currículo e interculturalidad,"El currículo incorpora perspectivas internacionales, interculturales y saberes propios."
+D7,D7.4,Convenios y alianzas,Los convenios y alianzas están vigentes y tienen actividad.
+D8,D8.1,Titulación,Los estudiantes se titulan en un tiempo razonable.
+D8,D8.2,Inserción laboral y continuidad de estudios,Los titulados se insertan en el trabajo o continúan estudios de posgrado.
+D8,D8.3,Satisfacción de egresados y empleadores,La opinión de egresados y empleadores se recoge y se usa para mejorar.
+D9,D9.1,Autoevaluación periódica y participativa,La Carrera se autoevalúa con regularidad y con participación de todos los actores.
+D9,D9.2,Plan de mejora y seguimiento,"Las debilidades se traducen en acciones con responsable, plazo y seguimiento."
+D9,D9.3,Uso de la información y rendición de cuentas,Las decisiones se apoyan en los indicadores y los resultados se informan a la comunidad.
+D9,D9.4,Objetivos de calidad,La Carrera contribuye a los objetivos de calidad de la UMSA y mide su cumplimiento.

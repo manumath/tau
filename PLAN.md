@@ -2218,7 +2218,7 @@ responde, el correo se intenta una vez sin cola (sirve para el aviso de un error
 
 ## 57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)
 
-**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 (ver al final); la 6 sigue abierta. Etapa 1 hecha (6-nov-2026).**
+**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 (ver al final); la 6 sigue abierta. Etapas 1 a 5 hechas (6-nov-2026).**
 
 ### Propósito
 
@@ -2328,10 +2328,10 @@ beneficiarios de los proyectos de interacción social (objetivo 6); encuesta a e
 | Etapa | Contenido | Tamaño |
 |---|---|---|
 | 1 | **Neutralizar sin cambiar el comportamiento (hecha):** paquete `app/calidad`, informe de I+D+i en `/informes/investigacion` (las anteriores redirigen), menú «Aseguramiento de la Calidad», textos y docstrings neutros, rol renombrado, retiro de la Guía, guía de uso, README y CLAUDE.md | Mediana |
-| 2 | **Marco como datos:** migración (marco, dimensión, criterio, indicador, meta, atributo), CSV del marco de la Carrera, pantalla para editarlo (Dirección de Carrera) | Mediana |
-| 3 | **Indicadores automáticos y tablero:** registro de cálculos, serie, metas, instantáneas por periodo, exportación | Grande |
-| 4 | **Evidencias:** repositorio y asociación a criterios; informes generados con su huella | Mediana |
-| 5 | **Autoevaluación:** proceso, juicios por criterio, informe de autoevaluación imprimible y en XLSX | Grande |
+| 2 | **Marco como datos (hecha):** migración (marco, dimensión, criterio, indicador, meta, atributo), CSV del marco de la Carrera, pantalla para editarlo (Dirección de Carrera) | Mediana |
+| 3 | **Indicadores automáticos y tablero (hecha):** registro de cálculos, serie, metas, instantáneas por periodo, exportación | Grande |
+| 4 | **Evidencias (hecha):** repositorio y asociación a criterios; informes generados con su huella | Mediana |
+| 5 | **Autoevaluación (hecha):** proceso, juicios por criterio, informe de autoevaluación imprimible y en XLSX | Grande |
 | 6 | **Plan de mejora y evaluación externa:** acciones, avances, avisos, recomendaciones | Mediana |
 | 7 | **Ficha estadística y exportación por correspondencia** (la Guía ya se retiró en la etapa 1) | Mediana |
 | 8 | **Datos que faltan:** capacitación, convenios, impacto de interacción social, encuestas a empleadores y docentes | Mediana |
@@ -2361,6 +2361,103 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
 - **Decisiones tomadas por el agente (por confirmar):** los informes siguen bajo `/informes` (no se movieron a `/calidad`,
   para no romper más direcciones de las necesarias); la asignación de dimensiones a cada sección del informe de I+D+i
   (cuerpo académico D4, producción D5, servicios D6, internacionalización D7, estudiantes D3 · D5) es una propuesta.
+
+### Etapa 2: marco de calidad como datos (hecha, 6-nov-2026)
+
+- **Migración 0050:** `marco_calidad` (unidad, nombre, versión, vigencia, años de evidencia), `nivel_escala`,
+  `atributo_calidad`, `dimension_calidad` (con su alineación con las políticas), `criterio_calidad`, `indicador_calidad`
+  (tipo, fórmula, fuente `manual` o `auto:<clave>`, unidad, frecuencia, lectura, responsable, referencia, activo),
+  `indicador_atributo` y `meta_indicador` (una meta por año).
+- **Migración 0051:** carga el borrador de `datos/calidad/marco-carrera/` (CSV versionados, formato en su README) con
+  `app/calidad/marco_csv.py`: D1–D9, 37 criterios, 63 indicadores (45 automáticos y 18 manuales), los 20 criterios de la
+  Política de Calidad de la UMSA como atributos y la escala de 4 niveles. Los 8 objetivos del Anexo 3 que se pueden medir en
+  la Carrera (2 a 9) están como indicadores con su meta institucional en «referencia»; el 1 (carreras acreditadas) es de la
+  universidad. Ninguna fila nombra a una agencia.
+- **Pantalla** `/calidad/marco` (menú «Marco de calidad»): el marco por dimensión, filtro por atributo, ficha de cada indicador
+  con sus metas, edición de todo (Dirección de Carrera de la unidad, `gestionar_marco_calidad`) y XLSX con las columnas del
+  formato de carga. Lo ven la Coordinación académica, la Dirección del Instituto y la Comisión de calidad
+  (`ver_marco_calidad`, en cualquier unidad: es de solo lectura y sin datos personales). Todo cambio se audita.
+- **Reglas:** los códigos no se repiten dentro del marco; solo se elimina una dimensión sin criterios, un criterio sin
+  indicadores y un indicador sin metas (si no, se desactiva); la escala tiene de 2 a 7 niveles.
+- **Fuentes automáticas:** `marco.FUENTES_AUTOMATICAS` lista las 45 claves; su cálculo llegó con la etapa 3.
+- **Decisiones tomadas por el agente (por confirmar):** el contenido del borrador (criterios, indicadores, atributos marcados
+  y responsables) es una propuesta para la Comisión; las metas numéricas por año quedan vacías para que las fije la
+  Dirección de Carrera; la Dirección del Instituto ve el marco (responde por los indicadores de investigación) pero no lo edita.
+
+### Etapa 3: indicadores automáticos y tablero (hecha, 6-nov-2026)
+
+- **Migración 0052:** `valor_indicador` (cifras manuales, una por indicador y año, con base n, fuente y nota),
+  `valor_automatico` (instantánea de lo que solo se mide «a hoy»), `cierre_calidad` y `valor_cierre` (cifras y metas
+  congeladas al cerrar un año).
+- **Cálculos** (`app/calidad/indicadores.py`, `CALCULOS`): `clave → función(calculadora, año) → Resultado(valor, n, detalle)`,
+  una por cada fuente automática del marco (una prueba lo exige). Reutilizan los cálculos de los informes: memoria e
+  informe de I+D+i (producción, proyectos, transferencia, coautoría internacional, citas en la ventana de evidencia),
+  cuerpo académico, oferta (paralelos con docente, inscritos por paralelo), cohortes (ingresantes, retención al primer año,
+  deserción del año y su brecha por sexo, titulación oportuna en 10 + 2 semestres, tiempo de titulación), egresados (su
+  respuesta más reciente) y encuestas. Las cifras son del año calendario y la del año en curso es parcial. Las variaciones
+  se calculan contra el año anterior; sin base, quedan sin dato y lo dicen.
+- **«A hoy»:** la cobertura de la tutoría, las observaciones pendientes de los planes y las revisiones de calidad de datos
+  solo se pueden medir en el presente. El mantenimiento (`main._correr_mantenimiento`) guarda una vez al día la cifra del año
+  en curso; para un año pasado se usa la última guardada en él, o queda sin dato.
+- **Pendientes:** las acciones cumplidas del plan de mejora (etapa 6) dicen por qué aún no se calculan (la autoevaluación
+  vigente se calcula desde la etapa 5). El cumplimiento de las metas se calcula en el tablero: % de indicadores con meta y cifra que la cumplen.
+- **Tablero** `/calidad/indicadores` (menú «Indicadores»): las cifras de la ventana de evidencia por dimensión, con semáforo
+  (cumple, no cumple, sin meta, informativo, sin dato) según la lectura del indicador, el detalle y la base al pasar el
+  cursor, un resumen por estado y XLSX (cifras, n, meta y estado por año; detalle; método; cierres).
+- **Ficha del indicador:** la serie con base, meta y cómo se obtuvo; en los manuales, el registro de cifras
+  (`registrar_indicadores_calidad`: Dirección de Carrera y Gestión de datos de la unidad).
+- **Cierre de años:** la Dirección de Carrera cierra un año terminado, que congela cifras y metas; se puede reabrir. Las
+  cifras manuales de un año cerrado no se cambian. Todo se audita.
+- **Decisiones tomadas por el agente (por confirmar):** Gestión de datos registra cifras manuales y por eso ve el marco
+  (`ver_marco_calidad`); años calendario (no gestiones); la deserción del borrador se calcula por año (desertores del año /
+  matriculados en el año), mientras su fórmula habla de la cohorte: hay que alinear una de las dos; la titulación oportuna
+  usa 10 semestres más 2; la satisfacción de egresados cuenta 4 o más en la escala de 1 a 5; la retención de doctores mira
+  si tenían vínculo tres años antes del corte.
+
+### Etapa 4: evidencias (hecha, 6-nov-2026)
+
+- **Migración 0053:** `evidencia_calidad` (documento, enlace o informe del sistema; título, descripción, fecha, vigencia;
+  archivo con nombre original, tipo, tamaño y huella SHA-256; el informe y sus parámetros) y `evidencia_criterio` (una o
+  más por evidencia).
+- **Archivos** (`app/calidad/evidencias.py`): se validan por contenido con la detección de `investigacion.adjuntos`,
+  ampliada a XLSX, DOCX y PPTX (un ZIP con su pieza característica); hasta 20 MB; con nombre aleatorio en `<datos>/evidencias`,
+  fuera de `/static`. No se usa la tabla `adjunto` (su CHECK de entidades y su límite de 10 por registro no sirven aquí).
+  El archivo de una evidencia no se reemplaza: así su huella sigue probando qué se entregó.
+- **Informes del sistema:** tablero de indicadores, marco, informe de I+D+i (su XLSX pasó a `rutas/anexo.contenido_xlsx`)
+  e indicadores del cuerpo académico, generados al guardarlos; solo los que la cuenta puede ver.
+- **Pantalla** `/calidad/evidencias` (menú «Evidencias»): lista con filtro por criterio y vigencia, aviso de los criterios sin
+  evidencia vigente, ficha con descarga y huella, alta y edición en ventana, y **verificación** de un archivo por su huella
+  (no se guarda). En el marco, cada criterio muestra sus evidencias vigentes; un criterio con evidencias no se elimina.
+- **Permisos:** `registrar_evidencias_calidad` (Dirección de Carrera de la unidad y Comisión de calidad, decisión 2) y
+  `ver_evidencias_calidad` (además, Coordinación académica y Dirección del Instituto). Todo cambio se audita (al eliminar,
+  con la huella).
+- **Decisiones tomadas por el agente (por confirmar):** Gestión de datos no ve las evidencias (actas y convenios no son de
+  su tarea, aunque ve el marco); cualquiera que registra evidencias puede editar o eliminar las de otros (queda en la
+  auditoría); una evidencia vencida deja de contar como respaldo pero no se oculta; la huella de un informe es la del XLSX
+  guardado (generar el mismo informe otra vez da otro archivo, porque el XLSX lleva la fecha de creación).
+
+### Etapa 5: autoevaluación (hecha, 6-nov-2026)
+
+- **Migración 0054:** `autoevaluacion` (marco, nombre, periodo evaluado en años, estado en curso o concluida, análisis
+  global; una sola en curso por marco, con índice único parcial), `juicio_criterio` (nivel y su nombre de ese momento, juicio
+  fundado, fortalezas y debilidades, una por línea) y `sintesis_dimension`. Un criterio con juicios o una dimensión con
+  síntesis no se eliminan del marco.
+- **Proceso** (`app/calidad/autoevaluacion.py`, pantalla `/calidad/autoevaluaciones`, menú «Autoevaluación»): avance y
+  distribución por nivel; página por criterio con sus indicadores en los años del periodo y sus evidencias; síntesis por
+  dimensión y análisis global; concluir exige nivel en todos los criterios; concluida, no cambia (se puede reabrir); solo se
+  elimina una en curso.
+- **Informe** imprimible con membrete (escala, resumen por dimensión y nivel, juicio de cada criterio con fortalezas,
+  debilidades, indicadores y evidencias, análisis global; «Borrador» mientras está en curso) y XLSX.
+- **Permisos:** `gestionar_autoevaluacion` (Dirección de Carrera de la unidad: abrir, datos, concluir, reabrir, eliminar),
+  `registrar_juicios_calidad` (Dirección de Carrera y Comisión de calidad, decisión 2: juicios, síntesis y análisis) y
+  `ver_autoevaluacion` (además, Coordinación académica y Dirección del Instituto). Todo se audita.
+- **Indicador** «Autoevaluación vigente»: 1 si hay una autoevaluación del marco concluida en los años de la ventana de
+  evidencia que terminan en el año.
+- **Decisiones tomadas por el agente (por confirmar):** el juicio fundado es obligatorio al elegir un nivel; concluir exige
+  todos los criterios juzgados (no las síntesis ni el análisis); la Coordinación académica y la Dirección del Instituto ven
+  los juicios (no son confidenciales, a diferencia de las notas de tutoría); el informe muestra las cifras del tablero, que
+  solo quedan fijas en los años cerrados (no se congela nada más al concluir); un representante estudiantil en la Comisión
+  juzga con la cuenta de personal de la decisión 2.
 
 ### Decisiones (confirmadas por el usuario el 6-nov-2026, salvo la 6)
 1. **Nombre:** «Aseguramiento de la Calidad» en el menú y «SIAC de la Carrera» en los documentos.

@@ -52,7 +52,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
   `main.py`. El menú lateral se arma en `app/navegacion.py`: una pantalla nueva se agrega ahí, con el mismo
   permiso que su ruta. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
-  `datos/planes/` (planes de estudio en CSV), `static/` (vendor con versión fija), `estilos/`.
+  `datos/planes/` (planes de estudio en CSV), `datos/calidad/` (borrador del marco de calidad), `static/` (vendor con versión fija), `estilos/`.
 
 ## Reglas de negocio que no se deducen del código a simple vista
 
@@ -60,7 +60,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   ella). **Solo la Dirección de Carrera** define categoría y vínculo (altas, cambios, término,
   carga horaria contratada). La Dirección del Instituto gestiona el ciclo de vida de los proyectos
   institucionales. Administración del sistema: cuentas, roles (a pedido de las direcciones) y
-  auditoría. La Comisión de calidad ve todo y no modifica.
+  auditoría. La Comisión de calidad ve todo y solo registra evidencias y juicios de la autoevaluación (PLAN §57).
 - **Vínculo por periodos:** contratados, interinos e invitados con fecha de término obligatoria;
   titular permanente (se termina a mano con motivo: retiro, renuncia, despido, fallecimiento).
 - **Carga horaria:** unidades de 32 h/mes; carga contratada 32–160 h/mes por periodo de vínculo,

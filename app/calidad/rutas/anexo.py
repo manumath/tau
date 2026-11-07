@@ -306,7 +306,12 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
     if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         return Response("No autorizado", status_code=403)
     d, h = _ventana(desde, hasta)
-    a = idi.anexo(d, h, revistas != "todas")
+    return _archivo(contenido_xlsx(d, h, revistas != "todas"), f"informe-idi-{d}-{h}.xlsx", XLSX)
+
+
+def contenido_xlsx(d: int, h: int, exigir_verificada: bool = True) -> bytes:
+    """El XLSX del informe de I+D+i de los años (también se guarda como evidencia del marco de calidad)."""
+    a = idi.anexo(d, h, exigir_verificada)
     m = a["memoria"]
     nombres = {"investigadores": "Investigadores", "jce": "JCE (160 h/mes)", "indexados": "Artículos indexados",
                "arbitrados": "Artículos arbitrados", "nacionales": "En revistas nacionales",
@@ -339,7 +344,7 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
               {"Tema": "Cuerpo académico", "Descripción": "Personas con vínculo vigente al 31 de diciembre de cada año; "
                "JCE = carga contratada (h/mes) / 160; sin carga registrada, jornada del vínculo × 4."},
               {"Tema": "Citas", "Descripción": "OpenAlex, en la fecha de actualización de cada producto."}]
-    contenido = exportar.a_xlsx({
+    return exportar.a_xlsx({
         "Resumen por año": resumen, "Cuerpo académico": cuerpo,
         "Publicaciones": informes.filas_productos(a["articulos"]),
         "Libros y capítulos": informes.filas_productos(a["libros"]),
@@ -355,7 +360,6 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
         "Países de coautores": [{"País": k, "Artículos": v} for k, v in a["coautoria"]["por_pais"].items()],
         "Por confirmar": informes.filas_productos(m["por_confirmar"]),
         "Método": metodo})
-    return _archivo(contenido, f"informe-idi-{d}-{h}.xlsx", XLSX)
 
 
 # --- Trazabilidad: de dónde sale cada cifra ------------------------------------------------------

@@ -34,10 +34,11 @@ DESCRIPCIONES = {
     "direccion_instituto": "Propuestas y convocatoria, catálogos de revistas y líneas, coautores externos, "
                            "memoria e informe de I+D+i. No define vínculos.",
     "direccion_carrera": "Categoría, vínculo y carga horaria de cada persona; plan de estudios, oferta y asignación "
-                         "docente; informes de la Carrera.",
+                         "docente; informes de la Carrera; marco de calidad.",
     "coordinacion_academica": "Prepara asignaciones y revisa programas, sin aprobarlos.",
-    "comision_calidad": "Ve todos los informes y exportaciones del sistema de calidad; no modifica nada.",
-    "gestion_datos": "Fichas académicas (grados, fecha de nacimiento), estudiantes y coautores externos de su unidad.",
+    "comision_calidad": "Ve todos los informes y exportaciones del sistema de calidad; registra evidencias y juicios de la autoevaluación.",
+    "gestion_datos": ("Fichas académicas (grados, fecha de nacimiento), estudiantes y coautores externos de su unidad, "
+                      "y cifras manuales de los indicadores de calidad."),
 }
 
 # acción → roles que la permiten. Las acciones con unidad se consultan con ella (p. ej., vínculos
@@ -80,6 +81,21 @@ ACCIONES = {
     "ver_informes_institucionales": {"direccion_instituto", "direccion_carrera", "comision_calidad"},
     "ver_calidad_datos": {"direccion_instituto", "direccion_carrera", "coordinacion_academica", "comision_calidad",
                           "administracion_sistema"},
+    # Aseguramiento de la Calidad (PLAN §57): la Dirección de Carrera gestiona el marco de su unidad; lo ven también la
+    # Coordinación académica, la Dirección del Instituto (sus indicadores de investigación) y la Comisión de calidad.
+    "gestionar_marco_calidad": {"direccion_carrera"},
+    "registrar_indicadores_calidad": {"direccion_carrera", "gestion_datos"},
+    "ver_marco_calidad": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad",
+                          "gestion_datos"},
+    # Evidencias (PLAN §57, etapa 4): las registran la Dirección de Carrera y la Comisión de calidad (decisión 2); las ven
+    # quienes ven el marco, salvo Gestión de datos (actas y convenios no son de su tarea).
+    "registrar_evidencias_calidad": {"direccion_carrera", "comision_calidad"},
+    "ver_evidencias_calidad": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
+    # Autoevaluación (PLAN §57, etapa 5): la Dirección de Carrera la abre, la concluye y la reabre; los juicios y las
+    # síntesis los registran la Comisión de calidad y la Dirección (decisión 2); la ven quienes ven las evidencias.
+    "gestionar_autoevaluacion": {"direccion_carrera"},
+    "registrar_juicios_calidad": {"direccion_carrera", "comision_calidad"},
+    "ver_autoevaluacion": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
     # «Avisar a los responsables» desde Calidad de datos (la Comisión de calidad solo mira; Administración no decide contenido).
     "avisar_calidad": {"direccion_instituto", "direccion_carrera", "coordinacion_academica"},
 }

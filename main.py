@@ -21,6 +21,7 @@ if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not 
           "se usa UTC.", flush=True)
 
 from app.investigacion import institucionales  # noqa: E402
+from app.calidad import indicadores as indicadores_calidad  # noqa: E402
 from app.calidad import programados  # noqa: E402
 from app.egresados import egresados as seguimiento_egresados  # noqa: E402
 from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
@@ -41,6 +42,10 @@ from app.investigacion.rutas.admin_revistas import rt as rutas_admin_revistas
 from app.investigacion.rutas.admin_lineas import rt as rutas_admin_lineas
 from app.investigacion.rutas.admin_catalogos import rt as rutas_admin_catalogos
 from app.calidad.rutas.anexo import rt as rutas_anexo
+from app.calidad.rutas.marco import rt as rutas_marco
+from app.calidad.rutas.indicadores import rt as rutas_indicadores
+from app.calidad.rutas.evidencias import rt as rutas_evidencias
+from app.calidad.rutas.autoevaluacion import rt as rutas_autoevaluacion
 from app.comun.rutas.estudiantes import rt as rutas_estudiantes
 from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
 from app.calidad.rutas.informes import rt as rutas_informes
@@ -87,6 +92,7 @@ def _correr_mantenimiento():
         institucionales.mantenimiento()  # vigencias de proyectos y recordatorios
         programados.mantenimiento()  # informes que se envían solos
         seguimiento_egresados.mantenimiento()  # invitaciones del seguimiento de egresados
+        indicadores_calidad.mantenimiento()  # cifras «a hoy» de los indicadores de calidad, una vez al día
     except Exception:
         registros.log.exception("Falló el mantenimiento periódico")
     finally:
@@ -153,7 +159,7 @@ def create_app(db_path=config.DB_PATH):
     # rutas_bibtex va antes que rutas_productos: /productos/bibtex coincidiría con /productos/{pid}.
     for router in (rutas_auth, rutas_inicio, rutas_busqueda, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
-                   rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_anexo, rutas_informes, rutas_publico,
+                   rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_anexo, rutas_marco, rutas_indicadores, rutas_evidencias, rutas_autoevaluacion, rutas_informes, rutas_publico,
                    rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
                    rutas_preparacion, rutas_cohortes,

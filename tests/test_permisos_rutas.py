@@ -56,6 +56,14 @@ RUTAS = {  # ruta → quienes reciben 200 (el resto, 403)
     "/docencia/egresados/directorio": {"carrera"},
     "/docencia/tutoria": {"carrera", "datos_cmat", "comite"},
     "/informes/seguimiento-estudiantil": {"carrera", "datos_cmat", "comite"},
+    "/calidad/marco": {"instituto", "carrera", "datos_cmat", "comite"},
+    "/calidad/marco/xlsx": {"instituto", "carrera", "datos_cmat", "comite"},
+    "/calidad/indicadores": {"instituto", "carrera", "datos_cmat", "comite"},
+    "/calidad/indicadores/xlsx": {"instituto", "carrera", "datos_cmat", "comite"},
+    "/calidad/evidencias": {"instituto", "carrera", "comite"},
+    "/calidad/evidencias/nueva": {"carrera", "comite"},
+    "/calidad/autoevaluaciones": {"instituto", "carrera", "comite"},
+    "/calidad/autoevaluaciones/nueva": {"carrera"},
     "/personas/externos/duplicados": {"instituto", "datos_cmat"},
 }
 

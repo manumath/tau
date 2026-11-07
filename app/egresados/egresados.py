@@ -201,7 +201,7 @@ def trienio(anio: int, fin: int) -> tuple[int, int]:
     return fin - 3 * k - 2, fin - 3 * k
 
 
-def _ultimas_respuestas() -> dict[int, dict[str, str]]:
+def ultimas_respuestas() -> dict[int, dict[str, str]]:
     """Por egresado, lo que contestó por clave (de su respuesta más reciente a cada pregunta con clave)."""
     res: dict[int, dict[str, tuple[int, str]]] = {}
     for f in get_db().q(
@@ -220,7 +220,7 @@ def _pct(parte: int, total: int) -> float | None:
 def indicadores(hoy: date | None = None) -> dict:
     hoy = hoy or date.today()
     gente = titulados()
-    respuestas = _ultimas_respuestas()
+    respuestas = ultimas_respuestas()
     por: dict[tuple[int, int], list[dict]] = {}
     for g in gente:
         por.setdefault(trienio(int(g["fecha_titulacion"][:4]), hoy.year), []).append(g)

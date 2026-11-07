@@ -55,6 +55,13 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
     calidad = []
     if auth["es_investigador"] or puede("ver_informes_institucionales") or puede("ver_cv_ajeno"):
         calidad.append(_item("informes", "Informes", "/informes", "file-text"))
+    if puede("ver_marco_calidad"):
+        calidad.append(_item("marco", "Marco de calidad", "/calidad/marco", "layers"))
+        calidad.append(_item("indicadores", "Indicadores", "/calidad/indicadores", "gauge"))
+    if puede("ver_evidencias_calidad"):
+        calidad.append(_item("evidencias", "Evidencias", "/calidad/evidencias", "folder-open"))
+    if puede("ver_autoevaluacion"):
+        calidad.append(_item("autoevaluacion", "Autoevaluación", "/calidad/autoevaluaciones", "clipboard-check"))
     if puede("ver_calidad_datos"):
         calidad.append(_item("calidad", "Calidad de datos", "/informes/calidad", "list-checks"))
     administracion = []

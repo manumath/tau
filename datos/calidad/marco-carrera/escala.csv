@@ -1,0 +1,5 @@
+valor,nombre,descripcion
+1,No cumple,"No hay evidencia suficiente, o la evidencia muestra que el criterio no se cumple."
+2,Cumple parcialmente,Se cumple en parte; hay brechas importantes que requieren acciones de mejora.
+3,Cumple,Se cumple con evidencia suficiente; hay aspectos menores por mejorar.
+4,Cumple plenamente,"Se cumple con evidencia sólida y sostenida, con mecanismos de mejora en marcha."

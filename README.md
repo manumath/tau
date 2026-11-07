@@ -126,11 +126,16 @@ app/
   calidad/                     Aseguramiento de la Calidad (SIAC de la Carrera, PLAN §57)
     informes.py                datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
     anexo.py                   informe de I+D+i (/informes/investigacion), por tema y año
+    marco.py                   marco de calidad: dimensiones, criterios, indicadores, atributos y metas (/calidad/marco)
+    marco_csv.py               carga del marco desde datos/calidad/ (la usa la migración 0051)
+    indicadores.py             cifras de los indicadores: cálculos automáticos, manuales, cierres (/calidad/indicadores)
+    evidencias.py              evidencias por criterio con huella SHA-256 (/calidad/evidencias; archivos en <datos>/evidencias)
+    autoevaluacion.py          autoevaluación: juicios por criterio, síntesis, informe (/calidad/autoevaluaciones)
     estudiantes.py             tesis e indicadores de participación de estudiantes
     cuerpo_academico.py        carga docente e indicadores del cuerpo académico
     calidad_datos.py           calidad de los datos: lo que falta completar y a quién avisar
     seguimiento_estudiantil.py anexo de seguimiento estudiantil: cohortes, actividad, encuestas, tutoría y egresados (agregados)
-    rutas/                     informes, anexo, cuerpo_academico, calidad_datos, seguimiento_estudiantil
+    rutas/                     informes, anexo, marco, cuerpo_academico, calidad_datos, seguimiento_estudiantil
   academico/                   docencia y currículo (fase 3)
     planes.py                  programas, planes de estudio, asignaturas, electivas, requisitos, observaciones
     importar_planes.py         carga de planes desde datos/planes/ (la usa la migración 0028)
@@ -162,6 +167,7 @@ Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `
 static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
 static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
 datos/planes/                  planes de estudio en CSV (formato en su README)
+datos/calidad/marco-carrera/   borrador del marco de calidad de la Carrera en CSV (formato en su README)
 catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar
 scripts/seed.py                datos de ejemplo
