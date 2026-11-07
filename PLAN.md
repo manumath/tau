@@ -2218,7 +2218,7 @@ responde, el correo se intenta una vez sin cola (sirve para el aviso de un error
 
 ## 57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)
 
-**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 (ver al final); la 6 sigue abierta. Etapas 1 a 8 hechas (7-nov-2026).**
+**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 y la 6 el 7-nov-2026 (ver al final). Etapas 1 a 8 hechas y sus decisiones del agente confirmadas (7-nov-2026). Siguen: la deserción por cohorte y la página pública (etapa 9).**
 
 ### Propósito
 
@@ -2359,7 +2359,7 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   La plantilla sigue en el historial de git (no se reescribe, §56).
 - **Textos:** pantallas, docstrings, guía de uso, README, mantenimiento y CLAUDE.md sin la agencia ni sus códigos de criterio;
   «acreditación» queda solo donde se habla del proceso en general («evaluación y acreditación de la Carrera»).
-- **Decisiones tomadas por el agente (por confirmar):** los informes siguen bajo `/informes` (no se movieron a `/calidad`,
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** los informes siguen bajo `/informes` (no se movieron a `/calidad`,
   para no romper más direcciones de las necesarias); la asignación de dimensiones a cada sección del informe de I+D+i
   (cuerpo académico D4, producción D5, servicios D6, internacionalización D7, estudiantes D3 · D5) es una propuesta.
 
@@ -2381,7 +2381,7 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
 - **Reglas:** los códigos no se repiten dentro del marco; solo se elimina una dimensión sin criterios, un criterio sin
   indicadores y un indicador sin metas (si no, se desactiva); la escala tiene de 2 a 7 niveles.
 - **Fuentes automáticas:** `marco.FUENTES_AUTOMATICAS` lista las 45 claves; su cálculo llegó con la etapa 3.
-- **Decisiones tomadas por el agente (por confirmar):** el contenido del borrador (criterios, indicadores, atributos marcados
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** el contenido del borrador (criterios, indicadores, atributos marcados
   y responsables) es una propuesta para la Comisión; las metas numéricas por año quedan vacías para que las fije la
   Dirección de Carrera; la Dirección del Instituto ve el marco (responde por los indicadores de investigación) pero no lo edita.
 
@@ -2409,11 +2409,11 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   (`registrar_indicadores_calidad`: Dirección de Carrera y Gestión de datos de la unidad).
 - **Cierre de años:** la Dirección de Carrera cierra un año terminado, que congela cifras y metas; se puede reabrir. Las
   cifras manuales de un año cerrado no se cambian. Todo se audita.
-- **Decisiones tomadas por el agente (por confirmar):** Gestión de datos registra cifras manuales y por eso ve el marco
-  (`ver_marco_calidad`); años calendario (no gestiones); la deserción del borrador se calcula por año (desertores del año /
-  matriculados en el año), mientras su fórmula habla de la cohorte: hay que alinear una de las dos; la titulación oportuna
-  usa 10 semestres más 2; la satisfacción de egresados cuenta 4 o más en la escala de 1 a 5; la retención de doctores mira
-  si tenían vínculo tres años antes del corte.
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** Gestión de datos registra cifras manuales y por eso ve el marco
+  (`ver_marco_calidad`); años calendario (no gestiones); la titulación oportuna usa 10 semestres más 2; la satisfacción de
+  egresados cuenta 4 o más en la escala de 1 a 5; la retención de doctores mira si tenían vínculo tres años antes del corte.
+- **Deserción:** se calculaba por año (desertores del año / matriculados en el año) mientras la fórmula hablaba de la
+  cohorte; el 7-nov-2026 se decidió por la cohorte (ver «Decisiones del 7-nov-2026»).
 
 ### Etapa 4: evidencias (hecha, 6-nov-2026)
 
@@ -2432,7 +2432,7 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
 - **Permisos:** `registrar_evidencias_calidad` (Dirección de Carrera de la unidad y Comisión de calidad, decisión 2) y
   `ver_evidencias_calidad` (además, Coordinación académica y Dirección del Instituto). Todo cambio se audita (al eliminar,
   con la huella).
-- **Decisiones tomadas por el agente (por confirmar):** Gestión de datos no ve las evidencias (actas y convenios no son de
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** Gestión de datos no ve las evidencias (actas y convenios no son de
   su tarea, aunque ve el marco); cualquiera que registra evidencias puede editar o eliminar las de otros (queda en la
   auditoría); una evidencia vencida deja de contar como respaldo pero no se oculta; la huella de un informe es la del XLSX
   guardado (generar el mismo informe otra vez da otro archivo, porque el XLSX lleva la fecha de creación).
@@ -2454,7 +2454,7 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   `ver_autoevaluacion` (además, Coordinación académica y Dirección del Instituto). Todo se audita.
 - **Indicador** «Autoevaluación vigente»: 1 si hay una autoevaluación del marco concluida en los años de la ventana de
   evidencia que terminan en el año.
-- **Decisiones tomadas por el agente (por confirmar):** el juicio fundado es obligatorio al elegir un nivel; concluir exige
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** el juicio fundado es obligatorio al elegir un nivel; concluir exige
   todos los criterios juzgados (no las síntesis ni el análisis); la Coordinación académica y la Dirección del Instituto ven
   los juicios (no son confidenciales, a diferencia de las notas de tutoría); el informe muestra las cifras del tablero, que
   solo quedan fijas en los años cerrados (no se congela nada más al concluir); un representante estudiantil en la Comisión
@@ -2477,7 +2477,7 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
 - **Permisos:** `gestionar_plan_mejora` (Dirección de Carrera: acciones, estados y evaluaciones externas) y `ver_plan_mejora`
   (además, Comisión de calidad, Coordinación académica y Dirección del Instituto). El responsable de una acción, aunque no
   tenga rol, ve sus acciones y registra y quita sus avances. Todo se audita.
-- **Decisiones tomadas por el agente (por confirmar):** el responsable puede ser cualquier cuenta del personal (no un
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** el responsable puede ser cualquier cuenta del personal (no un
   estudiante); el plazo es obligatorio; marcar cumplida, cancelar y reabrir son de la Dirección, no del responsable; una acción
   con avances no se elimina, se cancela con motivo; la Comisión de calidad ve el plan pero no crea acciones (decisión 2: el plan
   lo gestiona la Dirección); el aviso de vencida va también a la Dirección de Carrera.
@@ -2497,7 +2497,7 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   CSV `hoja,celda,clave`; `xlsx_plantilla` escribe solo esas celdas. Ninguno de los dos archivos se guarda; con una clave
   desconocida, una hoja que no existe o una celda mal escrita no se genera nada y se dice qué fila corregir. Se audita (sin el
   contenido).
-- **Decisiones tomadas por el agente (por confirmar):** la ficha la ven quienes ven el marco (incluida Gestión de datos); la
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** la ficha la ven quienes ven el marco (incluida Gestión de datos); la
   correspondencia no se guarda en el sistema (cada vez se sube el CSV); una clave sin dato deja la celda vacía.
 
 ### Etapa 8: datos que faltan (hecha, 7-nov-2026)
@@ -2518,7 +2518,7 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   (`/calidad/convenios`, `registrar_convenios`: Dirección de Carrera) e **impacto social** (`/calidad/impacto`,
   `registrar_impacto_proyectos`: las dos direcciones y el responsable o co-responsable del proyecto). Los ven quienes ven el
   marco; el responsable de un proyecto ve los suyos. Todo se audita.
-- **Decisiones tomadas por el agente (por confirmar):** una capacitación cuenta en el año en que concluyó y no se registran
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** una capacitación cuenta en el año en que concluyó y no se registran
   las que siguen en curso; cada académico no registra las suyas (lo hacen la Dirección o Gestión de datos); un convenio
   «activo» en el año es uno vigente con al menos una actividad registrada en el año; un impacto «comprobado» exige una
   evidencia y su descripción; la encuesta a empleadores es nominal por omisión (pocos empleadores: con anónima casi nunca se
@@ -2534,8 +2534,21 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
 4. **La Guía y la plantilla externa:** se retiran del sistema y del repositorio; queda el motor genérico
    (`xlsx_plantilla`) con correspondencias privadas, que no se versionan.
 5. **Ámbito:** un marco por unidad evaluable, empezando por la Carrera (el Instituto, después).
-6. ⚠ **Transparencia:** ¿se publican indicadores agregados en una página pública (rendición de cuentas) o solo dentro
-   del sistema? **Abierta.**
+6. **Transparencia** (decidida el 7-nov-2026): los indicadores agregados se publican en una página pública (rendición de
+   cuentas). Qué se publica, desde qué fecha y con qué resguardos se define al diseñar esa etapa.
 7. **Documentación histórica:** las secciones anteriores de este PLAN y las migraciones aplicadas se conservan como
    historia; todo lo nuevo (código, pantallas, guía, README, pruebas) se escribe neutro.
 8. **Dimensiones:** el borrador D1–D9 de arriba.
+
+### Decisiones del 7-nov-2026
+- Se confirman todas las decisiones que el agente tomó en las etapas 1 a 8 (marcadas en cada etapa).
+- **Transparencia:** página pública de indicadores (decisión 6).
+- **Tiempos de trámite** (D1.3.b): se registran a mano; TAU no mide trámites.
+- **Metas por año:** las fija la Dirección de Carrera en el marco (`gestionar_marco_calidad`).
+- **Inicio de sesión UMSA:** sigue pendiente del proveedor que confirme la DTIC.
+- **Deserción** (D3.2.b y la brecha D3.4.a): **por cohorte**, con plazo de 3 años (6 ciclos) y las cohortes I y II del
+  mismo año juntas: desertores antes de cumplir el plazo / ingresantes de la cohorte. Ya se calcula con los datos que hay
+  (cohorte, estado, último ciclo, motivo); exige que la carga de Seguimiento Académico traiga las cohortes completas,
+  también a quienes se fueron. Se descarta la tasa por año: sin la matrícula de cada ciclo su denominador es aproximado.
+- **Página pública** (etapa 9): solo los indicadores que la Dirección marque como públicos en el marco; solo años cerrados;
+  ninguna cifra calculada sobre menos de 5 personas; valor, n, meta y método; sin datos individuales ni inicio de sesión.
