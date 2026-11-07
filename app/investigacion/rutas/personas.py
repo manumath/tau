@@ -7,6 +7,7 @@ from monsterui.all import H2, Button, ButtonT, Card, Table, Tbody, Td, TextPrese
 from app.comun import paises, permisos, personas
 from app.investigacion.componentes import personas as ui
 from app.comun.componentes.layout import ID_MODAL, boton_espera, modal, pagina
+from app.comun.componentes.registros import url_filtrada
 from app.comun.db import auditar, get_db
 
 rt = APIRouter()
@@ -128,7 +129,9 @@ def get(auth, q: str = "", sin_pais: bool = True, todos: bool = False):
 def get(auth, q: str = "", todos: bool = False):
     if not _permitido(auth):
         return Response("No autorizado", status_code=403)
-    return tabla_externos(q, not todos, _fusiona(auth))
+    # La búsqueda queda en la URL de la página (no la del fragmento): se puede recargar o compartir.
+    return (tabla_externos(q, not todos, _fusiona(auth)),
+            HtmxResponseHeaders(replace_url=url_filtrada("/personas/externos", q=q, todos="1" if todos else "")))
 
 
 @rt("/personas/externos/completar")

@@ -25,6 +25,13 @@ def test_listado_y_busqueda(admin):
     r = admin.get("/admin/usuarios/filas", params={"q": "noe"}, headers=HX)
     assert r.text.startswith("<tbody") and "Noether" in r.text and "admin@test.cl" not in r.text
     assert "No hay usuarios" in admin.get("/admin/usuarios/filas", params={"q": "zzz"}).text
+    # La búsqueda queda en la URL de la página, y al recargarla se muestra igual.
+    assert admin.get("/admin/usuarios/filas", params={"q": "noe"}, headers=HX).headers["hx-replace-url"] == \
+        "/admin/usuarios?q=noe"
+    r = admin.get("/admin/usuarios", params={"q": "noe"})
+    fila_admin = f'id="usuario-{usuarios.por_email("admin@test.cl")["id"]}"'
+    assert 'value="noe"' in r.text and "Noether" in r.text and fila_admin not in r.text
+    assert fila_admin in admin.get("/admin/usuarios").text  # sin filtro, sí está
 
 
 def test_crear_usuario_muestra_password_temporal_y_actualiza_tabla(admin, client):

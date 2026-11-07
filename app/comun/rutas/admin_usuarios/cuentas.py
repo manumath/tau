@@ -13,6 +13,7 @@ from monsterui.all import (H2, Button, ButtonT, Form, FormLabel, Input, LabelChe
 from app.comun import config, correo, permisos, tokens, usuarios, vinculos
 from app.comun.componentes.avisos_emergentes import aviso_con_deshacer
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.registros import url_filtrada
 from app.comun.db import auditar
 from app.comun.rutas.admin_usuarios.comun import (BASE, ID_TBODY, SIN_PERMISO, cuerpo_tabla, fila, gestiona_vinculos,
                                                   opciones_categoria)
@@ -135,7 +136,8 @@ def get(auth, q: str = ""):
 
 @rt(f"{BASE}/filas")
 def get(auth, q: str = ""):
-    return cuerpo_tabla(usuarios.listar(q), auth)
+    # La búsqueda queda en la URL de la página: se puede recargar, volver atrás o compartir.
+    return cuerpo_tabla(usuarios.listar(q), auth), HtmxResponseHeaders(replace_url=url_filtrada(BASE, q=q))
 
 
 @rt(f"{BASE}/nuevo")

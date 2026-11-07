@@ -236,8 +236,9 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
   (`productos-cambiados`, `actividades-cambiadas`, `pendientes-cambiados`) y las listas, fichas y
   contadores que lo escuchan se recargan solos.
 - **Filas de tabla fuera de banda** (`hx-swap-oob`) siempre dentro de `<template>`.
-- **URL de las vistas filtradas:** la fija el servidor con `HX-Replace-Url`, para que apunte a la
-  página y no al fragmento.
+- **URL de las vistas filtradas:** la fija el servidor con `HX-Replace-Url`
+  (`HtmxResponseHeaders(replace_url=url_filtrada("/pagina", q=q, …))`), para que apunte a la página y no al
+  fragmento; la página completa lee los mismos parámetros, de modo que recargar o compartir el enlace muestra lo mismo.
 - **Errores:** a HTMX se le responde con el código (403, 404…) y el navegador muestra un aviso
   (`app/comun/componentes/errores.py`). A las peticiones normales, una página con el estilo del sistema.
 - **Modales:** el servidor responde con `modal(...)` dentro de `#modal`; cerrar es vaciarlo (botones con

@@ -63,6 +63,11 @@ informes…) puede **ordenar** haciendo clic en el título de una columna (otro 
 **filtrar** escribiendo en «Filtrar…» (no distingue tildes ni mayúsculas) y **descargar en CSV** lo
 que ve, con el orden y el filtro aplicados. El CSV se abre en Excel con las tildes correctas.
 
+En las listas con búsqueda o filtros arriba (productos, actividades, investigadores, coautores externos,
+estudiantes, revistas, usuarios y auditoría), lo que usted elige **queda en la dirección de la página**. Así,
+al recargar o al volver desde una ficha la lista se ve igual, y puede guardar o compartir el enlace de una
+búsqueda. Quien abre ese enlace ve solo lo que su rol le permite.
+
 ## Menú
 
 En una pantalla grande, el **menú lateral** reúne todo lo que usted puede abrir, agrupado: **Investigación**

@@ -76,6 +76,17 @@ def test_pagina_de_coautores_externos(client, emmy):
         "institucion": "UChile", "pais": "Perú"}
 
 
+def test_busqueda_de_coautores_externos_queda_en_la_url(client, emmy):
+    get_db().t.persona_externa.insert(nombres="Ana", apellidos="Uno", pais="Chile")
+    login(client, "inv@test.cl", PASS_TEMP)
+    r = client.get("/personas/externos/tabla", params={"q": "uno", "todos": "1"}, headers=HX)
+    assert "Uno" in r.text
+    assert r.headers["hx-replace-url"] == "/personas/externos?q=uno&todos=1"
+    r = client.get("/personas/externos", params={"q": "uno", "todos": "1"})  # al recargar: mismos filtros
+    assert 'value="uno"' in r.text and "Uno" in r.text
+    assert client.get("/personas/externos/tabla", headers=HX).headers["hx-replace-url"] == "/personas/externos"
+
+
 def test_ambito_y_contrapartes(client, emmy):
     login(client, "inv@test.cl", PASS_TEMP)
     r = client.post("/proyectos", headers=HX, data={"nombre": "Colaboración andina", "estado": "vigente", "ambito": ""})

@@ -2174,8 +2174,15 @@ versión y las pruebas están bien. El hallazgo grave fue de concurrencia, y est
   como mucho cada 5 minutos, con un candado. Cada tarea conserva su plazo horario.
 - Pruebas en `tests/test_concurrencia.py`. Sin migraciones.
 
-**Pendiente de la auditoría (en este orden):** (a) filtros y paginación con `hx-replace-url`, para que recargar, volver
-atrás y compartir el enlace conserven el estado; (b) integración continua en GitHub Actions (ruff y pytest); (c) cola de
+**Etapa 2, filtros en la dirección (hecha):** la auditoría había dado por faltante el estado de los filtros en la URL,
+porque buscó `hx-push-url`. En realidad, seis listas ya lo hacían desde el servidor (`HtmxResponseHeaders(replace_url=
+url_filtrada(...))`): productos, actividades, investigadores, estudiantes, revistas y auditoría. Faltaban dos, que ahora
+siguen el mismo patrón: coautores externos (`q`, `todos`) y usuarios (`q`). Las páginas completas ya leían esos
+parámetros. La paginación «Cargar más» no va en la URL: al recargar se vuelve a la primera página, como antes.
+Convención para listas nuevas: el fragmento devuelve `replace_url` con la ruta de la página, y la página lee los mismos
+parámetros.
+
+**Pendiente de la auditoría (en este orden):** (b) integración continua en GitHub Actions (ruff y pytest); (c) cola de
 correo persistente con reintentos, si no basta la actual en memoria; (d) imagen Docker: verificar el sha256 de
 Litestream y no correr como root; (e) registro de rutas sin depender del orden (`/productos/{pid:int}`).
 
