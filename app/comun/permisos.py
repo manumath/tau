@@ -35,7 +35,8 @@ DESCRIPCIONES = {
                            "memoria e informe de I+D+i. No define vínculos.",
     "direccion_carrera": "Categoría, vínculo y carga horaria de cada persona; plan de estudios, oferta y asignación "
                          "docente; informes de la Carrera; marco de calidad.",
-    "coordinacion_academica": "Prepara asignaciones y revisa programas, sin aprobarlos.",
+    "coordinacion_academica": "Prepara asignaciones y revisa programas, sin aprobarlos; convocatorias a auxiliaturas, "
+                              "tribunales de grado y comunicados.",
     "comision_calidad": "Ve todos los informes y exportaciones del sistema de calidad; registra evidencias y juicios de la autoevaluación.",
     "gestion_datos": ("Fichas académicas (grados, fecha de nacimiento), estudiantes y coautores externos de su unidad, "
                       "y cifras manuales de los indicadores de calidad."),
@@ -106,6 +107,13 @@ ACCIONES = {
     "registrar_capacitacion": {"direccion_carrera", "gestion_datos"},
     "registrar_convenios": {"direccion_carrera"},
     "registrar_impacto_proyectos": {"direccion_carrera", "direccion_instituto"},
+    # Servicios para estudiantes (PLAN §58): comunicados (las dos direcciones y la Coordinación académica; también el
+    # responsable de un proyecto, lo decide la ruta), auxiliaturas de docencia (Carrera) y de investigación (también el
+    # Instituto), y trámites de grado: designar tribunales y registrar resoluciones (decisión 1 del 7-nov-2026).
+    "publicar_comunicados": {"direccion_carrera", "direccion_instituto", "coordinacion_academica"},
+    "gestionar_auxiliaturas": {"direccion_carrera", "coordinacion_academica"},
+    "gestionar_auxiliaturas_investigacion": {"direccion_carrera", "coordinacion_academica", "direccion_instituto"},
+    "gestionar_grado": {"direccion_carrera", "coordinacion_academica"},
     # «Avisar a los responsables» desde Calidad de datos (la Comisión de calidad solo mira; Administración no decide contenido).
     "avisar_calidad": {"direccion_instituto", "direccion_carrera", "coordinacion_academica"},
 }

@@ -87,6 +87,10 @@ from app.investigacion.rutas.productos import rt as rutas_productos
 from app.investigacion.rutas.propuestas import rt as rutas_propuestas
 from app.investigacion.rutas.proyectos import rt as rutas_proyectos
 from app.investigacion.rutas.publico import rt as rutas_publico
+from app.servicios import grado as tramites_grado  # noqa: E402
+from app.servicios.rutas.auxiliaturas import rt as rutas_auxiliaturas
+from app.servicios.rutas.comunicados import rt as rutas_comunicados
+from app.servicios.rutas.grado import rt as rutas_grado
 
 
 _candado_mantenimiento = threading.Lock()
@@ -102,6 +106,7 @@ def _correr_mantenimiento():
         seguimiento_egresados.mantenimiento()  # invitaciones del seguimiento de egresados
         indicadores_calidad.mantenimiento()  # cifras «a hoy» de los indicadores de calidad, una vez al día
         mejora.avisar_vencimientos()  # acciones del plan de mejora por vencer o vencidas (una vez por acción y plazo)
+        tramites_grado.recordar()  # informes de tribunales de grado por vencer o vencidos (una vez por ronda y persona)
     except Exception:
         registros.log.exception("Falló el mantenimiento periódico")
     finally:
@@ -173,7 +178,7 @@ def create_app(db_path=config.DB_PATH):
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
                    rutas_preparacion, rutas_cohortes,
                    rutas_actividades_estudiantiles, rutas_estudiante, rutas_encuestas, rutas_responder, rutas_egresados, rutas_directorio, rutas_tutoria,
-                   rutas_seguimiento_estudiantil):
+                   rutas_seguimiento_estudiantil, rutas_comunicados, rutas_auxiliaturas, rutas_grado):
         router.to_app(app)
     return app
 

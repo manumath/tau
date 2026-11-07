@@ -58,5 +58,7 @@ def test_pagina_con_menu_unico(client):
 
 def test_cuenta_de_estudiante(sofia):  # noqa: F811
     r = sofia.get("/estudiante").text
-    assert re.findall(r'href="([^"]+)"[^>]*data-nav', r) == ["/estudiante", "/avisos", "/estudiante", "/avisos"]
-    assert 'id="busqueda-global"' not in r and "<span>Más</span>" not in r   # sin búsqueda ni «Más»: solo dos secciones
+    # Su seguimiento, los servicios (PLAN §58) y sus avisos, en el menú lateral y en la barra del teléfono.
+    secciones = ["/estudiante", "/estudiante/comunicados", "/estudiante/auxiliaturas", "/estudiante/grado", "/avisos"]
+    assert re.findall(r'href="([^"]+)"[^>]*data-nav', r) == secciones * 2
+    assert 'id="busqueda-global"' not in r and "<span>Más</span>" not in r   # sin búsqueda ni «Más»

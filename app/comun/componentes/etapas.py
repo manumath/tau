@@ -38,7 +38,9 @@ def etapas(pasos: list[dict], compacto: bool = False, etiqueta: str = "Etapas"):
             Div(A(p["titulo"], href=p["href"], cls="hover:underline") if p.get("href") else p["titulo"],
                 cls="text-sm font-medium leading-tight " + ("text-muted-foreground" if estado in _APAGADOS else "")),
             Div(p["detalle"], cls="text-xs text-muted-foreground leading-tight mt-0.5") if p.get("detalle") else "",
-            cls="mt-2 text-center px-1")
+            # Con más de cuatro pasos las etiquetas no caben en el teléfono: allí se ocultan y se muestra una línea
+            # con el paso en curso debajo de la barra.
+            cls="mt-2 text-center px-1" + (" hidden sm:block" if len(pasos) > 4 else ""))
         items.append(Li(
             Div(tramo, Div(marca, cls=f"relative z-10 flex {tam} items-center justify-center rounded-full border-2 "
                                       f"font-semibold {_CIRCULO[estado]}"),
@@ -49,4 +51,11 @@ def etapas(pasos: list[dict], compacto: bool = False, etiqueta: str = "Etapas"):
             title=None if not compacto else f"{p['titulo']}" + (f" · {p['detalle']}" if p.get("detalle") else ""),
             aria_current="step" if estado in ("actual", "alerta") else None,
             cls="relative flex-1 min-w-0"))
-    return Ol(*items, aria_label=etiqueta, cls="flex items-start " + ("w-40" if compacto else "w-full"))
+    barra = Ol(*items, aria_label=etiqueta, cls="flex items-start " + ("w-40" if compacto else "w-full"))
+    en_curso = next(((i, p) for i, p in enumerate(pasos) if p["estado"] in ("actual", "alerta", "error")), None)
+    if compacto or len(pasos) <= 4 or not en_curso:
+        return barra
+    i, p = en_curso
+    return Div(barra, Div(f"Paso {i + 1} de {len(pasos)}: ", Span(p["titulo"], cls="font-medium"),
+                          f" · {p['detalle']}" if p.get("detalle") else "",
+                          aria_hidden="true", cls="sm:hidden mt-2 text-center text-sm"))

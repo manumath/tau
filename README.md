@@ -39,6 +39,8 @@ el servicio `portal` y la aplicación de Fly.io).
   con ingreso por enlace al correo; actividad estudiantil con verificación; encuestas anónimas o nominales con enlace personal;
   tutoría con reuniones confidenciales; egresados con seguimiento a los 6 meses, 1, 3 y 5 años, directorio opcional y mentoría;
   y un informe de seguimiento estudiantil con solo cifras agregadas.
+- **Servicios** (PLAN §58): comunicados y eventos con convocados; convocatorias a auxiliaturas con postulación en línea y
+  tribunal que califica por fases; perfil y proyecto de grado con tutor, tribunal, observaciones y plantilla LaTeX.
 - **Administración:** cuentas, proyectos, auditoría. **API JSON** de solo lectura para perfiles públicos.
 
 ## Puesta en marcha (desarrollo)
@@ -164,12 +166,18 @@ app/
     directorio.py              directorio opcional de egresados, invitación y solicitudes de mentoría
     empleadores.py             registro de empleadores, destinatarios de la encuesta a empleadores
     rutas/                     egresados (/docencia/egresados), empleadores (/docencia/empleadores), directorio (/estudiante/directorio, /estudiante/perfil-egresado)
+  servicios/                   servicios para estudiantes y personal (PLAN §58)
+    comunicados.py             comunicados, convocatorias y eventos con convocados, confirmación y asistencia
+    auxiliaturas.py            convocatorias a auxiliaturas: requisitos, ítems, tribunal 2 + 2, postulación, fases y resultado
+    grado.py                   perfil y documento final: tutor, tribunal, revisiones de 15 días hábiles, resolución y defensa
+    latex.py                   ZIP en LaTeX del perfil (clase perfil-cmat) y nota de presentación
+    rutas/                     comunicados, auxiliaturas y grado (/servicios/… y /estudiante/…)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
   navegacion.py                menú lateral y pestañas del teléfono: qué secciones ve cada rol (PLAN §53)
 
 Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `calidad`,
-`academico`, `estudiantil` y `egresados` pueden usar `comun` (`calidad` usa `estudiantil` para el seguimiento estudiantil y
-`egresados` usa `estudiantil` para el motor de encuestas). `app/inicio.py` y `main.py` reúnen todo.
+`academico`, `estudiantil`, `egresados` y `servicios` pueden usar `comun` (`calidad` usa `estudiantil` para el seguimiento estudiantil y
+`egresados` usa `estudiantil` para el motor de encuestas; `servicios` usa `investigacion` para los adjuntos y `estudiantil` para la cuenta del estudiante). `app/inicio.py` y `main.py` reúnen todo.
 static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
 static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
 datos/planes/                  planes de estudio en CSV (formato en su README)

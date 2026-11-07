@@ -567,7 +567,7 @@ ficha en lugar de crear otra. Se vuelve a cargar el archivo cada vez que cambie 
 
 ### Portal del estudiante («Mi seguimiento»)
 
-Quien tiene cuenta de estudiante solo ve **Mi seguimiento**; no entra al resto del sistema. La primera vez
+Quien tiene cuenta de estudiante ve **Mi seguimiento**, **Comunicados**, **Auxiliaturas**, **Grado** y **Avisos**; no entra al resto del sistema (vea «Servicios» más abajo). Arriba de su ficha, **Le toca a usted** lista lo que tiene pendiente: eventos por confirmar, un perfil observado, una postulación sin enviar o postulantes por calificar si integra un tribunal. La primera vez
 lee y acepta el uso de sus datos. Ve su ficha (RU, cohorte, plan y estado), su participación en la
 investigación (tesis, proyectos y actividades del instituto) y su **actividad estudiantil**: ayudantías,
 olimpiadas, congresos, pasantías, becas, movilidad, semilleros, charlas, voluntariado y otras. Cada una lleva
@@ -671,6 +671,80 @@ nombres: cohortes (ingreso, egreso, titulación y deserción), actividad estudia
 respuesta y promedio; las anónimas con menos de 5 respuestas aparecen como «reservado»), tutoría (cobertura, reuniones y
 derivaciones, sin el contenido), egresados (indicadores por trienio y seguimiento) y directorio y mentoría. Se elige el rango de
 años de ingreso.
+
+## Servicios
+
+Tres servicios para estudiantes y personal: comunicados y eventos, auxiliaturas y proyectos de grado. Todo lo que
+alguien debe hacer le llega como aviso (en el sistema y, según su preferencia, por correo) y aparece en su página de
+inicio.
+
+### Comunicados y eventos (Dirección de Carrera, Dirección del Instituto, Coordinación académica y responsables de proyectos)
+
+En **Servicios → Comunicados y eventos → Nuevo** elija el tipo (comunicado, convocatoria o evento), a nombre de quién
+se publica y el texto. Un evento lleva fecha, hora y lugar, y puede pedir que se confirme la asistencia. Luego elija
+a quién llega:
+
+- **Para todos:** todas las cuentas activas del sistema.
+- **Convocados:** agregue grupos (estudiantes, docentes, estudiantes con trámite de grado, una cohorte, los
+  postulantes de una convocatoria a auxiliaturas, los participantes de un proyecto) o personas sueltas buscándolas por
+  nombre. Puede quitar a quien no corresponda.
+
+El responsable o co-responsable de un proyecto publica a nombre de su proyecto y solo convoca a su grupo y a personas
+que elija. **Publicar** avisa a cada convocado; mientras está en borrador nadie lo ve. Después puede **cancelar y
+avisar**. En la página del comunicado verá cuántos confirmaron, cuántos no podrán y cuántos no respondieron. Cuando el
+evento ya empezó, quien lo organizó registra la asistencia (no en los eventos «para todos»).
+
+Quien lo recibe lo ve en **Comunicados** y, si se pide, responde **Asistiré** o **No podré** hasta que el evento empiece.
+
+### Auxiliaturas (Dirección de Carrera y Coordinación académica; las de investigación, también la Dirección del Instituto)
+
+Siguen el Reglamento General de Auxiliares Académicos de la UMSA.
+
+1. **Nueva convocatoria:** gestión, modalidad (docencia o investigación), primera o segunda convocatoria, fechas de
+   publicación, cierre de la recepción y examen escrito, lugar y número de resolución (el PDF es opcional). El sistema
+   avisa si entre la publicación y el examen hay menos de 10 días hábiles (5 en una segunda convocatoria). Los
+   requisitos del reglamento se cargan solos; puede agregar o quitar.
+2. **Ítems:** una materia de la oferta de la gestión (o un proyecto, en investigación), plazas y horas (20 o 40 h/mes).
+3. **Tribunal de cada ítem:** dos docentes y dos estudiantes; un postulante no puede integrarlo.
+4. **Publicar:** se avisa a todos los estudiantes y a los miembros de los tribunales.
+
+**El estudiante** entra en **Auxiliaturas**, elige una materia y **Postula**. En la página de su postulación sube un
+PDF o una foto por cada documento, marca **Declaro que es así** en las declaraciones juradas y escribe su propuesta de
+trabajo. El sistema verifica solo que no haya sido auxiliar de esa materia en dos gestiones. Cuando no falta nada,
+**Enviar postulación**; puede retirarla mientras la recepción está abierta.
+
+**El tribunal** califica cada fase por su cuenta: habilitación (cumple o no), méritos (0 a 30, mínimo 10), examen
+escrito (0 a 35, mínimo 17,5) y examen oral (0 a 35). Los estudiantes del tribunal lo hacen desde **Le toca a usted**.
+La nota de cada fase es el promedio de al menos tres miembros. Quien gestiona la convocatoria, o un docente del tribunal,
+**cierra la fase y publica las notas**: cada postulante ve su resultado y tiene 24 horas para impugnar por escrito ante
+la Dirección; las impugnaciones se registran en la página del ítem y la fase siguiente no se cierra mientras haya alguna
+sin resolver. Antes del examen oral se **sortea el tema**. Al cerrar el oral, gana la plaza quien suma al menos 56 de 100
+con el mayor total; un empate lo resuelve la Dirección en la misma página. El **acta de calificaciones** se imprime desde
+el ítem.
+
+### Proyectos de grado (Dirección de Carrera y Coordinación académica; tutores y tribunales)
+
+**El estudiante** abre **Grado → Nuevo perfil**, con el título, la modalidad (proyecto de grado o tesis) y su tutor. El
+perfil tiene secciones obligatorias (introducción, planteamiento del problema, objetivo general, objetivos específicos,
+metodología, calendario y bibliografía) y otras que puede agregar (antecedentes, justificación, hipótesis, marco
+teórico, alcances, resultados esperados). Las fórmulas se escriben en LaTeX (`$x^2$`). El sistema genera la **nota de
+presentación** para imprimir y un **ZIP en LaTeX** con la plantilla de la Carrera, para compilar con pdfLaTeX o subir a
+Overleaf; la bibliografía puede ser BibTeX.
+
+1. **Visto bueno del tutor:** el tutor lo da o lo devuelve con un comentario.
+2. **Tribunal:** la Dirección de Carrera o la Coordinación académica designa al menos dos docentes (no el tutor).
+3. **Revisión:** cada miembro tiene **15 días hábiles** para su informe: valora cuatro aspectos, dictamina (aprobado,
+   observado o no aprobado) y escribe sus observaciones, una por párrafo. Los informes se muestran cuando llega el
+   último. El sistema recuerda tres días antes del plazo y avisa a la Dirección si vence.
+4. **Si hay observaciones**, el estudiante responde cada una, corrige y **reenvía**: empieza una nueva revisión de 15 días
+   hábiles. Un dictamen «no aprobado» rechaza el perfil.
+5. **Resolución:** con todos los dictámenes favorables, la Dirección registra el **número de resolución** (el PDF es
+   opcional) y el perfil queda aprobado.
+
+El **documento final** sigue los mismos pasos: el estudiante lo inicia desde su perfil aprobado y sube el PDF. Con el
+dictamen favorable del tribunal, la Dirección registra la fecha de la reunión con el estudiante y el tutor y la de la
+defensa. Ese día cada miembro del tribunal registra su nota (1 a 100; aprueba con 51) y, con todas, el trámite queda
+como defendido o reprobado. El acta se imprime desde el trámite.
 
 ## Aseguramiento de la Calidad
 

@@ -2571,3 +2571,67 @@ La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás const
   también a quienes se fueron. Se descarta la tasa por año: sin la matrícula de cada ciclo su denominador es aproximado.
 - **Página pública** (etapa 9): solo los indicadores que la Dirección marque como públicos en el marco; solo años cerrados;
   ninguna cifra calculada sobre menos de 5 personas; valor, n, meta y método; sin datos individuales ni inicio de sesión.
+
+## 58. Servicios: comunicados y eventos, auxiliaturas y proyectos de grado (7-nov-2026)
+
+Tres servicios para estudiantes y personal, diseñados sobre los reglamentos de la UMSA (Reglamento General de Auxiliares
+Académicos; reglamento de modalidades de graduación de la Carrera). Paquete `app/servicios`; pantallas del personal en
+`/servicios/*` (grupo «Servicios» del menú) y de los estudiantes en `/estudiante/comunicados`, `/estudiante/auxiliaturas`,
+`/estudiante/tribunal` y `/estudiante/grado`.
+
+### Decisiones del 7-nov-2026 (usuario)
+1. **Tribunales de auxiliatura:** los define la Coordinación académica o la Dirección de Carrera para cada materia
+   convocada: dos docentes y dos estudiantes.
+2. **Perfil:** el estudiante elige las secciones que sugiere el sistema; obligatorias: datos (título, autor, tutor),
+   introducción, planteamiento del problema, objetivos (general y específicos), metodología, calendario y bibliografía.
+3. **Plazo del tribunal de grado:** 15 días hábiles.
+4. **Dictámenes:** en el perfil y en el proyecto de grado deben dictaminar ambos miembros del tribunal; en las
+   auxiliaturas, cada fase necesita tres calificaciones.
+5. **Resoluciones:** se guarda obligatoriamente el número y, si se quiere, el PDF.
+6. **Auxiliaturas de investigación del IIMAT:** entran ahora, junto con las de docencia.
+7. **«Ayudantías»:** son las auxiliaturas (no hay un servicio aparte).
+8. **Impugnaciones:** se presentan y resuelven en papel; TAU solo las registra.
+9. **Asistencia a eventos:** la registra el organizador, salvo en los eventos para todos.
+
+### Qué se hizo
+- **Migración 0059** (`servicios-estudiantiles`): recrea `adjunto` (conserva sus filas) para admitir adjuntos de
+  convocatorias, requisitos de postulación y trámites de grado; agrega `comunicado`, `comunicado_destinatario`,
+  `convocatoria_auxiliatura`, `requisito_auxiliatura`, `item_auxiliatura`, `tribunal_auxiliatura`,
+  `postulacion_auxiliatura`, `postulacion_requisito`, `calificacion_auxiliatura`, `fase_auxiliatura`,
+  `impugnacion_auxiliatura`, `tramite_grado`, `tribunal_grado`, `informe_grado`, `observacion_grado` y
+  `recordatorio_grado`.
+- **Acciones:** `publicar_comunicados` (las dos direcciones y la Coordinación académica; los responsables de proyectos
+  publican a nombre de su proyecto sin la acción), `gestionar_auxiliaturas` (Dirección de Carrera y Coordinación),
+  `gestionar_auxiliaturas_investigacion` (además, la Dirección del Instituto) y `gestionar_grado` (Dirección de Carrera y
+  Coordinación).
+- **Comunicados** (`comunicados.py`): borrador → publicado → cancelado; destinatarios materializados al publicar (para
+  todos = cuentas activas); grupos por estudiantes, docentes, grado, cohorte, convocatoria y proyecto; respuesta hasta el
+  inicio del evento; asistencia del organizador.
+- **Auxiliaturas** (`auxiliaturas.py`): convocatoria con requisitos del reglamento precargados, ítems por materia de la
+  oferta o por proyecto, tribunal 2 + 2, postulación con documentos y declaraciones juradas, fases habilitación →
+  méritos (30, mín. 10) → escrito (35, mín. 17,5) → oral (35), titular con 56 de 100, impugnaciones de 24 h, sorteo del
+  tema oral, empate y acta.
+- **Grado** (`grado.py`, `latex.py`): perfil y documento final; visto bueno del tutor; tribunal de al menos dos docentes;
+  rondas de revisión de 15 días hábiles con informe por aspectos (art. 35), observaciones que el estudiante responde,
+  resolución, defensa y nota (literal: Excelente ≥ 90, Sobresaliente ≥ 80, Bueno ≥ 51); recordatorios diarios
+  (`recordar`, en el mantenimiento de `main.py`); ZIP en LaTeX con la clase `perfil-cmat` y nota de presentación
+  imprimible.
+- **«Le toca a usted»** en `/estudiante` y el menú del estudiante con cinco secciones.
+- Indicador de etapas (`componentes/etapas.py`): con más de cuatro pasos, en el teléfono se muestra una línea con el paso
+  en curso en vez de las etiquetas.
+
+### Decisiones del agente, por confirmar
+- Tribunal de grado: al menos dos docentes, sin el tutor; deben dictaminar todos. Un «no aprobado» rechaza; un
+  «observado» abre otra ronda.
+- Auxiliaturas: la nota de cada fase es el promedio de las calificaciones (mínimo tres); un empate en la habilitación no
+  habilita; la fase siguiente no se cierra antes de 24 h del cierre anterior ni con impugnaciones pendientes; cierran la
+  fase quien gestiona la convocatoria o un docente del tribunal.
+- Requisitos: se acreditan con documento o declaración jurada; el sistema solo verifica «no más de dos gestiones como
+  auxiliar de la materia», con sus propios registros.
+- Días hábiles: lunes a viernes, sin feriados.
+- Un responsable de proyecto convoca solo a su grupo y a personas sueltas.
+- El servidor no compila PDF: entrega el ZIP en LaTeX y la nota en HTML para imprimir.
+- Autoría individual del perfil (sin grupos).
+- Observaciones del tribunal: una por párrafo.
+- El perfil se aprueba al registrar la resolución; el documento final termina con la defensa (aprueba con 51).
+- Mientras la revisión está abierta, cada miembro ve solo su informe y el resto ve cuántos llegaron.

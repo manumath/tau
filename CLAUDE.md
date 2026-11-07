@@ -49,6 +49,8 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - `app/estudiantil`: seguimiento estudiantil (PLAN §49): cohortes, carga del CSV de Seguimiento Académico,
   actividad estudiantil y encuestas. Sin materias ni notas. `app/egresados`: titulación, seguimiento,
   indicadores de egresados (PLAN §50) y registro de empleadores (PLAN §57).
+- `app/servicios`: comunicados y eventos, auxiliaturas y proyectos de grado (PLAN §58), con pantallas del personal en
+  `/servicios/*` y de los estudiantes en `/estudiante/{comunicados,auxiliaturas,tribunal,grado}`.
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
   `main.py`. El menú lateral se arma en `app/navegacion.py`: una pantalla nueva se agrega ahí, con el mismo
   permiso que su ruta. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
@@ -84,7 +86,8 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - **Cuentas de estudiante (PLAN §49):** sin contraseña, ingresan por enlace al correo (`/acceso`) y solo llegan a
   `/estudiante`, `/avisos` y `/logout` (`auth.RUTAS_ESTUDIANTE`): una ruta nueva del personal queda cerrada para ellos
   sin tocar nada, pero toda ruta nueva de `/estudiante` debe sacar la ficha de `estudiantes.cuenta_de(auth["id"])`, nunca de
-  un id en la dirección. Se unen a la ficha por `cuenta_estudiante`, no por `persona_externa.usuario_id`.
+  un id en la dirección. Si la dirección lleva el id de un trámite, una postulación o un ítem (PLAN §58), compruebe que es de
+  esa ficha o que el estudiante integra ese tribunal. Se unen a la ficha por `cuenta_estudiante`, no por `persona_externa.usuario_id`.
 - **Encuestas (PLAN §49 y §50):** las anónimas no enlazan la respuesta con la invitación ni guardan la hora, y no
   muestran resultados con menos de 5 respuestas (`encuestas.MIN_ANONIMO`): cualquier vista o exportación nueva debe
   respetarlo. El enlace de `/encuesta/<enlace>` es público y personal; se borra al responder o cerrar.

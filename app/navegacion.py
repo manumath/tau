@@ -10,6 +10,7 @@ from fasthtml.common import Span
 from app.academico.componentes import PESTANAS, visible
 from app.calidad import impacto, mejora
 from app.comun import permisos
+from app.comun.db import get_db
 
 DOCENCIA = ("mia", "preparacion", "planes", "oferta", "carga", "gestiones")
 ESTUDIANTES = ("cohortes", "encuestas", "tutoria", "egresados", "empleadores")
@@ -34,10 +35,25 @@ def _academico(claves, auth):
     return [_item(c, t, u, ICONOS[c]) for c, t, u, cond in PESTANAS if c in claves and visible(cond, auth)]
 
 
+def _miembro_auxiliatura(uid: int) -> bool:
+    return bool(get_db().q("""SELECT 1 FROM tribunal_auxiliatura t JOIN item_auxiliatura i ON i.id = t.item_id
+                              JOIN convocatoria_auxiliatura c ON c.id = i.convocatoria_id
+                              WHERE t.usuario_id = ? AND c.estado = 'publicada' LIMIT 1""", [uid]))
+
+
+def _en_grado(uid: int) -> bool:
+    """¿Es tutor o tribunal de algún trámite de grado?"""
+    return bool(get_db().q("""SELECT 1 FROM tramite_grado WHERE tutor_id = ? AND estado <> 'borrador'
+                              UNION SELECT 1 FROM tribunal_grado WHERE usuario_id = ? LIMIT 1""", [uid, uid]))
+
+
 def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
     """[(título del grupo o None, ítems)], solo los grupos con algo visible."""
     if auth.get("solo_estudiante"):
         return [(None, [_item("estudiante", "Mi seguimiento", "/estudiante", "graduation-cap"),
+                        _item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
+                        _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
+                        _item("grado", "Grado", "/estudiante/grado", "scroll"),
                         _item("avisos", "Avisos", "/avisos", "bell")])]
     puede = lambda accion: permisos.puede(auth, accion)  # noqa: E731
     investigacion = []
@@ -74,6 +90,11 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
         calidad.append(_item("mejora", "Plan de mejora", "/calidad/mejora", "list-todo"))
     if puede("ver_calidad_datos"):
         calidad.append(_item("calidad", "Calidad de datos", "/informes/calidad", "list-checks"))
+    servicios = [_item("comunicados", "Comunicados y eventos", "/servicios/comunicados", "megaphone")]
+    if puede("gestionar_auxiliaturas") or puede("gestionar_auxiliaturas_investigacion") or _miembro_auxiliatura(auth["id"]):
+        servicios.append(_item("auxiliaturas", "Auxiliaturas", "/servicios/auxiliaturas", "badge-check"))
+    if puede("gestionar_grado") or _en_grado(auth["id"]):
+        servicios.append(_item("grado", "Proyectos de grado", "/servicios/grado", "scroll"))
     administracion = []
     if puede("ver_usuarios"):
         administracion.append(_item("usuarios", "Usuarios", "/admin/usuarios", "users"))
@@ -84,7 +105,7 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                            _item("lineas", "Líneas de investigación", "/admin/lineas", "route"),
                            _item("catalogos", "Tipos e índices", "/admin/catalogos", "tags")]
     grupos = [(None, [_item("inicio", "Inicio", "/", "home")]), ("Investigación", investigacion),
-              ("Docencia", _academico(DOCENCIA, auth)), ("Estudiantes", estudiantes),
+              ("Docencia", _academico(DOCENCIA, auth)), ("Estudiantes", estudiantes), ("Servicios", servicios),
               ("Aseguramiento de la Calidad", calidad), ("Administración", administracion)]
     return [(t, items) for t, items in grupos if items]
 

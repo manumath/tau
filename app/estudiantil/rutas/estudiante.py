@@ -151,6 +151,31 @@ def _tarjeta_apoyo(externo: int):
                 Div(*contenido, cls="flex flex-col gap-2"))
 
 
+def _le_toca(auth, externo: int):
+    """«Le toca a usted»: lo que espera una acción del estudiante en los servicios (PLAN §58)."""
+    from app.servicios import auxiliaturas, comunicados, grado
+    from app.servicios.rutas.comun import le_toca
+    filas = [le_toca(f"Confirme su asistencia: {c['titulo']}", f"{BASE}/comunicados/{c['id']}", comunicados.fecha_hora(c["inicio"]),
+                     "calendar") for c in comunicados.por_confirmar(auth["id"])]
+    for t in grado.de_estudiante(externo):
+        if t["estado"] == "observado":
+            filas.append(le_toca(f"Responda las observaciones del tribunal ({len(grado.observaciones_pendientes(t))} pendientes)",
+                                 f"{BASE}/grado/{t['id']}", f"{grado.TIPOS[t['tipo']]} «{t['titulo']}»"))
+        elif t["estado"] == "borrador" and t["comentario_tutor"]:
+            filas.append(le_toca("Su tutor le devolvió el trámite", f"{BASE}/grado/{t['id']}", t["comentario_tutor"][:120]))
+    for p in auxiliaturas.de_estudiante(externo):
+        if p["estado"] == "borrador" and auxiliaturas.abierta(p):
+            filas.append(le_toca(f"Complete y envíe su postulación: {p['item_titulo']}", f"{BASE}/auxiliaturas/{p['id']}",
+                                 f"La recepción cierra el {auxiliaturas.hoy_texto(p['cierre'])}"))
+    for i in auxiliaturas.items_de_miembro(auth["id"]):
+        if i["por_calificar"]:
+            filas.append(le_toca(f"Califique como tribunal: {i['titulo']}", f"{BASE}/tribunal/{i['id']}",
+                                 f"{i['por_calificar']} postulante(s) por calificar"))
+    if not filas:
+        return ""
+    return Card(H3("Le toca a usted", cls="text-base font-semibold mb-2"), Div(*filas, cls="space-y-2"), cls="mb-6")
+
+
 @rt(BASE)
 def get(auth):
     externo = _externo(auth)
@@ -167,6 +192,7 @@ def get(auth):
         "Mi seguimiento",
         H2(f"{p['nombres']} {p['apellidos']}"),
         P(" · ".join(x for x in datos if x) or "Sin datos de cohorte todavía.", cls=(TextPresets.muted_sm, "mb-6")),
+        _le_toca(auth, externo),
         # El egresado empieza por su perfil de egresado; el estudiante, por su actividad (PLAN.md §54).
         Div(*([_tarjeta_apoyo(externo), Div(tarjeta_actividades(externo), _tarjeta_participacion(externo), cls="space-y-6")]
               if estudiantes.es_egresado(externo) else

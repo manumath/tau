@@ -77,6 +77,9 @@ RUTAS = {  # ruta → quienes reciben 200 (el resto, 403)
     "/calidad/mejora/xlsx": {"instituto", "carrera", "comite"},
     "/calidad/mejora/acciones/nueva": {"carrera"},
     "/personas/externos/duplicados": {"instituto", "datos_cmat"},
+    "/servicios/comunicados/nuevo": {"instituto", "carrera"},
+    "/servicios/auxiliaturas/nueva": {"instituto", "carrera"},   # el Instituto, solo las de investigación
+    "/servicios/grado": {"carrera"},
 }
 
 
