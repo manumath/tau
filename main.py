@@ -27,7 +27,7 @@ from app.comun.auth import rt as rutas_auth
 from app.comun.componentes import avisos_emergentes
 from app.comun.componentes.errores import error_interno, no_encontrado, paginas_de_error
 from app.comun.cabeceras import CabecerasSeguridad
-from app.comun import registros
+from app.comun import correo, registros
 from app.comun.registros import RegistroPeticiones
 from app.comun.componentes.recursos import encabezados
 from app.comun.componentes.recursos import montar as montar_estaticos
@@ -83,6 +83,7 @@ MANTENIMIENTO_CADA_S = 300  # cada cuánto se mira si toca (cada tarea lleva ade
 
 def _correr_mantenimiento():
     try:
+        correo.reintentar()  # correos de la cola que fallaron (cada vez: tiene sus propias esperas)
         institucionales.mantenimiento()  # vigencias de proyectos y recordatorios
         programados.mantenimiento()  # informes que se envían solos
         seguimiento_egresados.mantenimiento()  # invitaciones del seguimiento de egresados

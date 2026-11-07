@@ -127,7 +127,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0047). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0048). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.
@@ -321,6 +321,19 @@ o una restauración). No ejecuta las tareas horarias.
 `PORTAL_CORREO_MODO`: `archivo` (por omisión, guarda cada correo como `.eml` en
 `data/correos/`, útil para revisar sin enviar), `smtp` (producción; ver `PORTAL_SMTP_*`) o `memoria`
 (pruebas).
+
+En modo `smtp` los correos pasan por una **cola persistente** (`correo_pendiente`, migración 0048):
+
+- Cada correo se guarda en la misma transacción que lo origina. Si esa operación se revierte, el correo no sale; si
+  se confirma, sale en un hilo aparte (`db.al_confirmar`).
+- Si el servidor SMTP falla, el mantenimiento lo reintenta a los 1, 5, 15, 60 y 240 minutos (seis intentos, unas
+  5 horas y media). Un rechazo definitivo (código 5xx, p. ej. un destinatario que no existe) se descarta enseguida.
+  Cada intento fallido queda en `portal.log` como WARNING; el descarte, como ERROR.
+- Un reinicio o un despliegue ya no pierde correos: los pendientes salen en la primera revisión.
+- Al enviarse (o descartarse), la fila se borra: no queda historial de mensajes, que llevan enlaces personales.
+- Para ver qué espera: `sqlite3 data/portal.db "SELECT id, para, asunto, intentos, proximo_intento, ultimo_error
+  FROM correo_pendiente"`. Para reenviar ya uno detenido: ponga `proximo_intento` en el pasado y espere la próxima
+  revisión (cada 5 minutos, mientras alguien use el sistema).
 
 ### 5.6 Registros y errores
 

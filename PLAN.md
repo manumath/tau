@@ -2189,7 +2189,16 @@ versiones de uv (0.13.7) y ruff (0.17.4) fijas. Antes se comprobó en un clon li
 archivos que solo existen en el equipo del usuario (logos originales, `.herramientas/`, `data/`): 696 pruebas y 17
 de navegador pasan.
 
-**Pendiente de la auditoría (en este orden):** (c) cola de
-correo persistente con reintentos, si no basta la actual en memoria; (d) imagen Docker: verificar el sha256 de
+**Etapa 4, cola persistente de correo (hecha):** migración 0048, tabla `correo_pendiente`. En modo `smtp`, cada correo
+se guarda en la transacción que lo origina y sale al confirmarse (`db.al_confirmar`, que `transaccion()` ejecuta al
+confirmar la más externa y descarta si se revierte). Antes, un correo salía aunque la operación se revirtiera, y se
+perdía si la máquina se reiniciaba. Reintentos desde el mantenimiento a los 1, 5, 15, 60 y 240 minutos; un rechazo
+5xx se descarta enseguida. Antes de enviar, el correo se «reserva» (se corre su próximo intento con un UPDATE
+condicionado), para que dos hilos no lo envíen a la vez. El Message-ID se mantiene en los reintentos. La fila se borra al
+enviarse o descartarse, sin historial de mensajes (llevan enlaces de ingreso, recuperación y encuestas). Si la base no
+responde, el correo se intenta una vez sin cola (sirve para el aviso de un error del servidor). Los modos `archivo` y
+`memoria` no cambian.
+
+**Pendiente de la auditoría (en este orden):** (d) imagen Docker: verificar el sha256 de
 Litestream y no correr como root; (e) registro de rutas sin depender del orden (`/productos/{pid:int}`).
 

@@ -120,6 +120,30 @@ def marca_tiempo(desplazamiento: timedelta = timedelta()) -> str:
 
 @contextmanager
 def transaccion():
-    """Todo o nada: `with transaccion(): …`. Se puede anidar (SQLite usa puntos de guardado)."""
-    with get_db().conn:
-        yield
+    """Todo o nada: `with transaccion(): …`. Se puede anidar (SQLite usa puntos de guardado).
+    Al confirmarse la más externa se ejecuta lo registrado con `al_confirmar`; si se revierte, se descarta."""
+    conn = get_db().conn
+    externa = not conn.in_transaction
+    if externa:
+        _local.al_confirmar = []
+    try:
+        with conn:
+            yield
+    except BaseException:
+        if externa:
+            _local.al_confirmar = []
+        raise
+    if externa:
+        pendientes, _local.al_confirmar = _local.al_confirmar, []
+        for fn in pendientes:
+            fn()
+
+
+def al_confirmar(fn):
+    """Ejecuta `fn` cuando lo escrito hasta ahora quede confirmado: ya mismo si no hay una transacción abierta
+    en este hilo, o al confirmarse la de `transaccion()` (nunca si se revierte). Sirve para acciones que no
+    se pueden deshacer, como enviar un correo, y que deben ver confirmado lo que se acaba de guardar."""
+    if not get_db().conn.in_transaction:
+        fn()
+    else:
+        _local.__dict__.setdefault("al_confirmar", []).append(fn)

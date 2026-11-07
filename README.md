@@ -196,7 +196,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_EXIGIR_REVISTA_VERIFICADA` | `0` | `1` para la acreditación: solo cuentan artículos en revistas verificadas del catálogo |
 | `PORTAL_FILIACIONES` | IIMAT; CMAT; FCPN; UMSA y sus nombres completos | Nombres que cuentan como filiación del instituto al importar (separados por «;») |
 | `PORTAL_CONTACTO` | (vacío) | Correo que se informa a Crossref al importar |
-| `PORTAL_CORREO_MODO` | `archivo` | `archivo`, `smtp` o `desactivado` (las pruebas usan `memoria`) |
+| `PORTAL_CORREO_MODO` | `archivo` | `archivo`, `smtp` (con cola persistente y reintentos, `docs/mantenimiento.md` §5.5) o `desactivado` (las pruebas usan `memoria`) |
 | `PORTAL_CORREO_REMITENTE` | `TAU <no-responder@instituto.test>` | Remitente |
 | `PORTAL_SMTP_HOST` / `_PUERTO` / `_USUARIO` / `_CLAVE` | `localhost` / `587` / — / — | Servidor SMTP |
 | `PORTAL_SMTP_STARTTLS` | `1` | `0` para desactivar STARTTLS |
