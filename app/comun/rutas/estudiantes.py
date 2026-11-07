@@ -60,7 +60,7 @@ def get(auth, q: str = "", nivel: str = "", estado: str = ""):
         "Estudiantes",
         Div(Div(H2("Estudiantes y tesistas"),
                 P("Estudiantes que participan en la investigación del instituto: tesistas, coautores y participantes de "
-                  "proyectos y actividades. Registre sus periodos de estudio para que los informes de acreditación "
+                  "proyectos y actividades. Registre sus periodos de estudio para que los informes de calidad "
                   "cuenten su participación (tesis, publicaciones, proyectos).", cls=(TextPresets.muted_sm, "max-w-3xl"))),
             Button(UkIcon("user-plus", height=16, width=16), "Registrar estudiante", cls=ButtonT.primary,
                    hx_get="/estudiantes/nuevo", hx_target=f"#{ID_MODAL}"),

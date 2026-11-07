@@ -5,7 +5,7 @@ import openpyxl
 import pytest
 
 from app.academico import gestiones, oferta
-from app.acreditacion import cuerpo_academico as ca
+from app.calidad import cuerpo_academico as ca
 from app.comun import academicos, permisos, unidades, usuarios, vinculos
 from app.investigacion import carga_proyectos, proyectos
 from tests.conftest import HX, PASS_TEMP, login
@@ -72,7 +72,7 @@ def test_pantallas_y_permisos(client, datos):
     assert client.get("/informes/carga-docente").status_code == 403
     assert client.get("/informes/cuerpo-academico").status_code == 403
     assert "Carga docente" not in client.get("/informes").text
-    permisos.asignar(datos["emmy"], "comite_acreditacion", unidades.id_de("UMSA"))
+    permisos.asignar(datos["emmy"], "comision_calidad", unidades.id_de("UMSA"))
     r = client.get("/informes")
     assert "Carga docente" in r.text and "Cuerpo académico" in r.text
     r = client.get(f"/informes/carga-docente?gestion={datos['II']['id']}")

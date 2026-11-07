@@ -1,6 +1,6 @@
-"""Anexo de I+D+i para la acreditación (administración): documento imprimible ordenado por criterio
-de IAC-CINDA y su XLSX. Sin extensión en la URL de descarga: la ruta de archivos estáticos
-capturaría «….xlsx»."""
+"""Informe de I+D+i (administración): documento imprimible ordenado por las dimensiones del marco de calidad de
+la Carrera (SIAC, PLAN §57) y su XLSX. Sin extensión en la URL de descarga: la ruta de archivos estáticos capturaría
+«….xlsx». Las direcciones anteriores (/informes/acreditacion…) redirigen aquí."""
 from datetime import date
 from urllib.parse import urlencode
 
@@ -8,13 +8,13 @@ import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, Response, Select, Span, Table, Tbody,
                              Td, Th, Thead, Tr, Ul)
 
-from app.acreditacion import anexo as acreditacion, informes
+from app.calidad import anexo as idi, informes
 from app.investigacion import actividades, productos, proyectos
 from app.comun import config, estudiantes, exportar, permisos, unidades, vinculos
 from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import pagina
 from monsterui.all import H2 as Titulo, Card, TextPresets, UkIcon
-from app.acreditacion.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _tabla_conteo, barra, cita,
+from app.calidad.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _tabla_conteo, barra, cita,
                                              descarga, hoja, seccion_metodo)
 
 rt = APIRouter()
@@ -34,7 +34,7 @@ def _q(a) -> str:
 
 def url_detalle(a, indicador, anio, categoria=""):
     extra = f"&{urlencode({'categoria': categoria})}" if categoria else ""
-    return f"/informes/acreditacion/detalle?indicador={indicador}&anio={anio}&{_q(a)}{extra}"
+    return f"{BASE}/detalle?indicador={indicador}&anio={anio}&{_q(a)}{extra}"
 
 
 def _lista_actividades(acts, vacio="Sin registros en el periodo."):
@@ -59,14 +59,14 @@ def _lista_productos(prods, vacio="Sin registros en el periodo.", detalle=True):
     return Ol(*[cita(p)(extra(p)) for p in prods], cls="citas")
 
 
-def _ancla(codigo):
-    return "c-" + "".join(c for c in codigo.split(" ·")[0] if c.isalnum())
+BASE = "/informes/investigacion"
 
 
-def _criterio(codigo, titulo, que, *contenido):
-    """Sección de un criterio: código, título, qué evidencia aporta y el contenido."""
-    return Div(H2(Span(codigo, cls="font-mono text-base mr-2"), titulo), P(que, cls="apagado text-sm"), *contenido,
-               cls="space-y-2", id=_ancla(codigo))
+def _seccion(ancla, dimensiones, titulo, que, *contenido):
+    """Sección del informe: dimensiones del marco de calidad de la Carrera a las que aporta evidencia (D1–D9, PLAN §57),
+    título, qué evidencia aporta y el contenido."""
+    return Div(H2(Span(dimensiones, cls="font-mono text-base mr-2", title="Dimensiones del marco de calidad"), titulo),
+               P(que, cls="apagado text-sm"), *contenido, cls="space-y-2", id=ancla)
 
 
 def seccion_tendencias(a):
@@ -75,7 +75,7 @@ def seccion_tendencias(a):
     etiquetas = [x["anio"] for x in anios]
 
     def g(titulo, *claves, nota=""):
-        series = [(acreditacion.INDICADORES[k][0], [x[k] for x in anios]) for k in claves]
+        series = [(idi.INDICADORES[k][0], [x[k] for x in anios]) for k in claves]
         return barras(titulo, etiquetas, series, [[url_detalle(a, k, y) for y in etiquetas] for k in claves], nota)
     return Div(H2("Tendencias"),
                P("Cada barra lleva a los registros de ese año.", cls="apagado text-sm no-imprimir"),
@@ -94,14 +94,14 @@ def _nombres(personas_):
 
 
 def seccion_estudiantes(e):
-    """2.3.2 · 3.6.1 d · 2.3.4: tesis dirigidas y participación de estudiantes (y graduados)."""
+    """Tesis dirigidas y participación de estudiantes (y graduados) en la investigación."""
     tesis = Ul(*[Li(Span(f"{t['producto']['anio']} — ", cls="apagado"), t["producto"]["titulo"],
                     Span(f" · {_nombres(t['tesistas']) or 'tesista sin registrar'}"
                          f" ({estudiantes.NIVELES.get(t['nivel'], 'nivel sin registrar').lower()}, {t['estado']})"
                          f" · dirige: {_nombres(t['directores'])}", cls="apagado"))
                  for t in e["tesis"]], cls="space-y-1") if e["tesis"] else P("Sin tesis dirigidas en el periodo.", cls="apagado")
-    return _criterio(
-        "2.3.2 · 3.6.1 d · 2.3.4", "Estudiantes en la investigación",
+    return _seccion(
+        "estudiantes", "D3 · D5", "Estudiantes en la investigación",
         "Tesis dirigidas por investigadores del instituto y participación de estudiantes (y graduados) en publicaciones, "
         "proyectos y actividades, según sus periodos de estudio registrados.",
         Div(_cifra(sum(t["estado"] == "defendida" for t in e["tesis"]), "tesis defendidas"),
@@ -124,13 +124,13 @@ def seccion_estudiantes(e):
 
 
 def seccion_internacionalizacion(a):
-    """3.5.2 c: coautoría internacional (con su cobertura) y proyectos internacionales."""
+    """Coautoría internacional (con su cobertura) y proyectos internacionales."""
     c = a["coautoria"]
     faltan = c["con_externos"] - c["con_pais"]
     internacionales = [p for p in a["proyectos"] if p["ambito_efectivo"] == "internacional"]
     sin_ambito = sum(p["ambito_efectivo"] is None for p in a["proyectos"])
-    return _criterio(
-        "3.5.2 c", "Internacionalización de la investigación",
+    return _seccion(
+        "internacionalizacion", "D7", "Internacionalización de la investigación",
         "Publicaciones con coautores de instituciones de otros países y proyectos internacionales (con contrapartes "
         "o financiamiento de otros países).",
         Div(_cifra(c["internacionales"], "artículos con coautoría internacional"),
@@ -181,23 +181,23 @@ def documento(a):
     if not a["exige_verificada"] and rv["declarados"]:
         avisos.append(f"{rv['declarados']} artículo(s) cuentan con clasificación declarada (revista sin verificar).")
     return hoja(
-        H1(f"Anexo de I+D+i para la acreditación, {a['desde_anio']}–{a['hasta_anio']}"),
-        P("Evidencia de investigación, desarrollo e innovación ordenada según los criterios de IAC-CINDA para programas "
-          f"de pregrado (junio 2025). Los datos provienen de {config.NOMBRE_SISTEMA}; el método está al final.",
+        H1(f"Informe de I+D+i, {a['desde_anio']}–{a['hasta_anio']}"),
+        P("Evidencia de investigación, desarrollo e innovación ordenada por las dimensiones del marco de calidad de la "
+          f"Carrera (D1–D9). Los datos provienen de {config.NOMBRE_SISTEMA}; el método está al final.",
           cls="apagado text-sm"),
         Div(*[P(x, cls="text-sm") for x in avisos],
             cls="rounded-md border border-amber-300 bg-amber-50 text-amber-900 p-3 mt-3 space-y-1") if avisos else "",
-        Div(_cifra(len(a["articulos"]), "artículos que cuentan", "#c-363a"),
-            _cifra(len(a["libros"]), "libros y capítulos", "#c-363b"),
-            _cifra(len(a["presentaciones"]), "presentaciones", "#c-363i"),
-            _cifra(len(a["proyectos"]), "proyectos", "#c-363h"),
-            _cifra(m["impacto"]["citas"], "citas (OpenAlex)", "#c-361"), cls="grid grid-cols-5 gap-3 mt-6"),
+        Div(_cifra(len(a["articulos"]), "artículos que cuentan", "#publicaciones"),
+            _cifra(len(a["libros"]), "libros y capítulos", "#libros"),
+            _cifra(len(a["presentaciones"]), "presentaciones", "#presentaciones"),
+            _cifra(len(a["proyectos"]), "proyectos", "#proyectos"),
+            _cifra(m["impacto"]["citas"], "citas (OpenAlex)", "#impacto"), cls="grid grid-cols-5 gap-3 mt-6"),
         H2("Resumen por año"),
         P("Cada cifra enlaza a los registros que la componen.", cls="apagado text-sm no-imprimir"), resumen,
         seccion_tendencias(a),
-        _criterio("2.2.1", "Cuerpo académico", "Dotación, categoría y dedicación (jornada) de quienes estuvieron "
+        _seccion("cuerpo-academico", "D4", "Cuerpo académico", "Dotación, categoría y dedicación (jornada) de quienes estuvieron "
                   "vinculados a la Carrera y su Instituto cada año, según el historial de Recursos Humanos.", cuerpo),
-        _criterio("3.6.3 a", "Publicaciones en revistas indexadas y arbitradas",
+        _seccion("publicaciones", "D5", "Publicaciones en revistas indexadas y arbitradas",
                   f"{len(a['articulos'])} artículos que cuentan: {rv['por_ambito'].get('Nacional', 0)} en revistas nacionales, "
                   f"{rv['por_ambito'].get('Internacional', 0)} en internacionales, {rv['acceso_abierto']} en acceso abierto.",
                   Div(Div(H3("Por índice"), _tabla_conteo("Índice", m["por_indice"]) if m["por_indice"] else P("—", cls="apagado")),
@@ -205,19 +205,19 @@ def documento(a):
                           else P("Sin cuartiles registrados en el catálogo.", cls="apagado")),
                       cls="grid grid-cols-2 gap-6"),
                   _lista_productos(a["articulos"])),
-        _criterio("3.6.3 b", "Libros y capítulos con referato externo", "Libros y capítulos arbitrados que cuentan.",
+        _seccion("libros", "D5", "Libros y capítulos con referato externo", "Libros y capítulos arbitrados que cuentan.",
                   _lista_productos(a["libros"], detalle=False)),
-        _criterio("3.6.3 d · e", "Patentes, productos tecnológicos y traducciones",
+        _seccion("tecnicos", "D5", "Patentes, productos tecnológicos y traducciones",
                   "Patentes (solicitadas o concedidas), software y traducciones de autores vinculados en la fecha.",
                   _lista_productos(a["tecnicos"], detalle=False)),
-        _criterio("3.6.3 f · 3.4.1", "Transferencia de conocimiento y divulgación",
+        _seccion("transferencia", "D5 · D6", "Transferencia de conocimiento y divulgación",
                   "Actividades de transferencia a la sociedad, el sector productivo o las políticas públicas, y de divulgación.",
                   H3("Transferencia"), _lista_actividades(a["transferencia"]),
                   H3("Divulgación"), _lista_actividades(a["divulgacion"])),
-        _criterio("3.6.3 g · 3.5.2 a", "Estancias y pasantías en centros de investigación",
+        _seccion("estancias", "D5 · D7", "Estancias y pasantías en centros de investigación",
                   f"{len(a['estancias'])} estancias o visitas; {len(a['movilidad_internacional'])} internacionales.",
                   _lista_actividades(a["estancias"])),
-        _criterio("3.6.3 h", "Participación en proyectos de I+D+i",
+        _seccion("proyectos", "D5", "Participación en proyectos de I+D+i",
                   "Proyectos vigentes en el periodo, con su fuente de financiamiento y participantes del instituto.",
                   Div(Table(Thead(Tr(Th("Proyecto"), Th("Tipo"), Th("Ámbito"), Th("Periodo"), Th("Financiamiento"), Th("Responsable"),
                                      Th("Participantes del instituto", cls="text-right"))),
@@ -232,13 +232,13 @@ def documento(a):
                                     for p in a["proyectos"]]), data_tabla="proyectos-anexo"), cls="overflow-x-auto")
                   if a["proyectos"] else P("Sin proyectos vigentes en el periodo.", cls="apagado")),
         seccion_estudiantes(a["estudiantes"]),
-        _criterio("3.6.3 i", "Presentaciones en congresos y eventos científicos",
+        _seccion("presentaciones", "D5", "Presentaciones en congresos y eventos científicos",
                   f"{len(a['presentaciones'])} eventos con exposición de integrantes del instituto; "
                   f"{sum(x['ambito'] == 'internacional' for x in a['presentaciones'])} internacionales.",
                   _lista_actividades(a["presentaciones"])),
-        _criterio("3.6.3 j", "Participación en redes de investigación", "Redes nacionales e internacionales.",
+        _seccion("redes", "D5 · D7", "Participación en redes de investigación", "Redes nacionales e internacionales.",
                   _lista_actividades(a["redes"])),
-        _criterio("2.2.1 d", "Reconocimiento de pares",
+        _seccion("reconocimiento", "D4", "Reconocimiento de pares",
                   "Premios y distinciones, arbitraje de artículos para revistas y participación en comités "
                   "científicos o editoriales.",
                   H3("Premios y distinciones"), _lista_actividades(a["premios"]),
@@ -249,7 +249,7 @@ def documento(a):
                                cls="apagado")) for x in a["arbitrajes"]], cls="space-y-1")
                   if a["arbitrajes"] else P("Sin registros en el periodo.", cls="apagado"),
                   H3("Comités científicos o editoriales"), _lista_actividades(a["comites"])),
-        _criterio("3.4.3", "Prestación de servicios",
+        _seccion("servicios", "D6", "Prestación de servicios",
                   "Asesorías, cursos y consultorías prestados a terceros, con su contraparte y lo que generaron.",
                   Ul(*[Li(Span(actividades.fechas_texto(x), cls="apagado"), " — ", x["titulo"],
                           Span(" · " + " · ".join(y for y in (
@@ -261,32 +261,32 @@ def documento(a):
                        for x in a["servicios"]], cls="space-y-1")
                   if a["servicios"] else P("Sin registros en el periodo.", cls="apagado")),
         seccion_internacionalizacion(a),
-        _criterio("3.6.1", "Impacto", "Citas según OpenAlex de los productos que cuentan, por año de publicación.",
+        _seccion("impacto", "D5", "Impacto", "Citas según OpenAlex de los productos que cuentan, por año de publicación.",
                   P(f"{m['impacto']['citas']} citas en {m['impacto']['con_datos']} de {m['impacto']['productos']} productos"
                     + (f", actualizadas el {m['impacto']['actualizadas']}." if m["impacto"]["actualizadas"] else "."),
                     cls="text-sm")),
         Div(H2("Aún no registrado en el sistema"),
-            Ul(Li("Impacto de la vinculación con el medio (3.4.1)."),
+            Ul(Li("Impacto de la vinculación con el medio."),
                cls="list-disc pl-5 space-y-1 text-sm"),
-            P("Estos criterios deben documentarse por otros medios hasta que el sistema los registre.", cls="apagado text-sm")),
+            P("Debe documentarse por otros medios hasta que el sistema lo registre.", cls="apagado text-sm")),
         seccion_metodo(m), instituto=True)
 
 
 def _ventana(desde, hasta):
-    d, h = acreditacion.ventana_por_omision()
+    d, h = idi.ventana_por_omision()
     d = int(desde) if str(desde).isdigit() else d
     h = int(hasta) if str(hasta).isdigit() else h
     h = min(h, date.today().year)
     return (min(d, h), max(d, h)) if h - d <= 10 else (h - 10, h)
 
 
-@rt("/informes/acreditacion")
+@rt(BASE)
 def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
     if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         return Response("No autorizado", status_code=403)
     d, h = _ventana(desde, hasta)
     estricto = revistas != "todas"
-    a = acreditacion.anexo(d, h, estricto)
+    a = idi.anexo(d, h, estricto)
     anios = list(range(date.today().year, 1999, -1))
     filtros = [fh.Label(Span("Desde", cls="text-sm"), Select(*[Option(str(x), selected=x == d) for x in anios],
                                                              name="desde", cls="uk-select w-28"), cls="flex items-center gap-2"),
@@ -296,17 +296,17 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
                       Option("Incluir revistas sin verificar", value="todas", selected=not estricto),
                       name="revistas", cls="uk-select w-60", aria_label="Revistas")]
     q = urlencode({"desde": d, "hasta": h, "revistas": "verificadas" if estricto else "todas"})
-    return pagina(f"Anexo de I+D+i {d}–{h}", ESTILO_IMPRESION,
-                  barra(filtros, [descarga("XLSX", f"/informes/acreditacion/xlsx?{q}")]),
+    return pagina(f"Informe de I+D+i {d}–{h}", ESTILO_IMPRESION,
+                  barra(filtros, [descarga("XLSX", f"{BASE}/xlsx?{q}")]),
                   documento(a), usuario=auth, seccion="informes")
 
 
-@rt("/informes/acreditacion/xlsx")
+@rt(f"{BASE}/xlsx")
 def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
     if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
         return Response("No autorizado", status_code=403)
     d, h = _ventana(desde, hasta)
-    a = acreditacion.anexo(d, h, revistas != "todas")
+    a = idi.anexo(d, h, revistas != "todas")
     m = a["memoria"]
     nombres = {"investigadores": "Investigadores", "jce": "JCE (160 h/mes)", "indexados": "Artículos indexados",
                "arbitrados": "Artículos arbitrados", "nacionales": "En revistas nacionales",
@@ -322,13 +322,13 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
     cuerpo = [{"Año": c["anio"], "Investigador(a)": f"{p['apellidos']}, {p['nombres']}", "Categoría": p["categoria"],
                "Carga (h/mes)": p["jornada"] or ""} for c in a["cuerpo"] for p in c["personas"]]
 
-    def actividades_con(criterio, acts):
-        return [{"Criterio": criterio, **f} for f in informes.filas_actividades(acts)]
-    acts = (actividades_con("3.6.3 f Transferencia", a["transferencia"]) + actividades_con("3.4.1 Divulgación", a["divulgacion"])
-            + actividades_con("3.6.3 g Estancias", a["estancias"]) + actividades_con("3.6.3 i Presentaciones", a["presentaciones"])
-            + actividades_con("3.6.3 j Redes", a["redes"]) + actividades_con("2.2.1 d Comités", a["comites"])
-            + actividades_con("2.2.1 d Premios", a["premios"]) + actividades_con("2.2.1 d Arbitraje", a["arbitrajes"])
-            + actividades_con("3.4.3 Prestación de servicios", a["servicios"]))
+    def actividades_con(tema, acts):
+        return [{"Tema": tema, **f} for f in informes.filas_actividades(acts)]
+    acts = (actividades_con("Transferencia", a["transferencia"]) + actividades_con("Divulgación", a["divulgacion"])
+            + actividades_con("Estancias", a["estancias"]) + actividades_con("Presentaciones", a["presentaciones"])
+            + actividades_con("Redes", a["redes"]) + actividades_con("Comités", a["comites"])
+            + actividades_con("Premios", a["premios"]) + actividades_con("Arbitraje", a["arbitrajes"])
+            + actividades_con("Prestación de servicios", a["servicios"]))
     metodo = [{"Tema": "Periodo", "Descripción": f"{a['desde']} a {a['hasta']}"},
               {"Tema": "Revistas", "Descripción": "Solo revistas verificadas en el catálogo" if a["exige_verificada"]
                else "Incluye revistas sin verificar (clasificación declarada)"},
@@ -340,22 +340,22 @@ def get(auth, desde: str = "", hasta: str = "", revistas: str = "verificadas"):
                "JCE = carga contratada (h/mes) / 160; sin carga registrada, jornada del vínculo × 4."},
               {"Tema": "Citas", "Descripción": "OpenAlex, en la fecha de actualización de cada producto."}]
     contenido = exportar.a_xlsx({
-        "Resumen por año": resumen, "2.2.1 Cuerpo académico": cuerpo,
-        "3.6.3 a Publicaciones": informes.filas_productos(a["articulos"]),
-        "3.6.3 b Libros y capítulos": informes.filas_productos(a["libros"]),
-        "3.6.3 d-e Técnicos": informes.filas_productos(a["tecnicos"]),
-        "Actividades por criterio": acts,
-        "3.6.3 h Proyectos": informes.filas_proyectos(a["proyectos"]),
+        "Resumen por año": resumen, "Cuerpo académico": cuerpo,
+        "Publicaciones": informes.filas_productos(a["articulos"]),
+        "Libros y capítulos": informes.filas_productos(a["libros"]),
+        "Técnicos": informes.filas_productos(a["tecnicos"]),
+        "Actividades por tema": acts,
+        "Proyectos": informes.filas_proyectos(a["proyectos"]),
         "Tesis dirigidas": [{"Año": t["producto"]["anio"], "Título": t["producto"]["titulo"],
                              "Tesista(s)": _nombres(t["tesistas"]),
                              "Nivel": estudiantes.NIVELES.get(t["nivel"], ""), "Estado": t["estado"],
                              "Del programa": "Sí" if any(x["del_programa"] for x in t["tesistas"]) else "No",
                              "Dirige": _nombres(t["directores"])} for t in a["estudiantes"]["tesis"]],
         "Productos con estudiantes": informes.filas_productos(a["estudiantes"]["productos"]),
-        "3.5.2 Países de coautores": [{"País": k, "Artículos": v} for k, v in a["coautoria"]["por_pais"].items()],
+        "Países de coautores": [{"País": k, "Artículos": v} for k, v in a["coautoria"]["por_pais"].items()],
         "Por confirmar": informes.filas_productos(m["por_confirmar"]),
         "Método": metodo})
-    return _archivo(contenido, f"anexo-idi-{d}-{h}.xlsx", XLSX)
+    return _archivo(contenido, f"informe-idi-{d}-{h}.xlsx", XLSX)
 
 
 # --- Trazabilidad: de dónde sale cada cifra ------------------------------------------------------
@@ -398,7 +398,7 @@ def _tabla_registros(d, auth):
                cls="overflow-x-auto")
 
 
-@rt("/informes/acreditacion/detalle")
+@rt(f"{BASE}/detalle")
 def get(auth, indicador: str = "", anio: str = "", desde: str = "", hasta: str = "", revistas: str = "verificadas",
         categoria: str = ""):
     if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
@@ -407,20 +407,27 @@ def get(auth, indicador: str = "", anio: str = "", desde: str = "", hasta: str =
     y = int(anio) if anio.isdigit() else h0
     if categoria and categoria not in vinculos.CATEGORIAS.values():
         categoria = ""
-    d = acreditacion.detalle(indicador, y, f"{max(h0, y)}-12-31", revistas != "todas", categoria)
+    d = idi.detalle(indicador, y, f"{max(h0, y)}-12-31", revistas != "todas", categoria)
     if not d or not 2000 <= y <= date.today().year:
         return Response("Indicador no encontrado", status_code=404)
-    volver = f"/informes/acreditacion?{urlencode({'desde': d0, 'hasta': h0, 'revistas': revistas if revistas == 'todas' else 'verificadas'})}"
+    volver = f"{BASE}?{urlencode({'desde': d0, 'hasta': h0, 'revistas': revistas if revistas == 'todas' else 'verificadas'})}"
     titulo = f"{d['nombre']}{' · ' + categoria if categoria else ''}, {y}"
     return pagina(
         titulo,
-        A(UkIcon("arrow-left", height=14, width=14), f"Anexo de I+D+i {d0}–{h0}", href=volver,
+        A(UkIcon("arrow-left", height=14, width=14), f"Informe de I+D+i {d0}–{h0}", href=volver,
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         Card(Div(Div(Titulo(titulo), P(d["regla"], cls=TextPresets.muted_sm),
                      P("Solo revistas verificadas en el catálogo." if revistas != "todas"
                        else "Incluye revistas sin verificar.", cls=TextPresets.muted_sm) if d["clase"] == "producto" else ""),
                  Div(Div(str(d["valor"]), cls="text-3xl font-semibold tabular-nums"),
-                     Div("cifra del anexo", cls="text-xs text-muted-foreground"), cls="text-right shrink-0"),
+                     Div("cifra del informe", cls="text-xs text-muted-foreground"), cls="text-right shrink-0"),
                  cls="flex flex-wrap items-start justify-between gap-4 mb-4"),
              _tabla_registros(d, auth)),
         usuario=auth, seccion="informes")
+
+
+@rt("/informes/acreditacion{resto:path}")
+def get(req, resto: str):
+    """Direcciones anteriores (marcadores, correos ya enviados): redirigen al informe con los mismos parámetros."""
+    destino = BASE + resto + (f"?{req.url.query}" if req.url.query else "")
+    return fh.RedirectResponse(destino, status_code=301)

@@ -161,6 +161,6 @@ def actualizar_citas() -> tuple[int, int]:
 
 
 def anios_por_omision() -> tuple[int, int]:
-    """Los últimos 5 años (la ventana de evidencia de IAC-CINDA)."""
+    """Los últimos 5 años (la ventana de evidencia habitual de la evaluación)."""
     hoy = date.today().year
     return hoy - 4, hoy

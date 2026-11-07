@@ -10,7 +10,7 @@ PERSONAS = {  # clave → (rol, sigla de la unidad)
     "sistema": ("administracion_sistema", "UMSA"),
     "instituto": ("direccion_instituto", "IIMAT"),
     "carrera": ("direccion_carrera", "CMAT"),
-    "comite": ("comite_acreditacion", "UMSA"),
+    "comite": ("comision_calidad", "UMSA"),
     "datos_cmat": ("gestion_datos", "CMAT"),
     "investigador": (None, None),
 }
@@ -44,8 +44,7 @@ RUTAS = {  # ruta → quienes reciben 200 (el resto, 403)
     "/admin/lineas": {"instituto"},
     "/admin/propuestas": {"instituto"},
     "/informes/memoria?anio=2025": {"instituto", "comite"},
-    "/informes/acreditacion?desde=2022&hasta=2026": {"instituto", "comite"},
-    "/informes/guia-antecedentes": {"instituto", "carrera", "comite"},
+    "/informes/investigacion?desde=2022&hasta=2026": {"instituto", "comite"},
     "/docencia/preparacion": {"carrera"},
     "/docencia/cohortes": {"carrera", "datos_cmat", "comite"},
     "/docencia/cohortes/importar": {"carrera", "datos_cmat"},

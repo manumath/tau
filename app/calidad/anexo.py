@@ -1,17 +1,17 @@
-"""Anexo de I+D+i para la acreditación ante IAC-CINDA.
+"""Informe de I+D+i del sistema de calidad de la Carrera (PLAN §57).
 
-Reúne, para una ventana de años (por omisión, los últimos 5: la evidencia que pide el criterio
-3.6.3), los datos del portal ordenados por criterio, con un resumen año por año. Aplica las mismas
-reglas que la memoria del instituto (vínculo en la fecha, filiación, catálogo de revistas) y, por
-omisión, exige revista verificada, como corresponde a la acreditación.
+Reúne, para una ventana de años (por omisión, los últimos 5, la ventana habitual de la evidencia), los datos
+del sistema ordenados por tema, con un resumen año por año. Aplica las mismas reglas que la memoria del
+instituto (vínculo en la fecha, filiación, catálogo de revistas) y, por omisión, exige revista verificada,
+como corresponde a una evaluación externa.
 """
 from datetime import date
 
 from app.investigacion import actividades, perfiles, proyectos, revistas
 from app.academico import carga
-from app.acreditacion import estudiantes as ind_estudiantes
+from app.calidad import estudiantes as ind_estudiantes
 from app.comun import config, estudiantes, paises, vinculos
-from app.acreditacion import informes
+from app.calidad import informes
 from app.comun.db import get_db
 
 # Actividades por criterio (nombres del catálogo de tipos de actividad).
@@ -74,7 +74,7 @@ def _internacional(a: dict) -> bool:
 def coautoria_internacional(prods: list[dict]) -> dict:
     """Coautoría internacional de los artículos: cuántos tienen al menos un coautor externo de otro
     país, cuántos tienen coautores externos, en cuántos se conoce el país de todos ellos (cobertura)
-    y con qué países se colabora (IAC-CINDA 3.5.2 c)."""
+    y con qué países se colabora."""
     con_externos = con_pais = internacionales = 0
     por_pais, lista_int = {}, []
     for p in prods:
@@ -98,7 +98,7 @@ def coautoria_internacional(prods: list[dict]) -> dict:
 
 
 # Indicadores del resumen por año: clave → (nombre, clase de registro, de dónde sale la cifra). La
-# clase dice cómo se listan los registros en la trazabilidad (/informes/acreditacion/detalle).
+# clase dice cómo se listan los registros en la trazabilidad (/informes/investigacion/detalle).
 INDICADORES = {
     "investigadores": ("Investigadores", "persona", "Personas con vínculo vigente con la Carrera al 31 de diciembre "
                        "(o a hoy, en el año en curso)."),

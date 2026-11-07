@@ -7,7 +7,7 @@ import pytest
 from openpyxl import load_workbook
 from starlette.testclient import TestClient
 
-from app.acreditacion import seguimiento_estudiantil as seg
+from app.calidad import seguimiento_estudiantil as seg
 from app.comun import estudiantes, notificaciones, permisos, tokens, unidades, usuarios
 from app.comun.db import get_db
 from app.egresados import directorio, egresados
@@ -46,7 +46,7 @@ def mundo(app):
     for email, nombre in (("tutor1@test.cl", "Tutor1"), ("tutor2@test.cl", "Tutor2")):
         usuarios.crear(email, nombre, "Docente", CLAVE, debe_cambiar_pass=False, categoria="titular", fecha_ingreso="2015-01-01")
     c = usuarios.crear("comite@test.cl", "Comité", "Prueba", CLAVE, debe_cambiar_pass=False, es_investigador=False)
-    permisos.asignar(c["id"], "comite_acreditacion", unidades.id_de("UMSA"))
+    permisos.asignar(c["id"], "comision_calidad", unidades.id_de("UMSA"))
     hace = (date.today() - timedelta(days=400)).isoformat()
     _cargar("8000001,Ana,Alumna,ana@correo.bo,mujer,,2022-I,,,,,,cursando,,,,,",
             "8000002,Beto,Alumno,beto@correo.bo,hombre,,2022-I,,,,,,cursando,,,,,",

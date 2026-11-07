@@ -1,10 +1,6 @@
 """Premios, arbitraje de artículos y prestación de servicios: registro como actividades y su lugar
-en el anexo de I+D+i y en la Guía de Antecedentes (PLAN §40)."""
-import io
-
-from openpyxl import load_workbook
-
-from app.acreditacion import anexo, guia_antecedentes as guia
+en el informe de I+D+i (PLAN §40)."""
+from app.calidad import anexo
 from app.comun import personas, usuarios, vinculos
 from app.comun.db import get_db
 from app.investigacion import actividades, revistas
@@ -83,7 +79,7 @@ def _registrar(uid, tipo, rol, **campos):
     return actividades.guardar(d, [(f"i:{uid}", rol)], uid)
 
 
-def test_anexo_y_guia(app):
+def test_en_el_informe_de_idi(app):
     emmy = usuarios.por_email("inv@test.cl")["id"]
     vinculos.agregar(emmy, "titular", "2020-01-01")
     _registrar(emmy, actividades.PREMIO, "distinguido", titulo="Premio Nacional", institucion="SBM",
@@ -104,18 +100,10 @@ def test_anexo_y_guia(app):
     d = anexo.detalle("arbitrajes", 2025, "2025-12-31")
     assert d["valor"] == 5 and len(d["registros"]) == 2
 
-    guia_xlsx = load_workbook(io.BytesIO(guia.generar(ultimo=(2025, "II"), tipo_cambio=6.96)))
-    acad = guia_xlsx[guia.H["academicos"]]
-    r = next(r for r in range(7, 20) if acad[f"C{r}"].value == "Noether")
-    assert acad[f"Z{r}"].value == "Premio Nacional, SBM (2025)"
-    serv = guia_xlsx[guia.H["servicios"]]
-    assert (serv["C8"].value, serv["F8"].value, serv["G8"].value, serv["H8"].value) == ("Curso para el INE", "INE", 1, 1)
-    assert (serv["N8"].value, serv["O8"].value, serv["Q8"].value) == (None, 10000.0, 1000.0)   # USD, externo
-
 
 def test_anexo_ya_no_los_da_por_ausentes(client):
     from tests.conftest import PASS_ADMIN, login
     login(client, "admin@test.cl", PASS_ADMIN)
-    r = client.get("/informes/acreditacion")
-    assert "Premios y distinciones" in r.text and "3.4.3" in r.text and "Prestación de servicios" in r.text
+    r = client.get("/informes/investigacion")
+    assert "Premios y distinciones" in r.text and 'id="servicios"' in r.text and "Prestación de servicios" in r.text
     assert "Premios y distinciones; arbitraje de artículos" not in r.text   # ya no en «Aún no registrado»

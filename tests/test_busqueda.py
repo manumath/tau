@@ -30,7 +30,7 @@ def test_busca_en_todo_y_respeta_permisos(emmy):  # noqa: F811
     assert re.fullmatch(r"/docencia/planes/\d+#asignatura-MAT-111", asig["href"])
     assert busqueda.buscar("i", yo, 5) == []                         # al menos dos letras
     # Quien ve todos los proyectos encuentra también el de Alan.
-    assert not permisos.asignar(emmy.uid, "comite_acreditacion", unidades.id_de("UMSA"))
+    assert not permisos.asignar(emmy.uid, "comision_calidad", unidades.id_de("UMSA"))
     yo["roles"] = permisos.roles_vigentes(emmy.uid)
     assert len(_grupos("ideales", yo)["Proyectos"]) == 2
 

@@ -1,8 +1,8 @@
-"""Internacionalización (IAC-CINDA 3.5.2 c y 3.6.3 h): país de coautores externos y ámbito de los
+"""Internacionalización de la investigación (dimensión D7): país de coautores externos y ámbito de los
 proyectos."""
 import pytest
 
-from app.acreditacion import anexo as acreditacion
+from app.calidad import anexo as idi
 from app.investigacion import importacion, openalex, productos, proyectos, revistas
 from app.comun import paises, personas, usuarios, vinculos
 from app.comun.db import get_db
@@ -126,13 +126,13 @@ def test_anexo_internacionalizacion(client, emmy):
                                fecha_fin="2025-12-31"), emmy, emmy)
     proyectos.agregar_contraparte(pid, "Uppsala University", "Sweden")
 
-    a = acreditacion.anexo(2022, 2026)
+    a = idi.anexo(2022, 2026)
     c = a["coautoria"]
     assert (c["internacionales"], c["con_externos"], c["con_pais"]) == (2, 4, 3)
     assert c["por_pais"] == {"Chile": 2, "Brasil": 1}
     anio = {x["anio"]: x for x in a["anios"]}
     assert (anio[2024]["coautoria_internacional"], anio[2024]["proyectos_internacionales"]) == (2, 1)
     login(client, "admin@test.cl", PASS_ADMIN)
-    r = client.get("/informes/acreditacion?desde=2022&hasta=2026")
+    r = client.get("/informes/investigacion?desde=2022&hasta=2026")
     assert "Cobertura incompleta" in r.text and "Proyecto con Suecia" in r.text and "Uppsala University (Suecia)" in r.text
     assert "Ámbito nacional o internacional de los proyectos" not in r.text  # ya no figura como pendiente

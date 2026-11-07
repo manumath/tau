@@ -1,5 +1,5 @@
 """Informes de docencia (PLAN.md, sección 29): carga docente por semestre e indicadores del cuerpo
-académico por año, como los pide IAC-CINDA.
+académico por año (dimensión D4 del marco de calidad, PLAN §57).
 
 - **Carga docente** (un semestre): por persona, la carga contratada y su distribución, la JCE
   (carga / 160), la docencia prevista frente a la asignada, la carga en proyectos y los avisos; por
@@ -17,7 +17,7 @@ de la UMSA).
 from datetime import date
 
 from app.academico import carga, gestiones
-from app.acreditacion import anexo
+from app.calidad import anexo
 from app.comun import academicos, vinculos
 from app.comun.db import get_db
 

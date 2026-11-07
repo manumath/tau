@@ -7,8 +7,8 @@ import fasthtml.common as fh
 from fasthtml.common import APIRouter, Div, H1, H2, Option, P, Response, Select, Span, Table, Tbody, Td, Th, Thead, Tr
 
 from app.academico import carga as carga_mod, gestiones
-from app.acreditacion import cuerpo_academico as ca
-from app.acreditacion.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _selector_anio, barra, descarga,
+from app.calidad import cuerpo_academico as ca
+from app.calidad.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _selector_anio, barra, descarga,
                                              hoja)
 from app.comun import exportar, permisos, vinculos
 from app.comun.componentes.layout import pagina
@@ -125,7 +125,7 @@ def documento_indicadores(serie):
     return hoja(
         H1(f"Cuerpo académico {anios[0]}–{anios[-1]}"),
         P("Indicadores al 31 de diciembre de cada año (el año en curso, a hoy), con el vínculo con la Carrera vigente "
-          "en esa fecha. Pensados para el criterio de cuerpo académico de IAC-CINDA.", cls="apagado text-sm"),
+          "en esa fecha. Pensados para la dimensión de cuerpo académico del marco de calidad.", cls="apagado text-sm"),
         Div(_cifra(ultimo["total"], f"académicos vinculados ({ultimo['anio']})"), _cifra(ultimo["jce"], "JCE"),
             _cifra(f"{ultimo['pct_doctores']} %" if ultimo["pct_doctores"] is not None else "—", "con doctorado"),
             _cifra(f"{ultimo['pct_con_proyecto']} %" if ultimo["pct_con_proyecto"] is not None else "—", "con proyecto vigente"),

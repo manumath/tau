@@ -1,7 +1,7 @@
 """Encuestas a estudiantes y egresados (PLAN §49 y §50): armarlas, abrirlas, enviar las invitaciones y ver los
 resultados agregados. Arman, abren y envían la Dirección de Carrera y la Coordinación académica
 (`gestionar_encuestas`); ven los resultados quienes ven el seguimiento estudiantil (`ver_seguimiento_estudiantil`,
-incluido el Comité de acreditación, que solo ve agregados). Las respuestas individuales solo existen en las
+incluida la Comisión de calidad, que solo ve agregados). Las respuestas individuales solo existen en las
 encuestas nominales y solo las ve quien las gestiona."""
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response, Select, Span, Thead, Tr, Ul

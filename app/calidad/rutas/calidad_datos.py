@@ -4,7 +4,7 @@ from fasthtml.common import A, APIRouter, Div, Li, P, Response, Span, Ul
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
-from app.acreditacion import calidad
+from app.calidad import calidad_datos as calidad
 from app.comun import permisos
 from app.comun.componentes.layout import pagina
 from app.comun.componentes.registros import insignia
@@ -64,7 +64,7 @@ def get(auth):
     return pagina(
         "Calidad de datos",
         Div(H2("Calidad de datos"),
-            P("Lo que falta o no cuadra antes de generar la memoria, el anexo o los informes de docencia.",
+            P("Lo que falta o no cuadra antes de generar la memoria, el informe de I+D+i o los informes de docencia.",
               cls=TextPresets.muted_sm),
             fh.Details(fh.Summary("¿Cómo funciona?", cls="cursor-pointer text-sm text-primary"),
                        P("Cada revisión dice a qué afecta y quién lo corrige; abra una para ver los registros, con enlace "

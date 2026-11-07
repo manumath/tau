@@ -1,6 +1,6 @@
 """Llenar una plantilla XLSX ajena sin alterarla: se editan solo las celdas indicadas, directamente
 en el XML de cada hoja. openpyxl no sirve para esto porque al guardar descarta los gráficos y las
-imágenes de la plantilla (la Guía de Antecedentes de IAC-CINDA trae ambos).
+imágenes de la plantilla (los formularios de las agencias suelen traer ambos).
 
 Lo demás (estilos, celdas combinadas, validaciones, gráficos, comentarios) queda como estaba. Al
 abrir, Excel recalcula las fórmulas (`fullCalcOnLoad`); se quita la cadena de cálculo guardada y,

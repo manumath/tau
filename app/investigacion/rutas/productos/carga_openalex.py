@@ -91,7 +91,7 @@ def get(auth):
         H2("Buscar mi producción en OpenAlex"),
         P("OpenAlex es un catálogo abierto de publicaciones científicas. Con su ORCID, el sistema busca sus obras, "
           "le muestra cuáles faltan en el sistema y registra las que usted elija, con sus citas. Por omisión, los "
-          "últimos 5 años (la ventana de evidencia de la acreditación).", cls=(TextPresets.muted_sm, "mb-4 max-w-3xl")),
+          "últimos 5 años (la ventana de evidencia de los informes de calidad).", cls=(TextPresets.muted_sm, "mb-4 max-w-3xl")),
         Card(fh.Form(
             Div(Span("ORCID: ", cls=TextPresets.muted_sm),
                 Span(p["orcid"], cls="font-mono") if p and p["orcid"] else

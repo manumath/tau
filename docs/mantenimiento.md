@@ -71,7 +71,7 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
   |---|---|
   | `app/comun` | Configuración, base de datos, cuentas, seguridad, correo, personas, vínculos, estudiantes, países, componentes de interfaz y recursos estáticos |
   | `app/investigacion` | Perfiles, producción, actividades, proyectos, propuestas institucionales, revistas, OpenAlex, líneas |
-  | `app/acreditacion` | Memoria, CV, informes y anexo de I+D+i para IAC-CINDA |
+  | `app/calidad` | Aseguramiento de la Calidad: memoria, CV, informes, informe de I+D+i, calidad de datos |
   | `app/academico` | Vacío: docencia y currículo (fase 3 del plan de ampliación) |
   | `app/egresados` | Egresados (PLAN §50): titulación, seguimiento a los 6 meses, 1, 3 y 5 años e indicadores |
   | `app/estudiantil` | Seguimiento estudiantil (PLAN §49 y §50): cohortes, carga del CSV de Seguimiento Académico y, en etapas siguientes, actividad estudiantil, encuestas y egresados |
@@ -89,7 +89,7 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
   | ¿Con qué unidad está vinculada una persona? | `app/comun/vinculos.py` (siempre con `unidad`; sin ella, el IIMAT), `app/comun/unidades.py` |
   | ¿Quién puede hacer qué? | `ROLES` y `ACCIONES` en `app/comun/permisos.py`; se decide con `puede(usuario, accion, unidad)` |
   | ¿Qué rutas son públicas? | `RUTAS_PUBLICAS` en `app/comun/auth.py` |
-  | ¿Qué cifras lleva la memoria o el anexo? | `app/acreditacion/informes.py`, `app/acreditacion/anexo.py` |
+  | ¿Qué cifras lleva la memoria o el informe de I+D+i? | `app/calidad/informes.py`, `app/calidad/anexo.py` |
 
 - **Tareas periódicas:** no hay programador de tareas. Cada 5 minutos, a lo más, una petición lanza
   el mantenimiento (`_mantenimiento` en `main.py`) **en un hilo aparte**, que no demora esa petición.
@@ -127,7 +127,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0048). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0049). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.
@@ -143,7 +143,7 @@ solas al arrancar el sistema.
 
 ### 4.2 Agregar una pantalla o una ruta
 
-1. Elija el paquete (`comun`, `investigacion`, `acreditacion` o `academico`) y el archivo de
+1. Elija el paquete (`comun`, `investigacion`, `calidad`, `academico`, `estudiantil` o `egresados`) y el archivo de
    `rutas/`; si es un área nueva, un archivo nuevo con `rt = APIRouter()`, y regístrelo en la tupla
    de routers de `create_app` en `main.py`.
 2. **Orden:** una ruta literal que choca con una variable (`/productos/nuevo` frente a
@@ -159,7 +159,7 @@ solas al arrancar el sistema.
 ### 4.3 Agregar un campo a un registro
 
 Migración (4.1) → validación en el módulo (`validar`/`preparar`) → formulario y ficha en la ruta →
-exportaciones e informes que deban mostrarlo (`app/acreditacion/informes.py`) → prueba.
+exportaciones e informes que deban mostrarlo (`app/calidad/informes.py`) → prueba.
 
 ### 4.4 Estilos: una clase de Tailwind nueva
 
@@ -215,23 +215,6 @@ latino en woff2, de `@fontsource/…`, con su licencia OFL al lado) tienen versi
 
 Las URL llevan una huella del contenido (`?v=…`): los navegadores toman la versión nueva sin
 vaciar caché.
-
-### 4.5 bis Actualizar la plantilla de la Guía de Antecedentes
-
-La Guía de Antecedentes de IAC-CINDA se genera llenando la plantilla oficial vacía
-`datos/iac-cinda/Guia-de-Antecedentes-pregrado-2025.xlsx` (versionada; los PDF de IAC-CINDA, en
-`/iac-cinda/`, no). Se escribe celda por celda en el XML (`app/comun/xlsx_plantilla.py`), sin
-openpyxl, porque este descarta los gráficos del resumen estadístico al guardar. Si IAC-CINDA publica
-una versión nueva:
-
-1. Guárdela vacía en `datos/iac-cinda/` y actualice `PLANTILLA` en
-   `app/acreditacion/guia_antecedentes.py`.
-2. Compare hojas, encabezados y filas de datos con la anterior (nombres de hoja en `H`, columnas en
-   cada función `_<hoja>`, primera fila de datos) y corrija lo que cambió.
-3. Revise si siguen los errores de fórmulas que el sistema corrige (hojas 4, 5, 6 y 20) y quite las
-   correcciones que ya no hagan falta.
-4. `uv run pytest tests/test_guia_antecedentes.py` y abra en Excel una guía generada con la base de
-   ejemplo: debe abrir sin avisos de reparación y con los gráficos del resumen.
 
 ### 4.5 ter Actualizar Litestream (imagen Docker)
 
@@ -368,7 +351,7 @@ En modo `smtp` los correos pasan por una **cola persistente** (`correo_pendiente
 
 - Remoto: `origin` = <https://github.com/manumath/tau>. Los commits usan el correo `noreply` de GitHub
   (`git config user.email`): GitHub rechaza los envíos que exponen un correo privado.
-- **No se versionan** (`.gitignore`): `data/`, `.sesskey`, `.venv/`, cachés, `iac-cinda/`, `.herramientas/`, `.archify/` y los
+- **No se versionan** (`.gitignore`): `data/`, `.sesskey`, `.venv/`, cachés, `iac-cinda/`, `politicas/`, `.herramientas/`, `.archify/` y los
   logos originales `static/img/membrete/logo_*`. Para cambiar el del IIMAT, reemplace el original en local y regenere la
   copia recortada (`iimat.png`, ≈300 px de alto; ver PLAN.md §35). Los de la Carrera salen del PDF oficial de su
   marca (`static/img/marca/`, ver 4.4).
@@ -391,13 +374,13 @@ En modo `smtp` los correos pasan por una **cola persistente** (`correo_pendiente
 
 ## 7. Deuda conocida
 
-- **Publicación:** falta un `LICENSE`; conviene confirmar con IAC-CINDA que se puede redistribuir la plantilla de la Guía de
-  Antecedentes y con la Dirección que se pueden publicar los logos del membrete (PLAN.md §52).
+- **Publicación:** falta un `LICENSE`; conviene confirmar con la Dirección que se pueden publicar los logos del membrete
+  (PLAN.md §52). La plantilla de una agencia que se versionó antes sigue en el historial de git (PLAN §57).
 - **Seguimiento estudiantil:** el consentimiento de los estudiantes y del directorio se redactó sin revisión de la Dirección; el
   envío real de correo masivo (encuestas, seguimiento y directorio) no se probó con el proveedor de producción.
 - **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se
   usa (`q`, `execute`, `t.<tabla>.insert/update`); el resto de lo propio de SQLite está en
   `app/comun/db.py` (ver su docstring).
-- Los mayores archivos de rutas son `acreditacion/rutas/informes.py` (unas 700 líneas) e
+- Los mayores archivos de rutas son `calidad/rutas/informes.py` (unas 700 líneas) e
   `investigacion/rutas/propuestas.py` (620). Las rutas de usuarios, productos y proyectos ya son
   paquetes con un módulo por flujo; su `__init__` los registra en orden.

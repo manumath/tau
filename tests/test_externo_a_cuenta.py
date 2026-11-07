@@ -1,6 +1,6 @@
 """Una persona externa que luego recibe cuenta: sugerencias y vinculación sin perder registros (PLAN §42)."""
-from app.acreditacion import calidad
-from app.acreditacion import estudiantes as ind_estudiantes
+from app.calidad import calidad_datos as calidad
+from app.calidad import estudiantes as ind_estudiantes
 from app.comun import estudiantes, personas, usuarios, vinculos
 from app.comun.db import get_db
 from app.investigacion import actividades, productos, proyectos

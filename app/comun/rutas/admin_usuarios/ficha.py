@@ -40,7 +40,7 @@ def modal_ficha(u, auth):
     uid = u["id"]
     return modal(
         f"Ficha académica de {u['nombres']} {u['apellidos']}",
-        P("Datos de la persona que pide la acreditación (Guía de Antecedentes, hojas 10 y 11). Los investigadores "
+        P("Datos que piden los informes del cuerpo académico y las fichas estadísticas de calidad. Los investigadores "
           "también pueden completar sus grados en «Mi perfil».", cls=(TextPresets.muted_sm, "mb-3")),
         _grados_ficha(uid) if permisos.puede(auth, "gestionar_fichas") else
         Div(H3("Grados académicos", cls="text-base font-semibold mb-2"),

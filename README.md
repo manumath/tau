@@ -3,9 +3,9 @@
 TAU es el sistema de información de la Carrera de Matemática (CMAT) y su Instituto de
 Investigación Matemática (IIMAT), FCPN, UMSA. Reúne en un solo lugar la actividad científica
 (productos, actividades, proyectos, líneas de investigación), la gestión académica (planes de
-estudio, oferta por gestión, asignación docente, carga horaria) y la evidencia para la acreditación
-ante IAC-CINDA. Cada hecho se registra una sola vez y, con eso, se generan los CV, los informes de
-proyecto, la memoria anual y el anexo de acreditación. Hecho con [FastHTML](https://fastht.ml),
+estudio, oferta por gestión, asignación docente, carga horaria) y el Sistema Interno de Aseguramiento
+de la Calidad (SIAC) de la Carrera. Cada hecho se registra una sola vez y, con eso, se generan los CV, los informes de
+proyecto, la memoria anual y los informes de calidad. Hecho con [FastHTML](https://fastht.ml),
 HTMX, MonsterUI y SQLite.
 
 Nació en 2026 como «Portal de Investigación» del IIMAT; algunos nombres técnicos conservan
@@ -35,7 +35,7 @@ el servicio `portal` y la aplicación de Fly.io).
   instituto por año, periodo octubre–septiembre o rango, imprimibles; descargas XLSX, CSV y BibTeX.
 - **Docencia:** planes de estudio, oferta y asignación docente por gestión, carga horaria, preparación del semestre.
 - **Estudiantes y egresados** (complementan a Seguimiento Académico; sin materias ni notas): cohortes de ingreso, egreso,
-  titulación y deserción cargadas desde un CSV (alimentan las hojas 3 a 6 de la Guía de Antecedentes); portal del estudiante
+  titulación y deserción cargadas desde un CSV (alimentan los indicadores de progresión); portal del estudiante
   con ingreso por enlace al correo; actividad estudiantil con verificación; encuestas anónimas o nominales con enlace personal;
   tutoría con reuniones confidenciales; egresados con seguimiento a los 6 meses, 1, 3 y 5 años, directorio opcional y mentoría;
   y un informe de seguimiento estudiantil con solo cifras agregadas.
@@ -123,13 +123,14 @@ app/
       proyectos/               un módulo por pestaña: lista, datos, resumen, participantes, registros,
                                pendientes, plan, reasignar y ficha (registrada al final)
       productos/               lista, formulario, carga_openalex y ficha (registrada al final)
-  acreditacion/                evidencia para IAC-CINDA
+  calidad/                     Aseguramiento de la Calidad (SIAC de la Carrera, PLAN §57)
     informes.py                datos de CV, informe de proyecto y memoria; exportación CSV/XLSX
-    anexo.py                   anexo de I+D+i para la acreditación, por criterio y año
+    anexo.py                   informe de I+D+i (/informes/investigacion), por tema y año
     estudiantes.py             tesis e indicadores de participación de estudiantes
-    guia_antecedentes.py       Guía de Antecedentes de IAC-CINDA: la plantilla oficial llenada con los datos
+    cuerpo_academico.py        carga docente e indicadores del cuerpo académico
+    calidad_datos.py           calidad de los datos: lo que falta completar y a quién avisar
     seguimiento_estudiantil.py anexo de seguimiento estudiantil: cohortes, actividad, encuestas, tutoría y egresados (agregados)
-    rutas/                     informes, anexo, guia_antecedentes
+    rutas/                     informes, anexo, cuerpo_academico, calidad_datos, seguimiento_estudiantil
   academico/                   docencia y currículo (fase 3)
     planes.py                  programas, planes de estudio, asignaturas, electivas, requisitos, observaciones
     importar_planes.py         carga de planes desde datos/planes/ (la usa la migración 0028)
@@ -155,9 +156,9 @@ app/
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
   navegacion.py                menú lateral y pestañas del teléfono: qué secciones ve cada rol (PLAN §53)
 
-Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `acreditacion`,
-`academico`, `estudiantil` y `egresados` pueden usar `comun` (`acreditacion` usa `estudiantil` para la Guía y `egresados`
-usa `estudiantil` para el motor de encuestas). `app/inicio.py` y `main.py` reúnen todo.
+Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `calidad`,
+`academico`, `estudiantil` y `egresados` pueden usar `comun` (`calidad` usa `estudiantil` para el seguimiento estudiantil y
+`egresados` usa `estudiantil` para el motor de encuestas). `app/inicio.py` y `main.py` reúnen todo.
 static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
 static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
 datos/planes/                  planes de estudio en CSV (formato en su README)
@@ -319,12 +320,11 @@ La API responde con `Access-Control-Allow-Origin: *`, así la web del instituto 
 ## Repositorio
 
 El código está en <https://github.com/manumath/tau>. No se versionan `data/` (la base y los correos de desarrollo),
-`.sesskey`, `.venv/`, los PDF de IAC-CINDA (`iac-cinda/`) ni los logos originales (`static/img/membrete/logo_*`): el
+`.sesskey`, `.venv/`, los PDF de agencias (`iac-cinda/`), las políticas de la UMSA (`politicas/`) ni los logos originales (`static/img/membrete/logo_*`): el
 membrete usa la copia recortada `iimat.png` y la marca de la Carrera de `static/img/marca/` (PLAN.md §55). Los commits usan el correo `noreply` de GitHub del autor.
 **Aún no tiene archivo `LICENSE`**: hasta que se agregue, el código se puede leer pero no hay permiso para reutilizarlo.
 
 ## Licencias de datos
 
 El catálogo MSC2020 (`catalogos/MSC2020.tsv`) es de Mathematical Reviews y zbMATH Open, bajo
-CC BY-NC-SA 4.0; ver [catalogos/README.md](catalogos/README.md). La plantilla vacía de la Guía de Antecedentes
-(`datos/iac-cinda/`) es un documento de IAC-CINDA; los logos del membrete son de la UMSA, el IIMAT y la Carrera.
+CC BY-NC-SA 4.0; ver [catalogos/README.md](catalogos/README.md). Los logos del membrete son de la UMSA, el IIMAT y la Carrera.

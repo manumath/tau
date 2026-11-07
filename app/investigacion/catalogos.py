@@ -1,9 +1,9 @@
 """Catálogos administrables desde la interfaz (PLAN.md §47): tipos de actividad, tipos de producto e
 índices. Los del sistema (`del_sistema = 1`, los que traen las migraciones) los reconocen por su nombre el
-anexo, la Guía de Antecedentes, el CV y las importaciones: solo se reordenan y se activan o desactivan (en
+informe de I+D+i, el CV y las importaciones: solo se reordenan y se activan o desactivan (en
 los índices, además, se cambia si cuentan como indexado o arbitrado). Los agregados desde la interfaz se
 renombran y, si nadie los usó, se eliminan. Un tipo nuevo cuenta de forma genérica: en formularios, listas,
-CV y memoria, pero no en las categorías del anexo ni de la Guía."""
+CV y memoria, pero no en las categorías del informe de I+D+i."""
 from app.comun.db import get_db, sin_tildes, transaccion
 
 LARGO_NOMBRE = 80

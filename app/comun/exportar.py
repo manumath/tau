@@ -1,5 +1,5 @@
 """Exportación a CSV y XLSX con las celdas neutralizadas contra la «inyección de fórmulas». La usan los
-informes (app/acreditacion/informes.py) y la auditoría."""
+informes (app/calidad/informes.py) y la auditoría."""
 import csv
 import io
 

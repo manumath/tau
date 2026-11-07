@@ -297,7 +297,7 @@ def test_solo_se_elimina_un_borrador(direccion):
 def test_el_comite_ve_resultados_pero_no_gestiona(app, datos):
     from app.comun import usuarios as u
     comite = u.crear("comite@test.cl", "Comité", "Prueba", "Clave-roles-1", debe_cambiar_pass=False, es_investigador=False)
-    permisos.asignar(comite["id"], "comite_acreditacion", unidades.id_de("UMSA"))
+    permisos.asignar(comite["id"], "comision_calidad", unidades.id_de("UMSA"))
     eid = _eid()
     encuestas.abrir(eid, None)
     c = TestClient(app)

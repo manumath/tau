@@ -6,7 +6,7 @@ import pytest
 
 from app.investigacion import actividades, perfiles, productos
 from app.comun import importar_usuarios, importar_vinculos, usuarios, vinculos
-from app.acreditacion import informes
+from app.calidad import informes
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 

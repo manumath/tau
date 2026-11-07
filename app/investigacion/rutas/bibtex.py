@@ -12,7 +12,7 @@ from monsterui.all import (Button, ButtonT, Form, Label, LabelT, LabelTextArea, 
 
 from app.comun import permisos
 from app.investigacion import bibtex, productos
-from app.acreditacion import informes
+from app.calidad import informes
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal
 from app.comun.db import auditar, sin_tildes
 

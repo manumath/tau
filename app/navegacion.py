@@ -52,11 +52,11 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
     estudiantes = _academico(ESTUDIANTES, auth)
     if auth.get("es_tutor"):
         estudiantes.insert(0, _item("mis-tutorados", "Mis tutorados", "/tutoria", "message-circle-heart"))
-    acreditacion = []
+    calidad = []
     if auth["es_investigador"] or puede("ver_informes_institucionales") or puede("ver_cv_ajeno"):
-        acreditacion.append(_item("informes", "Informes", "/informes", "file-text"))
+        calidad.append(_item("informes", "Informes", "/informes", "file-text"))
     if puede("ver_calidad_datos"):
-        acreditacion.append(_item("calidad", "Calidad de datos", "/informes/calidad", "list-checks"))
+        calidad.append(_item("calidad", "Calidad de datos", "/informes/calidad", "list-checks"))
     administracion = []
     if puede("ver_usuarios"):
         administracion.append(_item("usuarios", "Usuarios", "/admin/usuarios", "users"))
@@ -68,7 +68,7 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                            _item("catalogos", "Tipos e índices", "/admin/catalogos", "tags")]
     grupos = [(None, [_item("inicio", "Inicio", "/", "home")]), ("Investigación", investigacion),
               ("Docencia", _academico(DOCENCIA, auth)), ("Estudiantes", estudiantes),
-              ("Acreditación", acreditacion), ("Administración", administracion)]
+              ("Aseguramiento de la Calidad", calidad), ("Administración", administracion)]
     return [(t, items) for t, items in grupos if items]
 
 

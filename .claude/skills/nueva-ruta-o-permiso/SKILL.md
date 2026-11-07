@@ -8,7 +8,7 @@ description: Agregar una pantalla, ruta HTMX o acción con permisos en TAU (Fast
 ## Dónde va
 
 - Paquetes: `app/comun` (personas, cuentas, vínculos, roles; **no importa de los demás**),
-  `app/investigacion`, `app/academico`, `app/acreditacion`. Lógica en el módulo
+  `app/investigacion`, `app/academico`, `app/calidad`. Lógica en el módulo
   (`app/<paquete>/<tema>.py`), pantallas en `app/<paquete>/rutas/<tema>.py` con `rt = APIRouter()`.
 - Registre el router en `main.py`. Las rutas con segmento literal que choca con `{id}`
   (`/productos/bibtex` frente a `/productos/{pid}`) van **antes**.
@@ -23,7 +23,7 @@ description: Agregar una pantalla, ruta HTMX o acción con permisos en TAU (Fast
      horaria contratada) — única dependencia; planes, oferta, docencia.
    - **Dirección del Instituto:** ciclo de vida de los proyectos institucionales (convocatoria,
      propuestas, responsables), catálogos, memoria y anexo. No define vínculos.
-   - **Comité de acreditación:** ve todo, no modifica.
+   - **Comisión de calidad:** ve todo, no modifica.
 3. Rutas `/admin/...`: agregue su patrón a `REGLAS_ADMIN` en `app/comun/auth.py` (lo que no está se
    deniega; `tests/test_permisos_rutas.py::test_toda_ruta_admin_tiene_regla` lo exige) **y** vuelva
    a verificar dentro de la ruta con `puede(…)`. Ocultar un botón no basta.

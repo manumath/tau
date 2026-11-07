@@ -2,7 +2,7 @@
 import pytest
 
 from app.academico import carga, gestiones, oferta
-from app.acreditacion import anexo
+from app.calidad import anexo
 from app.comun import permisos, unidades, usuarios, vinculos
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login

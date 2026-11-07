@@ -4,8 +4,8 @@ from monsterui.all import Card, H3, TextPresets, UkIcon
 
 from app.comun import academicos
 
-AVISO = ("El instituto registra su fecha de nacimiento para la acreditación (IAC-CINDA pide la distribución por "
-         "edad del cuerpo académico). Solo la ven usted y la Administración del sistema; los informes usan tramos "
+AVISO = ("El instituto registra su fecha de nacimiento para los informes de calidad (piden la distribución "
+         "por edad del cuerpo académico). Solo la ven usted y la Administración del sistema; los informes usan tramos "
          "de edad, nunca la fecha. Si no es correcta, pida a la administración que la corrija.")
 
 

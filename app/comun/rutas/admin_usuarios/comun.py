@@ -45,7 +45,7 @@ def resumen_vinculo(u, con_boton=True):
 
 CORTO = {"administracion_sistema": "Adm. del sistema", "direccion_instituto": "Dir. Instituto",
          "direccion_carrera": "Dir. Carrera", "coordinacion_academica": "Coord. académica",
-         "comite_acreditacion": "Comité de acreditación", "gestion_datos": "Gestión de datos"}
+         "comision_calidad": "Comisión de calidad", "gestion_datos": "Gestión de datos"}
 
 
 def _personal_academico(u) -> bool:

@@ -19,7 +19,7 @@ import time
 from datetime import date, timedelta
 
 from app.academico import carga, gestiones, preparacion
-from app.acreditacion import calidad, cuerpo_academico, informes
+from app.calidad import calidad_datos as calidad, cuerpo_academico, informes
 from app.comun import config, notificaciones, permisos
 from app.comun.db import get_db
 
@@ -122,7 +122,7 @@ def _calidad(d):
     quien = "\n".join(f"· {calidad.QUIEN[q]}: {n}" for q, n in r["por_quien"].items() if n)
     return (f"Calidad de datos: {r['registros']} registros por completar",
             f"{r['con_observaciones']} de {r['chequeos']} revisiones con observaciones.",
-            f"Antes de generar la memoria, el anexo o los informes de docencia, conviene completar "
+            f"Antes de generar la memoria, el informe de I+D+i o los informes de docencia, conviene completar "
             f"{r['registros']} registros ({r['con_observaciones']} de {r['chequeos']} revisiones con observaciones). "
             f"Les toca a:\n\n{quien}\n\nEl tablero, con enlaces para corregir cada uno:",
             "/informes/calidad")

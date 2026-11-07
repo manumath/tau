@@ -1,10 +1,9 @@
-"""Cohortes estudiantiles (PLAN §49, etapa 1): carga del CSV, indicadores, tablero y hojas 3 a 6 de la Guía."""
+"""Cohortes estudiantiles (PLAN §49, etapa 1): carga del CSV, indicadores, tablero y conteos por cohorte."""
 import base64
 import io
 
 from openpyxl import load_workbook
 
-from app.acreditacion import guia_antecedentes as guia
 from app.comun import personas
 from app.comun.db import get_db
 from app.estudiantil import cohortes, importar
@@ -152,25 +151,27 @@ def test_carga_rechaza_archivo_sin_filas_validas(carrera):
     assert "Faltan columnas" in r.text
 
 
-# --- Guía de Antecedentes ----------------------------------------------------------------------------------
+# --- Conteos por cohorte (antes verificados en las hojas 3 a 6 de una planilla externa) ------------------
 
-def test_hojas_3_a_6_de_la_guia(app):
+def test_conteos_por_cohorte_y_admision(app):
     _cargar()
-    libro = load_workbook(io.BytesIO(guia.generar(ultimo=(2026, "II"))))
-    h4, h5, h6, h3 = (libro[guia.H[k]] for k in ("cohortes", "egresados", "titulados", "admision"))
-    # Hoja 4: cohorte 2020-II (fila 15): 2 matriculados desde su ingreso; 1 cuando egresa Pedro (2024-II → ciclo 15).
-    assert (h4["I15"].value, h4["Q15"].value, h4["R15"].value, h4["S15"].value) == (2, 2, 1, 0)
-    assert (h4["V15"].value, h4["W15"].value, h4["X15"].value) == (0, 0, 0)
-    assert (h4["V16"].value, h4["W16"].value, h4["X16"].value) == (0, 1, 1)           # 2021-I: Ana
-    assert h4["X17"].value == 1                                                       # 2021-II: Rosa (congelada)
-    assert h4["B8"].value is None                                                     # 2017-I: sin datos
-    assert h4["Y15"].value == '=IFERROR((I15-K15)/I15,"")'
-    # Hojas 5 y 6: egresados y titulados de la cohorte 2020-II en los ciclos de 2022-I a 2026-II.
-    assert [h5[f"{c}14"].value for c in "BGHI"] == [0, 1, 1, 0]
-    assert [h6[f"{c}16"].value for c in "BHIJ"] == [0, 0, 1, 0]
-    # Hoja 3: la cohorte 2022-I (fila 9): ordinaria, mujer, colegio público, menor de 18 años.
-    assert [h3[c + "9"].value for c in "CEHIJKLMNOPQ"] == [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0]
-    assert h3["C10"].value is None
+    ciclos = cohortes.cohortes_hasta((2026, "II"), 20)          # 2017-I … 2026-II
+    res = cohortes.resumen(ciclos)
+    c = {x["texto"]: x for x in res}
+    # Cohorte 2020-II: 2 matriculados desde su ingreso; 1 cuando egresa Pedro (2024-II → ciclo 16).
+    assert [c["2020-II"]["matricula"][k] for k in (7, 15, 16, 17)] == [2, 2, 1, 0]
+    assert [c["2020-II"][k] for k in ("desercion_academica", "desercion_no_academica", "desertores")] == [0, 0, 0]
+    assert [c["2021-I"][k] for k in ("desercion_academica", "desercion_no_academica", "desertores")] == [0, 1, 1]
+    assert c["2021-II"]["desertores"] == 1                     # Rosa (congelada)
+    assert res[0]["n"] == 0                                    # 2017-I: sin datos
+    # Egresados y titulados de la cohorte 2020-II por ciclo (2022-I, 2024-II, 2025-I, 2025-II / 2026-I).
+    assert [c["2020-II"]["egresados"][k] for k in (10, 15, 16, 17)] == [0, 1, 1, 0]
+    assert [c["2020-II"]["titulados"][k] for k in (10, 16, 17, 18)] == [0, 0, 1, 0]
+    # Admisión de la cohorte 2022-I: ordinaria, mujer, colegio público, menor de 18 años; 2022-II vacía.
+    a = cohortes.admision(ciclos[10])
+    assert [a[k] for k in ("ordinaria", "especial", "hombres", "mujeres", "otra_ciudad", "extranjeros", "publico",
+                           "privado")] + a["tramos"] == [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0]
+    assert c["2022-II"]["n"] == 0
 
 
 def test_la_lista_de_investigacion_no_muestra_el_seguimiento_academico(app, client):

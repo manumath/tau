@@ -1,7 +1,7 @@
 """Coautores externos duplicados: detección y fusión sin perder registros."""
 import pytest
 
-from app.acreditacion import calidad
+from app.calidad import calidad_datos as calidad
 from app.comun import permisos, personas, usuarios
 from app.comun.db import get_db
 from app.investigacion import actividades, productos, proyectos

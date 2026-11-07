@@ -1,6 +1,6 @@
 """Tablero de calidad de datos (punto 4 de la evaluación, PLAN.md §31)."""
 from app.academico import gestiones, oferta
-from app.acreditacion import calidad
+from app.calidad import calidad_datos as calidad
 from app.comun import academicos, permisos, unidades, usuarios, vinculos
 from app.investigacion import proyectos
 from tests.conftest import PASS_TEMP, login

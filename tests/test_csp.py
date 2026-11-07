@@ -16,7 +16,7 @@ from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 SCRIPT_EN_LINEA = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>\s*\S", re.S)
 MANEJADOR = re.compile(r"\s(on[a-z]+|hx-on[:a-z-]*)=", re.I)
 PAGINAS = ["/login", "/", "/proyectos", "/productos", "/actividades", "/informes", "/informes/memoria",
-           "/informes/acreditacion", "/informes/calidad", "/informes/guia-antecedentes", "/docencia/oferta",
+           "/informes/investigacion", "/informes/calidad", "/docencia/oferta",
            "/docencia/carga", "/docencia/planes", "/docencia/gestiones", "/docencia/preparacion", "/admin/usuarios",
            "/admin/auditoria", "/admin/propuestas", "/admin/revistas", "/admin/lineas", "/avisos",
            "/personas/externos", "/personas/externos/duplicados", "/estudiantes", "/investigadores"]

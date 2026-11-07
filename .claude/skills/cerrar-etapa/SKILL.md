@@ -55,7 +55,7 @@ Si cambió algo que se ve: skill `captura-visual` y revise los PNG.
   frase clara; cuerpo con qué y por qué. Termine con la línea `Co-Authored-By` que indique el
   sistema.
 - `git add` de rutas concretas (`app scripts tests docs PLAN.md migrations static/css/tailwind.css …`),
-  nunca `data/`, `.herramientas/` ni PDFs de IAC-CINDA.
+  nunca `data/`, `.herramientas/` ni los PDF de agencias ni las políticas (`/iac-cinda/`, `/politicas/`).
 
 ## 8. Respuesta al usuario
 

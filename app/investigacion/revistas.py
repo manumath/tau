@@ -4,7 +4,7 @@
   índices de los artículos publicados en ella, según el año de publicación. Una `pendiente` (la
   propuso un investigador o se creó al importar) todavía no: rige lo que declaró el autor.
 - `revista_indice` registra en qué años figura la revista en cada índice, con la fuente
-  consultada y un enlace de evidencia (transparencia de los datos; IAC-CINDA, criterio 3.6.3).
+  consultada y un enlace de evidencia (transparencia de los datos).
 """
 import re
 
@@ -281,7 +281,7 @@ def vincular(producto_ids: list[int], rid: int) -> int:
 def detalle(p: dict) -> dict:
     """Datos de la revista de un producto para informes y exportaciones: revista, ISSN, país,
     ámbito (nacional / internacional), acceso abierto, mejor cuartil del año, origen de la
-    clasificación y fuentes de la indexación (transparencia del método; IAC-CINDA 3.6.3)."""
+    clasificación y fuentes de la indexación (transparencia del método)."""
     r = p.get("revista")
     es_articulo = p.get("tipo") == TIPO_ARTICULO
     if not r:

@@ -19,7 +19,7 @@ from app.investigacion import (actividades, cosecha, importacion, institucionale
                                revistas)
 from app.comun import config, exportar, permisos, unidades
 from app.comun.componentes import recursos
-from app.acreditacion import informes, programados
+from app.calidad import informes, programados
 from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import boton_espera, pagina
 from app.comun.db import auditar
@@ -205,10 +205,10 @@ def get(auth):
                                      "fechas. Descarga en XLSX y CSV.", cls=TextPresets.muted_sm))),
                           href="/informes/memoria", cls="block hover:shadow-md transition"))
         tarjetas.append(A(Card(Div(UkIcon("award", height=22, width=22, cls="text-primary"),
-                                   H3("Anexo de I+D+i para la acreditación", cls="text-base font-semibold mt-2"),
-                                   P("Evidencia de los últimos 5 años ordenada según los criterios de IAC-CINDA, "
+                                   H3("Informe de I+D+i", cls="text-base font-semibold mt-2"),
+                                   P("Evidencia de los últimos 5 años ordenada por las dimensiones del marco de calidad, "
                                      "con resumen por año. Descarga en XLSX.", cls=TextPresets.muted_sm))),
-                          href="/informes/acreditacion", cls="block hover:shadow-md transition"))
+                          href="/informes/investigacion", cls="block hover:shadow-md transition"))
     if permisos.puede(auth, "ver_carga"):
         tarjetas.append(A(Card(Div(UkIcon("clock", height=22, width=22, cls="text-primary"),
                                    H3("Carga docente", cls="text-base font-semibold mt-2"),
@@ -223,12 +223,6 @@ def get(auth):
                                      "de edad, carga en investigación y proyectos. Descarga en XLSX.",
                                      cls=TextPresets.muted_sm))),
                           href="/informes/cuerpo-academico", cls="block hover:shadow-md transition"))
-        tarjetas.append(A(Card(Div(UkIcon("file-spreadsheet", height=22, width=22, cls="text-primary"),
-                                   H3("Guía de Antecedentes IAC-CINDA", cls="text-base font-semibold mt-2"),
-                                   P("La planilla oficial para la acreditación del pregrado, llenada con los datos del "
-                                     "sistema: plan, cuerpo académico, proyectos, publicaciones y actividades.",
-                                     cls=TextPresets.muted_sm))),
-                          href="/informes/guia-antecedentes", cls="block hover:shadow-md transition"))
     if permisos.puede(auth, "ver_seguimiento_estudiantil"):
         tarjetas.append(A(Card(Div(UkIcon("graduation-cap", height=22, width=22, cls="text-primary"),
                                    H3("Seguimiento estudiantil", cls="text-base font-semibold mt-2"),
@@ -238,7 +232,7 @@ def get(auth):
     if permisos.puede(auth, "ver_calidad_datos"):
         tarjetas.append(A(Card(Div(UkIcon("list-checks", height=22, width=22, cls="text-primary"),
                                    H3("Calidad de datos", cls="text-base font-semibold mt-2"),
-                                   P("Lo que falta o no cuadra antes de generar la memoria, el anexo o los informes "
+                                   P("Lo que falta o no cuadra antes de generar la memoria, el informe de I+D+i o los informes "
                                      "de docencia, con quién lo corrige y un enlace para hacerlo.",
                                      cls=TextPresets.muted_sm))),
                           href="/informes/calidad", cls="block hover:shadow-md transition"))
@@ -479,12 +473,12 @@ def seccion_revistas(rv):
                 else P("Sin cuartiles registrados en el catálogo.", cls="apagado")),
             cls="grid grid-cols-2 gap-6"),
         P(f"{rv['declarados']} artículo(s) en revistas aún no verificadas en el catálogo: su clasificación es la "
-          "que declararon los autores." + (" Para la acreditación conviene verificarlas." if not rv["exige_verificada"] else ""),
+          "que declararon los autores." + (" Para una evaluación externa conviene verificarlas." if not rv["exige_verificada"] else ""),
           cls="text-sm text-amber-700") if rv["declarados"] else "")
 
 
 def seccion_impacto(imp):
-    """Citas de los productos que cuentan, según OpenAlex (IAC-CINDA 3.6.1: impacto con métricas)."""
+    """Citas de los productos que cuentan, según OpenAlex (impacto con métricas)."""
     if not imp["productos"]:
         return ""
     return Div(
@@ -498,7 +492,7 @@ def seccion_impacto(imp):
 
 
 def seccion_metodo(m):
-    """Cómo se obtuvieron las cifras (IAC-CINDA 3.6.3: datos, métodos y métricas transparentes)."""
+    """Cómo se obtuvieron las cifras (datos, métodos y métricas transparentes)."""
     pol = m["revistas"]["politica"]
     return Div(
         H2("Datos y método"),

@@ -4,7 +4,7 @@ from datetime import date
 import pytest
 
 from app.academico import gestiones
-from app.acreditacion import calidad, programados
+from app.calidad import calidad_datos as calidad, programados
 from app.comun import config, notificaciones, permisos, unidades, usuarios
 from app.comun.db import get_db
 from tests.conftest import PASS_ADMIN, PASS_TEMP, login

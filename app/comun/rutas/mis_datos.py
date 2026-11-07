@@ -16,7 +16,7 @@ def get(auth):
     return pagina(
         "Mis datos personales",
         H2("Mis datos personales"),
-        P("Lo que el instituto registra de usted para la acreditación. Si algo no es correcto, pida a la "
+        P("Lo que el instituto registra de usted para los informes de calidad. Si algo no es correcto, pida a la "
           "administración que lo corrija.", cls=(TextPresets.muted_sm, "mb-6")),
         Div(Card(H3("Grados académicos", cls="text-base font-semibold mb-2"),
                  Ul(*[Li(academicos.texto_grado(g), cls="text-sm py-1") for g in grados]) if grados

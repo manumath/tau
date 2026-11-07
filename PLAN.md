@@ -2218,7 +2218,7 @@ responde, el correo se intenta una vez sin cola (sirve para el aviso de un error
 
 ## 57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)
 
-**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 (ver al final); la 6 sigue abierta. Nada implementado.**
+**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 (ver al final); la 6 sigue abierta. Etapa 1 hecha (6-nov-2026).**
 
 ### Propósito
 
@@ -2327,16 +2327,40 @@ beneficiarios de los proyectos de interacción social (objetivo 6); encuesta a e
 
 | Etapa | Contenido | Tamaño |
 |---|---|---|
-| 1 | **Neutralizar sin cambiar el comportamiento:** paquete `app/calidad`, rutas `/calidad/…` (las anteriores redirigen), menú «Aseguramiento de la calidad», textos y docstrings neutros, rol renombrado, guía de uso, README y CLAUDE.md | Mediana |
+| 1 | **Neutralizar sin cambiar el comportamiento (hecha):** paquete `app/calidad`, informe de I+D+i en `/informes/investigacion` (las anteriores redirigen), menú «Aseguramiento de la Calidad», textos y docstrings neutros, rol renombrado, retiro de la Guía, guía de uso, README y CLAUDE.md | Mediana |
 | 2 | **Marco como datos:** migración (marco, dimensión, criterio, indicador, meta, atributo), CSV del marco de la Carrera, pantalla para editarlo (Dirección de Carrera) | Mediana |
 | 3 | **Indicadores automáticos y tablero:** registro de cálculos, serie, metas, instantáneas por periodo, exportación | Grande |
 | 4 | **Evidencias:** repositorio y asociación a criterios; informes generados con su huella | Mediana |
 | 5 | **Autoevaluación:** proceso, juicios por criterio, informe de autoevaluación imprimible y en XLSX | Grande |
 | 6 | **Plan de mejora y evaluación externa:** acciones, avances, avisos, recomendaciones | Mediana |
-| 7 | **Ficha estadística y exportación por correspondencia:** retiro definitivo de la Guía | Mediana |
+| 7 | **Ficha estadística y exportación por correspondencia** (la Guía ya se retiró en la etapa 1) | Mediana |
 | 8 | **Datos que faltan:** capacitación, convenios, impacto de interacción social, encuestas a empleadores y docentes | Mediana |
 
 La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás construyen el SIAC.
+
+### Etapa 1: neutralización (hecha, 6-nov-2026)
+
+- **Paquete:** `app/acreditacion` → `app/calidad` (`calidad.py` → `calidad_datos.py`, para no repetir el nombre del
+  paquete). Sin cambios de lógica.
+- **Informe de I+D+i** (antes «Anexo de I+D+i para la acreditación»): en `/informes/investigacion`, `/xlsx` y `/detalle`;
+  `/informes/acreditacion…` redirige (301) con los mismos parámetros, para marcadores y correos ya enviados. Cada sección
+  dice a qué dimensiones del marco D1–D9 aporta evidencia, en lugar del código de un criterio de la agencia; las anclas,
+  las hojas del XLSX («Publicaciones», «Proyectos»…), la columna «Tema» y el archivo (`informe-idi-AAAA-AAAA.xlsx`) son neutros.
+- **Menú:** el grupo «Acreditación» pasa a «Aseguramiento de la Calidad»; la clave del grupo plegado
+  (`aseguramiento-de-la-calidad`) cambió, así que quien lo tenía plegado lo verá abierto una vez.
+- **Rol:** migración 0049, `comite_acreditacion` → `comision_calidad` («Comisión de calidad»), con los mismos permisos de
+  solo lectura; los permisos de escritura de la Comisión (juicios y evidencias, decisión 2) llegan con las etapas 4 y 5.
+  La auditoría anterior conserva el nombre antiguo.
+- **Guía retirada** (decisión 4, adelantada desde la etapa 7): se quitaron `guia_antecedentes.py`, su pantalla
+  (`/informes/guia-antecedentes`), su prueba y la plantilla `datos/iac-cinda/`. La prueba de las hojas 3 a 6 se convirtió
+  en una prueba de los conteos por cohorte (`tests/test_cohortes.py`), que siguen igual; el texto del formulario de
+  servicios ya no habla de dólares. `app/comun/xlsx_plantilla.py` se conserva para las correspondencias privadas.
+  La plantilla sigue en el historial de git (no se reescribe, §56).
+- **Textos:** pantallas, docstrings, guía de uso, README, mantenimiento y CLAUDE.md sin la agencia ni sus códigos de criterio;
+  «acreditación» queda solo donde se habla del proceso en general («evaluación y acreditación de la Carrera»).
+- **Decisiones tomadas por el agente (por confirmar):** los informes siguen bajo `/informes` (no se movieron a `/calidad`,
+  para no romper más direcciones de las necesarias); la asignación de dimensiones a cada sección del informe de I+D+i
+  (cuerpo académico D4, producción D5, servicios D6, internacionalización D7, estudiantes D3 · D5) es una propuesta.
 
 ### Decisiones (confirmadas por el usuario el 6-nov-2026, salvo la 6)
 1. **Nombre:** «Aseguramiento de la Calidad» en el menú y «SIAC de la Carrera» en los documentos.

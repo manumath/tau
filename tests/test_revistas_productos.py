@@ -1,5 +1,5 @@
 """Catálogo de revistas, etapa R2 (revista de cada artículo y clasificación derivada) y tipos de
-productos y actividades de IAC-CINDA."""
+productos y actividades de I+D+i."""
 import copy
 import re
 
@@ -7,7 +7,7 @@ import pytest
 
 from app.investigacion import bibtex, importacion, productos, revistas
 from app.comun import usuarios, vinculos
-from app.acreditacion import informes
+from app.calidad import informes
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, PASS_TEMP, login
 from tests.test_importacion import CROSSREF, red  # noqa: F401
@@ -170,7 +170,7 @@ def test_vincular_articulos_existentes(admin, emmy, jsl):
     assert revistas.sin_vincular() == []
 
 
-# --- Tipos de IAC-CINDA ------------------------------------------------------------------------------------------
+# --- Tipos de I+D+i ----------------------------------------------------------------------------------------------
 
 def test_tipos_nuevos(app):
     productos_ = {t["nombre"] for t in productos.tipos()}

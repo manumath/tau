@@ -3,7 +3,7 @@ import re
 
 import pytest
 
-from app.acreditacion import calidad, informes
+from app.calidad import calidad_datos as calidad, informes
 from app.investigacion import productos, proyectos
 from app.comun import usuarios
 from app.comun.db import get_db

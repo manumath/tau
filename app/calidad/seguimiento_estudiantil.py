@@ -1,4 +1,4 @@
-"""Anexo de seguimiento estudiantil para la acreditación (PLAN §49 y §50, etapa 5): solo cifras agregadas, sin nombres ni
+"""Anexo de seguimiento estudiantil del sistema de calidad (PLAN §49 y §50, etapa 5): solo cifras agregadas, sin nombres ni
 datos personales. Reúne cohortes, actividad estudiantil verificada, encuestas, tutoría, egresados y directorio y mentoría.
 
 Las encuestas anónimas con menos de `encuestas.MIN_ANONIMO` respuestas no muestran promedios, igual que en su pantalla. Las

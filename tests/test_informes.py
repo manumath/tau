@@ -4,7 +4,7 @@ import re
 import pytest
 from openpyxl import load_workbook
 
-from app.acreditacion import informes
+from app.calidad import informes
 from app.comun import exportar
 from app.investigacion import perfiles, productos, proyectos
 from app.comun import personas, usuarios

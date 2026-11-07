@@ -21,7 +21,7 @@ if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not 
           "se usa UTC.", flush=True)
 
 from app.investigacion import institucionales  # noqa: E402
-from app.acreditacion import programados  # noqa: E402
+from app.calidad import programados  # noqa: E402
 from app.egresados import egresados as seguimiento_egresados  # noqa: E402
 from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
 from app.comun.auth import rt as rutas_auth
@@ -40,10 +40,10 @@ from app.comun.rutas.admin_auditoria import rt as rutas_admin_auditoria
 from app.investigacion.rutas.admin_revistas import rt as rutas_admin_revistas
 from app.investigacion.rutas.admin_lineas import rt as rutas_admin_lineas
 from app.investigacion.rutas.admin_catalogos import rt as rutas_admin_catalogos
-from app.acreditacion.rutas.anexo import rt as rutas_acreditacion
+from app.calidad.rutas.anexo import rt as rutas_anexo
 from app.comun.rutas.estudiantes import rt as rutas_estudiantes
 from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
-from app.acreditacion.rutas.informes import rt as rutas_informes
+from app.calidad.rutas.informes import rt as rutas_informes
 from app.inicio import rt as rutas_inicio
 from app.busqueda import rt as rutas_busqueda
 from app import navegacion
@@ -58,10 +58,9 @@ from app.academico.rutas.carga import rt as rutas_carga
 from app.academico.rutas.mi_docencia import rt as rutas_mi_docencia
 from app.academico.rutas.renovaciones import rt as rutas_renovaciones
 from app.comun.rutas.avisos import rt as rutas_avisos
-from app.acreditacion.rutas.cuerpo_academico import rt as rutas_cuerpo_academico
-from app.acreditacion.rutas.calidad import rt as rutas_calidad
-from app.acreditacion.rutas.guia_antecedentes import rt as rutas_guia_antecedentes
-from app.acreditacion.rutas.seguimiento_estudiantil import rt as rutas_seguimiento_estudiantil
+from app.calidad.rutas.cuerpo_academico import rt as rutas_cuerpo_academico
+from app.calidad.rutas.calidad_datos import rt as rutas_calidad
+from app.calidad.rutas.seguimiento_estudiantil import rt as rutas_seguimiento_estudiantil
 from app.academico.rutas.preparacion import rt as rutas_preparacion
 from app.egresados.rutas.directorio import rt as rutas_directorio
 from app.egresados.rutas.egresados import rt as rutas_egresados
@@ -154,10 +153,10 @@ def create_app(db_path=config.DB_PATH):
     # rutas_bibtex va antes que rutas_productos: /productos/bibtex coincidiría con /productos/{pid}.
     for router in (rutas_auth, rutas_inicio, rutas_busqueda, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
                    rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
-                   rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_acreditacion, rutas_informes, rutas_publico,
+                   rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_anexo, rutas_informes, rutas_publico,
                    rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
-                   rutas_guia_antecedentes, rutas_preparacion, rutas_cohortes,
+                   rutas_preparacion, rutas_cohortes,
                    rutas_actividades_estudiantiles, rutas_estudiante, rutas_encuestas, rutas_responder, rutas_egresados, rutas_directorio, rutas_tutoria,
                    rutas_seguimiento_estudiantil):
         router.to_app(app)

@@ -12,7 +12,7 @@ from datetime import date, timedelta
 from urllib.parse import quote
 
 from app.academico import carga
-from app.acreditacion import anexo, informes
+from app.calidad import anexo, informes
 from app.comun import academicos, notificaciones, personas, usuarios, vinculos
 from app.comun.db import get_db
 from app.investigacion import perfiles, productos
@@ -79,14 +79,14 @@ def sin_termino():
 def sin_carga():
     return _chequeo("sin_carga", "Vínculos y carga", "Docentes con vínculo vigente sin carga contratada",
                     "Titulares, contratados e interinos deberían tener su carga horaria registrada.", "carrera",
-                    "Carga docente, JCE del anexo", [
+                    "Carga docente, JCE del informe de I+D+i", [
                         _item(*_persona(f), vinculos.CATEGORIAS[f["categoria"]]) for f in carga.vigentes_sin_carga()])
 
 
 def sin_ingreso():
     return _chequeo("sin_ingreso", "Vínculos y carga", "Vínculos sin fecha de ingreso",
                     "Sin fecha de inicio no se sabe desde cuándo cuenta su producción.", "carrera",
-                    "Memoria y anexo (producción a la fecha)", [
+                    "Memoria e informe de I+D+i (producción a la fecha)", [
                         _item(*_persona(f)) for f in vinculos.sin_fecha_de_ingreso()])
 
 
@@ -96,7 +96,7 @@ def investigadores_sin_vinculo():
             WHERE u.activo = 1 AND {vinculos.sql_categoria_vigente('u')} IS NULL ORDER BY u.apellidos""")
     return _chequeo("investigadores_sin_vinculo", "Vínculos y carga", "Investigadores activos sin vínculo vigente",
                     "Su producción de hoy no cuenta en los informes hasta que tengan vínculo.", "carrera",
-                    "Memoria y anexo", [_item(*_persona(f)) for f in filas])
+                    "Memoria e informe de I+D+i", [_item(*_persona(f)) for f in filas])
 
 
 # --- Personas -----------------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ def productos_por_confirmar():
              for x in m["por_confirmar"]]
     return _chequeo("por_confirmar", "Producción", f"Publicaciones que no cuentan hasta completarse ({d}–{h})",
                     "Filiación sin declarar, revista sin verificar en el catálogo o mes faltante cuando el "
-                    "vínculo cubre solo parte del año.", "personas", "Memoria y anexo de I+D+i", items)
+                    "vínculo cubre solo parte del año.", "personas", "Memoria e informe de I+D+i", items)
 
 
 def productos_sin_msc():
@@ -210,7 +210,7 @@ def proyectos_sin_ambito():
                           ORDER BY p.nombre""")
     return _chequeo("sin_ambito", "Proyectos", "Proyectos vigentes sin ámbito (nacional o internacional)",
                     "Sin ámbito ni contrapartes no se sabe si es internacional.", "responsables",
-                    "Anexo (proyectos internacionales)",
+                    "Informe de I+D+i (proyectos internacionales)",
                     [_item(f["nombre"], f"/proyectos/{f['id']}", para=_responsables(f["id"])) for f in filas])
 
 
@@ -238,7 +238,7 @@ def externos_con_cuenta():
     sugerencias = personas.sugerencias_de_cuenta()
     return _chequeo("externos_con_cuenta", "Producción", "Coautores externos que ya tienen cuenta",
                     "Lo que registraron como externos no cuenta como producción del instituto hasta vincularlo a su cuenta.",
-                    "instituto", "Memoria, anexo y CV de esas personas",
+                    "instituto", "Memoria, informe de I+D+i y CV de esas personas",
                     [_item(f"{s['externo']['apellidos']}, {s['externo']['nombres']} → {s['usuario']['apellidos']}, "
                            f"{s['usuario']['nombres']}", "/personas/externos/duplicados", s["motivo"]) for s in sugerencias])
 

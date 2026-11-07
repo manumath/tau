@@ -3,7 +3,7 @@
 **TAU | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática** reúne la
 actividad científica del Instituto y la gestión académica de la Carrera: cada persona registra sus
 productos y actividades **una sola vez**, y con eso se generan su CV, los informes de los proyectos,
-la memoria anual y el anexo de acreditación; la Dirección de Carrera gestiona los planes, la oferta,
+la memoria anual y los informes de aseguramiento de la calidad; la Dirección de Carrera gestiona los planes, la oferta,
 la asignación docente y la carga horaria.
 
 - [Ingreso y contraseña](#ingreso-y-contraseña)
@@ -73,7 +73,7 @@ búsqueda. Quien abre ese enlace ve solo lo que su rol le permite.
 En una pantalla grande, el **menú lateral** reúne todo lo que usted puede abrir, agrupado: **Investigación**
 (actividades, productos, proyectos, investigadores, propuestas), **Docencia** (mi docencia, preparación del
 semestre, planes, oferta, carga horaria y, para quien prepara el semestre, gestiones), **Estudiantes** (cohortes, encuestas, tutoría, egresados),
-**Acreditación** (informes y calidad de datos) y **Administración** (usuarios, auditoría, revistas, líneas, tipos e
+**Aseguramiento de la Calidad** (informes y calidad de datos) y **Administración** (usuarios, auditoría, revistas, líneas, tipos e
 índices). Cada persona ve solo los grupos que le corresponden. El botón junto a «TAU» lo **pliega** a solo íconos
 (útil con tablas anchas); el sistema recuerda la elección en ese navegador. Cada grupo se **pliega** tocando su
 título (la flecha lo indica); el grupo de la página abierta se ve siempre, y con el menú en solo íconos se ven todos.
@@ -117,7 +117,7 @@ subtítulo por cada rol que usted tenga (solo aparecen los que tienen algo pendi
 - **Calidad de datos** (quien la ve): cuántos registros faltan completar.
 
 Debajo, unas **cifras** con enlace: su producción del año, proyectos vigentes y perfil (si investiga) y, para
-quien ve los informes institucionales, el cuerpo académico del año y el anexo de I+D+i. A los módulos se llega
+quien ve los informes institucionales, el cuerpo académico del año y el informe de I+D+i. A los módulos se llega
 por el menú.
 
 ## Mi docencia
@@ -140,7 +140,7 @@ Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Ed
     registra la Dirección de Carrera en su vínculo). Si nada de eso aplica: «Carrera de Matemática».
   El grado que se muestra es el de mayor nivel de sus grados académicos.
 - **Grados académicos:** todos sus grados (doctorado, maestría, licenciatura…), con el título, la
-  institución que lo otorgó, el país y el año. Los pide la acreditación.
+  institución que lo otorgó, el país y el año. Los piden los informes de calidad.
 - **Datos personales:** su fecha de nacimiento, tal como la registró la administración (no se edita
   aquí). Solo la ven usted y la Administración del sistema; los informes usan tramos de edad. Quien
   no tiene perfil de investigación la ve en «Mis datos personales» (menú con su nombre).
@@ -179,7 +179,7 @@ quedan en la dirección de la página, para volver a ellos o compartirlos.
 En **Investigadores → Estudiantes y tesistas** registre a los estudiantes que participan en su
 investigación: tesistas, coautores, participantes de proyectos o actividades. Para cada uno indique
 sus estudios (nivel, programa, año de ingreso y, si ya egresó, año de egreso y si se tituló). Así los
-informes de acreditación cuentan su participación, y el sistema sabe si alguien era estudiante o ya
+informes de calidad cuentan su participación, y el sistema sabe si alguien era estudiante o ya
 graduado en la fecha de cada producto.
 
 Registre las **tesis que dirige** como producto «Tesis dirigida»: primero el tesista y luego quienes
@@ -338,7 +338,7 @@ revisar.
 
 Además de seminarios, congresos y escuelas, registre **estancias o pasantías de investigación**,
 **transferencia de conocimiento** (a la sociedad, el sector productivo o las políticas públicas) y su
-**participación en redes de investigación** (desde / hasta): IAC-CINDA las considera evidencia de I+D+i.
+**participación en redes de investigación** (desde / hasta): son evidencia de I+D+i.
 
 «Actividades» reúne seminarios, congresos, escuelas, visitas y otras actividades. Al registrar
 una, indique el tipo, las fechas, el lugar, la modalidad y el ámbito, y los participantes (del
@@ -348,15 +348,13 @@ revisor(a) o responsable. En la ficha puede adjuntar certificados o afiches.
 Tres tipos tienen datos propios (el formulario cambia al elegirlos):
 
 - **Premio o distinción:** la institución que lo otorga y la fecha; al menos una persona con el rol
-  «Distinguido(a)». Sale en el anexo (reconocimiento de pares, 2.2.1 d) y en la Guía de Antecedentes
-  (logros de cada académico).
+  «Distinguido(a)». Sale en el informe de I+D+i (reconocimiento de pares).
 - **Arbitraje de artículos:** una entrada **por revista y año**, con la cantidad de artículos que
   arbitró, sin sus títulos (el arbitraje es confidencial); al menos una persona «Revisor(a)». Si la
   revista está en el catálogo, se reconoce por su título.
 - **Prestación de servicios** (asesorías, cursos o consultorías para terceros): la contraparte, el
   monto con su moneda, si el financiamiento es interno o externo y los ingresos que dejó a la Carrera
-  o el Instituto; al menos una persona «Responsable». Sale en el anexo (3.4.3) y en la hoja 28 de la
-  Guía de Antecedentes (en dólares, con el tipo de cambio que se indica al generarla).
+  o el Instituto; al menos una persona «Responsable». Sale en el informe de I+D+i.
 
 Para una **charla** en un congreso, registre el congreso como actividad y la charla como producto
 de tipo «Presentación», vinculada a esa actividad.
@@ -493,7 +491,7 @@ plantilla). La oferta de cada gestión del archivo se reemplaza por la del archi
 corregir el archivo y volver a importarlo. Una gestión con algún error no se importa (la vista
 previa dice por qué). Los docentes deben estar registrados en «Usuarios», aunque sea sin acceso.
 
-**Ficha de docente** (direcciones, Coordinación y Comité): en «Carga horaria», el nombre de cada
+**Ficha de docente** (direcciones, Coordinación y Comisión de calidad): en «Carga horaria», el nombre de cada
 persona abre su ficha, con lo mismo que ella ve en «Mi docencia» (materias, carga, carga en proyectos,
 historial). La Dirección de Carrera tiene ahí el botón «Vínculo y carga» para corregirlos sin ir a
 Usuarios.
@@ -526,18 +524,18 @@ semestre, según el vínculo vigente al inicio del semestre, y compara la docenc
 asignada en la oferta (32 h/mes por materia como titular, de grado o maestría; no suman los
 auxiliares ni los cursos de verano e invierno). Avisa si faltan materias por asignar o si hay más
 de las previstas. La consultan la Dirección de Carrera, la Coordinación académica, la Dirección
-del Instituto y el Comité de acreditación. La jornada completa equivalente del anexo de
-acreditación es la carga contratada / 160.
+del Instituto y la Comisión de calidad. La jornada completa equivalente de los informes
+de calidad es la carga contratada / 160.
 
 ## Estudiantes y egresados
 
 Los módulos de seguimiento estudiantil complementan al sistema de **Seguimiento Académico**, que es el dueño de las
 materias y las notas: TAU **no los registra**. Guarda la trayectoria (cohorte, estado y plan), la actividad estudiantil, las
 encuestas, la tutoría y el seguimiento de egresados. Quién ve qué: la **Dirección de Carrera** y la **Coordinación
-académica** gestionan; **Gestión de datos** carga los datos; el **Comité de acreditación** ve solo cifras agregadas; los
+académica** gestionan; **Gestión de datos** carga los datos; el **Comisión de calidad** ve solo cifras agregadas; los
 **estudiantes y egresados** ven únicamente lo suyo (y el directorio, si participan).
 
-### Cohortes estudiantiles (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
+### Cohortes estudiantiles (Dirección de Carrera, Coordinación académica, Gestión de datos y Comisión de calidad)
 
 En **Estudiantes → Cohortes estudiantiles** está el tablero de la licenciatura por cohorte (semestre de
 ingreso): cuántos ingresaron, cuántos siguen cursando, egresaron, se titularon o desertaron, con sus
@@ -564,7 +562,7 @@ cuenta (por ejemplo, la de un docente), esa ficha queda sin acceso y el aviso lo
 Si el estudiante ya figura (por RU, correo o nombre, como tesista, por ejemplo), se actualiza su
 ficha en lugar de crear otra. Se vuelve a cargar el archivo cada vez que cambie la situación.
 **Desertor** es quien se retiró o quien congeló sus estudios y no volvió en los dos ciclos siguientes
-(definición de IAC-CINDA). El sistema considera matriculado a un estudiante desde su cohorte hasta su
+(definición habitual de los modelos de calidad de la región). El sistema considera matriculado a un estudiante desde su cohorte hasta su
 último ciclo matriculado; no registra los congelamientos intermedios.
 
 ### Portal del estudiante («Mi seguimiento»)
@@ -587,8 +585,8 @@ los dos casos el estudiante recibe un aviso (en el sistema y, según su preferen
 ### Encuestas a estudiantes y egresados (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Encuestas** se arman, abren y envían las encuestas (satisfacción, clima, bienestar, abandono,
-seguimiento de egresados, logro del perfil de egreso). Ven los resultados también Gestión de datos y el Comité de
-acreditación, que solo ven cifras agregadas.
+seguimiento de egresados, logro del perfil de egreso). Ven los resultados también Gestión de datos y la Comisión de
+calidad, que solo ven cifras agregadas.
 
 1. **Crear:** parta de una encuesta de ejemplo (todas son borradores que puede cambiar) o en blanco. Indique el
    tipo, a quién va dirigida (estudiantes que cursan, o egresados y titulados), si quiere limitarla a ciertos años
@@ -608,7 +606,7 @@ y los resultados aparecen **solo desde 5 respuestas**; el promedio por año de i
 nadie puede deducir quién respondió qué. En las nominales (p. ej. el seguimiento de egresados) la Dirección ve las
 respuestas persona por persona.
 
-### Egresados (Dirección de Carrera y Coordinación académica; el Comité ve los indicadores)
+### Egresados (Dirección de Carrera y Coordinación académica; la Comisión de calidad ve los indicadores)
 
 En **Estudiantes → Egresados** están los indicadores de quienes se titularon, el seguimiento y la lista de egresados.
 
@@ -631,7 +629,7 @@ En **Estudiantes → Egresados** están los indicadores de quienes se titularon,
 
 La Dirección de Carrera y la Coordinación académica asignan un **tutor** (un docente con vínculo vigente) a cada estudiante que
 cursa, en **Estudiantes → Tutoría**: uno por uno o a toda una cohorte que aún no tiene tutor. Esa pantalla muestra también la
-cobertura (cuántos tienen tutor), las reuniones por año, los temas y las derivaciones; el Comité ve esas cifras, sin nombres.
+cobertura (cuántos tienen tutor), las reuniones por año, los temas y las derivaciones; la Comisión de calidad ve esas cifras, sin nombres.
 
 El **tutor** ve **«Mis tutorados»** en el menú (grupo Estudiantes) y, en cada estudiante, registra sus **reuniones**: fecha, modalidad,
 tema (académico, económico, salud, vocacional, convivencia, otro), un resumen, la **derivación** si corresponde (bienestar,
@@ -653,7 +651,7 @@ cambia el tutor, el nuevo no ve las notas del anterior.
   uno solo se comparte cuando el egresado acepta: a cada quien le llega el del otro.
 - El personal que gestiona egresados ve el directorio en **Egresados → Ver el directorio**.
 
-### Anexo de seguimiento estudiantil (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité)
+### Anexo de seguimiento estudiantil (Dirección de Carrera, Coordinación académica, Gestión de datos y Comisión de calidad)
 
 En **Informes → Seguimiento estudiantil** hay un documento imprimible (con membrete) y su XLSX con **solo cifras agregadas**, sin
 nombres: cohortes (ingreso, egreso, titulación y deserción), actividad estudiantil verificada por tipo y año, encuestas (tasa de
@@ -673,17 +671,17 @@ Menú «Informes»:
   en los institucionales, además, el plan de actividades (previstas y realizadas). Indica cuántos
   productos cumplen los requisitos de los fondos (filiación y agradecimiento) y qué le falta a cada
   uno. Descarga en XLSX.
-- **Carga docente** (direcciones, Coordinación académica y Comité; también desde Docencia → Carga
+- **Carga docente** (direcciones, Coordinación académica y Comisión de calidad; también desde Docencia → Carga
   horaria): un semestre, con la carga contratada y su distribución por persona y por categoría, la
   jornada completa equivalente (carga / 160), la docencia prevista frente a la asignada, la carga en
   proyectos, los avisos, los paralelos sin docente y las inscripciones por JCE. Imprimible y en XLSX.
-- **Cuerpo académico** (quien ve los informes institucionales): indicadores por año para el criterio
-  de cuerpo académico de IAC-CINDA: académicos vinculados, JCE, porcentaje con doctorado y con
+- **Cuerpo académico** (quien ve los informes institucionales): indicadores por año de la dimensión
+  de cuerpo académico (D4 del marco de calidad): académicos vinculados, JCE, porcentaje con doctorado y con
   posgrado, sin grado registrado, porcentaje de la carga en investigación, con proyecto vigente,
   inscripciones por JCE, y la distribución por categoría y por tramo de edad (la fecha de nacimiento
   nunca se muestra). Imprimible y en XLSX. Las «inscripciones» suman los inscritos de cada paralelo:
   no son la matrícula de la Carrera.
-- **Calidad de datos** (direcciones, Coordinación académica, Comité y Administración del sistema;
+- **Calidad de datos** (direcciones, Coordinación académica, Comisión de calidad y Administración del sistema;
   también aparece en el inicio): 16 revisiones de lo que falta o no cuadra antes de generar informes,
   agrupadas en vínculos y carga, personas, producción, docencia y proyectos. Cada una dice a qué
   afecta y quién lo corrige; al abrirla muestra los registros con un enlace para corregirlos. La
@@ -721,9 +719,9 @@ proyecto y ser del mismo periodo).
   dirección lo pidió. «Quitar» hace que el rol deje de regir desde hoy; queda en el historial.
   Roles: Administración del sistema (cuentas, roles, auditoría), Dirección del Instituto (el ciclo
   de vida de los proyectos institucionales: convocatoria, propuestas, responsables; catálogos,
-  coautores externos, memoria y anexo), Dirección de Carrera (categoría y vínculo de cada persona,
+  coautores externos, memoria e informe de I+D+i), Dirección de Carrera (categoría y vínculo de cada persona,
   con su carga horaria; planes, oferta y docencia), Coordinación académica (planes, oferta y
-  asignación docente), Comité de acreditación (ve todo, no modifica) y Gestión de datos (fichas
+  asignación docente), Comisión de calidad (ve todo, no modifica) y Gestión de datos (fichas
   académicas, estudiantes y coautores externos de su unidad). El sistema no permite quedarse sin
   Administración del sistema.
 - **Usuarios → Importar CSV:** alta masiva desde una planilla con `email`, `nombres`,
@@ -776,31 +774,18 @@ proyecto y ser del mismo periodo).
   fuente de cada indexación y su clasificación MSC2020. **«Por área (MSC2020)»** cuenta los productos por la
   sección de su código principal, con un gráfico, e indica cuántos están sin clasificar. **«Evolución»** grafica los cinco años calendario que terminan en el
   periodo elegido (productos, actividades y proyectos); cada barra abre la memoria de ese año.
-- **Informes → Anexo de I+D+i para la acreditación:** la evidencia de los últimos 5 años (o de los
-  años que elija) ordenada según los criterios de IAC-CINDA: resumen por año; cuerpo académico por
-  categoría y jornada completa equivalente (2.2.1); publicaciones, libros, patentes, software y
-  traducciones (3.6.3 a–e); transferencia, estancias, proyectos, presentaciones y redes (3.6.3 f–j);
-  internacionalización (3.5.2) e impacto (3.6.1); lo que el sistema aún no registra; y el método. Por
-  omisión solo cuenta artículos en revistas verificadas del catálogo; puede incluir las demás. El XLSX
-  trae una hoja por criterio. **Trazabilidad:** cada cifra del resumen por año y del cuerpo académico
-  es un enlace a los registros que la componen (qué artículos, qué personas, qué proyectos), con la
-  regla que se aplicó; así se responde de inmediato «¿de dónde sale este número?». La sección
+- **Informes → Informe de I+D+i:** la evidencia de los últimos 5 años (o de los años que elija)
+  ordenada por las dimensiones del marco de calidad de la Carrera (D1–D9): resumen por año; cuerpo
+  académico por categoría y jornada completa equivalente; publicaciones, libros, patentes, software y
+  traducciones; transferencia, estancias, proyectos, presentaciones y redes; internacionalización e
+  impacto; lo que el sistema aún no registra; y el método. Cada sección indica a qué dimensiones aporta
+  evidencia. Por omisión solo cuenta artículos en revistas verificadas del catálogo; puede incluir las
+  demás. El XLSX trae una hoja por tema. **Trazabilidad:** cada cifra del resumen por año y del cuerpo
+  académico es un enlace a los registros que la componen (qué artículos, qué personas, qué proyectos),
+  con la regla que se aplicó; así se responde de inmediato «¿de dónde sale este número?». La sección
   **«Tendencias»** muestra las series del periodo en gráficos, y cada barra lleva a los registros de
-  su año. Los gráficos se imprimen con el documento.
-- **Informes → Guía de Antecedentes IAC-CINDA** (Direcciones de Carrera y del Instituto, Comité de
-  acreditación): la planilla oficial de IAC-CINDA para carreras de pregrado (2025), llenada con lo que
-  registra el sistema. Elija el **programa** (cada licenciatura se acredita por separado), el **último
-  ciclo** de referencia (la Guía pide los 10 semestres que terminan en él) y el **tipo de cambio** en
-  bolivianos por dólar (la Guía pide los montos en USD; sin él, los montos en bolivianos quedan en
-  blanco) y pulse «Descargar la Guía (XLSX)». La pantalla detalla qué llena el sistema en cada hoja:
-  identificación, líneas, asignaturas del plan, académicos y su caracterización por ciclo, auxiliares,
-  proyectos, artículos, libros, patentes, redes, desarrollo académico y profesional, y extensión. Lo
-  demás (vacantes, consejo, becas, bienestar, recursos, impacto y difusión de cada actividad) se
-  completa a mano en el archivo. Las hojas 3 a 6 (admisión, cohortes, egreso y titulación) salen del
-  tablero de cohortes estudiantiles; las cohortes sin estudiantes cargados quedan en blanco. El resumen estadístico y sus gráficos
-  se calculan solos al abrirlo en Excel. Criterios: horas en **horas semanales** (la carga mensual ÷ 4);
-  jornada completa desde 160 h/mes, media jornada de 80 a 159, por horas bajo 80. Revise el archivo
-  antes de enviarlo.
+  su año. Los gráficos se imprimen con el documento. Los enlaces antiguos a «Anexo de I+D+i para la
+  acreditación» llevan a este informe.
 - **Citas:** en la memoria, «Actualizar citas» consulta en OpenAlex las citas de todos los productos
   con DOI. La sección «Impacto» las suma y el XLSX las trae por producto, con su fecha.
 - **Propuestas → Descargar XLSX:** las propuestas presentadas en una convocatoria, con lo que se
@@ -815,18 +800,18 @@ proyecto y ser del mismo periodo).
   no se podrá elegir, pero los proyectos, propuestas y perfiles que la usaban la conservan. Solo se
   elimina una línea que nadie ha usado. La ficha de cada línea muestra sus proyectos e investigadores.
 - **Catálogo de revistas** (menú, grupo Administración): las revistas donde publica el instituto y los
-  índices en que figuran **cada año**, con la fuente consultada y un enlace de evidencia (lo pide
-  IAC-CINDA: datos y métodos transparentes). Una revista **verificada** define el nivel de revisión
+  índices en que figuran **cada año**, con la fuente consultada y un enlace de evidencia (datos y
+  métodos transparentes). Una revista **verificada** define el nivel de revisión
   y los índices de los artículos publicados en ella; una **pendiente** todavía no. Se cargan una a
   una o por CSV (una fila por revista e índice; las existentes se completan).
 - **Tipos e índices** (Dirección del Instituto; menú, grupo Administración): los tipos de actividad, los tipos
   de producto y los índices que se ofrecen en los formularios.
   - Los **del sistema** (los que trae el sistema) se pueden **reordenar** y **desactivar**: dejan de
     ofrecerse en los formularios, pero lo ya registrado los conserva y se puede seguir editando. Su
-    nombre no cambia, porque el anexo, la Guía de Antecedentes, el CV y las importaciones los reconocen
+    nombre no cambia, porque el informe de I+D+i, el CV y las importaciones los reconocen
     por él.
   - Los **agregados** aquí se pueden además renombrar y, si nadie los usó, eliminar. Un tipo nuevo
-    cuenta en la memoria y en el CV, pero no en las categorías del anexo ni de la Guía.
+    cuenta en la memoria y en el CV, pero no en las categorías del informe de I+D+i.
   - En los **índices** se decide si cuentan como «indexado» o «arbitrado». Cambiarlo reclasifica los
     artículos de las revistas verificadas que figuran en ese índice (los de revistas sin verificar
     conservan lo que declararon sus autores) y queda en la auditoría.
@@ -849,7 +834,7 @@ quienes pueden editar el registro. Fuera del instituto solo se ve lo que usted p
 **¿Cómo obtengo el CV (o cualquier informe) en PDF con membrete?**
 Con «Imprimir / Guardar PDF» (o el menú Imprimir del navegador), elija «Guardar como PDF» como
 destino y, en «Más opciones», desmarque **«Encabezados y pies de página»** (los del navegador: la
-dirección web y la fecha). Todos los informes —CV, informe de proyecto, memoria, anexo de I+D+i,
+dirección web y la fecha). Todos los informes —CV, informe de proyecto, memoria, informe de I+D+i,
 carga docente y cuerpo académico— llevan en la primera página el membrete con los logos del IIMAT
 y de la Carrera, y en cada página un pie con el título del informe y «Página X de Y». Al imprimir,
 el sistema oculta la navegación y los botones y usa texto negro sobre blanco en tamaño A4, aunque

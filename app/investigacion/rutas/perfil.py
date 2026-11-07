@@ -139,7 +139,7 @@ def put(auth, sess, nombres: str = "", apellidos: str = ""):
 
 def _tarjeta_grados(id_, *contenido):
     return seccion(id_, "Grados académicos",
-                   P("Todos sus grados, con la institución que los otorgó (lo pide la acreditación). El de mayor "
+                   P("Todos sus grados, con la institución que los otorgó (lo piden los informes de calidad). El de mayor "
                      "nivel se muestra en su perfil.", cls=(TextPresets.muted_sm, "mb-2")), *contenido)
 
 

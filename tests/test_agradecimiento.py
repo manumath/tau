@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 
 from app.investigacion import filiacion, productos, proyectos
 from app.comun import usuarios
-from app.acreditacion import informes
+from app.calidad import informes
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
 

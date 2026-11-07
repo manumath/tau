@@ -1,11 +1,11 @@
-"""Estudiantes en la investigación (IAC-CINDA 2.3.2, 2.3.4 y 3.6.1 d)."""
+"""Estudiantes en la investigación."""
 import io
 
 import pytest
 from openpyxl import load_workbook
 
-from app.acreditacion import anexo as acreditacion, informes
-from app.acreditacion import estudiantes as ind_estudiantes
+from app.calidad import anexo as idi, informes
+from app.calidad import estudiantes as ind_estudiantes
 from app.comun import estudiantes, personas, usuarios, vinculos
 from app.investigacion import productos, proyectos, revistas
 from app.comun.db import get_db
@@ -100,7 +100,7 @@ def test_indicadores_y_anexo(client, emmy, maria):
                                fecha_fin="2024-12-31"), emmy, emmy)
     proyectos.agregar_participante(pid, f"e:{maria}", "tesista", False)
 
-    e = acreditacion.anexo(2022, 2026)["estudiantes"]
+    e = idi.anexo(2022, 2026)["estudiantes"]
     assert [(t["producto"]["titulo"], t["nivel"], t["estado"]) for t in e["tesis"]] == [
         ("Tesis de licenciatura", "licenciatura", "defendida"), ("Tesis de maestría", "maestria", "en curso")]
     assert e["tesis_por_nivel"] == {("Licenciatura", "defendida"): 1, ("Maestría", "en curso"): 1}
@@ -110,10 +110,10 @@ def test_indicadores_y_anexo(client, emmy, maria):
     assert [g for g in informes.cv(emmy, 2022, 2026)["grupos"]["tesis"]]  # el CV las agrupa
 
     login(client, "admin@test.cl", PASS_ADMIN)
-    r = client.get("/informes/acreditacion?desde=2022&hasta=2026")
+    r = client.get("/informes/investigacion?desde=2022&hasta=2026")
     assert "Estudiantes en la investigación" in r.text and "Tesis de licenciatura" in r.text
     assert "Participación de estudiantes en tesis" not in r.text  # ya no figura como pendiente
-    libro = load_workbook(io.BytesIO(client.get("/informes/acreditacion/xlsx?desde=2022&hasta=2026").content))
+    libro = load_workbook(io.BytesIO(client.get("/informes/investigacion/xlsx?desde=2022&hasta=2026").content))
     assert libro["Tesis dirigidas"].max_row == 3 and "Productos con estudiantes" in libro.sheetnames
 
 

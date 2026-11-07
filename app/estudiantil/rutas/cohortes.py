@@ -1,6 +1,6 @@
 """Cohortes estudiantiles: tablero de ingreso, egreso, titulación y deserción de la licenciatura, y carga del
 CSV de Seguimiento Académico (PLAN §49). Ven el tablero (agregados) la Dirección de Carrera, la
-Coordinación académica, Gestión de datos y el Comité de acreditación; cargan el CSV la Dirección de Carrera y
+Coordinación académica, Gestión de datos y la Comisión de calidad; cargan el CSV la Dirección de Carrera y
 Gestión de datos. Sin materias ni notas."""
 import base64
 
@@ -92,11 +92,11 @@ def get(auth):
         resumen, tabla,
         fh.Details(fh.Summary("¿Cómo se calcula?", cls="cursor-pointer text-sm text-primary"),
                    P("Son cifras agregadas: no incluyen materias ni notas, que están en el sistema de Seguimiento "
-                     "Académico, y alimentan las hojas 3 a 6 de la Guía de Antecedentes de IAC-CINDA. Solo cuenta a "
+                     "Académico, y alimentan los indicadores de progresión del sistema de calidad. Solo cuenta a "
                      "estudiantes de la licenciatura del programa propio con cohorte de ingreso. Un estudiante cuenta "
                      "como matriculado desde su cohorte hasta su último ciclo matriculado; los congelamientos intermedios "
                      "no se registran. Desertor: retirado, o congelado que no volvió en los dos ciclos siguientes "
-                     "(definición de IAC-CINDA). Las tasas son sobre los ingresantes de cada cohorte.",
+                     "(definición habitual de los modelos de calidad). Las tasas son sobre los ingresantes de cada cohorte.",
                      cls=(TextPresets.muted_sm, "mt-1 max-w-3xl")), cls="mt-3"),
         usuario=auth, seccion="docencia")
 

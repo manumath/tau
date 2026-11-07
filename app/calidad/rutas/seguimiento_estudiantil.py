@@ -1,12 +1,12 @@
 """Anexo de seguimiento estudiantil (PLAN §49 y §50): documento imprimible con cifras agregadas y su XLSX. Lo ven quienes ven el
-seguimiento estudiantil (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité de acreditación)."""
+seguimiento estudiantil (Dirección de Carrera, Coordinación académica, Gestión de datos y Comisión de calidad)."""
 from datetime import date
 from urllib.parse import urlencode
 
 from fasthtml.common import H1, H2, APIRouter, Div, P, Response, Table, Tbody, Td, Th, Thead, Tr
 
-from app.acreditacion import seguimiento_estudiantil as seg
-from app.acreditacion.rutas.informes import ESTILO_IMPRESION, XLSX, _archivo, _cifra, _selector_anio, barra, descarga, hoja
+from app.calidad import seguimiento_estudiantil as seg
+from app.calidad.rutas.informes import ESTILO_IMPRESION, XLSX, _archivo, _cifra, _selector_anio, barra, descarga, hoja
 from app.comun import exportar, permisos, vinculos
 from app.comun.componentes.layout import pagina
 from app.estudiantil import actividad, encuestas
@@ -48,7 +48,7 @@ def documento(i):
     return hoja(
         H1(f"Seguimiento estudiantil {i['desde']}–{i['hasta']}"),
         P("Cifras agregadas de los estudiantes y egresados de la licenciatura, a partir de lo que registra el sistema. No incluye nombres, "
-          "notas ni materias. Las cohortes alimentan las hojas 3 a 6 de la Guía de Antecedentes de IAC-CINDA.", cls="apagado text-sm"),
+          "notas ni materias. Las cohortes alimentan los indicadores de progresión del sistema de calidad.", cls="apagado text-sm"),
         Div(_cifra(tot["total"], f"estudiantes con cohorte {i['desde']}–{i['hasta']}"), _cifra(tot["estados"]["cursando"], "cursando"),
             _cifra(tot["estados"]["titulado"], "titulados"), _cifra(tot["desertores"], "desertores"),
             cls="grid grid-cols-2 sm:grid-cols-4 gap-3 my-6"),

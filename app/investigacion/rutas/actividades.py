@@ -166,8 +166,8 @@ def campos_del_tipo(d):
                         d.get("financiamiento") or ""),
                 campo("Ingresos para la unidad", "ingresos", inputmode="numeric", placeholder="En la misma moneda"),
                 cls="grid grid-cols-1 sm:grid-cols-4 gap-4"),
-            P("Los ingresos son lo que el servicio dejó a la Carrera o el Instituto. La Guía de Antecedentes los pide "
-              "en dólares: se convierten con el tipo de cambio que se indica al generarla.", cls=TextPresets.muted_sm),
+            P("Los ingresos son lo que el servicio dejó a la Carrera o el Instituto, en la misma moneda del monto.",
+              cls=TextPresets.muted_sm),
             cls="space-y-2")
     return Div(fechas, lugar, extra, pista_rol, id=ID_CAMPOS, cls="space-y-4")
 

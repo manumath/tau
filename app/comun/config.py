@@ -21,8 +21,8 @@ ZONA_HORARIA = os.environ.get("PORTAL_ZONA_HORARIA", "America/La_Paz")
 MONEDA = os.environ.get("PORTAL_MONEDA", "BOB")
 # País del instituto: una revista de este país es «nacional» en los informes.
 PAIS = os.environ.get("PORTAL_PAIS", "Bolivia")
-# Durante el piloto, los artículos en revistas aún no verificadas cuentan con lo declarado. Para la
-# acreditación, con «1» solo cuentan los de revistas verificadas (los demás quedan «por confirmar»).
+# Durante el piloto, los artículos en revistas aún no verificadas cuentan con lo declarado. Para los
+# informes de calidad, con «1» solo cuentan los de revistas verificadas (los demás quedan «por confirmar»).
 EXIGIR_REVISTA_VERIFICADA = os.environ.get("PORTAL_EXIGIR_REVISTA_VERIFICADA", "0") == "1"
 SIMBOLOS_MONEDA = {"BOB": "Bs", "USD": "US$", "EUR": "€"}
 
@@ -66,7 +66,7 @@ SMTP_STARTTLS = os.environ.get("PORTAL_SMTP_STARTTLS", "1") == "1"
 
 # Modo solo lectura (mudanzas y mantenimiento): se puede consultar, pero ningún cambio se guarda.
 SOLO_LECTURA = os.environ.get("PORTAL_SOLO_LECTURA", "0") == "1"
-# Informes que se envían solos a las direcciones (app.acreditacion.programados). Las pruebas los apagan.
+# Informes que se envían solos a las direcciones (app.calidad.programados). Las pruebas los apagan.
 INFORMES_PROGRAMADOS = os.environ.get("PORTAL_INFORMES_PROGRAMADOS", "1") == "1"
 # Registros (app/comun/registros.py): «archivo» (consola y data/registros/portal.log) o «consola».
 REGISTROS = os.environ.get("PORTAL_REGISTROS", "archivo")

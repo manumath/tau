@@ -161,7 +161,7 @@ def ubicar_producto(p: dict, desde: str, hasta: str) -> str:
 
 
 def otros_resultados(desde: str, hasta: str, tipos=("Patente", "Traducción")) -> list[dict]:
-    """Otros resultados de I+D+i (IAC-CINDA 3.6.3 d, e) de autores vinculados en la fecha."""
+    """Otros resultados de I+D+i de autores vinculados en la fecha."""
     marcas = ",".join("?" * len(tipos))
     res = []
     for x in productos.obtener_varios(f["id"] for f in get_db().q(

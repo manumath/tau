@@ -117,8 +117,9 @@ def _enlace_menu(item):
 
 
 def _clave_grupo(titulo: str) -> str:
-    """'Acreditación' → 'acreditacion' (la usan estilos/entrada.css y static/js/disposicion-inicial.js)."""
-    return unicodedata.normalize("NFKD", titulo).encode("ascii", "ignore").decode().lower()
+    """'Aseguramiento de la Calidad' → 'aseguramiento-de-la-calidad' (la usan estilos/entrada.css y
+    static/js/disposicion-inicial.js; sin espacios, porque data-grupos es una lista separada por espacios)."""
+    return unicodedata.normalize("NFKD", titulo).encode("ascii", "ignore").decode().lower().replace(" ", "-")
 
 
 def _grupo_menu(titulo, items):

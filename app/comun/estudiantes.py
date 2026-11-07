@@ -1,5 +1,5 @@
 """Estudiantes en la investigación: periodos de estudio de personas externas y su participación
-en tesis, publicaciones, proyectos y actividades (IAC-CINDA 2.3.2, 2.3.4 y 3.6.1 d).
+en tesis, publicaciones, proyectos y actividades.
 
 - Una persona era **estudiante** un año si ese año cae entre su ingreso y su egreso (o sigue
   cursando). Es **graduada** un año si egresó titulada antes de ese año.

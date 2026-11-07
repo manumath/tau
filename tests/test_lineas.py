@@ -142,7 +142,7 @@ def test_administracion(client, gente):
 
 
 def test_productos_y_actividades_heredan_la_linea_del_proyecto(client, app):
-    from app.acreditacion import informes
+    from app.calidad import informes
     from app.investigacion import productos
     from app.comun import vinculos
     from tests.conftest import PASS_TEMP, login

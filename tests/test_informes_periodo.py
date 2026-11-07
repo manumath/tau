@@ -7,7 +7,7 @@ import pytest
 from openpyxl import load_workbook
 
 from app.investigacion import actividades, bibtex, importacion
-from app.acreditacion import informes
+from app.calidad import informes
 from app.investigacion import institucionales as inst
 from app.investigacion import perfiles, productos, proyectos
 from app.comun import usuarios

@@ -1,10 +1,10 @@
-"""Anexo de I+D+i para la acreditación (IAC-CINDA)."""
+"""Informe de I+D+i del sistema de calidad (antes «anexo de I+D+i para la acreditación»)."""
 import io
 
 import pytest
 from openpyxl import load_workbook
 
-from app.acreditacion import anexo as acreditacion
+from app.calidad import anexo as acreditacion
 from app.investigacion import actividades, productos, proyectos, revistas
 from app.comun import personas, usuarios, vinculos
 from app.comun.db import get_db
@@ -92,22 +92,27 @@ def test_cuerpo_academico(datos):
 
 def test_rutas(client, datos):
     login(client, "inv@test.cl", PASS_TEMP)
-    assert client.get("/informes/acreditacion").status_code == 403
+    assert client.get("/informes/investigacion").status_code == 403
     client.post("/logout")
     login(client, "admin@test.cl", PASS_ADMIN)
-    assert "Anexo de I+D+i para la acreditación" in client.get("/informes").text
-    r = client.get("/informes/acreditacion?desde=2022&hasta=2026")
-    for texto in ("Resumen por año", "3.6.3 a", "Publicaciones en revistas indexadas", "Congreso con charla",
+    assert "Informe de I+D+i" in client.get("/informes").text
+    r = client.get("/informes/investigacion?desde=2022&hasta=2026")
+    assert "CINDA" not in r.text and "3.6.3" not in r.text   # sin agencia ni códigos de sus criterios (PLAN §57)
+    for texto in ("Resumen por año", 'id="publicaciones"', "Publicaciones en revistas indexadas", "Congreso con charla",
                   "Jornada completa equivalente", "Aún no registrado en el sistema", "Datos y método", "por confirmar"):
         assert texto in r.text, texto
-    r = client.get("/informes/acreditacion/xlsx?desde=2022&hasta=2026")
-    assert r.headers["content-disposition"] == 'attachment; filename="anexo-idi-2022-2026.xlsx"'
+    r = client.get("/informes/investigacion/xlsx?desde=2022&hasta=2026")
+    assert r.headers["content-disposition"] == 'attachment; filename="informe-idi-2022-2026.xlsx"'
     libro = load_workbook(io.BytesIO(r.content))
-    assert "3.6.3 a Publicaciones" in libro.sheetnames and "Método" in libro.sheetnames
+    assert "Publicaciones" in libro.sheetnames and "Método" in libro.sheetnames
     resumen = libro["Resumen por año"]
     assert [c.value for c in resumen[1]] == ["Indicador", "2022", "2023", "2024", "2025", "2026"]
+    # Las direcciones anteriores redirigen con sus parámetros (marcadores y correos ya enviados).
+    r = client.get("/informes/acreditacion/xlsx?desde=2022&hasta=2026", follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == "/informes/investigacion/xlsx?desde=2022&hasta=2026"
+    assert client.get("/informes/acreditacion", follow_redirects=False).headers["location"] == "/informes/investigacion"
     # Una ventana de más de 10 años se acota.
-    assert "Anexo de I+D+i para la acreditación, 2016–2026" in client.get("/informes/acreditacion?desde=1990&hasta=2026").text
+    assert "Informe de I+D+i, 2016–2026" in client.get("/informes/investigacion?desde=1990&hasta=2026").text
 
 
 def test_producto_del_anio_en_curso_sin_mes_cuenta(datos):
@@ -141,19 +146,19 @@ def test_trazabilidad_cada_cifra_coincide_con_sus_registros(datos):
 
 def test_rutas_de_tendencias_y_detalle(client, datos):
     login(client, "inv@test.cl", PASS_TEMP)
-    assert client.get("/informes/acreditacion/detalle?indicador=indexados&anio=2024").status_code == 403
+    assert client.get("/informes/investigacion/detalle?indicador=indexados&anio=2024").status_code == 403
     client.post("/logout")
     login(client, "admin@test.cl", PASS_ADMIN)
-    r = client.get("/informes/acreditacion?desde=2022&hasta=2026")
+    r = client.get("/informes/investigacion?desde=2022&hasta=2026")
     assert "Tendencias" in r.text and "<svg" in r.text
-    enlace = "/informes/acreditacion/detalle?indicador=indexados&amp;anio=2024&amp;desde=2022&amp;hasta=2026"
+    enlace = "/informes/investigacion/detalle?indicador=indexados&amp;anio=2024&amp;desde=2022&amp;hasta=2026"
     assert enlace in r.text  # la cifra del resumen y la barra del gráfico
-    r = client.get("/informes/acreditacion/detalle?indicador=presentaciones&anio=2024&desde=2022&hasta=2026")
+    r = client.get("/informes/investigacion/detalle?indicador=presentaciones&anio=2024&desde=2022&hasta=2026")
     assert r.status_code == 200 and "Congreso con charla" in r.text and "Congreso de oyente" not in r.text
-    assert "/informes/acreditacion?desde=2022&amp;hasta=2026&amp;revistas=verificadas" in r.text  # volver
-    r = client.get("/informes/acreditacion/detalle?indicador=proyectos&anio=2024&desde=2022&hasta=2026")
+    assert "/informes/investigacion?desde=2022&amp;hasta=2026&amp;revistas=verificadas" in r.text  # volver
+    r = client.get("/informes/investigacion/detalle?indicador=proyectos&anio=2024&desde=2022&hasta=2026")
     assert "Proyecto IDH" in r.text
-    r = client.get("/informes/acreditacion/detalle?indicador=investigadores&anio=2024&categoria=Titular")
+    r = client.get("/informes/investigacion/detalle?indicador=investigadores&anio=2024&categoria=Titular")
     assert "Noether" in r.text or "Emmy" in r.text
-    assert client.get("/informes/acreditacion/detalle?indicador=nada&anio=2024").status_code == 404
-    assert client.get("/informes/acreditacion/detalle?indicador=citas&anio=1990").status_code == 404
+    assert client.get("/informes/investigacion/detalle?indicador=nada&anio=2024").status_code == 404
+    assert client.get("/informes/investigacion/detalle?indicador=citas&anio=1990").status_code == 404

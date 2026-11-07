@@ -102,7 +102,7 @@ def get(auth, q: str = "", sin_pais: bool = True, todos: bool = False):
         "Coautores externos",
         Div(Div(H2("Coautores y participantes externos"),
                 P("Personas sin cuenta en el sistema (coautores, participantes de actividades y proyectos). Su país sirve "
-                  "para medir la colaboración internacional (IAC-CINDA 3.5.2). Al importar desde OpenAlex el país se "
+                  "para medir la colaboración internacional. Al importar desde OpenAlex el país se "
                   "completa solo; aquí se completan los que falten.", cls=(TextPresets.muted_sm, "max-w-3xl"))),
             Div(Button(UkIcon("wand-sparkles", height=16, width=16), "Completar países automáticamente",
                        cls=ButtonT.default, hx_post="/personas/externos/completar",

@@ -4,7 +4,7 @@
   Solo Administración del sistema asigna roles, a pedido de las direcciones. Un rol que termina no
   se borra: se le pone fecha de término.
 - `puede(usuario, accion, unidad)`: ¿alguno de sus roles vigentes permite la acción en esa unidad?
-  Los roles de toda la universidad (Administración del sistema, Comité de acreditación) cubren
+  Los roles de toda la universidad (Administración del sistema, Comisión de calidad) cubren
   todas las unidades; los demás, solo la suya. Aunque el IIMAT está dentro de la CMAT en la
   jerarquía, la Dirección de Carrera no decide sobre el Instituto ni al revés.
 - Los roles derivados (investigador, docente, responsable de un proyecto) no se asignan: se
@@ -24,19 +24,19 @@ ROLES = {
     "direccion_instituto": ("Dirección del Instituto", ("IIMAT",)),
     "direccion_carrera": ("Dirección de Carrera", ("CMAT",)),
     "coordinacion_academica": ("Coordinación académica", ("CMAT",)),
-    "comite_acreditacion": ("Comité de acreditación", ("UMSA",)),
+    "comision_calidad": ("Comisión de calidad", ("UMSA",)),
     "gestion_datos": ("Gestión de datos", ("IIMAT", "CMAT")),
 }
 # Roles que cubren todas las unidades (se asignan en la UMSA); el resto vale solo en su unidad.
-ROLES_DE_TODA_LA_UNIVERSIDAD = ("administracion_sistema", "comite_acreditacion")
+ROLES_DE_TODA_LA_UNIVERSIDAD = ("administracion_sistema", "comision_calidad")
 DESCRIPCIONES = {
     "administracion_sistema": "Cuentas y roles, auditoría y configuración. No decide sobre contenido académico.",
     "direccion_instituto": "Propuestas y convocatoria, catálogos de revistas y líneas, coautores externos, "
-                           "memoria y anexo de I+D+i. No define vínculos.",
+                           "memoria e informe de I+D+i. No define vínculos.",
     "direccion_carrera": "Categoría, vínculo y carga horaria de cada persona; plan de estudios, oferta y asignación "
                          "docente; informes de la Carrera.",
     "coordinacion_academica": "Prepara asignaciones y revisa programas, sin aprobarlos.",
-    "comite_acreditacion": "Ve todos los informes, anexos y exportaciones; no modifica nada.",
+    "comision_calidad": "Ve todos los informes y exportaciones del sistema de calidad; no modifica nada.",
     "gestion_datos": "Fichas académicas (grados, fecha de nacimiento), estudiantes y coautores externos de su unidad.",
 }
 
@@ -59,7 +59,7 @@ ACCIONES = {
     "gestionar_egresados": {"direccion_carrera", "coordinacion_academica"},   # titulación y seguimiento de egresados
     "gestionar_encuestas": {"direccion_carrera", "coordinacion_academica"},   # armar, abrir, enviar y cerrar
     "verificar_actividad": {"direccion_carrera", "coordinacion_academica"},   # actividad estudiantil declarada
-    "ver_seguimiento_estudiantil": {"direccion_carrera", "coordinacion_academica", "gestion_datos", "comite_acreditacion"},
+    "ver_seguimiento_estudiantil": {"direccion_carrera", "coordinacion_academica", "gestion_datos", "comision_calidad"},
     "gestionar_personas_externas": {"direccion_instituto", "gestion_datos"},
     "gestionar_fichas": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
     # Investigación (Instituto)
@@ -71,16 +71,16 @@ ACCIONES = {
     # Docencia (Carrera)
     "revisar_planes": {"direccion_carrera", "coordinacion_academica"},
     "gestionar_oferta": {"direccion_carrera", "coordinacion_academica"},
-    "ver_carga": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comite_acreditacion"},
+    "ver_carga": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
     # Lectura
-    "ver_todos_los_proyectos": {"direccion_instituto", "comite_acreditacion"},
-    "ver_propuestas": {"direccion_instituto", "comite_acreditacion"},
-    "ver_evidencias": {"direccion_instituto", "comite_acreditacion"},
-    "ver_cv_ajeno": {"direccion_instituto", "direccion_carrera", "comite_acreditacion"},
-    "ver_informes_institucionales": {"direccion_instituto", "direccion_carrera", "comite_acreditacion"},
-    "ver_calidad_datos": {"direccion_instituto", "direccion_carrera", "coordinacion_academica", "comite_acreditacion",
+    "ver_todos_los_proyectos": {"direccion_instituto", "comision_calidad"},
+    "ver_propuestas": {"direccion_instituto", "comision_calidad"},
+    "ver_evidencias": {"direccion_instituto", "comision_calidad"},
+    "ver_cv_ajeno": {"direccion_instituto", "direccion_carrera", "comision_calidad"},
+    "ver_informes_institucionales": {"direccion_instituto", "direccion_carrera", "comision_calidad"},
+    "ver_calidad_datos": {"direccion_instituto", "direccion_carrera", "coordinacion_academica", "comision_calidad",
                           "administracion_sistema"},
-    # «Avisar a los responsables» desde Calidad de datos (el Comité solo mira; Administración no decide contenido).
+    # «Avisar a los responsables» desde Calidad de datos (la Comisión de calidad solo mira; Administración no decide contenido).
     "avisar_calidad": {"direccion_instituto", "direccion_carrera", "coordinacion_academica"},
 }
 

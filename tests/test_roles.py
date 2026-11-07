@@ -39,9 +39,9 @@ def test_matriz_de_permisos(gente):
         ("direccion_instituto", "IIMAT", "decidir_propuestas", "IIMAT", True),
         ("direccion_instituto", "IIMAT", "gestionar_vinculos", "CMAT", False),
         ("direccion_instituto", "IIMAT", "asignar_roles", None, False),
-        ("comite_acreditacion", "UMSA", "ver_informes_institucionales", "CMAT", True),
-        ("comite_acreditacion", "UMSA", "ver_informes_institucionales", "IIMAT", True),
-        ("comite_acreditacion", "UMSA", "gestionar_vinculos", "IIMAT", False),  # solo mira
+        ("comision_calidad", "UMSA", "ver_informes_institucionales", "CMAT", True),
+        ("comision_calidad", "UMSA", "ver_informes_institucionales", "IIMAT", True),
+        ("comision_calidad", "UMSA", "gestionar_vinculos", "IIMAT", False),  # solo mira
         ("gestion_datos", "CMAT", "gestionar_estudiantes", "CMAT", True),
         ("gestion_datos", "CMAT", "gestionar_estudiantes", "IIMAT", False),
         ("administracion_sistema", "UMSA", "asignar_roles", None, True),
@@ -70,7 +70,7 @@ def test_asignar_valida(gente):
     assert [r["rol"] for r in permisos.roles_vigentes(emmy)] == ["direccion_carrera"]
     assert permisos.roles_vigentes(emmy, "2024-06-01")[0]["hasta"] == "2024-12-31"
     manana = (date.today() + timedelta(days=1)).isoformat()
-    assert permisos.asignar(emmy, "comite_acreditacion", u["UMSA"], manana) == []
+    assert permisos.asignar(emmy, "comision_calidad", u["UMSA"], manana) == []
     assert not permisos.puede({"id": emmy}, "ver_todos_los_proyectos")
 
 
@@ -129,3 +129,24 @@ def test_solo_administracion_del_sistema_asigna_roles(client, gente):
     assert client.get(f"/admin/usuarios/{gente['emmy']}/roles").status_code == 403
     assert client.post(f"/admin/usuarios/{admin}/roles", headers=HX,
                        data={"rol_unidad": f"administracion_sistema:{unidades.id_de('UMSA')}"}).status_code == 403
+
+
+
+def test_migracion_renombra_el_comite_a_comision_de_calidad(app):
+    """0049 (PLAN §57, etapa 1): las asignaciones de comite_acreditacion pasan a comision_calidad, sin perder ninguna."""
+    import apsw
+
+    from app.comun import config
+    sql = (config.MIGRACIONES / "0049-comision-de-calidad.sql").read_text()
+    db = get_db()
+    # La tabla como estaba antes de 0049 (el mismo esquema con el CHECK anterior), con una asignación del comité.
+    anterior = sql[sql.index("CREATE TABLE"):sql.index(");") + 2].replace("'comision_calidad'", "'comite_acreditacion'")
+    db.conn.execute("DROP TABLE rol_asignado; " + anterior.replace("rol_asignado_nueva", "rol_asignado"))
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    db.execute("INSERT INTO rol_asignado (usuario_id, rol, unidad_id, desde, hasta) VALUES (?, 'comite_acreditacion', ?, "
+               "'2025-01-01', '2025-12-31')", [emmy, unidades.id_de("UMSA")])
+    db.conn.execute(sql)
+    assert [(r["rol"], r["hasta"]) for r in db.q("SELECT rol, hasta FROM rol_asignado")] == [("comision_calidad", "2025-12-31")]
+    with pytest.raises(apsw.ConstraintError):
+        db.execute("INSERT INTO rol_asignado (usuario_id, rol, unidad_id, desde) VALUES (?, 'comite_acreditacion', ?, "
+                   "'2026-01-01')", [emmy, unidades.id_de("UMSA")])

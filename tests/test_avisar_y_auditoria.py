@@ -4,7 +4,7 @@ import io
 
 from starlette.testclient import TestClient
 
-from app.acreditacion import calidad
+from app.calidad import calidad_datos as calidad
 from app.comun import permisos, unidades, usuarios, vinculos
 from app.comun.db import auditar, get_db
 from tests.conftest import HX, PASS_TEMP, login
@@ -45,9 +45,9 @@ def test_quien_puede_avisar(app, hoy):  # noqa: F811
     vinculos.agregar(emmy, "titular", None)
     usuarios.crear("comite@test.cl", "Carla", "Comité", PASS_TEMP, es_investigador=False)
     usuarios.crear("carrera@test.cl", "Dora", "Directora", PASS_TEMP, es_investigador=False)
-    comite = _cliente(app, "comite@test.cl", "comite_acreditacion", "UMSA")
+    comite = _cliente(app, "comite@test.cl", "comision_calidad", "UMSA")
     carrera = _cliente(app, "carrera@test.cl", "direccion_carrera")
-    assert "Avisar a 1 persona" not in comite.get("/informes/calidad").text          # el Comité solo mira
+    assert "Avisar a 1 persona" not in comite.get("/informes/calidad").text          # la Comisión solo mira
     assert comite.post("/informes/calidad/sin_grado/avisar", headers=HX).status_code == 403
     assert "Avisar a 1 persona" in carrera.get("/informes/calidad").text
     assert carrera.post("/informes/calidad/oferta/avisar", headers=HX).status_code == 404   # la corrige la Carrera

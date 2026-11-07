@@ -227,7 +227,7 @@ def test_registrar_titulacion_desde_la_pantalla(direccion):
 
 def test_el_comite_ve_indicadores_pero_no_la_lista_ni_gestiona(app, grupo):
     c = usuarios.crear("comite@test.cl", "Comité", "Prueba", "Clave-roles-1", debe_cambiar_pass=False, es_investigador=False)
-    permisos.asignar(c["id"], "comite_acreditacion", unidades.id_de("UMSA"))
+    permisos.asignar(c["id"], "comision_calidad", unidades.id_de("UMSA"))
     cl = TestClient(app)
     login(cl, "comite@test.cl", "Clave-roles-1")
     r = cl.get("/docencia/egresados")

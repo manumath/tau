@@ -8,7 +8,7 @@ from app.comun.db import get_db
 from app.investigacion import perfiles
 from tests.conftest import HX
 from tests.test_vinculos import _producto, emmy, hoy  # noqa: F401
-from app.acreditacion import informes
+from app.calidad import informes
 
 
 def test_jerarquia(app):

@@ -101,15 +101,15 @@ def test_decidir_propuesta(page):
     assert page.url.endswith(url.rsplit("/", 1)[1])
 
 
-def test_anexo_de_acreditacion(page, tmp_path):
+def test_informe_de_idi(page, tmp_path):
     entrar(page, "admin")
-    page.goto("/informes/acreditacion")
-    expect(page.locator("main h1, main h2").first).to_contain_text("Anexo")
+    page.goto("/informes/investigacion")
+    expect(page.locator("main h1, main h2").first).to_contain_text("Informe de I+D+i")
     with page.expect_download() as descarga:
         page.locator("main").get_by_role("link", name="XLSX").click()
     archivo = tmp_path / descarga.value.suggested_filename
     descarga.value.save_as(archivo)
-    assert archivo.name.startswith("anexo-idi-") and archivo.suffix == ".xlsx"
+    assert archivo.name.startswith("informe-idi-") and archivo.suffix == ".xlsx"
     hojas = openpyxl.load_workbook(archivo).sheetnames
     assert len(hojas) > 3, hojas
 

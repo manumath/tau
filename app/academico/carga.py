@@ -6,7 +6,7 @@
 - En cada semestre (I o II) rige el periodo de vínculo vigente al inicio del semestre. La docencia
   prevista se compara con la asignada en la oferta: 32 h/mes por materia como titular (grado o
   maestría). No suman los auxiliares ni los cursos de verano e invierno.
-- Jornada completa equivalente (anexo de acreditación) = carga contratada / 160.
+- Jornada completa equivalente (informes de calidad) = carga contratada / 160.
 """
 from datetime import date, timedelta
 

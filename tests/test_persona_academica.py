@@ -98,7 +98,7 @@ def test_docente_de_la_carrera_sin_perfil_de_investigacion(admin):
 
 def test_ficha_academica_segun_el_rol(client, emmy):
     ids = {}
-    for clave, rol, sigla in (("datos", "gestion_datos", "CMAT"), ("comite", "comite_acreditacion", "UMSA"),
+    for clave, rol, sigla in (("datos", "gestion_datos", "CMAT"), ("comite", "comision_calidad", "UMSA"),
                               ("sistema", "administracion_sistema", "UMSA")):
         ids[clave] = usuarios.crear(f"{clave}@test.cl", clave, "Prueba", "Clave-ficha-1", debe_cambiar_pass=False,
                                     es_investigador=False)["id"]

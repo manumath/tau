@@ -7,7 +7,7 @@ import httpx2
 import pytest
 from openpyxl import load_workbook
 
-from app.acreditacion import calidad, informes
+from app.calidad import calidad_datos as calidad, informes
 from app.investigacion import importacion, msc, perfiles, productos
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_ADMIN, login

@@ -22,9 +22,9 @@ CONSENTIMIENTO = ("TAU registra su trayectoria en la Carrera (cohorte, estado y 
                   "declare aquí (ayudantías, olimpiadas, pasantías, becas, movilidad, semilleros y otras), con la "
                   "evidencia que adjunte. No registra sus materias ni sus notas: esas están en el sistema de "
                   "Seguimiento Académico. Los datos se usan para el seguimiento interno de la Carrera y, de forma "
-                  "agregada (sin su nombre), como evidencia en los procesos de acreditación. Usted puede ver, "
+                  "agregada (sin su nombre), como evidencia en los procesos de evaluación y acreditación de la Carrera. Usted puede ver, "
                   "corregir y eliminar su actividad cuando quiera. La Dirección de Carrera, la Coordinación académica "
-                  "y Gestión de datos pueden ver sus datos individuales; el Comité de acreditación solo ve cifras "
+                  "y Gestión de datos pueden ver sus datos individuales; la Comisión de calidad solo ve cifras "
                   "agregadas.")
 
 

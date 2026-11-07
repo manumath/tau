@@ -66,7 +66,7 @@ def test_membrete_y_exportaciones(app, monkeypatch):
     from fasthtml.common import H1, to_xml
     from openpyxl import load_workbook
 
-    from app.acreditacion.rutas import informes
+    from app.calidad.rutas import informes
     from app.comun import exportar
     monkeypatch.setattr(config, "DIRECCION", "Av. Ejemplo 123, La Paz")
     docencia, investigacion = to_xml(informes.hoja(H1("Carga"))), to_xml(informes.hoja(H1("Memoria"), instituto=True))

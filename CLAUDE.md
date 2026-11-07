@@ -2,8 +2,8 @@
 
 **TAU | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática**
 (CMAT) y su Instituto de Investigación Matemática (IIMAT), FCPN, UMSA, La Paz, Bolivia. Reúne la
-actividad científica, la gestión académica (planes, oferta, docencia, carga horaria) y la evidencia
-para la acreditación ante IAC-CINDA. Nació como «Portal de Investigación» del IIMAT: los nombres
+actividad científica, la gestión académica (planes, oferta, docencia, carga horaria) y el Sistema Interno
+de Aseguramiento de la Calidad (SIAC) de la Carrera. Nació como «Portal de Investigación» del IIMAT: los nombres
 técnicos (`PORTAL_*`, `portal.db`, servicio `portal`, app de Fly.io) conservan «portal» a propósito.
 
 Léase con: [README.md](README.md) (estructura, configuración, convenciones HTMX y seguridad),
@@ -44,15 +44,15 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - `app/investigacion`: perfiles, productos, actividades, proyectos, propuestas institucionales,
   líneas, revistas, importaciones (DOI, arXiv, BibTeX, OpenAlex).
 - `app/academico`: planes de estudio, gestiones, oferta y asignación docente, carga horaria.
-- `app/acreditacion`: CV, memoria, anexo de I+D+i, estudiantes.
+- `app/calidad`: Aseguramiento de la Calidad (PLAN §57): memoria, informe de I+D+i, cuerpo académico, calidad de
+  datos, seguimiento estudiantil. Sin nombres de agencias ni de sus instrumentos (decisión del 6-nov-2026).
 - `app/estudiantil`: seguimiento estudiantil (PLAN §49): cohortes, carga del CSV de Seguimiento Académico,
   actividad estudiantil y encuestas. Sin materias ni notas. `app/egresados`: titulación, seguimiento y
   indicadores de egresados (PLAN §50).
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
   `main.py`. El menú lateral se arma en `app/navegacion.py`: una pantalla nueva se agrega ahí, con el mismo
   permiso que su ruta. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
-  `datos/planes/` (planes de estudio en CSV), `datos/iac-cinda/` (plantilla vacía de la Guía de
-  Antecedentes), `static/` (vendor con versión fija), `estilos/`.
+  `datos/planes/` (planes de estudio en CSV), `static/` (vendor con versión fija), `estilos/`.
 
 ## Reglas de negocio que no se deducen del código a simple vista
 
@@ -60,7 +60,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   ella). **Solo la Dirección de Carrera** define categoría y vínculo (altas, cambios, término,
   carga horaria contratada). La Dirección del Instituto gestiona el ciclo de vida de los proyectos
   institucionales. Administración del sistema: cuentas, roles (a pedido de las direcciones) y
-  auditoría. El Comité de acreditación ve todo y no modifica.
+  auditoría. La Comisión de calidad ve todo y no modifica.
 - **Vínculo por periodos:** contratados, interinos e invitados con fecha de término obligatoria;
   titular permanente (se termina a mano con motivo: retiro, renuncia, despido, fallecimiento).
 - **Carga horaria:** unidades de 32 h/mes; carga contratada 32–160 h/mes por periodo de vínculo,
@@ -89,7 +89,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   muestran resultados con menos de 5 respuestas (`encuestas.MIN_ANONIMO`): cualquier vista o exportación nueva debe
   respetarlo. El enlace de `/encuesta/<enlace>` es público y personal; se borra al responder o cerrar.
 - **Tutoría (PLAN §49):** las notas de las reuniones son confidenciales: las ve el tutor autor y la Dirección de Carrera
-  (con auditoría); nunca van a informes, exportaciones ni a la pantalla del Comité. **Directorio de egresados (PLAN §50):** opcional y
+  (con auditoría); nunca van a informes, exportaciones ni a la pantalla de la Comisión de calidad. **Directorio de egresados (PLAN §50):** opcional y
   solo dentro del sistema; el correo de un estudiante y el de un egresado solo se comparten cuando el egresado acepta una solicitud.
 - **Egresados (PLAN §50):** egresado = estudiante con estado «titulado» y fecha de titulación (se deduce). El seguimiento
   (encuestas con `encuesta.hito`) invita solo al último hito cumplido; los indicadores se calculan por `pregunta.clave` y
@@ -108,8 +108,8 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - Contraseñas: solo las de ejemplo del seed o de prueba fijadas en copias temporales. Nunca pida
   ni use contraseñas del sistema operativo o cuentas reales.
 - Descargas e instalaciones (paquetes, binarios, plugins): pida permiso explícito antes.
-- No versione `data/`, `.herramientas/`, ni los PDF de IAC-CINDA (`/iac-cinda/`) ni las políticas de la UMSA (`/politicas/`, PLAN §57). La plantilla vacía de
-  la Guía de Antecedentes sí va versionada, en `datos/iac-cinda/`. Tampoco los logos originales
+- No versione `data/`, `.herramientas/`, ni los PDF de agencias (`/iac-cinda/`) ni las políticas de la UMSA (`/politicas/`, PLAN §57). Las
+  correspondencias con instrumentos de una agencia son privadas (PLAN §57). Tampoco los logos originales
   (`static/img/membrete/logo_*`, solo en local).
 - **El repositorio es público** (<https://github.com/manumath/tau>): nada de datos reales, bases, correos ni contraseñas
   reales en commits, pruebas, seed ni documentación. Los commits usan el correo `noreply` de GitHub del autor
@@ -118,7 +118,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   `uv run python scripts/tema_marca.py && scripts/estilos.sh`); errores y botones de quitar con `text-destructive`,
   nunca `text-red-*`; logos con `layout.isotipo()`/`layout.logotipo()` (versión blanca en oscuro). Los originales de la
   marca y sus fuentes comerciales (Gotham, Helvetica Neue, Garamond Pro) no se versionan: se usan Montserrat y EB Garamond.
-- Plantillas XLSX ajenas (la Guía de Antecedentes): nunca con openpyxl al guardar, que borra gráficos e
+- Plantillas XLSX ajenas (formularios de agencias): nunca con openpyxl al guardar, que borra gráficos e
   imágenes; use `app/comun/xlsx_plantilla.py`, que escribe solo las celdas pedidas.
 - Nunca edite una migración aplicada; nunca borre una prueba para que pase.
 - Seguridad: autorización en el servidor en cada ruta; CSRF por `Origin`; CSP propia y estricta

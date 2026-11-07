@@ -15,7 +15,7 @@
 
 /* Tipografía de la marca (PLAN.md §55), con equivalentes libres de las del manual (licencia OFL, en
    static/vendor/fonts): Montserrat por Gotham en los títulos de página y la marca; EB Garamond por Garamond Pro en
-   el cuerpo de los informes (app/acreditacion/rutas/informes.py). El resto de la interfaz, con la fuente del
+   el cuerpo de los informes (app/calidad/rutas/informes.py). El resto de la interfaz, con la fuente del
    sistema, que en tablas densas se lee mejor. */
 @layer base {
   @font-face { font-family: "Montserrat"; font-style: normal; font-weight: 400; font-display: swap;
@@ -69,7 +69,7 @@
   html[data-grupos~="investigacion"] [data-grupo="investigacion"]:not(.actual) > ul,
   html[data-grupos~="docencia"] [data-grupo="docencia"]:not(.actual) > ul,
   html[data-grupos~="estudiantes"] [data-grupo="estudiantes"]:not(.actual) > ul,
-  html[data-grupos~="acreditacion"] [data-grupo="acreditacion"]:not(.actual) > ul,
+  html[data-grupos~="aseguramiento-de-la-calidad"] [data-grupo="aseguramiento-de-la-calidad"]:not(.actual) > ul,
   html[data-grupos~="administracion"] [data-grupo="administracion"]:not(.actual) > ul { @apply hidden; }
   .grupo-plegable[aria-expanded="false"] .flecha-grupo { @apply -rotate-90; }
 

@@ -1,6 +1,6 @@
 """Cohortes de ingreso, egreso y titulación de la licenciatura (PLAN §49).
 
-Alimenta el tablero de cohortes y las hojas 3 a 6 de la Guía de Antecedentes de IAC-CINDA. Cuenta a
+Alimenta el tablero de cohortes y los indicadores de progresión del marco de calidad (PLAN §57). Cuenta a
 los estudiantes del programa propio con cohorte de ingreso (`estudiante.cohorte_anio`). Un
 estudiante estuvo matriculado desde su cohorte hasta su último ciclo matriculado (vacío = sigue
 cursando); los congelamientos intermedios no se registran.
@@ -63,7 +63,7 @@ def matriculado(e: dict, ciclo: int, actual: int) -> bool:
 
 
 def desertor(e: dict, actual: int) -> bool:
-    """Deserción según IAC-CINDA: abandonó el programa, o congeló sus estudios y no volvió en los dos ciclos siguientes."""
+    """Deserción (definición habitual de los modelos de calidad de la región): abandonó el programa, o congeló sus estudios y no volvió en los dos ciclos siguientes."""
     return e["estado"] == "retirado" or (e["estado"] == "congelado" and e["ultimo"] is not None
                                           and actual > e["ultimo"] + 2)
 

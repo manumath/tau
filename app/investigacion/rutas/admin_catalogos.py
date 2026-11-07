@@ -17,9 +17,9 @@ rt = APIRouter()
 BASE = "/admin/catalogos"
 AYUDA = {
     "actividades": "Se ofrecen al registrar una actividad. Un tipo nuevo cuenta en la memoria y el CV, pero no en "
-                   "las categorías del anexo de I+D+i ni de la Guía de Antecedentes.",
+                   "las categorías del informe de I+D+i.",
     "productos": "Se ofrecen al registrar un producto. Un tipo nuevo que pueda ser indexado o arbitrado cuenta en la "
-                 "memoria según su nivel de revisión; no entra en las categorías del anexo ni de la Guía.",
+                 "memoria según su nivel de revisión; no entra en las categorías del informe de I+D+i.",
     "indices": "Bases en que figuran las revistas. Si un índice cuenta como «indexado», un producto que figura en él "
                "es indexado; si cuenta como «arbitrado», sus revistas se consideran arbitradas.",
 }
@@ -31,7 +31,7 @@ def _boton(icono, etiqueta, **kw):
 
 
 def _insignias(cat, x):
-    res = [insignia("Del sistema", "gris", titulo="Lo reconocen el anexo, la Guía, el CV o las importaciones: "
+    res = [insignia("Del sistema", "gris", titulo="Lo reconocen el informe de I+D+i, el CV o las importaciones: "
                                                  "su nombre no cambia") if x["del_sistema"] else
            insignia("Agregado", "azul")]
     if not x["activo"]:
@@ -77,7 +77,7 @@ def get(auth):
         "Catálogos",
         Div(H2("Catálogos"),
             P("Tipos de actividad, tipos de producto e índices. Los del sistema se pueden reordenar y desactivar (los "
-              "reconocen por su nombre el anexo, la Guía de Antecedentes, el CV y las importaciones); los agregados "
+              "reconocen por su nombre el informe de I+D+i, el CV y las importaciones); los agregados "
               "aquí, además, renombrar y, si nadie los usó, eliminar.", cls=TextPresets.muted_sm),
             cls="mb-6"),
         Div(*[seccion(cat) for cat in CATALOGOS], cls="space-y-6"),
@@ -100,7 +100,7 @@ def form_catalogo(cat, d, errores=(), xid=None, del_sistema=False):
              Div(UkIcon("triangle-alert", height=14, width=14, cls="shrink-0 mt-0.5"),
                  Span("Cambiar si cuenta como indexado o arbitrado cambia la clasificación de lo ya registrado: los "
                       "artículos de revistas verificadas que figuran en este índice se reclasifican (y con ellos la "
-                      "memoria, el anexo y los CV); los de revistas sin verificar conservan lo que declararon sus "
+                      "memoria, el informe de I+D+i y los CV); los de revistas sin verificar conservan lo que declararon sus "
                       "autores. Queda en la auditoría."),
                  cls="flex gap-1.5 text-sm text-amber-700 dark:text-amber-400") if politica else "",
              Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),

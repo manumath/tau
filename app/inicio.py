@@ -8,7 +8,7 @@ from monsterui.all import H2, H3, Card, TextPresets, UkIcon
 
 from app.academico import carga, gestiones, preparacion
 from app.academico.componentes import tiene_docencia
-from app.acreditacion import anexo, calidad
+from app.calidad import anexo, calidad_datos as calidad
 from app.comun import estudiantes, permisos, vinculos
 from app.estudiantil import actividad as actividad_estudiantil, tutoria
 from app.comun.db import get_db
@@ -38,18 +38,18 @@ def _cifras_mias(auth):
         _cifra(f"{pct} %", "perfil completo", "/perfil")])
 
 
-def _cifras_acreditacion(auth):
+def _cifras_calidad(auth):
     """Quien ve los informes institucionales: el cuerpo académico del año."""
     if not permisos.puede(auth, "ver_informes_institucionales"):
         return None
     anio = date.today().year
     cuerpo = anexo.cuerpo_academico(anio, date.today().isoformat())
     vigentes = get_db().q("SELECT COUNT(*) n FROM proyecto WHERE estado = 'vigente'")[0]["n"]
-    return (f"Acreditación · {anio}", [
+    return (f"Aseguramiento de la Calidad · {anio}", [
         _cifra(cuerpo["total"], "académicos vinculados", "/informes/cuerpo-academico"),
         _cifra(cuerpo["jce"], "jornadas completas eq.", "/informes/cuerpo-academico"),
         _cifra(vigentes, "proyectos vigentes", "/informes/memoria"),
-        _cifra("Anexo", "de I+D+i", "/informes/acreditacion")])
+        _cifra("Informe", "de I+D+i", "/informes/investigacion")])
 
 
 # --- Para hoy ---------------------------------------------------------------------------------------
@@ -215,7 +215,7 @@ def _para_calidad(auth):
     r = calidad.resumen()
     item = _item(f"{_plural(r['registros'], 'registro')} por completar en {r['con_observaciones']} de "
                  f"{r['chequeos']} revisiones", "/informes/calidad",
-                 detalle="Antes de generar la memoria o el anexo.") if r["registros"] else None
+                 detalle="Antes de generar la memoria o el informe de I+D+i.") if r["registros"] else None
     return _grupo("list-checks", "Calidad de datos", [item])
 
 
@@ -237,7 +237,7 @@ def _bandeja(secciones):
 def get(auth):
     secciones = [x for x in (_para_mi(auth), _para_carrera(auth), _para_instituto(auth), _para_estudiantes(auth),
                              _para_fichas(auth), _para_calidad(auth)) if x]
-    cifras = [x for x in (_cifras_mias(auth), _cifras_acreditacion(auth)) if x]
+    cifras = [x for x in (_cifras_mias(auth), _cifras_calidad(auth)) if x]
     return pagina(
         "Inicio",
         Div(H2(f"Hola, {auth['nombres']}"), P("Lo que requiere su atención.", cls=TextPresets.muted_sm),

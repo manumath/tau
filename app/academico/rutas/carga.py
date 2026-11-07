@@ -1,6 +1,6 @@
 """Carga horaria por semestre: lo contratado y su distribución (del vínculo con la Carrera) frente a
 la docencia asignada en la oferta. La ven la Dirección de Carrera, la Coordinación académica, la
-Dirección del Instituto y el Comité (`ver_carga`). La carga se registra en Usuarios → Vínculo,
+Dirección del Instituto y la Comisión de calidad (`ver_carga`). La carga se registra en Usuarios → Vínculo,
 pestaña de la Carrera (`gestionar_vinculos` en la Carrera: la Dirección de Carrera)."""
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, Li, Option, P, Response, Select, Span, Ul

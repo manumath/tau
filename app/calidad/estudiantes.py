@@ -1,5 +1,5 @@
-"""Estudiantes en la investigación: tesis e indicadores de participación para el anexo de I+D+i
-(IAC-CINDA 2.3.2, 2.3.4 y 3.6.1 d). Los periodos de estudio de cada persona están en
+"""Estudiantes en la investigación: tesis e indicadores de participación para el informe de I+D+i.
+Los periodos de estudio de cada persona están en
 app.comun.estudiantes."""
 from app.comun import vinculos
 from app.comun.db import get_db

@@ -4,7 +4,7 @@ investigación. Sirven a la Carrera y al Instituto por igual.
 - La persona es la fila de `usuario`; la cuenta de acceso es opcional: una persona **sin acceso**
   (p. ej., un docente que no usa el portal) tiene `pass_hash = SIN_ACCESO`, que nunca coincide con
   ninguna contraseña. Se le habilita el acceso con «Restablecer contraseña» o una invitación.
-- Grados académicos: varios por persona, con título, institución, país y año (hoja 10 de la Guía).
+- Grados académicos: varios por persona, con título, institución, país y año (los piden los informes del cuerpo académico).
   El «grado» que se muestra en perfiles y directorios es el de mayor nivel.
 - Fecha de nacimiento (hoja 11): la registra y la ve Administración del sistema (permiso
   `ver_datos_personales`) y la propia persona, sin editarla. Los informes usan `tramo_edad`, nunca
