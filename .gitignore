@@ -8,6 +8,9 @@ data/
 # Documentos de la agencia acreditadora (de terceros; se consultan en local, no se versionan).
 /iac-cinda/
 
+# Políticas de la UMSA (PDF con derechos reservados; base del SIAC, PLAN §57; se consultan en local).
+/politicas/
+
 # Herramientas locales de desarrollo (p. ej., el compilador de Tailwind).
 .herramientas/
 

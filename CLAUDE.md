@@ -108,7 +108,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - Contraseñas: solo las de ejemplo del seed o de prueba fijadas en copias temporales. Nunca pida
   ni use contraseñas del sistema operativo o cuentas reales.
 - Descargas e instalaciones (paquetes, binarios, plugins): pida permiso explícito antes.
-- No versione `data/`, `.herramientas/`, ni los PDF de IAC-CINDA (`/iac-cinda/`). La plantilla vacía de
+- No versione `data/`, `.herramientas/`, ni los PDF de IAC-CINDA (`/iac-cinda/`) ni las políticas de la UMSA (`/politicas/`, PLAN §57). La plantilla vacía de
   la Guía de Antecedentes sí va versionada, en `datos/iac-cinda/`. Tampoco los logos originales
   (`static/img/membrete/logo_*`, solo en local).
 - **El repositorio es público** (<https://github.com/manumath/tau>): nada de datos reales, bases, correos ni contraseñas
