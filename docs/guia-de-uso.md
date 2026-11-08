@@ -1030,10 +1030,17 @@ proyecto y ser del mismo periodo).
   la exportación también queda en la auditoría.
 - **Artículos sin revista:** desde el catálogo, los artículos registrados sin revista del catálogo,
   agrupados por el nombre declarado, para vincularlos a una revista o crearla.
-- **Líneas de investigación** (menú, grupo Administración): el catálogo de líneas institucionales, con su
-  vigencia. Cuando una línea deja de regir, póngale **fecha de término** en lugar de eliminarla: ya
-  no se podrá elegir, pero los proyectos, propuestas y perfiles que la usaban la conservan. Solo se
-  elimina una línea que nadie ha usado. La ficha de cada línea muestra sus proyectos e investigadores.
+- **Líneas de investigación** (Dirección del Instituto; menú, grupo Administración): el catálogo de líneas
+  institucionales, agrupado por **áreas** (Álgebra, Geometría y Topología, Análisis, Matemática Aplicada, Educación
+  Matemática), con su vigencia.
+  - En **Áreas** se crean, renombran y ordenan las áreas; solo se elimina un área sin líneas.
+  - Cada línea pertenece a un área, que se elige al crearla o editarla; las flechas la ordenan dentro de su área.
+  - Cuando una línea deja de regir, póngale **fecha de término** en lugar de eliminarla: ya no se podrá elegir,
+    pero los proyectos, propuestas y perfiles que la usaban la conservan. Solo se elimina una línea que nadie ha usado.
+  - Las líneas anteriores al catálogo por áreas aparecen al final, en **Sin área**: asígneles un área o póngales
+    fecha de término.
+  - La ficha de cada línea muestra sus proyectos e investigadores. Allí puede **agregar** un proyecto vigente a la
+    línea o **quitarlo**.
 - **Catálogo de revistas** (menú, grupo Administración): las revistas donde publica el instituto y los
   índices en que figuran **cada año**, con la fuente consultada y un enlace de evidencia (datos y
   métodos transparentes). Una revista **verificada** define el nivel de revisión

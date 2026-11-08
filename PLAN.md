@@ -2635,3 +2635,137 @@ Académicos; reglamento de modalidades de graduación de la Carrera). Paquete `a
 - Observaciones del tribunal: una por párrafo.
 - El perfil se aprueba al registrar la resolución; el documento final termina con la defensa (aprueba con 51).
 - Mientras la revisión está abierta, cada miembro ve solo su informe y el resto ve cuántos llegaron.
+
+## 59. IA con criterio humano (propuesta, 8-nov-2026)
+
+Plan para aplicar la hoja de ruta «IA con criterio humano en TAU», que el usuario entregó el 8-nov-2026. El documento
+no se versiona. Su objetivo es incorporar funciones de IA generativa que ahorren trabajo, gobernadas, medidas y con
+supervisión humana, siguiendo la metodología CriterIA: gobernanza; datos y proveedores; pilotos y medición; personas y
+competencias. La hoja de ruta pide adaptarse a la arquitectura: abajo está cómo, y cada adaptación irá a
+`docs/ia/decisiones.md`.
+
+### Principios (cada uno con al menos una prueba)
+1. La IA sugiere y la persona decide: toda salida nace como `borrador_ia` y no surte efecto sin aprobación.
+2. Hay módulos vedados, con bloqueo verificado en el servidor:
+   - auxiliaturas (calificación y fases);
+   - asignación docente y carga horaria;
+   - tutoría;
+   - tribunales y resoluciones de grado;
+   - toda decisión sobre una persona identificada;
+   - evaluación del desempeño (hoy TAU no la tiene; queda vedada de antemano).
+3. Ningún dato sensible sale del servidor: fecha de nacimiento, tutoría, respuestas individuales anónimas y datos de
+   contacto.
+4. Todo texto de IA lleva una marca visible: «Borrador generado con IA» y luego «Elaborado con apoyo de IA; revisado por
+   [rol], [fecha]».
+5. Cada uso queda en la auditoría existente (`db.auditar`).
+6. Todo está apagado por omisión: cada función se activa por separado, con un responsable.
+7. Sin puntajes, rankings ni predicciones sobre personas.
+
+### Adaptaciones a TAU
+- **Paquete `app/ia`** (no `ia/`):
+  - `clasificacion.py`: niveles 0–3 por campo;
+  - `servicio.py`: `generar(funcion, contexto, auth) -> uso_id`;
+  - `funciones.py`: catálogo en código; la base solo guarda si cada función está activa y quién responde por ella;
+  - `instrucciones/<funcion>/v<n>.md`;
+  - `rutas/`: administración, página «Uso de IA en TAU» y panel de revisión.
+- **Variables de entorno con el prefijo de la casa:**
+  - `PORTAL_IA_LOCAL_URL` y `PORTAL_IA_LOCAL_MODELO`;
+  - `PORTAL_IA_EXT_URL`, `PORTAL_IA_EXT_MODELO` y `PORTAL_IA_EXT_CLAVE`;
+  - `PORTAL_IA_EXT_ZDR`.
+
+  Es el anexo A con `PORTAL_` en lugar de `TAU_` (convención de `config.py`). Nada del proveedor va a la base.
+- **Cliente HTTP:** `httpx2`, que ya es dependencia; no se instala nada.
+- **Pruebas:** usan un proveedor falso que registra la carga útil enviada, de modo que ninguna sale a la red; así
+  funcionan en GitHub Actions.
+- **Generación en segundo plano:** un modelo local en procesador puede tardar minutos. Por eso:
+  - la generación corre en un hilo, como el mantenimiento de `main.py`;
+  - `ia_uso.estado` pasa de `generando` a `borrador_ia`, o a `error`;
+  - la pantalla consulta el estado con HTMX y llega un aviso al terminar.
+- **Módulos vedados:** se aplican en dos capas.
+  - El servicio rechaza (y audita) toda función cuyo módulo esté en `VEDADOS`.
+  - Una prueba estática verifica que ningún archivo de los módulos vedados importe `app.ia`:
+    - `servicios/auxiliaturas`;
+    - `servicios/grado` (tribunal, resolución y nota);
+    - `academico/oferta` y `academico/carga`;
+    - `estudiantil/tutoria`.
+- **Clasificación de datos:** el contexto que recibe `generar` es una lista de campos con su origen (`tabla.columna`).
+  - Un campo sin nivel declarado se rechaza: así, una columna nueva no se cuela sin clasificar.
+  - La seudonimización reemplaza a las personas del contexto por `[PERSONA_n]` y restituye los nombres en la respuesta;
+    la correspondencia queda solo en memoria.
+- **Permisos:**
+  - `gestionar_ia` (Dirección de Carrera): redacta y aprueba la política, activa funciones y designa responsables.
+  - `ver_uso_ia` (direcciones y Comisión de calidad): registro de usos y resultados del piloto.
+- **Distancia de edición:** `1 − SequenceMatcher.ratio()` de `difflib`, sin dependencias.
+- **Ya existe y se reaprovecha:**
+  - la memoria y el informe de proyecto (`calidad/informes.py`);
+  - el campo `investigador.bio` del perfil público (para `cv_resumen`);
+  - la capacitación (`calidad/capacitacion.py`, con su indicador);
+  - el motor de encuestas (`MIN_ANONIMO = 5`; la síntesis exige 10);
+  - las evidencias y la autoevaluación (§57).
+- **Clasificación de productos (fase 2):** los productos no tienen línea de investigación; tienen códigos MSC
+  (`producto_msc`, migración 0039). Ver la pregunta 5.
+
+### Etapas (un commit cada una)
+| Etapa | Contenido | Migración |
+|---|---|---|
+| 0a | Modelo de datos (`ia_politica`, `ia_funcion`, `ia_uso`, `ia_salida`), niveles de datos, servicio con enrutamiento local/externo y ZDR, seudonimización, vedados, auditoría. Sin pantallas. Pruebas de los principios 1, 2, 3, 5 y 6 y del anexo A | 0060 |
+| 0b | Panel de revisión reutilizable (Aprobar · Aprobar con cambios · Rechazar, valoración 1–5, marca visible), administración de la política y las funciones, registro de usos, página «Uso de IA en TAU», `docs/ia/decisiones.md` | — |
+| 1a | `memoria_borrador`: secciones narrativas de la memoria (presentación, síntesis por línea, logros); la revisa la Dirección del Instituto. Las cifras y tablas salen de las consultas (prueba que lo compara). La memoria impresa lleva la marca | 0061 si hace falta guardar las secciones aprobadas |
+| 1b | `informe_proyecto_borrador` (solo el responsable del proyecto), vista del piloto (tiempo hasta la aprobación, edición y valoración por función y periodo) y decisión de cierre (ampliar · ajustar · retirar) registrada | — |
+| 2 | `producto_clasificar` (sugerencia que el investigador confirma), `cv_resumen` (llena `bio`; solo el propio investigador; nivel 2 seudonimizado o local) y reporte de sesgos por tipo de producto y por código o línea | — |
+| 3a | `encuesta_sintesis`: ≥ 10 respuestas; anónimas solo con modelo local y sin metadatos; sin citas de temas con < 10 respuestas | — |
+| 3b | `evidencia_sugerir` (cada sugerencia enlaza su registro; la Comisión acepta o descarta) y `autoevaluacion_borrador` (solo la narrativa; el juicio de cumplimiento sigue siendo humano). La página pública no usa texto sin aprobar | — |
+| 4 | Capacitación en IA y competencias digitales (un área más en `capacitacion`, visible en el CV y en el indicador), guía breve de uso crítico (ventana desde el panel de revisión) y encuesta de percepción por gestión (una plantilla más) | 0062 (CHECK de área) |
+| 5 | TAU para otras instituciones: solo cuando estén resueltas la titularidad y la licencia con la UMSA | — |
+
+Orden: 0a → 0b → 1a → 1b, y entonces la Dirección decide. Después siguen 2 y 3; la 4 puede ir en paralelo con la 2. Sin
+un modelo de prueba se puede llegar hasta la 0b con el proveedor falso. Para probar los borradores de verdad hace falta
+un modelo local (por ejemplo, Ollama con un modelo pequeño), cuya instalación pide permiso.
+
+### Decisiones pendientes
+De la hoja de ruta, a cargo de personas:
+1. El proveedor: local en un servidor de la UMSA o externo con retención cero. Mientras tanto, queda configurable.
+2. El texto de la política de uso, que aprueba la Dirección de Carrera. El agente puede proponer un borrador.
+3. Los responsables de cada función.
+4. La titularidad y la licencia, antes de la fase 5.
+
+Del agente, para confirmar:
+5. A qué apunta `producto_clasificar`: a los códigos MSC (que ya existen) o a una nueva relación producto–línea.
+6. Si la página «Uso de IA en TAU» es pública (sin ingresar) o solo para usuarios con cuenta.
+7. Si la memoria la aprueba la Dirección del Instituto y la Dirección de Carrera la gestiona (política y activación).
+
+### Respuestas del 8-nov-2026
+- **Pregunta 5:** las sugerencias de `producto_clasificar` apuntan a las **líneas oficiales** (§60). Hoy un producto
+  hereda la línea de sus proyectos aprobados (`lineas.de_registro`). Clasificarlo directamente exigirá, en la fase 2,
+  una relación producto–línea confirmada por el investigador. Cómo convive con la herencia se define al diseñar esa
+  fase.
+- **Pregunta 6:** la página «Uso de IA en TAU» es solo para usuarios con cuenta.
+- **Pregunta 7:** sí. La Dirección de Carrera aprueba la política y activa las funciones; la Dirección del Instituto
+  aprueba los borradores de la memoria.
+
+## 60. Áreas y catálogo oficial de líneas de investigación (8-nov-2026)
+
+El usuario entregó el catálogo oficial: 15 líneas en 5 áreas, con los proyectos vigentes de cada una. Pidió que la
+Dirección del Instituto pueda actualizar las líneas.
+
+- **La pantalla ya existía** (`/admin/lineas`, acción `gestionar_catalogos`, de la Dirección del Instituto). Se amplió
+  con:
+  - **Áreas** (`area_investigacion`): crear, renombrar, ordenar y eliminar si no tienen líneas.
+  - El **área obligatoria** de cada línea (`linea_investigacion.area_id`). El orden de las líneas es por área y,
+    dentro de ella, por la línea; todas las consultas de `lineas.py` lo usan (constante `ORDEN`).
+  - **Proyectos desde la ficha de la línea:** la Dirección del Instituto agrega un proyecto vigente a una línea
+    vigente, o lo quita (con auditoría).
+- **Migración 0060** (`areas-de-investigacion`): crea las 5 áreas y carga las 15 líneas oficiales.
+  - Las 3 que ya existían con el mismo nombre (sin distinguir mayúsculas) solo reciben su área y su orden, y
+    conservan su nombre: Estructuras Algebraicas Ordenadas, Optimización Matemática y Sistemas Dinámicos.
+  - Las 3 anteriores que no figuran en la lista oficial (Teoría de Control, Modelos Matemáticos y Computación, Áreas
+    Fundamentales Complementarias) quedan **vigentes y sin área**. La Dirección les pone fecha de término o un área:
+    la migración no lo decide.
+- **Proyectos de la tabla oficial:** no se cargan, porque los proyectos vigentes del usuario (Dinámicas de Control,
+  Tópicos de Topología y Grafos, etc.) se adscriben desde la ficha de cada línea, o desde el proyecto, cuando estén
+  registrados en TAU.
+
+### Por confirmar
+- El área es obligatoria al crear o editar una línea.
+- Las 3 líneas anteriores no se cierran solas.
+- La Dirección del Instituto puede adscribir y quitar proyectos (también institucionales) desde la ficha de la línea.

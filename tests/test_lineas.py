@@ -10,18 +10,43 @@ def _id(nombre):
     return get_db().q("SELECT id FROM linea_investigacion WHERE nombre = ?", [nombre])[0]["id"]
 
 
+def _area(nombre):
+    return get_db().q("SELECT id FROM area_investigacion WHERE nombre = ?", [nombre])[0]["id"]
+
+
 def test_catalogo_inicial(app):
-    assert [x["nombre"] for x in lineas.vigentes()] == [
-        "Sistemas Dinámicos", "Estructuras Algebraicas Ordenadas", "Teoría de Control",
-        "Modelos Matemáticos y Computación", "Optimización Matemática", "Áreas Fundamentales Complementarias"]
+    # Catálogo oficial por áreas (migración 0060); las líneas anteriores que coinciden conservan su nombre y las que no
+    # figuran en él quedan al final, sin área, hasta que la Dirección del Instituto decida.
+    assert [a["nombre"] for a in lineas.areas()] == ["Álgebra", "Geometría y Topología", "Análisis", "Matemática Aplicada",
+                                                     "Educación Matemática"]
+    assert [(x["area"], x["nombre"]) for x in lineas.todas()] == [
+        ("Álgebra", "Estructuras Algebraicas Ordenadas"), ("Álgebra", "Grupos finitos"),
+        ("Álgebra", "Problemas inversos de autovalores"),
+        ("Geometría y Topología", "Teoría geométrica de control"),
+        ("Geometría y Topología", "Topologías finitas y aplicaciones a otras áreas científicas"),
+        ("Geometría y Topología", "Geometría diferencial"),
+        ("Análisis", "Teoría de distribuciones en el contexto de las EDP"), ("Análisis", "Teoría ergódica"),
+        ("Análisis", "Análisis intervalar"),
+        ("Matemática Aplicada", "Optimización Matemática"), ("Matemática Aplicada", "Matemática aplicada y análisis de datos"),
+        ("Matemática Aplicada", "Teoría de control. Modelos aplicados a la biología"),
+        ("Matemática Aplicada", "Sistemas Dinámicos"),
+        ("Matemática Aplicada", "Teoría de grafos finitos y aplicaciones a otras áreas científicas"),
+        ("Educación Matemática", "Educación matemática: Teoría de la Respuesta al Ítem"),
+        (None, "Teoría de Control"), (None, "Modelos Matemáticos y Computación"),
+        (None, "Áreas Fundamentales Complementarias")]
+    assert len(lineas.vigentes()) == 18
 
 
 def test_vigencia_y_catalogo(app):
-    d, errores = lineas.validar({"nombre": "Teoría de control", "vigente_desde": "", "vigente_hasta": ""})
+    algebra = str(_area("Álgebra"))
+    d, errores = lineas.validar({"nombre": "Teoría de control", "area_id": algebra, "vigente_desde": "", "vigente_hasta": ""})
     assert errores == ["Ya existe una línea con ese nombre."]
-    d, errores = lineas.validar({"nombre": "Lógica", "vigente_desde": "2027-01-01", "vigente_hasta": "2026-01-01"})
+    assert lineas.validar({"nombre": "Lógica", "area_id": ""})[1] == ["Elija el área de la línea."]
+    assert lineas.validar({"nombre": "Lógica", "area_id": "999"})[1] == ["Elija un área de la lista."]
+    d, errores = lineas.validar({"nombre": "Lógica", "area_id": algebra, "vigente_desde": "2027-01-01",
+                                 "vigente_hasta": "2026-01-01"})
     assert "anterior a su inicio" in errores[0]
-    d, errores = lineas.validar({"nombre": "Lógica", "descripcion": "", "vigente_desde": "2027-01-01",
+    d, errores = lineas.validar({"nombre": "Lógica", "area_id": algebra, "descripcion": "", "vigente_desde": "2027-01-01",
                                  "vigente_hasta": ""})
     lid = lineas.crear(d, None)
     x = lineas.obtener(lid)
@@ -30,8 +55,11 @@ def test_vigencia_y_catalogo(app):
     assert lineas.estado(lineas.obtener(lid), "2029-01-01") == "cerrada"
     lineas.reabrir(lid)
     assert lineas.obtener(lid)["vigente_hasta"] is None
+    # Se ordena dentro de su área: al final del Álgebra, y sube un puesto.
+    del_algebra = [x["id"] for x in lineas.todas() if x["area"] == "Álgebra"]
+    assert del_algebra[-1] == lid
     lineas.mover(lid, -1)
-    assert [x["id"] for x in lineas.todas()][-2] == lid
+    assert [x["id"] for x in lineas.todas() if x["area"] == "Álgebra"] == [*del_algebra[:-2], lid, del_algebra[-2]]
     assert lineas.eliminar(lid) is None and lineas.obtener(lid) is None
 
 
@@ -89,7 +117,7 @@ def test_proyecto_individual(client, gente):
     pid = int(r.headers["hx-redirect"].rsplit("/", 1)[1])
     assert "Sin líneas de investigación registradas." in client.get(f"/proyectos/{pid}").text
     r = client.put(f"/proyectos/{pid}/lineas", headers=HX, data={"linea": ["1", "5"]})
-    assert "Sistemas Dinámicos" in r.text and [x["id"] for x in lineas.de_proyecto(pid)] == [1, 5]
+    assert "Sistemas Dinámicos" in r.text and [x["id"] for x in lineas.de_proyecto(pid)] == [5, 1]  # por área
     lineas.cerrar(3, "2020-01-01")
     r = client.put(f"/proyectos/{pid}/lineas", headers=HX, data={"linea": ["1", "3"]})
     assert "Solo puede adscribirse a líneas vigentes: Teoría de Control." in r.text
@@ -107,7 +135,7 @@ def test_perfil_y_directorio(client, gente):
     # Una línea cerrada se conserva (marcada) hasta que el investigador la quita, pero no se vuelve a agregar.
     assert "ya no rige" in client.get("/perfil/lineas").text
     assert client.put("/perfil/lineas", headers=HX, data={"linea": ["1", "2"]}).status_code == 200
-    assert [x["id"] for x in lineas.de_investigador(gente["emmy"])] == [1, 2]
+    assert [x["id"] for x in lineas.de_investigador(gente["emmy"])] == [2, 1]  # Álgebra antes que Matemática Aplicada
     client.put("/perfil/lineas", headers=HX, data={"linea": ["1"]})
     r = client.put("/perfil/lineas", headers=HX, data={"linea": ["1", "2"]})
     assert "Solo puede adscribirse a líneas vigentes" in r.text
@@ -123,12 +151,15 @@ def test_administracion(client, gente):
     assert client.get("/admin/lineas").status_code == 403
     entrar(client, "admin")
     assert "Estructuras Algebraicas Ordenadas" in client.get("/admin/lineas").text
-    r = client.post("/admin/lineas", headers=HX, data={"nombre": "Lógica Matemática", "vigente_desde": "2026-01-01"})
+    algebra = str(_area("Álgebra"))
+    r = client.post("/admin/lineas", headers=HX, data={"nombre": "Lógica Matemática", "vigente_desde": "2026-01-01",
+                                                       "area_id": algebra})
     assert r.headers.get("hx-redirect") == "/admin/lineas"
     lid = _id("Lógica Matemática")
-    r = client.post("/admin/lineas", headers=HX, data={"nombre": "lógica matemática"})
+    r = client.post("/admin/lineas", headers=HX, data={"nombre": "lógica matemática", "area_id": algebra})
     assert "Ya existe una línea con ese nombre." in r.text
-    client.put(f"/admin/lineas/{lid}", headers=HX, data={"nombre": "Lógica y Fundamentos", "vigente_desde": "2026-01-01"})
+    client.put(f"/admin/lineas/{lid}", headers=HX, data={"nombre": "Lógica y Fundamentos", "vigente_desde": "2026-01-01",
+                                                         "area_id": algebra})
     assert lineas.obtener(lid)["nombre"] == "Lógica y Fundamentos"
     client.post(f"/admin/lineas/{lid}/cerrar", headers=HX, data={"fecha": "2026-12-31"})
     assert lineas.obtener(lid)["vigente_hasta"] == "2026-12-31"
@@ -159,12 +190,46 @@ def test_productos_y_actividades_heredan_la_linea_del_proyecto(client, app):
     get_db().t.producto_proyecto.insert(producto_id=pid, proyecto_id=dos, estado="pendiente", propuesto_por=uid)
     assert [x["id"] for x in lineas.de_registro("producto", pid)] == [1, 3]  # lo pendiente no cuenta
     get_db().execute("UPDATE producto_proyecto SET estado = 'aprobado' WHERE proyecto_id = ?", [dos])
-    assert [x["id"] for x in lineas.de_registro("producto", pid)] == [1, 3, 5]  # sin repetir
+    assert [x["id"] for x in lineas.de_registro("producto", pid)] == [5, 1, 3]  # sin repetir, por área
     fila = informes.filas_productos([productos.obtener(pid)])[0]
-    assert fila["Líneas de investigación"] == "Sistemas Dinámicos; Teoría de Control; Optimización Matemática"
+    assert fila["Líneas de investigación"] == "Optimización Matemática; Sistemas Dinámicos; Teoría de Control"
     assert lineas.de_registro("actividad", 999) == []
     get_db().t.producto_autor.insert(producto_id=pid, orden=1, investigador_id=uid)
     from app.comun import usuarios
     usuarios.cambiar_password(uid, PASS_TEMP, temporal=False)
     login(client, "inv@test.cl", PASS_TEMP)
     assert "Optimización Matemática" in client.get(f"/productos/{pid}").text
+
+
+def test_areas_y_proyectos_desde_la_linea(client, gente):
+    """La Dirección del Instituto mantiene las áreas y adscribe o quita proyectos vigentes desde la ficha de la línea."""
+    entrar(client, "emmy")
+    assert client.post("/admin/lineas/areas", headers=HX, data={"nombre": "Lógica"}).status_code == 403
+    entrar(client, "admin")  # tiene la Dirección del Instituto en estas pruebas
+    r = client.post("/admin/lineas/areas", headers=HX, data={"nombre": "Lógica"})
+    assert r.headers.get("hx-redirect") == "/admin/lineas"
+    logica = _area("Lógica")
+    assert "Ya existe un área" in client.post("/admin/lineas/areas", headers=HX, data={"nombre": "lógica"}).text
+    client.post(f"/admin/lineas/areas/{logica}/subir", headers=HX)
+    assert [a["nombre"] for a in lineas.areas()][-2:] == ["Lógica", "Educación Matemática"]
+    client.post(f"/admin/lineas/areas/{logica}", headers=HX, data={"nombre": "Lógica matemática"})
+    assert lineas.area(logica)["nombre"] == "Lógica matemática"
+    # Un área con líneas no se elimina; sin líneas, sí.
+    client.put("/admin/lineas/3", headers=HX, data={"nombre": "Teoría de Control", "area_id": str(logica)})
+    client.delete(f"/admin/lineas/areas/{logica}", headers=HX)
+    assert lineas.area(logica)
+    client.put("/admin/lineas/3", headers=HX, data={"nombre": "Teoría de Control", "area_id": str(_area("Análisis"))})
+    client.delete(f"/admin/lineas/areas/{logica}", headers=HX)
+    assert lineas.area(logica) is None
+    assert "Sin área" in client.get("/admin/lineas").text  # quedan dos líneas anteriores sin área
+
+    pid = proyectos.crear(dict(nombre="Dinámicas de Control", estado="vigente"), gente["emmy"], gente["emmy"])
+    grafos = _id("Teoría de grafos finitos y aplicaciones a otras áreas científicas")
+    assert "Dinámicas de Control" in client.get(f"/admin/lineas/{grafos}").text  # se ofrece para agregar
+    client.post(f"/admin/lineas/{grafos}/proyectos", headers=HX, data={"proyecto_id": str(pid)})
+    assert [x["id"] for x in lineas.de_proyecto(pid)] == [grafos]
+    assert lineas.agregar_proyecto(grafos, pid) == "Elija un proyecto vigente que aún no esté en la línea."
+    lineas.cerrar(grafos, "2020-01-01")
+    assert lineas.agregar_proyecto(grafos, pid) == "Solo se pueden adscribir proyectos a una línea vigente."
+    client.post(f"/admin/lineas/{grafos}/proyectos/{pid}/quitar", headers=HX)
+    assert lineas.de_proyecto(pid) == []

@@ -1,14 +1,15 @@
 """Líneas de investigación institucionales.
 
 Reglas (ver PLAN.md, sección 21):
-  - La administración mantiene el catálogo. Cada línea rige entre `vigente_desde` (NULL: desde
+  - La Dirección del Instituto mantiene el catálogo (`gestionar_catalogos`), agrupado en áreas (PLAN §60). Cada línea rige entre `vigente_desde` (NULL: desde
     antes del portal) y `vigente_hasta` (NULL: sigue vigente). Una línea que deja de regir no se
     borra: se le pone fecha de término y quienes ya la usaban la conservan en su historia. Solo
     se puede eliminar una línea que nadie ha usado (p. ej., creada por error).
   - Una propuesta institucional debe adscribirse al menos a una línea vigente al inicio de su
     periodo; al aceptarse, sus líneas pasan al proyecto.
   - Los proyectos individuales y los investigadores (desde su perfil) se adscriben de forma
-    opcional, solo a líneas vigentes hoy.
+    opcional, solo a líneas vigentes hoy. La Dirección del Instituto también puede adscribir o quitar
+    proyectos desde la ficha de la línea.
   - Productos y actividades no eligen línea: la heredan de los proyectos en que están aprobados
     (`de_registro`). Sin proyecto aprobado, no tienen línea.
 """
@@ -17,6 +18,9 @@ from datetime import date
 from app.comun.db import AHORA, DISTINTO_DE, get_db, transaccion
 
 LARGO_NOMBRE = 200
+# Orden del catálogo: por área (las líneas sin área al final) y, dentro de ella, por el orden de la línea.
+_AREA = "(SELECT orden FROM area_investigacion WHERE id = l.area_id)"
+ORDEN = f"{_AREA} IS NULL, {_AREA}, l.orden, l.nombre"
 LARGO_DESCRIPCION = 2000
 
 
@@ -46,26 +50,27 @@ def obtener(lid: int) -> dict | None:
 
 
 def todas() -> list[dict]:
-    """Catálogo completo con cuántos proyectos, propuestas e investigadores usan cada línea."""
+    """Catálogo completo (por área y orden) con cuántos proyectos, propuestas e investigadores usan cada línea."""
     return get_db().q(
-        """SELECT l.*,
+        f"""SELECT l.*, a.nombre AS area,
                   (SELECT COUNT(*) FROM proyecto_linea WHERE linea_id = l.id) AS n_proyectos,
                   (SELECT COUNT(*) FROM propuesta_linea WHERE linea_id = l.id) AS n_propuestas,
                   (SELECT COUNT(*) FROM investigador_linea x JOIN usuario u ON u.id = x.usuario_id
                     WHERE x.linea_id = l.id AND u.activo = 1) AS n_investigadores
-           FROM linea_investigacion l ORDER BY l.orden, l.nombre""")
+           FROM linea_investigacion l LEFT JOIN area_investigacion a ON a.id = l.area_id
+           ORDER BY {ORDEN}""")
 
 
 def vigentes(fecha: str | None = None) -> list[dict]:
     f = fecha or hoy()
     return get_db().q(
-        """SELECT * FROM linea_investigacion WHERE (vigente_desde IS NULL OR vigente_desde <= :f)
-           AND (vigente_hasta IS NULL OR vigente_hasta >= :f) ORDER BY orden, nombre""", {"f": f})
+        f"""SELECT l.* FROM linea_investigacion l WHERE (l.vigente_desde IS NULL OR l.vigente_desde <= :f)
+           AND (l.vigente_hasta IS NULL OR l.vigente_hasta >= :f) ORDER BY {ORDEN}""", {"f": f})
 
 
 def _de(tabla: str, columna: str, valor: int) -> list[dict]:
     return get_db().q(f"""SELECT l.* FROM {tabla} x JOIN linea_investigacion l ON l.id = x.linea_id
-                          WHERE x.{columna} = ? ORDER BY l.orden, l.nombre""", [valor])
+                          WHERE x.{columna} = ? ORDER BY {ORDEN}""", [valor])
 
 
 def de_proyecto(pid: int) -> list[dict]:
@@ -87,7 +92,7 @@ def de_registro(tipo: str, registro_id: int) -> list[dict]:
     return get_db().q(
         f"""SELECT DISTINCT l.* FROM {tabla} v JOIN proyecto_linea pl ON pl.proyecto_id = v.proyecto_id
             JOIN linea_investigacion l ON l.id = pl.linea_id
-            WHERE v.{columna} = ? AND v.estado = 'aprobado' ORDER BY l.orden, l.nombre""", [registro_id])
+            WHERE v.{columna} = ? AND v.estado = 'aprobado' ORDER BY {ORDEN}""", [registro_id])
 
 
 def investigadores(lid: int) -> list[dict]:
@@ -176,6 +181,13 @@ def validar(d: dict, lid: int | None = None) -> tuple[dict, list[str]]:
     elif get_db().q(f"SELECT 1 FROM linea_investigacion WHERE lower(nombre) = lower(?) AND id {DISTINTO_DE} ?",
                     [d["nombre"], lid]):
         errores.append("Ya existe una línea con ese nombre.")
+    if d.get("area_id"):
+        if not str(d["area_id"]).isdigit() or not area(int(d["area_id"])):
+            errores.append("Elija un área de la lista.")
+        else:
+            d["area_id"] = int(d["area_id"])
+    elif areas():
+        errores.append("Elija el área de la línea.")
     if d.get("descripcion") and len(d["descripcion"]) > LARGO_DESCRIPCION:
         errores.append(f"La descripción admite hasta {LARGO_DESCRIPCION} caracteres.")
     for campo in ("vigente_desde", "vigente_hasta"):
@@ -233,10 +245,11 @@ def eliminar(lid: int) -> str | None:
 
 
 def mover(lid: int, delta: int):
-    """Sube (-1) o baja (+1) la línea en el orden del catálogo."""
-    ids = [x["id"] for x in get_db().q("SELECT id FROM linea_investigacion ORDER BY orden, nombre")]
-    if lid not in ids:
+    """Sube (-1) o baja (+1) la línea dentro de su área."""
+    linea = obtener(lid)
+    if not linea:
         return
+    ids = [x["id"] for x in todas() if x["area_id"] == linea["area_id"]]
     i = ids.index(lid)
     j = i + delta
     if 0 <= j < len(ids):
@@ -244,3 +257,81 @@ def mover(lid: int, delta: int):
     with transaccion():
         for n, x in enumerate(ids, start=1):
             get_db().execute("UPDATE linea_investigacion SET orden = ? WHERE id = ?", [n, x])
+
+
+# --- Áreas -----------------------------------------------------------------------------------------------
+
+LARGO_AREA = 120
+
+
+def areas() -> list[dict]:
+    """Áreas en su orden, con cuántas líneas tiene cada una."""
+    return get_db().q("""SELECT a.*, (SELECT COUNT(*) FROM linea_investigacion WHERE area_id = a.id) AS n_lineas
+                         FROM area_investigacion a ORDER BY a.orden, a.nombre""")
+
+
+def area(aid: int) -> dict | None:
+    filas = get_db().q("SELECT * FROM area_investigacion WHERE id = ?", [aid])
+    return filas[0] if filas else None
+
+
+def validar_area(nombre: str, aid: int | None = None) -> tuple[str, list[str]]:
+    nombre = (nombre or "").strip()
+    if not nombre:
+        return nombre, ["Indique el nombre del área."]
+    if len(nombre) > LARGO_AREA:
+        return nombre, [f"El nombre admite hasta {LARGO_AREA} caracteres."]
+    if get_db().q(f"SELECT 1 FROM area_investigacion WHERE lower(nombre) = lower(?) AND id {DISTINTO_DE} ?", [nombre, aid]):
+        return nombre, ["Ya existe un área con ese nombre."]
+    return nombre, []
+
+
+def crear_area(nombre: str) -> int:
+    orden = get_db().q("SELECT COALESCE(MAX(orden), 0) + 1 AS n FROM area_investigacion")[0]["n"]
+    return get_db().t.area_investigacion.insert(nombre=nombre, orden=orden)["id"]
+
+
+def renombrar_area(aid: int, nombre: str):
+    get_db().execute(f"UPDATE area_investigacion SET nombre = ?, actualizado_en = {AHORA} WHERE id = ?", [nombre, aid])
+
+
+def eliminar_area(aid: int) -> str | None:
+    if get_db().q("SELECT 1 FROM linea_investigacion WHERE area_id = ? LIMIT 1", [aid]):
+        return "El área tiene líneas: muévalas a otra área antes de eliminarla."
+    get_db().execute("DELETE FROM area_investigacion WHERE id = ?", [aid])
+    return None
+
+
+def mover_area(aid: int, delta: int):
+    ids = [x["id"] for x in areas()]
+    if aid not in ids:
+        return
+    i, j = ids.index(aid), ids.index(aid) + delta
+    if 0 <= j < len(ids):
+        ids[i], ids[j] = ids[j], ids[i]
+    with transaccion():
+        for n, x in enumerate(ids, start=1):
+            get_db().execute("UPDATE area_investigacion SET orden = ? WHERE id = ?", [n, x])
+
+
+# --- Proyectos de una línea (desde la ficha de la línea) ---------------------------------------------------
+
+def proyectos_para_agregar(lid: int) -> list[dict]:
+    """Proyectos vigentes que aún no están en la línea."""
+    return get_db().q("""SELECT id, nombre, tipo FROM proyecto WHERE estado = 'vigente'
+                         AND id NOT IN (SELECT proyecto_id FROM proyecto_linea WHERE linea_id = ?)
+                         ORDER BY nombre""", [lid])
+
+
+def agregar_proyecto(lid: int, pid: int) -> str | None:
+    linea = obtener(lid)
+    if not linea or not vigente(linea):
+        return "Solo se pueden adscribir proyectos a una línea vigente."
+    if not any(p["id"] == pid for p in proyectos_para_agregar(lid)):
+        return "Elija un proyecto vigente que aún no esté en la línea."
+    get_db().execute("INSERT INTO proyecto_linea (proyecto_id, linea_id) VALUES (?, ?)", [pid, lid])
+    return None
+
+
+def quitar_proyecto(lid: int, pid: int):
+    get_db().execute("DELETE FROM proyecto_linea WHERE proyecto_id = ? AND linea_id = ?", [pid, lid])
