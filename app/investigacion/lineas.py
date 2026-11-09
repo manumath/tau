@@ -86,13 +86,26 @@ def de_investigador(uid: int) -> list[dict]:
 
 
 def de_registro(tipo: str, registro_id: int) -> list[dict]:
-    """Líneas de un producto o una actividad: las de los proyectos en que está aprobado."""
+    """Líneas de un producto o una actividad: las de los proyectos en que está aprobado y, en los productos, las que el
+    investigador le asignó directamente (`producto_linea`, PLAN §59)."""
     tabla, columna = {"producto": ("producto_proyecto", "producto_id"),
                       "actividad": ("actividad_proyecto", "actividad_id")}[tipo]
+    directas = " OR l.id IN (SELECT linea_id FROM producto_linea WHERE producto_id = :r)" if tipo == "producto" else ""
     return get_db().q(
-        f"""SELECT DISTINCT l.* FROM {tabla} v JOIN proyecto_linea pl ON pl.proyecto_id = v.proyecto_id
-            JOIN linea_investigacion l ON l.id = pl.linea_id
-            WHERE v.{columna} = ? AND v.estado = 'aprobado' ORDER BY {ORDEN}""", [registro_id])
+        f"""SELECT l.* FROM linea_investigacion l
+            WHERE l.id IN (SELECT pl.linea_id FROM {tabla} v JOIN proyecto_linea pl ON pl.proyecto_id = v.proyecto_id
+                           WHERE v.{columna} = :r AND v.estado = 'aprobado'){directas}
+            ORDER BY {ORDEN}""", {"r": registro_id})
+
+
+def directas_de_producto(pid: int) -> list[dict]:
+    """Las líneas asignadas directamente a un producto (no las heredadas de sus proyectos)."""
+    return get_db().q(f"""SELECT l.* FROM producto_linea x JOIN linea_investigacion l ON l.id = x.linea_id
+                          WHERE x.producto_id = ? ORDER BY {ORDEN}""", [pid])
+
+
+def quitar_de_producto(pid: int, lid: int):
+    get_db().execute("DELETE FROM producto_linea WHERE producto_id = ? AND linea_id = ?", [pid, lid])
 
 
 def investigadores(lid: int) -> list[dict]:
@@ -232,7 +245,8 @@ def reabrir(lid: int):
 def en_uso(lid: int) -> bool:
     return bool(get_db().q("""SELECT 1 FROM proyecto_linea WHERE linea_id = :l
                               UNION ALL SELECT 1 FROM propuesta_linea WHERE linea_id = :l
-                              UNION ALL SELECT 1 FROM investigador_linea WHERE linea_id = :l LIMIT 1""",
+                              UNION ALL SELECT 1 FROM investigador_linea WHERE linea_id = :l
+                              UNION ALL SELECT 1 FROM producto_linea WHERE linea_id = :l LIMIT 1""",
                            {"l": lid}))
 
 

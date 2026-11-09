@@ -91,6 +91,8 @@ from app.servicios import grado as tramites_grado  # noqa: E402
 from app.servicios.rutas.auxiliaturas import rt as rutas_auxiliaturas
 from app.servicios.rutas.comunicados import rt as rutas_comunicados
 from app.servicios.rutas.grado import rt as rutas_grado
+from app.ia import catalogo as _catalogo_ia  # noqa: E402,F401  registra las funciones de IA
+from app.ia.rutas.ia import rt as rutas_ia
 
 
 _candado_mantenimiento = threading.Lock()
@@ -178,7 +180,7 @@ def create_app(db_path=config.DB_PATH):
                    rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
                    rutas_preparacion, rutas_cohortes,
                    rutas_actividades_estudiantiles, rutas_estudiante, rutas_encuestas, rutas_responder, rutas_egresados, rutas_directorio, rutas_tutoria,
-                   rutas_seguimiento_estudiantil, rutas_comunicados, rutas_auxiliaturas, rutas_grado):
+                   rutas_seguimiento_estudiantil, rutas_comunicados, rutas_auxiliaturas, rutas_grado, rutas_ia):
         router.to_app(app)
     return app
 

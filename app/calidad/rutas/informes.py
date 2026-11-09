@@ -19,12 +19,14 @@ from app.investigacion import (actividades, cosecha, importacion, institucionale
                                revistas)
 from app.comun import config, exportar, permisos, unidades
 from app.comun.componentes import recursos
-from app.calidad import informes, programados
+from app.calidad import capacitacion, informes, programados
 from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import boton_espera, pagina
 from app.comun.db import auditar
 from app.comun.componentes.registros import fecha_local
 from app.investigacion.identificadores import IDENTIFICADORES
+from app.ia import catalogo as ia_catalogo, servicio as ia
+from app.ia.rutas.panel import bloque as bloque_ia, marca_si, respuesta_pedido, texto_aprobado
 
 rt = APIRouter()
 
@@ -296,6 +298,13 @@ def documento_cv(datos, uid, desde, hasta):
                                                     + (f", {x['fecha_inicio'][:4]}–{(x['fecha_fin'] or '')[:4]}"
                                                        if x["fecha_inicio"] else "") + ")", cls="apagado"))
                                             for x in datos["proyectos"]], cls="space-y-1")]
+    if datos.get("capacitacion"):
+        secciones += [H2("Capacitación"), Ul(*[Li(Span(f"{c['fecha_fin'][:4]}", cls="apagado"), " — ", c["titulo"],
+                                                 f", {c['institucion']}" if c["institucion"] else "",
+                                                 Span(f" ({capacitacion.AREAS[c['area']].lower()}"
+                                                      + (f", {c['horas']} h" if c["horas"] else "") + ")",
+                                                      cls="apagado"))
+                                              for c in datos["capacitacion"]], cls="space-y-1")]
     if not secciones:
         secciones.append(P("No hay registros en el periodo seleccionado.", cls="apagado mt-6"))
     return hoja(
@@ -307,6 +316,7 @@ def documento_cv(datos, uid, desde, hasta):
         P(f"Periodo {desde}–{hasta} · {datos['n_productos']} productos ({datos['n_informe']} cuentan para "
           f"el informe del instituto) · {datos['n_actividades']} actividades", cls="apagado text-sm mt-2"),
         P(p["bio"], cls="mt-4 text-sm whitespace-pre-line") if p["bio"] else "",
+        marca_si(ia_catalogo.CV.clave, f"investigador:{uid}", p["bio"]),
         *secciones)
 
 
@@ -337,6 +347,7 @@ def get(auth, desde: str = "", hasta: str = "", informe: bool = False, uid: int 
 
 def documento_proyecto(datos, desde, hasta):
     p = datos["proyecto"]
+    sintesis = texto_aprobado(ia_catalogo.INFORME_PROYECTO.clave, ia_catalogo.entidad_informe(p["id"], desde, hasta))
     resp = ", ".join(f"{r['nombres']} {r['apellidos']}" for r in datos["participantes"]
                      if r["rol"] == "responsable" and r["vigente"])
     equipo = Table(Thead(Tr(Th("Nombre"), Th("Rol"), Th("Institución / unidad"), Th("Periodo"))),
@@ -370,6 +381,7 @@ def documento_proyecto(datos, desde, hasta):
             _cifra(len(datos["actividades"]), "actividades"),
             _cifra(sum(x["vigente"] for x in datos["participantes"]), "participantes vigentes"),
             cls="grid grid-cols-5 gap-3 mt-6"),
+        *([H2("Síntesis del periodo"), sintesis] if sintesis else []),
         *([H2("Objetivo general"), P(p["objetivo_general"])] if p["objetivo_general"] else []),
         *([H2("Objetivos específicos"), Ol(*[Li(o["texto"]) for o in datos["objetivos"]], cls="citas")]
           if datos["objetivos"] else []),
@@ -414,8 +426,28 @@ def get(auth, pid: int, desde: str = "", hasta: str = ""):
     return pagina(f"Informe · {p['nombre']}", ESTILO_IMPRESION,
                   A(UkIcon("arrow-left", height=14, width=14), "Volver al proyecto", href=f"/proyectos/{pid}",
                     cls="no-imprimir inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
-                  barra(filtros, descargas), documento_proyecto(informes.informe_proyecto(pid, d, h), d, h),
+                  barra(filtros, descargas),
+                  Div(bloque_ia(ia_catalogo.INFORME_PROYECTO.clave, ia_catalogo.entidad_informe(pid, d, h), auth,
+                                f"/proyectos/{pid}/informe/ia?desde={d}&hasta={h}",
+                                f"/proyectos/{pid}/informe?desde={d}&hasta={h}", "Borrador de la síntesis con IA"),
+                      cls="mb-4"),
+                  documento_proyecto(informes.informe_proyecto(pid, d, h), d, h),
                   usuario=auth, seccion="proyectos")
+
+
+@rt("/proyectos/{pid}/informe/ia")
+def post(auth, pid: int, desde: str = "", hasta: str = "", volver: str = ""):
+    """Borrador de la síntesis del informe (PLAN §59, etapa 1b): solo el responsable del proyecto (lo comprueba la
+    función)."""
+    p = _proyecto_visible(pid, auth)
+    if not p:
+        return Response("No encontrado", status_code=404)
+    d, h = _periodo_proyecto(p, desde, hasta)
+    entidad = ia_catalogo.entidad_informe(pid, d, h)
+    datos, posproceso = ia_catalogo.datos_informe_proyecto(informes.informe_proyecto(pid, d, h), d, h)
+    return respuesta_pedido(ia_catalogo.INFORME_PROYECTO.clave, entidad, auth, volver, lambda: ia.generar(
+        ia_catalogo.INFORME_PROYECTO.clave, datos, auth, entidad_tipo=entidad, entidad_id=pid, en_fondo=True,
+        posproceso=posproceso))
 
 
 @rt("/proyectos/{pid}/informe/xlsx")
@@ -558,7 +590,13 @@ def seccion_evolucion(serie):
                    cls="grid grid-cols-3 gap-3"))
 
 
+def entidad_memoria(m) -> str:
+    return f"memoria:{m['desde']}_{m['hasta']}"
+
+
 def documento_memoria(m, serie=None):
+    """La memoria; si la Dirección del Instituto aprobó un borrador de presentación (PLAN §59), va con su marca."""
+    narrativa = texto_aprobado(ia_catalogo.MEMORIA.clave, entidad_memoria(m), cls="whitespace-pre-line text-sm mt-4")
     return hoja(
         H1(m["titulo"]),
         P(f"Del {informes._fecha_corta(m['desde'])} al {informes._fecha_corta(m['hasta'])}.", cls="apagado text-sm")
@@ -575,6 +613,7 @@ def documento_memoria(m, serie=None):
             _cifra(len(m["actividades"]), "actividades"),
             _cifra(m["por_ambito"].get("internacional", 0), "actividades internacionales"),
             _cifra(len(m["proyectos"]), "proyectos vigentes"), cls="grid grid-cols-5 gap-3 mt-6"),
+        narrativa,
         seccion_evolucion(serie) if serie else "",
         Div(Div(H3("Productos indexados por índice"),
                 _tabla_conteo("Índice", m["por_indice"]) if m["por_indice"] else P("—", cls="apagado")),
@@ -688,8 +727,22 @@ def get(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "
                  descarga("XLSX", f"/informes/memoria/xlsx?{q}"),
                  descarga("CSV productos", f"/informes/memoria/csv/productos?{q}"),
                  descarga("CSV actividades", f"/informes/memoria/csv/actividades?{q}")]
+    ia_memoria = bloque_ia(ia_catalogo.MEMORIA.clave, entidad_memoria(m), auth, f"/informes/memoria/ia?{q}",
+                           f"/informes/memoria?{q}", "Borrador de la presentación con IA")
     return pagina(m["titulo"], ESTILO_IMPRESION, barra(selector_periodo(m, anios), descargas),
-                  documento_memoria(m, serie), usuario=auth, seccion="informes")
+                  Div(ia_memoria, cls="mb-4"), documento_memoria(m, serie), usuario=auth, seccion="informes")
+
+
+@rt("/informes/memoria/ia")
+def post(auth, anio: str = "", periodo: str = "", desde: str = "", hasta: str = "", modo: str = "", volver: str = ""):
+    """Pide a la IA el borrador de la presentación (PLAN §59, etapa 1a); lo revisa la Dirección del Instituto."""
+    if not permisos.puede(auth, "ver_informes_institucionales", unidades.instituto()):
+        return Response("No autorizado", status_code=403)
+    m = informes.memoria(**_periodo_memoria(anio, periodo, desde, hasta, modo))
+    entidad = entidad_memoria(m)
+    datos, posproceso = ia_catalogo.datos_memoria(m)
+    return respuesta_pedido(ia_catalogo.MEMORIA.clave, entidad, auth, volver, lambda: ia.generar(
+        ia_catalogo.MEMORIA.clave, datos, auth, entidad_tipo=entidad, en_fondo=True, posproceso=posproceso))
 
 
 @rt("/informes/citas/actualizar")

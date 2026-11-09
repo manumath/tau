@@ -22,7 +22,7 @@ def test_cada_rol_ve_sus_grupos(app):
     assert emmy[None] == ["inicio"] and emmy["Investigación"] == ["actividades", "productos", "proyectos", "investigadores"]
     assert "Administración" not in emmy and "Estudiantes" not in emmy        # ni cuentas ni seguimiento estudiantil
     admin = _grupos(_auth("admin@test.cl"))   # Administración del sistema y Dirección del Instituto
-    assert admin["Administración"] == ["usuarios", "auditoria", "revistas", "lineas", "catalogos"]
+    assert admin["Administración"] == ["usuarios", "auditoria", "revistas", "lineas", "catalogos", "ia"]  # ia: PLAN §59
     assert "propuestas" in admin["Investigación"] and "calidad" in admin["Aseguramiento de la Calidad"]
     assert "actividades" not in admin["Investigación"]                        # no es investigadora
     permisos.asignar(usuarios.por_email("inv@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))

@@ -15,6 +15,8 @@ from app.comun.componentes.registros import insignia
 from app.comun.db import get_db
 from app.estudiantil import encuestas
 from app.estudiantil.plantillas_encuesta import PLANTILLAS
+from app.ia import catalogo as ia_catalogo, servicio as ia
+from app.ia.rutas.panel import bloque as bloque_ia, respuesta_pedido, texto_aprobado
 
 rt = APIRouter()
 BASE = "/docencia/encuestas"
@@ -349,10 +351,23 @@ def _barras(p):
     return Div(*filas, cls="space-y-1")
 
 
-def _resultado_pregunta(p):
+def _entidad_sintesis(eid, qid):
+    return f"encuesta:{eid}:{qid}"
+
+
+def _resultado_pregunta(p, eid=None, auth=None):
     q = p["pregunta"]
     cuerpo = []
     if q["tipo"] == "texto":
+        if eid:   # síntesis aprobada (PLAN §59, etapa 3a) y el botón para pedirla
+            entidad = _entidad_sintesis(eid, q["id"])
+            n = len(p["textos"])
+            cuerpo += [texto_aprobado(ia_catalogo.SINTESIS.clave, entidad, cls="whitespace-pre-line text-sm"),
+                       bloque_ia(ia_catalogo.SINTESIS.clave, entidad, auth, f"{BASE}/{eid}/preguntas/{q['id']}/sintesis",
+                                 f"{BASE}/{eid}/resultados", "Sintetizar con IA",
+                                 motivo_no=None if n >= ia_catalogo.MIN_RESPUESTAS_SINTESIS else
+                                 f"La síntesis con IA se ofrece desde {ia_catalogo.MIN_RESPUESTAS_SINTESIS} respuestas "
+                                 f"(hay {n}).")]
         cuerpo.append(Ul(*[Li(t, cls="text-sm py-1") for t in p["textos"]], cls="divide-y divide-border")
                       if p["textos"] else P("Sin comentarios.", cls=TextPresets.muted_sm))
     else:
@@ -387,7 +402,7 @@ def get(auth, eid: int):
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         Card(P(f"Por ser anónima, los resultados se muestran desde {r['minimo']} respuestas, para que nadie pueda saber "
                f"quién respondió qué. Hay {r['n']}.", cls="text-sm")) if r["oculto"]
-        else Div(*[_resultado_pregunta(p) for p in r["preguntas"]], cls="space-y-4"),
+        else Div(*[_resultado_pregunta(p, eid, auth) for p in r["preguntas"]], cls="space-y-4"),
         Div(H3("Respuestas individuales", cls="text-base font-semibold mt-8 mb-2"),
             *[Card(Div(f"{x['apellidos']}, {x['nombres']}", cls="font-medium"),
                    Ul(*[Li(Span(q["texto"], cls=TextPresets.muted_sm), Div(" · ".join(encuestas.texto_valor(q, v) for v in vals)
@@ -395,6 +410,24 @@ def get(auth, eid: int):
                          for q, vals in x["respuestas"]], cls="space-y-1 mt-1"), cls="mb-3")
               for x in individuales]) if individuales else "",
         usuario=auth, seccion="docencia")
+
+
+@rt(f"{BASE}/{{eid}}/preguntas/{{qid}}/sintesis")
+def post(auth, eid: int, qid: int, volver: str = ""):
+    """Síntesis de las respuestas abiertas (PLAN §59, etapa 3a): desde 10 respuestas, solo con el modelo local, con las
+    respuestas mezcladas y sin metadatos. Una encuesta anónima por debajo del mínimo no muestra nada (`oculto`)."""
+    if not _gestiona(auth):
+        return _no()
+    r = encuestas.resultados(eid) if _encuesta(eid) else None
+    p = next((x for x in (r or {}).get("preguntas", []) if x["pregunta"]["id"] == qid
+              and x["pregunta"]["tipo"] == "texto"), None)
+    if not r or r["oculto"] or not p or len(p["textos"]) < ia_catalogo.MIN_RESPUESTAS_SINTESIS:
+        return Response("No disponible", status_code=404)
+    entidad = _entidad_sintesis(eid, qid)
+    datos, posproceso = ia_catalogo.datos_sintesis(p["pregunta"]["texto"], p["textos"])
+    return respuesta_pedido(ia_catalogo.SINTESIS.clave, entidad, auth, f"{BASE}/{eid}/resultados", lambda: ia.generar(
+        ia_catalogo.SINTESIS.clave, datos, auth, entidad_tipo=entidad, entidad_id=eid, en_fondo=True, solo_local=True,
+        posproceso=posproceso))
 
 
 @rt(f"{BASE}/{{eid}}/resultados.csv")

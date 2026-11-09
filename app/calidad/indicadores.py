@@ -443,6 +443,17 @@ def _personal_capacitado(c, a):
                      f"{si} de {len(personas)} académicos vinculados concluyeron al menos una capacitación en el año.")
 
 
+def _personal_capacitado_ia(c, a):
+    """Como «Personal capacitado», solo con capacitaciones del área «IA y competencias digitales» (PLAN §59)."""
+    personas = c.anio(a).cuerpo_personas
+    con = {f["usuario_id"] for f in get_db().q(
+        "SELECT usuario_id FROM capacitacion WHERE area = 'ia_digital' AND substr(fecha_fin, 1, 4) = ?", [str(a)])}
+    si = sum(p["id"] in con for p in personas)
+    return Resultado(_pct(si, len(personas)), len(personas),
+                     f"{si} de {len(personas)} académicos vinculados concluyeron una capacitación en IA y "
+                     "competencias digitales en el año.")
+
+
 def _convenios_activos(c, a):
     f = get_db().q(
         """SELECT COUNT(*) AS vigentes,
@@ -520,6 +531,7 @@ CALCULOS = {
     "perfil_empleadores": Calculo(_promedio_encuesta("publico = 'empleadores'", "perfil", "encuestas a empleadores")),
     "satisfaccion_empleadores": Calculo(_satisfaccion_empleadores),
     "personal_capacitado": Calculo(_personal_capacitado),
+    "personal_capacitado_ia": Calculo(_personal_capacitado_ia),
     "convenios_activos": Calculo(_convenios_activos),
     "impacto_interaccion_social": Calculo(_impacto_interaccion_social),
     "cumplimiento_objetivos": Calculo(),   # lo arma el tablero con las demás cifras del año

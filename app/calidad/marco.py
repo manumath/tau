@@ -66,6 +66,7 @@ FUENTES_AUTOMATICAS = {
     "perfil_empleadores": "Logro del perfil de egreso según los empleadores (encuesta a empleadores)",
     "satisfaccion_empleadores": "Satisfacción de los empleadores (encuesta a empleadores)",
     "personal_capacitado": "Personal de la Carrera con capacitación concluida en el año",
+    "personal_capacitado_ia": "Personal de la Carrera capacitado en IA y competencias digitales en el año",
     "convenios_activos": "Convenios vigentes con actividad en el año",
     "impacto_interaccion_social": "Proyectos de interacción social con impacto comprobado",
     "cumplimiento_objetivos": "Indicadores con meta cumplida",

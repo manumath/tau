@@ -48,6 +48,8 @@ def _menu_usuario(usuario: dict):
     opciones += [
         A(UkIcon("key-round", height=16, width=16), "Cambiar contraseña", href="/cambiar-password",
           cls=item),
+        # Transparencia (PLAN §59): qué hace la IA en el sistema, para todo el personal.
+        A(UkIcon("sparkles", height=16, width=16), "Uso de IA en TAU", href="/ia", cls=item),
         selector_tema(),
         Form(fh.Button(UkIcon("log-out", height=16, width=16), "Salir", type="submit", cls=item),
              method="post", action="/logout", hx_post="/logout"),

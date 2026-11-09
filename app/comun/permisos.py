@@ -107,6 +107,10 @@ ACCIONES = {
     "registrar_capacitacion": {"direccion_carrera", "gestion_datos"},
     "registrar_convenios": {"direccion_carrera"},
     "registrar_impacto_proyectos": {"direccion_carrera", "direccion_instituto"},
+    # IA con criterio humano (PLAN §59): la Dirección de Carrera aprueba la política, activa las funciones y designa a sus
+    # responsables; las dos direcciones y la Comisión de calidad ven el registro de usos y los resultados del piloto.
+    "gestionar_ia": {"direccion_carrera"},
+    "ver_uso_ia": {"direccion_carrera", "direccion_instituto", "comision_calidad"},
     # Servicios para estudiantes (PLAN §58): comunicados (las dos direcciones y la Coordinación académica; también el
     # responsable de un proyecto, lo decide la ruta), auxiliaturas de docencia (Carrera) y de investigación (también el
     # Instituto), y trámites de grado: designar tribunales y registrar resoluciones (decisión 1 del 7-nov-2026).

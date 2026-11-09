@@ -127,7 +127,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0060). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0062). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.
@@ -357,6 +357,26 @@ En modo `smtp` los correos pasan por una **cola persistente** (`correo_pendiente
   marca (`static/img/marca/`, ver 4.4).
 - Antes de publicar algo nuevo, revise que no entren datos personales ni bases de datos (`git status --ignored`) y que
   los correos de ejemplo sean de dominios de prueba (`test.cl`, `instituto.test`, `correo.bo`).
+
+### 5.8 IA con criterio humano
+
+Todas las funciones de IA nacen apagadas (PLAN §59). Para usarlas:
+
+1. Configure al menos un proveedor con las variables `PORTAL_IA_*` del README: un modelo local (Ollama, llama.cpp o
+   vLLM, con la API compatible con OpenAI) o un servicio externo, que además exige `PORTAL_IA_EXT_ZDR=true`
+   (retención cero de datos). Sin proveedor, el sistema dice «La función de IA no está disponible; puede continuar
+   manualmente».
+2. La Dirección de Carrera aprueba la política de uso y activa cada función con su responsable.
+
+Reglas para el código: ningún módulo llama a un modelo por su cuenta; todo pasa por `app/ia/servicio.generar`. Un dato
+nuevo que alimente a la IA se clasifica en `app/ia/clasificacion.py`. Los módulos vedados (`funciones.VEDADOS` y
+`servicio.ARCHIVOS_VEDADOS`) no importan `app.ia`, y una prueba lo verifica. Las instrucciones nunca se editan: se crea
+la versión siguiente. Las decisiones de diseño van en `docs/ia/decisiones.md`.
+
+Las funciones y los datos que recibe cada una están en `app/ia/catalogo.py`: para agregar una, regístrela allí, cree
+`app/ia/instrucciones/<clave>/v1.md`, ofrézcala en su pantalla con `app/ia/rutas/panel.bloque` y agregue sus pruebas.
+Las cifras de un borrador nunca vienen del modelo: se le dan marcadores (`{{productos}}`) que `textos.cifras` reemplaza
+por los valores de la base.
 
 ## 6. Problemas frecuentes
 

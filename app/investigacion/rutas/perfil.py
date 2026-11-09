@@ -10,7 +10,7 @@ import json
 
 import fasthtml.common as fh
 
-from fasthtml.common import A, APIRouter, Div, Hr, P, Span, UploadFile
+from fasthtml.common import A, APIRouter, Div, Hr, P, Response, Span, UploadFile
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, Button, ButtonT, Card, Form, Input, LabelInput,
                            LabelTextArea, Progress, TextPresets, UkIcon)
@@ -24,6 +24,8 @@ from app.investigacion.componentes.lineas import casillas_lineas, insignias_line
 from app.investigacion.componentes.msc import resultados as resultados_msc
 from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
 from app.comun.db import auditar
+from app.ia import catalogo as ia_catalogo, servicio as ia
+from app.ia.rutas.panel import bloque as bloque_ia, marca_si, respuesta_pedido
 from app.investigacion.identificadores import IDENTIFICADORES, normalizar_todos
 
 rt = APIRouter()
@@ -219,9 +221,25 @@ def put(auth, sess, orcid: str = "", mr_id: str = "", zbmath_id: str = "", arxiv
 
 # --- Resumen de investigación (con LaTeX) ------------------------------------
 
-def vista_bio(p):
-    return seccion("seccion-bio", "Resumen de investigación", texto_con_parrafos(p["bio"]),
+def vista_bio(p, auth=None):
+    """El resumen; con la marca si es el aprobado de un borrador de IA, y el botón para pedir uno (PLAN §59)."""
+    entidad = f"investigador:{p['id']}"
+    return seccion("seccion-bio", "Resumen de investigación",
+                   Div(texto_con_parrafos(p["bio"]), marca_si(ia_catalogo.CV.clave, entidad, p["bio"]),
+                       Div(bloque_ia(ia_catalogo.CV.clave, entidad, auth, "/perfil/bio/ia", "/perfil",
+                                     "Borrador del resumen con IA"), cls="mt-3") if auth else ""),
                    accion=_boton_editar("bio"))
+
+
+@rt("/perfil/bio/ia")
+def post(auth, volver: str = ""):
+    """Borrador del resumen (PLAN §59, etapa 2): solo el propio investigador; el nombre va seudonimizado."""
+    if not perfiles.obtener(auth["id"]):
+        return Response("No autorizado", status_code=403)
+    entidad = f"investigador:{auth['id']}"
+    return respuesta_pedido(ia_catalogo.CV.clave, entidad, auth, "/perfil", lambda: ia.generar(
+        ia_catalogo.CV.clave, ia_catalogo.datos_cv(auth["id"]), auth, entidad_tipo=entidad, entidad_id=auth["id"],
+        en_fondo=True))
 
 
 def form_bio(bio, errores=()):
@@ -243,7 +261,7 @@ def form_bio(bio, errores=()):
 
 @rt("/perfil/bio")
 def get(auth):
-    return vista_bio(perfiles.obtener(auth["id"]))
+    return vista_bio(perfiles.obtener(auth["id"]), auth)
 
 
 @rt("/perfil/bio/editar")
@@ -265,7 +283,7 @@ def put(auth, sess, bio: str = ""):
     perfiles.actualizar_bio(auth["id"], bio or None)
     auditar(auth["id"], "editar_perfil", "investigador", auth["id"], "bio")
     add_toast(sess, "Resumen guardado.", "success")
-    return _respuesta(auth["id"], vista_bio(perfiles.obtener(auth["id"])))
+    return _respuesta(auth["id"], vista_bio(perfiles.obtener(auth["id"]), auth))
 
 
 # --- Líneas de investigación institucionales -----------------------------------
@@ -489,7 +507,7 @@ def get(auth):
             Div(Card(seccion_foto(p), Hr(cls="my-4 border-border"), tarjeta_completitud(p)),
                 cls="lg:col-span-1 space-y-6"),
             Div(vista_datos(p), seccion_grados(p["id"]), datos_personales.tarjeta(p["id"]),
-                vista_identificadores(p), vista_lineas(p["id"]), seccion_areas(p["id"]), vista_bio(p),
+                vista_identificadores(p), vista_lineas(p["id"]), seccion_areas(p["id"]), vista_bio(p, auth),
                 seccion_preferencias(p),
                 cls="lg:col-span-2 space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"),

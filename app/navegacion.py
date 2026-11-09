@@ -104,6 +104,9 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
         administracion += [_item("revistas", "Catálogo de revistas", "/admin/revistas", "library"),
                            _item("lineas", "Líneas de investigación", "/admin/lineas", "route"),
                            _item("catalogos", "Tipos e índices", "/admin/catalogos", "tags")]
+    if puede("gestionar_ia") or puede("ver_uso_ia"):          # PLAN §59; la página /ia está en el menú del usuario
+        administracion.append(_item("ia", "IA: administración y piloto",
+                                    "/ia/admin" if puede("gestionar_ia") else "/ia/usos", "sparkles"))
     grupos = [(None, [_item("inicio", "Inicio", "/", "home")]), ("Investigación", investigacion),
               ("Docencia", _academico(DOCENCIA, auth)), ("Estudiantes", estudiantes), ("Servicios", servicios),
               ("Aseguramiento de la Calidad", calidad), ("Administración", administracion)]

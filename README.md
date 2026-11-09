@@ -166,6 +166,15 @@ app/
     directorio.py              directorio opcional de egresados, invitación y solicitudes de mentoría
     empleadores.py             registro de empleadores, destinatarios de la encuesta a empleadores
     rutas/                     egresados (/docencia/egresados), empleadores (/docencia/empleadores), directorio (/estudiante/directorio, /estudiante/perfil-egresado)
+  ia/                          IA con criterio humano (PLAN §59): la IA sugiere y la persona decide
+    servicio.py                única puerta a los modelos: vedados, niveles de datos, seudonimización, proveedores, revisión
+    funciones.py               catálogo de funciones activables y módulos vedados
+    clasificacion.py           nivel (0 a 3) de cada dato que puede alimentar a la IA
+    catalogo.py                las 7 funciones y los datos que recibe cada una (memoria, informe, líneas, perfil, encuestas, autoevaluación)
+    textos.py                  cifras desde la base ({{marcadores}}) y sin citas textuales de las respuestas
+    medicion.py                resultados del piloto, decisiones de cierre y reporte de sesgos
+    instrucciones/             instrucciones versionadas por función (<clave>/v<n>.md)
+    rutas/                     /ia (Uso de IA en TAU), /ia/admin, /ia/usos, /ia/sesgos, /ia/guia y el panel de revisión
   servicios/                   servicios para estudiantes y personal (PLAN §58)
     comunicados.py             comunicados, convocatorias y eventos con convocados, confirmación y asistencia
     auxiliaturas.py            convocatorias a auxiliaturas: requisitos, ítems, tribunal 2 + 2, postulación, fases y resultado
@@ -214,6 +223,10 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_MONEDA` | `BOB` | Moneda de los montos de proyectos (se muestra como «Bs») |
 | `PORTAL_PAIS` | `Bolivia` | Las revistas de este país son «nacionales» en los informes |
 | `PORTAL_OPENALEX_CLAVE` | — | Clave de OpenAlex (opcional; OpenAlex contabiliza el uso y la clave permite superar el cupo gratuito) |
+| `PORTAL_IA_LOCAL_URL`, `PORTAL_IA_LOCAL_MODELO` | — | Modelo de IA local con API compatible con OpenAI (p. ej., Ollama en `http://127.0.0.1:11434/v1`); PLAN §59 |
+| `PORTAL_IA_EXT_URL`, `PORTAL_IA_EXT_MODELO`, `PORTAL_IA_EXT_CLAVE` | — | Proveedor de IA externo (opcional) |
+| `PORTAL_IA_EXT_ZDR` | `false` | `true` declara retención cero de datos; sin ella, el proveedor externo no se usa |
+| `PORTAL_IA_TIEMPO_S` | `300` | Límite de cada llamada a la IA, en segundos |
 | `PORTAL_EXIGIR_REVISTA_VERIFICADA` | `0` | `1` para la acreditación: solo cuentan artículos en revistas verificadas del catálogo |
 | `PORTAL_FILIACIONES` | IIMAT; CMAT; FCPN; UMSA y sus nombres completos | Nombres que cuentan como filiación del instituto al importar (separados por «;») |
 | `PORTAL_CONTACTO` | (vacío) | Correo que se informa a Crossref al importar |

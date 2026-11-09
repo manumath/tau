@@ -1,8 +1,11 @@
 """Ficha de un producto."""
-from fasthtml.common import A, APIRouter, Div, H3, P, Redirect, Span
+from fasthtml.common import A, APIRouter, Div, H3, Li, P, Redirect, Response, Span, Ul
 from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.comun import permisos
+from app.comun.db import auditar
+from app.ia import catalogo as ia_catalogo, servicio as ia
+from app.ia.rutas.panel import bloque as bloque_ia, respuesta_pedido
 from app.investigacion import actividades, lineas, productos, proyectos, revistas
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes.msc import chips as chips_msc
@@ -15,6 +18,25 @@ rt = APIRouter()
 
 
 # --- Ficha -------------------------------------------------------------------------------
+
+def tarjeta_lineas(p, auth):
+    """Para quien edita el producto: las líneas asignadas directamente (se pueden quitar) y la sugerencia de la IA
+    (PLAN §59, etapa 2), que solo se guarda si el investigador la confirma."""
+    directas = lineas.directas_de_producto(p["id"])
+    entidad = f"producto:{p['id']}"
+    ia_bloque = bloque_ia(ia_catalogo.CLASIFICAR.clave, entidad, auth, f"/productos/{p['id']}/lineas/ia",
+                          f"/productos/{p['id']}", "Sugerir líneas con IA")
+    return Card(H3("Líneas asignadas al producto", cls="text-base font-semibold mb-1"),
+                P("Además de las que hereda de sus proyectos.", cls=(TextPresets.muted_sm, "mb-2")),
+                Ul(*[Li(insignia(x["nombre"], "azul", icono="route"),
+                        Button(UkIcon("x", height=12, width=12), cls=(ButtonT.ghost, ButtonT.xs), type="button",
+                               aria_label=f"Quitar {x['nombre']}", title="Quitar",
+                               hx_delete=f"/productos/{p['id']}/lineas/{x['id']}",
+                               hx_confirm=f"¿Quitar la línea «{x['nombre']}» de este producto?"),
+                        cls="flex items-center gap-1") for x in directas], cls="flex flex-wrap gap-2 mb-3")
+                if directas else P("Ninguna.", cls=(TextPresets.muted_sm, "mb-3")),
+                ia_bloque)
+
 
 def insignia_estado_revista(r):
     return insignia("verificada", "verde", icono="badge-check") if r["estado"] == "verificada" \
@@ -93,6 +115,7 @@ def ficha(p, auth):
                  else None),
             dato("Cita", P(productos.cita(p), cls="text-sm")),
         ),
+        tarjeta_lineas(p, auth) if editable else "",
         Card(H3("Resumen", cls="text-base font-semibold mb-2"),
              P(p["resumen"], cls="whitespace-pre-line leading-relaxed")) if p["resumen"] else "",
         Card(H3("Archivos adjuntos", cls="text-base font-semibold mb-2"),
@@ -116,3 +139,26 @@ def get(auth, pid: int):
                   A(UkIcon("arrow-left", height=14, width=14), "Mis productos", href="/productos",
                     cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
                   ficha(p, auth), usuario=auth, seccion="productos")
+
+
+@rt("/productos/{pid}/lineas/ia")
+def post(auth, pid: int, volver: str = ""):
+    """Pide a la IA las líneas que corresponden al producto; el investigador marca las que acepta."""
+    p = productos.obtener(pid)
+    if not p or not productos.puede_editar(p, auth["id"]):
+        return Response("No autorizado", status_code=403)
+    entidad = f"producto:{pid}"
+    datos, elegir = ia_catalogo.datos_clasificar(p)
+    return respuesta_pedido(ia_catalogo.CLASIFICAR.clave, entidad, auth, volver, lambda: ia.generar(
+        ia_catalogo.CLASIFICAR.clave, datos, auth, entidad_tipo=entidad, entidad_id=pid, en_fondo=True,
+        posproceso=elegir))
+
+
+@rt("/productos/{pid}/lineas/{lid}")
+def delete(auth, pid: int, lid: int):
+    p = productos.obtener(pid)
+    if not p or not productos.puede_editar(p, auth["id"]):
+        return Response("No autorizado", status_code=403)
+    lineas.quitar_de_producto(pid, lid)
+    auditar(auth["id"], "quitar_linea_producto", "producto", pid, str(lid))
+    return Redirect(f"/productos/{pid}")

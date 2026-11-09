@@ -16,6 +16,8 @@ from app.comun import unidades
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import fecha_local, insignia
 from app.comun.db import auditar
+from app.ia import catalogo as ia_catalogo, servicio as ia
+from app.ia.rutas.panel import bloque as bloque_ia, respuesta_pedido
 
 rt = APIRouter()
 BASE = "/calidad/autoevaluaciones"
@@ -332,6 +334,10 @@ def _evidencias_del_criterio(a, c):
               cls="space-y-1")
 
 
+def servicio_activo():
+    return ia.activa(ia_catalogo.NARRATIVA.clave)
+
+
 def form_juicio(a, c, j, escala, errores=()):
     actual = str(j.get("nivel")) if j.get("nivel") is not None else ""
     return Form(
@@ -392,8 +398,17 @@ def get(auth, aid: int, cid: int):
         P(c["descripcion"], cls="text-sm mt-2 max-w-3xl") if c["descripcion"] else "",
         Card(H3("Indicadores", cls="text-base font-semibold mb-2"), _indicadores_del_criterio(a, c), cls="mt-6"),
         Div(Card(H3("Evidencias", cls="text-base font-semibold mb-2"), _evidencias_del_criterio(a, c),
+                 Div(bloque_ia(ia_catalogo.EVIDENCIAS.clave, f"evidencias:{aid}:{cid}", auth,
+                               f"{BASE}/{aid}/criterios/{cid}/ia/evidencias", f"{BASE}/{aid}/criterios/{cid}",
+                               "Sugerir evidencias con IA"), cls="mt-3") if registra else "",
                  cls="min-w-0"),
             Card(H3("Juicio", cls="text-base font-semibold mb-3"),
+                 Div(bloque_ia(ia_catalogo.NARRATIVA.clave, f"juicio:{aid}:{cid}", auth,
+                               f"{BASE}/{aid}/criterios/{cid}/ia/juicio", f"{BASE}/{aid}/criterios/{cid}",
+                               "Borrador del juicio con IA"),
+                     P("Al aprobarlo reemplaza el texto del juicio; el nivel lo asigna la Comisión.",
+                       cls="text-xs text-muted-foreground mt-1 no-imprimir") if servicio_activo() else "",
+                     cls="mb-4") if registra else "",
                  form_juicio(a, c, j, escala) if registra else _juicio_leido(j or None, escala),
                  P(f"Última modificación: {fecha_local(j['actualizado_en'])}"
                    + (f" por {j['por']}" if j.get("por") else ""), cls=(TextPresets.muted_sm, "mt-3"))
@@ -552,3 +567,36 @@ def get(auth, aid: int):
     if error:
         return error
     return _archivo(ae.a_xlsx(a), f"autoevaluacion-{a['desde_anio']}-{a['hasta_anio']}.xlsx", XLSX)
+
+
+# --- IA (PLAN §59, etapa 3b): sugerencias de evidencias y borrador de la narrativa del juicio ---------------------
+
+@rt(f"{BASE}/{{aid}}/criterios/{{cid}}/ia/evidencias")
+def post(auth, aid: int, cid: int, volver: str = ""):
+    a, error = _editable(auth, aid)
+    if error:
+        return error
+    c = _criterio_de(a, cid)
+    if c is None:
+        return _no_encontrado()
+    entidad = f"evidencias:{aid}:{cid}"
+    datos, elegir = ia_catalogo.datos_evidencias(a, c)
+    return respuesta_pedido(ia_catalogo.EVIDENCIAS.clave, entidad, auth, f"{BASE}/{aid}/criterios/{cid}",
+                            lambda: ia.generar(ia_catalogo.EVIDENCIAS.clave, datos, auth, entidad_tipo=entidad,
+                                               entidad_id=cid, en_fondo=True, posproceso=elegir))
+
+
+@rt(f"{BASE}/{{aid}}/criterios/{{cid}}/ia/juicio")
+def post(auth, aid: int, cid: int, volver: str = ""):
+    a, error = _editable(auth, aid)
+    if error:
+        return error
+    c = _criterio_de(a, cid)
+    if c is None:
+        return _no_encontrado()
+    entidad = f"juicio:{aid}:{cid}"
+    datos, posproceso = ia_catalogo.datos_narrativa(c, evidencias.listar(a["marco_id"], cid),
+                                                    ae.juicios(aid).get(cid))
+    return respuesta_pedido(ia_catalogo.NARRATIVA.clave, entidad, auth, f"{BASE}/{aid}/criterios/{cid}",
+                            lambda: ia.generar(ia_catalogo.NARRATIVA.clave, datos, auth, entidad_tipo=entidad,
+                                               entidad_id=cid, en_fondo=True, posproceso=posproceso))

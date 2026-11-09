@@ -8,7 +8,7 @@ from app.comun import vinculos
 from app.comun.db import get_db
 
 AREAS = {"disciplinar": "Disciplinar (matemática)", "pedagogica": "Pedagógica o didáctica", "investigacion": "Investigación",
-         "gestion": "Gestión", "otra": "Otra"}
+         "gestion": "Gestión", "ia_digital": "IA y competencias digitales", "otra": "Otra"}   # ia_digital: PLAN §59
 
 
 def _texto(v, largo=300):

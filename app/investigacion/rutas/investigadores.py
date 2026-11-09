@@ -3,6 +3,7 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, FtResponse, HtmxRe
                              Option, P, Response, Select, Span, Ul)
 from monsterui.all import H2, Card, Grid, Input, TextPresets, UkIcon
 
+from app.ia.rutas.panel import marca_si
 from app.investigacion import actividades, lineas, perfiles, productos
 from app.comun import fotos, permisos, vinculos
 from app.investigacion.componentes.lineas import insignias_lineas
@@ -150,7 +151,8 @@ def get(auth, uid: int):
                     Div(*[chip_msc(a, principal=bool(a["principal"])) for a in areas],
                         cls="flex flex-wrap gap-2") if areas
                     else P("Sin áreas declaradas.", cls=TextPresets.muted_sm)),
-            seccion("pub-bio", "Resumen de investigación", texto_con_parrafos(p["bio"])),
+            seccion("pub-bio", "Resumen de investigación", texto_con_parrafos(p["bio"]),
+                    marca_si("cv_resumen", f"investigador:{uid}", p["bio"])),
             _produccion(uid),
             seccion("pub-ids", "Identificadores", lista_identificadores(p)),
             cls="space-y-6 max-w-3xl"),

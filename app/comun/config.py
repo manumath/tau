@@ -37,6 +37,15 @@ FILIACIONES = [f.strip() for f in os.environ.get(
 # el uso por consulta y la clave permite superar el cupo gratuito si hiciera falta.
 OPENALEX_URL = os.environ.get("PORTAL_OPENALEX_URL", "https://api.openalex.org")
 OPENALEX_CLAVE = os.environ.get("PORTAL_OPENALEX_CLAVE")
+# IA con criterio humano (PLAN §59): dos proveedores con API de chat compatible con OpenAI. Sin URL, el proveedor no
+# existe; sin PORTAL_IA_EXT_ZDR=true (retención cero de datos), el externo queda deshabilitado. Nunca en la base.
+IA_LOCAL_URL = os.environ.get("PORTAL_IA_LOCAL_URL")          # p. ej., http://127.0.0.1:11434/v1 (Ollama)
+IA_LOCAL_MODELO = os.environ.get("PORTAL_IA_LOCAL_MODELO")
+IA_EXT_URL = os.environ.get("PORTAL_IA_EXT_URL")              # p. ej., https://openrouter.ai/api/v1
+IA_EXT_MODELO = os.environ.get("PORTAL_IA_EXT_MODELO")
+IA_EXT_CLAVE = os.environ.get("PORTAL_IA_EXT_CLAVE")
+IA_EXT_ZDR = os.environ.get("PORTAL_IA_EXT_ZDR", "").strip().lower() in ("1", "true", "si", "sí")
+IA_TIEMPO_S = float(os.environ.get("PORTAL_IA_TIEMPO_S", "300"))  # límite por llamada (un modelo local es lento)
 # Correo de contacto que se envía a Crossref (su «polite pool» responde mejor si se identifica).
 CONTACTO = os.environ.get("PORTAL_CONTACTO")
 

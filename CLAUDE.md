@@ -49,6 +49,12 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - `app/estudiantil`: seguimiento estudiantil (PLAN §49): cohortes, carga del CSV de Seguimiento Académico,
   actividad estudiantil y encuestas. Sin materias ni notas. `app/egresados`: titulación, seguimiento,
   indicadores de egresados (PLAN §50) y registro de empleadores (PLAN §57).
+- `app/ia`: IA con criterio humano (PLAN §59). Todo uso de un modelo pasa por `servicio.generar`. Cada dato se
+  clasifica en `clasificacion.py`; los módulos vedados (auxiliaturas, grado, oferta, carga y tutoría) no importan
+  `app.ia`. Las salidas nacen como borrador y solo surten efecto con `servicio.texto_aprobado`. Las pruebas reemplazan
+  `servicio._enviar`: nunca salen a la red. Las decisiones de diseño van en `docs/ia/decisiones.md`. Las funciones y
+  el contexto que recibe cada una se arman solo en `catalogo.py`; las pantallas usan `rutas/panel.bloque` y muestran el
+  texto aprobado con `panel.texto_aprobado` (lleva la marca). Ninguna cifra sale del modelo (`textos.cifras`).
 - `app/servicios`: comunicados y eventos, auxiliaturas y proyectos de grado (PLAN §58), con pantallas del personal en
   `/servicios/*` y de los estudiantes en `/estudiante/{comunicados,auxiliaturas,tribunal,grado}`.
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en

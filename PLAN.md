@@ -2769,3 +2769,68 @@ Dirección del Instituto pueda actualizar las líneas.
 - El área es obligatoria al crear o editar una línea.
 - Las 3 líneas anteriores no se cierran solas.
 - La Dirección del Instituto puede adscribir y quitar proyectos (también institucionales) desde la ficha de la línea.
+
+### Etapa 0a: fundaciones (hecha, 8-nov-2026)
+- **Migración 0061** (`ia`): `ia_politica`, `ia_funcion` (nace apagada y exige un responsable para activarse), `ia_uso`
+  y `ia_salida`.
+- **Código en `app/ia`:**
+  - `clasificacion.py`: niveles 0–3 por origen; lo no clasificado se rechaza.
+  - `funciones.py`: catálogo y `VEDADOS`.
+  - `servicio.py`:
+    - política y activación;
+    - instrucciones versionadas;
+    - seudonimización;
+    - enrutamiento local o externo con retención cero (`PORTAL_IA_*`);
+    - ejecución en segundo plano con aviso;
+    - revisión humana (`decidir`), `texto_aprobado` y `marca`.
+- Aún no hay funciones registradas ni pantallas (etapa 0b). TAU funciona exactamente igual.
+- Las adaptaciones, las decisiones del agente y la tabla de pruebas por principio están en `docs/ia/decisiones.md`.
+
+### Etapas 0b a 4 (hechas, 8-nov-2026)
+El usuario pidió ejecutar todas las etapas y commitear al final. La **etapa 5** (TAU para otras instituciones) **no se
+hizo**: la hoja de ruta la condiciona a resolver la titularidad y la licencia con la UMSA.
+
+- **Migración 0062** (`ia-etapas`):
+  - `ia_cierre`: decisión de cierre de cada piloto, con su fundamento.
+  - `producto_linea`: líneas asignadas directamente a un producto.
+  - `capacitacion`: el área nueva `ia_digital` (se recrea la tabla para cambiar su CHECK, con todas sus filas).
+- **Acciones:** `gestionar_ia` (Dirección de Carrera) y `ver_uso_ia` (las dos direcciones y la Comisión de calidad).
+- **0b · Pantallas:**
+  - `/ia` («Uso de IA en TAU»): para todo el personal, desde el menú del usuario.
+  - `/ia/admin`: política por versiones (con un borrador propuesto), activación y responsable de cada función.
+  - `/ia/usos`: resultados del piloto, usos recientes y decisiones de cierre.
+  - `/ia/sesgos`: el reporte de sesgos.
+  - `/ia/guia`: guía de uso crítico, en una ventana.
+  - El panel de revisión reutilizable (`app/ia/rutas/panel.py`): Aprobar o Descartar, corrección en el mismo texto o
+    con casillas, valoración de 1 a 5 y motivo. No se imprime; el documento solo lleva el texto aprobado con su marca.
+- **Funciones** (`app/ia/catalogo.py`, con sus instrucciones `v1.md`):
+  - 1a · `memoria_borrador`: la presentación y la síntesis por línea de la memoria. La piden y la aprueban
+    la Dirección del Instituto (decisión 7) y va en la memoria impresa.
+  - 1b · `informe_proyecto_borrador`: la síntesis del periodo, solo para el responsable del proyecto.
+  - 2 · `producto_clasificar`: sugiere hasta 3 líneas oficiales; se guarda solo lo que el investigador marca (decisión
+    5). `cv_resumen`: el resumen del perfil, solo para el propio investigador; su nombre va seudonimizado; al aprobarlo
+    reemplaza el resumen y la marca se ve en el perfil, el perfil público y el CV mientras el texto no cambie.
+  - 3a · `encuesta_sintesis`: los temas de una pregunta abierta. Desde 10 respuestas, solo con el modelo local, con las
+    respuestas mezcladas y sin metadatos. La síntesis no reproduce tramos de 8 palabras o más copiados de una
+    respuesta.
+  - 3b · `evidencia_sugerir`: sugiere registros del sistema del periodo evaluado (productos, proyectos y
+    actividades); cada uno aceptado se registra como evidencia de tipo enlace del criterio. `autoevaluacion_borrador`:
+    redacta solo el texto del juicio y el nivel lo sigue poniendo la Comisión. La página pública no usa ningún texto de
+    IA.
+- **Cifras:** el modelo nunca escribe una cifra. Recibe marcadores (`{{productos}}`) que `textos.cifras` reemplaza
+  por los valores de la base. Un número suyo que no esté en los datos queda como «[cifra por verificar]».
+- **1b · Medición** (`app/ia/medicion.py`), por función y año, sin cifras por persona:
+  - usos; aprobadas sin cambios, con cambios y descartadas; errores;
+  - horas hasta la decisión, edición media y valoración media.
+  - La decisión de cierre la registra la Dirección de Carrera; «retirar» apaga la función.
+- **2 · Sesgos:** tasa de descarte de las líneas sugeridas, por línea y por tipo de producto. Se señala lo que se
+  descarta al menos 1,5 veces más que el promedio (con 5 sugerencias o más).
+- **4 · Capacitación:**
+  - El área «IA y competencias digitales» se suma a la capacitación, que ahora aparece en el CV.
+  - Hay un indicador automático `personal_capacitado_ia`, que la Dirección puede agregar al marco.
+  - La plantilla de encuesta anónima `percepcion_ia` (académicos, tipo «otra», para no mezclarse con la satisfacción
+    docente).
+- **Pruebas:** `tests/test_ia_etapas.py`, con permisos por rol, cada función y los principios de cada etapa.
+- **Expectativa cambiada a propósito:** en `test_navegacion`, el grupo Administración de quien tiene `ver_uso_ia`
+  incluye ahora «IA: administración y piloto».
+- **Decisiones del agente por confirmar:** están en `docs/ia/decisiones.md`, sección «Etapas 0b a 4».

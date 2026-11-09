@@ -105,4 +105,22 @@ PLANTILLAS = {
             ("En general, estoy satisfecho(a) con mi trabajo en la Carrera.", E, None, "satisfaccion"),
             ("¿Qué debería mejorar la Carrera?", T, None),
         ]},
+    # PLAN §59, etapa 4: percepción del uso de la IA en TAU, una vez por gestión. Tipo «otra»: no entra en los
+    # indicadores de satisfacción de los académicos.
+    "percepcion_ia": {
+        "titulo": "Percepción del uso de la IA en TAU", "tipo": "otra", "anonima": True, "publico": "docentes",
+        "descripcion": ("Queremos saber cómo le resultan las funciones de IA del sistema (borradores y sugerencias que "
+                        "usted revisa). Es anónima y no influye en ninguna evaluación."),
+        "preguntas": [
+            ("¿Usó alguna función de IA de TAU en esta gestión?", S, None),
+            ("¿Cuáles usó?", M, ["Memoria o informe de proyecto", "Resumen del perfil", "Líneas de un producto",
+                                 "Síntesis de encuestas", "Autoevaluación (evidencias o narrativa)", "Ninguna"]),
+            ("Los borradores de la IA me ahorran tiempo.", E, None),
+            ("Reviso con cuidado lo que propone la IA antes de aprobarlo.", E, None),
+            ("Encontré errores o datos inventados en lo que propuso la IA.", E, None),
+            ("Sé qué datos usa la IA y cuáles no salen del sistema.", E, None),
+            ("Me siento con la preparación necesaria para usar la IA de forma crítica.", E, None),
+            ("¿Qué capacitación en IA o competencias digitales le serviría?", T, None),
+            ("¿Qué cambiaría del uso de la IA en TAU?", T, None),
+        ]},
 }

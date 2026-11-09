@@ -1058,6 +1058,47 @@ proyecto y ser del mismo periodo).
     artículos de las revistas verificadas que figuran en ese índice (los de revistas sin verificar
     conservan lo que declararon sus autores) y queda en la auditoría.
 
+## Inteligencia artificial con criterio humano
+
+El sistema puede preparar **borradores** con inteligencia artificial (IA): la IA sugiere y usted decide. Ningún borrador
+surte efecto hasta que una persona lo aprueba, y todo texto aprobado lleva la marca «Elaborado con apoyo de IA;
+revisado por…». Para ver qué funciones hay, qué datos usan y si esos datos salen del sistema, abra **Uso de IA en TAU**
+en el menú con su nombre (arriba a la derecha).
+
+- **Todo nace apagado.** La Dirección de Carrera aprueba la política de uso, activa cada función y designa a su
+  responsable (menú, grupo Administración: **IA: administración y piloto**). Si una función no está activa, el botón
+  no aparece y usted trabaja como siempre.
+- **Dónde no se usa:** auxiliaturas, asignación docente y carga horaria, evaluación del desempeño, tutoría,
+  tribunales de grado y cualquier decisión sobre una persona.
+- **Cómo se revisa un borrador.** Al pedirlo, la IA trabaja en segundo plano; usted puede seguir y le llega un aviso
+  cuando está listo. En el panel del borrador:
+  1. Corrija el texto lo que haga falta (o marque y desmarque las opciones sugeridas).
+  2. Si quiere, diga si le fue útil (1 a 5) y por qué.
+  3. Pulse **Aprobar** o **Descartar**. El sistema registra si usted cambió el borrador.
+- **Las cifras salen de la base de datos.** Donde vea «[cifra por verificar]», el modelo escribió un número por su
+  cuenta: complételo con el dato real o borre la frase. La **Guía de uso crítico** (enlace en cada panel) resume qué
+  revisar antes de aprobar.
+
+| Dónde | Qué prepara la IA | Quién lo pide y lo aprueba |
+|---|---|---|
+| Memoria del Instituto | La presentación y la síntesis por línea; va en la memoria impresa con su marca | Dirección del Instituto |
+| Informe de un proyecto | La síntesis del periodo | El responsable del proyecto |
+| Ficha de un producto | Las líneas de investigación que le corresponden; solo se guardan las que usted marca | Quien puede editar el producto |
+| Mi perfil | El resumen de investigación (su nombre se reemplaza por un seudónimo antes de enviarse) | Usted |
+| Resultados de una encuesta | Los temas de las respuestas abiertas, desde 10 respuestas, sin copiar frases | Quien gestiona las encuestas |
+| Autoevaluación, cada criterio | Registros del sistema que podrían servir de evidencia, y el texto del juicio (el nivel lo pone la Comisión) | Comisión de calidad y Dirección de Carrera |
+
+- **Resultados del piloto** (direcciones y Comisión de calidad): cuántos borradores se aprobaron, cuánto se
+  corrigieron, cuánto se tardó en decidir y cómo se valoraron, por función y año, sin cifras por persona. Con ellos la
+  Dirección de Carrera registra la decisión de cierre de cada función: **ampliar**, **ajustar** o **retirar** (que la
+  apaga). El **reporte de sesgos** muestra si las sugerencias de líneas se descartan bastante más en una línea o en un
+  tipo de producto.
+- **Capacitación:** registre los cursos de IA en Capacitación con el área **IA y competencias digitales**; aparecen
+  en su CV y en el indicador «Personal capacitado en IA y competencias digitales», que la Dirección puede agregar al
+  marco de calidad.
+- **Percepción:** una vez por gestión, la Dirección o la Coordinación pueden crear la encuesta anónima «Percepción del
+  uso de la IA en TAU» desde Encuestas (plantilla).
+
 ## Preguntas frecuentes
 
 **Registré un artículo y mi coautor(a) del instituto también: ¿quedó duplicado?**

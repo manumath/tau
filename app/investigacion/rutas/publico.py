@@ -9,6 +9,7 @@ from fasthtml.common import (A, APIRouter, Div, FileResponse, Footer, Form, Head
                              Li, Main, P, Redirect, Response, Span, Title, Ul)
 from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets, UkIcon
 
+from app.ia.rutas.panel import marca_si
 from app.comun import config, fotos
 from app.investigacion import lineas, perfiles, productos
 from app.investigacion.componentes.lineas import insignias_lineas
@@ -142,7 +143,8 @@ def get(uid: int):
             seccion("pub-areas", "Áreas de investigación (MSC2020)",
                     Div(*[chip_msc(a, principal=bool(a["principal"])) for a in areas], cls="flex flex-wrap gap-2")
                     if areas else P("—", cls=TextPresets.muted_sm)),
-            seccion("pub-bio", "Investigación", texto_con_parrafos(p["bio"], vacio="—")),
+            seccion("pub-bio", "Investigación", texto_con_parrafos(p["bio"], vacio="—"),
+                    marca_si("cv_resumen", f"investigador:{uid}", p["bio"])),
             seccion("pub-productos", f"Publicaciones ({len(prods)})",
                     Ul(*[_cita_publica(x, publicos) for x in prods], cls="divide-y divide-border") if prods
                     else P("—", cls=TextPresets.muted_sm)),

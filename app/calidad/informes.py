@@ -88,8 +88,10 @@ def cv(uid: int, desde: int, hasta: int, solo_informe: bool = False, solo_filiac
     for a in acts:
         por_tipo.setdefault(a["tipo"], []).append(a)
     proys = [p for p in proyectos.de_investigador(uid) if _en_periodo_proyecto(p, desde, hasta)]
+    from app.calidad import capacitacion   # (import local: capacitacion → anexo → informes). PLAN §59, etapa 4
+    capac = [c for c in capacitacion.listar(usuario=uid) if desde <= int(c["fecha_fin"][:4]) <= hasta]
     return {"perfil": perfil, "areas": perfiles.areas(uid), "grupos": grupos,
-            "actividades": por_tipo, "proyectos": proys,
+            "actividades": por_tipo, "proyectos": proys, "capacitacion": capac,
             "n_productos": len(prods), "n_informe": sum(productos.cuenta_para_informe(p) for p in prods),
             "n_actividades": len(acts)}
 
