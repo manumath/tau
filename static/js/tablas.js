@@ -1,7 +1,9 @@
 // Tablas que se pueden trabajar: toda <table data-tabla="nombre-del-archivo"> gana, sin recargar,
 //   - orden por columna (clic en el encabezado; números, fechas y texto en español),
 //   - filtro por texto (sin distinguir tildes ni mayúsculas) con el conteo «N de M filas»,
-//   - «Descargar CSV» de las filas visibles (UTF-8 con BOM, como los CSV del servidor).
+//   - «Descargar CSV» de las filas visibles (UTF-8 con BOM, como los CSV del servidor),
+//   - en el teléfono, filas como tarjetas: cada celda lleva data-label con el título de su columna (CSS en
+//     estilos/entrada.css; data-tabla-movil="tabla" lo evita).
 // Las columnas sin título (acciones) no se ordenan ni se exportan. Una celda puede traer
 // data-valor con el valor para ordenar (p. ej., una fecha ISO si muestra otra cosa).
 // Se aplica también al contenido que llega por htmx (evento htmx:load) y se actualiza si htmx
@@ -43,6 +45,14 @@
     const esAviso = (f) => f.cells.length === 1 && f.cells[0].colSpan > 1;
     const filas = () => Array.from(cuerpo().rows).filter((f) => !esAviso(f));
     const conFiltro = tabla.dataset.tablaFiltro !== "no";  // p. ej., listas con buscador propio del servidor
+    const titulos = encabezados.map((th) => th.textContent.replace(/\s+/g, " ").trim());
+    function rotular() {  // título de la columna en cada celda (tarjetas del teléfono)
+      Array.from(cuerpo().rows).forEach((f) => {
+        if (esAviso(f)) return;
+        Array.from(f.cells).forEach((c, i) => { if (titulos[i] && !c.dataset.label) c.dataset.label = titulos[i]; });
+      });
+    }
+    rotular();
 
     // Barra: filtro, conteo y descarga (no se imprime).
     const barra = document.createElement("div");
@@ -70,7 +80,8 @@
       contar();
     }
     if (conFiltro) filtro.addEventListener("input", filtrar);
-    tabla._tablaRefrescar = function () {  // htmx cambió las filas: se vuelve a filtrar y contar
+    tabla._tablaRefrescar = function () {  // htmx cambió las filas: se vuelve a rotular, filtrar y contar
+      rotular();
       const activo = encabezados.find((th) => ["ascending", "descending"].includes(th.getAttribute("aria-sort")));
       if (activo) {
         encabezados.forEach((o) => { if (o.getAttribute("aria-sort")) o.setAttribute("aria-sort", "none"); });

@@ -92,3 +92,19 @@ def test_paginas_publicas_sin_problemas_de_accesibilidad(page):
         if (p := page.evaluate(REVISAR)):
             hallados[ruta] = p
     assert hallados == {}, "\n".join(f"{r}:\n  " + "\n  ".join(p) for r, p in hallados.items())
+
+
+@pytest.mark.parametrize("ruta", ["/admin/usuarios"])
+def test_tablas_como_tarjetas_en_el_telefono(page, ruta):
+    """Bajo 640 px las tablas de trabajo son tarjetas con el título de cada columna y la página no se desplaza a lo
+    ancho (PLAN §62, UX-01)."""
+    page.set_viewport_size({"width": 375, "height": 800})
+    entrar(page, "admin" if ruta == "/admin/usuarios" else "direccion")
+    page.goto(ruta)
+    tabla = page.locator("table[data-tabla-lista]").first
+    if not tabla.count():
+        pytest.skip(f"{ruta} no muestra una tabla con estos datos")
+    celda = tabla.locator("tbody tr:not(:has(td[colspan])) td[data-label]").first
+    assert celda.count(), "las celdas no llevan el título de su columna"
+    assert celda.evaluate("c => getComputedStyle(c).display") == "flex"
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")

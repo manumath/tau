@@ -116,3 +116,29 @@ body:has(.htmx-request) .barra-superior::after {
 @media (prefers-reduced-motion: reduce) {
   body:has(.htmx-request) .barra-superior::after { animation: tau-cargando 0s 300ms forwards; background-size: 100% 100%; }
 }
+
+/* Tablas de trabajo en el teléfono (PLAN §62, UX-01): bajo 640 px, cada fila de una table[data-tabla] es una tarjeta
+   y cada celda muestra el título de su columna (data-label, lo pone tablas.js). data-tabla-movil="tabla" la deja como
+   tabla (grillas que se leen por columnas). */
+@media (max-width: 639.98px) {
+  table[data-tabla-lista]:not([data-tabla-movil="tabla"]) thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  table[data-tabla-lista]:not([data-tabla-movil="tabla"]),
+  table[data-tabla-lista]:not([data-tabla-movil="tabla"]) tbody { display: block; width: 100%; }
+  table[data-tabla-lista]:not([data-tabla-movil="tabla"]) tbody tr {
+    display: block; border: 1px solid hsl(var(--border)); border-radius: 0.5rem; padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  table[data-tabla-lista]:not([data-tabla-movil="tabla"]) tbody td {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 0.75rem;
+    padding: 0.25rem 0 !important; border: 0 !important; text-align: right;
+  }
+  table[data-tabla-lista]:not([data-tabla-movil="tabla"]) tbody td[data-label]::before {
+    content: attr(data-label); font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-align: left;
+  }
+  /* Columnas que el escritorio oculta en pantallas medianas (hidden lg:table-cell) siguen ocultas. */
+  table[data-tabla-lista]:not([data-tabla-movil="tabla"]) tbody td.hidden { display: none; }
+  /* El aviso «no hay datos» ocupa la tarjeta entera. */
+  table[data-tabla-lista]:not([data-tabla-movil="tabla"]) tbody td[colspan] { justify-content: center; text-align: center; }
+}

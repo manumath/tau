@@ -67,6 +67,7 @@ En las tablas principales (carga horaria, oferta, usuarios, propuestas, revistas
 informes…) puede **ordenar** haciendo clic en el título de una columna (otro clic invierte el orden),
 **filtrar** escribiendo en «Filtrar…» (no distingue tildes ni mayúsculas) y **descargar en CSV** lo
 que ve, con el orden y el filtro aplicados. El CSV se abre en Excel con las tildes correctas.
+En el teléfono, estas tablas muestran cada fila como una tarjeta, con el nombre de cada dato a la izquierda.
 
 En las listas con búsqueda o filtros arriba (productos, actividades, investigadores, coautores externos,
 estudiantes, revistas, usuarios y auditoría), lo que usted elige **queda en la dirección de la página**. Así,

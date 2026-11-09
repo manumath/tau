@@ -86,6 +86,10 @@ def _estado(u, bloqueada=False):
                 cls="inline-flex items-center gap-1 text-green-700 dark:text-green-400 text-sm")
 
 
+# Acciones de la fila con ícono y texto (PLAN §62, UX-04): se entienden sin pasar el puntero.
+ACCION = (ButtonT.ghost, ButtonT.sm, "gap-1 whitespace-nowrap")
+
+
 def fila(u, auth: dict):
     """Fila de una persona. Muestra solo las acciones que quien mira (`auth`) puede hacer."""
     uid = u["id"]
@@ -94,17 +98,15 @@ def fila(u, auth: dict):
     cuentas = permisos.puede(auth, "administrar_cuentas")
     bloqueada = usuarios.bloqueado(u["email"])
     boton_desbloquear = Button(
-        UkIcon("lock-open", height=18, width=18), cls=(ButtonT.ghost, ButtonT.icon),
-        aria_label="Desbloquear", title="Desbloquear (sin cambiar la contraseña)",
+        UkIcon("lock-open", height=16, width=16), "Desbloquear", cls=ACCION, title="Desbloquear (sin cambiar la contraseña)",
         hx_post=f"/admin/usuarios/{uid}/desbloquear", hx_target=f"#usuario-{uid}",
         hx_swap="outerHTML") if bloqueada else ""
     # Si tiene vínculo vigente, desactivar abre una ventana que pregunta si también termina.
     con_vinculo = (u["activo"] and u["es_investigador"] and vinculos.vigente(uid)
                    and gestiona_vinculos(auth))
     boton_activo = Button(
-        UkIcon("user-x" if u["activo"] else "user-check", height=18, width=18),
-        cls=(ButtonT.ghost, ButtonT.icon),
-        aria_label="Desactivar cuenta" if u["activo"] else "Activar cuenta",
+        UkIcon("user-x" if u["activo"] else "user-check", height=16, width=16),
+        "Desactivar" if u["activo"] else "Activar", cls=ACCION,
         **({"hx_get": f"/admin/usuarios/{uid}/desactivar", "hx_target": f"#{ID_MODAL}"} if con_vinculo else
            {"hx_post": f"/admin/usuarios/{uid}/activo", "hx_target": f"#usuario-{uid}", "hx_swap": "outerHTML"}),
         hx_vals='{"activo": "0"}' if u["activo"] and not con_vinculo else '{"activo": "1"}' if not u["activo"] else None,
@@ -113,9 +115,7 @@ def fila(u, auth: dict):
               ("Desactivar cuenta" if u["activo"] else "Activar cuenta"))
     sin_acceso = academicos.sin_acceso(u)
     boton_reset = Button(
-        UkIcon("key-round", height=18, width=18),
-        cls=(ButtonT.ghost, ButtonT.icon),
-        aria_label="Habilitar acceso" if sin_acceso else "Restablecer contraseña",
+        UkIcon("key-round", height=16, width=16), "Dar acceso" if sin_acceso else "Contraseña", cls=ACCION,
         hx_post=f"/admin/usuarios/{uid}/restablecer", hx_target=f"#{ID_MODAL}",
         hx_confirm=(f"¿Habilitar el acceso de {u['email']} con una contraseña temporal?" if sin_acceso else
                     f"¿Generar una nueva contraseña temporal para {u['email']}? La actual dejará de funcionar."),
@@ -123,8 +123,7 @@ def fila(u, auth: dict):
         title="Use «Contraseña» en el menú para cambiar la suya" if es_yo else
               ("Habilitar acceso (contraseña temporal)" if sin_acceso else "Restablecer contraseña"))
     boton_ficha = Button(
-        UkIcon("graduation-cap", height=18, width=18), cls=(ButtonT.ghost, ButtonT.icon),
-        aria_label="Ficha académica", title="Ficha académica (grados)",
+        UkIcon("graduation-cap", height=16, width=16), "Ficha", cls=ACCION, title="Ficha académica (grados)",
         hx_get=f"{BASE}/{uid}/ficha", hx_target=f"#{ID_MODAL}") \
         if permisos.puede(auth, "gestionar_fichas") or permisos.puede(auth, "ver_datos_personales") else ""
     return Tr(
@@ -136,7 +135,7 @@ def fila(u, auth: dict):
         Td(fecha_local(u["ultimo_acceso"]),
            cls=(TextPresets.muted_sm, "whitespace-nowrap hidden lg:table-cell")),
         Td(Div(boton_ficha, *([boton_desbloquear, boton_activo, boton_reset] if cuentas else []),
-               cls="flex gap-1 justify-end")),
+               cls="flex flex-wrap gap-1 justify-end")),
         id=f"usuario-{uid}")
 
 

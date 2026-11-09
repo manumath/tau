@@ -2916,6 +2916,14 @@ acciones y 57 actividades del apéndice del informe (sin datos personales; los r
   (`estilos/entrada.css`, `body:has(.htmx-request)`); sin animación con `prefers-reduced-motion`.
 - **Prueba:** la de accesibilidad exige además un solo `<h1>` y ninguna fecha ISO en el texto de `<main>`.
 
+### Etapa 4: tablas en el teléfono y acciones con texto (UX-01, UX-04)
+- **Tarjetas bajo 640 px:** toda `table[data-tabla]` muestra cada fila como tarjeta, con el título de la columna junto a
+  cada dato (`tablas.js` pone `data-label`, también tras un reemplazo por htmx; CSS en `estilos/entrada.css`). Una grilla
+  que se lee por columnas puede quedar como tabla con `data-tabla-movil="tabla"`. La prueba
+  `test_tablas_como_tarjetas_en_el_telefono` revisa que no haya desplazamiento horizontal a 375 px.
+- **Usuarios:** las acciones de cada fila llevan ícono y texto («Ficha», «Desactivar», «Contraseña», «Dar acceso»,
+  «Desbloquear») en vez de íconos solos.
+
 ### Decisiones del agente por confirmar
 - La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
   en la Guía significa extensión, se cambia en el CSV antes de cargarlo.
