@@ -1,11 +1,12 @@
 """Carga del historial de vínculos desde un CSV de Recursos Humanos.
 
-Formato: una fila por periodo con `email`, `categoria`, `desde` y, opcionalmente, `hasta`
-(vacío = vigente), `jornada` (horas semanales) y `nota`. Fechas como AAAA-MM-DD o DD/MM/AAAA.
-El vínculo es con una sola dependencia (la Carrera; el Instituto forma parte de ella): si el archivo
+Formato: una fila por periodo con `email`, `categoria`, `desde` y, opcionalmente, `hasta` (vacío = vigente),
+`jornada` (horas semanales), `nota` y la carga horaria contratada: `carga` (32 a 160 h/mes) y su distribución en
+`docencia`, `investigacion`, `extension`, `gestion` y `otras` (múltiplos de 32 que suman `carga`). Fechas como
+AAAA-MM-DD o DD/MM/AAAA. El vínculo es con una sola dependencia (la Carrera; el Instituto forma parte de ella): si el archivo
 trae una columna `unidad`, se ignora. El historial de cada persona del archivo se **reemplaza** por
-el del archivo (Recursos Humanos es la fuente oficial); lo que no aparece no cambia. La carga
-horaria contratada se registra después, en el vínculo de cada persona.
+el del archivo (Recursos Humanos es la fuente oficial); lo que no aparece no cambia. Un periodo sin `carga` queda
+sin carga, que se registra después en el vínculo de cada persona.
 
 Flujo en dos pasos, como la carga de cuentas: `leer` valida y agrupa por persona sin cambiar
 nada; `aplicar` reemplaza el historial de las personas sin errores.
@@ -25,10 +26,16 @@ ALIAS = {
     "hasta": ("hasta", "termino", "fin", "fecha termino", "fecha de termino", "fecha fin"),
     "jornada": ("jornada", "horas", "horas semanales", "jornada horas"),
     "nota": ("nota", "observacion", "observaciones", "resolucion"),
+    "horas": ("carga", "carga contratada", "carga horaria", "horas contratadas", "horas mes"),
+    "docencia": ("docencia",),
+    "investigacion": ("investigacion",),
+    "extension": ("extension", "extension y servicios"),
+    "gestion": ("gestion",),
+    "otras": ("otras", "otra", "otras actividades"),
 }
-PLANTILLA = ("email,categoria,desde,hasta,jornada,nota\n"
-             "emmy.noether@umsa.bo,contratado,01/03/2018,31/12/2021,40,Contrato 12/2018\n"
-             "emmy.noether@umsa.bo,titular,01/01/2022,,40,Resolución 345/2021\n")
+PLANTILLA = ("email,categoria,desde,hasta,jornada,nota,carga,docencia,investigacion,extension,gestion,otras\n"
+             "emmy.noether@umsa.bo,contratado,01/03/2018,31/12/2021,40,Contrato 12/2018,64,64,0,0,0,0\n"
+             "emmy.noether@umsa.bo,titular,01/01/2022,,40,Resolución 345/2021,160,96,64,0,0,0\n")
 
 
 def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
@@ -75,11 +82,14 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
             problemas.append(f"falta la fecha de término ({vinculos.CATEGORIAS[cat].lower()}: periodo definido)")
         if jornada and not (jornada.isdigit() and 1 <= int(jornada) <= 60):
             problemas.append("jornada: horas semanales entre 1 y 60")
+        carga = vinculos.leer_carga({k: celda(k) for k in ("horas", *vinculos.ACTIVIDADES)})
+        problemas += [e.rstrip(".")[0].lower() + e.rstrip(".")[1:] for e in vinculos.validar_carga(carga)]
         if problemas:
             p["errores"].append(f"Fila {linea}: " + "; ".join(problemas) + ".")
         else:
             p["periodos"].append({"linea": linea, "categoria": cat, "desde": desde, "hasta": hasta,
-                                  "jornada": int(jornada) if jornada else None, "nota": celda("nota") or None})
+                                  "jornada": int(jornada) if jornada else None, "nota": celda("nota") or None,
+                                  "carga": carga})
     if not personas:
         return [], ["El archivo no tiene filas con datos."]
     for p in personas.values():

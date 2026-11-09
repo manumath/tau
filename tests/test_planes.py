@@ -44,6 +44,22 @@ def test_estructura_del_plan(app):
     assert planes.totales(m["id"]) == {"en créditos": (None, 60)}  # 5×6 + 3 electivas×6 + tesis 12
 
 
+def test_lineas_formativas(app):
+    """Migración 0063: cada asignatura de licenciatura tiene su línea formativa; el área sale del archivo o de la
+    línea de investigación."""
+    p = _plan("Licenciatura en Matemática")
+    filas = {f["sigla"]: f for f in planes.asignaturas(p["id"]) if f["sigla"]}
+    assert all(f["linea_formativa"] for f in filas.values())
+    assert (filas["MAT-111"]["linea_formativa"], filas["MAT-111"]["area"]) == ("Álgebra", "Álgebra")
+    assert filas["MAT-111"]["linea"].lower() == "estructuras algebraicas ordenadas"
+    assert (filas["MAT-112"]["area"], filas["MAT-112"]["linea"]) == ("Análisis", None)
+    assert filas["MAT-114"]["area"] is None  # formación básica, sin área
+    assert filas["FIS-137"]["linea_formativa"].startswith("Ciencias Básicas")
+    # Volver a cargar el archivo no cambia nada.
+    assert importar_planes.cargar_lineas_formativas(get_db().conn) == len(
+        list(csv.DictReader(open(importar_planes.CARPETA / "lineas-formativas.csv", encoding="utf-8"))))
+
+
 def test_observaciones_marcadas(app):
     def detalles(programa):
         return sorted(o["tipo"] for o in planes.observaciones(_plan(programa)["id"]))
@@ -93,6 +109,7 @@ def test_pantallas_y_resolucion(client, app):
     assert "Licenciatura en Matemática Aplicada" in r.text and "por revisar" in r.text
     r = client.get(f"/docencia/planes/{p['id']}")
     assert "Octavo semestre" in r.text and "MAT-394" in r.text and "la dicta otra unidad" in r.text
+    assert "Línea formativa" in r.text and "Fundamentos y Matemática Discreta" in r.text
     assert "No coincide" in r.text and "Marcar resuelta" not in r.text  # un investigador solo consulta
     oid = next(o["id"] for o in planes.observaciones(p["id"]) if o["tipo"] == "totales")
     assert client.post(f"/docencia/planes/observaciones/{oid}/resolver", headers=HX,

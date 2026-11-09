@@ -127,7 +127,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0062). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0063). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.
@@ -377,6 +377,19 @@ Las funciones y los datos que recibe cada una están en `app/ia/catalogo.py`: pa
 `app/ia/instrucciones/<clave>/v1.md`, ofrézcala en su pantalla con `app/ia/rutas/panel.bloque` y agregue sus pruebas.
 Las cifras de un borrador nunca vienen del modelo: se le dan marcadores (`{{productos}}`) que `textos.cifras` reemplaza
 por los valores de la base.
+
+### 5.9 Cargar datos desde un formulario de antecedentes ya llenado
+
+El conversor de la Guía de Antecedentes llenada y la correspondencia para llenarla desde la ficha
+(`iac-cinda/guia_a_tau.py` y `iac-cinda/correspondencia-guia.csv`) son **locales y privados**: no se versionan, porque
+conocen las celdas del instrumento de la agencia y trabajan con datos reales (PLAN §57 y §61). El conversor lee la Guía
+sin escribirla y deja en `iac-cinda/carga/` los CSV que aceptan las cargas del sistema, un `productos.bib` y un
+`informe.md` con lo que falta completar. Con `--tau` toma los correos de una **copia** de la base (nunca de
+`data/portal.db`).
+
+Orden de carga, cada una con su vista previa: cuentas (Usuarios → Importar CSV), historial con la carga horaria
+(Importar historial, Dirección de Carrera), grados (Importar grados), capacitación (Calidad → Capacitación → Importar
+CSV) y productos (Productos → Importar BibTeX). La capacitación exige que la persona ya tenga vínculo.
 
 ## 6. Problemas frecuentes
 

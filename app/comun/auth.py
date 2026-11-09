@@ -31,6 +31,7 @@ REGLAS_ADMIN = [
     (r"/admin/usuarios/(\d+/vinculo(/\w+)?|\d+/categoria|vinculo/\d+(/editar)?|historial(/\w+)?)",
      ("gestionar_vinculos",)),
     (r"/admin/usuarios/\d+/(ficha|grados(/\d+)?|fecha-nacimiento)", ("gestionar_fichas", "ver_datos_personales")),
+    (r"/admin/usuarios/importar-grados(/\w+)?", ("gestionar_fichas",)),
     (r"/admin/usuarios(/lista|/filas)?", ("administrar_cuentas", "gestionar_vinculos", "gestionar_fichas")),
     (r"/admin/usuarios/.+", ("administrar_cuentas",)),
     (r"/admin/auditoria(/.+)?", ("ver_auditoria",)),

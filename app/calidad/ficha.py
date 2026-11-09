@@ -17,7 +17,7 @@ from datetime import date
 from lxml import etree
 
 from app.academico import gestiones
-from app.calidad import cuerpo_academico, indicadores
+from app.calidad import cuerpo_academico, indicadores, listados
 from app.calidad import marco as marco_calidad
 from app.comun import exportar
 from app.comun.xlsx_plantilla import Plantilla
@@ -82,7 +82,8 @@ def datos(marco: dict, hasta: int | None = None) -> dict:
     tablero = {a: indicadores.valores_del_anio(marco["id"], a) for a in anios_}
     inds = [i for d in marco_calidad.arbol(marco["id"], inactivos=False) for c in d["criterios"] for i in c["indicadores"]]
     return {"anios": anios_, "semestres": [f"{t}-{a}" for a, t in sems], "academicos": academicos_, "oferta": oferta,
-            "admision": admision, "trayectoria": trayectoria, "indicadores": inds, "tablero": tablero}
+            "admision": admision, "trayectoria": trayectoria, "indicadores": inds, "tablero": tablero,
+            "listados": listados.todos(anios_, date.today().isoformat())}
 
 
 def valores(d: dict) -> dict[str, object]:
@@ -111,12 +112,17 @@ def valores(d: dict) -> dict[str, object]:
         for a in d["anios"]:
             r = d["tablero"][a].get(i["id"])
             v[f"indicador.{i['codigo']}.{a}"] = r["valor"] if r else None
+    v.update(listados.valores(d.get("listados") or {}))
     return v
 
 
 def nombre_de(clave: str) -> str:
     """Descripción legible de una clave (hoja «Claves» del XLSX)."""
     partes = clave.split(".")
+    if partes[0] == "listado" and len(partes) == 3:
+        columnas = listados.COLUMNAS_PLAN if partes[1].startswith(("asignaturas_", "electivas_")) else \
+            listados.COLUMNAS.get(partes[1], {})
+        return f"Listado {partes[1].replace('_', ' ')}: {columnas.get(partes[2], partes[2])} (una fila por registro)"
     seccion, periodo = partes[0], partes[-1]
     nombres = {"academicos": CAMPOS_ACADEMICOS, "admision": CAMPOS_ADMISION, "cohorte": CAMPOS_COHORTE,
                "oferta": {"paralelos": "Paralelos", "inscripciones": "Inscripciones"}}.get(seccion, {})
@@ -141,7 +147,8 @@ def a_xlsx(d: dict) -> bytes:
     tray = [{"Cohorte": x["semestre"], **{t: x[k] for k, t in CAMPOS_COHORTE.items()}} for x in d["trayectoria"]]
     inds = [{"Código": i["codigo"], "Indicador": i["nombre"], "Unidad": i["unidad_medida"] or "",
              **{str(a): (d["tablero"][a].get(i["id"]) or {}).get("valor") for a in d["anios"]}} for i in d["indicadores"]]
-    claves = [{"clave": k, "descripción": nombre_de(k) if not k.startswith("indicador.") else k, "valor": val}
+    claves = [{"clave": k, "descripción": nombre_de(k) if not k.startswith("indicador.") else k,
+               "valor": f"{len(val)} fila(s)" if isinstance(val, list) else val}
               for k, val in valores(d).items()]
     return exportar.a_xlsx({"Cuerpo académico": acad, "Oferta": oferta, "Admisión": adm, "Cohortes": tray,
                             "Indicadores": inds, "Claves": claves})
@@ -197,7 +204,13 @@ def llenar(plantilla: bytes, filas: list[dict], vals: dict[str, object]) -> tupl
     n = 0
     for f in filas:
         v = vals[f["clave"]]
-        x.escribir(f["hoja"], f["celda"], v)
-        n += v is not None
+        if isinstance(v, list):  # un listado: una celda por fila, hacia abajo desde la indicada
+            col, fila = re.match(r"([A-Z]+)(\d+)", f["celda"]).groups()
+            for i, w in enumerate(v):
+                x.escribir(f["hoja"], f"{col}{int(fila) + i}", w)
+                n += w is not None
+        else:
+            x.escribir(f["hoja"], f["celda"], v)
+            n += v is not None
     return x.guardar(), [], n
 

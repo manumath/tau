@@ -54,6 +54,33 @@ def _separador(texto: str) -> str:
     return max((",", ";", "\t"), key=primera.count)
 
 
+def leer_tabla(contenido: bytes, alias: dict, obligatorias: tuple, max_filas: int):
+    """Lee un CSV con encabezados (por sus alias, sin tildes ni mayúsculas) → (filas, errores generales). Cada fila es
+    (n.º de línea, {campo: texto}) y omite las vacías. Lo usan las cargas que no necesitan nada más especial."""
+    if len(contenido) > MAX_BYTES:
+        return [], ["El archivo supera 1 MB."]
+    texto = _decodificar(contenido)
+    if not texto.strip():
+        return [], ["El archivo está vacío."]
+    lector = csv.reader(io.StringIO(texto), delimiter=_separador(texto))
+    encabezados = [sin_tildes(h).strip().replace("﻿", "") for h in next(lector, [])]
+    indice = {c: next((i for i, h in enumerate(encabezados) if h in a), None) for c, a in alias.items()}
+    faltan = [c for c in obligatorias if indice[c] is None]
+    if faltan:
+        return [], [f"Faltan columnas: {', '.join(faltan)}. La primera fila debe tener los encabezados."]
+    filas = []
+    for linea, registro in enumerate(lector, start=2):
+        if not any(c.strip() for c in registro):
+            continue
+        if len(filas) >= max_filas:
+            return [], [f"Se procesan hasta {max_filas} filas; divida el archivo."]
+        filas.append((linea, {c: registro[i].strip() if i is not None and i < len(registro) else ""
+                              for c, i in indice.items()}))
+    if not filas:
+        return [], ["El archivo no tiene filas con datos."]
+    return filas, []
+
+
 def _booleano(valor: str, por_omision: bool) -> bool | None:
     v = sin_tildes(valor or "").strip()
     if v == "":

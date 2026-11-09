@@ -20,6 +20,14 @@ Tipos: `obligatoria`, `trabajo_final`; en las listas de electivas (sin semestre)
 `electiva_b` o `electiva`; y las casillas de un semestre que se llenan con una electiva
 (`casilla_electiva_a`, `casilla_electiva_b`, `casilla_electiva`, sin sigla).
 
+## lineas-formativas.csv
+
+Una fila por asignatura (`sigla`): su `linea_formativa` (Álgebra, Análisis, Geometría y Topología, Fundamentos y
+Matemática Discreta, Matemática Aplicada y Computacional, Ciencias Básicas…) y, si corresponde, el `area` de
+investigación o la `linea` oficial con que se relaciona (por nombre; si trae línea, el área sale de ella). Es propia de
+la asignatura, no del plan. La cargó la migración 0063, con la clasificación que usó la Comisión de calidad en el
+informe de autoevaluación (PLAN §61).
+
 ## observaciones.csv
 
 Inconsistencias que solo se ven leyendo el documento. Las demás (totales que no cuadran,

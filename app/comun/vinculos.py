@@ -394,7 +394,7 @@ def reemplazar_historial(uid: int, periodos: list[dict], creado_por: int | None 
         for p in periodos:
             db.t.vinculo.insert(usuario_id=uid, unidad_id=carrera(), categoria=p["categoria"], fecha_inicio=p["desde"],
                                 fecha_fin=p["hasta"], jornada_horas=p.get("jornada"), nota=p.get("nota"),
-                                creado_por=creado_por)
+                                creado_por=creado_por, **_columnas_carga(p.get("carga")))
     _avisar(uid)
 
 

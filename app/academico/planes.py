@@ -31,8 +31,11 @@ def obtener(pid: int) -> dict | None:
 def asignaturas(pid: int) -> list[dict]:
     """Asignaturas y casillas del plan, en el orden del documento, con sus requisitos."""
     filas = get_db().q(
-        """SELECT pa.*, a.sigla, a.nombre, a.de_la_carrera FROM plan_asignatura pa
-           LEFT JOIN asignatura a ON a.id = pa.asignatura_id WHERE pa.plan_id = ? ORDER BY pa.orden""", [pid])
+        """SELECT pa.*, a.sigla, a.nombre, a.de_la_carrera, a.linea_formativa,
+                  ar.nombre AS area, li.nombre AS linea
+           FROM plan_asignatura pa LEFT JOIN asignatura a ON a.id = pa.asignatura_id
+           LEFT JOIN area_investigacion ar ON ar.id = a.area_id LEFT JOIN linea_investigacion li ON li.id = a.linea_id
+           WHERE pa.plan_id = ? ORDER BY pa.orden""", [pid])
     requisitos = {}
     for r in get_db().q("""SELECT r.* FROM requisito r JOIN plan_asignatura pa ON pa.id = r.plan_asignatura_id
                            WHERE pa.plan_id = ? ORDER BY r.id""", [pid]):

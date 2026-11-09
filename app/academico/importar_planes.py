@@ -57,6 +57,29 @@ def cargar_carpeta(con, carpeta: Path = CARPETA) -> list[int]:
     return creados
 
 
+def cargar_lineas_formativas(con, carpeta: Path = CARPETA) -> int:
+    """Línea formativa, área y línea de investigación de cada asignatura (`lineas-formativas.csv`: sigla,
+    linea_formativa, area, linea). El área se busca por nombre; la línea, por nombre entre las vigentes, y si el
+    archivo no trae área se toma la de la línea. Lo que no se encuentra queda vacío. → asignaturas actualizadas."""
+    archivo = carpeta / "lineas-formativas.csv"
+    if not archivo.exists():
+        return 0
+    with open(archivo, encoding="utf-8", newline="") as f:
+        filas = list(csv.DictReader(f))
+    n = 0
+    for r in filas:
+        linea = _uno(con, "SELECT id FROM linea_investigacion WHERE lower(nombre) = lower(?) ORDER BY id LIMIT 1",
+                     ((r.get("linea") or "").strip(),)) if (r.get("linea") or "").strip() else None
+        area = _uno(con, "SELECT id FROM area_investigacion WHERE lower(nombre) = lower(?)",
+                    ((r.get("area") or "").strip(),)) if (r.get("area") or "").strip() else None
+        if area is None and linea is not None:
+            area = _uno(con, "SELECT area_id FROM linea_investigacion WHERE id = ?", (linea,))
+        con.execute("UPDATE asignatura SET linea_formativa = ?, area_id = ?, linea_id = ? WHERE sigla = ?",
+                          ((r.get("linea_formativa") or "").strip() or None, area, linea, r["sigla"].strip()))
+        n += _uno(con, "SELECT changes()")
+    return n
+
+
 def cargar_plan(con, p: dict, filas: list[dict], conocidas: list[dict] = ()) -> int | None:
     unidad = _uno(con, "SELECT id FROM unidad WHERE sigla = 'CMAT'")
     programa = _uno(con, "SELECT id FROM programa WHERE nombre = ?", (p["programa"],)) or _insertar(

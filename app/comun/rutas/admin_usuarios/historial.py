@@ -18,9 +18,12 @@ def _form_historial(errores=()):
         P("Suba un CSV de Recursos Humanos con una fila por periodo: ", Code("email"), ", ", Code("categoria"), ", ",
           Code("desde"), " y, si quiere, ", Code("hasta"), " (vacío = vigente), ", Code("jornada"), " (horas "
           "semanales) y ", Code("nota"), ". Fechas como AAAA-MM-DD o DD/MM/AAAA.", cls="text-sm"),
-        P("El historial de cada persona del archivo se reemplaza por el del archivo; lo demás no cambia. La carga "
-          "horaria contratada se registra después en el vínculo de cada persona. Primero verá una vista previa.",
-          cls=TextPresets.muted_sm),
+        P("Si tiene la carga horaria contratada de cada periodo, agregue ", Code("carga"), " (32 a 160 h/mes) y su "
+          "distribución en ", Code("docencia"), ", ", Code("investigacion"), ", ", Code("extension"), ", ",
+          Code("gestion"), " y ", Code("otras"), " (múltiplos de 32 que suman la carga). Si no, se registra después en "
+          "el vínculo de cada persona.", cls="text-sm"),
+        P("El historial de cada persona del archivo se reemplaza por el del archivo; lo demás no cambia. Primero verá "
+          "una vista previa.", cls=TextPresets.muted_sm),
         A(UkIcon("download", height=14, width=14), "Descargar plantilla", href="/admin/usuarios/historial/plantilla",
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
         Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
@@ -58,7 +61,7 @@ async def post(auth, archivo: UploadFile = None):
     for p in personas:
         nombre = f"{p['usuario']['apellidos']}, {p['usuario']['nombres']}" if p["usuario"] else p["email"]
         periodos = "; ".join(f"{vinculos.CATEGORIAS[x['categoria']]} {x['desde']} a {x['hasta'] or 'hoy'}"
-                             for x in p["periodos"])
+                             + (f" ({x['carga']['horas']} h/mes)" if x.get("carga") else "") for x in p["periodos"])
         filas.append(Tr(Td(Div(nombre, cls="font-medium"), Div(p["email"], cls=TextPresets.muted_sm)),
                         Td(periodos or "—", cls="text-sm"),
                         Td(Label("Error", cls=LabelT.destructive), Div(*[P(e, cls="text-sm") for e in p["errores"]])

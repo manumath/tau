@@ -118,9 +118,13 @@ def get(auth, q: str = ""):
                        title="Periodos de vínculo y categorías desde Recursos Humanos",
                        hx_get="/admin/usuarios/historial", hx_target=f"#{ID_MODAL}")
                 if gestiona_vinculos(auth) else "",
+                Button(UkIcon("graduation-cap", height=16, width=16), "Importar grados", cls=ButtonT.default,
+                       title="Grados académicos de varias personas desde un CSV",
+                       hx_get="/admin/usuarios/importar-grados", hx_target=f"#{ID_MODAL}")
+                if permisos.puede(auth, "gestionar_fichas") else "",
                 Button(UkIcon("user-plus", height=16, width=16), "Nuevo usuario", cls=ButtonT.primary,
                        hx_get="/admin/usuarios/nuevo", hx_target=f"#{ID_MODAL}") if cuentas else "",
-                cls="flex gap-2"),
+                cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         Div(buscador,
             Span(UkIcon("loader-circle", height=16, width=16, cls="animate-spin"),

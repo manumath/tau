@@ -2834,3 +2834,91 @@ hizo**: la hoja de ruta la condiciona a resolver la titularidad y la licencia co
 - **Expectativa cambiada a propósito:** en `test_navegacion`, el grupo Administración de quien tiene `ver_uso_ia`
   incluye ahora «IA: administración y piloto».
 - **Decisiones del agente por confirmar:** están en `docs/ia/decisiones.md`, sección «Etapas 0b a 4».
+
+## 61. Plan de mejora del informe de autoevaluación y carga desde la Guía de Antecedentes (8-nov-2026)
+
+El usuario pidió dos cosas: analizar si TAU se adecua al plan de mejora del informe de autoevaluación de la Carrera
+(15 acciones y 57 actividades, 2026–2030), y planificar el uso del informe y de la Guía de Antecedentes llenada para
+poblar TAU, en especial a las personas y el plan de estudios.
+
+### Adecuación al plan de mejora
+TAU cubre más o menos dos tercios de lo que el plan pide registrar o medir:
+- **Bien cubierto:** el SIAC (indicadores, evidencias, autoevaluación, encuestas y página pública), cohortes y
+  deserción, titulación oportuna, tutoría, egresados y empleadores, cuerpo académico y JCE, capacitación, producción
+  verificable, convenios, impacto de la interacción social, estancias y redes, y las pautas de IA.
+- **Brechas:**
+  - El módulo del plan de mejora no tiene la estructura del plan (ver abajo).
+  - La causa de cada deserción y las reincorporaciones (A4.1); las atenciones de acompañamiento en 1.º y 2.º año (A4.2).
+  - Las vacantes de admisión (A4.4); el rendimiento por gestión, solo como agregados del SSA (A4.5).
+  - La cobertura de contenidos y el cumplimiento del calendario (A6.4); el perfil de egreso versionado (A6.1–6.2).
+  - Inducción y mentoría docente (A7.3); el banco de proyectos (A8.4).
+  - El indicador de localización de titulados (A5.1) y el de mujeres entre los ingresantes (A10.1).
+  - El uso de la biblioteca (A13); la ejecución de Recursos Propios (A14).
+  - El aviso de privacidad en los formularios (A15.2).
+  - Lo de cogobierno (A3) se deja como evidencias.
+
+### Postergado por decisión del usuario (8-nov-2026): reestructurar el plan de mejora
+El usuario decidió **postergar** el ajuste del plan de mejora; queda registrado para retomarlo. Hoy `accion_mejora`
+tiene un solo nivel, con meta pero sin línea base, y el plazo se sobrescribe. El plan del informe pide:
+- **actividades** dentro de cada acción, con línea base, meta, indicador, responsable, plazo, **presupuesto y fuente**,
+  medio de verificación y de difusión;
+- **reprogramación** con la causa documentada (historial del plazo);
+- **seguimiento por corte**: trimestral (Comisión), anual (Dirección) y bienal (DEAGEC), con un informe que sirva de
+  evidencia;
+- prioridades P1, P2 y P3 (equivalen a alta, media y baja).
+
+Cuando se retome: tablas `actividad_mejora` y `reprogramacion_mejora`, un informe por corte en PDF y la carga de las 15
+acciones y 57 actividades del apéndice del informe (sin datos personales; los responsables se asignan en TAU).
+
+### Hecho (8-nov-2026)
+- **Etapa 1: línea formativa de las asignaturas.**
+  - Migración **0063** (`lineas-formativas`, en Python): `asignatura.linea_formativa`, `area_id` y `linea_id`, cargadas
+    de `datos/planes/lineas-formativas.csv`. Son las 95 asignaturas de las licenciaturas, con la clasificación de la
+    Comisión en la Guía (hojas 7.a y 7.b).
+  - El área sale del archivo o, si trae una línea oficial, de esa línea.
+  - La ficha de cada plan muestra la columna «Línea formativa».
+- **Etapa 2: cargas por CSV de los datos académicos.**
+  - **Historial de vínculos con carga horaria:** columnas opcionales `carga`, `docencia`, `investigacion`,
+    `extension`, `gestion` y `otras`, validadas como en el formulario del vínculo (múltiplos de 32 que suman la carga).
+    La columna `horas` sigue siendo la jornada semanal, por compatibilidad.
+  - **Importar grados** (`app/comun/importar_grados.py`, `/admin/usuarios/importar-grados`, acción
+    `gestionar_fichas`): solo agrega, omite lo ya registrado y entiende «Licenciado», «M.Sc.», «Doctor»….
+  - **Importar capacitaciones** (`app/calidad/importar_capacitacion.py`, `/calidad/capacitacion/importar`, acción
+    `registrar_capacitacion`).
+  - `importar_usuarios.leer_tabla`: el lector de CSV común de las cargas nuevas.
+- **Etapa 3: listados de la ficha estadística** (`app/calidad/listados.py`).
+  - Una fila por persona vinculada, capacitación, asignatura o electiva de cada plan, artículo, libro o capítulo,
+    proyecto y actividad de la ventana del marco.
+  - De las personas: grados, año y fecha de ingreso, unidad, cargo, categoría, carga por actividad, asignaturas
+    dictadas como titular con sus gestiones y tesis dirigidas defendidas; **sin fecha de nacimiento, edad ni correo**.
+  - De las asignaturas: semestre, requisitos, veces dictada, máximo de inscritos por paralelo, línea formativa y área.
+  - Cada columna es la clave `listado.<tabla>.<columna>`; `ficha.llenar` la escribe hacia abajo desde la celda de la
+    correspondencia. Así TAU llena las hojas 7.a, 7.b, 10, 13, 22 y 23 de la Guía.
+- **Etapa 4: conversor privado** (`iac-cinda/guia_a_tau.py`, no versionado; ver `docs/mantenimiento.md` §5.9).
+  - Lee la Guía llenada y deja los CSV de cuentas, historial, grados y capacitación, un `productos.bib` (hojas 22 y
+    23) y un informe con los avisos. También escribe la correspondencia privada para llenar la plantilla en blanco.
+  - Probado sobre una copia de la base de desarrollo, solo con la vista previa de cada carga, sin aplicar nada:
+    - se hallaron los correos de 29 de las 31 personas;
+    - 18 historiales sin errores; los demás son interinos o invitados sin fecha de término y 2 cargas que no son
+      múltiplos de 32;
+    - 63 grados nuevos y 32 productos nuevos;
+    - las 22 capacitaciones esperan a que las personas tengan vínculo.
+
+### Decisiones del agente por confirmar
+- La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
+  en la Guía significa extensión, se cambia en el CSV antes de cargarlo.
+- El historial que arma el conversor tiene dos periodos:
+  - uno desde la fecha de ingreso hasta el 31 de diciembre del año anterior al de referencia, sin carga;
+  - otro desde el 1 de enero del año de referencia, con la carga de la Guía.
+  - Las categorías de antes no se conocen; la Dirección de Carrera lo revisa con Recursos Humanos.
+- La fecha de término de interinos, contratados e invitados no se inventa: queda vacía y la carga la rechaza hasta
+  que la Dirección la complete.
+- Una capacitación con solo el año se registra como concluida el 31 de diciembre (o hoy, en el año en curso).
+- No se cargan:
+  - las asignaturas dictadas de la hoja 10: la oferta de una gestión se importa completa y reemplaza la gestión;
+  - los proyectos (hoja 20) ni las actividades (hojas 19, 21 y 26 a 28): se registran en TAU por sus responsables.
+- Las hojas 9, 14 y 15 a 18 (Consejo, personal no académico, becas, bienestar y recursos) siguen sin destino en TAU.
+
+### Pendiente
+- El plan de mejora (postergado, arriba) y las brechas de la lista.
+- Una carga de actividades por CSV, si registrar a mano las ~85 filas de las hojas 19, 21 y 26 a 28 resulta pesado.

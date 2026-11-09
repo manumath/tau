@@ -200,6 +200,21 @@ def test_importar_historial_reemplaza(carrera, emmy, hoy):
     assert perfiles.obtener(emmy)["categoria"] == "titular"
 
 
+def test_historial_con_carga_por_actividad(emmy):
+    csv_ = ("email,categoria,desde,hasta,carga,docencia,investigacion,extension,gestion,otras\n"
+            "inv@test.cl,contratado,2018-03-01,2021-12-31,64,64,0,0,0,0\n"
+            "inv@test.cl,titular,2022-01-01,,160,96,32,0,32,0\n")
+    personas, _ = importar_vinculos.leer(csv_.encode())
+    assert personas[0]["errores"] == []
+    importar_vinculos.aplicar(personas, usuarios.por_email("admin@test.cl")["id"])
+    assert [vinculos.texto_carga(v) for v in vinculos.listar(emmy)] == [
+        "64 h/mes: docencia 64", "160 h/mes: docencia 96, investigación 32, gestión 32"]
+    malo = "email,categoria,desde,carga,docencia,investigacion\ninv@test.cl,titular,2022-01-01,100,64,0\n" \
+           "inv@test.cl,titular,2023-01-01,128,64,32\n"
+    errores = importar_vinculos.leer(malo.encode())[0][0]["errores"]
+    assert any("32, 64, 96, 128 o 160" in e for e in errores) and any("suma 96 h/mes" in e for e in errores)
+
+
 def test_csv_de_cuentas_con_fecha_de_ingreso(app, hoy):
     filas, _ = importar_usuarios.leer(b"email,nombres,apellidos,categoria,fecha de ingreso\n"
                                       b"a@test.cl,Ana,Uno,titular,15/03/2021\nb@test.cl,Bea,Dos,titular,ayer\n")

@@ -463,8 +463,9 @@ el equipo lo integran sus participantes, del instituto o externos.
 **Planes de estudio** (grupo «Docencia» del menú): los programas de la Carrera (Licenciatura en
 Matemática, Licenciatura en Matemática Aplicada, Maestría en Matemática y Maestría en Matemática
 Aplicada) con su plan vigente. La ficha de cada plan muestra las asignaturas por semestre y ciclo,
-con sus horas (teóricas, prácticas y de laboratorio) o créditos y sus requisitos; las listas de
-electivas; los totales del documento frente a la suma del plan; y las **observaciones**: lo que no
+con sus horas (teóricas, prácticas y de laboratorio) o créditos, sus requisitos y su **línea formativa**
+(Álgebra, Análisis, Fundamentos y Matemática Discreta…) con el área o la línea de investigación con que se
+relaciona; las listas de electivas; los totales del documento frente a la suma del plan; y las **observaciones**: lo que no
 cuadra en el documento (se cargó tal como está). La Dirección de Carrera y la Coordinación
 académica las marcan como resueltas indicando cómo se resolvió.
 
@@ -879,13 +880,23 @@ las columnas `hoja,celda,clave` (en qué celda va cada cifra) y súbalo junto co
 el sistema escribe solo esas celdas y deja intactos las fórmulas, los gráficos y el formato. Ninguno de los dos archivos
 se guarda en el sistema; la correspondencia es privada de la Carrera. Revise el resultado antes de enviarlo.
 
+**Listados.** Además de las cifras, la ficha tiene listados con una fila por registro, para los formularios que piden
+tablas: académicos vinculados (grados, año de incorporación, categoría, carga por actividad, asignaturas dictadas y tesis
+dirigidas, sin fecha de nacimiento ni edad), capacitaciones, asignaturas y electivas de cada plan (con las veces que se
+dictaron, el máximo de estudiantes por paralelo y la línea formativa), artículos, libros y capítulos, proyectos y
+actividades. En la correspondencia, cada columna es una clave como `listado.academicos.apellidos` y se escribe **hacia
+abajo** desde la celda indicada. La hoja «Claves» del XLSX los lista con la cantidad de filas.
+
 ### Capacitación, convenios e impacto social
 
 Tres registros que alimentan indicadores del marco y que antes se llevaban aparte. Los ven quienes ven el marco de calidad.
 
 - **Capacitación** (la registran la Dirección de Carrera y Gestión de datos): cursos, talleres, diplomados y pasantías que
   concluyó cada académico, con su área, sus horas y, si hay, el certificado como evidencia. Cuenta en el año en que
-  concluyó. Indicador: «Personal capacitado» (académicos vinculados con alguna capacitación en el año).
+  concluyó. Indicador: «Personal capacitado» (académicos vinculados con alguna capacitación en el año). **Importar CSV**
+  carga varias a la vez (`email`, `titulo`, `area` y, si los tiene, `institucion`, `horas`, `fecha_inicio` y
+  `fecha_fin`); si solo conoce el año, la columna `anio` la registra como concluida el 31 de diciembre. Lo ya
+  registrado se omite.
 - **Convenios** (los registra la Dirección de Carrera): contraparte, país, ámbito, tipo, firma, vigencia, objeto y el
   texto firmado como evidencia. En la ficha de cada convenio se anota lo que se hizo con él (estancias, cursos, proyectos,
   publicaciones). Indicador: «Convenios con actividad en el año». Un convenio con actividades no se elimina.
@@ -983,9 +994,13 @@ proyecto y ser del mismo periodo).
     la persona estaba vinculada**, con la categoría de ese momento. Las cuentas sin fecha de
     ingreso se marcan en ámbar.
   - **Importar historial** (Dirección de Carrera): carga el historial desde un CSV de Recursos
-    Humanos (`email`, `categoria`, `desde`, `hasta`, `jornada` y `nota`; una fila por periodo). El
-    historial de cada persona del archivo se reemplaza por el del archivo; la carga horaria se
-    registra después en su vínculo.
+    Humanos (`email`, `categoria`, `desde`, `hasta`, `jornada` y `nota`; una fila por periodo). Si
+    tiene la carga horaria contratada de cada periodo, agregue `carga` (32 a 160 h/mes) y su
+    distribución en `docencia`, `investigacion`, `extension`, `gestion` y `otras`; si no, se registra
+    después en su vínculo. El historial de cada persona del archivo se reemplaza por el del archivo.
+  - **Importar grados** (las direcciones y Gestión de datos): carga grados académicos de varias
+    personas desde un CSV (`email`, `nivel` y, si los tiene, `titulo`, `institucion`, `pais` y
+    `anio`). Solo agrega: no borra grados y omite los que ya están registrados.
   - Al **desactivar** una cuenta con vínculo vigente, a la Dirección de Carrera el sistema le
     pregunta si también termina el vínculo y en qué fecha. Lo publicado mientras estuvo vinculada sigue contando.
 - **Propuestas:** la bandeja de propuestas institucionales por periodo, con filtro por estado y el

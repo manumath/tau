@@ -117,7 +117,11 @@ def _pagina_plantilla(auth, h, errores=()):
                   Span("hoja,celda,clave", cls="font-mono"), " que dice en qué celda va cada cifra. Las claves están en la "
                   "hoja «Claves» del XLSX de la ficha (p. ej., ", Span("academicos.total.2025", cls="font-mono"), ", ",
                   Span("admision.mujeres.I-2025", cls="font-mono"), ", ", Span("indicador.D3.2.b.2025", cls="font-mono"),
-                  ")."), cls="uk-list uk-list-disc pl-5"),
+                  ")."),
+               Li(Span("Los listados", cls="font-medium"), " (claves que empiezan con ", Span("listado.", cls="font-mono"),
+                  ", como ", Span("listado.academicos.apellidos", cls="font-mono"), ") tienen una fila por persona, "
+                  "asignatura, producto, proyecto o actividad: se escriben hacia abajo desde la celda indicada, una "
+                  "columna por clave. Deje en la plantilla filas suficientes."), cls="uk-list uk-list-disc pl-5"),
             P("Ninguno de los dos archivos se guarda en el sistema: la correspondencia con los criterios de un organismo es "
               "privada de la Carrera. Revise siempre el resultado antes de enviarlo."),
             cls="text-sm max-w-3xl space-y-3 my-4"),

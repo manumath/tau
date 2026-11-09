@@ -1,12 +1,14 @@
 """Capacitación del personal (PLAN §57, etapa 8): la registran la Dirección de Carrera y Gestión de datos; la ven quienes
 ven el marco de calidad."""
+import base64
 from datetime import date
 
-from fasthtml.common import A, APIRouter, Div, Option, P, Redirect, Response, Select, Span, Table, Tbody, Td, Th, Thead, Tr
+from fasthtml.common import (A, APIRouter, Code, Div, Option, P, Redirect, Response, Select, Span, Table, Tbody, Td, Th,
+                             Thead, Tr, UploadFile)
 from fasthtml.toaster import add_toast
-from monsterui.all import H2, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon
+from monsterui.all import H2, Button, ButtonT, Card, Form, Input, Label, LabelInput, LabelT, TextPresets, UkIcon
 
-from app.calidad import capacitacion, evidencias, marco
+from app.calidad import capacitacion, evidencias, importar_capacitacion, marco
 from app.calidad.rutas.mejora import _botones_modal, _fecha, _select
 from app.comun import unidades
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
@@ -45,6 +47,8 @@ def get(auth, anio: str = ""):
                             name="anio", aria_label="Año", cls="uk-select uk-form-small w-28"),
                      Button("Ver", type="submit", cls=(ButtonT.default, ButtonT.sm)), method="get", action=BASE,
                      cls="flex gap-2"),
+                Button(UkIcon("file-up", height=14, width=14), "Importar CSV", cls=(ButtonT.default, ButtonT.sm),
+                       hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if registra else "",
                 Button(UkIcon("plus", height=14, width=14), "Registrar capacitación", cls=(ButtonT.primary, ButtonT.sm),
                        hx_get=f"{BASE}/nueva", hx_target=f"#{ID_MODAL}") if registra else "",
                 cls="flex flex-wrap items-center gap-2"),
@@ -162,3 +166,87 @@ def delete(auth, sess, cid: int):
     auditar(auth["id"], "quitar_capacitacion", "capacitacion", cid, c["titulo"])
     add_toast(sess, "Capacitación quitada.", "success")
     return Redirect(f"{BASE}?anio={c['fecha_fin'][:4]}")
+
+
+# --- Carga por CSV (PLAN §61) -------------------------------------------------------------------------------
+
+def _form_importar(errores=()):
+    return modal(
+        "Importar capacitaciones",
+        Form(mensaje_error(*errores),
+             P("Suba un CSV con una fila por persona y capacitación: ", Code("email"), ", ", Code("titulo"), ", ",
+               Code("area"), " (disciplinar, pedagógica, investigación, gestión, IA u otra) y, si los tiene, ",
+               Code("institucion"), ", ", Code("horas"), ", ", Code("fecha_inicio"), " y ", Code("fecha_fin"), ".",
+               cls="text-sm"),
+             P("Si solo conoce el año, use la columna ", Code("anio"), ": la capacitación se registra como concluida el "
+               "31 de diciembre de ese año. Lo que ya está registrado se omite. Primero verá una vista previa.",
+               cls=TextPresets.muted_sm),
+             A(UkIcon("download", height=14, width=14), "Descargar plantilla", href=f"{BASE}/importar/plantilla",
+               cls="inline-flex items-center gap-1 text-sm text-primary hover:underline"),
+             Input(type="file", name="archivo", accept=".csv,text/csv", required=True, aria_label="Archivo CSV"),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
+                 Button("Revisar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
+             hx_post=f"{BASE}/importar/revisar", hx_encoding="multipart/form-data", hx_target=f"#{ID_MODAL}",
+             cls="space-y-4"),
+        ancho="max-w-2xl")
+
+
+@rt(f"{BASE}/importar")
+def get(auth):
+    return _form_importar() if _registra(auth, _marco()) else _no()
+
+
+@rt(f"{BASE}/importar/plantilla")
+def get(auth):
+    if not _registra(auth, _marco()):
+        return _no()
+    return Response(importar_capacitacion.PLANTILLA.encode("utf-8-sig"), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="plantilla-capacitacion.csv"'})
+
+
+@rt(f"{BASE}/importar/revisar")
+async def post(auth, archivo: UploadFile = None):
+    if not _registra(auth, _marco()):
+        return _no()
+    if archivo is None or not archivo.filename:
+        return _form_importar(["Seleccione un archivo."])
+    contenido = await archivo.read(importar_capacitacion.MAX_BYTES + 1)
+    filas, errores = importar_capacitacion.leer(contenido)
+    if not filas:
+        return _form_importar(errores)
+    nuevas = sum(f["estado"] == "nueva" for f in filas)
+    insignias = {"nueva": ("Nueva", LabelT.primary), "existe": ("Ya registrada", LabelT.secondary),
+                 "error": ("Error", LabelT.destructive)}
+    return modal(
+        "Vista previa de las capacitaciones",
+        P(f"{nuevas} nueva(s) · {sum(f['estado'] == 'existe' for f in filas)} ya registrada(s) · "
+          f"{sum(f['estado'] == 'error' for f in filas)} con errores, se omiten.", cls="text-sm font-medium mb-3"),
+        Div(Table(Thead(Tr(Th("Fila", cls="w-12"), Th("Persona"), Th("Capacitación"), Th("Concluyó", cls="w-24"),
+                           Th("Resultado"))),
+                  Tbody(*[Tr(Td(str(f["linea"])), Td(f["nombre"] or f["email"]), Td(f["titulo"]),
+                             Td(_fecha(f["datos"]["fecha_fin"]) if f["datos"] else "—"),
+                             Td(Label(insignias[f["estado"]][0], cls=insignias[f["estado"]][1]),
+                                P(f["mensaje"], cls="text-sm") if f["mensaje"] else ""))
+                          for f in filas]),
+                  cls="uk-table uk-table-divider uk-table-small text-sm"),
+            cls="max-h-96 overflow-y-auto border border-border rounded-md mb-4"),
+        Form(Input(type="hidden", name="contenido", value=base64.b64encode(contenido).decode()),
+             Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
+                 Button(f"Registrar {nuevas} capacitación(es)", type="submit", cls=ButtonT.primary, disabled=not nuevas),
+                 cls="flex justify-end gap-2"),
+             hx_post=f"{BASE}/importar/confirmar", hx_target=f"#{ID_MODAL}"),
+        ancho="max-w-4xl")
+
+
+@rt(f"{BASE}/importar/confirmar")
+def post(auth, sess, contenido: str = ""):
+    if not _registra(auth, _marco()):
+        return _no()
+    try:
+        datos = base64.b64decode(contenido, validate=True)
+    except ValueError:
+        return _form_importar(["No se pudo leer el archivo. Súbalo otra vez."])
+    filas, _ = importar_capacitacion.leer(datos)
+    n = importar_capacitacion.aplicar(filas, auth["id"])
+    add_toast(sess, f"Se registraron {n} capacitación(es).", "success")
+    return Redirect(BASE)

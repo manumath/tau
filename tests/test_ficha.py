@@ -69,3 +69,47 @@ def test_llenar_por_pantalla(carrera):
     r = carrera.post("/calidad/ficha/plantilla", headers=HX,
                      files={"plantilla": ("form.xlsx", _plantilla()), "correspondencia": ("c.csv", malo)})
     assert "clave desconocida" in r.text
+
+
+def test_listados_de_la_ficha(carrera):
+    """PLAN §61: los listados (una fila por persona, asignatura…) se escriben hacia abajo desde la celda indicada."""
+    from app.academico import gestiones
+    from app.calidad import capacitacion
+    from app.comun import academicos, usuarios, vinculos
+    from app.comun.db import get_db
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    vinculos.agregar(emmy, "titular", f"{HOY - 3}-02-01", carga={
+        "horas": 160, "actividades": {"docencia": 96, "investigacion": 64, "extension": 0, "gestion": 0, "otras": 0},
+        "detalles": {}})
+    academicos.agregar_grado(emmy, {"nivel": "doctorado", "titulo": "Doctorado en Matemática",
+                                    "institucion": "Universidad Dos", "pais": "Chile"})
+    academicos.agregar_grado(emmy, {"nivel": "licenciatura", "institucion": "Universidad Uno"})
+    capacitacion.crear({"usuario_id": emmy, "titulo": "Taller", "institucion": None, "area": "otra", "horas": 8,
+                        "fecha_inicio": f"{HOY - 1}-03-01", "fecha_fin": f"{HOY - 1}-03-02", "evidencia_id": None}, emmy)
+    g = gestiones.por_codigo(f"I-{HOY - 1}") or next(x for x in gestiones.crear_anio(HOY - 1) if x["tipo"] == "I")
+    asig = get_db().q("SELECT id FROM asignatura WHERE sigla = 'MAT-111'")[0]["id"]
+    oid = get_db().t.oferta.insert(gestion_id=g["id"], asignatura_id=asig, paralelo="A", inscritos=42)["id"]
+    get_db().t.oferta_docente.insert(oferta_id=oid, usuario_id=emmy, rol="titular")
+    d = ficha.datos(_marco(), HOY)
+    v = ficha.valores(d)
+    assert v["listado.academicos.apellidos"] == ["Noether"]
+    assert v["listado.academicos.grado_1"] == ["Licenciatura o título profesional"]
+    assert v["listado.academicos.grado_2"] == ["Doctorado en Matemática"]
+    assert v["listado.academicos.institucion_2"] == ["Universidad Dos (Chile)"]
+    assert v["listado.academicos.horas_total"] == [160] and v["listado.academicos.horas_investigacion"] == [64]
+    assert v["listado.academicos.cursos"] == [f"Algebra I (I-{HOY - 1})"] and v["listado.academicos.n_cursos"] == [1]
+    assert v["listado.capacitacion.titulo"] == ["Taller"]
+    plan = next(k for k in v if k.startswith("listado.asignaturas_licenciatura_en_matematica_") and k.endswith(".nombre"))
+    base = plan.rsplit(".", 1)[0]
+    i = v[f"{base}.sigla"].index("MAT-111")
+    assert v[plan][i] == "Algebra I (MAT-111)" and v[f"{base}.veces_dictada"][i] == 1
+    assert v[f"{base}.max_estudiantes"][i] == 42 and v[f"{base}.linea_formativa"][i] == "Álgebra"
+    assert "fecha_nacimiento" not in " ".join(v) and "edad" not in " ".join(k for k in v if k.startswith("listado."))
+    assert "Listado academicos: Apellidos" in ficha.nombre_de("listado.academicos.apellidos")
+    corr = [{"fila": 2, "hoja": "Antecedentes", "celda": "B7", "clave": "listado.academicos.apellidos"},
+            {"fila": 3, "hoja": "Antecedentes", "celda": "C7", "clave": f"{base}.nombre"}]
+    contenido, err, n = ficha.llenar(_plantilla(), corr, v)
+    assert not err
+    h = load_workbook(io.BytesIO(contenido))["Antecedentes"]
+    assert h["B7"].value == "Noether" and h["B8"].value is None and h["C7"].value == "Algebra I (MAT-111)"
+    assert h["C8"].value == v[plan][1] and h["A1"].value == "Formulario externo"

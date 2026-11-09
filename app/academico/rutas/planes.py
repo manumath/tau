@@ -64,8 +64,11 @@ def _fila(f, sistema):
         sigla = f["sigla"]
     tipo = "" if f["tipo"] == "obligatoria" else insignia(planes.TIPOS[f["tipo"]],
                                                          "azul" if "electiva" in f["tipo"] else "gris")
+    relacion = f.get("linea") or (f"Área de {f['area']}" if f.get("area") else "")
+    linea = Div(f.get("linea_formativa") or "—", Div(relacion, cls=TextPresets.muted_sm) if relacion else "")
     return fh.Tr(fh.Td(sigla, cls="font-mono text-sm whitespace-nowrap"), fh.Td(nombre, tipo, cls="text-sm"),
                  *_horas(f, sistema), fh.Td(", ".join(f["requisitos"]) or "—", cls="text-sm whitespace-nowrap"),
+                 fh.Td(linea, cls="text-sm"),
                  id=f"asignatura-{sigla}" if sigla else None,  # destino de la búsqueda global
                  cls="target:bg-amber-50 dark:target:bg-amber-950")
 
@@ -75,7 +78,8 @@ def _encabezado(sistema):
         [fh.Th("T", title="Horas teóricas semanales", cls="w-14"),
          fh.Th("P", title="Horas prácticas semanales", cls="w-14"),
          fh.Th("L", title="Horas de laboratorio semanales", cls="w-14")]
-    return fh.Thead(fh.Tr(fh.Th("Sigla"), fh.Th("Asignatura"), *horas, fh.Th("Requisitos")))
+    return fh.Thead(fh.Tr(fh.Th("Sigla"), fh.Th("Asignatura"), *horas, fh.Th("Requisitos"),
+                          fh.Th("Línea formativa", title="Y el área o la línea de investigación con que se relaciona")))
 
 
 def _tabla(filas, sistema):
