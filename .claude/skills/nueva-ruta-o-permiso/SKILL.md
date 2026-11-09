@@ -29,6 +29,9 @@ description: Agregar una pantalla, ruta HTMX o acción con permisos en TAU (Fast
    a verificar dentro de la ruta con `puede(…)`. Ocultar un botón no basta.
 4. Pruebe cada rol: matriz `RUTAS` en `tests/test_permisos_rutas.py` y un test del 403. Para la
    Dirección de Carrera en tests, la fixture `carrera` (cuenta admin + ese rol).
+5. Toda ruta fuera de `/admin` y de las públicas debe comprobar algo (`puede`, `auth["id"]`, la ficha del estudiante,
+   403/404): `tests/test_rutas_declaradas.py` lo revisa en la ruta y en las funciones que llama. Si es de verdad para todo
+   el personal (sugerencias, formularios vacíos), agréguela a `TODO_EL_PERSONAL` con su motivo.
 
 ## HTMX y componentes
 

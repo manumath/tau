@@ -2946,6 +2946,15 @@ acciones y 57 actividades del apéndice del informe (sin datos personales; los r
   Franken UI no requieren cambios. `tests/navegador/test_rendimiento.py` lo vigila, junto con que KaTeX no se pida
   donde no hay fórmulas.
 
+### Etapa 7: toda ruta declara quién la usa (SEC-03)
+- `tests/test_rutas_declaradas.py` recorre todas las rutas de la aplicación (unas 590). Fuera de `/admin` (que decide
+  `REGLAS_ADMIN`) y de las públicas, cada ruta debe comprobar algo en su función o en las que llama (tres niveles):
+  un permiso (`puede`), que el dato es de quien pide (`auth["id"]`, la ficha del estudiante) o responder 403/404.
+  Las 16 que son para todo el personal (sugerencias de formularios, formularios vacíos, el directorio, la guía de la
+  IA, una redirección antigua) están en `TODO_EL_PERSONAL` con su motivo; la lista no admite rutas que ya no existen
+  ni que ya tienen control. Una prueba comprueba que una ruta nueva sin control se detecta.
+- Es una revisión del código, no de la lógica: complementa la matriz por rol de `tests/test_permisos_rutas.py`.
+
 ### Decisiones del agente por confirmar
 - La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
   en la Guía significa extensión, se cambia en el CSV antes de cargarlo.
