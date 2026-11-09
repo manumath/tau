@@ -1,8 +1,8 @@
 """Marco de calidad de la Carrera (PLAN §57, etapa 2): ver el marco por dimensión, filtrarlo por atributo, editarlo
 (Dirección de Carrera) y exportarlo en XLSX. Lo ven también la Coordinación académica, la Dirección del Instituto y la
 Comisión de calidad (`ver_marco_calidad`)."""
-from fasthtml.common import (A, APIRouter, Div, Label, Li, Option, P, Redirect, Response, Select, Span, Table,
-                             Tbody, Td, Th, Thead, Tr, Ul)
+from fasthtml.common import (A, APIRouter, Details, Div, Label, Li, Nav, Option, P, Redirect, Response, Select, Span,
+                             Summary, Table, Tbody, Td, Th, Thead, Tr, Ul)
 from fasthtml.toaster import add_toast
 from monsterui.all import (H2, H3, H4, Button, ButtonT, Card, CheckboxX, Form, FormLabel, LabelInput, LabelTextArea,
                            TextPresets, UkIcon)
@@ -10,7 +10,7 @@ from monsterui.all import (H2, H3, H4, Button, ButtonT, Card, CheckboxX, Form, F
 from app.calidad import evidencias, indicadores, marco, publico
 from app.calidad.rutas.indicadores import cifra, numero
 from app.calidad.rutas.informes import XLSX, _archivo, descarga
-from app.comun import permisos, unidades
+from app.comun import formato, permisos, unidades
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
@@ -44,7 +44,7 @@ def _acciones(gestiona, *botones):
 
 
 def _fecha(iso):
-    return f"{iso[8:10]}/{iso[5:7]}/{iso[:4]}" if iso else None
+    return formato.fecha(iso) if iso else None
 
 
 def _vigencia(m):
@@ -100,10 +100,16 @@ def _criterio(c, gestiona, mid):
         _tabla_indicadores(c, gestiona), cls="space-y-2 pt-4", id=f"criterio-{c['id']}")
 
 
-def _dimension(d, gestiona, mid):
-    return Card(
-        Div(Div(H3(Span(d["codigo"], cls="font-mono mr-2"), d["nombre"], cls="text-lg font-semibold"),
-                P(d["descripcion"], cls="text-sm mt-1") if d["descripcion"] else "",
+def _dimension(d, gestiona, mid, abierta):
+    """Dimensión plegable (PLAN §62, UX-02): el resumen dice cuántos criterios e indicadores tiene."""
+    n_ind = sum(len(c["indicadores"]) for c in d["criterios"])
+    return Details(
+        Summary(H3(UkIcon("chevron-right", height=16, width=16, cls="plegable-icono mr-1"),
+                   Span(d["codigo"], cls="font-mono mr-2"), d["nombre"], cls="text-lg font-semibold"),
+                Span(f"{len(d['criterios'])} criterio{'s' if len(d['criterios']) != 1 else ''} · {n_ind} "
+                     f"indicador{'es' if n_ind != 1 else ''}", cls=TextPresets.muted_sm),
+                cls="flex flex-wrap items-baseline justify-between gap-2 cursor-pointer"),
+        Div(Div(P(d["descripcion"], cls="text-sm mt-1") if d["descripcion"] else "",
                 P("Se alinea con: ", d["referencia"], cls=(TextPresets.muted_sm, "mt-1")) if d["referencia"] else "",
                 cls="flex-1"),
             _acciones(gestiona,
@@ -116,7 +122,7 @@ def _dimension(d, gestiona, mid):
             cls="flex gap-3"),
         Div(*[_criterio(c, gestiona, mid) for c in d["criterios"]], cls="divide-y divide-border")
         if d["criterios"] else P("Sin criterios.", cls=(TextPresets.muted_sm, "mt-2")),
-        id=f"dimension-{d['id']}")
+        open=abierta, id=f"dimension-{d['id']}", cls="uk-card uk-card-default uk-card-body scroll-mt-20")
 
 
 def _filtro_atributos(mid, actual):
@@ -170,18 +176,24 @@ def get(auth, atributo: str = ""):
                            (r["activos"], "indicadores activos"), (r["automaticos"], "automáticos"),
                            (r["manuales"], "manuales"))],
             cls="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6"),
-        Card(Div(Div(H3("Escala de valoración", cls="text-base font-semibold"),
-                     P("Para los juicios por criterio de la autoevaluación.", cls=TextPresets.muted_sm),
-                     cls="flex-1"),
-                 _acciones(gestiona, _boton("pencil", "Editar la escala", hx_get=f"{BASE}/{m['id']}/escala",
-                                            hx_target=f"#{ID_MODAL}")), cls="flex gap-3 mb-2"),
-             Ul(*[Li(Span(f"{n['valor']}. {n['nombre']}", cls="font-medium"),
-                     f": {n['descripcion']}" if n["descripcion"] else "") for n in escala],
-                cls="text-sm space-y-1"), cls="mb-6"),
+        Details(Summary(H3(UkIcon("chevron-right", height=16, width=16, cls="plegable-icono mr-1"),
+                           "Escala de valoración", cls="text-base font-semibold"),
+                        Span(f"{len(escala)} niveles, para los juicios por criterio de la autoevaluación",
+                             cls=TextPresets.muted_sm), cls="flex flex-wrap items-baseline gap-x-3 cursor-pointer"),
+                Div(Ul(*[Li(Span(f"{n['valor']}. {n['nombre']}", cls="font-medium"),
+                            f": {n['descripcion']}" if n["descripcion"] else "") for n in escala],
+                       cls="text-sm space-y-1 flex-1"),
+                    _acciones(gestiona, _boton("pencil", "Editar la escala", hx_get=f"{BASE}/{m['id']}/escala",
+                                               hx_target=f"#{ID_MODAL}")), cls="flex gap-3 mt-3"),
+                cls="uk-card uk-card-default uk-card-body mb-6"),
         _filtro_atributos(m["id"], atributo),
         P(f"Indicadores con el atributo «{claves[atributo]['nombre']}»: {claves[atributo]['descripcion'] or ''}",
           cls="text-sm mb-4") if atributo else "",
-        Div(*[_dimension(d, gestiona and not atributo, m["id"]) for d in arbol], cls="space-y-6")
+        Nav(Ul(*[Li(A(Span(d["codigo"], cls="font-mono mr-1"), d["nombre"], href=f"#dimension-{d['id']}",
+                      cls="text-sm text-primary hover:underline")) for d in arbol],
+               cls="flex flex-wrap gap-x-4 gap-y-1"), aria_label="Dimensiones", cls="mb-4") if len(arbol) > 1 else "",
+        Div(*[_dimension(d, gestiona and not atributo, m["id"], abierta=bool(atributo) or len(arbol) == 1)
+              for d in arbol], cls="space-y-4")
         if arbol else P("No hay indicadores con ese atributo.", cls=TextPresets.muted_sm),
         usuario=auth)
 

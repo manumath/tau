@@ -100,7 +100,7 @@ def test_pantallas_y_permisos(client, g2026):
     permisos.asignar(emmy, "coordinacion_academica", unidades.id_de("CMAT"))
     r = client.post(f"/docencia/oferta/{g2026['I']['id']}", headers=HX,
                     data={"asignatura": "MAT-111 · Algebra I", "paralelo": "A", "inscritos": "40"})
-    assert "MAT-111" in r.text and "Sin docente" in r.text
+    assert "MAT-111" in r.text and "Sin docente" in r.text and 'data-accion="filtrar-tabla"' in r.text
     oid = oferta.listar(g2026["I"]["id"])[0]["id"]
     r = client.post(f"/docencia/oferta/{oid}/docentes", headers=HX, data={"usuario": str(emmy), "rol": "titular"})
     assert "Emmy Noether" in r.text and "sin vínculo con la Carrera" in r.text

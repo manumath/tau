@@ -15,7 +15,8 @@
   const NEUTRA = "\u2195\uFE0E";  // ↕ como texto (sin \uFE0E, macOS lo dibuja como emoji)
 
   function texto(celda) {
-    const sel = celda.querySelector("select");
+    // El valor de una celda que es un select (grillas); no el de un formulario plegado dentro de la celda.
+    const sel = celda.querySelector("select:not(details select)");
     if (sel && sel.selectedOptions.length) return sel.selectedOptions[0].textContent.trim();
     return celda.textContent.replace(/\s+/g, " ").trim();
   }

@@ -486,7 +486,7 @@ que se dictan, por paralelo, con sus inscritos y docentes (titular o auxiliar). 
 cada materia de un titular cuenta 32 h/mes de carga; los auxiliares no suman carga. Los cursos de
 verano e invierno solo los dictan docentes titulares (de planta) de la Carrera y no forman parte de
 la carga: cuentan como docencia dictada. Las asignaturas de otras carreras no se ofertan desde aquí.
-Si un docente no tiene vínculo con la Carrera al inicio de la gestión, se avisa. Sobre la oferta
+Si un docente no tiene vínculo con la Carrera al inicio de la gestión, se avisa. «Ver los N sin docente», sobre la tabla, deja a la vista solo los paralelos que aún no tienen docente (otro clic muestra todos). Los programas de cada asignatura se indican solo cuando no son los de la mayoría, que se nombran una vez sobre la tabla. Sobre la oferta
 inicial de troncales se agregan a mano las electivas y otros paralelos, se asignan los docentes y se
 quita la troncal que se cierre (por ejemplo, por falta de inscritos). En semestres creados antes,
 «Agregar las troncales» completa las que falten. La editan la Dirección de Carrera
@@ -782,6 +782,10 @@ Todos los cambios quedan en la auditoría. Gestión de datos también ve el marc
 
 En **Aseguramiento de la Calidad → Indicadores** están las cifras de cada indicador activo en los años de evidencia del
 marco, agrupadas por dimensión. Elija otro año final arriba y pulse «Ver» para mirar años anteriores.
+
+- **Resumen y filtro:** las cinco tarjetas de arriba cuentan los indicadores por estado. Pulse una para ver solo esos (por
+  ejemplo, los que no cumplen la meta); púlsela otra vez para ver todos. Cada dimensión se abre y se cierra con un clic, y
+  su encabezado dice cuántos indicadores tiene en cada estado.
 
 - **Cifras:** son del año calendario; la del año en curso dice «parcial». Al pasar el cursor por una cifra verá cómo se
   obtuvo, su base (n, por ejemplo cuántos estudiantes o respuestas) y la meta. Un guion significa que no hay dato.

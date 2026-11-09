@@ -142,3 +142,10 @@ body:has(.htmx-request) .barra-superior::after {
   /* El aviso «no hay datos» ocupa la tarjeta entera. */
   table[data-tabla-lista]:not([data-tabla-movil="tabla"]) tbody td[colspan] { justify-content: center; text-align: center; }
 }
+
+/* Secciones plegables (<details>, PLAN §62): sin el triángulo del navegador; la flecha gira al abrir. */
+details > summary.cursor-pointer { list-style: none; }
+details > summary.cursor-pointer::-webkit-details-marker { display: none; }
+details .plegable-icono { display: inline-block; transition: transform 150ms; vertical-align: -2px; }
+details[open] > summary .plegable-icono { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { details .plegable-icono { transition: none; } }

@@ -1,5 +1,6 @@
 """Oferta por gestión y asignación docente; gestiones académicas. La consultan todos; la editan la
 Dirección de Carrera y la Coordinación académica (acción `gestionar_oferta`)."""
+from collections import Counter
 import base64
 
 import fasthtml.common as fh
@@ -62,8 +63,13 @@ def _form_docente(o, g):
 def seccion_oferta(g, auth, errores=()):
     puede = _puede(auth)
     troncales = {a["id"] for a in oferta.troncales(g["anio"])}
+    paralelos = oferta.listar(g["id"])
+    # Los programas se muestran solo donde difieren de los de la mayoría (PLAN §62, UX-02): repetidos en cada fila
+    # no dicen nada.
+    programas = {o["asignatura_id"]: ", ".join(oferta.programas_de(o["asignatura_id"])) for o in paralelos}
+    comunes = Counter(programas.values()).most_common(1)[0][0] if programas else ""
     filas = []
-    for o in oferta.listar(g["id"]):
+    for o in paralelos:
         quitar = fh.Button(UkIcon("trash-2", height=14, width=14), type="button", aria_label="Quitar de la oferta",
                            cls="p-1 rounded hover:bg-muted hover:text-destructive", hx_delete=f"{BASE}/{o['id']}",
                            hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
@@ -71,8 +77,9 @@ def seccion_oferta(g, auth, errores=()):
         filas.append(fh.Tr(
             fh.Td(o["sigla"], cls="font-mono text-sm whitespace-nowrap"),
             fh.Td(Div(o["nombre"], cls="text-sm"),
-                  Div(", ".join(oferta.programas_de(o["asignatura_id"]))
-                      + (" · troncal" if o["asignatura_id"] in troncales else ""), cls=TextPresets.muted_sm)),
+                  Div(" · ".join(x for x in (programas[o["asignatura_id"]] if programas[o["asignatura_id"]] != comunes
+                                              else "", "troncal" if o["asignatura_id"] in troncales else "") if x),
+                      cls=TextPresets.muted_sm)),
             fh.Td(o["paralelo"], cls="text-sm"),
             fh.Td(str(o["inscritos"]) if o["inscritos"] is not None else "—", cls="text-sm tabular-nums"),
             fh.Td(Ul(*[_docente(d, g, puede) for d in o["docentes"]]) if o["docentes"]
@@ -92,10 +99,14 @@ def seccion_oferta(g, auth, errores=()):
             cls="flex flex-wrap gap-2"),
         lista, hx_post=f"{BASE}/{g['id']}", hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
         cls="space-y-2 mb-4") if puede else ""
-    total = sum(len(o["docentes"]) == 0 for o in oferta.listar(g["id"]))
+    total = sum(len(o["docentes"]) == 0 for o in paralelos)
     return Div(
         agregar,
-        P(f"{len(filas)} paralelo(s)" + (f" · {total} sin docente" if total else ""), cls=(TextPresets.muted_sm, "mb-2")),
+        Div(P(f"{len(filas)} paralelo(s)", f" · programas (salvo indicación): {comunes}" if comunes else "", cls=TextPresets.muted_sm),
+            Button(UkIcon("circle-alert", height=14, width=14), f"Ver los {total} sin docente" if total > 1 else
+                   "Ver el que no tiene docente", type="button", cls=(ButtonT.default, ButtonT.sm, "gap-1"),
+                   data_accion="filtrar-tabla", data_filtro="Sin docente", aria_pressed="false") if total else "",
+            cls="flex flex-wrap items-center gap-3 mb-2"),
         Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Sigla"), fh.Th("Asignatura"), fh.Th("Paralelo"), fh.Th("Inscritos"),
                                     fh.Th("Docentes"), fh.Th(""))), fh.Tbody(*filas),
                      cls="uk-table uk-table-divider uk-table-small", data_tabla=f"oferta-{gestiones.codigo(g)}"),
@@ -198,7 +209,7 @@ def _pagina_grilla(g, auth, errores=()):
         filas.append(fh.Tr(fh.Td(o["sigla"], cls="font-mono text-sm whitespace-nowrap"), fh.Td(o["nombre"], cls="text-sm"),
                            fh.Td(o["paralelo"], cls="text-sm"),
                            fh.Td(Select(*opciones(t["usuario_id"] if t else None), name=f"titular_{o['id']}",
-                                        cls="uk-select h-8 text-sm w-72", aria_label=f"Titular de {o['sigla']} {o['paralelo']}")),
+                                        cls="uk-select h-8 text-sm w-72 max-w-full", aria_label=f"Titular de {o['sigla']} {o['paralelo']}")),
                            fh.Td(", ".join(auxiliares) or "—", cls="text-xs text-muted-foreground")))
     return pagina(
         f"Grilla de docentes {gestiones.codigo(g)}",

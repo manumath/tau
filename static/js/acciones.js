@@ -10,6 +10,7 @@
 //   data-accion="imprimir"            window.print()
 //   data-accion="copiar"              copia data-copiar o el texto de #data-copiar-de; muestra data-copiado
 //   data-accion="con-busqueda"        en un enlace: agrega la búsqueda actual (?…) a su href
+//   data-accion="filtrar-tabla"       escribe data-filtro en el filtro de la tabla de su zona ([id]); otro clic lo quita
 //   data-navegar="/ruta?x="           en un select: va a esa ruta + el valor elegido
 //   data-mostrar-modo                 en un select: muestra los [data-modo] del formulario que coinciden
 //   data-enter="prevenir" | "clic:ID" en un campo: Enter no envía el formulario (o pulsa #ID)
@@ -24,6 +25,7 @@
 //   data-accion="plegar-lateral"      pliega o despliega el menú lateral (se recuerda en el navegador)
 //   data-accion="plegar-grupo"        pliega o despliega un grupo del menú (se recuerda en el navegador)
 //   data-accion="abrir-menu" | "cerrar-menu"   el menú lateral como panel en el teléfono (Escape lo cierra)
+//   enlace a #id dentro de un <details> cerrado: lo abre (también al cargar la página con #id)
 //   data-nav                          enlace del menú: el de la página actual recibe aria-current="page"
 //
 // Además (accesibilidad y envíos):
@@ -108,6 +110,16 @@
       case 'vaciar': { const o = document.getElementById(el.dataset.objetivo); if (o) o.innerHTML = ''; break; }
       case 'elegir-archivo': { const f = el.closest('form'); const i = f && f.querySelector('input[type=file]'); if (i) i.click(); break; }
       case 'imprimir': window.print(); break;
+      case 'filtrar-tabla': {
+        const zona = el.closest('[id]') || document;
+        const campo = zona.querySelector('input[aria-label="Filtrar la tabla"]');
+        if (!campo) break;
+        const activo = campo.value !== el.dataset.filtro;
+        campo.value = activo ? el.dataset.filtro : '';
+        el.setAttribute('aria-pressed', activo ? 'true' : 'false');
+        campo.dispatchEvent(new Event('input'));
+        break;
+      }
       case 'copiar': {
         const fuente = el.dataset.copiarDe ? document.getElementById(el.dataset.copiarDe) : null;
         const texto = fuente ? fuente.innerText : (el.dataset.copiar || '');
@@ -277,4 +289,15 @@
     const m = modal();
     if (abridor && m && !m.children.length) devolverFoco();
   });
+
+  // Un #id dentro de un <details> plegado (dimensiones del marco y de los indicadores) lo abre.
+  function abrirDestino() {
+    const id = decodeURIComponent(location.hash.slice(1));
+    let el = id && document.getElementById(id);
+    if (!el) return;
+    for (let d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
+    el.scrollIntoView();
+  }
+  window.addEventListener('hashchange', abrirDestino);
+  document.addEventListener('DOMContentLoaded', abrirDestino);
 })();

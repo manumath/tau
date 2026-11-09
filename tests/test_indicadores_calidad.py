@@ -180,3 +180,26 @@ def test_xlsx_del_tablero(carrera):
     cab = [c.value for c in libro["Indicadores"][1]]
     assert cab[:6] == ["dimension", "criterio", "codigo", "indicador", "unidad", "lectura"]
     assert {str(HOY), f"meta {HOY}", f"estado {HOY}"} <= set(cab)
+
+
+def test_tablero_filtra_por_estado_y_pliega_las_dimensiones(carrera):
+    """Cada tarjeta del resumen filtra el tablero por estado; las dimensiones son plegables (PLAN §62, UX-02)."""
+    i = _manual()
+    carrera.post(f"/calidad/marco/indicadores/{i['id']}/valores", headers=HX,
+                 data={"anio": str(HOY - 1), "valor": "7,5", "n": "20"})
+    todo = carrera.get("/calidad/indicadores").text
+    assert "<details" in todo and 'aria-label="Dimensiones"' in todo and "?hasta=" in todo and "&amp;ver=sin_dato" in todo
+    assert i["codigo"] in todo
+    sin_dato = carrera.get(f"/calidad/indicadores?ver=sin_dato&hasta={HOY}").text
+    assert i["codigo"] not in sin_dato                     # ya tiene cifra: no está «sin dato»
+    assert 'aria-current="true"' in sin_dato and "ver todos" in sin_dato
+    estado = indicadores.tablero(_marco()["id"], HOY - 4, HOY)
+    con_cifra = [x for d in estado["arbol"] for c in d["criterios"] for x in c["indicadores"] if x["id"] == i["id"]][0]
+    filtrado = carrera.get(f"/calidad/indicadores?ver={con_cifra['ultima']['estado']}&hasta={HOY}").text
+    assert i["codigo"] in filtrado and "<details open" in filtrado
+    assert carrera.get("/calidad/indicadores?ver=cualquiera").status_code == 200   # un estado desconocido no filtra
+
+
+def test_marco_plegable_con_indice(carrera):
+    r = carrera.get("/calidad/marco").text
+    assert "<details" in r and "Escala de valoración" in r and 'aria-label="Dimensiones"' in r

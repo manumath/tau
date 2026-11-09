@@ -2924,6 +2924,18 @@ acciones y 57 actividades del apéndice del informe (sin datos personales; los r
 - **Usuarios:** las acciones de cada fila llevan ícono y texto («Ficha», «Desactivar», «Contraseña», «Dar acceso»,
   «Desbloquear») en vez de íconos solos.
 
+### Etapa 5: pantallas largas más fáciles de recorrer (UX-02)
+- **Indicadores:** las cinco tarjetas del resumen filtran el tablero por estado (`?ver=cumple|no_cumple|sin_meta|`
+  `informativo|sin_dato`, según la cifra más reciente; otro clic lo quita). Cada dimensión es plegable
+  (`<details>`) y su resumen cuenta los indicadores por estado; un índice lleva a cada una. Con filtro, o con una sola
+  dimensión, se abren.
+- **Marco de calidad:** dimensiones y escala de valoración plegables, con índice; fechas de vigencia legibles. Un enlace
+  o una redirección a `#dimension-…`/`#criterio-…` abre lo que lo contiene (`acciones.js`).
+- **Oferta:** los programas de cada asignatura solo se muestran cuando difieren de los de la mayoría (que van una vez
+  sobre la tabla); «Ver los N sin docente» escribe ese filtro en la tabla (`data-accion="filtrar-tabla"`). `tablas.js`
+  ya no toma por valor de la celda el select de un formulario plegado dentro de ella.
+- La base de las pruebas en navegador tiene la gestión en curso con un paralelo sin docente.
+
 ### Decisiones del agente por confirmar
 - La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
   en la Guía significa extensión, se cambia en el CSV antes de cargarlo.
@@ -2978,3 +2990,5 @@ OWASP, rendimiento y pruebas) y luego ejecutar sus nueve etapas, un commit por e
   Es lo más simple que cierra la copia robada; si molesta salir del teléfono al salir de la computadora, se cambia por
   una tabla de sesiones.
 - 20 fallos por IP: alto a propósito, porque una sala de computación o una red con NAT comparte la IP.
+- Indicadores y marco: las dimensiones empiezan **plegadas** (el resumen ya dice cuántos indicadores hay en cada estado).
+  Si la Comisión prefiere verlas abiertas, basta cambiar el valor por omisión.

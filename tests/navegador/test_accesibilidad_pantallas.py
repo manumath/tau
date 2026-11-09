@@ -108,3 +108,19 @@ def test_tablas_como_tarjetas_en_el_telefono(page, ruta):
     assert celda.count(), "las celdas no llevan el título de su columna"
     assert celda.evaluate("c => getComputedStyle(c).display") == "flex"
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+
+
+def test_oferta_filtra_los_paralelos_sin_docente(page):
+    """«Ver los N sin docente» escribe el filtro de la tabla; otro clic lo quita (PLAN §62, UX-02)."""
+    entrar(page, "direccion")
+    page.goto("/docencia/oferta")
+    boton = page.locator('[data-accion="filtrar-tabla"]')
+    if not boton.count():
+        pytest.skip("la oferta de prueba no tiene paralelos sin docente")
+    filas = page.locator("table[data-tabla] tbody tr:visible")
+    total = filas.count()
+    boton.click()
+    assert page.locator('input[aria-label="Filtrar la tabla"]').input_value() == "Sin docente"
+    assert 0 < filas.count() <= total and boton.get_attribute("aria-pressed") == "true"
+    boton.click()
+    assert filas.count() == total
