@@ -74,6 +74,7 @@ def encabezados():
         Script(src=url("js/tablas.js"), defer=True),  # orden, filtro y CSV en <table data-tabla>
         Script(src=url("js/acciones.js"), defer=True),  # botones, selects y modal (data-accion…)
         Script(src=url("js/avisos.js"), defer=True),  # avisos emergentes y errores de HTMX
-        Link(rel="stylesheet", href=url("vendor/katex/katex.min.css")),
-        Script(type="module", src=url("js/katex.mjs")),  # fórmulas LaTeX
+        # Fórmulas LaTeX: katex.mjs carga KaTeX y su hoja (esta URL) solo si la página tiene fórmulas.
+        Meta(name="katex-css", content=url("vendor/katex/katex.min.css")),
+        Script(type="module", src=url("js/katex.mjs")),
     ]

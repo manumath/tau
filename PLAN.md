@@ -2936,6 +2936,16 @@ acciones y 57 actividades del apéndice del informe (sin datos personales; los r
   ya no toma por valor de la celda el select de un formulario plegado dentro de ella.
 - La base de las pruebas en navegador tiene la gestión en curso con un paralelo sin docente.
 
+### Etapa 6: rendimiento (PERF-01, PERF-02, PERF-03)
+- **Compresión gzip** (`GZipMiddleware` en `main.py`, desde 1 KB): `tailwind.css` pasa de 49 a 9 KB, htmx de 51 a
+  16 KB y el HTML a menos de la mitad. Los estáticos con `?v=` ya se guardaban un año en el navegador.
+- **KaTeX bajo demanda:** `static/js/katex.mjs` pide la biblioteca y su hoja de estilos solo la primera vez que aparece
+  un delimitador (`$`, `\(`), también en contenido que llega por htmx; la URL versionada de la hoja va en
+  `<meta name="katex-css">`.
+- **Saltos al cargar (CLS):** medidos en las pantallas principales, bajo 0,1 (el umbral «bueno»): los íconos de
+  Franken UI no requieren cambios. `tests/navegador/test_rendimiento.py` lo vigila, junto con que KaTeX no se pida
+  donde no hay fórmulas.
+
 ### Decisiones del agente por confirmar
 - La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
   en la Guía significa extensión, se cambia en el CSV antes de cargarlo.

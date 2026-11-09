@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 from fasthtml.common import Beforeware, Meta, Response, fast_app, serve
+from starlette.middleware.gzip import GZipMiddleware
 
 from app.comun import config
 
@@ -160,6 +161,8 @@ def create_app(db_path=config.DB_PATH):
     app.after.append(paginas_de_error)
     montar_estaticos(app)
     app.add_middleware(CabecerasSeguridad)
+    # Compresión (PLAN §62, etapa 6): HTML, CSS y JS viajan comprimidos (la hoja de Tailwind pasa de 49 KB a 9 KB).
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
     app.add_middleware(RegistroPeticiones)  # el último agregado es el más externo: registra todo lo demás
     registros.configurar()
 
