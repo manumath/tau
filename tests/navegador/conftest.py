@@ -18,7 +18,10 @@ import urllib.request
 import pytest
 
 from app.comun import config
-from tests.navegador.preparar import ADMIN, CLAVE, COMISION, DIRECCION, INVESTIGADORA, PROLIFICO
+from tests.navegador.preparar import ADMIN, CLAVE, COMISION, DIRECCION, INVESTIGADORA, PROLIFICO, archivo_enlaces
+
+
+_ENLACES: list[str] = []   # enlaces de ingreso de las estudiantes de preparar.py (uno por estudiante)
 
 
 def _puerto_libre() -> int:
@@ -48,6 +51,7 @@ def servidor(tmp_path_factory):
     else:
         proceso.terminate()
         pytest.fail(f"El portal no arrancó: ver {carpeta / 'servidor.log'}")
+    _ENLACES.extend(archivo_enlaces(entorno["PORTAL_DB"]).read_text().split())
     yield url
     proceso.terminate()
     proceso.wait(timeout=10)
@@ -75,6 +79,21 @@ def sin_errores_en_la_pagina(page):
     page.on("dialog", lambda d: d.accept())  # confirmaciones hx-confirm: se aceptan
     yield errores
     assert errores == [], "Errores en la página:\n" + "\n".join(errores)
+
+
+@pytest.fixture
+def estudiante(page, servidor):
+    """Entra como una estudiante nueva de preparar.py con su enlace de ingreso (como el del correo) y acepta el
+    consentimiento. Devuelve la página."""
+    if not _ENLACES:
+        pytest.fail("No quedan estudiantes: agregue una a ESTUDIANTES en preparar.py")
+    page.goto(_ENLACES.pop())
+    page.click("button:has-text('Ingresar')")
+    page.wait_for_url("**/estudiante**")
+    if page.locator("form[action$='/consentimiento'] button[type=submit]").count():
+        page.locator("form[action$='/consentimiento'] button[type=submit]").click()
+        page.wait_for_load_state("networkidle")
+    return page
 
 
 def entrar(page, quien: str):

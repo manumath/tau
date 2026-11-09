@@ -38,6 +38,16 @@ def fecha_hora(iso_utc) -> str:
     return f"{fecha(dt.date())}, {dt:%H:%M}"
 
 
+def momento(iso_local) -> str:
+    """Fecha y hora ya locales, como se escriben en un formulario ('2026-11-12T14:30', cierres de convocatorias,
+    eventos) → '12 nov 2026, 14:30'; si es solo fecha, '12 nov 2026'. A diferencia de fecha_hora, no convierte de UTC."""
+    if not iso_local:
+        return "—"
+    texto = str(iso_local)
+    hora = texto[11:16] if len(texto) >= 16 and texto[10] in "T " else ""
+    return fecha(texto) + (f", {hora}" if hora else "")
+
+
 def periodo(desde, hasta) -> str:
     """'1 ago – 31 dic 2026' (mismo año) o '1 ago 2026 – 15 ene 2027'. Sin término: 'desde 1 ago 2026'."""
     a, b = _a_fecha(desde), _a_fecha(hasta)

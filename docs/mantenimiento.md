@@ -238,6 +238,10 @@ Política:
 
 - **Cuándo:** una vez por semestre, o antes si hay un aviso de seguridad (Starlette, uvicorn,
   argon2-cffi, Pillow y openpyxl son las más expuestas).
+- **Avisos:** Dependabot (`.github/dependabot.yml`) revisa cada mes los paquetes de `uv.lock` y las acciones de
+  GitHub, y abre un pull request por actualización (los parches menores van juntos, salvo FastHTML, MonsterUI,
+  fastlite, fastmigrate y fastcore, que van uno a uno). Las alertas de seguridad llegan apenas se publican. Nada se
+  fusiona solo: espere las pruebas del pull request y siga los pasos de abajo si toca FastHTML o MonsterUI.
 - **Cómo:** un paquete a la vez, en una rama:
   ```sh
   uv lock --upgrade-package python-fasthtml

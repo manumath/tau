@@ -460,4 +460,4 @@ def test_llenar_plantilla_con_la_ficha(page, tmp_path):
     archivo = tmp_path / descarga.value.suggested_filename
     descarga.value.save_as(archivo)
     assert archivo.name == "formulario-llena.xlsx"
-    assert openpyxl.load_workbook(archivo)["Antecedentes"]["B2"].value == 1          # Emmy, titular desde 2015
+    assert openpyxl.load_workbook(archivo)["Antecedentes"]["B2"].value == 2          # Emmy (titular desde 2015) y Grace (desde 2018)

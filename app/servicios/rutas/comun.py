@@ -6,6 +6,7 @@ import fasthtml.common as fh
 from fasthtml.common import A, Div, FileResponse, Option, P, Response, Select, Span
 from monsterui.all import H3, Button, ButtonT, Card, FormLabel, TextPresets, UkIcon
 
+from app.comun import formato
 from app.investigacion import adjuntos
 
 ACEPTA = ".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
@@ -20,9 +21,8 @@ def no_encontrado():
 
 
 def fecha(iso: str | None) -> str:
-    if not iso:
-        return "—"
-    return f"{iso[8:10]}/{iso[5:7]}/{iso[:4]}" + (f" {iso[11:16]}" if len(iso) > 10 else "")
+    """'2026-11-12T14:30' → '12 nov 2026, 14:30' (PLAN §62: una sola forma de escribir fechas)."""
+    return formato.momento(iso)
 
 
 def formulario(url: str, *contenido, archivos: bool = False, cls: str = "space-y-4", **kw):

@@ -2955,6 +2955,19 @@ acciones y 57 actividades del apéndice del informe (sin datos personales; los r
   ni que ya tienen control. Una prueba comprueba que una ruta nueva sin control se detecta.
 - Es una revisión del código, no de la lógica: complementa la matriz por rol de `tests/test_permisos_rutas.py`.
 
+### Etapa 8: dependencias y flujos del estudiante en el navegador (OPS-01, TEST-01)
+- **Dependabot** (`.github/dependabot.yml`): cada mes revisa `uv.lock` y las acciones de GitHub y abre pull requests;
+  los parches menores van juntos, salvo FastHTML, MonsterUI, fastlite, fastmigrate y fastcore (uno a uno). Nada se
+  fusiona solo (docs/mantenimiento.md §4.6). Elegido en vez de pip-audit para no descargar herramientas (decisión del
+  usuario del 8-nov-2026).
+- **Flujos en Chrome** (`tests/navegador/test_servicios.py`): ingreso de una estudiante por el enlace del correo y
+  consentimiento, rechazo de las pantallas del personal, postulación a una auxiliatura con subida de un PDF y perfil de
+  proyecto de grado. La base de navegador (`preparar.py`) trae estudiantes (una por prueba: cada enlace anula el
+  anterior de la misma cuenta) y una convocatoria publicada con tribunal; la fixture `estudiante` entra con un enlace.
+- La prueba de accesibilidad revisa también el portal del estudiante. Encontró fechas ISO en los avisos y plazos de
+  las auxiliaturas: `formato.momento` («12 nov 2026, 14:30», hora local de un formulario, sin conversión de UTC)
+  reemplaza a las tres formas que había en servicios (incluida «12/11/2026», ambigua).
+
 ### Decisiones del agente por confirmar
 - La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
   en la Guía significa extensión, se cambia en el CSV antes de cargarlo.

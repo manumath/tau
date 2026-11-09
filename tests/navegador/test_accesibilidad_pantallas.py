@@ -84,6 +84,21 @@ def test_pantallas_sin_problemas_de_accesibilidad(page, quien, oscuro):
     assert hallados == {}, "\n".join(f"{r}:\n  " + "\n  ".join(p) for r, p in hallados.items())
 
 
+def test_pantallas_del_estudiante_sin_problemas_de_accesibilidad(estudiante):
+    """Portal del estudiante (PLAN §49 y §58), en claro y en oscuro con la misma sesión."""
+    page = estudiante
+    hallados = {}
+    for oscuro in (False, True):
+        page.emulate_media(color_scheme="dark" if oscuro else "light")
+        for ruta in ["/estudiante", "/estudiante/comunicados", "/estudiante/auxiliaturas", "/estudiante/grado",
+                     "/estudiante/grado/nuevo", "/avisos"]:
+            page.goto(ruta)
+            page.wait_for_load_state("networkidle")
+            if (p := page.evaluate(REVISAR)):
+                hallados[f"{ruta} ({'oscuro' if oscuro else 'claro'})"] = p
+    assert hallados == {}, "\n".join(f"{r}:\n  " + "\n  ".join(p) for r, p in hallados.items())
+
+
 def test_paginas_publicas_sin_problemas_de_accesibilidad(page):
     hallados = {}
     for ruta in ["/login", "/acceso", "/recuperar", "/publico", "/publico/indicadores"]:

@@ -16,7 +16,7 @@
 import random
 from datetime import date, datetime, timedelta, timezone
 
-from app.comun import estudiantes, notificaciones, permisos, usuarios
+from app.comun import estudiantes, formato, notificaciones, permisos, usuarios
 from app.comun.db import AHORA, get_db, transaccion
 
 MODALIDADES = {"docencia": "Docencia", "investigacion": "Investigación"}
@@ -328,7 +328,7 @@ def publicar(cid: int) -> list[str]:
         get_db().execute("UPDATE convocatoria_auxiliatura SET estado = 'publicada' WHERE id = ?", [cid])
         for u in get_db().q("""SELECT u.* FROM cuenta_estudiante c JOIN usuario u ON u.id = c.usuario_id WHERE u.activo = 1"""):
             notificaciones.avisar(u, f"Convocatoria: {c['titulo']}",
-                                  f"Puede postular hasta el {c['cierre'].replace('T', ' ')}.", "/estudiante/auxiliaturas")
+                                  f"Puede postular hasta el {formato.momento(c['cierre'])}.", "/estudiante/auxiliaturas")
         for it in items(cid):
             for m in it["tribunal"]:
                 notificaciones.avisar(usuarios.por_id(m["usuario_id"]), f"Integra el tribunal de {it['titulo']}",
@@ -537,7 +537,7 @@ def faltantes_cierre(it: dict, ahora: datetime | None = None) -> list[str]:
     fase = it["fase"]
     if fase == "postulacion":
         c = obtener(it["convocatoria_id"])
-        return [] if (c["cierre"] or "9999") <= _ahora() else [f"La recepción cierra el {c['cierre'].replace('T', ' ')}."]
+        return [] if (c["cierre"] or "9999") <= _ahora() else [f"La recepción cierra el {formato.momento(c['cierre'])}."]
     if fase not in FASES:
         return ["El concurso de este ítem ya concluyó."]
     f = []
@@ -679,4 +679,4 @@ def fases_publicadas(iid: int) -> set[str]:
 
 
 def hoy_texto(iso: str | None) -> str:
-    return (iso or "").replace("T", " ")
+    return formato.momento(iso)
