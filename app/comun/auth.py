@@ -55,7 +55,9 @@ def _cargar_usuario(req, sess):
     """
     uid = sess.get("uid")
     usuario = usuarios.con_perfil(uid) if uid else None
-    if not usuario or not usuario["activo"]:
+    # Una sesión vale mientras la versión de la cuenta no cambie: salir, cambiar o restablecer la contraseña la
+    # incrementan y cierran todas las copias de la cookie (PLAN §62). Sin «sv», sesiones anteriores al cambio: versión 0.
+    if not usuario or not usuario["activo"] or sess.get("sv", 0) != usuario["sesion_version"]:
         sess.clear()
         return Redirect("/login")
     usuario["roles"] = permisos.roles_vigentes(uid)
@@ -192,9 +194,12 @@ def post(req, sess, htmx, email: str = "", password: str = ""):
         form = form_login(email, msg)
         return form if htmx.request else _pagina_login(form)
 
+    if usuarios.ip_bloqueada(ip):
+        return fallo(f"Demasiados intentos fallidos desde esta red. Espere {config.LOGIN_VENTANA_MIN} minutos.")
     if usuarios.bloqueado(email):
+        # Recuperar la contraseña por correo también desbloquea la cuenta: nadie puede dejar a otro sin acceso.
         return fallo(f"Demasiados intentos fallidos. Espere {config.LOGIN_VENTANA_MIN} minutos "
-                     "o solicite a la administración que restablezca su contraseña.")
+                     "o use «¿Olvidó su contraseña?» para recibir un enlace por correo.")
     usuario = usuarios.por_email(email)
     ok = verificar_password(usuario["pass_hash"] if usuario else None, password or "")
     if not ok or not usuario["activo"]:
@@ -204,13 +209,16 @@ def post(req, sess, htmx, email: str = "", password: str = ""):
     usuarios.registrar_intento(email, ip, True)
     usuarios.registrar_acceso(usuario["id"])
     sess.clear()  # evita fijación de sesión
-    sess["uid"] = usuario["id"]
+    sess["uid"], sess["sv"] = usuario["id"], usuario["sesion_version"]
     auditar(usuario["id"], "login", "usuario", usuario["id"])
     return Redirect("/cambiar-password" if usuario["debe_cambiar_pass"] else "/")
 
 
 @rt("/logout")
 def post(sess):
+    # Cierra la sesión en todos los equipos: una copia de la cookie deja de valer (PLAN §62).
+    if sess.get("uid"):
+        usuarios.cerrar_sesiones(sess["uid"])
     sess.clear()
     return Redirect("/login")
 
@@ -267,7 +275,8 @@ def post(auth, sess, htmx, actual: str = "", nueva: str = "", confirmacion: str 
         form = form_password(errores, forzado)
         return form if htmx.request else _pagina_password(auth, form)
 
-    usuarios.cambiar_password(auth["id"], nueva, temporal=False)
+    usuarios.cambiar_password(auth["id"], nueva, temporal=False)   # cierra las demás sesiones de la cuenta
+    sess["sv"] = usuarios.version_sesion(auth["id"])               # y esta sigue abierta
     auditar(auth["id"], "cambio_password", "usuario", auth["id"])
     add_toast(sess, "Contraseña actualizada.", "success")
     return Redirect("/")
@@ -405,7 +414,7 @@ def post(sess, req, token: str):
     tokens.consumir(token, ("acceso",))
     usuarios.registrar_acceso(u["id"])
     sess.clear()  # evita fijación de sesión
-    sess["uid"] = u["id"]
+    sess["uid"], sess["sv"] = u["id"], u["sesion_version"]
     auditar(u["id"], "login_enlace", "usuario", u["id"], req.client.host if req.client else None)
     return Redirect("/")
 

@@ -85,5 +85,8 @@ AVISO_ERRORES = os.environ.get("PORTAL_AVISO_ERRORES", "").strip() or None
 # Bloqueo de login: N intentos fallidos por email dentro de la ventana.
 LOGIN_MAX_FALLOS = 5
 LOGIN_VENTANA_MIN = 15
+# Fallos desde una misma IP, con cualquier correo, dentro de la misma ventana (PLAN §62). Más alto que el límite por
+# correo: una sala de computación o una red con NAT comparte la IP.
+LOGIN_MAX_FALLOS_IP = 20
 PASS_MIN_LARGO = 10
 SESION_MAX_AGE = 8 * 3600

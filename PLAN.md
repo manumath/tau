@@ -2922,3 +2922,29 @@ acciones y 57 actividades del apéndice del informe (sin datos personales; los r
 ### Pendiente
 - El plan de mejora (postergado, arriba) y las brechas de la lista.
 - Una carga de actividades por CSV, si registrar a mano las ~85 filas de las hojas 19, 21 y 26 a 28 resulta pesado.
+
+## 62. Mejoras de la auditoría de software (8-nov-2026)
+
+El usuario pidió una auditoría integral (UX/UI, accesibilidad WCAG 2.2, FastHTML + HTMX, arquitectura, seguridad
+OWASP, rendimiento y pruebas) y luego ejecutar sus nueve etapas, un commit por etapa. Hallazgos: ninguno crítico,
+5 de prioridad alta, 16 media y 10 baja. Decisiones del usuario del 8-nov-2026:
+- Sin descargas para las pruebas: verificación propia de accesibilidad en Playwright (no axe-core) y Dependabot en vez
+  de pip-audit.
+- La página pública (`/publico`) usa la marca de la Carrera y el nombre del sistema, como el resto.
+
+### Etapa 1: sesión e ingreso (SEC-01, SEC-02)
+- **Revocación de sesiones** (migración 0064): `usuario.sesion_version`; la cookie guarda la versión al ingresar
+  (`sess["sv"]`) y `auth._cargar_usuario` la compara en cada petición. «Salir» (`usuarios.cerrar_sesiones`) y todo
+  cambio de contraseña (`usuarios.cambiar_password`: propio, por enlace o restablecido por la administración) la
+  incrementan. Quien cambia su propia contraseña sigue dentro (se fija la nueva versión en su sesión). Antes, una copia
+  de la cookie seguía valiendo tras salir (comprobado en la auditoría). Las sesiones anteriores al cambio valen como
+  versión 0: nadie pierde la sesión al desplegar.
+- **Límite por IP:** `config.LOGIN_MAX_FALLOS_IP` = 20 fallos en 15 minutos desde una dirección, con cualquier correo
+  (`usuarios.ip_bloqueada`, índice `ix_intento_login_ip_fecha`). El bloqueo por correo sigue (5 en 15 minutos) y su
+  mensaje ofrece recuperar la contraseña, que ya desbloqueaba la cuenta: nadie puede dejar a otro sin acceso.
+
+### Decisiones del agente por confirmar
+- «Salir» cierra la sesión en **todos** los equipos de la persona (una versión por cuenta, no una tabla de sesiones).
+  Es lo más simple que cierra la copia robada; si molesta salir del teléfono al salir de la computadora, se cambia por
+  una tabla de sesiones.
+- 20 fallos por IP: alto a propósito, porque una sala de computación o una red con NAT comparte la IP.

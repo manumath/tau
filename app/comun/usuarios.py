@@ -62,8 +62,24 @@ def crear(email: str, nombres: str, apellidos: str, password: str | None, *,
 
 
 def cambiar_password(uid: int, password: str, *, temporal: bool):
+    """Cambia la contraseña y cierra todas las sesiones abiertas de la cuenta (la que hizo el cambio, si debe seguir,
+    vuelve a fijar su versión con `version_sesion`)."""
     get_db().t.usuario.update(id=uid, pass_hash=hash_password(password),
                               debe_cambiar_pass=int(temporal))
+    cerrar_sesiones(uid)
+
+
+# --- Sesiones (PLAN §62) -------------------------------------------------------------------------------------------
+# La sesión es una cookie firmada que guarda el id de la cuenta y su `sesion_version` al ingresar. Incrementar la
+# versión invalida todas las copias de la cookie de esa cuenta, en cualquier equipo.
+
+def version_sesion(uid: int) -> int:
+    filas = get_db().q("SELECT sesion_version FROM usuario WHERE id = ?", [uid])
+    return filas[0]["sesion_version"] if filas else 0
+
+
+def cerrar_sesiones(uid: int):
+    get_db().execute("UPDATE usuario SET sesion_version = sesion_version + 1 WHERE id = ?", [uid])
 
 
 def set_activo(uid: int, activo: bool):
@@ -89,6 +105,16 @@ def bloqueado(email: str) -> bool:
                                    WHERE email = :e AND exito = 1), '')""",
         {"e": email.strip().lower(), "desde": marca_tiempo(-timedelta(minutes=config.LOGIN_VENTANA_MIN))})[0]
     return fila["n"] >= config.LOGIN_MAX_FALLOS
+
+
+def ip_bloqueada(ip: str | None) -> bool:
+    """True si desde esa dirección hubo demasiados fallos recientes, con cualquier correo (frena el «password
+    spraying» y que alguien bloquee cuentas ajenas probando correos al azar)."""
+    if not ip:
+        return False
+    fila = get_db().q("SELECT COUNT(*) AS n FROM intento_login WHERE ip = ? AND exito = 0 AND fecha >= ?",
+                      [ip, marca_tiempo(-timedelta(minutes=config.LOGIN_VENTANA_MIN))])[0]
+    return fila["n"] >= config.LOGIN_MAX_FALLOS_IP
 
 
 def desbloquear(email: str):

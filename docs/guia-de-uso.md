@@ -26,8 +26,13 @@ la asignación docente y la carga horaria.
 - La contraseña debe tener al menos 10 caracteres y combinar letras con números o símbolos.
 - **¿La olvidó?** Use «¿Olvidó su contraseña?» en la pantalla de ingreso: recibirá un enlace
   válido por una hora.
-- Tras 5 intentos fallidos el ingreso se bloquea 15 minutos. La administración puede
-  desbloquearlo antes.
+- Tras 5 intentos fallidos el ingreso se bloquea 15 minutos. Para entrar antes, use «¿Olvidó su contraseña?»: al
+  definir una nueva por el enlace del correo, la cuenta se desbloquea. La administración también puede desbloquearla.
+  Si desde una misma red hay muchos intentos fallidos con correos distintos, el ingreso desde esa red se detiene
+  15 minutos.
+- **«Salir» cierra su sesión en todos sus equipos** (computadora, teléfono). Cambiar la contraseña cierra las demás
+  sesiones y mantiene abierta la del equipo en que la cambió; si la administración la restablece, se cierran todas.
+  Si cree que alguien usó su cuenta, cambie la contraseña.
 - **Estudiantes:** no tienen contraseña. En la pantalla de ingreso use «¿Es estudiante? Ingrese con un enlace a su
   correo», escriba su correo y abra el enlace que recibe (vale 30 minutos y una sola vez). Ven solo «Mi seguimiento».
 - Para cambiar su contraseña: menú con su nombre (arriba a la derecha) → «Cambiar contraseña».
