@@ -139,8 +139,8 @@ def seccion_internacionalizacion(a):
             _cifra(len(a["movilidad_internacional"]), "estancias internacionales"), cls="grid grid-cols-4 gap-3"),
         P(f"Cobertura incompleta: en {faltan} artículo(s) falta el país de algún coautor externo, por lo que la coautoría "
           "internacional puede estar subestimada (complételo en Investigadores → Coautores externos)." if faltan else
-          "El país de todos los coautores externos está registrado.", cls="text-sm" + (" text-amber-700" if faltan else "")),
-        P(f"{sin_ambito} proyecto(s) sin ámbito indicado ni contrapartes." if sin_ambito else "", cls="text-sm text-amber-700"),
+          "El país de todos los coautores externos está registrado.", cls="text-sm" + (" text-amber-700 dark:text-amber-400" if faltan else "")),
+        P(f"{sin_ambito} proyecto(s) sin ámbito indicado ni contrapartes." if sin_ambito else "", cls="text-sm text-amber-700 dark:text-amber-400"),
         Div(H3("Países de los coautores"), _tabla_conteo("País", c["por_pais"])) if c["por_pais"] else "",
         Div(H3("Proyectos internacionales"),
             Ul(*[Li(p["nombre"], Span(" · " + "; ".join(f"{x['institucion']} ({x['pais'] or '?'})" for x in p["contrapartes"]),

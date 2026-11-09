@@ -56,7 +56,7 @@ def _periodo(p):
 def insignia_contador(n):
     return Span(str(n) if n else "", id="badge-pendientes",
                 title=f"{n} propuesta(s) por revisar" if n else None,
-                cls="ml-1 rounded-full bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5"
+                cls="ml-1 rounded-full bg-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5"
                     if n else "hidden",
                 hx_get="/proyectos/pendientes/contador", hx_swap="outerHTML",
                 hx_trigger=f"every 60s, {EVENTO_PENDIENTES} from:body")
@@ -67,5 +67,5 @@ def insignia_contador(n):
 def contador_pestana(pid, oob=False):
     n = proyectos.n_pendientes(pid)
     return Span(str(n) if n else "", id="contador-pestana-pendientes",
-                cls="ml-1 rounded-full bg-amber-500 text-white text-[10px] font-bold px-1.5" if n else "hidden",
+                cls="ml-1 rounded-full bg-amber-700 text-white text-[10px] font-bold px-1.5" if n else "hidden",
                 hx_swap_oob="true" if oob else None)

@@ -102,7 +102,7 @@ def _produccion(uid):
     return Div(
         seccion("pub-productos", f"Productos ({len(prods)})",
                 Ul(*[Li(A(productos.cita(x), href=f"/productos/{x['id']}", cls="hover:underline"),
-                        Span(" ✓ informe", cls="text-xs text-green-600")
+                        Span(" ✓ informe", cls="text-xs text-green-700 dark:text-green-400")
                         if productos.cuenta_para_informe(x) else "",
                         cls="text-sm py-1") for x in primeros], cls="space-y-1")
                 if prods else P("Sin productos registrados.", cls=TextPresets.muted_sm)),

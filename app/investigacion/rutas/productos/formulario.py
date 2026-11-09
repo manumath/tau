@@ -68,7 +68,7 @@ def banner_importacion(info):
                      hx_include="input[name=proyecto]:checked", hx_target=f"#{ID_MODAL}") \
         if info.get("doi_publicado") else ""
     return Div(
-        Div(UkIcon("circle-check", height=16, width=16, cls="shrink-0 text-green-600"),
+        Div(UkIcon("circle-check", height=16, width=16, cls="shrink-0 text-green-700 dark:text-green-400"),
             Span(f"Datos importados de {info['fuente']}. Revíselos antes de guardar."),
             cls="flex items-center gap-1.5 font-medium text-sm"),
         *[P(x, cls="text-sm") for x in lineas], *avisos, version,

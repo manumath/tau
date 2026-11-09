@@ -5,7 +5,7 @@ import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Div, H1, Li, P, Redirect, Response, Span, Table, Tbody, Td, Th, Thead, Tr,
                              Ul)
 from fasthtml.toaster import add_toast
-from monsterui.all import H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelInput, LabelTextArea, TextPresets, \
+from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelInput, LabelTextArea, TextPresets, \
     UkIcon
 
 from app.calidad import autoevaluacion as ae
@@ -13,7 +13,7 @@ from app.calidad import evidencias, indicadores, marco
 from app.calidad.rutas.indicadores import cifra, numero
 from app.calidad.rutas.informes import ESTILO_IMPRESION, XLSX, _archivo, barra, descarga, hoja
 from app.comun import unidades
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import fecha_local, insignia
 from app.comun.db import auditar
 from app.ia import catalogo as ia_catalogo, servicio as ia
@@ -342,8 +342,7 @@ def form_juicio(a, c, j, escala, errores=()):
     actual = str(j.get("nivel")) if j.get("nivel") is not None else ""
     return Form(
         mensaje_error(*errores),
-        Div(FormLabel("Nivel"),
-            *[fh.Label(fh.Input(type="radio", name="nivel", value=str(n["valor"]), checked=str(n["valor"]) == actual,
+        campo("Nivel", *[fh.Label(fh.Input(type="radio", name="nivel", value=str(n["valor"]), checked=str(n["valor"]) == actual,
                                 cls="uk-radio mt-1"),
                        Span(Span(f"{n['valor']}. {n['nombre']}", cls="font-medium"),
                             Span(f": {n['descripcion']}", cls=TextPresets.muted_sm) if n["descripcion"] else ""),

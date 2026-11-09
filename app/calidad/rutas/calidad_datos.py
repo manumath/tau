@@ -31,7 +31,7 @@ def _chequeo(c, auth):
     ok = not c["n"]
     cabecera = Div(
         UkIcon("circle-check" if ok else "circle-alert", height=18, width=18,
-               cls="shrink-0 mt-0.5 " + ("text-green-600" if ok else "text-amber-600")),
+               cls="shrink-0 mt-0.5 " + ("text-green-700 dark:text-green-400" if ok else "text-amber-700 dark:text-amber-400")),
         Div(Div(Span(c["titulo"], cls="font-medium"), Span(f" · {c['n']}" if c["n"] else "", cls="font-semibold tabular-nums"),
                 cls="text-sm"),
             P(c["explicacion"], cls=TextPresets.muted_sm) if c["explicacion"] else "",
@@ -78,7 +78,7 @@ def get(auth):
                      Span(" registros por completar", cls="text-sm"))),
             Card(Ul(*[Li(Span(f"{calidad.QUIEN[q]}: ", cls="text-sm"), Span(str(n), cls="text-sm font-semibold"))
                       for q, n in r["por_quien"].items() if n], cls="space-y-0.5")
-                 if r["registros"] else P("Todo en orden.", cls="text-sm text-green-700")),
+                 if r["registros"] else P("Todo en orden.", cls="text-sm text-green-700 dark:text-green-400")),
             cls="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"),
         *[Card(fh.H3(g, cls="text-base font-semibold mb-1"),
                Div(*[_chequeo(c, auth) for c in lista], cls="divide-y divide-border"), cls="mb-4")
@@ -99,4 +99,4 @@ def post(auth, sess, clave: str):
         f" {r['ya_avisadas']} ya tenía(n) un aviso de esta revisión de los últimos {calidad.DIAS_ENTRE_AVISOS} días."
         if r["ya_avisadas"] else "")
     add_toast(sess, texto, "success")
-    return P(UkIcon("check", height=14, width=14, cls="inline mr-1"), texto, cls="pl-7 mt-2 text-sm text-green-700")
+    return P(UkIcon("check", height=14, width=14, cls="inline mr-1"), texto, cls="pl-7 mt-2 text-sm text-green-700 dark:text-green-400")

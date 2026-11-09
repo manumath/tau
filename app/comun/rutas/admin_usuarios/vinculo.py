@@ -7,7 +7,7 @@ from fasthtml.common import APIRouter, Div, Option, P, Response, Select, Span, T
 from monsterui.all import Button, ButtonT, Form, FormLabel, LabelInput, Table, Tbody, Td, Th, TextPresets, UkIcon
 
 from app.comun import usuarios, vinculos
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, campo
 from app.comun.db import auditar
 from app.comun.rutas.admin_usuarios.comun import BASE, SIN_PERMISO, fila, gestiona_vinculos, opciones_categoria
 
@@ -19,7 +19,7 @@ AYUDA_TERMINO = ("Contratados, interinos e invitados: con fecha de término (per
 
 def _campos_periodo(d, con_nota=True, sufijo=""):
     return Div(
-        Div(Div(FormLabel("Categoría"), Select(*opciones_categoria(d.get("categoria"), vacia="— Elija —"),
+        Div(campo("Categoría", Select(*opciones_categoria(d.get("categoria"), vacia="— Elija —"),
                                                name="categoria", cls="uk-select"), cls="space-y-1"),
             LabelInput("Desde", id=f"desde{sufijo}", name="desde", type="date", value=d.get("desde") or ""),
             LabelInput("Hasta", id=f"hasta{sufijo}", name="hasta", type="date", value=d.get("hasta") or ""),
@@ -97,8 +97,8 @@ def modal_vinculo(u, auth, errores=(), editar=None, datos=None):
                 hx_put=f"{BASE}/vinculo/{v["id"]}", hx_target=f"#{ID_MODAL}"), colspan=6)))
             continue
         filas.append(Tr(
-            Td(vinculos.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700") if vig and v["id"] == vig["id"] else ""),
-            Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700"), cls="whitespace-nowrap"),
+            Td(vinculos.CATEGORIAS[v["categoria"]], Span(" · vigente", cls="text-xs text-green-700 dark:text-green-400") if vig and v["id"] == vig["id"] else ""),
+            Td(v["fecha_inicio"] or Span("sin registrar", cls="text-amber-700 dark:text-amber-400"), cls="whitespace-nowrap"),
             Td(v["fecha_fin"] or "—",
                Div(vinculos.MOTIVOS_TERMINO[v["motivo_termino"]], cls=TextPresets.muted_sm) if v["motivo_termino"] else "",
                cls="whitespace-nowrap"),

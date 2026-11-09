@@ -3,10 +3,10 @@ gestiona egresados (en `/docencia/egresados/directorio`). El egresado edita su p
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response, Select, Span, Ul
 from fasthtml.toaster import add_toast
-from monsterui.all import H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelCheckboxX, LabelInput, TextPresets, UkIcon
+from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelCheckboxX, LabelInput, TextPresets, UkIcon
 
 from app.comun import estudiantes, permisos, vinculos
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.egresados import directorio
 
@@ -86,10 +86,10 @@ def _form_solicitud(a_externo, d=None, errores=()):
         "Pedir ayuda a un egresado",
         Form(mensaje_error(*errores),
              P("Cuéntele qué necesita. Su correo se le compartirá solo si acepta.", cls=TextPresets.muted_sm),
-             Div(FormLabel("¿Qué necesita?"), Select(Option("— Elija —", value=""), *[Option(t, value=k, selected=k == d.get("tipo"))
+             campo("¿Qué necesita?", Select(Option("— Elija —", value=""), *[Option(t, value=k, selected=k == d.get("tipo"))
                                                                                     for k, t in directorio.TIPOS_SOLICITUD.items()],
                                                     name="tipo", cls="uk-select", required=True), cls="space-y-1"),
-             Div(FormLabel("Mensaje"), fh.Textarea(d.get("mensaje") or "", name="mensaje", rows="4", maxlength="1000", cls="uk-textarea",
+             campo("Mensaje", fh.Textarea(d.get("mensaje") or "", name="mensaje", rows="4", maxlength="1000", cls="uk-textarea",
                                                    required=True), cls="space-y-1"),
              Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Enviar solicitud", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
@@ -126,10 +126,9 @@ def _form_perfil(externo, d, errores=()):
             LabelInput("Ciudad y país", id="ciudad_pais", value=d.get("ciudad_pais") or "", maxlength="300"), cls="grid grid-cols-1 sm:grid-cols-2 gap-3"),
         LabelInput("Áreas de trabajo o interés", id="areas", value=d.get("areas") or "", maxlength="300",
                    placeholder="Estadística, criptografía, educación…"),
-        Div(FormLabel("¿Qué puede ofrecer a los estudiantes?"),
-            *[LabelCheckboxX(t, id=f"ofrece-{k}", name="ofrece", value=k, checked=k in seleccion) for k, t in directorio.OFRECE.items()],
+        campo("¿Qué puede ofrecer a los estudiantes?", *[LabelCheckboxX(t, id=f"ofrece-{k}", name="ofrece", value=k, checked=k in seleccion) for k, t in directorio.OFRECE.items()],
             cls="space-y-1"),
-        Div(FormLabel("Detalle (opcional)"), fh.Textarea(d.get("detalle") or "", name="detalle", rows="3", maxlength="1000", cls="uk-textarea"),
+        campo("Detalle (opcional)", fh.Textarea(d.get("detalle") or "", name="detalle", rows="3", maxlength="1000", cls="uk-textarea"),
             cls="space-y-1"),
         Div(LabelCheckboxX("Quiero figurar en el directorio de egresados", id="visible", checked=bool(d.get("visible"))),
             LabelCheckboxX("Acepto que estos datos los vean los estudiantes y el personal de la Carrera dentro del sistema (mi correo solo "

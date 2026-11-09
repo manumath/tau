@@ -3,11 +3,11 @@ indicadores (agregados, con su n) quienes ven el seguimiento estudiantil; la lis
 titulación y el seguimiento los gestionan la Dirección de Carrera y la Coordinación académica."""
 from fasthtml.common import A, APIRouter, Div, Option, P, Redirect, Response, Select, Span, Thead, Tr
 from fasthtml.toaster import add_toast
-from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelInput, Table, Tbody, Td, TextPresets, Th,
+from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, LabelInput, Table, Tbody, Td, TextPresets, Th,
                            UkIcon)
 
 from app.comun import permisos, vinculos
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.egresados import directorio, egresados
 from app.estudiantil import cohortes
@@ -185,7 +185,7 @@ def _form_titular(d=None, errores=()):
         Form(mensaje_error(*errores),
              P("Pasa a «titulado» y entra al seguimiento de egresados. Si no indica la fecha de egreso, se toma la de titulación.",
                cls=TextPresets.muted_sm),
-             Div(FormLabel("Estudiante"), Select(Option("— Elija —", value=""),
+             campo("Estudiante", Select(Option("— Elija —", value=""),
                                                 *[Option(f"{c['apellidos']}, {c['nombres']} · cohorte {cohortes.texto(c['cohorte_anio'], c['cohorte_ciclo'])}",
                                                          value=str(c["id"]), selected=str(c["id"]) == str(d.get("estudiante_id")))
                                                   for c in egresados.candidatos_titulacion()],
@@ -193,8 +193,7 @@ def _form_titular(d=None, errores=()):
              Div(LabelInput("Fecha de egreso (opcional)", id="fecha_egreso", type="date", value=d.get("fecha_egreso") or ""),
                  LabelInput("Fecha de titulación", id="fecha_titulacion", type="date", value=d.get("fecha_titulacion") or "",
                             required=True), cls="grid grid-cols-2 gap-3"),
-             Div(FormLabel("Modalidad de titulación"),
-                 Select(Option("— Sin dato —", value=""), *[Option(t, value=k, selected=k == d.get("modalidad"))
+             campo("Modalidad de titulación", Select(Option("— Sin dato —", value=""), *[Option(t, value=k, selected=k == d.get("modalidad"))
                                                             for k, t in cohortes.MODALIDADES.items()],
                         name="modalidad", cls="uk-select"), cls="space-y-1"),
              Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),

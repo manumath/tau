@@ -69,7 +69,7 @@ def post(auth, doi: str = "", arxiv_id: str = "", pid: str = ""):
         doi_n = productos.normalizar_doi(doi) if doi.strip() else None
         arxiv_n = productos.normalizar_arxiv(arxiv_id) if arxiv_id.strip() else None
     except ValueError as e:
-        return P(str(e), cls="text-sm text-amber-600")
+        return P(str(e), cls="text-sm text-amber-700 dark:text-amber-400")
     otro = productos.existente(doi_n, arxiv_n, excluir=int(pid) if pid.isdigit() else None)
     return aviso_duplicado(otro, auth["id"]) if otro else ""
 

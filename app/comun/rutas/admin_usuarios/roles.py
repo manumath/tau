@@ -33,7 +33,7 @@ def modal_roles(u, auth, errores=(), datos=None):
         vigente = r["desde"] <= hoy and (r["hasta"] is None or r["hasta"] >= hoy)
         abierta = r["hasta"] is None or r["hasta"] >= hoy
         filas.append(Tr(
-            Td(permisos.nombre(r["rol"]), Span(" · vigente", cls="text-xs text-green-700") if vigente else ""),
+            Td(permisos.nombre(r["rol"]), Span(" · vigente", cls="text-xs text-green-700 dark:text-green-400") if vigente else ""),
             Td(r["sigla"]), Td(r["desde"], cls="whitespace-nowrap"), Td(r["hasta"] or "—", cls="whitespace-nowrap"),
             Td(Div(r["nota"] or "", cls="text-sm"),
                Div(f"Asignado por {r['asignado_por_nombre']}" if r["asignado_por_nombre"] else "",

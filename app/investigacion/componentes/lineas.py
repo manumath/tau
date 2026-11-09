@@ -26,7 +26,7 @@ def casillas_lineas(elegidas: list[int], fecha: str | None = None, nombre="linea
     return Div(*[Label(Input(type="checkbox", name=nombre, value=str(x["id"]), checked=x["id"] in elegidas,
                              cls="uk-checkbox mt-0.5"),
                        Span(Span(x["nombre"], cls="text-sm"),
-                            Span(" · ya no rige: desmárquela", cls="text-xs text-amber-700")
+                            Span(" · ya no rige: desmárquela", cls="text-xs text-amber-700 dark:text-amber-400")
                             if x["id"] not in ids else "",
                             Span(x["descripcion"], cls=(TextPresets.muted_sm, "block"))
                             if x.get("descripcion") else ""),

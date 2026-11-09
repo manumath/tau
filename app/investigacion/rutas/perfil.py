@@ -65,7 +65,7 @@ def tarjeta_completitud(p, oob=False):
                for f in faltan]
     detalle = (P("Falta: ", *[x for i, e in enumerate(enlaces) for x in ((", " if i else ""), e)], ".",
                  cls=TextPresets.muted_sm) if faltan
-               else P("¡Perfil completo!", cls="text-sm text-green-600"))
+               else P("¡Perfil completo!", cls="text-sm text-green-700 dark:text-green-400"))
     return Div(Div(Span("Perfil completo", cls="text-sm font-medium"),
                    Span(f"{porcentaje} %", cls="text-sm font-semibold"),
                    cls="flex justify-between mb-1"),

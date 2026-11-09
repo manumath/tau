@@ -13,7 +13,7 @@ from app.calidad import cuerpo_academico, evidencias, indicadores, marco
 from app.calidad.rutas.anexo import contenido_xlsx as xlsx_informe_idi
 from app.calidad.rutas.informes import descarga
 from app.comun import exportar, permisos, unidades
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import fecha_local, insignia
 from app.comun.db import auditar
 from app.investigacion import adjuntos
@@ -243,8 +243,7 @@ def form_evidencia(m, tipo, d, url, metodo, auth, errores=()):
              Div(LabelInput("Fecha del documento", id="fecha", type="date", value=v("fecha")),
                  LabelInput("Vigente hasta (vacío: no vence)", id="vigente_hasta", type="date",
                             value=v("vigente_hasta")), cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
-             Div(FormLabel("Criterios que respalda"),
-                 Div(*[Div(Div(dim, cls="text-xs font-medium mt-2"),
+             campo("Criterios que respalda", Div(*[Div(Div(dim, cls="text-xs font-medium mt-2"),
                            *[Label(CheckboxX(name="criterios", value=str(c["id"]), checked=c["id"] in marcados),
                                    Span(Span(c["codigo"], cls="font-mono mr-1"), c["nombre"]),
                                    cls="flex items-center gap-2 text-sm") for c in cs])

@@ -6,11 +6,11 @@ encuestas nominales y solo las ve quien las gestiona."""
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response, Select, Span, Thead, Tr, Ul
 from fasthtml.toaster import add_toast
-from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelCheckboxX, LabelInput, Table, Tbody, Td,
+from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, LabelCheckboxX, LabelInput, Table, Tbody, Td,
                            TextPresets, Th, UkIcon)
 
 from app.comun import permisos, vinculos
-from app.comun.componentes.layout import mensaje_error, pagina
+from app.comun.componentes.layout import mensaje_error, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import get_db
 from app.estudiantil import encuestas
@@ -61,7 +61,7 @@ def get(auth):
              for e in encuestas.listar()]
     nueva = Card(
         H3("Nueva encuesta", cls="text-base font-semibold"),
-        Form(Div(Div(FormLabel("Partir de"), Select(Option("Una encuesta en blanco", value=""),
+        Form(Div(campo("Partir de", Select(Option("Una encuesta en blanco", value=""),
                                                      *[Option(p["titulo"], value=k) for k, p in PLANTILLAS.items()],
                                                      name="plantilla", cls="uk-select"), cls="space-y-1"),
                  LabelInput("Título (solo si parte en blanco)", id="titulo"), cls="grid grid-cols-1 sm:grid-cols-2 gap-3"),
@@ -112,12 +112,11 @@ def _datos(e, editable, errores=()):
     return Form(
         mensaje_error(*errores),
         LabelInput("Título", id="titulo", value=e["titulo"], required=True, maxlength="200"),
-        Div(FormLabel("Descripción (se muestra a quien responde)"),
-            fh.Textarea(e["descripcion"] or "", name="descripcion", rows="2", maxlength="2000", cls="uk-textarea"),
+        campo("Descripción (se muestra a quien responde)", fh.Textarea(e["descripcion"] or "", name="descripcion", rows="2", maxlength="2000", cls="uk-textarea"),
             cls="space-y-1"),
-        Div(Div(FormLabel("Tipo"), Select(*[Option(t, value=k, selected=k == e["tipo"]) for k, t in encuestas.TIPOS.items()],
+        Div(campo("Tipo", Select(*[Option(t, value=k, selected=k == e["tipo"]) for k, t in encuestas.TIPOS.items()],
                                          name="tipo", cls="uk-select"), cls="space-y-1"),
-            Div(FormLabel("Dirigida a"), Select(*[Option(t, value=k, selected=k == e["publico"])
+            campo("Dirigida a", Select(*[Option(t, value=k, selected=k == e["publico"])
                                                   for k, t in encuestas.PUBLICOS.items()], name="publico", cls="uk-select"),
                 cls="space-y-1"),
             LabelInput("Ingreso desde (año; estudiantes y egresados)", id="cohorte_desde", type="number", value=e["cohorte_desde"] or "",
@@ -153,10 +152,9 @@ def _form_pregunta(eid, errores=()):
         fh.Summary("Agregar una pregunta", cls="cursor-pointer text-sm text-primary"),
         Form(mensaje_error(*errores),
              LabelInput("Pregunta", id="texto", required=True, maxlength="500"),
-             Div(Div(FormLabel("Tipo de respuesta"), Select(*[Option(t, value=k) for k, t in encuestas.TIPOS_PREGUNTA.items()],
+             Div(campo("Tipo de respuesta", Select(*[Option(t, value=k) for k, t in encuestas.TIPOS_PREGUNTA.items()],
                                                           name="tipo", cls="uk-select"), cls="space-y-1"),
-                 Div(FormLabel("Opciones (una por línea; solo para «Una opción» y «Varias opciones»)"),
-                     fh.Textarea(name="opciones", rows="3", cls="uk-textarea"), cls="space-y-1"),
+                 campo("Opciones (una por línea; solo para «Una opción» y «Varias opciones»)", fh.Textarea(name="opciones", rows="3", cls="uk-textarea"), cls="space-y-1"),
                  cls="grid grid-cols-1 sm:grid-cols-2 gap-3"),
              LabelCheckboxX("Respuesta obligatoria", id="obligatoria", checked=True),
              Button("Agregar", type="submit", cls=ButtonT.default), method="post", action=f"{BASE}/{eid}/preguntas",

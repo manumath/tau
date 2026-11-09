@@ -32,10 +32,10 @@ def resumen_vinculo(u, con_boton=True):
         if vinculos.carga_de(v):
             partes.append(Span(f" · {v['horas_contratadas']} h/mes", cls=TextPresets.muted_sm))
         if not v["fecha_inicio"]:
-            partes.append(Span(" · ingreso sin fecha", cls="text-xs text-amber-700"))
+            partes.append(Span(" · ingreso sin fecha", cls="text-xs text-amber-700 dark:text-amber-400"))
     else:
         partes = [Span("Sin categoría" if not vinculos.listar(u["id"]) else "Sin vínculo vigente",
-                       cls="text-sm text-amber-700")]
+                       cls="text-sm text-amber-700 dark:text-amber-400")]
     return Div(*partes,
                fh.Button(UkIcon("id-card", height=14, width=14), "Vínculo", type="button",
                          cls="inline-flex items-center gap-1 text-xs text-primary hover:underline ml-2",
@@ -81,9 +81,9 @@ def _estado(u, bloqueada=False):
                     cls="inline-flex items-center gap-1 text-destructive text-sm whitespace-nowrap")
     if u["debe_cambiar_pass"]:
         return Span(UkIcon("clock", height=14, width=14), "Sin primer ingreso",
-                    cls="inline-flex items-center gap-1 text-amber-600 text-sm whitespace-nowrap")
+                    cls="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 text-sm whitespace-nowrap")
     return Span(UkIcon("check", height=14, width=14), "Activa",
-                cls="inline-flex items-center gap-1 text-green-600 text-sm")
+                cls="inline-flex items-center gap-1 text-green-700 dark:text-green-400 text-sm")
 
 
 def fila(u, auth: dict):

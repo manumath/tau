@@ -392,7 +392,7 @@ def documento_proyecto(datos, desde, hasta):
           cls="apagado text-sm") if datos["productos_informe"] else "",
         Ol(*[cita(x)(Span(" — " + ("filiación y agradecimiento ✓" if not x["requisitos_faltan"]
                                        else "falta: " + ", ".join(x["requisitos_faltan"])),
-                             cls="apagado" if not x["requisitos_faltan"] else "text-amber-700"))
+                             cls="apagado" if not x["requisitos_faltan"] else "text-amber-700 dark:text-amber-400"))
              for x in datos["productos_informe"]], cls="citas") if datos["productos_informe"]
         else P("Ninguno en el periodo.", cls="apagado"),
         *([H2(f"Otros productos ({len(datos['productos_otros'])})"),
@@ -506,7 +506,7 @@ def seccion_revistas(rv):
             cls="grid grid-cols-2 gap-6"),
         P(f"{rv['declarados']} artículo(s) en revistas aún no verificadas en el catálogo: su clasificación es la "
           "que declararon los autores." + (" Para una evaluación externa conviene verificarlas." if not rv["exige_verificada"] else ""),
-          cls="text-sm text-amber-700") if rv["declarados"] else "")
+          cls="text-sm text-amber-700 dark:text-amber-400") if rv["declarados"] else "")
 
 
 def seccion_impacto(imp):
@@ -570,7 +570,7 @@ def seccion_areas(m):
         P("Cada producto se cuenta una vez, en la sección de su código MSC2020 principal.", cls="apagado text-sm"),
         Div(Div(tabla), grafico, cls="grid grid-cols-2 gap-6 items-start"),
         P(f"{m['sin_area']} producto(s) sin clasificación MSC2020: complétela en cada producto (Calidad de datos "
-          "los lista).", cls="text-sm text-amber-700 no-imprimir") if m["sin_area"] else "")
+          "los lista).", cls="text-sm text-amber-700 dark:text-amber-400 no-imprimir") if m["sin_area"] else "")
 
 
 def seccion_evolucion(serie):

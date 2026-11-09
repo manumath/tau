@@ -83,7 +83,7 @@ def casillas_proyectos(tipo: str, registro_id: int | None, usuario: dict,
         if v and v["estado"] == "aprobado":
             nota = Span("aprobado · solo un responsable puede desvincularlo", cls=TextPresets.muted_sm)
         elif v and v["estado"] == "pendiente":
-            nota = Span("propuesta pendiente de aprobación", cls="text-sm text-amber-600")
+            nota = Span("propuesta pendiente de aprobación", cls="text-sm text-amber-700 dark:text-amber-400")
         elif v and v["estado"] == "rechazado":
             nota = Span(f"rechazado: «{v['comentario']}». Si lo deja marcado, se vuelve a proponer.",
                         cls="text-sm text-destructive")
@@ -102,7 +102,7 @@ def casillas_proyectos(tipo: str, registro_id: int | None, usuario: dict,
                               name="agradece", aria_label=f"¿La publicación agradece a {nombre}?",
                               title="Los fondos exigen que la publicación agradezca al proyecto.",
                               cls="uk-select h-8 w-56 text-sm ml-auto shrink-0"
-                                  + (" border-amber-400 text-amber-700" if actual == "" else ""))
+                                  + (" border-amber-400 text-amber-700 dark:text-amber-400" if actual == "" else ""))
         filas.append(Div(fh.Label(
             Input(type="checkbox", name="proyecto", value=str(pid), checked=marcado,
                   disabled=bloqueado, cls="uk-checkbox mt-0.5"),

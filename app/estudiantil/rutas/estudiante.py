@@ -5,10 +5,10 @@ from urllib.parse import quote
 
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, FileResponse, Li, Option, P, Redirect, Response, Select, Span, Ul, UploadFile
-from monsterui.all import H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelInput, TextPresets, UkIcon
+from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon
 
 from app.comun import estudiantes
-from app.comun.componentes.layout import ID_MODAL, cerrar_modal, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, cerrar_modal, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
 from app.estudiantil import actividad, cohortes
@@ -222,7 +222,7 @@ def _form(d=None, errores=(), aid=None):
     return modal(
         "Corregir actividad" if aid else "Registrar actividad",
         Form(mensaje_error(*errores),
-             Div(FormLabel("Tipo"), Select(Option("— Elija —", value=""),
+             campo("Tipo", Select(Option("— Elija —", value=""),
                                           *[Option(t, value=k, selected=k == d.get("tipo")) for k, t in actividad.TIPOS.items()],
                                           name="tipo", cls="uk-select", required=True), cls="space-y-1"),
              LabelInput("Título", id="titulo", value=d.get("titulo") or "", required=True, maxlength="200",
@@ -231,11 +231,9 @@ def _form(d=None, errores=(), aid=None):
              Div(LabelInput("Desde", id="fecha_inicio", type="date", value=d.get("fecha_inicio") or "", required=True),
                  LabelInput("Hasta (opcional)", id="fecha_fin", type="date", value=d.get("fecha_fin") or ""),
                  cls="grid grid-cols-2 gap-3"),
-             Div(FormLabel("Descripción (opcional)"),
-                 fh.Textarea(d.get("descripcion") or "", name="descripcion", rows="3", maxlength="2000", cls="uk-textarea"),
+             campo("Descripción (opcional)", fh.Textarea(d.get("descripcion") or "", name="descripcion", rows="3", maxlength="2000", cls="uk-textarea"),
                  cls="space-y-1"),
-             Div(FormLabel("Evidencia (opcional)"),
-                 fh.Input(type="file", name="archivo", accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg",
+             campo("Evidencia (opcional)", fh.Input(type="file", name="archivo", accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg",
                           aria_label="Evidencia"),
                  P("PDF, PNG o JPG de hasta 20 MB: un certificado, una constancia…" +
                    (" Los archivos ya adjuntos se quitan desde la lista." if aid else ""), cls=TextPresets.muted_sm),

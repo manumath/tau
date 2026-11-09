@@ -14,8 +14,8 @@ _CIRCULO = {
     "hecho": "bg-primary text-primary-foreground border-primary",
     "actual": "bg-background text-primary border-primary ring-4 ring-primary/15",
     "pendiente": "bg-background text-muted-foreground border-border",
-    "alerta": "bg-amber-500 text-white border-amber-500",
-    "error": "bg-red-600 text-white border-red-600",
+    "alerta": "bg-amber-700 text-white border-amber-700",
+    "error": "bg-destructive text-destructive-foreground border-destructive",
     "omitido": "bg-background text-muted-foreground border-dashed border-border",
 }
 _ICONO = {"hecho": "check", "alerta": "circle-alert", "error": "x", "omitido": "minus"}

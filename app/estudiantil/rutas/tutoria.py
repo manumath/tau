@@ -6,11 +6,11 @@ from datetime import date
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response, Select, Span, Thead, Tr, Ul
 from fasthtml.toaster import add_toast
-from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, LabelInput, Table, Tbody, Td, TextPresets, Th,
+from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, LabelInput, Table, Tbody, Td, TextPresets, Th,
                            UkIcon)
 
 from app.comun import estudiantes, permisos, vinculos
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
 from app.estudiantil import cohortes, tutoria
@@ -132,18 +132,18 @@ def _form(externo_id, d=None, errores=(), rid=None):
         "Corregir reunión" if rid else "Registrar reunión",
         Form(mensaje_error(*errores),
              Div(LabelInput("Fecha", id="fecha", type="date", value=d.get("fecha") or date.today().isoformat(), required=True),
-                 Div(FormLabel("Modalidad"), Select(*[Option(t, value=k, selected=k == (d.get("modalidad") or "presencial"))
+                 campo("Modalidad", Select(*[Option(t, value=k, selected=k == (d.get("modalidad") or "presencial"))
                                                       for k, t in tutoria.MODALIDADES.items()], name="modalidad", cls="uk-select"),
                      cls="space-y-1"), cls="grid grid-cols-2 gap-3"),
-             Div(FormLabel("Tema"), Select(Option("— Elija —", value=""), *[Option(t, value=k, selected=k == d.get("tema"))
+             campo("Tema", Select(Option("— Elija —", value=""), *[Option(t, value=k, selected=k == d.get("tema"))
                                                                           for k, t in tutoria.TEMAS.items()],
                                           name="tema", cls="uk-select", required=True), cls="space-y-1"),
-             Div(FormLabel("Resumen (confidencial)"), fh.Textarea(d.get("resumen") or "", name="resumen", rows="4", maxlength="3000",
+             campo("Resumen (confidencial)", fh.Textarea(d.get("resumen") or "", name="resumen", rows="4", maxlength="3000",
                                                                   cls="uk-textarea"), cls="space-y-1"),
-             Div(FormLabel("Derivación"), Select(*[Option(t, value=k, selected=k == (d.get("derivacion") or "ninguna"))
+             campo("Derivación", Select(*[Option(t, value=k, selected=k == (d.get("derivacion") or "ninguna"))
                                                    for k, t in tutoria.DERIVACIONES.items()], name="derivacion", cls="uk-select"),
                  cls="space-y-1"),
-             Div(FormLabel("Acuerdos"), fh.Textarea(d.get("acuerdos") or "", name="acuerdos", rows="2", maxlength="2000",
+             campo("Acuerdos", fh.Textarea(d.get("acuerdos") or "", name="acuerdos", rows="2", maxlength="2000",
                                                     cls="uk-textarea"), cls="space-y-1"),
              Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
@@ -245,9 +245,9 @@ def get(auth, cohorte: str = "", solo: str = ""):
         cuerpo = Div(
             Card(H3("Asignar tutor a una cohorte", cls="text-base font-semibold mb-2"),
                  P("Asigna el tutor a los estudiantes de la cohorte que cursan y aún no tienen tutor.", cls=(TextPresets.muted_sm, "mb-2")),
-                 Form(Div(Div(FormLabel("Cohorte"), Select(Option("— Elija —", value=""), *[Option(c, value=c) for c in opciones_cohorte],
+                 Form(Div(campo("Cohorte", Select(Option("— Elija —", value=""), *[Option(c, value=c) for c in opciones_cohorte],
                                                           name="cohorte", cls="uk-select", required=True), cls="space-y-1"),
-                          Div(FormLabel("Tutor(a)"), Select(*opciones(None), name="tutor_id", cls="uk-select", required=True),
+                          campo("Tutor(a)", Select(*opciones(None), name="tutor_id", cls="uk-select", required=True),
                               cls="space-y-1"), cls="grid grid-cols-1 sm:grid-cols-2 gap-3"),
                       Button("Asignar a la cohorte", type="submit", cls=ButtonT.primary), hx_post=f"{DIR}/asignar-cohorte",
                       hx_swap="none", cls="space-y-3")),

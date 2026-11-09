@@ -22,7 +22,7 @@ def _selector_agradece(valor, **kw):
     return Div(FormLabel("¿La publicación agradece al proyecto?") if not kw else "",
                Select(*[Option(t, value=v, selected=v == actual) for v, t in OPCIONES_AGRADECE],
                       name="agradece", aria_label="¿La publicación agradece al proyecto?",
-                      cls="uk-select h-8 w-56 text-sm" + (" border-amber-400 text-amber-700" if actual == "" else ""),
+                      cls="uk-select h-8 w-56 text-sm" + (" border-amber-400 text-amber-700 dark:text-amber-400" if actual == "" else ""),
                       **kw),
                cls="space-y-1")
 
@@ -84,7 +84,7 @@ def _aviso_carga(p, a, gestiona):
         texto = (f"{nombre} tiene un nuevo periodo de vínculo (desde {a['fecha_inicio']}) con carga libre. La carga "
                  "en el proyecto no se reasigna sola: asígnela en «Participantes» o indique que no corresponde.")
         boton = "No asignar carga"
-    return Card(Div(UkIcon("user-round-cog", height=18, width=18, cls="shrink-0 mt-0.5 text-amber-600"),
+    return Card(Div(UkIcon("user-round-cog", height=18, width=18, cls="shrink-0 mt-0.5 text-amber-700 dark:text-amber-400"),
                     Div(Span(carga_proyectos.TIPOS_AVISO[a["tipo"]], cls="font-medium"), P(texto, cls="text-sm")),
                     cls="flex gap-3"),
                 Div(fh.Button("Ir a participantes", type="button", cls="text-sm text-primary hover:underline",

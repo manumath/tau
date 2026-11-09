@@ -42,9 +42,9 @@ def insignias(p):
     return Div(*res, cls="flex flex-wrap gap-1.5")
 
 
-MARCAS_FILIACION = {1: ("✓", "text-green-700", "Firmó con la filiación del instituto (IIMAT/UMSA)"),
+MARCAS_FILIACION = {1: ("✓", "text-green-700 dark:text-green-400", "Firmó con la filiación del instituto (IIMAT/UMSA)"),
                     0: ("✗", "text-muted-foreground", "No firmó con la filiación del instituto"),
-                    None: ("?", "text-amber-600", "Filiación sin declarar")}
+                    None: ("?", "text-amber-700 dark:text-amber-400", "Filiación sin declarar")}
 
 
 def autores_texto(p):
@@ -69,7 +69,7 @@ def declarar_filiacion(p, uid):
         texto, type="button", cls="text-xs px-2 py-0.5 rounded border border-border hover:bg-muted",
         hx_post=f"/productos/{p['id']}/filiacion", hx_vals=f'{{"valor": "{valor}"}}',
         hx_target=f"#producto-{p['id']}", hx_swap="outerHTML")
-    return Div(Span("¿Firmó con IIMAT/UMSA?", cls="text-xs text-amber-700"), boton("Sí", 1), boton("No", 0),
+    return Div(Span("¿Firmó con IIMAT/UMSA?", cls="text-xs text-amber-700 dark:text-amber-400"), boton("Sí", 1), boton("No", 0),
                cls="flex items-center gap-2")
 
 
@@ -169,7 +169,7 @@ def _mas_filtros(activos: int, n_pend: int, *campos):
     """Área y casillas, plegadas: el número dice cuántos están activos; el punto, si hay filiaciones por declarar."""
     resumen = Span("Más filtros", Span(f" · {activos} activo{'s' if activos != 1 else ''}", cls="font-medium")
                    if activos else "",
-                   Span(cls="inline-block size-2 rounded-full bg-amber-500 ml-1", title="Filiaciones por declarar")
+                   Span(cls="inline-block size-2 rounded-full bg-amber-600 ml-1", title="Filiaciones por declarar")
                    if n_pend and not activos else "")
     return fh.Details(fh.Summary(UkIcon("sliders-horizontal", height=16, width=16), resumen,
                                  cls="uk-btn uk-btn-default inline-flex items-center gap-1 cursor-pointer list-none"),
@@ -187,7 +187,7 @@ def get(auth, q: str = "", anio: str = "", tipo: str = "", informe: bool = False
                             cls="flex items-center gap-2 text-sm")
     n_pend = filiacion.pendientes(uid)
     casilla_filiacion = Label(CheckboxX(name="sin_filiacion", value="1", checked=sin_filiacion),
-                              Span(f"Sin filiación declarada ({n_pend})", cls="text-amber-700" if n_pend else ""),
+                              Span(f"Sin filiación declarada ({n_pend})", cls="text-amber-700 dark:text-amber-400" if n_pend else ""),
                               cls="flex items-center gap-2 text-sm")
     return pagina(
         "Mis productos",

@@ -129,6 +129,9 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   `uv run python scripts/tema_marca.py && scripts/estilos.sh`); errores y botones de quitar con `text-destructive`,
   nunca `text-red-*`; logos con `layout.isotipo()`/`layout.logotipo()` (versión blanca en oscuro). Los originales de la
   marca y sus fuentes comerciales (Gotham, Helvetica Neue, Garamond Pro) no se versionan: se usan Montserrat y EB Garamond.
+- **Accesibilidad (PLAN §62):** etiquete los campos con `layout.campo("Texto", control)`, no con `FormLabel` suelto; el
+  texto de color usa tono 700 u 800 con su variante `dark:` (los 500 y 600 no llegan a 4,5:1 sobre blanco).
+  `tests/navegador/test_accesibilidad_pantallas.py` lo vigila: agregue allí las pantallas nuevas.
 - Plantillas XLSX ajenas (formularios de agencias): nunca con openpyxl al guardar, que borra gráficos e
   imágenes; use `app/comun/xlsx_plantilla.py`, que escribe solo las celdas pedidas.
 - Nunca edite una migración aplicada; nunca borre una prueba para que pase.

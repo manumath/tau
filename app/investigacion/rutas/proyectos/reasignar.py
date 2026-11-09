@@ -6,7 +6,7 @@ from monsterui.all import Button, ButtonT, Form, FormLabel, TextPresets
 
 from app.investigacion import proyectos
 from app.comun import usuarios
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, campo
 from app.comun.db import auditar
 
 rt = APIRouter()
@@ -27,8 +27,7 @@ def form_reasignar(p, errores=(), nuevo="", anterior="co_investigador"):
                         *[Option(f"{u['apellidos']}, {u['nombres']}", value=str(u["id"]),
                                  selected=str(u["id"]) == nuevo) for u in candidatos],
                         id="nuevo", name="nuevo", cls="uk-select"), cls="space-y-2"),
-             Div(FormLabel("El responsable actual"),
-                 *[fh.Label(Input(type="radio", name="anterior", value=v, checked=v == anterior, cls="uk-radio"),
+             campo("El responsable actual", *[fh.Label(Input(type="radio", name="anterior", value=v, checked=v == anterior, cls="uk-radio"),
                             Span(t, cls="text-sm"), cls="flex items-center gap-2")
                    for v, t in (("co_investigador", "sigue en el proyecto como co-investigador(a)"),
                                 ("baja", "deja el proyecto (se le da de baja con fecha de hoy)"))],

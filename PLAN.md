@@ -2943,6 +2943,16 @@ OWASP, rendimiento y pruebas) y luego ejecutar sus nueve etapas, un commit por e
   (`usuarios.ip_bloqueada`, índice `ix_intento_login_ip_fecha`). El bloqueo por correo sigue (5 en 15 minutos) y su
   mensaje ofrece recuperar la contraseña, que ya desbloqueaba la cuenta: nadie puede dejar a otro sin acceso.
 
+### Etapa 2: contraste y etiquetas (A11Y-01, A11Y-03)
+- **Contraste AA:** las insignias de contadores (menú, campana, pestañas de proyectos) y el paso «alerta» de las etapas
+  pasan de ámbar 500 (2,15:1 con texto blanco) a ámbar 700 (5:1); los textos de estado en verde y ámbar, de 600
+  (3,2–3,3:1) a 700 (5:1), con variante 400 en el tema oscuro. Todo texto de color 600–800 lleva su variante oscura.
+- **Etiquetas:** `layout.campo(texto, control, …)` une la etiqueta y el control con `for`/`id` (le da un id si no lo
+  tiene). Reemplaza el patrón `Div(FormLabel("…"), Select(…))`, que dejaba la etiqueta suelta, en 43 formularios.
+- **Prueba:** `tests/navegador/test_accesibilidad_pantallas.py` recorre 45 pantallas con cuatro perfiles, en tema claro y
+  oscuro, y falla con texto bajo 4,5:1 (3:1 si es grande), controles sin etiqueta, botones o enlaces sin nombre e ids
+  repetidos. `tests/navegador/preparar.py` agrega una cuenta con las dos direcciones (`direccion`).
+
 ### Decisiones del agente por confirmar
 - «Salir» cierra la sesión en **todos** los equipos de la persona (una versión por cuenta, no una tabla de sesiones).
   Es lo más simple que cierra la copia robada; si molesta salir del teléfono al salir de la computadora, se cambia por

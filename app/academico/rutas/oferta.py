@@ -31,7 +31,7 @@ def _selector(g):
 
 
 def _docente(d, g, puede):
-    aviso = Span(" · sin vínculo con la Carrera", cls="text-xs text-amber-700",
+    aviso = Span(" · sin vínculo con la Carrera", cls="text-xs text-amber-700 dark:text-amber-400",
                  title="No tiene vínculo vigente con la Carrera al inicio de la gestión") \
         if oferta.sin_vinculo_con_la_carrera(d["usuario_id"], g) else ""
     quitar = fh.Button(UkIcon("x", height=12, width=12), type="button", aria_label="Quitar docente",
@@ -114,7 +114,7 @@ def get(auth, gestion: str = ""):
     anterior = oferta.mismo_semestre_anio_anterior(g)
     anterior = anterior if anterior and oferta.listar(anterior["id"]) else None
     temporada = P("Curso de temporada: solo lo dictan docentes titulares y no suma a la carga horaria del semestre "
-                  "(cuenta como docencia dictada).", cls="text-sm text-amber-700 mb-4") \
+                  "(cuenta como docencia dictada).", cls="text-sm text-amber-700 dark:text-amber-400 mb-4") \
         if g["tipo"] in oferta.TEMPORADA else ""
     return pagina(
         "Oferta y docentes",
@@ -461,7 +461,7 @@ async def post(auth, archivo: UploadFile = None):
             resultado = Div(Span(("Reemplaza " + str(g["actuales"]) + " paralelo(s) actual(es)") if g["actuales"] else
                                  ("Gestión nueva: se crearán las del año" if not g["existe"] else "Sin oferta previa"),
                                  cls="text-sm"),
-                            *[P(a, cls="text-sm text-amber-700") for a in g["avisos"]])
+                            *[P(a, cls="text-sm text-amber-700 dark:text-amber-400") for a in g["avisos"]])
         filas.append(fh.Tr(fh.Td(g["codigo"], cls="font-mono whitespace-nowrap"),
                            fh.Td(f"{paralelos} paralelo(s), {docentes} docente(s)" +
                                  (f", {sin_doc} sin docente" if sin_doc else ""), cls="text-sm"),

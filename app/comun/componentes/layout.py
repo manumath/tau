@@ -1,9 +1,10 @@
 """Estructura común de las páginas: menú lateral, barra superior, pestañas del teléfono, contenedor y modal."""
+import itertools
 import unicodedata
 
 import fasthtml.common as fh
 from fasthtml.common import A, Div, Form, Img, Input, Li, Main, Span, Title, Ul
-from monsterui.all import H3, Button, ButtonT, Container, ContainerT, TextPresets, UkIcon
+from monsterui.all import H3, Button, ButtonT, Container, ContainerT, FormLabel, TextPresets, UkIcon
 
 from app.comun import config
 from app.comun.componentes import recursos
@@ -255,6 +256,22 @@ def boton_espera(*contenido, cls=ButtonT.default, **kwargs):
                   UkIcon("loader-circle", height=16, width=16,
                          cls="absolute group-disabled:animate-spin group-enabled:hidden"),
                   cls=(*clases, "relative group disabled:cursor-not-allowed"), **kwargs)
+
+
+_CONTROLES = ("select", "input", "textarea")
+_ids_campo = itertools.count(1)
+
+
+def campo(texto, *hijos, **kw):
+    """Etiqueta y control en un `Div`, unidos por `for`/`id` (WCAG 1.3.1 y 4.1.2: el lector de pantalla anuncia la
+    etiqueta al llegar al control). Toma el primer `select`, `input` o `textarea` de los hijos y le da un id si no lo
+    tiene. Sin control (un grupo de casillas, un buscador), deja la etiqueta como texto, igual que antes."""
+    control = next((h for h in hijos if getattr(h, "tag", None) in _CONTROLES), None)
+    if control is None:
+        return Div(FormLabel(texto), *hijos, **kw)
+    cid = control.attrs.get("id") or f"{control.attrs.get('name') or 'campo'}-{next(_ids_campo)}"
+    control.attrs["id"] = cid
+    return Div(FormLabel(texto, fr=cid), *hijos, **kw)
 
 
 def mensaje_error(*errores):

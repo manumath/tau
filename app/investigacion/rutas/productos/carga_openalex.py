@@ -133,8 +133,8 @@ def post(auth, sess, carga: str = "", sel: list[str] = None):
     creados, mensajes = cosecha.registrar(auth["id"], elegidas)
     add_toast(sess, f"{creados} producto(s) registrado(s) desde OpenAlex.", "success")
     return (Div(Div(P(f"Se registraron {creados} producto(s). Revise en «Mis productos» su nivel de revisión y su "
-                      "filiación, y vincúlelos a sus proyectos si corresponde.", cls="text-sm text-green-700"),
-                    *[P(m, cls="text-sm text-amber-700") for m in mensajes],
+                      "filiación, y vincúlelos a sus proyectos si corresponde.", cls="text-sm text-green-700 dark:text-green-400"),
+                    *[P(m, cls="text-sm text-amber-700 dark:text-amber-400") for m in mensajes],
                     A("Ir a mis productos", href="/productos", cls="text-sm text-primary hover:underline"),
                     cls="space-y-2 rounded-md border border-border p-4"), id=ID_COSECHA),
             HtmxResponseHeaders(trigger=EVENTO))

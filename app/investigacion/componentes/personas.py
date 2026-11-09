@@ -40,7 +40,7 @@ def selector_filiacion(p: dict, valor):
     return Select(*[Option(t, value=v, selected=v == actual) for v, t in OPCIONES_FILIACION.items()],
                   name="filiacion", aria_label=f"Filiación de {p['nombres']} {p['apellidos']}",
                   title="¿Firmó la publicación con la filiación del instituto (IIMAT, CMAT, FCPN o UMSA)?",
-                  cls=f"{CLS_SELECTOR} sm:w-52" + (" border-amber-400 text-amber-700" if actual == "" else ""))
+                  cls=f"{CLS_SELECTOR} sm:w-52" + (" border-amber-400 text-amber-700 dark:text-amber-400" if actual == "" else ""))
 
 
 def fila(p: dict, campo: str, rol: str | None = None, filiacion=None):

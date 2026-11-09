@@ -113,7 +113,7 @@ def get(auth, q: str = "", sin_pais: bool = True, todos: bool = False):
                 if _fusiona(auth) else "",
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-4"),
-        P(f"{n_sin} persona(s) sin país.", cls="text-sm text-amber-700" if n_sin else "text-sm text-green-700"),
+        P(f"{n_sin} persona(s) sin país.", cls="text-sm text-amber-700 dark:text-amber-400" if n_sin else "text-sm text-green-700 dark:text-green-400"),
         fh.Form(Input(type="search", name="q", value=q, placeholder="Buscar por nombre o institución…",
                       cls="uk-input max-w-sm", aria_label="Buscar personas externas"),
                 fh.Label(fh.Input(type="checkbox", name="todos", value="1", checked=not sin_pais, cls="uk-checkbox"),
@@ -261,7 +261,7 @@ def post(auth, sess, par: str = "", conservar: str = ""):
     auditar(auth["id"], "fusionar_externos", "persona_externa", c,
             f"Se unió «{antes['nombres']} {antes['apellidos']}» (id {e})" if antes else f"id {e}")
     add_toast(sess, "Fichas fusionadas.", "success")
-    return Div(UkIcon("check", height=14, width=14, cls="shrink-0 text-green-600"),
+    return Div(UkIcon("check", height=14, width=14, cls="shrink-0 text-green-700 dark:text-green-400"),
                Span(f"Fusionadas: queda «{personas.por_ref(f'e:{c}')['nombres']} {personas.por_ref(f'e:{c}')['apellidos']}»."),
                id=f"par-{par}", cls="flex items-center gap-2 rounded border border-border p-3 text-sm")
 
@@ -281,7 +281,7 @@ def post(auth, sess, externo: int, usuario: int, desde: str = ""):
     add_toast(sess, "Vinculada a la cuenta.", "success")
     if desde == "tabla":       # desde la lista de externos: la fila desaparece al recargar
         return HtmxResponseHeaders(refresh="true")
-    return Div(UkIcon("check", height=14, width=14, cls="shrink-0 text-green-600"),
+    return Div(UkIcon("check", height=14, width=14, cls="shrink-0 text-green-700 dark:text-green-400"),
                Span(f"Vinculada: sus registros ahora son de {u['nombres']} {u['apellidos']}."),
                id=f"cuenta-{externo}-{usuario}", cls="flex items-center gap-2 rounded border border-border p-3 text-sm")
 

@@ -53,7 +53,7 @@ def _tarjeta_materias(uid, g):
                                     fh.Th("Rol"))), fh.Tbody(*filas), cls="uk-table uk-table-divider uk-table-small"),
             cls="overflow-x-auto mt-2") if filas else P("No tiene materias en esta gestión.", cls=(TextPresets.muted_sm, "mt-2")),
         P("Curso de temporada: cuenta como docencia dictada, no como carga del semestre.",
-          cls="text-sm text-amber-700 mt-2") if temporada else "",
+          cls="text-sm text-amber-700 dark:text-amber-400 mt-2") if temporada else "",
         Div(P(f"Docencia prevista: {r['prevista'] if r['prevista'] is not None else '—'} h/mes · asignada: "
               f"{r['asignada']} h/mes (32 por materia como titular).", cls="text-sm"),
             _barra(r["asignada"], r["prevista"], "Docencia asignada respecto de la prevista") if r["prevista"] else "",

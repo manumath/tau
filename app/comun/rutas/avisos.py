@@ -28,7 +28,7 @@ def campana(uid: int):
     recientes = notificaciones.recientes(uid, 8)
     return Div(
         fh.Button(UkIcon("bell", height=18, width=18),
-                  Span(str(n) if n < 100 else "99+", cls="absolute -top-1 -right-1 rounded-full bg-amber-500 px-1.5 "
+                  Span(str(n) if n < 100 else "99+", cls="absolute -top-1 -right-1 rounded-full bg-amber-700 px-1.5 "
                                                           "text-[10px] font-bold text-white") if n else "",
                   type="button", aria_label=f"Avisos ({n} sin leer)" if n else "Avisos",
                   cls="relative inline-flex items-center rounded p-2 hover:bg-muted"),

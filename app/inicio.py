@@ -59,7 +59,7 @@ def _plural(n, singular, plural=None):
 
 
 def _item(texto, href, tono="ambar", detalle=None):
-    color = {"ambar": "text-amber-600", "rojo": "text-destructive", "info": "text-primary"}[tono]
+    color = {"ambar": "text-amber-700 dark:text-amber-400", "rojo": "text-destructive", "info": "text-primary"}[tono]
     return Li(A(Div(UkIcon("circle-alert" if tono != "info" else "info", height=16, width=16, cls=f"shrink-0 mt-0.5 {color}"),
                     Div(Span(texto, cls="text-sm"),
                         P(detalle, cls=TextPresets.muted_sm) if detalle else "", cls="min-w-0"),
@@ -223,7 +223,7 @@ def _bandeja(secciones):
     """Todos los pendientes en una tarjeta: un subtítulo por rol, o «Todo al día»."""
     con_algo = [(i, t, items) for i, t, items in secciones if items]
     if not con_algo:
-        return Card(P(UkIcon("circle-check", height=18, width=18, cls="inline mr-2 text-green-600"),
+        return Card(P(UkIcon("circle-check", height=18, width=18, cls="inline mr-2 text-green-700 dark:text-green-400"),
                       "Todo al día: no tiene pendientes.", cls="text-sm"))
     bloques = [Div(Div(UkIcon(icono, height=16, width=16, cls="text-primary"),
                        H3(titulo, cls="text-xs font-semibold uppercase tracking-wide text-muted-foreground"),

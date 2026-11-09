@@ -6,11 +6,11 @@ import fasthtml.common as fh
 from fasthtml.common import (A, APIRouter, Div, H3, HtmxResponseHeaders, Input, Li, Option, P, Redirect, Response,
                              Select, Span, Thead, Tr, Ul)
 from fasthtml.toaster import add_toast
-from monsterui.all import (H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, Table, Tbody, Td, TextPresets, Th,
+from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, Table, Tbody, Td, TextPresets, Th,
                            UkIcon)
 
 from app.comun import estudiantes, permisos, personas
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia, url_filtrada
 from app.comun.db import auditar, get_db, sin_tildes
 
@@ -92,21 +92,21 @@ def get(auth, q: str = "", nivel: str = "", estado: str = ""):
 def _campos_periodo(d, sufijo=""):
     anios = [str(a) for a in range(date.today().year + 1, 1969, -1)]
     return Div(
-        Div(FormLabel("Nivel"), Select(Option("— Elija —", value=""),
+        campo("Nivel", Select(Option("— Elija —", value=""),
                                      *[Option(t, value=v, selected=v == d.get("nivel")) for v, t in estudiantes.NIVELES.items()],
                                      name="nivel", cls="uk-select"), cls="space-y-1"),
         LabelInput("Programa", id=f"programa{sufijo}", name="programa", value=d.get("programa") or "",
                    placeholder="Por omisión: Licenciatura en Matemática (UMSA)"),
-        Div(FormLabel("¿Del programa propio?"), Select(Option("Sí (Matemática, UMSA)", value="1",
+        campo("¿Del programa propio?", Select(Option("Sí (Matemática, UMSA)", value="1",
                                                              selected=str(d.get("del_programa", "1")) != "0"),
                                                       Option("No (otra carrera o institución)", value="0",
                                                              selected=str(d.get("del_programa", "1")) == "0"),
                                                       name="del_programa", cls="uk-select"), cls="space-y-1"),
-        Div(FormLabel("Ingreso"), Select(Option("—", value=""), *[Option(a, selected=a == str(d.get("desde") or "")) for a in anios],
+        campo("Ingreso", Select(Option("—", value=""), *[Option(a, selected=a == str(d.get("desde") or "")) for a in anios],
                                         name="desde", cls="uk-select"), cls="space-y-1"),
-        Div(FormLabel("Egreso"), Select(Option("Cursando", value=""), *[Option(a, selected=a == str(d.get("hasta") or "")) for a in anios],
+        campo("Egreso", Select(Option("Cursando", value=""), *[Option(a, selected=a == str(d.get("hasta") or "")) for a in anios],
                                        name="hasta", cls="uk-select"), cls="space-y-1"),
-        Div(FormLabel("¿Se tituló?"), Select(Option("No / aún no", value="0", selected=not d.get("titulado")),
+        campo("¿Se tituló?", Select(Option("No / aún no", value="0", selected=not d.get("titulado")),
                                             Option("Sí", value="1", selected=bool(d.get("titulado"))),
                                             name="titulado", cls="uk-select"), cls="space-y-1"),
         cls="grid grid-cols-2 sm:grid-cols-3 gap-3 items-end")

@@ -10,6 +10,7 @@ from app.investigacion import actividades, productos, revistas
 from app.investigacion import msc as msc_mod
 from app.investigacion.componentes import msc as msc_ui
 from app.comun.componentes.registros import insignia
+from app.comun.componentes.layout import campo
 
 rt = APIRouter()
 
@@ -80,7 +81,7 @@ def bloque_revista(revista_id, anio, nueva, medio=None):
         open=bool(nueva.get("titulo")), cls="rounded-md border border-border p-3")
     nombre = LabelInput("Nombre de la revista (si no está en el catálogo)", id="medio", value=medio or "",
                         placeholder="Como figura en la publicación")
-    return Div(FormLabel("Revista"), buscador, nombre, propuesta, cls="space-y-2"), None
+    return campo("Revista", buscador, nombre, propuesta, cls="space-y-2"), None
 
 
 def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revista_id=None, anio=None, nueva=None,
@@ -119,7 +120,7 @@ def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revist
                               hx_swap="outerHTML"),
                         Span(texto), cls="flex items-center gap-2")
                   for v, texto in productos.REVISIONES.items()]
-        partes.append(Div(FormLabel("Nivel de revisión"), Div(*radios, cls="flex flex-wrap gap-4"),
+        partes.append(campo("Nivel de revisión", Div(*radios, cls="flex flex-wrap gap-4"),
                           cls="space-y-2"))
         if revision == "indexado":
             casillas = [Label(CheckboxX(name="indice", value=str(i["id"]),
@@ -129,8 +130,7 @@ def bloque_dependiente(uid, tipo_id, revision, indices_sel, actividad_id, revist
                               if not i["cuenta_como_indexado"] else "",
                               cls="flex items-center gap-2")
                         for i in productos.indices(incluir=indices_sel)]
-            partes.append(Div(FormLabel("Índices en que figura"),
-                              Div(*casillas, cls="grid grid-cols-1 sm:grid-cols-2 gap-2"),
+            partes.append(campo("Índices en que figura", Div(*casillas, cls="grid grid-cols-1 sm:grid-cols-2 gap-2"),
                               cls="space-y-2"))
     if t and t["nombre"] == productos.TIPO_PRESENTACION:
         opciones = actividades.para_selector(uid)

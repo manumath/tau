@@ -76,7 +76,7 @@ def get(auth, semestre: str = ""):
                   "etapa enlaza a donde se resuelve; esta página no cambia nada.", cls=TextPresets.muted_sm)),
             selector, cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         Card(Div(Span(f"{est['hechas']} de {est['total']} etapas listas", cls="text-sm font-medium"),
-                 Span("El semestre está listo." if est["hechas"] == est["total"] else "", cls="text-sm text-green-700"),
+                 Span("El semestre está listo." if est["hechas"] == est["total"] else "", cls="text-sm text-green-700 dark:text-green-400"),
                  cls="flex flex-wrap justify-between gap-2 mb-4"),
              etapas([{"titulo": e["titulo"], "estado": e["estado"], "detalle": e["detalle"],
                       "href": e["href"] if _puede(auth, ACCION[e["clave"]][1]) else None} for e in est["etapas"]],

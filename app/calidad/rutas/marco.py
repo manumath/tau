@@ -11,7 +11,7 @@ from app.calidad import evidencias, indicadores, marco, publico
 from app.calidad.rutas.indicadores import cifra, numero
 from app.calidad.rutas.informes import XLSX, _archivo, descarga
 from app.comun import permisos, unidades
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
 
@@ -460,8 +460,7 @@ def form_indicador(titulo, d, mid, url, metodo, errores=()):
              Div(LabelInput("Responsable", id="responsable", value=v("responsable")),
                  LabelInput("Referencia (política, objetivo o meta institucional)", id="referencia",
                             value=v("referencia")), cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
-             Div(FormLabel("Atributos (criterios de calidad de la UMSA de los que da evidencia)"),
-                 Div(*[Label(CheckboxX(name="atributos", value=str(a["id"]), checked=a["id"] in marcados),
+             campo("Atributos (criterios de calidad de la UMSA de los que da evidencia)", Div(*[Label(CheckboxX(name="atributos", value=str(a["id"]), checked=a["id"] in marcados),
                              Span(a["nombre"], title=a["descripcion"] or ""), cls="flex items-center gap-2 text-sm")
                        for a in marco.atributos(mid)], cls="grid grid-cols-2 sm:grid-cols-4 gap-2"),
                  cls="space-y-2"),

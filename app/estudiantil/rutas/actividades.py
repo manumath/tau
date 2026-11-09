@@ -2,10 +2,10 @@
 académica ven lo que los estudiantes declararon, miran la evidencia y lo verifican o piden correcciones."""
 import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, P, Response, Span, Thead, Tr
-from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, Table, Tbody, Td, TextPresets, Th, UkIcon
+from monsterui.all import H2, Button, ButtonT, Card, Form, Table, Tbody, Td, TextPresets, Th, UkIcon
 
 from app.comun import permisos, vinculos
-from app.comun.componentes.layout import ID_MODAL, cerrar_modal, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, cerrar_modal, mensaje_error, modal, pagina, campo
 from app.estudiantil import actividad
 from app.estudiantil.rutas.estudiante import respuesta_evidencia
 from app.investigacion import adjuntos
@@ -68,8 +68,7 @@ def post(auth, aid: int):
 def _form_observar(aid, errores=()):
     return modal("Pedir correcciones",
                  Form(mensaje_error(*errores),
-                      Div(FormLabel("¿Qué debe corregir o aclarar el estudiante?"),
-                          fh.Textarea(name="observacion", rows="4", maxlength="1000", cls="uk-textarea", required=True),
+                      campo("¿Qué debe corregir o aclarar el estudiante?", fh.Textarea(name="observacion", rows="4", maxlength="1000", cls="uk-textarea", required=True),
                           cls="space-y-1"),
                       Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                           Button("Enviar observación", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),

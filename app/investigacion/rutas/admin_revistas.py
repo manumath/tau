@@ -11,7 +11,7 @@ from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, Input
 
 from app.comun import config
 from app.investigacion import importar_revistas, revistas
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia, url_filtrada
 from app.comun.db import auditar
 
@@ -119,7 +119,7 @@ def get(auth):
           "verificar). Al vincular, el artículo toma el nombre de la revista y, si está verificada, su "
           "clasificación según el año.", cls=(TextPresets.muted_sm, "mb-6")),
         Div(*tarjetas, cls="space-y-4") if tarjetas else P("Todos los artículos tienen revista del catálogo.",
-                                                          cls="text-sm text-green-700"),
+                                                          cls="text-sm text-green-700 dark:text-green-400"),
         usuario=auth, seccion="revistas")
 
 
@@ -265,14 +265,14 @@ def tarjeta_indexaciones(r, errores=(), datos=None):
     indices = revistas.indices_catalogo()
     agregar = Form(
         mensaje_error(*errores),
-        Div(Div(FormLabel("Índice"), Select(Option("— Elija —", value=""),
+        Div(campo("Índice", Select(Option("— Elija —", value=""),
                                           *[Option(i["nombre"], value=str(i["id"]),
                                                    selected=str(i["id"]) == str(datos.get("indice_id") or ""))
                                             for i in indices], name="indice_id", cls="uk-select"), cls="space-y-1"),
             LabelInput("Desde (año)", id="desde", type="number", min=1900, max=2100, value=datos.get("desde") or ""),
             LabelInput("Hasta (vacío = vigente)", id="hasta", type="number", min=1900, max=2100,
                        value=datos.get("hasta") or ""),
-            Div(FormLabel("Cuartil"), Select(Option("—", value=""), *[Option(c, selected=c == datos.get("cuartil"))
+            campo("Cuartil", Select(Option("—", value=""), *[Option(c, selected=c == datos.get("cuartil"))
                                                                      for c in revistas.CUARTILES],
                                              name="cuartil", cls="uk-select"), cls="space-y-1"),
             cls="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end"),

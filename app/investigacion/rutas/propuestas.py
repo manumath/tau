@@ -20,7 +20,7 @@ from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
 from app.investigacion.componentes.lineas import casillas_lineas
 from app.comun.componentes.etapas import etapas
-from app.comun.componentes.layout import ID_MODAL, boton_espera, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, boton_espera, mensaje_error, modal, pagina, campo
 from app.investigacion.componentes.perfil import texto_con_parrafos
 from app.comun.componentes.registros import dato, fecha_local, insignia
 from app.comun.db import auditar
@@ -207,7 +207,7 @@ def avance(prop):
     hechos = sum(c for _, c in reqs)
     faltan = [t for t, c in reqs if not c]
     return Div(Div(Span(f"Requisitos para enviar: {hechos} de {len(reqs)}", cls="text-sm font-medium"),
-                   Span("Lista para enviar." if not faltan else "", cls="text-sm text-green-700"),
+                   Span("Lista para enviar." if not faltan else "", cls="text-sm text-green-700 dark:text-green-400"),
                    cls="flex flex-wrap items-baseline justify-between gap-2"),
                Progress(value=hechos, max=len(reqs), cls="mt-1 mb-1", aria_label="Requisitos cumplidos"),
                P("Falta: " + ", ".join(faltan) + ".", cls=TextPresets.muted_sm) if faltan else "",
@@ -221,10 +221,10 @@ def editor(prop, auth, errores=()):
         estado_envio = P("Corrija según las condiciones y vuelva a enviarla (no depende del plazo).",
                          cls=TextPresets.muted_sm)
     elif inst.abierta(periodo):
-        estado_envio = P(f"Plazo abierto hasta el {inst.fecha_texto(plazo['cierra'])}.", cls="text-sm text-green-700")
+        estado_envio = P(f"Plazo abierto hasta el {inst.fecha_texto(plazo['cierra'])}.", cls="text-sm text-green-700 dark:text-green-400")
     else:
         estado_envio = P(f"Podrá enviarla del {inst.fecha_texto(plazo['abre'])} al "
-                         f"{inst.fecha_texto(plazo['cierra'])}.", cls="text-sm text-amber-700")
+                         f"{inst.fecha_texto(plazo['cierra'])}.", cls="text-sm text-amber-700 dark:text-amber-400")
     return Form(
         mensaje_error(*errores),
         Div(UkIcon("circle-alert", height=16, width=16, cls="shrink-0"),
@@ -233,8 +233,7 @@ def editor(prop, auth, errores=()):
                 "dark:text-amber-200 p-3 text-sm") if prop["estado"] == "condicional" else "",
         _seccion("Datos básicos",
                  LabelInput("Nombre del proyecto", id="nombre", value=prop["nombre"], required=True, maxlength=300),
-                 Div(FormLabel("Líneas de investigación institucionales"),
-                     P(f"Seleccione las líneas vigentes en el periodo {inst.periodo_texto(periodo)} a las que se "
+                 campo("Líneas de investigación institucionales", P(f"Seleccione las líneas vigentes en el periodo {inst.periodo_texto(periodo)} a las que se "
                        "adscribe el proyecto" + (" (opcional en un proyecto de interacción social)."
                                                  if prop.get("clase") == "interaccion_social" else " (al menos una)."),
                        cls=TextPresets.muted_sm),
@@ -243,8 +242,7 @@ def editor(prop, auth, errores=()):
                      cls="space-y-2"),
                  _area("Descripción", "descripcion", prop["descripcion"], 4),
                  _area("Objetivo general", "objetivo_general", prop["objetivo_general"], 2),
-                 Div(FormLabel("Objetivos específicos"),
-                     Div(*[fila_objetivo(o["texto"]) for o in prop["objetivos"]] or [fila_objetivo()],
+                 campo("Objetivos específicos", Div(*[fila_objetivo(o["texto"]) for o in prop["objetivos"]] or [fila_objetivo()],
                          id="lista-objetivos", cls="space-y-2"),
                      Button(UkIcon("plus", height=14, width=14), "Agregar objetivo", type="button",
                             cls=(ButtonT.ghost, ButtonT.sm), hx_get=f"/propuestas/{prop['id']}/fila/objetivo",
@@ -567,7 +565,7 @@ def get(auth, periodo: str = "", estado: str = ""):
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         Card(H3(f"Plazo de la convocatoria {inst.periodo_texto(periodo)}", cls="text-base font-semibold mb-2"),
              P("Abierta hoy." if inst.abierta(periodo) else "Cerrada hoy.",
-               cls="text-sm " + ("text-green-700" if inst.abierta(periodo) else "text-muted-foreground")),
+               cls="text-sm " + ("text-green-700 dark:text-green-400" if inst.abierta(periodo) else "text-muted-foreground")),
              form_plazo(periodo), cls="mb-6"),
         Div(*[A(t, href=f"/admin/propuestas?periodo={periodo}" + (f"&estado={e}" if e else ""),
                 cls="text-sm px-3 py-1 rounded-full border " +
@@ -613,5 +611,5 @@ def post(auth, sess, periodo: int):
 def get(auth):
     n = inst.n_por_decidir()
     return Span(str(n) if n else "", id="badge-propuestas", title=f"{n} propuesta(s) por decidir" if n else None,
-                cls="ml-1 rounded-full bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5" if n else "hidden",
+                cls="ml-1 rounded-full bg-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5" if n else "hidden",
                 hx_get="/admin/propuestas/contador", hx_swap="outerHTML", hx_trigger="every 60s")
