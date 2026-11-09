@@ -47,6 +47,13 @@ REVISAR = r"""
     if (razon < (grande ? 3 : 4.5) - 0.05)
       problemas.push(`contraste ${razon.toFixed(2)}: «${e.textContent.trim().slice(0, 30)}» (${cs.color})`);
   });
+  document.querySelectorAll('table[data-tabla]').forEach(t => {
+    if (vis(t) && !t.caption && !nombre(t)) problemas.push('tabla sin nombre: ' + t.dataset.tabla);
+  });
+  const foco = document.querySelector('main a[href], main button');
+  if (foco) { foco.focus({focusVisible: true});
+              if (parseFloat(getComputedStyle(foco).outlineWidth) < 2 && getComputedStyle(foco).boxShadow === 'none')
+                problemas.push('foco sin indicador visible de 2 px'); foco.blur(); }
   const h1 = document.querySelectorAll('h1').length;
   if (h1 !== 1) problemas.push(`${h1} encabezados h1 (debe haber uno)`);
   const texto = document.querySelector('main')?.innerText || '';

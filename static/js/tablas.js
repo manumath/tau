@@ -54,6 +54,16 @@
       });
     }
     rotular();
+    // Nombre accesible (PLAN §62): si la tabla no trae <caption> ni aria-label, la nombra el encabezado de su tarjeta o
+    // sección (aria-labelledby).
+    if (!tabla.caption && !tabla.getAttribute("aria-label") && !tabla.getAttribute("aria-labelledby")) {
+      const zona = tabla.closest(".uk-card, section, details, main");
+      const titulo = zona && zona.querySelector("h1, h2, h3, h4, summary");
+      if (titulo) {
+        if (!titulo.id) titulo.id = "titulo-" + (tabla.dataset.tabla || "tabla").replace(/[^\w-]/g, "-");
+        tabla.setAttribute("aria-labelledby", titulo.id);
+      }
+    }
 
     // Barra: filtro, conteo y descarga (no se imprime).
     const barra = document.createElement("div");

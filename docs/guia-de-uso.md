@@ -757,7 +757,7 @@ como defendido o reprobado. El acta se imprime desde el trámite.
 
 ### Marco de calidad (lo edita la Dirección de Carrera; lo ven la Coordinación académica, la Dirección del Instituto y la Comisión de calidad)
 
-En **Aseguramiento de la Calidad → Marco de calidad** está el marco con que la Carrera evalúa su calidad: **dimensiones**
+En **Calidad → Marco de calidad** está el marco con que la Carrera evalúa su calidad: **dimensiones**
 (D1 a D9), cada una con sus **criterios**, y cada criterio con sus **indicadores**. El sistema trae un **borrador** para que la
 Comisión de calidad lo discuta; mientras el Consejo de Carrera no lo apruebe, deje su vigencia en blanco.
 
@@ -780,7 +780,7 @@ Todos los cambios quedan en la auditoría. Gestión de datos también ve el marc
 
 ### Indicadores (los ven quienes ven el marco)
 
-En **Aseguramiento de la Calidad → Indicadores** están las cifras de cada indicador activo en los años de evidencia del
+En **Calidad → Indicadores** están las cifras de cada indicador activo en los años de evidencia del
 marco, agrupadas por dimensión. Elija otro año final arriba y pulse «Ver» para mirar años anteriores.
 
 - **Resumen y filtro:** las cinco tarjetas de arriba cuentan los indicadores por estado. Pulse una para ver solo esos (por
@@ -812,7 +812,7 @@ marco, agrupadas por dimensión. Elija otro año final arriba y pulse «Ver» pa
 
 ### Evidencias (las registran la Dirección de Carrera y la Comisión de calidad; las ven también la Coordinación académica y la Dirección del Instituto)
 
-En **Aseguramiento de la Calidad → Evidencias** se reúne lo que respalda cada criterio del marco. Hay tres clases:
+En **Calidad → Evidencias** se reúne lo que respalda cada criterio del marco. Hay tres clases:
 
 - **Documento:** un archivo PDF, PNG, JPG, XLSX, DOCX o PPTX de hasta 20 MB (actas, resoluciones, convenios…).
 - **Enlace:** una dirección web (por ejemplo, una publicación oficial).
@@ -833,7 +833,7 @@ con evidencias no se puede eliminar del marco.
 
 ### Autoevaluación (la abre y la concluye la Dirección de Carrera; juzgan la Comisión de calidad y la Dirección; la ven también la Coordinación académica y la Dirección del Instituto)
 
-En **Aseguramiento de la Calidad → Autoevaluación**:
+En **Calidad → Autoevaluación**:
 
 1. **Nueva autoevaluación** (Dirección de Carrera): nombre y **periodo evaluado** (los años cuyos indicadores se miran).
    Solo puede haber una en curso. Conviene cerrar antes esos años en el tablero de indicadores, para que sus cifras no
@@ -853,7 +853,7 @@ que hay una autoevaluación concluida en los últimos cinco.
 
 ### Plan de mejora (lo gestiona la Dirección de Carrera; lo ven la Comisión de calidad, la Coordinación académica y la Dirección del Instituto; cada responsable ve sus acciones)
 
-En **Aseguramiento de la Calidad → Plan de mejora**:
+En **Calidad → Plan de mejora**:
 
 1. **Acciones.** Cada acción tiene responsable (cualquier persona con cuenta del personal), **plazo**, prioridad, el
    criterio que atiende y, si corresponde, el **indicador** y la **meta** con que se medirá. Se crean de tres maneras:
@@ -878,7 +878,7 @@ tienen acciones no se puede eliminar.
 
 ### Ficha estadística (la ven quienes ven el marco de calidad)
 
-En **Aseguramiento de la Calidad → Ficha estadística** están, para los años de la ventana del marco, las cifras que suelen
+En **Calidad → Ficha estadística** están, para los años de la ventana del marco, las cifras que suelen
 pedir los formularios de antecedentes de un proceso de evaluación: cuerpo académico (vinculados, JCE, grados, categorías,
 tramos de edad), oferta por semestre (paralelos e inscripciones), admisión por cohorte (vía, sexo, procedencia, colegio,
 edad) y la trayectoria de cada cohorte (matriculados al año, egresados, titulados, desertores). **XLSX** la descarga con

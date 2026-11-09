@@ -30,70 +30,26 @@ from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectur
 from app.comun.auth import rt as rutas_auth
 from app.comun.componentes import avisos_emergentes
 from app.comun.componentes.errores import error_interno, no_encontrado, paginas_de_error
-from app.comun.cabeceras import CabecerasSeguridad
+from app.comun.cabeceras import CabecerasSeguridad, LimiteCuerpo
 from app.comun import correo, registros
 from app.comun.registros import RegistroPeticiones
 from app.comun.componentes.recursos import encabezados
 from app.comun.componentes.recursos import montar as montar_estaticos
 from app.comun.db import get_db, init_db
-from app.investigacion.rutas.actividades import rt as rutas_actividades
-from app.investigacion.rutas.adjuntos import rt as rutas_adjuntos
-from app.investigacion.rutas.bibtex import rt as rutas_bibtex
-from app.comun.rutas.admin_auditoria import rt as rutas_admin_auditoria
-from app.investigacion.rutas.admin_revistas import rt as rutas_admin_revistas
-from app.investigacion.rutas.admin_lineas import rt as rutas_admin_lineas
-from app.investigacion.rutas.admin_catalogos import rt as rutas_admin_catalogos
-from app.calidad.rutas.anexo import rt as rutas_anexo
-from app.calidad.rutas.marco import rt as rutas_marco
-from app.calidad.rutas.indicadores import rt as rutas_indicadores
-from app.calidad.rutas.evidencias import rt as rutas_evidencias
-from app.calidad.rutas.autoevaluacion import rt as rutas_autoevaluacion
-from app.calidad.rutas.mejora import rt as rutas_mejora
-from app.calidad.rutas.ficha import rt as rutas_ficha
-from app.calidad.rutas.capacitacion import rt as rutas_capacitacion
-from app.calidad.rutas.convenios import rt as rutas_convenios
-from app.calidad.rutas.impacto import rt as rutas_impacto
-from app.calidad.rutas.publico import rt as rutas_indicadores_publicos
-from app.egresados.rutas.empleadores import rt as rutas_empleadores
-from app.comun.rutas.estudiantes import rt as rutas_estudiantes
-from app.comun.rutas.admin_usuarios import rt as rutas_admin_usuarios
-from app.calidad.rutas.informes import rt as rutas_informes
 from app.inicio import rt as rutas_inicio
 from app.busqueda import rt as rutas_busqueda
 from app import navegacion
 from app.comun.componentes import layout
-from app.investigacion.rutas.investigadores import rt as rutas_investigadores
-from app.investigacion.rutas.perfil import rt as rutas_perfil
-from app.investigacion.rutas.personas import rt as rutas_personas
-from app.comun.rutas.mis_datos import rt as rutas_mis_datos
-from app.academico.rutas.planes import rt as rutas_planes
-from app.academico.rutas.oferta import rt as rutas_oferta
-from app.academico.rutas.carga import rt as rutas_carga
-from app.academico.rutas.mi_docencia import rt as rutas_mi_docencia
-from app.academico.rutas.renovaciones import rt as rutas_renovaciones
-from app.comun.rutas.avisos import rt as rutas_avisos
-from app.calidad.rutas.cuerpo_academico import rt as rutas_cuerpo_academico
-from app.calidad.rutas.calidad_datos import rt as rutas_calidad
-from app.calidad.rutas.seguimiento_estudiantil import rt as rutas_seguimiento_estudiantil
-from app.academico.rutas.preparacion import rt as rutas_preparacion
-from app.egresados.rutas.directorio import rt as rutas_directorio
-from app.egresados.rutas.egresados import rt as rutas_egresados
-from app.estudiantil.rutas.actividades import rt as rutas_actividades_estudiantiles
-from app.estudiantil.rutas.cohortes import rt as rutas_cohortes
-from app.estudiantil.rutas.encuestas import rt as rutas_encuestas
-from app.estudiantil.rutas.estudiante import rt as rutas_estudiante
-from app.estudiantil.rutas.responder import rt as rutas_responder
-from app.estudiantil.rutas.tutoria import rt as rutas_tutoria
-from app.investigacion.rutas.productos import rt as rutas_productos
-from app.investigacion.rutas.propuestas import rt as rutas_propuestas
-from app.investigacion.rutas.proyectos import rt as rutas_proyectos
-from app.investigacion.rutas.publico import rt as rutas_publico
 from app.servicios import grado as tramites_grado  # noqa: E402
-from app.servicios.rutas.auxiliaturas import rt as rutas_auxiliaturas
-from app.servicios.rutas.comunicados import rt as rutas_comunicados
-from app.servicios.rutas.grado import rt as rutas_grado
 from app.ia import catalogo as _catalogo_ia  # noqa: E402,F401  registra las funciones de IA
-from app.ia.rutas.ia import rt as rutas_ia
+from app.academico import rutas as rutas_academico
+from app.calidad import rutas as rutas_calidad
+from app.comun import rutas as rutas_comun
+from app.egresados import rutas as rutas_egresados
+from app.estudiantil import rutas as rutas_estudiantil
+from app.ia import rutas as rutas_ia
+from app.investigacion import rutas as rutas_investigacion
+from app.servicios import rutas as rutas_servicios
 
 
 _candado_mantenimiento = threading.Lock()
@@ -163,6 +119,7 @@ def create_app(db_path=config.DB_PATH):
     app.add_middleware(CabecerasSeguridad)
     # Compresión (PLAN §62, etapa 6): HTML, CSS y JS viajan comprimidos (la hoja de Tailwind pasa de 49 KB a 9 KB).
     app.add_middleware(GZipMiddleware, minimum_size=1024)
+    app.add_middleware(LimiteCuerpo, maximo=config.MAX_CUERPO)  # 413 antes de leer un envío desmedido
     app.add_middleware(RegistroPeticiones)  # el último agregado es el más externo: registra todo lo demás
     registros.configurar()
 
@@ -175,15 +132,10 @@ def create_app(db_path=config.DB_PATH):
             registros.log.exception("Chequeo de salud: la base no responde")
             return Response("La base de datos no responde", status_code=503)
         return Response("ok", media_type="text/plain")
-    # rutas_bibtex va antes que rutas_productos: /productos/bibtex coincidiría con /productos/{pid}.
-    for router in (rutas_auth, rutas_inicio, rutas_busqueda, rutas_admin_usuarios, rutas_perfil, rutas_bibtex,
-                   rutas_investigadores, rutas_actividades, rutas_productos, rutas_personas,
-                   rutas_adjuntos, rutas_estudiantes, rutas_propuestas, rutas_proyectos, rutas_anexo, rutas_marco, rutas_indicadores, rutas_evidencias, rutas_autoevaluacion, rutas_mejora, rutas_ficha, rutas_capacitacion, rutas_convenios, rutas_impacto, rutas_empleadores, rutas_informes, rutas_publico, rutas_indicadores_publicos,
-                   rutas_admin_auditoria, rutas_admin_revistas, rutas_admin_lineas, rutas_admin_catalogos, rutas_mis_datos,
-                   rutas_planes, rutas_oferta, rutas_carga, rutas_mi_docencia, rutas_cuerpo_academico, rutas_calidad, rutas_renovaciones, rutas_avisos,
-                   rutas_preparacion, rutas_cohortes,
-                   rutas_actividades_estudiantiles, rutas_estudiante, rutas_encuestas, rutas_responder, rutas_egresados, rutas_directorio, rutas_tutoria,
-                   rutas_seguimiento_estudiantil, rutas_comunicados, rutas_auxiliaturas, rutas_grado, rutas_ia):
+    # Cada paquete da sus routers en orden (app/<paquete>/rutas/__init__.py, PLAN §62 ARQ-01).
+    for router in (rutas_auth, rutas_inicio, rutas_busqueda, *rutas_comun.routers(), *rutas_investigacion.routers(),
+                   *rutas_calidad.routers(), *rutas_egresados.routers(), *rutas_academico.routers(),
+                   *rutas_estudiantil.routers(), *rutas_servicios.routers(), *rutas_ia.routers()):
         router.to_app(app)
     return app
 

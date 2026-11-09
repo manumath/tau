@@ -56,3 +56,47 @@ class CabecerasSeguridad:
             await send(mensaje)
 
         await self.app(scope, receive, enviar)
+
+
+class LimiteCuerpo:
+    """Middleware ASGI: rechaza con 413 una petición cuyo cuerpo pasa de `maximo` bytes (PLAN §62, etapa 9).
+
+    El adjunto más grande que acepta el sistema es de 20 MB (`adjuntos.MAX_BYTES`); sin este límite, una subida enorme
+    llenaba el disco temporal antes de que la ruta la rechazara. Mira Content-Length y, si no viene (envío por
+    partes), cuenta lo recibido."""
+
+    def __init__(self, app, maximo: int):
+        self.app = app
+        self.maximo = maximo
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        largo = dict(scope.get("headers", [])).get(b"content-length")
+        if largo and largo.isdigit() and int(largo) > self.maximo:
+            return await self._demasiado_grande(send)
+        recibido = 0
+
+        async def recibir():
+            nonlocal recibido
+            mensaje = await receive()
+            if mensaje["type"] == "http.request":
+                recibido += len(mensaje.get("body", b""))
+                if recibido > self.maximo:
+                    raise CuerpoDemasiadoGrande
+            return mensaje
+
+        try:
+            await self.app(scope, recibir, send)
+        except CuerpoDemasiadoGrande:
+            await self._demasiado_grande(send)
+
+    async def _demasiado_grande(self, send):
+        texto = f"El envío supera el máximo de {self.maximo // (1024 * 1024)} MB.".encode()
+        await send({"type": "http.response.start", "status": 413,
+                    "headers": [(b"content-type", b"text/plain; charset=utf-8"), (b"content-length", str(len(texto)).encode())]})
+        await send({"type": "http.response.body", "body": texto})
+
+
+class CuerpoDemasiadoGrande(Exception):
+    pass

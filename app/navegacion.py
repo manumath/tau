@@ -109,7 +109,7 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                                     "/ia/admin" if puede("gestionar_ia") else "/ia/usos", "sparkles"))
     grupos = [(None, [_item("inicio", "Inicio", "/", "home")]), ("Investigación", investigacion),
               ("Docencia", _academico(DOCENCIA, auth)), ("Estudiantes", estudiantes), ("Servicios", servicios),
-              ("Aseguramiento de la Calidad", calidad), ("Administración", administracion)]
+              ("Calidad", calidad), ("Administración", administracion)]
     return [(t, items) for t, items in grupos if items]
 
 

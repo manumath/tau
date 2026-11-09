@@ -1,7 +1,7 @@
 [project]
 name = "portal-investigacion"
 version = "0.1.0"
-description = "Portal de gestión de la actividad de investigación del instituto (FastHTML + HTMX)"
+description = "TAU: sistema integrado de gestión académica y científica de la Carrera de Matemática y su instituto (FastHTML + HTMX)"
 authors = [
     { name = "Charlie", email = "manumath@gmail.com" }
 ]

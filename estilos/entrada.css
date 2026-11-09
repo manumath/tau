@@ -69,7 +69,8 @@
   html[data-grupos~="investigacion"] [data-grupo="investigacion"]:not(.actual) > ul,
   html[data-grupos~="docencia"] [data-grupo="docencia"]:not(.actual) > ul,
   html[data-grupos~="estudiantes"] [data-grupo="estudiantes"]:not(.actual) > ul,
-  html[data-grupos~="aseguramiento-de-la-calidad"] [data-grupo="aseguramiento-de-la-calidad"]:not(.actual) > ul,
+  html[data-grupos~="servicios"] [data-grupo="servicios"]:not(.actual) > ul,
+  html[data-grupos~="calidad"] [data-grupo="calidad"]:not(.actual) > ul,
   html[data-grupos~="administracion"] [data-grupo="administracion"]:not(.actual) > ul { @apply hidden; }
   .grupo-plegable[aria-expanded="false"] .flecha-grupo { @apply -rotate-90; }
 
@@ -149,3 +150,7 @@ details > summary.cursor-pointer::-webkit-details-marker { display: none; }
 details .plegable-icono { display: inline-block; transition: transform 150ms; vertical-align: -2px; }
 details[open] > summary .plegable-icono { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { details .plegable-icono { transition: none; } }
+
+/* Foco visible (PLAN §62, WCAG 2.4.7 y 2.4.13): contorno de 2 px con separación, en todo lo que se alcanza con el
+   teclado. */
+:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }

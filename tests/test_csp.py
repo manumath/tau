@@ -66,3 +66,35 @@ def test_tema_inicial_igual_al_de_monsterui():
                                                      shadows=ThemeShadows.sm, font=ThemeFont.sm).children).strip()
     archivo = Path(config.RAIZ / "static/js/tema-inicial.js").read_text()
     assert esperado in archivo
+
+
+def test_envio_demasiado_grande_responde_413(client):
+    """LimiteCuerpo (PLAN §62, etapa 9): por Content-Length y también contando lo recibido si no lo declara."""
+    import asyncio
+    from concurrent.futures import ThreadPoolExecutor
+
+    from app.comun.cabeceras import LimiteCuerpo
+    r = client.post("/login", content=b"x", headers={"content-length": str(config.MAX_CUERPO + 1)})
+    assert r.status_code == 413 and "máximo" in r.text
+    assert client.post("/login", data={"email": "a@b.c", "password": "x"}).status_code != 413
+
+    async def app_que_lee(scope, receive, send):
+        while (await receive()).get("more_body"):
+            pass
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    partes = [{"type": "http.request", "body": b"x" * 600, "more_body": True} for _ in range(2)]
+    enviados = []
+
+    async def recibir():
+        return partes.pop(0)
+
+    async def enviar(m):
+        enviados.append(m)
+
+    # En un hilo aparte: con las pruebas en navegador, Playwright ya tiene un bucle de eventos en este.
+    with ThreadPoolExecutor(1) as hilo:
+        hilo.submit(asyncio.run, LimiteCuerpo(app_que_lee, maximo=1000)({"type": "http", "headers": []}, recibir,
+                                                                       enviar)).result()
+    assert enviados[0]["status"] == 413

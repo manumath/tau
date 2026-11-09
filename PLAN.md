@@ -13,6 +13,71 @@ Documento de diseño del sistema: qué hace, cómo está organizado, qué se dec
 pendiente. Para instalarlo y trabajar en el código, vea el [README](README.md); para usarlo, la
 [guía de uso](docs/guia-de-uso.md); para ponerlo en producción, la [guía de despliegue](docs/despliegue.md).
 
+## Índice
+
+- [1. Visión](#1-visión)
+- [2. Roles](#2-roles)
+- [3. Flujo de propuesta y aprobación](#3-flujo-de-propuesta-y-aprobación)
+- [4. Reglas de negocio](#4-reglas-de-negocio)
+- [5. Modelo de datos](#5-modelo-de-datos)
+- [6. Arquitectura](#6-arquitectura)
+- [7. Estado por fase](#7-estado-por-fase)
+- [8. Decisiones tomadas](#8-decisiones-tomadas)
+- [9. Pendiente](#9-pendiente)
+- [10. Preguntas abiertas](#10-preguntas-abiertas)
+- [11. Ajustes tras las pruebas con usuarios](#11-ajustes-tras-las-pruebas-con-usuarios)
+- [12. Filiación y periodo de pertenencia](#12-filiación-y-periodo-de-pertenencia)
+- [13. Contexto boliviano y acreditación IAC-CINDA](#13-contexto-boliviano-y-acreditación-iac-cinda)
+- [14. Catálogo de revistas: indexación verificada por año](#14-catálogo-de-revistas-indexación-verificada-por-año)
+- [15. Correspondencia con IAC-CINDA](#15-correspondencia-con-iac-cinda)
+- [16. Carga automática desde OpenAlex y citas](#16-carga-automática-desde-openalex-y-citas)
+- [17. Anexo de I+D+i para la acreditación](#17-anexo-de-idi-para-la-acreditación)
+- [18. Estudiantes en la investigación](#18-estudiantes-en-la-investigación)
+- [19. Internacionalización](#19-internacionalización)
+- [20. Protección CSRF](#20-protección-csrf)
+- [21. Líneas de investigación institucionales](#21-líneas-de-investigación-institucionales)
+- [22. Ampliación a gestión curricular y docente (opción 2)](#22-ampliación-a-gestión-curricular-y-docente-opción-2)
+- [23. Diseño de la fase 2: personas, unidades y roles (propuesta, 27-sep-2026)](#23-diseño-de-la-fase-2-personas-unidades-y-roles-propuesta-27-sep-2026)
+- [24. Fase 3: módulo curricular y docente (27-sep-2026)](#24-fase-3-módulo-curricular-y-docente-27-sep-2026)
+- [25. Dependencia única, clases de proyecto institucional y proyectos individuales (28-sep-2026)](#25-dependencia-única-clases-de-proyecto-institucional-y-proyectos-individuales-28-sep-2026)
+- [26. Término del vínculo y carga horaria en proyectos (28-sep-2026)](#26-término-del-vínculo-y-carga-horaria-en-proyectos-28-sep-2026)
+- [27. Cargo y unidad o grupo calculados (28-sep-2026)](#27-cargo-y-unidad-o-grupo-calculados-28-sep-2026)
+- [28. Usabilidad e informes: evaluación y punto 1 (28-sep-2026)](#28-usabilidad-e-informes-evaluación-y-punto-1-28-sep-2026)
+- [29. Informes de docencia (punto 2 de la evaluación, 28-sep-2026)](#29-informes-de-docencia-punto-2-de-la-evaluación-28-sep-2026)
+- [30. Componente de tablas (punto 3 de la evaluación, 28-sep-2026)](#30-componente-de-tablas-punto-3-de-la-evaluación-28-sep-2026)
+- [31. Tablero de calidad de datos (punto 4 de la evaluación, 28-sep-2026)](#31-tablero-de-calidad-de-datos-punto-4-de-la-evaluación-28-sep-2026)
+- [32. Ficha de docente y acciones masivas (punto 5 de la evaluación, 28-sep-2026)](#32-ficha-de-docente-y-acciones-masivas-punto-5-de-la-evaluación-28-sep-2026)
+- [33. Centro de avisos y resumen semanal (punto 6 de la evaluación, 28-sep-2026)](#33-centro-de-avisos-y-resumen-semanal-punto-6-de-la-evaluación-28-sep-2026)
+- [34. Series con gráficos y trazabilidad (punto 7 de la evaluación, 28-sep-2026)](#34-series-con-gráficos-y-trazabilidad-punto-7-de-la-evaluación-28-sep-2026)
+- [35. PDF con membrete (punto 8 de la evaluación, primera parte, 28-sep-2026)](#35-pdf-con-membrete-punto-8-de-la-evaluación-primera-parte-28-sep-2026)
+- [36. Guía de Antecedentes de IAC-CINDA (punto 8 de la evaluación, 28-sep-2026)](#36-guía-de-antecedentes-de-iac-cinda-punto-8-de-la-evaluación-28-sep-2026)
+- [37. Etapas de propuestas, botones que esperan y barras de avance (1-oct-2026)](#37-etapas-de-propuestas-botones-que-esperan-y-barras-de-avance-1-oct-2026)
+- [38. Preparación del semestre (1-oct-2026)](#38-preparación-del-semestre-1-oct-2026)
+- [39. Informes programados (1-oct-2026)](#39-informes-programados-1-oct-2026)
+- [40. Premios, arbitraje y prestación de servicios (1-oct-2026)](#40-premios-arbitraje-y-prestación-de-servicios-1-oct-2026)
+- [41. Fusionar coautores externos duplicados (1-oct-2026)](#41-fusionar-coautores-externos-duplicados-1-oct-2026)
+- [42. Vincular una persona externa a su cuenta (1-oct-2026)](#42-vincular-una-persona-externa-a-su-cuenta-1-oct-2026)
+- [43. Política de seguridad de contenido estricta (2-oct-2026)](#43-política-de-seguridad-de-contenido-estricta-2-oct-2026)
+- [44. División de los archivos de rutas más grandes (2-oct-2026)](#44-división-de-los-archivos-de-rutas-más-grandes-2-oct-2026)
+- [45. Clasificación MSC2020 de los productos (2-oct-2026)](#45-clasificación-msc2020-de-los-productos-2-oct-2026)
+- [46. Preprint y versión publicada (2-oct-2026)](#46-preprint-y-versión-publicada-2-oct-2026)
+- [47. Catálogos desde la interfaz (2-oct-2026)](#47-catálogos-desde-la-interfaz-2-oct-2026)
+- [48. Valoración de usabilidad y buenas prácticas (3-oct-2026)](#48-valoración-de-usabilidad-y-buenas-prácticas-3-oct-2026)
+- [49. Módulo Estudiantes (21-oct-2026)](#49-módulo-estudiantes-21-oct-2026)
+- [50. Módulo Egresados o alumni (21-oct-2026)](#50-módulo-egresados-o-alumni-21-oct-2026)
+- [51. Etapas previstas de los módulos de estudiantes y egresados (21-oct-2026)](#51-etapas-previstas-de-los-módulos-de-estudiantes-y-egresados-21-oct-2026)
+- [52. Publicación del repositorio en GitHub (21-22-oct-2026)](#52-publicación-del-repositorio-en-github-21-22-oct-2026)
+- [53. Menú lateral y pestañas en el teléfono (24-oct-2026)](#53-menú-lateral-y-pestañas-en-el-teléfono-24-oct-2026)
+- [54. Valoración de la experiencia por rol y ajustes (24-oct-2026)](#54-valoración-de-la-experiencia-por-rol-y-ajustes-24-oct-2026)
+- [55. Identidad visual de la Carrera de Matemática (25-oct-2026)](#55-identidad-visual-de-la-carrera-de-matemática-25-oct-2026)
+- [56. Auditoría del stack y concurrencia en SQLite (6-nov-2026)](#56-auditoría-del-stack-y-concurrencia-en-sqlite-6-nov-2026)
+- [57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)](#57-módulo-de-aseguramiento-de-la-calidad-propuesta-6-nov-2026)
+- [58. Servicios: comunicados y eventos, auxiliaturas y proyectos de grado (7-nov-2026)](#58-servicios-comunicados-y-eventos-auxiliaturas-y-proyectos-de-grado-7-nov-2026)
+- [59. IA con criterio humano (propuesta, 8-nov-2026)](#59-ia-con-criterio-humano-propuesta-8-nov-2026)
+- [60. Áreas y catálogo oficial de líneas de investigación (8-nov-2026)](#60-áreas-y-catálogo-oficial-de-líneas-de-investigación-8-nov-2026)
+- [61. Plan de mejora del informe de autoevaluación y carga desde la Guía de Antecedentes (8-nov-2026)](#61-plan-de-mejora-del-informe-de-autoevaluación-y-carga-desde-la-guía-de-antecedentes-8-nov-2026)
+- [62. Mejoras de la auditoría de software (8-nov-2026)](#62-mejoras-de-la-auditoría-de-software-8-nov-2026)
+
 ## 1. Visión
 
 Sistema interno donde cada investigador del instituto ingresa con su cuenta y mantiene al día su
@@ -2968,6 +3033,22 @@ acciones y 57 actividades del apéndice del informe (sin datos personales; los r
   las auxiliaturas: `formato.momento` («12 nov 2026, 14:30», hora local de un formulario, sin conversión de UTC)
   reemplaza a las tres formas que había en servicios (incluida «12/11/2026», ambigua).
 
+### Etapa 9: arquitectura, menú, página pública y detalles (ARQ-01, UX-06, A11Y-04, SEC-04, DOC-01)
+- **Routers por paquete:** cada `app/<paquete>/rutas/__init__.py` da `routers()` en orden (lista `MODULOS`); `main.py`
+  pasó de 52 importaciones de routers a 8 paquetes. Se comprobó que cada ruta y método resuelve a la misma función que
+  antes.
+- **Menú:** el grupo «Aseguramiento de la Calidad» se llama «Calidad» (cabía en dos líneas centradas) y los rótulos
+  quedan alineados a la izquierda. El grupo «Servicios» no recordaba su estado plegado al recargar: le faltaba su regla.
+- **Página pública** (`/publico`): isotipo de la Carrera y nombre del sistema en la cabecera y el título, como el resto
+  (decisión del usuario del 8-nov-2026); el pie nombra a la Carrera y su instituto.
+- **Accesibilidad:** las tablas de trabajo sin `<caption>` toman su nombre del encabezado de su tarjeta
+  (`aria-labelledby`, `tablas.js`); foco visible de 2 px con separación en todo lo que se alcanza con el teclado. La
+  prueba de accesibilidad vigila ambas cosas.
+- **Límite de envío:** `LimiteCuerpo` (`app/comun/cabeceras.py`) responde 413 a una petición de más de 25 MB
+  (`PORTAL_MAX_CUERPO_MB`), por Content-Length o contando lo recibido.
+- **Documentación:** índice de este archivo, descripción de `pyproject.toml` y nota en mantenimiento sobre el riesgo de
+  que todo dependa de un solo equipo.
+
 ### Decisiones del agente por confirmar
 - La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
   en la Guía significa extensión, se cambia en el CSV antes de cargarlo.
@@ -3024,3 +3105,6 @@ OWASP, rendimiento y pruebas) y luego ejecutar sus nueve etapas, un commit por e
 - 20 fallos por IP: alto a propósito, porque una sala de computación o una red con NAT comparte la IP.
 - Indicadores y marco: las dimensiones empiezan **plegadas** (el resumen ya dice cuántos indicadores hay en cada estado).
   Si la Comisión prefiere verlas abiertas, basta cambiar el valor por omisión.
+- El menú dice «Calidad» en vez de «Aseguramiento de la Calidad» (el nombre completo sigue en las pantallas y la guía
+  dice «Calidad → …»). Si la Comisión prefiere el nombre largo, es un cambio de una línea en `app/navegacion.py`.
+- Límite de 25 MB por envío (el adjunto mayor es de 20 MB). Se ajusta con `PORTAL_MAX_CUERPO_MB`.

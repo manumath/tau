@@ -7,11 +7,11 @@ productos en curso.
 """
 from fasthtml.common import (A, APIRouter, Div, FileResponse, Footer, Form, Header, Input, JSONResponse,
                              Li, Main, P, Redirect, Response, Span, Title, Ul)
-from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets, UkIcon
+from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets
 
 from app.ia.rutas.panel import marca_si
 from app.comun import config, fotos
-from app.comun.componentes.layout import con_h1
+from app.comun.componentes.layout import con_h1, isotipo
 from app.investigacion import lineas, perfiles, productos
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
@@ -55,18 +55,22 @@ def ids_publicos() -> set[int]:
 def pagina_publica(titulo, *contenido, pie: str | None = None):
     contenido = con_h1(contenido, titulo)
     cabecera = Header(Container(Div(
-        A(Div(UkIcon("sigma", height=24, width=24), Span(config.NOMBRE_INSTITUTO, cls="font-semibold"),
-              cls="flex items-center gap-2"), href="/publico/investigadores", cls="min-w-0"),
+        # Marca de la Carrera y nombre del sistema, como en el resto (PLAN §55 y §62; decisión del 8-nov-2026).
+        A(Div(*isotipo(), Span(config.NOMBRE_SISTEMA, cls="font-marca text-lg font-bold tracking-wide"),
+              Span(config.NOMBRE_CARRERA, cls="hidden sm:inline text-sm text-muted-foreground"),
+              cls="flex items-center gap-2"), href="/publico/investigadores", aria_label=config.NOMBRE_COMPLETO,
+          cls="min-w-0"),
         Div(A("Investigadores", href="/publico/investigadores", cls="text-sm hover:underline"),
             A("Indicadores", href="/publico/indicadores", cls="text-sm hover:underline"),
             A("Ingresar", href="/login", cls="uk-btn uk-btn-default uk-btn-sm"),
             cls="flex items-center gap-4"),
         cls="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3"), cls=ContainerT.xl),
         cls="border-b border-border")
-    pie = Footer(Container(P(pie or f"{config.NOMBRE_INSTITUTO} · Información publicada por cada investigador(a).",
+    pie = Footer(Container(P(pie or f"{config.NOMBRE_CARRERA} y su {config.NOMBRE_INSTITUTO} · Información publicada "
+                                    "por cada investigador(a).",
                              cls=(TextPresets.muted_sm, "py-6")), cls=ContainerT.xl),
                  cls="border-t border-border mt-12")
-    return (Title(f"{titulo} · {config.NOMBRE_INSTITUTO}"), cabecera,
+    return (Title(f"{titulo} · {config.NOMBRE_SISTEMA}"), cabecera,
             Main(Container(*contenido, cls=(ContainerT.xl, "py-8"))), pie)
 
 

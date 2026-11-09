@@ -120,7 +120,7 @@ def _enlace_menu(item):
 
 
 def _clave_grupo(titulo: str) -> str:
-    """'Aseguramiento de la Calidad' → 'aseguramiento-de-la-calidad' (la usan estilos/entrada.css y
+    """'Investigación' → 'investigacion' (la usan estilos/entrada.css y
     static/js/disposicion-inicial.js; sin espacios, porque data-grupos es una lista separada por espacios)."""
     return unicodedata.normalize("NFKD", titulo).encode("ascii", "ignore").decode().lower().replace(" ", "-")
 
@@ -131,7 +131,7 @@ def _grupo_menu(titulo, items):
     if not titulo:
         return Div(lista)
     clave = _clave_grupo(titulo)
-    return Div(fh.Button(Span(titulo), UkIcon("chevron-down", height=14, width=14, cls="flecha-grupo"),
+    return Div(fh.Button(Span(titulo, cls="text-left"), UkIcon("chevron-down", height=14, width=14, cls="flecha-grupo"),
                          type="button", data_accion="plegar-grupo", aria_expanded="true",
                          cls="lateral-grupo grupo-plegable flex w-full items-center justify-between rounded px-3 pt-4 "
                              "pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground "

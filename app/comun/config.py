@@ -90,3 +90,6 @@ LOGIN_VENTANA_MIN = 15
 LOGIN_MAX_FALLOS_IP = 20
 PASS_MIN_LARGO = 10
 SESION_MAX_AGE = 8 * 3600
+
+# Tamaño máximo de una petición (PLAN §62): el adjunto mayor es de 20 MB; el resto es margen para los demás campos.
+MAX_CUERPO = int(os.environ.get("PORTAL_MAX_CUERPO_MB", "25")) * 1024 * 1024

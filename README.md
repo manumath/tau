@@ -214,6 +214,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_ORIGENES_EXTRA` | — | Otras direcciones desde las que se usa el sistema, separadas por coma (p. ej. una interna); protección CSRF |
 | `PORTAL_SECRET_KEY` | archivo `.sesskey` | Clave de firma de la cookie de sesión |
 | `PORTAL_HTTPS_ONLY` | `0` | `1` en producción: cookie solo por HTTPS |
+| `PORTAL_MAX_CUERPO_MB` | `25` | Tamaño máximo de un envío; uno mayor recibe 413 (el adjunto mayor es de 20 MB) |
 | `PORTAL_SISTEMA` | `TAU` | Nombre corto del sistema (encabezado, título de las páginas, correos, exportaciones) |
 | `PORTAL_SISTEMA_DESCRIPCION` | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática | Descripción (ingreso, correos) |
 | `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre del instituto en informes y memoria |

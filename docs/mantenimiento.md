@@ -411,6 +411,10 @@ CSV) y productos (Productos → Importar BibTeX). La capacitación exige que la 
 
 ## 7. Deuda conocida
 
+- **Un solo equipo:** el desarrollo, la base de desarrollo (`data/`), los logos originales y las herramientas locales
+  (`.herramientas/`) están en un solo computador, y GitHub Actions es la única otra máquina que corre las pruebas. Si ese
+  equipo falla, el código está en GitHub, pero no lo que no se versiona: respalde `data/` y los logos originales fuera
+  de él (5.3) y anote dónde. Conviene que una segunda persona haya instalado y corrido el sistema siguiendo el capítulo 1.
 - **Publicación:** falta un `LICENSE`; conviene confirmar con la Dirección que se pueden publicar los logos del membrete
   (PLAN.md §52). La plantilla de una agencia que se versionó antes sigue en el historial de git (PLAN §57).
 - **Seguimiento estudiantil:** el consentimiento de los estudiantes y del directorio se redactó sin revisión de la Dirección; el
