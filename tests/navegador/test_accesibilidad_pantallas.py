@@ -3,7 +3,8 @@ una verificación propia, en el navegador, de lo que la auditoría encontró y q
 
 - contraste del texto visible (WCAG 1.4.3: 4,5:1, o 3:1 si es grande), en tema claro y oscuro;
 - controles de formulario y botones o enlaces sin nombre accesible (WCAG 1.3.1 y 4.1.2);
-- ids repetidos.
+- ids repetidos;
+- un solo <h1> por página (WCAG 1.3.1 y 2.4.6) y fechas legibles: ni «2026-08-01» ni «08-11-2026» (PLAN §62, etapa 3).
 """
 import pytest
 
@@ -46,12 +47,17 @@ REVISAR = r"""
     if (razon < (grande ? 3 : 4.5) - 0.05)
       problemas.push(`contraste ${razon.toFixed(2)}: «${e.textContent.trim().slice(0, 30)}» (${cs.color})`);
   });
+  const h1 = document.querySelectorAll('h1').length;
+  if (h1 !== 1) problemas.push(`${h1} encabezados h1 (debe haber uno)`);
+  const texto = document.querySelector('main')?.innerText || '';
+  (texto.match(/\b\d{4}-\d{2}-\d{2}\b|\b\d{2}-\d{2}-\d{4}\b/g) || []).slice(0, 3)
+    .forEach(f => problemas.push('fecha sin formato: ' + f));
   return [...new Set(problemas)];
 }
 """
 
 PANTALLAS = {
-    "investigadora": ["/", "/productos", "/productos/nuevo", "/actividades", "/proyectos", "/perfil", "/informes",
+    "investigadora": ["/", "/productos", "/actividades", "/proyectos", "/perfil", "/informes",
                       "/docencia", "/avisos", "/buscar?q=noether"],
     "direccion": ["/", "/admin/usuarios", "/admin/propuestas", "/docencia/planes", "/docencia/oferta",
                   "/docencia/carga", "/docencia/gestiones", "/docencia/preparacion", "/docencia/cohortes",

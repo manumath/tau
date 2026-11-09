@@ -190,9 +190,31 @@ def pestanas_movil(usuario: dict):
                       "border-border bg-background " + COLUMNAS[len(items)])
 
 
+def _primer_encabezado(nodos, tag):
+    for n in nodos:
+        if getattr(n, "tag", None) == tag:
+            return n
+        if (hallado := _primer_encabezado(getattr(n, "children", ()) or (), tag)) is not None:
+            return hallado
+    return None
+
+
+def con_h1(contenido, titulo: str | None = None):
+    """Toda página tiene un <h1> con su título (WCAG 1.3.1 y 2.4.6; PLAN §62): si el contenido no trae uno, su primer
+    encabezado de nivel 2 pasa a serlo (conserva la clase uk-h2: se ve igual); si no tiene ninguno (un estado vacío),
+    se antepone el título de la página."""
+    if _primer_encabezado(contenido, "h1") is None:
+        if (h2 := _primer_encabezado(contenido, "h2")) is not None:
+            h2.tag = "h1"
+        elif titulo:
+            contenido = (fh.H1(titulo, cls="uk-h2 mb-4"), *contenido)
+    return contenido
+
+
 def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = ""):
     """Página completa. Con usuario muestra la navegación; sin él, un lienzo centrado. `seccion` ya no
     decide el enlace activo (lo marca acciones.js según la dirección); se conserva por compatibilidad."""
+    contenido = con_h1(contenido, titulo if usuario else None)
     cuerpo = Container(*contenido, cls=(ContainerT.xl, "py-8")) if usuario else Div(
         *contenido, cls="min-h-screen flex items-center justify-center p-4 bg-muted/40")
     aviso = Div(UkIcon("wrench", height=16, width=16, cls="shrink-0"),

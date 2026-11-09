@@ -10,6 +10,7 @@ from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, FormLabel, Input
                            TextPresets, UkIcon)
 
 from app.comun import config
+from app.comun import formato
 from app.investigacion import importar_revistas, revistas
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia, url_filtrada
@@ -256,7 +257,7 @@ def tarjeta_indexaciones(r, errores=(), datos=None):
                 Td(Div(x["fuente"] or "—", cls="text-sm"),
                    A("evidencia", href=x["evidencia_url"], target="_blank", rel="noopener",
                      cls="text-xs text-primary hover:underline") if x["evidencia_url"] else "",
-                   Div(f"verificó {x['verificador'] or '—'} · {x['verificado_en'][:10]}", cls="text-xs text-muted-foreground")),
+                   Div(f"verificó {x['verificador'] or '—'} · {formato.fecha(x['verificado_en'])}", cls="text-xs text-muted-foreground")),
                 Td(fh.Button(UkIcon("trash-2", height=14, width=14), type="button", aria_label="Quitar",
                              cls="p-1 rounded hover:bg-muted hover:text-destructive",
                              hx_delete=f"{BASE}/{rid}/indexacion/{x['id']}", hx_target="#indexaciones",
@@ -431,7 +432,7 @@ def get(auth, rid: int):
                 if not n_prod else "", cls="flex gap-2"),
             cls="flex flex-wrap items-center justify-between gap-2"),
         H2(r["titulo"], cls="mt-2 mb-1"),
-        P(f"Verificada por la administración el {r['verificada_en'][:10]}." if r["estado"] == "verificada"
+        P(f"Verificada por la administración el {formato.fecha(r['verificada_en'])}." if r["estado"] == "verificada"
           else "Pendiente: mientras no se verifique, sus artículos usan lo que declararon los autores.",
           cls=(TextPresets.muted_sm, "mb-6")),
         Div(datos, tarjeta_indexaciones(r), cls="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"),

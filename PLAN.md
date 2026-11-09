@@ -2904,6 +2904,18 @@ acciones y 57 actividades del apéndice del informe (sin datos personales; los r
     - 63 grados nuevos y 32 productos nuevos;
     - las 22 capacitaciones esperan a que las personas tengan vínculo.
 
+### Etapa 3: encabezados, fechas y números, aviso de carga (A11Y-02, UX-03, UX-05)
+- **Un `<h1>` por página:** `layout.con_h1`, llamado por `pagina()` y por la página pública, convierte en `<h1>` el
+  primer `<h2>` del contenido (conserva la clase `uk-h2`: se ve igual) o, en un estado vacío sin encabezados, antepone el
+  título de la página.
+- **Formatos legibles** (`app/comun/formato.py`): `fecha` («8 nov 2026»), `fecha_hora` («8 nov 2026, 22:43», hora de La
+  Paz), `periodo` («1 ago – 31 dic 2026») y `numero` («2,7», «1.500»). Los usan los registros, los periodos de vínculo,
+  la oferta, la carga horaria, los informes, el inicio, el cuerpo académico, egresados, propuestas y revistas. Las
+  exportaciones (CSV, XLSX) y los campos de formulario siguen en ISO.
+- **Aviso de carga:** una franja animada bajo la barra superior mientras hay una petición HTMX de más de 300 ms
+  (`estilos/entrada.css`, `body:has(.htmx-request)`); sin animación con `prefers-reduced-motion`.
+- **Prueba:** la de accesibilidad exige además un solo `<h1>` y ninguna fecha ISO en el texto de `<main>`.
+
 ### Decisiones del agente por confirmar
 - La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
   en la Guía significa extensión, se cambia en el CSV antes de cargarlo.

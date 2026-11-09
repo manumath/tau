@@ -18,6 +18,7 @@ import calendar
 from datetime import date, timedelta
 
 from app.comun import unidades
+from app.comun import formato
 from app.comun.db import get_db, transaccion
 
 # Categoría del vínculo (la asigna la administración con los datos de RR. HH.).
@@ -264,7 +265,9 @@ def texto_carga(v: dict | None) -> str:
 
 
 def texto_periodo(v: dict) -> str:
-    return f"{v['fecha_inicio'] or 'ingreso sin registrar'} a {v['fecha_fin'] or 'hoy'}"
+    """«1 mar 2015 a hoy» (PLAN §62: fechas legibles)."""
+    inicio = formato.fecha(v["fecha_inicio"]) if v["fecha_inicio"] else "ingreso sin registrar"
+    return f"{inicio} a {formato.fecha(v['fecha_fin']) if v['fecha_fin'] else 'hoy'}"
 
 
 def agregar(uid: int, categoria: str, desde=None, hasta=None, jornada=None, nota=None,

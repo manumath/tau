@@ -450,7 +450,7 @@ def test_llenar_plantilla_con_la_ficha(page, tmp_path):
     (tmp_path / "c.csv").write_text("hoja,celda,clave\nAntecedentes,B2,academicos.total.2025\n", encoding="utf-8")
     entrar(page, "comision")
     page.goto("/calidad/ficha")
-    expect(page.locator("main h2").first).to_contain_text("Ficha estadística")
+    expect(page.locator("main h1").first).to_contain_text("Ficha estadística")
     page.get_by_role("link", name="Llenar una plantilla").click()
     page.set_input_files("#plantilla", tmp_path / "formulario.xlsx")
     page.set_input_files("#correspondencia", tmp_path / "c.csv")

@@ -137,7 +137,7 @@ def test_cv_con_filtro_de_filiacion(client, emmy):
 
 def test_contexto_bolivia(client, emmy):
     assert os.environ["TZ"] == "America/La_Paz"
-    assert fecha_local("2026-09-25 12:00:00") == "25-09-2026 08:00"  # UTC-4
+    assert fecha_local("2026-09-25 12:00:00") == "25 sep 2026, 08:00"  # UTC-4
     pid = proyectos.crear(dict(nombre="Proyecto IDH", estado="vigente", monto=150000), emmy, emmy)
     assert proyectos.obtener(pid)["moneda"] == "BOB"
     login(client, "inv@test.cl", PASS_TEMP)

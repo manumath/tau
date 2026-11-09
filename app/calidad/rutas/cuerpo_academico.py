@@ -11,6 +11,7 @@ from app.calidad import cuerpo_academico as ca
 from app.calidad.rutas.informes import (ESTILO_IMPRESION, XLSX, _archivo, _cifra, _selector_anio, barra, descarga,
                                              hoja)
 from app.comun import exportar, permisos, vinculos
+from app.comun import formato
 from app.comun.componentes.layout import pagina
 
 rt = APIRouter()
@@ -19,7 +20,8 @@ ABREV = {"investigacion": "Inv.", "extension": "Ext.", "gestion": "Gest.", "otra
 
 
 def _num(v, sufijo=""):
-    return Td("—" if v is None or v == "" else f"{v}{sufijo}", cls="text-right tabular-nums")
+    return Td("—" if v is None or v == "" else f"{formato.numero(v) if isinstance(v, float) else v}{sufijo}",
+              cls="text-right tabular-nums")
 
 
 def _h(v):
@@ -47,7 +49,7 @@ def documento_carga(d):
                      *[_h(x[k]) for k in ca.ACTIVIDADES_NO_DOCENCIA]) for c, x in d["por_categoria"].items()]
     return hoja(
         H1(f"Carga docente {gestiones.codigo(g)}"),
-        P(f"{gestiones.nombre(g)}, del {g['fecha_inicio']} al {g['fecha_fin']}. Carga en h/mes (unidades de 32); "
+        P(f"{gestiones.nombre(g)}, {formato.periodo(g['fecha_inicio'], g['fecha_fin'])}. Carga en h/mes (unidades de 32); "
           "rige el vínculo vigente al inicio del semestre. JCE = carga contratada / 160.", cls="apagado text-sm"),
         Div(_cifra(t["personas"], "personas"), _cifra(t["jce"], "jornadas completas eq."),
             _cifra(f"{t['pct_investigacion']} %" if t["pct_investigacion"] is not None else "—", "de la carga en investigación"),

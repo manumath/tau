@@ -10,6 +10,7 @@ from app.academico import carga, gestiones, preparacion
 from app.academico.componentes import tiene_docencia
 from app.calidad import anexo, calidad_datos as calidad
 from app.comun import estudiantes, permisos, vinculos
+from app.comun import formato
 from app.estudiantil import actividad as actividad_estudiantil, tutoria
 from app.comun.db import get_db
 from app.investigacion import filiacion, institucionales, perfiles, productos, proyectos
@@ -18,7 +19,7 @@ from app.comun.componentes.layout import pagina
 rt = APIRouter()
 
 def _cifra(valor, texto, href=None):
-    contenido = (Span(str(valor), cls="text-2xl font-semibold tabular-nums"), Span(texto, cls=TextPresets.muted_sm))
+    contenido = (Span(formato.numero(valor) if isinstance(valor, float) else str(valor), cls="text-2xl font-semibold tabular-nums"), Span(texto, cls=TextPresets.muted_sm))
     cls = "flex flex-col rounded-lg border border-border px-4 py-3"
     return A(*contenido, href=href, cls=cls + " hover:bg-muted") if href else Div(*contenido, cls=cls)
 

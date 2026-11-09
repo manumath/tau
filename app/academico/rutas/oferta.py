@@ -10,6 +10,7 @@ from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.academico import gestiones, importar_oferta, oferta
 from app.comun import permisos
+from app.comun import formato
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, transaccion
@@ -118,7 +119,7 @@ def get(auth, gestion: str = ""):
         if g["tipo"] in oferta.TEMPORADA else ""
     return pagina(
         "Oferta y docentes",
-        Div(Div(H2(gestiones.codigo(g)), P(f"{gestiones.nombre(g)} · del {g['fecha_inicio']} al {g['fecha_fin']}",
+        Div(Div(H2(gestiones.codigo(g)), P(f"{gestiones.nombre(g)} · {formato.periodo(g['fecha_inicio'], g['fecha_fin'])}",
                                            cls=TextPresets.muted_sm)),
             Div(_selector(g),
                 Button(UkIcon("list-plus", height=16, width=16), "Agregar las troncales", cls=ButtonT.default,

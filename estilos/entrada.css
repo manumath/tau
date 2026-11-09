@@ -100,3 +100,19 @@
     .columna-contenido { padding: 0 !important; }
   }
 }
+
+/* Indicador de carga de toda petición htmx (PLAN §62, etapa 3): una barra fina bajo la franja superior mientras algún
+   elemento tiene la clase htmx-request. Aparece solo si la petición tarda más de 300 ms (no parpadea en las rápidas).
+   Se mueve el fondo, no la barra: la franja no puede recortar su contenido (menú del usuario, sugerencias). */
+@keyframes tau-cargando {
+  0% { opacity: 1; background-position: 100% 0; }
+  100% { opacity: 1; background-position: -100% 0; }
+}
+body:has(.htmx-request) .barra-superior::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, hsl(var(--primary)) 50%, transparent 100%) 0 0 / 50% 100% no-repeat;
+  animation: tau-cargando 1.2s linear 300ms infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  body:has(.htmx-request) .barra-superior::after { animation: tau-cargando 0s 300ms forwards; background-size: 100% 100%; }
+}

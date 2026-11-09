@@ -1,5 +1,5 @@
 """Piezas genéricas de fichas y listas: insignias, enlaces a personas, filtros, datos y fechas."""
-from datetime import datetime, timezone
+from app.comun import formato
 
 import fasthtml.common as fh
 from fasthtml.common import A, Div, Input, Option, Select, Span
@@ -64,10 +64,7 @@ def dato(etiqueta, valor):
 
 def fecha_local(iso_utc: str | None) -> str:
     """SQLite guarda UTC ('2026-09-24 02:38:11'); se muestra en la hora local del servidor."""
-    if not iso_utc:
-        return "—"
-    dt = datetime.fromisoformat(iso_utc).replace(tzinfo=timezone.utc).astimezone()
-    return dt.strftime("%d-%m-%Y %H:%M")
+    return formato.fecha_hora(iso_utc)
 
 
 POR_PAGINA = 50

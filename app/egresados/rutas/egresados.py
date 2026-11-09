@@ -7,6 +7,7 @@ from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, LabelInput, Tabl
                            UkIcon)
 
 from app.comun import permisos, vinculos
+from app.comun import formato
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.egresados import directorio, egresados
@@ -105,7 +106,7 @@ def _directorio(g):
 def _lista(auth):
     gente = egresados.titulados()
     filas = [Tr(Td(f"{g['apellidos']}, {g['nombres']}", cls="font-medium"),
-                Td(cohortes.texto(g["cohorte_anio"], g["cohorte_ciclo"]), cls="text-sm"), Td(g["fecha_titulacion"], cls="text-sm"),
+                Td(cohortes.texto(g["cohorte_anio"], g["cohorte_ciclo"]), cls="text-sm"), Td(formato.fecha(g["fecha_titulacion"]), data_valor=g["fecha_titulacion"] or "", cls="text-sm whitespace-nowrap"),
                 Td(cohortes.MODALIDADES.get(g["modalidad_titulacion"], "—"), cls="text-sm"),
                 Td(_chips(g["seguimiento"])),
                 Td(_directorio(g)))

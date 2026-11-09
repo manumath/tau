@@ -11,6 +11,7 @@ from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets, Uk
 
 from app.ia.rutas.panel import marca_si
 from app.comun import config, fotos
+from app.comun.componentes.layout import con_h1
 from app.investigacion import lineas, perfiles, productos
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
@@ -52,6 +53,7 @@ def ids_publicos() -> set[int]:
 # --- Páginas ---------------------------------------------------------------------------------------------
 
 def pagina_publica(titulo, *contenido, pie: str | None = None):
+    contenido = con_h1(contenido, titulo)
     cabecera = Header(Container(Div(
         A(Div(UkIcon("sigma", height=24, width=24), Span(config.NOMBRE_INSTITUTO, cls="font-semibold"),
               cls="flex items-center gap-2"), href="/publico/investigadores", cls="min-w-0"),

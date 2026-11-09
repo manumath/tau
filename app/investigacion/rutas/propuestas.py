@@ -16,6 +16,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, Progress, TextPresets, UkIcon
 
 from app.comun import exportar, permisos
+from app.comun import formato
 from app.investigacion import institucionales as inst
 from app.investigacion import lineas, proyectos
 from app.investigacion.componentes.lineas import casillas_lineas
@@ -548,7 +549,7 @@ def get(auth, periodo: str = "", estado: str = ""):
                    fh.Td(proyectos.CLASES.get(p["clase"] or "", "—"), cls="text-sm"),
                    fh.Td(inst.MODALIDADES[p["modalidad"]], cls="text-sm"),
                    fh.Td(p["proponente"], cls="text-sm"),
-                   fh.Td(p["enviada_en"][:10] if p["enviada_en"] else "—", cls="text-sm whitespace-nowrap"),
+                   fh.Td(formato.fecha(p["enviada_en"]), data_valor=p["enviada_en"] or "", cls="text-sm whitespace-nowrap"),
                    fh.Td(insignia_estado(p["estado"]))) for p in props]
     return pagina(
         "Propuestas institucionales",

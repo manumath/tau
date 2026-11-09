@@ -18,6 +18,7 @@ from monsterui.all import Button, ButtonT, Card, TextPresets, UkIcon
 from app.investigacion import (actividades, cosecha, importacion, institucionales, perfiles, productos, proyectos,
                                revistas)
 from app.comun import config, exportar, permisos, unidades
+from app.comun import formato
 from app.comun.componentes import recursos
 from app.calidad import capacitacion, informes, programados
 from app.comun.componentes.graficos import barras
@@ -134,7 +135,7 @@ def hoja(*contenido, titulo: str = "", instituto: bool = False):
         titulo = "".join(x for x in h1.children if isinstance(x, str)) if h1 else ""
     unidad = f"{config.NOMBRE_CARRERA} · {config.NOMBRE_INSTITUTO}" if instituto else config.NOMBRE_CARRERA
     pie = Div(P(config.DIRECCION, cls="membrete-texto") if config.DIRECCION else "",
-              P(f"Generado el {datetime.now():%d-%m-%Y %H:%M} · {config.NOMBRE_SISTEMA} · {unidad}"),
+              P(f"Generado el {formato.fecha(date.today())}, {datetime.now():%H:%M} · {config.NOMBRE_SISTEMA} · {unidad}"),
               cls="apagado text-xs mt-10 pt-3 border-t border-zinc-200 space-y-1")
     izquierda = _cadena_css(f"{titulo} · " if titulo else "") + f" {_cadena_css(unidad)}"
     paginas = Style("@media print { @page { @bottom-left { content: " + izquierda + "; font: 8pt sans-serif; "
@@ -174,7 +175,7 @@ def cita(p, destacar_uid=None):
 
 def _cifra(valor, texto, href=None):
     """Cifra destacada; con `href`, enlaza a los registros que la componen."""
-    contenido = (Div(str(valor), cls="text-2xl font-bold"), Div(texto, cls="apagado text-xs"))
+    contenido = (Div(formato.numero(valor) if isinstance(valor, float) else str(valor), cls="text-2xl font-bold"), Div(texto, cls="apagado text-xs"))
     if href:
         return A(*contenido, href=href, cls="cifra block border border-zinc-200 rounded p-3 text-center hover:bg-zinc-50",
                  style="color: inherit")
@@ -260,11 +261,11 @@ def seccion_programados(auth):
           "el enlace al informe. Las fechas son fijas; si nadie usa el sistema ese día, salen en el siguiente "
           "acceso.", cls=TextPresets.muted_sm),
         Div(Div(Strong("Próximos", cls="text-sm"),
-                Ul(*[Li(Span(f"{d:%d-%m-%Y}", cls="font-mono text-sm mr-2"),
+                Ul(*[Li(Span(formato.fecha(d), cls="text-sm mr-2 whitespace-nowrap"),
                         Span(f"{programados.NOMBRES[i]} ({detalle})", cls="text-sm")) for i, d, detalle in proximos],
                    cls="space-y-1 mt-1")),
             Div(Strong("Últimos envíos", cls="text-sm"),
-                Ul(*[Li(Span(fecha_local(x["enviado_en"])[:10], cls="font-mono text-sm mr-2"),
+                Ul(*[Li(Span(fecha_local(x["enviado_en"]), cls="text-sm mr-2 whitespace-nowrap"),
                         Span(f"{programados.NOMBRES[x['informe']]} ({x['ocasion']})", cls="text-sm"),
                         Span(" · sin novedades" if not x["destinatarios"] else "", cls=TextPresets.muted_sm))
                      for x in ultimos], cls="space-y-1 mt-1") if ultimos

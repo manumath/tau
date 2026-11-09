@@ -76,7 +76,7 @@ def test_pantallas_y_permisos(client, datos):
     r = client.get("/informes")
     assert "Carga docente" in r.text and "Cuerpo académico" in r.text
     r = client.get(f"/informes/carga-docente?gestion={datos['II']['id']}")
-    assert "Carga docente II-2026" in r.text and "Noether, Emmy" in r.text and "57.1" in r.text
+    assert "Carga docente II-2026" in r.text and "Noether, Emmy" in r.text and "57,1" in r.text
     assert "1980" not in client.get("/informes/cuerpo-academico?desde=2024&hasta=2026").text
     for url in (f"/informes/carga-docente/xlsx?gestion={datos['II']['id']}",
                 "/informes/cuerpo-academico/xlsx?desde=2024&hasta=2026"):
