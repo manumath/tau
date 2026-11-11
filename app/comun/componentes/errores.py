@@ -7,7 +7,7 @@
   static/js/avisos.js muestra entonces un aviso rojo con un mensaje comprensible.
 """
 from fasthtml.common import A, Div, FtResponse, JSONResponse, P, Response, Span
-from monsterui.all import H2, ButtonT, UkIcon
+from monsterui.all import H2, ButtonT, Card, UkIcon
 from starlette.responses import FileResponse, StreamingResponse
 
 from app.comun.componentes.layout import pagina
@@ -50,8 +50,9 @@ def pagina_error(req, codigo: int, referencia: str | None = None):
         if referencia else "",
         A(UkIcon("arrow-left", height=14, width=14), "Volver al inicio" if usuario else "Ir al ingreso",
           href="/" if usuario else "/login", cls=f"uk-btn {ButtonT.default} inline-flex gap-1 mt-6"),
-        cls="text-center py-16")
-    return pagina(titulo, contenido, usuario=usuario)
+        cls="text-center py-16" if usuario else "text-center py-8")
+    # Sin sesión la página va sobre el lienzo de la marca (azul marino): el mensaje, en una tarjeta.
+    return pagina(titulo, contenido if usuario else Card(contenido, cls="w-full max-w-md"), usuario=usuario)
 
 
 def paginas_de_error(req, resp):

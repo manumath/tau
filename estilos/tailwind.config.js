@@ -11,7 +11,9 @@ const colores = {};
 for (const c of ["background", "foreground", "card", "card-foreground", "popover", "popover-foreground",
                  "primary", "primary-foreground", "secondary", "secondary-foreground", "muted",
                  "muted-foreground", "accent", "accent-foreground", "destructive",
-                 "destructive-foreground", "border", "input", "ring"]) {
+                 "destructive-foreground", "border", "input", "ring",
+                 // Panel de la marca (PLAN §63): app/comun/marca.py, PANEL.
+                 "lateral", "lateral-fin", "lateral-foreground", "acento"]) {
   colores[c] = tema(c);
 }
 

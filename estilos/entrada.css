@@ -53,15 +53,25 @@
    16rem, plegable a 4rem (html[data-lateral=plegado]). Teléfono: el mismo menú es un panel que se abre sobre
    la página (html.menu-abierto) y abajo van las pestañas. */
 @layer components {
+  /* Panel de la marca (PLAN.md §63): azul marino que baja hacia el turquesa, como las aplicaciones del manual,
+     con la marca y el texto en blanco. Los colores salen de app/comun/marca.py (PANEL). */
   .lateral {
-    @apply fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-background
+    @apply fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-lateral text-lateral-foreground
            -translate-x-full transition-transform duration-200 ease-out;
+    background-image: linear-gradient(180deg, hsl(var(--lateral)) 0%, hsl(var(--lateral)) 45%, hsl(var(--lateral-fin)) 100%);
   }
+  .lateral-lista { scrollbar-width: thin; scrollbar-color: hsl(var(--lateral-foreground) / 0.3) transparent; }
+  .lateral :focus-visible { outline-color: hsl(var(--lateral-foreground)); }
   html.menu-abierto .lateral { @apply translate-x-0 shadow-xl; }
   .fondo-menu { @apply fixed inset-0 z-40 hidden bg-black/40; }
   html.menu-abierto .fondo-menu { @apply block; }
   html.menu-abierto body { @apply overflow-hidden; }
+  /* Enlace de la página actual: en el panel, claro sobre el azul (12:1) y con la cinta roja de la marca. */
   .enlace-menu[aria-current="page"] { @apply bg-primary/10 font-medium text-primary; }
+  .lateral .enlace-menu[aria-current="page"] {
+    @apply bg-lateral-foreground font-semibold text-lateral;
+    box-shadow: inset 3px 0 0 hsl(var(--acento));
+  }
   .pestanas-movil .enlace-menu[aria-current="page"] { @apply bg-transparent; }
   .lateral .icono-desplegar { @apply hidden; }
   /* Grupos plegados (html[data-grupos~=clave], lo pone static/js/disposicion-inicial.js antes de pintar); el
@@ -154,3 +164,39 @@ details[open] > summary .plegable-icono { transform: rotate(90deg); }
 /* Foco visible (PLAN §62, WCAG 2.4.7 y 2.4.13): contorno de 2 px con separación, en todo lo que se alcanza con el
    teclado. */
 :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+
+/* --- Identidad visual en la interfaz (PLAN.md §63) -------------------------------------------------------------- */
+
+/* Botones: el ícono nunca va pegado al texto (antes dependía de que cada botón pidiera su separación). */
+.uk-btn { gap: 0.375rem; }
+
+/* Título de cada pantalla: la cinta roja inclinada de las portadas y rótulos del manual, en chico. */
+.columna-contenido main h1::before {
+  content: ""; display: inline-block; width: 0.3em; height: 0.82em; margin-right: 0.45em; vertical-align: -0.06em;
+  background: hsl(var(--acento)); transform: skewX(-22deg); border-radius: 1px;
+}
+@media print { .columna-contenido main h1::before { display: none; } }
+
+/* Tablas de trabajo (table[data-tabla]): encabezado que se distingue de las filas y fila bajo el cursor. Los informes
+   impresos no llevan data-tabla y quedan como estaban. */
+@media screen {
+  table[data-tabla] thead th {
+    @apply bg-muted text-xs font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+  table[data-tabla] thead th:first-child { border-top-left-radius: 0.375rem; border-bottom-left-radius: 0.375rem; }
+  table[data-tabla] thead th:last-child { border-top-right-radius: 0.375rem; border-bottom-right-radius: 0.375rem; }
+  table[data-tabla] tbody tr { transition: background-color 120ms; }
+  table[data-tabla] tbody tr:hover { background-color: hsl(var(--muted) / 0.6); }
+}
+@media (prefers-reduced-motion: reduce) { table[data-tabla] tbody tr { transition: none; } }
+
+/* Lienzo de las páginas sin sesión (ingreso, enlace del estudiante, recuperar, encuestas): el fondo de la tarjeta y
+   la carpeta del manual, azul marino hacia el turquesa con sus franjas inclinadas, y la tarjeta blanca encima. */
+.lienzo-marca {
+  background-color: hsl(var(--lateral));
+  background-image:
+    linear-gradient(118deg, transparent 0 58%, rgb(255 255 255 / 0.05) 58% 74%, transparent 74%),
+    linear-gradient(62deg, rgb(255 255 255 / 0.04) 0 16%, transparent 16% 80%, rgb(255 255 255 / 0.04) 80%),
+    linear-gradient(180deg, hsl(var(--lateral)) 0%, hsl(var(--lateral)) 40%, hsl(var(--lateral-fin)) 100%);
+}
+.lienzo-marca > * { box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.45); }

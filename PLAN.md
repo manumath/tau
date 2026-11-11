@@ -77,6 +77,7 @@ pendiente. Para instalarlo y trabajar en el código, vea el [README](README.md);
 - [60. Áreas y catálogo oficial de líneas de investigación (8-nov-2026)](#60-áreas-y-catálogo-oficial-de-líneas-de-investigación-8-nov-2026)
 - [61. Plan de mejora del informe de autoevaluación y carga desde la Guía de Antecedentes (8-nov-2026)](#61-plan-de-mejora-del-informe-de-autoevaluación-y-carga-desde-la-guía-de-antecedentes-8-nov-2026)
 - [62. Mejoras de la auditoría de software (8-nov-2026)](#62-mejoras-de-la-auditoría-de-software-8-nov-2026)
+- [63. Identidad visual en la interfaz y optimización (10-nov-2026)](#63-identidad-visual-en-la-interfaz-y-optimización-10-nov-2026)
 
 ## 1. Visión
 
@@ -3108,3 +3109,45 @@ OWASP, rendimiento y pruebas) y luego ejecutar sus nueve etapas, un commit por e
 - El menú dice «Calidad» en vez de «Aseguramiento de la Calidad» (el nombre completo sigue en las pantallas y la guía
   dice «Calidad → …»). Si la Comisión prefiere el nombre largo, es un cambio de una línea en `app/navegacion.py`.
 - Límite de 25 MB por envío (el adjunto mayor es de 20 MB). Se ajusta con `PORTAL_MAX_CUERPO_MB`.
+
+## 63. Identidad visual en la interfaz y optimización (10-nov-2026)
+
+Pedido del usuario: optimizar el sistema con criterios y estándares internacionales y mejorar su aspecto respetando la
+marca. La auditoría del 8-nov-2026 (§62) ya había cerrado accesibilidad WCAG 2.2 AA, seguridad y rendimiento; esta
+sección se ocupa de lo que quedaba: que la interfaz se vea como la Carrera, y lo que la medición mostró.
+
+### Qué se midió antes de tocar nada
+- **Servidor:** las 37 pantallas principales responden en menos de 40 ms sobre la base de ejemplo (la más lenta,
+  Indicadores de calidad: 38 ms; la mayoría, 10 ms). No hay nada que optimizar en el servidor ni en la base, y no se
+  cambió nada ahí.
+- **Navegador:** recursos propios, comprimidos y con caché de un año (§62). Quedaba un detalle: el título de cada página
+  cambiaba de letra al cargar (la fuente se pedía después de leer la hoja de estilos).
+
+### Etapa 1: identidad visual
+La referencia es el Manual de Identidad Institucional (§55): sus portadas, la tarjeta y la carpeta usan un **panel azul
+marino que baja hacia el turquesa, con la marca en blanco**, y un **rótulo rojo inclinado** para los títulos.
+- **Menú lateral como panel de la marca:** fondo azul marino (Pantone 2767C) con degradado hacia el turquesa, isotipo
+  en blanco (como pide el manual sobre fondos corporativos) y texto blanco. El enlace de la página actual va en claro
+  sobre el azul (12:1) con una cinta roja. Los colores están en `marca.PANEL` (`lateral`, `lateral-fin`,
+  `lateral-foreground`, `acento`) y `tests/test_marca.py` exige contraste AA arriba y abajo del degradado, también con
+  la opacidad de los enlaces (85 %) y de los títulos de grupo (70 %). El degradado termina en un turquesa oscurecido y
+  no en el 7713C puro: con el puro, el texto del final del menú no llegaba a 4,5:1.
+- **Títulos de pantalla:** una cinta roja inclinada antes del `h1`, eco del rótulo del manual (no se imprime).
+- **Páginas sin sesión** (ingreso, enlace del estudiante, recuperar contraseña, encuestas, error): la tarjeta blanca
+  sobre el lienzo de la marca (`.lienzo-marca`: azul marino hacia el turquesa con franjas inclinadas, solo CSS). La
+  página de error sin sesión pasa a ir en una tarjeta.
+- **Esquinas:** el tema pasa de radio `sm` (2 px) a `md` (6 px) en botones, campos y tarjetas.
+- **Botones:** separación fija entre ícono y texto (`.uk-btn`); antes dependía de cada botón y en varios el ícono
+  quedaba pegado («Importar CSV», «Nuevo usuario», «Agregar a la oferta»).
+- **Tablas de trabajo** (`table[data-tabla]`): encabezado con fondo, en mayúsculas chicas, y fila resaltada bajo el
+  cursor. Los informes impresos no cambian.
+- **Menú del usuario:** un círculo con sus iniciales junto al nombre; en el teléfono, solo el círculo (el nombre
+  accesible del botón es «Cuenta de …» en ambos).
+- **Carga:** la fuente de los títulos (Montserrat 700) se precarga (`<link rel="preload">`).
+
+### Decisiones del agente por confirmar
+- El menú lateral azul marino es el cambio más visible. Si la Dirección prefiere el menú blanco de antes, basta poner
+  en `marca.PANEL` los valores de `background` y `foreground`.
+- La cinta roja de los títulos y las mayúsculas de los encabezados de tabla son gusto del agente dentro del manual.
+- Esquinas de 6 px: el manual no fija nada para pantallas.
+

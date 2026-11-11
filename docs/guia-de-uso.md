@@ -35,7 +35,8 @@ la asignación docente y la carga horaria.
   Si cree que alguien usó su cuenta, cambie la contraseña.
 - **Estudiantes:** no tienen contraseña. En la pantalla de ingreso use «¿Es estudiante? Ingrese con un enlace a su
   correo», escriba su correo y abra el enlace que recibe (vale 30 minutos y una sola vez). Ven solo «Mi seguimiento».
-- Para cambiar su contraseña: menú con su nombre (arriba a la derecha) → «Cambiar contraseña».
+- Para cambiar su contraseña: menú con su nombre (arriba a la derecha; en el teléfono, el círculo con sus
+  iniciales) → «Cambiar contraseña».
 - **Tema claro u oscuro:** menú con su nombre → «Tema»: *Claro*, *Oscuro* o *Sistema* (sigue la
   configuración de su computadora o teléfono). La elección se guarda en ese navegador.
 

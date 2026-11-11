@@ -27,15 +27,25 @@ def selector_tema():
                cls="px-2 py-2 space-y-1 border-t border-border mt-1")
 
 
+def _boton_usuario(usuario: dict):
+    """Botón que abre el menú del usuario: sus iniciales en un círculo del color de la marca y su nombre (en el
+    teléfono, solo las iniciales; el nombre accesible es el mismo en ambos)."""
+    iniciales = "".join((usuario.get(k) or " ").strip()[:1] for k in ("nombres", "apellidos")).upper()
+    return Button(Span(iniciales, aria_hidden="true",
+                       cls="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold "
+                           "text-primary-foreground"),
+                  Span(usuario["nombres"], cls="hidden sm:inline max-w-40 truncate"),
+                  UkIcon("chevron-down", height=14, width=14), cls=(ButtonT.ghost, "gap-2 px-2"),
+                  type="button", aria_haspopup="true", aria_label=f"Cuenta de {usuario['nombres']}")
+
+
 def _menu_usuario(usuario: dict):
     """Nombre del usuario con un desplegable: perfil, contraseña y salir."""
     item = "flex items-center gap-2 px-3 py-2 rounded hover:bg-muted w-full text-left text-sm"
     opciones = []
     if usuario.get("solo_estudiante"):          # solo ve su seguimiento: sin perfil, datos personales ni contraseña
         return Div(
-            Button(Span(usuario["nombres"], cls="max-w-40 truncate"),
-                   UkIcon("chevron-down", height=14, width=14), cls=(ButtonT.ghost, "gap-1"),
-                   type="button", aria_haspopup="true"),
+            _boton_usuario(usuario),
             Div(Div(Span(usuario["email"], cls=(TextPresets.muted_sm, "block px-3 py-2 truncate")), selector_tema(),
                     Form(fh.Button(UkIcon("log-out", height=16, width=16), "Salir", type="submit", cls=item),
                          method="post", action="/logout", hx_post="/logout"), cls="flex flex-col"),
@@ -56,9 +66,7 @@ def _menu_usuario(usuario: dict):
              method="post", action="/logout", hx_post="/logout"),
     ]
     return Div(
-        Button(Span(usuario["nombres"], cls="max-w-40 truncate"),
-               UkIcon("chevron-down", height=14, width=14), cls=(ButtonT.ghost, "gap-1"),
-               type="button", aria_haspopup="true"),
+        _boton_usuario(usuario),
         Div(Div(Span(usuario["email"], cls=(TextPresets.muted_sm, "block px-3 py-2 truncate")),
                 *opciones, cls="flex flex-col"),
             uk_dropdown="mode: click; pos: bottom-right", cls="uk-drop uk-dropdown w-60 p-1"))
@@ -94,8 +102,11 @@ def _version_clara_y_oscura(archivo: str, extension: str, alt: str, cls: str):
             Img(src=recursos.url(f"img/marca/{archivo}-blanco.{extension}"), alt=alt, cls=f"{cls} hidden dark:block"))
 
 
-def isotipo(cls: str = "size-7"):
-    """El nudo de la Carrera, sin texto (decorativo: el enlace que lo contiene lleva el nombre)."""
+def isotipo(cls: str = "size-7", blanco: bool = False):
+    """El nudo de la Carrera, sin texto (decorativo: el enlace que lo contiene lleva el nombre). `blanco`: sobre un
+    fondo de color de la marca (el menú lateral), donde el manual pide la versión blanca en ambos temas."""
+    if blanco:
+        return (Img(src=recursos.url("img/marca/isotipo-blanco.svg"), alt="", cls=f"shrink-0 {cls}"),)
     return _version_clara_y_oscura("isotipo", "svg", "", f"shrink-0 {cls}")
 
 
@@ -104,8 +115,8 @@ def logotipo(cls: str = "w-60"):
     return _version_clara_y_oscura("logotipo", "png", config.NOMBRE_CARRERA, f"h-auto {cls}")
 
 
-def _marca(usuario):
-    return A(*isotipo(),
+def _marca(usuario, en_panel: bool = False):
+    return A(*isotipo(blanco=en_panel),
              Span(config.NOMBRE_SISTEMA, cls="lateral-texto font-marca text-lg font-bold tracking-wide"),
              href="/estudiante" if usuario.get("solo_estudiante") else "/", title=config.DESCRIPCION_SISTEMA,
              aria_label=config.NOMBRE_COMPLETO, cls="flex items-center gap-2 min-w-0")
@@ -115,8 +126,8 @@ def _enlace_menu(item):
     return Li(A(UkIcon(item["icono"], height=18, width=18, cls="shrink-0"),
                 Span(item["texto"], cls="lateral-texto truncate"), item["insignia"] or "",
                 href=item["href"], title=item["texto"], data_nav=True,
-                cls="enlace-menu flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground/80 "
-                    "hover:bg-muted hover:text-foreground"))
+                cls="enlace-menu flex items-center gap-3 rounded-md px-3 py-2 text-sm text-lateral-foreground/85 "
+                    "hover:bg-lateral-foreground/10 hover:text-lateral-foreground"))
 
 
 def _clave_grupo(titulo: str) -> str:
@@ -134,8 +145,8 @@ def _grupo_menu(titulo, items):
     return Div(fh.Button(Span(titulo, cls="text-left"), UkIcon("chevron-down", height=14, width=14, cls="flecha-grupo"),
                          type="button", data_accion="plegar-grupo", aria_expanded="true",
                          cls="lateral-grupo grupo-plegable flex w-full items-center justify-between rounded px-3 pt-4 "
-                             "pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground "
-                             "hover:text-foreground"),
+                             "pb-1 text-xs font-semibold uppercase tracking-wide text-lateral-foreground/70 "
+                             "hover:text-lateral-foreground"),
                lista, data_grupo=clave, cls="menu-grupo")
 
 
@@ -145,12 +156,14 @@ def menu_lateral(usuario: dict):
                        UkIcon("panel-left-open", height=18, width=18, cls="icono-desplegar"),
                        type="button", data_accion="plegar-lateral", aria_label="Plegar o desplegar el menú",
                        title="Plegar o desplegar el menú",
-                       cls="hidden lg:inline-flex rounded p-1.5 text-muted-foreground hover:bg-muted")
+                       cls="hidden lg:inline-flex rounded p-1.5 text-lateral-foreground/70 hover:bg-lateral-foreground/10 "
+                           "hover:text-lateral-foreground")
     cerrar = fh.Button(UkIcon("x", height=18, width=18), type="button", data_accion="cerrar-menu",
-                       aria_label="Cerrar el menú", cls="lg:hidden rounded p-1.5 hover:bg-muted")
-    return fh.Nav(Div(_marca(usuario), plegar, cerrar, cls="lateral-cabecera flex items-center justify-between "
-                                                         "gap-2 px-4 h-14 border-b border-border shrink-0"),
-                  Div(*grupos, cls="flex-1 overflow-y-auto px-2 py-2"),
+                       aria_label="Cerrar el menú", cls="lg:hidden rounded p-1.5 hover:bg-lateral-foreground/10")
+    return fh.Nav(Div(_marca(usuario, en_panel=True), plegar, cerrar,
+                      cls="lateral-cabecera flex items-center justify-between gap-2 px-4 h-14 border-b "
+                          "border-lateral-foreground/15 shrink-0"),
+                  Div(*grupos, cls="lateral-lista flex-1 overflow-y-auto px-2 py-2"),
                   id="menu-lateral", aria_label="Menú principal", cls="lateral no-imprimir")
 
 
@@ -216,7 +229,7 @@ def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = 
     decide el enlace activo (lo marca acciones.js según la dirección); se conserva por compatibilidad."""
     contenido = con_h1(contenido, titulo if usuario else None)
     cuerpo = Container(*contenido, cls=(ContainerT.xl, "py-8")) if usuario else Div(
-        *contenido, cls="min-h-screen flex items-center justify-center p-4 bg-muted/40")
+        *contenido, cls="lienzo-marca min-h-screen flex items-center justify-center p-4")
     aviso = Div(UkIcon("wrench", height=16, width=16, cls="shrink-0"),
                 Span("El sistema está en mantenimiento: puede consultar, pero por ahora los cambios no se guardan."),
                 cls="flex items-center justify-center gap-2 px-4 py-2 text-sm bg-amber-100 text-amber-900 "

@@ -129,6 +129,9 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   `uv run python scripts/tema_marca.py && scripts/estilos.sh`); errores y botones de quitar con `text-destructive`,
   nunca `text-red-*`; logos con `layout.isotipo()`/`layout.logotipo()` (versión blanca en oscuro). Los originales de la
   marca y sus fuentes comerciales (Gotham, Helvetica Neue, Garamond Pro) no se versionan: se usan Montserrat y EB Garamond.
+  Sobre el panel azul marino (menú lateral, lienzo de las páginas sin sesión; PLAN §63) la marca va en blanco
+  (`isotipo(blanco=True)`) y el texto con `text-lateral-foreground`; una página sin sesión pone su contenido en una
+  tarjeta (`Card`), nunca suelto sobre el lienzo. El rojo decorativo es `acento`, no `destructive`.
 - **Accesibilidad (PLAN §62):** etiquete los campos con `layout.campo("Texto", control)`, no con `FormLabel` suelto; el
   texto de color usa tono 700 u 800 con su variante `dark:` (los 500 y 600 no llegan a 4,5:1 sobre blanco).
   `tests/navegador/test_accesibilidad_pantallas.py` lo vigila (también un solo `<h1>` y ninguna fecha ISO a la vista):

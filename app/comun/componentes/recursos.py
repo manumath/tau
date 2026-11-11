@@ -64,6 +64,10 @@ def encabezados():
         Link(rel="stylesheet", href=url("vendor/franken-ui/core.min.css")),
         Script(type="module", src=url("vendor/franken-ui/core.iife.js")),
         Link(rel="stylesheet", href=url("css/tailwind.css")),
+        # La fuente de los títulos se pide junto con la hoja de estilos y no después de leerla: el título de la página
+        # no cambia de letra al cargar. La dirección es la misma que escribe la @font-face (sin ?v=).
+        Link(rel="preload", href="/static/vendor/fonts/montserrat/montserrat-700.woff2", type="font/woff2",
+             crossorigin="anonymous", **{"as": "font"}),
         # Tema de Franken UI (colores de la Carrera, estilos/tema-cmat.css; claro u oscuro según la elección guardada o, si no hay, el sistema):
         # el mismo código que headers_theme de MonsterUI, en un archivo (sin defer: antes de pintar).
         Script(src=url("js/tema-inicial.js")),

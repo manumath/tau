@@ -13,6 +13,20 @@ ROJO = "#be141b"
 TURQUESA = "#007c8f"
 GRIS = "#6c6c6c"
 
+# Panel de la marca (PLAN.md §63): el menú lateral y el lienzo de las páginas de ingreso llevan el fondo de las
+# aplicaciones del manual (tarjeta, carpeta, portadas): azul marino que baja hacia el turquesa, con la marca en
+# blanco. El degradado termina en un turquesa oscurecido y no en el 7713C puro, para que el texto del menú se lea
+# también abajo (tests/test_marca.py). `acento` es el rojo de la marca en detalles que no son texto ni errores (la
+# cinta de los títulos, la marca del enlace activo); en oscuro se aclara, como `destructive`.
+PANEL = {
+    "claro": {"lateral": "224 36% 24%", "lateral-fin": "200 60% 22%", "lateral-foreground": "0 0% 100%",
+              "acento": "358 81% 41%"},
+    "oscuro": {"lateral": "224 36% 13%", "lateral-fin": "200 55% 13%", "lateral-foreground": "220 20% 96%",
+               "acento": "358 80% 66%"},
+}
+# Opacidad del texto del menú sobre el panel: enlaces y títulos de grupo (clases text-lateral-foreground/NN).
+OPACIDAD_MENU = (0.85, 0.7)
+
 # Variables del tema de Franken UI (HSL sin «hsl()», como las suyas). En modo oscuro el azul marino no se
 # lee sobre el fondo: el color principal es un tono aclarado del mismo matiz y el fondo, un azul muy oscuro.
 TEMA = {
@@ -27,6 +41,7 @@ TEMA = {
         "accent": "224 20% 95%", "accent-foreground": "224 36% 24%",
         "destructive": "358 81% 41%", "destructive-foreground": "0 0% 100%",
         "ring": "188 100% 28%",
+        **PANEL["claro"],
     },
     "oscuro": {
         "background": "224 36% 9%", "foreground": "220 20% 96%",
@@ -39,6 +54,7 @@ TEMA = {
         "accent": "224 25% 17%", "accent-foreground": "220 20% 96%",
         "destructive": "358 80% 66%", "destructive-foreground": "224 36% 9%",
         "ring": "186 70% 50%",
+        **PANEL["oscuro"],
     },
 }
 
@@ -56,6 +72,12 @@ def hex_de(hsl: str) -> str:
     m = luz - c / 2
     r, g, b = [(c, x, 0), (x, c, 0), (0, c, x), (0, x, c), (x, 0, c), (c, 0, x)][int(h // 60) % 6]
     return "#" + "".join(f"{round((v + m) * 255):02x}" for v in (r, g, b))
+
+
+def mezcla(color: str, fondo: str, opacidad: float) -> str:
+    """Color '#rrggbb' que resulta de pintar `color` con esa opacidad sobre `fondo`."""
+    canales = [round(int(color[i:i + 2], 16) * opacidad + int(fondo[i:i + 2], 16) * (1 - opacidad)) for i in (1, 3, 5)]
+    return "#" + "".join(f"{c:02x}" for c in canales)
 
 
 def contraste(color_a: str, color_b: str) -> float:
