@@ -15,6 +15,7 @@ el servicio `portal` y la aplicación de Fly.io).
 | Documento | Para qué |
 |---|---|
 | [Guía de uso](docs/guia-de-uso.md) | Cómo usar el sistema: investigadores, responsables de proyecto y administración |
+| [Importaciones](docs/importaciones.md) | Todas las cargas de datos (CSV, DOI, arXiv, BibTeX, OpenAlex): campos, claves de unión y orden de carga |
 | [Despliegue](docs/despliegue.md) | Instalación en un servidor propio, correo, respaldos, mudanzas y actualizaciones |
 | [Despliegue en Fly.io](docs/despliegue-fly.md) | Alternativa sin servidor propio, y cómo mudarse después a uno |
 | [PLAN.md](PLAN.md) | Diseño, reglas de negocio, modelo de datos, estado, decisiones y pendientes |

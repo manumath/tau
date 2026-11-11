@@ -558,7 +558,9 @@ al ingresar), vía de ingreso (ordinaria o especial), otra ciudad, extranjero, c
 privado), plan, último ciclo matriculado, fechas de egreso y titulación, modalidad de titulación y
 motivo del retiro. Reglas: un estudiante retirado necesita el último ciclo y el motivo (académico o no
 académico); un congelado, el último ciclo; un egresado, la fecha de egreso; un titulado, la fecha de
-titulación. Descargue la plantilla desde la misma ventana. Antes de guardar verá una vista previa con
+titulación. En `plan` escriba el nombre del plan («Plan 2017»): se toma el de la Licenciatura en Matemática.
+Para un estudiante de otro programa, escriba el programa delante: «Licenciatura en Matemática Aplicada · Plan
+2017». Descargue la plantilla desde la misma ventana. Antes de guardar verá una vista previa con
 lo que se crea, lo que se actualiza y los errores (las filas con errores se omiten).
 
 **Dar acceso a estudiantes.** Con **Dar acceso a estudiantes** (Dirección de Carrera y Gestión de datos) el

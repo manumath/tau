@@ -101,6 +101,42 @@ def test_errores_de_la_carga(app):
     assert get_db().q("SELECT COUNT(*) n FROM estudiante")[0]["n"] == 0
 
 
+def test_el_plan_se_busca_entre_las_licenciaturas(app):
+    """Los cuatro planes vigentes se llaman «Plan 2017»: con el nombre solo, es el de la Licenciatura en Matemática
+    (el programa en que la carga registra); con el programa delante, el de ese programa. Nunca el de una maestría
+    (antes el último plan con ese nombre pisaba a los demás: PLAN §63)."""
+    plan = {f["programa"]: f["id"] for f in get_db().q(
+        """SELECT pe.id, pr.nombre AS programa FROM plan_estudios pe JOIN programa pr ON pr.id = pe.programa_id
+           WHERE pe.nombre = 'Plan 2017'""")}
+    assert len(plan) == 4
+    filas, errores = importar.leer((ENCABEZADO + (
+        "9100001,Ana,Uno,,,,2022-I,,,,,Plan 2017,cursando,,,,,\n"
+        "9100002,Ana,Dos,,,,2022-I,,,,,plan 2017,cursando,,,,,\n"
+        "9100003,Ana,Tres,,,,2022-I,,,,,Licenciatura en Matemática Aplicada · Plan 2017,cursando,,,,,\n"
+        "9100004,Ana,Cuatro,,,,2022-I,,,,,Licenciatura en Matematica - Plan 2017,cursando,,,,,\n"
+        "9100005,Ana,Cinco,,,,2022-I,,,,,Maestría en Matemática · Plan 2017,cursando,,,,,\n"
+        "9100006,Ana,Seis,,,,2022-I,,,,,,cursando,,,,,\n")).encode())
+    assert errores == []
+    assert [f["datos"]["plan_id"] for f in filas] == [
+        plan["Licenciatura en Matemática"], plan["Licenciatura en Matemática"],
+        plan["Licenciatura en Matemática Aplicada"], plan["Licenciatura en Matemática"], None, None]
+    assert [bool(f["errores"]) for f in filas] == [False, False, False, False, True, False]
+    assert "no existe entre los planes de licenciatura" in filas[4]["errores"][0]
+
+
+def test_un_nombre_de_plan_ambiguo_no_se_adivina(app):
+    """Si el programa por omisión no tiene un plan con ese nombre y otros dos sí, la fila es un error que dice cómo
+    escribirlo."""
+    db = get_db()
+    for nombre in ("Licenciatura en Estadística", "Licenciatura en Computación Científica"):
+        pid = db.t.programa.insert(nombre=nombre, nivel="licenciatura", unidad_id=db.q(
+            "SELECT id FROM unidad WHERE sigla = 'CMAT'")[0]["id"])["id"]
+        db.t.plan_estudios.insert(programa_id=pid, nombre="Plan 2030", vigente_desde=2030, sistema="horas")
+    filas, _ = importar.leer((ENCABEZADO + "9200001,Ana,Uno,,,,2022-I,,,,,Plan 2030,cursando,,,,,\n").encode())
+    assert "hay varios planes «Plan 2030»" in filas[0]["errores"][0]
+    assert "«Licenciatura en Estadística · Plan 2030»" in filas[0]["errores"][0]
+
+
 def test_indicadores_por_cohorte(app):
     _cargar()
     ciclos = cohortes.cohortes_hasta((2026, "II"), 20)

@@ -4,7 +4,8 @@ Una fila por estudiante, sin materias ni notas. La clave es el registro universi
 se actualiza su periodo de licenciatura; si no, se busca a la persona por correo o por nombre y, si no
 figura, se registra. Columnas obligatorias: `ru`, `nombres`, `apellidos`, `cohorte` (AAAA-I o AAAA-II)
 y `estado`. Opcionales: `email`, `sexo`, `fecha_nacimiento` (solo se guarda la edad al ingreso),
-`via` (ordinaria o especial), `otra_ciudad`, `extranjero`, `colegio` (público o privado), `plan`,
+`via` (ordinaria o especial), `otra_ciudad`, `extranjero`, `colegio` (público o privado), `plan` («Plan 2017» o,
+para otro programa, «Licenciatura en Matemática Aplicada · Plan 2017»),
 `ultimo_ciclo` (obligatoria si está retirado o congelado), `fecha_egreso`, `fecha_titulacion`,
 `modalidad` y `motivo` (académico o no académico; obligatorio si está retirado).
 
@@ -88,7 +89,41 @@ def _edad(nacimiento: str, anio: int, ciclo: str) -> int:
     return ref.year - n.year - ((ref.month, ref.day) < (n.month, n.day))
 
 
-def _datos_fila(celda, planes: dict) -> tuple[dict, list[str]]:
+def _normal(texto: str) -> str:
+    """'Licenciatura en Matemática · Plan 2017' → 'licenciatura en matematica plan 2017'."""
+    return " ".join(re.sub(r"[·\-–—:,()]", " ", sin_tildes(texto or "")).split())
+
+
+def planes_de_licenciatura() -> list[dict]:
+    return get_db().q("""SELECT pe.id, pe.nombre, pr.nombre AS programa FROM plan_estudios pe
+                         JOIN programa pr ON pr.id = pe.programa_id WHERE pr.nivel = 'licenciatura' ORDER BY pe.id""")
+
+
+def _plan(texto: str, planes: list[dict]) -> tuple[int | None, str | None]:
+    """Plan de licenciatura que nombra la celda → (id, problema). Vale «Plan 2017» o, para decir de qué programa,
+    «Licenciatura en Matemática Aplicada · Plan 2017». Varios programas pueden tener un plan con el mismo nombre: con
+    el nombre solo se toma el del programa en que la carga registra a los estudiantes (`programa_por_omision`), y si
+    ese programa no lo tiene, es un error (no se adivina)."""
+    t = _normal(texto)
+    if not t:
+        return None, None
+    completo = [p for p in planes if _normal(f"{p['programa']} {p['nombre']}") == t]
+    if completo:
+        return completo[0]["id"], None
+    por_nombre = [p for p in planes if _normal(p["nombre"]) == t]
+    if len(por_nombre) == 1:
+        return por_nombre[0]["id"], None
+    if not por_nombre:
+        return None, f"el plan «{texto.strip()}» no existe entre los planes de licenciatura del sistema"
+    propio = _normal(estudiantes.programa_por_omision("licenciatura"))
+    del_programa = [p for p in por_nombre if propio.startswith(_normal(p["programa"]) + " ") or propio == _normal(p["programa"])]
+    if len(del_programa) == 1:
+        return del_programa[0]["id"], None
+    opciones = "; ".join(f"«{p['programa']} · {p['nombre']}»" for p in por_nombre)
+    return None, f"hay varios planes «{texto.strip()}»: escriba el programa y el plan ({opciones})"
+
+
+def _datos_fila(celda, planes: list[dict]) -> tuple[dict, list[str]]:
     """Interpreta una fila → (datos del periodo de estudios, problemas)."""
     problemas, d = [], {}
     ru = celda("ru").strip()
@@ -186,13 +221,9 @@ def _datos_fila(celda, planes: dict) -> tuple[dict, list[str]]:
     d.update(sexo=sexo or None, via_ingreso=via or None, colegio=colegio or None,
              otra_ciudad=None if ciudad is None else int(ciudad),
              extranjero=None if extranjero is None else int(extranjero), edad_ingreso=edad)
-    plan = celda("plan").strip()
-    d["plan_id"] = None
-    if plan:
-        if sin_tildes(plan) in planes:
-            d["plan_id"] = planes[sin_tildes(plan)]
-        else:
-            problemas.append(f"el plan «{plan}» no existe en el sistema")
+    d["plan_id"], problema = _plan(celda("plan"), planes)
+    if problema:
+        problemas.append(problema)
     return d, problemas
 
 
@@ -230,7 +261,7 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
     if faltan:
         return [], [f"Faltan columnas: {', '.join(faltan)}. La primera fila debe tener los encabezados "
                     "(ru, nombres, apellidos, cohorte y estado son obligatorios)."]
-    planes = {sin_tildes(p["nombre"]): p["id"] for p in get_db().q("SELECT id, nombre FROM plan_estudios")}
+    planes = planes_de_licenciatura()
     filas, vistos, n = [], {}, 0
     for linea, registro in enumerate(lector, start=2):
         if not any(c.strip() for c in registro):

@@ -3145,9 +3145,26 @@ marino que baja hacia el turquesa, con la marca en blanco**, y un **rótulo rojo
   accesible del botón es «Cuenta de …» en ambos).
 - **Carga:** la fuente de los títulos (Montserrat 700) se precarga (`<link rel="preload">`).
 
+### Etapa 2: el plan de estudios en la carga de cohortes
+Al escribir el informe de las importaciones (`docs/importaciones.md`, nuevo: los 16 procesos de entrada de datos, sus
+campos y cómo se vinculan) apareció un error en `app/estudiantil/importar.py`: el plan del estudiante se buscaba por
+nombre en un diccionario, y los cuatro planes vigentes se llaman «Plan 2017», así que el último pisaba a los demás. Un
+estudiante de licenciatura con `plan = Plan 2017` quedaba con el plan de la **Maestría en Matemática Aplicada**, sin
+aviso.
+- El plan se busca ahora solo entre los planes de **licenciatura** (`importar.planes_de_licenciatura`, `_plan`).
+- «Plan 2017» a secas es el del programa en que la carga registra a los estudiantes (`estudiantes.programa_por_omision`:
+  Licenciatura en Matemática). Para otro programa se escribe delante: «Licenciatura en Matemática Aplicada · Plan 2017»
+  (valen «·», «-», «–» y «:»).
+- Un nombre que tienen varios programas y no el de omisión es un error que lista cómo escribirlo; no se adivina.
+- Sin migración: la base de desarrollo no tiene estudiantes con plan. Donde ya se hayan cargado cohortes con la columna
+  `plan`, volver a subir el mismo archivo lo corrige (la carga actualiza por RU).
+
 ### Decisiones del agente por confirmar
 - El menú lateral azul marino es el cambio más visible. Si la Dirección prefiere el menú blanco de antes, basta poner
   en `marca.PANEL` los valores de `background` y `foreground`.
 - La cinta roja de los títulos y las mayúsculas de los encabezados de tabla son gusto del agente dentro del manual.
 - Esquinas de 6 px: el manual no fija nada para pantallas.
+- Carga de cohortes: «Plan 2017» sin programa es el de la Licenciatura en Matemática. La carga sigue registrando a
+  todos en ese programa (no tiene columna de programa): si Seguimiento Académico distingue a los de Matemática
+  Aplicada, conviene agregarla.
 
