@@ -14,6 +14,7 @@ el servicio `portal` y la aplicación de Fly.io).
 
 | Documento | Para qué |
 |---|---|
+| [Manual de usuario (PDF)](docs/manual/Manual-de-usuario-TAU.pdf) | Para usuarios no técnicos, con la marca de la Carrera y capturas: roles, privilegios y cada proceso paso a paso. Versión para revisión |
 | [Guía de uso](docs/guia-de-uso.md) | Cómo usar el sistema: investigadores, responsables de proyecto y administración |
 | [Importaciones](docs/importaciones.md) | Todas las cargas de datos (CSV, DOI, arXiv, BibTeX, OpenAlex): campos, claves de unión y orden de carga |
 | [Despliegue](docs/despliegue.md) | Instalación en un servidor propio, correo, respaldos, mudanzas y actualizaciones |
@@ -196,11 +197,12 @@ catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar
 scripts/seed.py                datos de ejemplo
 scripts/crear_admin.py         primer administrador en producción
+scripts/manual.py              manual de usuario: capturas sobre una base de demostración y PDF (docs/manual/)
 scripts/paquete.py             exportar e importar todos los datos (base, fotos, adjuntos): respaldos y mudanzas
 scripts/iniciar.sh             arranque en contenedor (con Litestream si hay réplica configurada)
 Dockerfile, fly.toml,
 litestream.yml                 imagen de contenedor y configuración para Fly.io
-docs/                          guía de uso, guía de mantenimiento y guías de despliegue (servidor propio y Fly.io)
+docs/                          manual de usuario (docs/manual/), guía de uso, guía de mantenimiento y guías de despliegue (servidor propio y Fly.io)
 tests/                         pytest con el TestClient de Starlette
 ```
 

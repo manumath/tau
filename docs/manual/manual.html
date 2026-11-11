@@ -1,0 +1,1537 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>TAU · Manual de usuario</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div class="portada">
+  <img class="logo" src="../../static/img/marca/logotipo-blanco.png" alt="Carrera de Matemática">
+  <div class="rotulo">Manual de usuario</div>
+  <h1>TAU</h1>
+  <div class="nombre">Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática</div>
+  <div class="version">Versión para revisión<span>11 de noviembre de 2026</span></div>
+  <div class="pie">Carrera de Matemática · Instituto de Investigación Matemática<br>
+    Facultad de Ciencias Puras y Naturales · Universidad Mayor de San Andrés · La Paz, Bolivia</div>
+</div>
+
+<section class="capitulo" id="sobre">
+<header class="apertura"><span class="marca">§sobre§</span><span class="numero">Antes de empezar</span><h1>Sobre este manual</h1><p>Para quién es, cómo leerlo y qué esperamos de su revisión.</p></header>
+
+<p class="entrada">Este manual explica, sin tecnicismos, qué es TAU, quiénes lo usan, qué puede hacer cada persona
+y cómo se hace cada tarea. Está pensado para docentes, investigadores, estudiantes, direcciones y personal de apoyo
+de la Carrera de Matemática y de su Instituto de Investigación Matemática.</p>
+
+<h2>Cómo leerlo</h2>
+<p>No hace falta leerlo de corrido. Los capítulos 1 a 4 son para todos: cuentan qué es el sistema, cómo está
+organizado, qué puede hacer cada tipo de usuario y cómo dar los primeros pasos. Del capítulo 5 en adelante, cada
+capítulo trata un módulo; lea los que correspondan a su trabajo.</p>
+
+<table>
+  <thead><tr><th>Si usted es…</th><th>Empiece por…</th></tr></thead>
+  <tbody>
+    <tr><td>Docente o investigador(a)</td><td>Capítulos 1 a 4, luego 5 (Investigación), 6 (su docencia) y 10 (su CV)</td></tr>
+    <tr><td>Estudiante o egresado(a)</td><td>Capítulo 4 (ingreso con enlace) y las secciones «Lo que ve el estudiante» de los capítulos 7 y 8</td></tr>
+    <tr><td>Dirección de Carrera o Coordinación académica</td><td>Capítulos 3, 6, 7, 8 y 9</td></tr>
+    <tr><td>Dirección del Instituto</td><td>Capítulos 3, 5, 10 y 11</td></tr>
+    <tr><td>Comisión de calidad</td><td>Capítulos 3, 9 y 10</td></tr>
+    <tr><td>Administración del sistema o Gestión de datos</td><td>Capítulos 3, 11 y 12</td></tr>
+  </tbody>
+</table>
+
+<h2>Convenciones</h2>
+<ul>
+  <li>Los nombres de botones, menús y campos van como se leen en la pantalla: <span class="ui">Nuevo producto</span>.</li>
+  <li>Un camino por el menú se escribe con flechas: <span class="ruta">Docencia → Oferta y docentes</span>.</li>
+  <li>Las <strong>capturas de pantalla</strong> se tomaron con datos de ejemplo. Las cuentas de ejemplo llevan nombres
+    de matemáticos célebres (Emmy Noether, Sofía Kovalévskaya, Alan Turing) y los estudiantes son inventados: ninguna
+    cifra ni nombre corresponde a datos reales de la Carrera.</li>
+</ul>
+
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Un recuadro como este dice qué rol necesita para la tarea que se explica. Si un botón o un menú del manual no
+  aparece en su pantalla, lo más probable es que su cuenta no tenga ese rol: el sistema muestra a cada persona solo
+  lo que puede usar.</div>
+<div class="nota consejo"><span class="rotulo">Consejo</span>
+  Un recuadro turquesa trae un atajo o una buena práctica.</div>
+<div class="nota importante"><span class="rotulo">Importante</span>
+  Un recuadro rojo avisa de algo que no se puede deshacer o que conviene saber antes de seguir.</div>
+
+<h2>Qué esperamos de su revisión</h2>
+<p>Esta es una <strong>versión para revisión</strong>. Con sus observaciones se ajustará el manual y, sobre todo,
+el sistema: es el insumo de la fase de adecuación. Mientras lee y prueba, anote:</p>
+<ul>
+  <li>lo que <strong>no se entiende</strong> o usa palabras que no son las de la Carrera;</li>
+  <li>lo que el sistema <strong>hace distinto</strong> de como se trabaja en la práctica o de lo que dice un reglamento;</li>
+  <li>lo que <strong>falta</strong>: una tarea que usted hace y no encuentra, un dato que no se puede registrar;</li>
+  <li>lo que <strong>sobra</strong> o pide más pasos de los necesarios;</li>
+  <li>los <strong>permisos</strong> que le parezcan mal puestos: algo que usted debería poder hacer o ver y no puede, o al revés.</li>
+</ul>
+<p>Al final del manual hay una <strong>hoja de observaciones</strong> para anotarlas con el número de página o de
+figura. Entréguela a la Dirección de Carrera o a la Dirección del Instituto, que las reunirán.</p>
+
+<h2>Contenido</h2>
+<ol class="indice"><li><a href="#sobre"><span class="numero"></span><span class="titulo">Sobre este manual</span><span class="puntos"></span><span class="pagina">2</span></a></li>
+<li><a href="#que-es"><span class="numero">1</span><span class="titulo">Qué es TAU</span><span class="puntos"></span><span class="pagina">5</span></a></li>
+<li><a href="#organizacion"><span class="numero">2</span><span class="titulo">Cómo está organizado</span><span class="puntos"></span><span class="pagina">7</span></a></li>
+<li><a href="#usuarios"><span class="numero">3</span><span class="titulo">Usuarios, roles y privilegios</span><span class="puntos"></span><span class="pagina">9</span></a></li>
+<li><a href="#primeros-pasos"><span class="numero">4</span><span class="titulo">Primeros pasos</span><span class="puntos"></span><span class="pagina">14</span></a></li>
+<li><a href="#investigacion"><span class="numero">5</span><span class="titulo">Investigación</span><span class="puntos"></span><span class="pagina">20</span></a></li>
+<li><a href="#docencia"><span class="numero">6</span><span class="titulo">Docencia</span><span class="puntos"></span><span class="pagina">28</span></a></li>
+<li><a href="#estudiantes"><span class="numero">7</span><span class="titulo">Estudiantes y egresados</span><span class="puntos"></span><span class="pagina">36</span></a></li>
+<li><a href="#servicios"><span class="numero">8</span><span class="titulo">Servicios</span><span class="puntos"></span><span class="pagina">43</span></a></li>
+<li><a href="#calidad"><span class="numero">9</span><span class="titulo">Calidad</span><span class="puntos"></span><span class="pagina">50</span></a></li>
+<li><a href="#informes"><span class="numero">10</span><span class="titulo">Informes</span><span class="puntos"></span><span class="pagina">58</span></a></li>
+<li><a href="#administracion"><span class="numero">11</span><span class="titulo">Administración</span><span class="puntos"></span><span class="pagina">63</span></a></li>
+<li><a href="#privacidad"><span class="numero">12</span><span class="titulo">Privacidad, seguridad e inteligencia artificial</span><span class="puntos"></span><span class="pagina">67</span></a></li>
+<li><a href="#ayuda"><span class="numero">13</span><span class="titulo">Preguntas frecuentes y glosario</span><span class="puntos"></span><span class="pagina">69</span></a></li>
+<li><a href="#observaciones"><span class="numero"></span><span class="titulo">Hoja de observaciones</span><span class="puntos"></span><span class="pagina">71</span></a></li></ol>
+</section>
+
+<section class="capitulo" id="que-es">
+<header class="apertura"><span class="marca">§que-es§</span><span class="numero">Capítulo 1</span><h1>Qué es TAU</h1><p>Un solo lugar para la actividad científica, la gestión académica y el aseguramiento de la calidad de la Carrera.</p></header>
+
+<p class="entrada"><strong>TAU</strong> es el Sistema Integrado de Gestión Académica y Científica de la Carrera de
+Matemática (CMAT) y de su Instituto de Investigación Matemática (IIMAT), de la Facultad de Ciencias Puras y
+Naturales de la UMSA. Se usa desde el navegador de una computadora o de un teléfono; no hay que instalar nada.</p>
+
+<h2>Para qué sirve</h2>
+<p>La idea central es sencilla: <strong>cada dato se registra una sola vez</strong>, por quien lo conoce, y el
+sistema lo reutiliza donde haga falta. Un artículo que usted registra aparece en su perfil, en su currículum, en el
+informe de su proyecto, en la memoria anual del Instituto y en los indicadores de calidad de la Carrera, sin
+volver a escribirlo.</p>
+<p>Con eso TAU reemplaza las planillas sueltas y los pedidos de información repetidos:</p>
+<ul>
+  <li>cada docente tiene a mano su producción, su carga horaria y su docencia del semestre;</li>
+  <li>las direcciones ven qué falta para que un semestre arranque y qué proyectos están por terminar;</li>
+  <li>los estudiantes hacen sus trámites (postular a una auxiliatura, presentar el perfil de grado) y reciben los
+    comunicados en un solo sitio;</li>
+  <li>la Comisión de calidad encuentra cada cifra con su respaldo, lista para una autoevaluación.</li>
+</ul>
+
+<h2>Los cinco módulos</h2>
+<div class="fichas">
+  <div class="ficha"><h3>Investigación</h3>
+    <p>Perfil de cada investigador, productos (artículos, libros, tesis dirigidas…), actividades, proyectos
+    individuales e institucionales, la convocatoria anual de propuestas, informes y currículum.</p></div>
+  <div class="ficha"><h3>Docencia</h3>
+    <p>Planes de estudio, gestiones (semestres y cursos de verano e invierno), oferta de materias, asignación de
+    docentes y carga horaria de cada persona.</p></div>
+  <div class="ficha"><h3>Estudiantes y egresados</h3>
+    <p>Seguimiento por cohorte, portal del estudiante, actividad estudiantil, encuestas, tutoría, seguimiento de
+    egresados, directorio de egresados y empleadores.</p></div>
+  <div class="ficha"><h3>Servicios</h3>
+    <p>Comunicados y eventos con confirmación de asistencia, convocatorias a auxiliaturas con su tribunal y sus
+    fases, y el trámite del proyecto de grado, del perfil a la defensa.</p></div>
+  <div class="ficha"><h3>Calidad</h3>
+    <p>El Sistema Interno de Aseguramiento de la Calidad (SIAC): marco de calidad, indicadores, evidencias,
+    autoevaluación, plan de mejora, ficha estadística y página pública de indicadores.</p></div>
+  <div class="ficha derivado"><h3>Administración</h3>
+    <p>No es un módulo más, sino lo que sostiene a los otros: cuentas, roles, vínculos de las personas con la
+    Carrera, catálogos y auditoría.</p></div>
+</div>
+
+<h2>Lo que TAU no hace</h2>
+<p>Conviene tenerlo claro desde el principio, porque evita esperar del sistema lo que no le corresponde:</p>
+<ul>
+  <li><strong>No guarda materias cursadas ni notas.</strong> Esas son del sistema de Seguimiento Académico de la
+    Universidad. De cada estudiante, TAU guarda su cohorte, su estado (cursando, egresado, titulado…) y su plan.</li>
+  <li><strong>No reemplaza a Recursos Humanos.</strong> Los contratos y las planillas siguen donde están; TAU registra
+    el vínculo y la carga horaria de cada persona para poder calcular informes.</li>
+  <li><strong>No decide por las personas.</strong> Las propuestas las acepta una dirección, las notas las pone un
+    tribunal, los juicios de la autoevaluación los escribe la Comisión. El sistema ordena, recuerda y calcula.</li>
+  <li><strong>No publica nada por su cuenta.</strong> Fuera de la Carrera solo se ve lo que cada investigador decide
+    publicar de su perfil y los indicadores que la Dirección de Carrera marca como públicos.</li>
+</ul>
+
+<h2>Un poco de historia</h2>
+<p>El sistema nació como «Portal de Investigación» del IIMAT y creció hasta abarcar la gestión académica y la
+calidad de toda la Carrera. Hoy se llama TAU. Lo mantienen la Dirección del Instituto y su equipo técnico, junto con
+la Dirección de Carrera.</p>
+</section>
+
+<section class="capitulo" id="organizacion">
+<header class="apertura"><span class="marca">§organizacion§</span><span class="numero">Capítulo 2</span><h1>Cómo está organizado</h1><p>La arquitectura de TAU explicada sin tecnicismos: qué entra, qué guarda, qué sale y quién cuida cada dato.</p></header>
+
+<p class="entrada">No hace falta saber de informática para usar TAU, pero ayuda tener un mapa. Este capítulo
+muestra las piezas del sistema y cómo se conectan.</p>
+
+<h2>TAU en una imagen</h2>
+<figure class="diagrama">
+<svg viewBox="0 0 870 470" xmlns="http://www.w3.org/2000/svg" font-family="Montserrat, Arial, sans-serif">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#273353"/><stop offset="1" stop-color="#16435a"/></linearGradient>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#6c6c6c"/></marker>
+  </defs>
+  <!-- Lo que entra -->
+  <text x="100" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#007c8f" letter-spacing="1.2">LO QUE ENTRA</text>
+  <g font-size="10.5" fill="#1b2135">
+    <rect x="10" y="36" width="180" height="78" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="56" font-weight="700" fill="#273353">Cada persona</text>
+    <text x="22" y="73">registra lo suyo: perfil,</text><text x="22" y="88">productos, actividades,</text><text x="22" y="103">trámites, respuestas</text>
+    <rect x="10" y="126" width="180" height="62" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="146" font-weight="700" fill="#273353">Seguimiento Académico</text>
+    <text x="22" y="163">lista de estudiantes por</text><text x="22" y="178">cohorte (sin notas)</text>
+    <rect x="10" y="200" width="180" height="62" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="220" font-weight="700" fill="#273353">Recursos Humanos</text>
+    <text x="22" y="237">vínculos y carga horaria</text><text x="22" y="252">contratada</text>
+    <rect x="10" y="274" width="180" height="78" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="294" font-weight="700" fill="#273353">Catálogos abiertos</text>
+    <text x="22" y="311">Crossref, arXiv, OpenAlex</text><text x="22" y="326">y zbMATH: datos de las</text><text x="22" y="341">publicaciones</text>
+    <rect x="10" y="364" width="180" height="62" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="384" font-weight="700" fill="#273353">Documentos oficiales</text>
+    <text x="22" y="401">planes de estudio, marco</text><text x="22" y="416">de calidad, resoluciones</text>
+  </g>
+  <g stroke="#6c6c6c" stroke-width="1.4" marker-end="url(#flecha)">
+    <line x1="194" y1="75" x2="232" y2="120"/><line x1="194" y1="157" x2="232" y2="175"/><line x1="194" y1="231" x2="232" y2="231"/>
+    <line x1="194" y1="313" x2="232" y2="285"/><line x1="194" y1="395" x2="232" y2="335"/>
+  </g>
+  <!-- TAU -->
+  <rect x="236" y="36" width="398" height="390" rx="10" fill="url(#panel)"/>
+  <polygon points="236,52 330,52 320,78 236,78" fill="#e1222a"/>
+  <text x="250" y="70" font-size="13" font-weight="700" fill="#fff" letter-spacing="1.5">TAU</text>
+  <g font-size="10.5" font-weight="700" fill="#273353" text-anchor="middle">
+    <rect x="254" y="96" width="114" height="62" rx="6" fill="#fff"/><text x="311" y="124">Investigación</text>
+    <text x="311" y="141" font-size="8.5" font-weight="400" fill="#6c6c6c">productos · proyectos</text>
+    <rect x="378" y="96" width="114" height="62" rx="6" fill="#fff"/><text x="435" y="124">Docencia</text>
+    <text x="435" y="141" font-size="8.5" font-weight="400" fill="#6c6c6c">planes · oferta · carga</text>
+    <rect x="502" y="96" width="114" height="62" rx="6" fill="#fff"/><text x="559" y="119">Estudiantes</text><text x="559" y="133">y egresados</text>
+    <text x="559" y="149" font-size="8.5" font-weight="400" fill="#6c6c6c">cohortes · tutoría</text>
+    <rect x="316" y="168" width="114" height="62" rx="6" fill="#fff"/><text x="373" y="196">Servicios</text>
+    <text x="373" y="213" font-size="8.5" font-weight="400" fill="#6c6c6c">avisos · auxiliaturas · grado</text>
+    <rect x="440" y="168" width="114" height="62" rx="6" fill="#fff"/><text x="497" y="196">Calidad</text>
+    <text x="497" y="213" font-size="8.5" font-weight="400" fill="#6c6c6c">indicadores · evidencias</text>
+  </g>
+  <g fill="#fff" text-anchor="middle">
+    <rect x="254" y="246" width="362" height="58" rx="6" fill="rgb(255 255 255 / 0.14)" stroke="rgb(255 255 255 / 0.5)"/>
+    <text x="435" y="270" font-size="10.5" font-weight="700">Personas, cuentas, roles y vínculos</text>
+    <text x="435" y="288" font-size="9">una sola ficha por persona, compartida por todos los módulos</text>
+    <rect x="254" y="314" width="176" height="46" rx="6" fill="rgb(255 255 255 / 0.14)" stroke="rgb(255 255 255 / 0.5)"/>
+    <text x="342" y="334" font-size="10" font-weight="700">Permisos</text><text x="342" y="350" font-size="8.5">cada pantalla comprueba el rol</text>
+    <rect x="440" y="314" width="176" height="46" rx="6" fill="rgb(255 255 255 / 0.14)" stroke="rgb(255 255 255 / 0.5)"/>
+    <text x="528" y="334" font-size="10" font-weight="700">Auditoría</text><text x="528" y="350" font-size="8.5">queda quién hizo qué y cuándo</text>
+    <text x="435" y="392" font-size="9.5">Base de datos única, en un servidor a cargo de la Carrera</text>
+    <text x="435" y="408" font-size="9.5">y el Instituto, con copias de respaldo</text>
+  </g>
+  <!-- Lo que sale -->
+  <text x="770" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#007c8f" letter-spacing="1.2">LO QUE SALE</text>
+  <g stroke="#6c6c6c" stroke-width="1.4" marker-end="url(#flecha)">
+    <line x1="638" y1="120" x2="676" y2="80"/><line x1="638" y1="190" x2="676" y2="170"/><line x1="638" y1="260" x2="676" y2="262"/>
+    <line x1="638" y1="330" x2="676" y2="352"/>
+  </g>
+  <g font-size="10.5" fill="#1b2135">
+    <rect x="680" y="36" width="180" height="78" rx="6" fill="#e6f3f5" stroke="#b9dbe0"/>
+    <text x="692" y="56" font-weight="700" fill="#273353">Informes con membrete</text>
+    <text x="692" y="73">CV, informe de proyecto,</text><text x="692" y="88">memoria anual, carga</text><text x="692" y="103">docente… en PDF</text>
+    <rect x="680" y="126" width="180" height="78" rx="6" fill="#e6f3f5" stroke="#b9dbe0"/>
+    <text x="692" y="146" font-weight="700" fill="#273353">Planillas</text>
+    <text x="692" y="163">XLSX y CSV para seguir</text><text x="692" y="178">trabajando o llenar</text><text x="692" y="193">formularios externos</text>
+    <rect x="680" y="216" width="180" height="78" rx="6" fill="#e6f3f5" stroke="#b9dbe0"/>
+    <text x="692" y="236" font-weight="700" fill="#273353">Avisos</text>
+    <text x="692" y="253">en la campana del sistema</text><text x="692" y="268">y, si usted quiere,</text><text x="692" y="283">por correo</text>
+    <rect x="680" y="306" width="180" height="78" rx="6" fill="#e6f3f5" stroke="#b9dbe0"/>
+    <text x="692" y="326" font-weight="700" fill="#273353">Página pública</text>
+    <text x="692" y="343">perfiles que cada quien</text><text x="692" y="358">publica e indicadores que</text><text x="692" y="373">la Dirección decide mostrar</text>
+  </g>
+</svg>
+<figcaption><b>Figura 1.</b> Las piezas de TAU: a la izquierda, de dónde llegan los datos; al centro, los módulos sobre
+una base común; a la derecha, lo que el sistema entrega.</figcaption>
+</figure>
+
+<h2>Cuatro ideas que explican todo lo demás</h2>
+<ol class="pasos">
+  <li><strong>Una sola ficha por persona.</strong> Un docente, un estudiante o un coautor externo existe una vez en
+    el sistema, y todos los módulos usan esa misma ficha. Por eso un estudiante que es tesista en un proyecto y
+    postulante a una auxiliatura es la misma persona en los dos lugares.</li>
+  <li><strong>Cada dato tiene un dueño.</strong> Usted registra su producción; la Dirección de Carrera, los vínculos y
+    la carga horaria; la Dirección del Instituto, las decisiones sobre los proyectos institucionales. Nadie más puede
+    cambiarlos. El capítulo 3 detalla quién es dueño de qué.</li>
+  <li><strong>El rol decide lo que se ve.</strong> El menú de cada persona muestra solo lo que puede usar, y el
+    sistema vuelve a comprobar el permiso cada vez que se abre una pantalla o se guarda algo.</li>
+  <li><strong>Todo deja rastro.</strong> Las acciones importantes (crear una cuenta, cambiar un vínculo, decidir una
+    propuesta, abrir las notas de una tutoría) quedan en la auditoría con la persona, la fecha y la hora.</li>
+</ol>
+
+<h2>Cómo se conectan los módulos</h2>
+<p>Lo que se registra en un lugar reaparece en otros. Esta tabla muestra los recorridos más comunes:</p>
+<table>
+  <thead><tr><th>Lo que se registra</th><th>Quién lo registra</th><th>Dónde reaparece</th></tr></thead>
+  <tbody>
+    <tr><td>Un artículo</td><td>Uno de sus autores</td><td>Perfil y CV de cada autor de la Carrera, informe del proyecto, memoria anual, informe de I+D+i e indicadores de investigación</td></tr>
+    <tr><td>El vínculo y la carga horaria</td><td>Dirección de Carrera</td><td>«Mi docencia» de la persona, carga horaria del semestre, carga en proyectos, cuerpo académico e indicadores</td></tr>
+    <tr><td>La oferta de materias y sus docentes</td><td>Dirección de Carrera o Coordinación académica</td><td>«Mi docencia», carga horaria, convocatorias a auxiliaturas, ficha estadística</td></tr>
+    <tr><td>La lista de estudiantes por cohorte</td><td>Dirección de Carrera o Gestión de datos</td><td>Tablero de cohortes, tutoría, encuestas, portal del estudiante, egresados, indicadores</td></tr>
+    <tr><td>La respuesta a una encuesta</td><td>Estudiante, egresado, docente o empleador</td><td>Resultados de la encuesta e indicadores de percepción</td></tr>
+    <tr><td>Una evidencia</td><td>Dirección de Carrera o Comisión de calidad</td><td>Criterios del marco, autoevaluación, avances del plan de mejora</td></tr>
+  </tbody>
+</table>
+
+<h2>Dónde vive y cómo se cuida</h2>
+<ul>
+  <li><strong>Se entra por una dirección web</strong>, con cualquier navegador actual (Chrome, Edge, Firefox, Safari), en
+    la computadora o en el teléfono. La pantalla se acomoda sola al tamaño.</li>
+  <li><strong>Los datos están en un solo lugar</strong>: un servidor a cargo del equipo técnico de la Carrera y el
+    Instituto, con copias de respaldo. No quedan copias en su computadora, salvo los archivos que usted descargue.</li>
+  <li><strong>La conexión es cifrada</strong> y el sistema no carga nada de otros sitios web: ni publicidad ni
+    rastreadores.</li>
+  <li><strong>Las contraseñas no se guardan legibles</strong>: nadie, tampoco el equipo técnico, puede leer la suya.</li>
+</ul>
+<p>El capítulo 12 trata con más detalle la privacidad de los datos personales.</p>
+</section>
+
+<section class="capitulo" id="usuarios">
+<header class="apertura"><span class="marca">§usuarios§</span><span class="numero">Capítulo 3</span><h1>Usuarios, roles y privilegios</h1><p>Quién usa TAU, qué puede hacer cada quien y por qué.</p></header>
+
+<p class="entrada">En TAU hay que distinguir dos cosas: el <strong>tipo de usuario</strong>, que sale de lo que la
+persona es en la Carrera (docente, estudiante, egresado), y el <strong>rol</strong>, que es un encargo que se le da
+a alguien por un tiempo (dirigir la Carrera, coordinar, integrar la Comisión de calidad).</p>
+
+<h2>Tipos de usuario</h2>
+<p>Nadie «asigna» estos tipos: el sistema los deduce de los datos. Una misma persona puede tener varios a la vez.</p>
+<div class="fichas">
+  <div class="ficha derivado"><h3>Docente</h3>
+    <p>Persona con cuenta del personal y vínculo con la Carrera. Ve su docencia, su carga horaria, los comunicados
+    y los informes que le corresponden.</p></div>
+  <div class="ficha derivado"><h3>Investigador(a)</h3>
+    <p>Docente con perfil de investigación. Además registra productos y actividades, participa en proyectos y
+    genera su currículum.</p></div>
+  <div class="ficha derivado"><h3>Responsable de proyecto</h3>
+    <p>Quien dirige un proyecto. Aprueba lo que su equipo vincula al proyecto, gestiona a los participantes y su
+    carga, y genera el informe.</p></div>
+  <div class="ficha derivado"><h3>Tutor(a)</h3>
+    <p>Docente a quien se asignaron estudiantes. Ve «Mis tutorados» y registra las reuniones, que son
+    confidenciales.</p></div>
+  <div class="ficha derivado"><h3>Miembro de un tribunal</h3>
+    <p>Docente o estudiante designado en una convocatoria a auxiliaturas o en un trámite de grado. Califica o
+    informa solo en ese trámite.</p></div>
+  <div class="ficha derivado"><h3>Estudiante</h3>
+    <p>Entra sin contraseña, con un enlace a su correo. Solo ve su seguimiento, los comunicados, las auxiliaturas,
+    su trámite de grado y sus avisos.</p></div>
+  <div class="ficha derivado"><h3>Egresado(a)</h3>
+    <p>Estudiante titulado. Recibe las encuestas de seguimiento y, si quiere, figura en el directorio de egresados
+    para orientar a estudiantes.</p></div>
+  <div class="ficha externo"><h3>Personas sin acceso</h3>
+    <p>Coautores externos, empleadores y docentes registrados solo por sus datos. Figuran en el sistema, pero no
+    pueden ingresar.</p></div>
+  <div class="ficha externo"><h3>Visitante</h3>
+    <p>Cualquier persona, sin cuenta. Ve la página pública: los perfiles que los investigadores publican y los
+    indicadores que la Carrera decide mostrar.</p></div>
+  <div class="ficha externo"><h3>Quien responde una encuesta</h3>
+    <p>Recibe un enlace personal por correo y responde sin cuenta. El enlace sirve una sola vez.</p></div>
+</div>
+
+<h2>Los seis roles</h2>
+<p>Un rol se asigna a una persona, para una unidad (la Carrera, el Instituto o toda la Universidad), desde una fecha
+y, si corresponde, hasta otra. Solo la <strong>Administración del sistema</strong> asigna roles, a pedido de una
+dirección, y queda anotado quién lo pidió. Un rol que termina no se borra: queda en el historial.</p>
+<div class="fichas">
+  <div class="ficha"><span class="sigla">DC</span><h3>Dirección de Carrera</h3>
+    <p>Define la categoría, el vínculo y la carga horaria de cada persona. Gestiona planes, oferta y asignación
+    docente, el marco de calidad, la autoevaluación y el plan de mejora.</p></div>
+  <div class="ficha"><span class="sigla">DI</span><h3>Dirección del Instituto</h3>
+    <p>Conduce el ciclo de los proyectos institucionales: convocatoria, decisión de las propuestas y responsables.
+    Cuida los catálogos (revistas, líneas, tipos) y genera la memoria y el informe de I+D+i. No define vínculos.</p></div>
+  <div class="ficha"><span class="sigla">CA</span><h3>Coordinación académica</h3>
+    <p>Prepara la oferta y las asignaciones, revisa los planes, gestiona convocatorias a auxiliaturas, tribunales de
+    grado, encuestas, tutoría y comunicados.</p></div>
+  <div class="ficha"><span class="sigla">CC</span><h3>Comisión de calidad</h3>
+    <p>Ve todos los informes y cifras del sistema de calidad. Registra evidencias y escribe los juicios de la
+    autoevaluación. No cambia datos de otros módulos.</p></div>
+  <div class="ficha"><span class="sigla">GD</span><h3>Gestión de datos</h3>
+    <p>Apoya la carga: fichas académicas (grados), estudiantes, coautores externos, capacitaciones y las cifras
+    manuales de los indicadores.</p></div>
+  <div class="ficha"><span class="sigla">AS</span><h3>Administración del sistema</h3>
+    <p>Cuentas, roles y auditoría. No decide sobre contenido académico. El sistema no permite quedarse sin nadie en
+    este rol.</p></div>
+</div>
+
+<div class="nota importante"><span class="rotulo">Una regla que conviene recordar</span>
+  El vínculo de cada persona es con <strong>una sola dependencia</strong>: la Carrera de Matemática, de la que el
+  Instituto forma parte. Por eso <strong>solo la Dirección de Carrera</strong> registra altas, cambios de categoría,
+  términos y carga horaria. La Dirección del Instituto no define vínculos, y la Dirección de Carrera no decide sobre
+  los proyectos del Instituto.</div>
+
+<h2>Qué puede hacer cada rol</h2>
+<p>La tabla resume los privilegios. Las siglas de las columnas son las de las fichas anteriores.</p>
+<p class="leyenda"><span class="si">●</span> lo hace o lo gestiona <span class="ve">○</span> solo lo consulta</p>
+
+<table class="matriz">
+  <thead><tr><th>Tarea</th><th>DC</th><th>DI</th><th>CA</th><th>CC</th><th>GD</th><th>AS</th></tr></thead>
+  <tbody>
+    <tr><td class="grupo" colspan="7">Cuentas y personas</td></tr>
+    <tr><td>Crear cuentas, restablecer contraseñas, activar y desactivar</td><td></td><td></td><td></td><td></td><td></td><td class="si">●</td></tr>
+    <tr><td>Asignar y quitar roles</td><td></td><td></td><td></td><td></td><td></td><td class="si">●</td></tr>
+    <tr><td>Consultar la auditoría</td><td></td><td></td><td></td><td></td><td></td><td class="si">●</td></tr>
+    <tr><td>Ver la lista de usuarios</td><td class="ve">○</td><td class="ve">○</td><td></td><td></td><td class="ve">○</td><td class="si">●</td></tr>
+    <tr><td>Categoría, vínculo y carga horaria contratada</td><td class="si">●</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Fichas académicas (grados)</td><td class="si">●</td><td class="si">●</td><td></td><td></td><td class="si">●</td><td class="ve">○</td></tr>
+    <tr><td>Fecha de nacimiento de una persona</td><td></td><td></td><td></td><td></td><td></td><td class="si">●</td></tr>
+    <tr><td>Coautores externos: duplicados y vínculo con cuentas</td><td></td><td class="si">●</td><td></td><td></td><td class="si">●</td><td></td></tr>
+
+    <tr><td class="grupo" colspan="7">Investigación</td></tr>
+    <tr><td>Abrir la convocatoria y decidir las propuestas institucionales</td><td></td><td class="si">●</td><td></td><td class="ve">○</td><td></td><td></td></tr>
+    <tr><td>Ver todos los proyectos</td><td></td><td class="ve">○</td><td></td><td class="ve">○</td><td></td><td></td></tr>
+    <tr><td>Reasignar al responsable de un proyecto</td><td></td><td class="si">●</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Catálogos: revistas, líneas de investigación, tipos e índices</td><td></td><td class="si">●</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Memoria anual, informe de I+D+i y cuerpo académico</td><td class="ve">○</td><td class="ve">○</td><td></td><td class="ve">○</td><td></td><td></td></tr>
+    <tr><td>Ver el currículum de otra persona</td><td class="ve">○</td><td class="ve">○</td><td></td><td class="ve">○</td><td></td><td></td></tr>
+
+    <tr><td class="grupo" colspan="7">Docencia</td></tr>
+    <tr><td>Revisar las observaciones de los planes de estudio</td><td class="si">●</td><td></td><td class="si">●</td><td></td><td></td><td></td></tr>
+    <tr><td>Gestiones, oferta de materias y asignación de docentes</td><td class="si">●</td><td></td><td class="si">●</td><td></td><td></td><td></td></tr>
+    <tr><td>Carga horaria de todas las personas</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td></td><td></td></tr>
+    <tr><td>Renovar contratos en bloque</td><td class="si">●</td><td></td><td></td><td></td><td></td><td></td></tr>
+
+    <tr><td class="grupo" colspan="7">Estudiantes y egresados</td></tr>
+    <tr><td>Cargar las cohortes y dar acceso a los estudiantes</td><td class="si">●</td><td></td><td></td><td></td><td class="si">●</td><td></td></tr>
+    <tr><td>Tablero de cohortes y seguimiento (cifras, sin nombres)</td><td class="ve">○</td><td></td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td></td></tr>
+    <tr><td>Crear, abrir, enviar y cerrar encuestas</td><td class="si">●</td><td></td><td class="si">●</td><td class="ve">○</td><td class="ve">○</td><td></td></tr>
+    <tr><td>Asignar tutores y ver la cobertura de la tutoría</td><td class="si">●</td><td></td><td class="si">●</td><td class="ve">○</td><td></td><td></td></tr>
+    <tr><td>Leer las reuniones de tutoría de cualquier estudiante</td><td class="si">●</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Verificar la actividad que declaran los estudiantes</td><td class="si">●</td><td></td><td class="si">●</td><td></td><td></td><td></td></tr>
+    <tr><td>Titulación, seguimiento de egresados y empleadores</td><td class="si">●</td><td></td><td class="si">●</td><td class="ve">○</td><td></td><td></td></tr>
+
+    <tr><td class="grupo" colspan="7">Servicios</td></tr>
+    <tr><td>Publicar comunicados y eventos</td><td class="si">●</td><td class="si">●</td><td class="si">●</td><td></td><td></td><td></td></tr>
+    <tr><td>Convocatorias a auxiliaturas de docencia</td><td class="si">●</td><td></td><td class="si">●</td><td></td><td></td><td></td></tr>
+    <tr><td>Convocatorias a auxiliaturas de investigación</td><td class="si">●</td><td class="si">●</td><td class="si">●</td><td></td><td></td><td></td></tr>
+    <tr><td>Proyectos de grado: designar tribunal y registrar resoluciones</td><td class="si">●</td><td></td><td class="si">●</td><td></td><td></td><td></td></tr>
+
+    <tr><td class="grupo" colspan="7">Calidad</td></tr>
+    <tr><td>Marco de calidad: dimensiones, criterios, indicadores y metas</td><td class="si">●</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td></td></tr>
+    <tr><td>Registrar las cifras manuales de los indicadores</td><td class="si">●</td><td></td><td></td><td></td><td class="si">●</td><td></td></tr>
+    <tr><td>Evidencias</td><td class="si">●</td><td class="ve">○</td><td class="ve">○</td><td class="si">●</td><td></td><td></td></tr>
+    <tr><td>Abrir, concluir y reabrir la autoevaluación</td><td class="si">●</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Escribir los juicios de la autoevaluación</td><td class="si">●</td><td class="ve">○</td><td class="ve">○</td><td class="si">●</td><td></td><td></td></tr>
+    <tr><td>Plan de mejora y evaluaciones externas</td><td class="si">●</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td></td><td></td></tr>
+    <tr><td>Capacitación del personal</td><td class="si">●</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td class="si">●</td><td></td></tr>
+    <tr><td>Convenios</td><td class="si">●</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td></td></tr>
+    <tr><td>Impacto social de los proyectos</td><td class="si">●</td><td class="si">●</td><td class="ve">○</td><td class="ve">○</td><td class="ve">○</td><td></td></tr>
+    <tr><td>Tablero de calidad de datos</td><td class="si">●</td><td class="si">●</td><td class="si">●</td><td class="ve">○</td><td></td><td class="ve">○</td></tr>
+
+    <tr><td class="grupo" colspan="7">Inteligencia artificial</td></tr>
+    <tr><td>Aprobar la política y activar cada función</td><td class="si">●</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Ver el registro de usos y los resultados del piloto</td><td class="ve">○</td><td class="ve">○</td><td></td><td class="ve">○</td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<h2>Lo que puede hacer cualquier persona con cuenta del personal</h2>
+<ul>
+  <li>Ver su inicio con lo pendiente, sus avisos y los comunicados que recibe.</li>
+  <li>Consultar los planes de estudio, la oferta del semestre y el directorio de investigadores.</li>
+  <li>Ver su docencia, su vínculo y su carga horaria (solo lectura).</li>
+  <li>Si es investigador(a): editar su perfil, registrar productos y actividades, crear proyectos individuales,
+    proponer proyectos institucionales (titulares y contratados) y generar su currículum.</li>
+  <li>Cambiar su contraseña y elegir cómo recibe los avisos.</li>
+</ul>
+
+<h2>Privilegios que no dependen de un rol</h2>
+<p>Algunos permisos nacen de una situación concreta y duran lo que ella dura:</p>
+<table>
+  <thead><tr><th>Si usted es…</th><th>Puede…</th></tr></thead>
+  <tbody>
+    <tr><td>Responsable o co-responsable de un proyecto</td><td>Aprobar o rechazar lo que se vincula al proyecto, gestionar participantes y su carga, publicar comunicados a su equipo, registrar el impacto social y generar el informe</td></tr>
+    <tr><td>Quien registró un producto, o uno de sus autores de la Carrera</td><td>Editarlo y ver sus adjuntos. Solo quien lo registró puede eliminarlo</td></tr>
+    <tr><td>Tutor(a) de un estudiante</td><td>Registrar y leer las reuniones con ese estudiante</td></tr>
+    <tr><td>Tutor(a) de un proyecto de grado</td><td>Dar o negar el visto bueno al perfil y al documento final</td></tr>
+    <tr><td>Miembro de un tribunal</td><td>Calificar las fases de esa auxiliatura, o informar y calificar ese trámite de grado</td></tr>
+    <tr><td>Responsable de una acción del plan de mejora</td><td>Registrar los avances de esa acción</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section class="capitulo" id="primeros-pasos">
+<header class="apertura"><span class="marca">§primeros-pasos§</span><span class="numero">Capítulo 4</span><h1>Primeros pasos</h1><p>Ingresar, reconocer la pantalla, encontrar lo que busca y recibir los avisos.</p></header>
+
+<h2>Ingresar por primera vez</h2>
+<p>Abra en su navegador la dirección de TAU que le dio la Carrera. Verá la pantalla de ingreso.</p>
+<figure class="captura media"><img src="img/ingreso.png" alt="Pantalla de ingreso. El personal entra con su correo institucional y su contraseña; los estudiantes, con el enlace de abajo."><figcaption><b>Figura 2.</b> Pantalla de ingreso. El personal entra con su correo institucional y su contraseña; los estudiantes, con el enlace de abajo.</figcaption></figure>
+
+<h3>Si usted es docente, investigador o personal</h3>
+<ol class="pasos">
+  <li>La Administración del sistema crea su cuenta. Usted recibe una <strong>invitación por correo</strong> con un
+    enlace que vale 3 días, o le entregan una <strong>contraseña temporal</strong>.</li>
+  <li>Con la invitación, abra el enlace y defina su contraseña. Con la contraseña temporal, ingrese y el sistema le
+    pedirá cambiarla en ese momento.</li>
+  <li>Elija una contraseña de <strong>al menos 10 caracteres</strong>, que combine letras con números o símbolos.</li>
+</ol>
+
+<h3>Si usted es estudiante o egresado</h3>
+<p>Usted <strong>no tiene contraseña</strong>. Cada vez que quiera entrar:</p>
+<ol class="pasos">
+  <li>En la pantalla de ingreso pulse <span class="ui">¿Es estudiante? Ingrese con un enlace a su correo</span>.</li>
+  <li>Escriba el correo con que la Carrera lo tiene registrado y pulse <span class="ui">Enviar enlace</span>.</li>
+  <li>Abra el correo que recibe y pulse el enlace. Vale <strong>30 minutos</strong> y sirve <strong>una sola
+    vez</strong>.</li>
+  <li>La primera vez, lea y acepte el aviso sobre el uso de sus datos.</li>
+</ol>
+<figure class="captura media"><img src="img/ingreso-estudiante.png" alt="Ingreso de estudiantes: solo se pide el correo."><figcaption><b>Figura 3.</b> Ingreso de estudiantes: solo se pide el correo.</figcaption></figure>
+
+<div class="nota consejo"><span class="rotulo">Si no le llega el correo</span>
+  Revise la carpeta de correo no deseado. Si tampoco está ahí, es probable que la Carrera tenga registrado otro
+  correo suyo: avise a la Dirección de Carrera para que lo corrija.</div>
+
+<h3>Si olvidó su contraseña o la cuenta se bloqueó</h3>
+<ul>
+  <li><span class="ui">¿Olvidó su contraseña?</span> le envía un enlace válido por una hora para definir una nueva.</li>
+  <li>Después de <strong>5 intentos fallidos</strong>, el ingreso se bloquea 15 minutos. Para entrar antes, use
+    «¿Olvidó su contraseña?»: al definir una nueva, la cuenta se desbloquea.</li>
+</ul>
+
+<h2>La pantalla</h2>
+<p>Todas las pantallas tienen las mismas tres zonas.</p>
+<figure class="captura "><img src="img/inicio.png" alt="La pantalla de inicio de una persona con las dos direcciones. A la izquierda, el menú; arriba, la búsqueda, la campana de avisos y el menú del usuario; al centro, lo pendiente."><figcaption><b>Figura 4.</b> La pantalla de inicio de una persona con las dos direcciones. A la izquierda, el menú; arriba, la búsqueda, la campana de avisos y el menú del usuario; al centro, lo pendiente.</figcaption></figure>
+<table>
+  <thead><tr><th>Zona</th><th>Qué hay</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Menú lateral</strong> (azul, a la izquierda)</td><td>Todo lo que usted puede abrir, en grupos: Investigación, Docencia, Estudiantes, Servicios, Calidad y Administración. Cada persona ve solo los grupos que le corresponden. La página en que está se marca en blanco.</td></tr>
+    <tr><td><strong>Barra superior</strong></td><td>El campo <span class="ui">Buscar…</span>, la <strong>campana</strong> con sus avisos sin leer y el <strong>menú del usuario</strong> (el círculo con sus iniciales y su nombre).</td></tr>
+    <tr><td><strong>Contenido</strong></td><td>La pantalla en sí. Su título lleva delante una pequeña cinta roja.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Cada grupo del menú se <strong>pliega</strong> tocando su título. El botón junto a «TAU» pliega todo el menú a
+    solo íconos, útil con tablas anchas. El sistema recuerda su elección en ese navegador.</li>
+  <li>Un <strong>número naranja</strong> junto a una opción del menú indica cuántas cosas esperan su atención ahí.</li>
+</ul>
+
+<h2>El inicio: lo que requiere su atención</h2>
+<p>Al entrar, <span class="ui">Pendientes</span> reúne en una sola lista lo que usted tiene por hacer, con un
+enlace directo a donde se resuelve. Si tiene varios roles, la lista va separada por rol. Cuando no hay nada, dice
+«Todo al día». Debajo aparecen algunas cifras con enlace: su producción del año, sus proyectos vigentes o, para
+las direcciones, el resumen de la Carrera.</p>
+<figure class="captura "><img src="img/inicio-docente.png" alt="El inicio de una docente investigadora: pendientes de sus proyectos, una publicación sin filiación declarada, su docencia del semestre y un tutorado sin reuniones."><figcaption><b>Figura 5.</b> El inicio de una docente investigadora: pendientes de sus proyectos, una publicación sin filiación declarada, su docencia del semestre y un tutorado sin reuniones.</figcaption></figure>
+
+<h2>El menú del usuario</h2>
+<div class="dos">
+  <div>
+    <p>Pulse su nombre, arriba a la derecha. Ahí están:</p>
+    <ul>
+      <li><span class="ui">Mi perfil</span> (investigadores) o <span class="ui">Mis datos personales</span>;</li>
+      <li><span class="ui">Cambiar contraseña</span>;</li>
+      <li><span class="ui">Uso de IA en TAU</span>, que explica qué hace la inteligencia artificial en el sistema;</li>
+      <li><span class="ui">Tema</span>: claro, oscuro o el de su equipo;</li>
+      <li><span class="ui">Salir</span>.</li>
+    </ul>
+    <div class="nota importante"><span class="rotulo">Importante</span>
+      «Salir» cierra su sesión en <strong>todos</strong> sus equipos. Si cree que alguien usó su cuenta, cambie la
+      contraseña: eso también cierra las demás sesiones.</div>
+  </div>
+  <figure class="captura "><img src="img/menu-usuario.png" alt="El menú del usuario."><figcaption><b>Figura 6.</b> El menú del usuario.</figcaption></figure>
+</div>
+
+<h2>Avisos</h2>
+<p>La <strong>campana</strong> muestra cuántos avisos tiene sin leer. Al abrir uno, el sistema lo marca como leído y
+lo lleva a donde se atiende. En <span class="ruta">Avisos</span> (al pie de la campana) están todos, y ahí elige
+cómo recibirlos por correo:</p>
+<ul>
+  <li><strong>al momento</strong>, uno por cada aviso;</li>
+  <li>en un <strong>resumen semanal</strong> con los que aún no leyó;</li>
+  <li><strong>solo en el sistema</strong>, sin correo.</li>
+</ul>
+<p>Elija lo que elija, los avisos siempre quedan en la campana.</p>
+<figure class="captura "><img src="img/avisos.png" alt="Todos los avisos y, a la derecha, cómo recibirlos."><figcaption><b>Figura 7.</b> Todos los avisos y, a la derecha, cómo recibirlos.</figcaption></figure>
+
+<h2>Buscar</h2>
+<p>El campo <span class="ui">Buscar…</span> (o la tecla <strong>/</strong>) busca a la vez personas, productos,
+actividades, proyectos y asignaturas. Mientras escribe muestra unos pocos resultados; con <strong>Enter</strong> abre
+la página completa. Solo aparece lo que usted puede abrir.</p>
+<figure class="captura "><img src="img/buscar.png" alt="Resultados de buscar «noether»: una persona y dos productos."><figcaption><b>Figura 8.</b> Resultados de buscar «noether»: una persona y dos productos.</figcaption></figure>
+
+<h2>Tablas: ordenar, filtrar y descargar</h2>
+<p>Las tablas de trabajo (usuarios, oferta, carga horaria, revistas…) se usan igual en todo el sistema:</p>
+<ul>
+  <li><strong>Ordenar:</strong> pulse el título de una columna; otro clic invierte el orden.</li>
+  <li><strong>Filtrar:</strong> escriba en <span class="ui">Filtrar…</span>. No distingue tildes ni mayúsculas.</li>
+  <li><strong>Descargar:</strong> <span class="ui">Descargar CSV</span> baja lo que está viendo, con el orden y el
+    filtro aplicados. El archivo se abre en Excel con las tildes correctas.</li>
+</ul>
+
+<h2>Confirmar y deshacer</h2>
+<p>Lo que <strong>no se puede revertir</strong> (eliminar, enviar una propuesta, fusionar dos fichas) pide
+confirmación en un cuadro, con el foco en «Cancelar». Lo que <strong>sí se puede revertir</strong> no pregunta: el
+aviso que aparece ofrece <span class="ui">Deshacer</span> durante unos segundos.</p>
+
+<h2>En el teléfono</h2>
+<div class="dos centro">
+  <figure class="captura telefono"><img src="img/inicio-telefono.png" alt="El inicio en un teléfono."><figcaption><b>Figura 9.</b> El inicio en un teléfono.</figcaption></figure>
+  <figure class="captura telefono"><img src="img/menu-telefono.png" alt="«Más» abre el menú completo."><figcaption><b>Figura 10.</b> «Más» abre el menú completo.</figcaption></figure>
+</div>
+<p>En el teléfono, abajo hay una barra con el inicio y sus tres secciones principales. <span class="ui">Más</span>
+abre el menú completo, que se cierra con la ✕ o tocando fuera. Las tablas se muestran como tarjetas, una por fila,
+con el nombre de cada dato a la izquierda.</p>
+</section>
+
+<section class="capitulo" id="investigacion">
+<header class="apertura"><span class="marca">§investigacion§</span><span class="numero">Capítulo 5</span><h1>Investigación</h1><p>Su perfil, sus productos y actividades, los proyectos y la convocatoria anual del Instituto.</p></header>
+
+<p class="entrada">Este módulo es de quienes investigan. Usted registra lo que produce y el sistema arma con eso su
+currículum, los informes de sus proyectos y la memoria del Instituto.</p>
+
+<h2>Mi perfil</h2>
+<p>Se abre desde el menú del usuario → <span class="ui">Mi perfil</span>. Cada sección se edita con su botón
+<span class="ui">Editar</span>. El indicador «Perfil completo» dice qué falta y lleva a donde se completa.</p>
+<figure class="captura "><img src="img/perfil.png" alt="El perfil de una investigadora: datos básicos, grados académicos y, más abajo, identificadores, áreas y resumen."><figcaption><b>Figura 11.</b> El perfil de una investigadora: datos básicos, grados académicos y, más abajo, identificadores, áreas y resumen.</figcaption></figure>
+<table>
+  <thead><tr><th>Sección</th><th>Qué registra</th></tr></thead>
+  <tbody>
+    <tr><td>Datos básicos</td><td>Su nombre. El <strong>cargo</strong> y la <strong>unidad o grupo</strong> no se escriben: el sistema los calcula de su vínculo y sus proyectos.</td></tr>
+    <tr><td>Grados académicos</td><td>Todos sus grados, con título, institución, país y año. Los piden los informes de calidad.</td></tr>
+    <tr><td>Identificadores</td><td>ORCID, MathSciNet, zbMATH, arXiv, Google Scholar y página web. Puede pegar la dirección de su perfil: el sistema guarda solo el identificador.</td></tr>
+    <tr><td>Líneas y áreas</td><td>Las líneas de investigación del Instituto en que trabaja y sus áreas según la clasificación MSC2020.</td></tr>
+    <tr><td>Resumen y foto</td><td>Un texto sobre su investigación (admite fórmulas en LaTeX) y una foto.</td></tr>
+    <tr><td>Privacidad y avisos</td><td>Si publica su perfil en la página pública, y si recibe avisos por correo.</td></tr>
+  </tbody>
+</table>
+<div class="nota"><span class="rotulo">Lo que usted no puede cambiar</span>
+  Su <strong>vínculo</strong> (categoría y fechas) y su <strong>fecha de nacimiento</strong> los registra la
+  Carrera. Si algo no es correcto, pida la corrección a la Dirección de Carrera. La fecha de nacimiento solo la ven
+  usted y la Administración del sistema; los informes usan tramos de edad.</div>
+
+<h2>Productos</h2>
+<p><span class="ruta">Investigación → Productos</span> lista los artículos, libros, capítulos, reportes, preprints,
+presentaciones, tesis dirigidas, patentes y demás de los que usted es autor(a).</p>
+<figure class="captura "><img src="img/productos.png" alt="«Mis productos». Cada producto muestra su tipo, su estado y, en verde, si cuenta para el informe del Instituto."><figcaption><b>Figura 12.</b> «Mis productos». Cada producto muestra su tipo, su estado y, en verde, si cuenta para el informe del Instituto.</figcaption></figure>
+
+<h3>Registrar un producto</h3>
+<p>Hay tres maneras, de la más rápida a la más manual:</p>
+<ol class="pasos">
+  <li><strong>Con el DOI o el identificador arXiv.</strong> Pulse <span class="ui">Nuevo producto</span>, pegue el DOI
+    (o su dirección web) en <span class="ui">Importar</span> y presione Enter. El formulario se llena solo con el
+    título, los autores, la revista, el año y las páginas. Revíselo y guarde.</li>
+  <li><strong>Desde un archivo BibTeX.</strong> En <span class="ui">Importar o exportar → Importar BibTeX</span>, suba su
+    archivo <code>.bib</code> (el de LaTeX, o el que exportan Google Scholar, MathSciNet o Zotero). Verá cada entrada
+    como nueva, ya registrada o con error, y elige cuáles crear.</li>
+  <li><strong>A mano.</strong> Complete el formulario: tipo, año, título, autores, estado y medio.</li>
+</ol>
+<figure class="captura media"><img src="img/producto-nuevo.png" alt="El formulario de un producto nuevo, con el recuadro para importar por DOI o arXiv."><figcaption><b>Figura 13.</b> El formulario de un producto nuevo, con el recuadro para importar por DOI o arXiv.</figcaption></figure>
+
+<div class="nota consejo"><span class="rotulo">Toda su producción de una vez</span>
+  Si tiene ORCID en su perfil, <span class="ui">Importar o exportar → Buscar en OpenAlex</span> encuentra sus obras de
+  los últimos años en ese catálogo abierto. Marque las que son suyas y regístrelas juntas. Revise cada una: a veces
+  OpenAlex atribuye obras por error.</div>
+
+<h3>Lo que conviene saber</h3>
+<ul>
+  <li><strong>Un producto con varios autores de la Carrera se registra una sola vez</strong> y aparece en el perfil de
+    cada uno. Si al escribir el DOI el sistema avisa que ya existe, use <span class="ui">Sumarme como autor</span>.</li>
+  <li><strong>Filiación.</strong> Junto a cada autor de la Carrera se indica si firmó la publicación con la filiación
+    institucional (IIMAT, CMAT, FCPN o UMSA). En los informes institucionales solo cuenta un producto si al menos un
+    autor vinculado firmó con ella.</li>
+  <li><strong>Cuenta para el informe</strong> el producto indexado o arbitrado que ya está aceptado o publicado. Lleva
+    una etiqueta verde.</li>
+  <li><strong>Revista.</strong> En un artículo, busque la revista en el catálogo del Instituto. Si está verificada, sus
+    índices se toman del catálogo. Si no está, propóngala: quedará pendiente hasta que la Dirección del Instituto la
+    verifique.</li>
+  <li><strong>Mes de publicación.</strong> Es opcional, pero sin él un producto no se puede ubicar en los informes de
+    octubre a septiembre.</li>
+  <li><strong>Preprint y versión publicada.</strong> Si registró un preprint y luego se publica, registre el artículo
+    aparte y enlácelos desde la ficha del preprint. El currículum mostrará solo la versión publicada.</li>
+  <li><strong>Adjuntos.</strong> En la ficha puede adjuntar PDF o imágenes de hasta 20 MB. Solo los ven quienes pueden
+    editar el producto.</li>
+</ul>
+
+<h2>Actividades</h2>
+<p><span class="ruta">Investigación → Actividades</span> reúne seminarios, congresos, escuelas, estancias, redes de
+investigación, transferencia de conocimiento, premios, arbitrajes y prestación de servicios. Indique el tipo, las
+fechas, el lugar, la modalidad, el ámbito y los participantes con su rol (expositor, organizador, asistente…).</p>
+<figure class="captura "><img src="img/actividades.png" alt="«Mis actividades», con el rol de la persona en cada una."><figcaption><b>Figura 14.</b> «Mis actividades», con el rol de la persona en cada una.</figcaption></figure>
+<div class="nota consejo"><span class="rotulo">Una charla en un congreso</span>
+  Registre el congreso como <strong>actividad</strong> y la charla como <strong>producto</strong> de tipo
+  «Presentación», vinculada a esa actividad.</div>
+
+<h2>Proyectos</h2>
+<table>
+  <thead><tr><th></th><th>Proyecto individual</th><th>Proyecto institucional</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Quién lo crea</strong></td><td>Usted, con <span class="ui">Nuevo proyecto individual</span></td><td>Se propone en la convocatoria y lo acepta la Dirección del Instituto</td></tr>
+    <tr><td><strong>Aprobación</strong></td><td>No necesita</td><td>Aceptado, aceptado con condiciones o rechazado</td></tr>
+    <tr><td><strong>Clases</strong></td><td>Libre</td><td>De investigación o de interacción social</td></tr>
+    <tr><td><strong>Periodo</strong></td><td>El que usted indique</td><td>De octubre a septiembre</td></tr>
+    <tr><td><strong>Se puede eliminar</strong></td><td>Sí, por su responsable</td><td>No: sigue su ciclo (continuidad o término)</td></tr>
+  </tbody>
+</table>
+<figure class="captura "><img src="img/proyectos.png" alt="«Proyectos»: la convocatoria, los proyectos en que la persona participa y sus propuestas institucionales."><figcaption><b>Figura 15.</b> «Proyectos»: la convocatoria, los proyectos en que la persona participa y sus propuestas institucionales.</figcaption></figure>
+
+<h3>Proponer un proyecto institucional</h3>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Investigadores <strong>titulares y contratados</strong>. Quien propone queda como responsable.</div>
+<ol class="pasos">
+  <li>La convocatoria está abierta <strong>todo septiembre</strong>. El borrador se puede preparar en cualquier momento;
+    solo el envío debe hacerse dentro del plazo.</li>
+  <li>Pulse <span class="ui">Proponer proyecto institucional</span>, elija la clase y escriba el nombre.</li>
+  <li>Complete las secciones: datos básicos y líneas de investigación, objetivos, metodología, resultados esperados,
+    actividades programadas y bibliografía. Una barra muestra qué requisitos faltan para enviar.</li>
+  <li>Agregue al equipo en <span class="ui">Gestionar participantes</span> y envíe. Después de enviar no se puede
+    modificar.</li>
+  <li>La Dirección del Instituto la acepta, la acepta con condiciones (usted corrige y reenvía) o la rechaza con el
+    motivo. La decisión le llega como aviso.</li>
+</ol>
+<div class="nota importante"><span class="rotulo">Continuidad</span>
+  En septiembre, el responsable de un proyecto que termina ve el botón <span class="ui">Proponer continuidad</span>.
+  <strong>Si no la presenta, el proyecto concluye el 30 de septiembre.</strong></div>
+
+<h3>Vincular su trabajo a un proyecto</h3>
+<p>En el formulario de un producto o de una actividad, marque el proyecto en <span class="ui">Vincular a
+proyectos</span>. Queda <strong>pendiente</strong> hasta que un responsable lo apruebe. Si lo rechaza, verá el motivo;
+corrija y vuelva a guardar.</p>
+
+<h3>Si usted es responsable de un proyecto</h3>
+<figure class="captura "><img src="img/proyecto-ficha.png" alt="La ficha de un proyecto institucional, con sus pestañas: Resumen, Participantes, Actividades, Productos, Plan y Pendientes."><figcaption><b>Figura 16.</b> La ficha de un proyecto institucional, con sus pestañas: Resumen, Participantes, Actividades, Productos, Plan y Pendientes.</figcaption></figure>
+<ul>
+  <li>En <span class="ui">Pendientes</span>, apruebe o rechace lo que su equipo vinculó al proyecto.</li>
+  <li>En <span class="ui">Participantes</span>, agregue personas, cambie roles o dé de baja. En los proyectos
+    institucionales indique cuántas horas al mes dedica cada persona (en múltiplos de 32). Esas horas salen de la
+    carga de investigación o de extensión que la Dirección de Carrera registró en su vínculo.</li>
+  <li>En <span class="ui">Productos</span>, indique si cada publicación <strong>agradece al proyecto</strong>: los
+    fondos lo exigen, junto con la filiación.</li>
+  <li>En <span class="ui">Plan</span>, marque como realizadas las actividades previstas en la propuesta.</li>
+  <li><span class="ui">Informe</span> genera el informe de avance, listo para imprimir.</li>
+</ul>
+
+<h2>Decidir las propuestas</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Dirección del Instituto</strong>. La Comisión de calidad puede verlas.</div>
+<p><span class="ruta">Investigación → Propuestas</span> es la bandeja de propuestas institucionales por periodo. En
+cada una se puede aceptar, aceptar con condiciones o rechazar. En la misma página se ajusta el plazo de la
+convocatoria y se descargan todas las propuestas en una planilla para el comité.</p>
+<figure class="captura "><img src="img/propuestas.png" alt="La bandeja de propuestas institucionales, con el plazo de la convocatoria."><figcaption><b>Figura 17.</b> La bandeja de propuestas institucionales, con el plazo de la convocatoria.</figcaption></figure>
+
+<h2>Investigadores, estudiantes y coautores</h2>
+<p><span class="ruta">Investigación → Investigadores</span> es el directorio interno. Desde ahí se llega a dos listas:</p>
+<ul>
+  <li><strong>Estudiantes y tesistas:</strong> registre a los estudiantes que participan en su investigación, con sus
+    estudios. Las tesis que dirige se registran como producto «Tesis dirigida», con el tesista primero.</li>
+  <li><strong>Coautores externos:</strong> las personas sin cuenta, con su institución y su país. Con eso los informes
+    miden la colaboración internacional.</li>
+</ul>
+<figure class="captura "><img src="img/investigadores.png" alt="El directorio de investigadores."><figcaption><b>Figura 18.</b> El directorio de investigadores.</figcaption></figure>
+</section>
+
+<section class="capitulo" id="docencia">
+<header class="apertura"><span class="marca">§docencia§</span><span class="numero">Capítulo 6</span><h1>Docencia</h1><p>Planes de estudio, gestiones, oferta de materias, asignación de docentes y carga horaria.</p></header>
+
+<p class="entrada">Aquí la Carrera organiza cada semestre: qué materias se dictan, quién las dicta y cómo se
+distribuye la carga horaria de cada persona. Los docentes consultan lo suyo; lo gestionan la Dirección de Carrera y
+la Coordinación académica.</p>
+
+<h2>Mi docencia</h2>
+<p><span class="ruta">Docencia → Mi docencia</span> muestra, para usted: sus materias por gestión (como titular o
+auxiliar, con los inscritos), la docencia prevista frente a la asignada, su vínculo, su carga horaria por actividad,
+su carga en proyectos y su historial.</p>
+<figure class="captura "><img src="img/mi-docencia.png" alt="«Mi docencia»: materias del semestre, vínculo y carga horaria, carga en proyectos e historial."><figcaption><b>Figura 19.</b> «Mi docencia»: materias del semestre, vínculo y carga horaria, carga en proyectos e historial.</figcaption></figure>
+<div class="nota"><span class="rotulo">Es solo lectura</span>
+  Si algo no coincide, la carga y el vínculo los corrige la Dirección de Carrera; las materias, la Dirección de Carrera
+  o la Coordinación académica.</div>
+
+<h2>Cómo se cuenta la carga horaria</h2>
+<p>Estas reglas explican las cifras de todas las pantallas de docencia:</p>
+<ul>
+  <li>La carga se mide en <strong>unidades de 32 horas al mes</strong>. Una persona tiene una carga contratada de 32,
+    64, 96, 128 o 160 h/mes; 160 es tiempo completo.</li>
+  <li>La carga se <strong>distribuye por actividad</strong>: docencia, investigación, extensión y servicios, gestión
+    y otras. La suma debe dar el total. Por ejemplo: 160 = docencia 64 + investigación 64 + extensión 32.</li>
+  <li>Cada materia dictada como <strong>titular</strong> en un semestre cuenta 32 h/mes. Los auxiliares no suman
+    carga.</li>
+  <li>Los <strong>cursos de verano e invierno</strong> solo los dictan docentes titulares y no forman parte de la
+    carga: cuentan como docencia dictada.</li>
+  <li>La <strong>jornada completa equivalente</strong> (JCE) de los informes es la carga contratada dividida entre 160.</li>
+</ul>
+
+<h2>Planes de estudio</h2>
+<p><span class="ruta">Docencia → Planes de estudio</span> muestra los programas de la Carrera con su plan vigente:
+las dos licenciaturas y las dos maestrías.</p>
+<figure class="captura "><img src="img/planes.png" alt="Los planes de estudio. La última columna indica cuántas observaciones tiene cada plan por revisar."><figcaption><b>Figura 20.</b> Los planes de estudio. La última columna indica cuántas observaciones tiene cada plan por revisar.</figcaption></figure>
+<p>La ficha de cada plan lista las asignaturas por semestre, con sus horas o créditos, sus requisitos y su línea
+formativa. Los planes se cargaron <strong>tal como están en los documentos oficiales</strong>: lo que no cuadra
+(un requisito que no existe, un total que no suma) no se corrigió, sino que quedó anotado como
+<strong>observación</strong>.</p>
+<figure class="captura "><img src="img/plan-ficha.png" alt="La ficha de un plan, con las observaciones del documento. La Dirección de Carrera o la Coordinación académica las marcan como resueltas indicando cómo se resolvió."><figcaption><b>Figura 21.</b> La ficha de un plan, con las observaciones del documento. La Dirección de Carrera o la Coordinación académica las marcan como resueltas indicando cómo se resolvió.</figcaption></figure>
+
+<h2>Gestiones</h2>
+<p>Una <strong>gestión</strong> es un periodo académico. Hay cuatro por año:</p>
+<table>
+  <thead><tr><th>Código</th><th>Qué es</th><th>Ejemplo</th></tr></thead>
+  <tbody>
+    <tr><td>I</td><td>Primer semestre</td><td>I-2026</td></tr>
+    <tr><td>INV</td><td>Curso de invierno (julio)</td><td>INV-2026</td></tr>
+    <tr><td>II</td><td>Segundo semestre</td><td>II-2026</td></tr>
+    <tr><td>VER</td><td>Curso de verano (enero del año siguiente, contado con el año anterior)</td><td>VER-2026 se dicta en enero de 2027</td></tr>
+  </tbody>
+</table>
+<p>En <span class="ruta">Docencia → Gestiones</span>, <span class="ui">Crear las gestiones del año</span> propone las
+fechas y deja ofertadas las materias troncales de las licenciaturas en ambos semestres, en el paralelo A y sin
+docente.</p>
+
+<h2>Oferta y docentes</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La editan la <strong>Dirección de Carrera</strong> y la <strong>Coordinación académica</strong>. Todo el personal
+  la consulta.</div>
+<figure class="captura "><img src="img/oferta.png" alt="La oferta de un semestre: cada paralelo con sus inscritos y sus docentes. Los paralelos sin docente se marcan en ámbar."><figcaption><b>Figura 22.</b> La oferta de un semestre: cada paralelo con sus inscritos y sus docentes. Los paralelos sin docente se marcan en ámbar.</figcaption></figure>
+<ol class="pasos">
+  <li>Elija la gestión en el selector de arriba.</li>
+  <li>Para agregar un paralelo, escriba la asignatura, el paralelo y los inscritos, y pulse <span class="ui">Agregar a
+    la oferta</span>.</li>
+  <li>En cada fila, <span class="ui">Asignar docente</span> agrega un titular o un auxiliar.</li>
+  <li><span class="ui">Ver los N sin docente</span> deja a la vista solo los paralelos que aún no tienen docente.</li>
+</ol>
+<p>Para trabajar más rápido:</p>
+<ul>
+  <li><span class="ui">Agregar las troncales</span> completa las materias obligatorias que falten.</li>
+  <li><span class="ui">Asignar en grilla</span> muestra todos los paralelos con un selector de titular y guarda todo de
+    una vez.</li>
+  <li><span class="ui">Copiar de…</span> trae los paralelos del mismo semestre del año anterior y, si se marca, sus
+    docentes.</li>
+  <li><span class="ui">Importar CSV</span> carga la oferta de gestiones pasadas desde una planilla. Hay una plantilla
+    para descargar.</li>
+</ul>
+
+<h2>Carga horaria</h2>
+<p><span class="ruta">Docencia → Carga horaria</span> muestra, por semestre, la carga contratada de cada persona y su
+distribución, y compara la docencia prevista con la asignada en la oferta. Avisa si a alguien le faltan materias o
+le sobran.</p>
+<figure class="captura "><img src="img/carga.png" alt="La carga horaria de un semestre. El nombre de cada persona abre su ficha de docente."><figcaption><b>Figura 23.</b> La carga horaria de un semestre. El nombre de cada persona abre su ficha de docente.</figcaption></figure>
+<div class="nota"><span class="rotulo">Quién puede verla</span>
+  Dirección de Carrera, Coordinación académica, Dirección del Instituto y Comisión de calidad.</div>
+
+<h2>Vínculo y carga de una persona</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Solo la <strong>Dirección de Carrera</strong>.</div>
+<p>El vínculo se registra por <strong>periodos</strong>. Se abre desde <span class="ruta">Administración →
+Usuarios</span>, con el botón <span class="ui">Vínculo</span> de cada persona, o desde su ficha en «Carga horaria».</p>
+<figure class="captura "><img src="img/vinculo.png" alt="El historial de vínculo de una persona: fue contratada y luego titular, con su carga por actividad."><figcaption><b>Figura 24.</b> El historial de vínculo de una persona: fue contratada y luego titular, con su carga por actividad.</figcaption></figure>
+<table>
+  <thead><tr><th>Categoría</th><th>Cómo se vincula</th></tr></thead>
+  <tbody>
+    <tr><td>Titular</td><td>Vínculo <strong>permanente</strong>, sin fecha de término. Se termina a mano, con su motivo: retiro, renuncia, despido, fallecimiento u otro.</td></tr>
+    <tr><td>Contratado(a), interino(a), invitado(a)</td><td>Por un <strong>periodo con fecha de término obligatoria</strong>.</td></tr>
+    <tr><td>Externo(a)</td><td>Colaborador(a) con cuenta que no pertenece a la planta de la Carrera.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><span class="ui">Cambiar de categoría o de carga</span> cierra el periodo vigente el día anterior y abre uno
+    nuevo.</li>
+  <li><span class="ui">Terminar el vínculo</span> pide la fecha y el motivo.</li>
+  <li><span class="ui">Agregar un periodo</span> sirve para un contrato nuevo o para completar el historial.</li>
+</ul>
+<div class="nota importante"><span class="rotulo">Por qué importa el historial</span>
+  Los informes cuentan lo que una persona produjo <strong>mientras estaba vinculada</strong>, con la categoría de
+  ese momento. Un vínculo sin fechas correctas deja producción fuera de los informes.</div>
+
+<h2>Preparar el semestre</h2>
+<p><span class="ruta">Docencia → Preparación del semestre</span> es un tablero con las cinco etapas para que un
+semestre arranque: gestión creada, oferta cargada, contratos renovados, docentes asignados y carga cuadrada. Cada
+etapa muestra lo que falta y enlaza a donde se resuelve. La página no cambia nada: solo informa.</p>
+<figure class="captura "><img src="img/preparacion.png" alt="El tablero de preparación del próximo semestre."><figcaption><b>Figura 25.</b> El tablero de preparación del próximo semestre.</figcaption></figure>
+<p><span class="ui">Renovar contratos</span> (en «Carga horaria») abre en bloque un periodo nuevo, con la misma
+categoría y la misma carga, para contratados, interinos e invitados cuyo periodo terminó.</p>
+</section>
+
+<section class="capitulo" id="estudiantes">
+<header class="apertura"><span class="marca">§estudiantes§</span><span class="numero">Capítulo 7</span><h1>Estudiantes y egresados</h1><p>Seguimiento por cohorte, portal del estudiante, encuestas, tutoría y egresados.</p></header>
+
+<p class="entrada">Este módulo acompaña al estudiante desde que ingresa hasta varios años después de titularse.
+Complementa al sistema de Seguimiento Académico de la Universidad, que sigue siendo el dueño de las materias y las
+notas.</p>
+
+<div class="nota importante"><span class="rotulo">Lo que TAU guarda de un estudiante</span>
+  Su registro universitario (RU), su cohorte de ingreso, su estado, su plan y algunos datos de admisión. De su
+  nacimiento solo se guarda la <strong>edad al ingresar</strong>. <strong>No se guardan materias, notas, ni el número
+  de carnet.</strong></div>
+
+<h2>Quién ve qué</h2>
+<table>
+  <thead><tr><th>Quién</th><th>Qué ve</th></tr></thead>
+  <tbody>
+    <tr><td>Dirección de Carrera y Coordinación académica</td><td>Gestionan encuestas, tutoría, egresados y verifican la actividad estudiantil</td></tr>
+    <tr><td>Gestión de datos</td><td>Carga las cohortes y da acceso a los estudiantes</td></tr>
+    <tr><td>Comisión de calidad</td><td>Solo cifras agregadas, sin nombres</td></tr>
+    <tr><td>Tutor(a)</td><td>Sus tutorados y las reuniones que registró con ellos</td></tr>
+    <tr><td>Estudiante o egresado(a)</td><td>Únicamente lo suyo</td></tr>
+  </tbody>
+</table>
+
+<h2>Cohortes estudiantiles</h2>
+<p>Una <strong>cohorte</strong> es el grupo que ingresó en un mismo semestre (por ejemplo, 2022-I).
+<span class="ruta">Estudiantes → Cohortes estudiantiles</span> muestra, por cohorte, cuántos ingresaron, cuántos
+siguen cursando, egresaron, se titularon o desertaron, con sus tasas. Son cifras: el tablero no muestra nombres.</p>
+<figure class="captura "><img src="img/cohortes.png" alt="El tablero de cohortes de la licenciatura."><figcaption><b>Figura 26.</b> El tablero de cohortes de la licenciatura.</figcaption></figure>
+
+<h3>Cargar los datos</h3>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  <strong>Dirección de Carrera</strong> y <strong>Gestión de datos</strong>.</div>
+<ol class="pasos">
+  <li>Pida a Seguimiento Académico una planilla con una fila por estudiante. Son obligatorios el RU, los nombres, los
+    apellidos, la cohorte y el estado (cursando, egresado, titulado, retirado o congelado).</li>
+  <li>Pulse <span class="ui">Cargar CSV</span>. En la misma ventana puede descargar una plantilla con las columnas.</li>
+  <li>Revise la <strong>vista previa</strong>: muestra qué se crea, qué se actualiza y los errores de cada fila. Las
+    filas con errores se omiten.</li>
+  <li>Confirme. Vuelva a cargar el archivo cada vez que cambie la situación de los estudiantes: el sistema reconoce a
+    cada uno por su RU y lo actualiza, sin duplicarlo.</li>
+</ol>
+<p>Con <span class="ui">Dar acceso a estudiantes</span> el sistema crea una cuenta para cada estudiante que cursa y
+tiene correo. Desde ese momento puede entrar con un enlace, como explica el capítulo 4.</p>
+<div class="nota"><span class="rotulo">A quién se cuenta como desertor</span>
+  A quien se retiró, o congeló sus estudios y no volvió en los dos semestres siguientes.</div>
+
+<h2>Lo que ve el estudiante: «Mi seguimiento»</h2>
+<p>El estudiante ve cinco opciones: <strong>Mi seguimiento</strong>, <strong>Comunicados</strong>,
+<strong>Auxiliaturas</strong>, <strong>Grado</strong> y <strong>Avisos</strong>. No entra al resto del sistema.</p>
+<div class="dos">
+  <figure class="captura "><img src="img/estudiante-inicio.png" alt="El portal del estudiante en una computadora."><figcaption><b>Figura 27.</b> El portal del estudiante en una computadora.</figcaption></figure>
+  <figure class="captura telefono"><img src="img/estudiante-telefono.png" alt="Y en un teléfono."><figcaption><b>Figura 28.</b> Y en un teléfono.</figcaption></figure>
+</div>
+<ul>
+  <li><strong>Le toca a usted</strong> lista lo pendiente: un evento por confirmar, un perfil observado, una
+    postulación sin enviar o postulantes por calificar si integra un tribunal.</li>
+  <li><strong>Mi actividad estudiantil:</strong> el estudiante declara ayudantías, olimpiadas, congresos, pasantías,
+    becas, movilidad, voluntariado y otras, con su evidencia si la tiene. Cada una queda «Por verificar» hasta que
+    la Dirección la revisa.</li>
+  <li><strong>Mi participación en la investigación:</strong> las tesis, proyectos y actividades del Instituto en que
+    figura.</li>
+  <li><strong>Apoyo y comunidad:</strong> quién es su tutor y el directorio de egresados.</li>
+</ul>
+
+<h3>Verificar la actividad estudiantil</h3>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  <strong>Dirección de Carrera</strong> y <strong>Coordinación académica</strong>.</div>
+<p>En «Cohortes estudiantiles», <span class="ui">Actividades por verificar</span> muestra lo que los estudiantes
+declararon. <span class="ui">Verificar</span> la da por válida; <span class="ui">Observar</span> pide escribir qué
+debe corregir. En los dos casos el estudiante recibe un aviso.</p>
+
+<h2>Tutoría</h2>
+<p>En <span class="ruta">Estudiantes → Tutoría</span>, la Dirección de Carrera o la Coordinación académica asignan un
+tutor (un docente con vínculo vigente) a cada estudiante que cursa: uno por uno, o a toda una cohorte. La pantalla
+muestra la cobertura, las reuniones por año, los temas y las derivaciones.</p>
+<figure class="captura "><img src="img/tutoria.png" alt="La tutoría vista por la Dirección: cobertura y reuniones, sin el contenido."><figcaption><b>Figura 29.</b> La tutoría vista por la Dirección: cobertura y reuniones, sin el contenido.</figcaption></figure>
+<p>El tutor ve <span class="ruta">Estudiantes → Mis tutorados</span>. En cada estudiante registra sus reuniones:
+fecha, modalidad, tema, un resumen, la derivación si corresponde (bienestar, apoyo psicológico, ayuda económica…) y
+los acuerdos.</p>
+<figure class="captura "><img src="img/mis-tutorados.png" alt="«Mis tutorados», como lo ve una tutora."><figcaption><b>Figura 30.</b> «Mis tutorados», como lo ve una tutora.</figcaption></figure>
+<div class="nota importante"><span class="rotulo">Las reuniones son confidenciales</span>
+  Las ven su autor y la Dirección de Carrera; cada vez que la Dirección las abre, queda en la auditoría. El
+  estudiante sabe quién es su tutor, pero no ve las notas. Si cambia el tutor, el nuevo no ve las notas del
+  anterior. Las notas <strong>nunca</strong> van a informes, descargas ni a la Comisión de calidad.</div>
+
+<h2>Encuestas</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Las arman y envían la <strong>Dirección de Carrera</strong> y la <strong>Coordinación académica</strong>. Gestión de
+  datos y la Comisión de calidad ven los resultados agregados.</div>
+<p><span class="ruta">Estudiantes → Encuestas</span> sirve para consultar a estudiantes, egresados, docentes y
+empleadores: satisfacción, clima, bienestar, abandono, seguimiento de egresados, logro del perfil de egreso.</p>
+<figure class="captura "><img src="img/encuestas.png" alt="La lista de encuestas, con cuántas personas respondieron."><figcaption><b>Figura 31.</b> La lista de encuestas, con cuántas personas respondieron.</figcaption></figure>
+<ol class="pasos">
+  <li><strong>Crear.</strong> Parta de una encuesta de ejemplo o de una en blanco. Indique a quién va dirigida, la fecha
+    límite y si es <strong>anónima</strong>. Las preguntas pueden ser de escala de 1 a 5, sí o no, una opción, varias
+    opciones o texto libre.</li>
+  <li><strong>Abrir.</strong> El sistema prepara un enlace personal para cada persona con correo. Desde ese momento no
+    se pueden cambiar las preguntas.</li>
+  <li><strong>Enviar.</strong> <span class="ui">Enviar invitaciones pendientes</span> manda los correos en grupos de 50;
+    repita hasta que no queden. <span class="ui">Enviar recordatorio</span> escribe a quienes no respondieron.</li>
+  <li><strong>Responder.</strong> Cada persona responde desde su teléfono o computadora, sin cuenta. El enlace sirve
+    una vez.</li>
+  <li><strong>Cerrar</strong> y ver los <strong>resultados</strong>: promedios, distribución de cada pregunta y
+    comentarios. Se descargan en una planilla.</li>
+</ol>
+<figure class="captura "><img src="img/encuesta-resultados.png" alt="Resultados de una encuesta anónima: el promedio y la distribución de cada pregunta."><figcaption><b>Figura 32.</b> Resultados de una encuesta anónima: el promedio y la distribución de cada pregunta.</figcaption></figure>
+<div class="nota importante"><span class="rotulo">Qué significa «anónima»</span>
+  En una encuesta anónima la respuesta no se asocia con la persona: el sistema ni siquiera guarda la hora. Además,
+  los resultados aparecen <strong>solo desde 5 respuestas</strong>, para que nadie pueda deducir quién respondió qué.</div>
+
+<h2>Egresados</h2>
+<p>Para TAU, <strong>egresado</strong> es quien se tituló. <span class="ruta">Estudiantes → Egresados</span> muestra
+sus indicadores y su seguimiento.</p>
+<figure class="captura "><img src="img/egresados.png" alt="Egresados: titulados, respuestas al seguimiento e indicadores por trienio."><figcaption><b>Figura 33.</b> Egresados: titulados, respuestas al seguimiento e indicadores por trienio.</figcaption></figure>
+<ul>
+  <li><strong>Registrar la titulación:</strong> llega con la planilla de cohortes, o con <span class="ui">Registrar
+    titulación</span>.</li>
+  <li><strong>Seguimiento a los 6 meses, 1, 3 y 5 años:</strong> con <span class="ui">Activar el seguimiento</span>, cada
+    egresado recibe por correo una encuesta al cumplir cada plazo. Las invitaciones salen solas.</li>
+  <li><strong>Indicadores por trienio:</strong> titulados, años hasta titularse, con empleo, en su área, con
+    posgrado, y satisfacción con la formación. Siempre muestran sobre cuántas respuestas se calcularon.</li>
+</ul>
+
+<h3>Directorio de egresados</h3>
+<p>Figurar es <strong>opcional</strong>. El egresado invitado decide si aparece, a qué se dedica y qué ofrece:
+charlas, mentoría, orientación sobre posgrados, pasantías. Los estudiantes pueden enviarle una solicitud; el correo
+de cada uno solo se comparte <strong>cuando el egresado acepta</strong>.</p>
+
+<h3>Empleadores</h3>
+<p>En <span class="ruta">Estudiantes → Empleadores</span> se registran las organizaciones donde trabajan los
+titulados, con una persona de contacto. A ellas va la encuesta a empleadores.</p>
+</section>
+
+<section class="capitulo" id="servicios">
+<header class="apertura"><span class="marca">§servicios§</span><span class="numero">Capítulo 8</span><h1>Servicios</h1><p>Comunicados y eventos, convocatorias a auxiliaturas y proyectos de grado.</p></header>
+
+<p class="entrada">Tres servicios que comparten estudiantes y personal. Todo lo que alguien debe hacer le llega
+como aviso y aparece en su inicio.</p>
+
+<h2>Comunicados y eventos</h2>
+<div class="nota"><span class="rotulo">Quién puede publicar</span>
+  <strong>Dirección de Carrera</strong>, <strong>Dirección del Instituto</strong> y <strong>Coordinación
+  académica</strong>. El responsable de un proyecto puede publicar a su equipo, a nombre de su proyecto.</div>
+<ol class="pasos">
+  <li>En <span class="ruta">Servicios → Comunicados y eventos</span>, pulse <span class="ui">Nuevo</span>.</li>
+  <li>Elija el tipo: <strong>comunicado</strong>, <strong>convocatoria</strong> o <strong>evento</strong>. Un evento lleva
+    fecha, hora y lugar, y puede pedir que se confirme la asistencia.</li>
+  <li>Elija a quién llega. <strong>Para todos</strong> son todas las cuentas activas. <strong>Convocados</strong> le
+    permite sumar grupos (estudiantes, docentes, una cohorte, los participantes de un proyecto) o personas sueltas.</li>
+  <li><span class="ui">Publicar</span> avisa a cada convocado. Mientras está en borrador, nadie lo ve.</li>
+</ol>
+<figure class="captura "><img src="img/comunicado-ficha.png" alt="Un evento publicado: a quién llegó y cuántos confirmaron."><figcaption><b>Figura 34.</b> Un evento publicado: a quién llegó y cuántos confirmaron.</figcaption></figure>
+<p>Quien lo recibe lo ve en <span class="ui">Comunicados</span> y, si se pide, responde <span class="ui">Asistiré</span>
+o <span class="ui">No podré</span> hasta que el evento empiece. Cuando el evento ya empezó, quien lo organizó puede
+registrar la asistencia.</p>
+<figure class="captura "><img src="img/estudiante-comunicado.png" alt="El mismo evento, como lo ve una estudiante convocada."><figcaption><b>Figura 35.</b> El mismo evento, como lo ve una estudiante convocada.</figcaption></figure>
+
+<h2>Auxiliaturas</h2>
+<p>Las convocatorias siguen el Reglamento General de Auxiliares Académicos de la UMSA: requisitos, tribunal por
+materia y calificación por fases.</p>
+<div class="nota"><span class="rotulo">Quién puede gestionarlas</span>
+  <strong>Dirección de Carrera</strong> y <strong>Coordinación académica</strong>. Las de investigación, también la
+  <strong>Dirección del Instituto</strong>.</div>
+
+<h3>Preparar y publicar una convocatoria</h3>
+<ol class="pasos">
+  <li><span class="ui">Nueva convocatoria</span>: gestión, modalidad (docencia o investigación), fechas de publicación,
+    cierre de la recepción y examen escrito, lugar y número de resolución. El sistema avisa si entre la publicación
+    y el examen hay menos días hábiles de los que pide el reglamento.</li>
+  <li><strong>Ítems:</strong> cada materia de la oferta de esa gestión (o un proyecto, en investigación), con sus
+    plazas y sus horas.</li>
+  <li><strong>Tribunal de cada ítem:</strong> dos docentes y dos estudiantes. Un postulante no puede integrarlo.</li>
+  <li><span class="ui">Publicar</span>: se avisa a todos los estudiantes y a los miembros de los tribunales.</li>
+</ol>
+<figure class="captura "><img src="img/auxiliaturas.png" alt="Una convocatoria publicada: datos, ítems con su tribunal, calificación por fases y requisitos."><figcaption><b>Figura 36.</b> Una convocatoria publicada: datos, ítems con su tribunal, calificación por fases y requisitos.</figcaption></figure>
+
+<h3>Lo que hace el estudiante</h3>
+<ol class="pasos">
+  <li>Entra a <span class="ui">Auxiliaturas</span>, elige una materia y pulsa <span class="ui">Postular</span>.</li>
+  <li>Sube un PDF o una foto por cada documento, marca las declaraciones juradas y escribe su propuesta de trabajo.</li>
+  <li>Cuando no falta nada, pulsa <span class="ui">Enviar postulación</span>. Puede retirarla mientras la recepción
+    esté abierta.</li>
+</ol>
+<figure class="captura "><img src="img/estudiante-auxiliaturas.png" alt="Las convocatorias abiertas, vistas por una estudiante."><figcaption><b>Figura 37.</b> Las convocatorias abiertas, vistas por una estudiante.</figcaption></figure>
+
+<h3>Lo que hace el tribunal</h3>
+<table>
+  <thead><tr><th>Fase</th><th>Puntaje</th><th>Mínimo</th></tr></thead>
+  <tbody>
+    <tr><td>Habilitación</td><td>Cumple o no cumple los requisitos</td><td>—</td></tr>
+    <tr><td>Méritos</td><td>0 a 30</td><td>10</td></tr>
+    <tr><td>Examen escrito</td><td>0 a 35</td><td>17,5</td></tr>
+    <tr><td>Examen oral</td><td>0 a 35</td><td>—</td></tr>
+    <tr><td><strong>Para ganar la plaza</strong></td><td>Suma de las tres notas</td><td><strong>56 de 100</strong></td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Cada miembro califica por su cuenta. La nota de una fase es el promedio de al menos tres miembros.</li>
+  <li>Quien gestiona la convocatoria, o un docente del tribunal, <strong>cierra la fase y publica las notas</strong>.
+    Cada postulante ve su resultado y tiene 24 horas para impugnar por escrito ante la Dirección.</li>
+  <li>Antes del examen oral se <strong>sortea el tema</strong>.</li>
+  <li>Al cerrar el oral, gana la plaza quien tiene el mayor total. El <strong>acta de calificaciones</strong> se
+    imprime desde el ítem.</li>
+</ul>
+
+<h2>Proyectos de grado</h2>
+<p>El trámite tiene dos partes que siguen los mismos pasos: primero el <strong>perfil</strong> y después el
+<strong>documento final</strong>.</p>
+
+<h3>Lo que hace el estudiante</h3>
+<ol class="pasos">
+  <li>En <span class="ui">Grado</span>, abre un perfil nuevo con el título, la modalidad (proyecto de grado o tesis) y
+    su tutor.</li>
+  <li>Escribe las secciones obligatorias: introducción, planteamiento del problema, objetivo general, objetivos
+    específicos, metodología, calendario y bibliografía. Puede agregar otras. Las fórmulas se escriben en LaTeX.</li>
+  <li>Pide el <strong>visto bueno</strong> de su tutor.</li>
+</ol>
+<figure class="captura "><img src="img/estudiante-grado.png" alt="El perfil de grado visto por la estudiante. Arriba, las etapas del trámite; a la derecha, los documentos que el sistema genera."><figcaption><b>Figura 38.</b> El perfil de grado visto por la estudiante. Arriba, las etapas del trámite; a la derecha, los documentos que el sistema genera.</figcaption></figure>
+<div class="nota consejo"><span class="rotulo">Documentos listos</span>
+  El sistema genera la <strong>nota de presentación</strong> para imprimir y un archivo con el perfil en la
+  <strong>plantilla LaTeX de la Carrera</strong>, para compilar o subir a Overleaf.</div>
+
+<h3>El recorrido completo</h3>
+<table>
+  <thead><tr><th>Etapa</th><th>Quién actúa</th><th>Qué pasa</th></tr></thead>
+  <tbody>
+    <tr><td>1. Visto bueno</td><td>Tutor(a)</td><td>Lo da, o lo devuelve con un comentario</td></tr>
+    <tr><td>2. Tribunal</td><td>Dirección de Carrera o Coordinación académica</td><td>Designa al menos dos docentes, que no sean el tutor</td></tr>
+    <tr><td>3. Revisión</td><td>Cada miembro del tribunal</td><td>Tiene <strong>15 días hábiles</strong> para su informe: valora, dictamina (aprobado, observado o no aprobado) y escribe sus observaciones</td></tr>
+    <tr><td>4. Correcciones</td><td>Estudiante</td><td>Responde cada observación, corrige y reenvía. Empieza otra revisión de 15 días hábiles</td></tr>
+    <tr><td>5. Resolución</td><td>Dirección de Carrera</td><td>Con todos los dictámenes favorables, registra el número de resolución. El perfil queda aprobado</td></tr>
+  </tbody>
+</table>
+<figure class="captura "><img src="img/grado-tribunal.png" alt="El mismo trámite visto por la Dirección: el tribunal designado y el plazo de la revisión."><figcaption><b>Figura 39.</b> El mismo trámite visto por la Dirección: el tribunal designado y el plazo de la revisión.</figcaption></figure>
+<p>El sistema recuerda al tribunal tres días antes del plazo y avisa a la Dirección si vence. Los informes del
+tribunal se muestran al estudiante cuando llega el último.</p>
+<p>Con el perfil aprobado, el estudiante inicia el <strong>documento final</strong> y sube el PDF. Tras el dictamen
+favorable, la Dirección registra la fecha de la defensa. Ese día cada miembro del tribunal registra su nota (de 1 a
+100; se aprueba con 51) y el acta se imprime desde el trámite.</p>
+</section>
+
+<section class="capitulo" id="calidad">
+<header class="apertura"><span class="marca">§calidad§</span><span class="numero">Capítulo 9</span><h1>Calidad</h1><p>El Sistema Interno de Aseguramiento de la Calidad: marco, indicadores, evidencias, autoevaluación y plan de mejora.</p></header>
+
+<p class="entrada">Este módulo sostiene el ciclo con que la Carrera se evalúa a sí misma: define qué mirar, mide,
+reúne el respaldo, juzga y mejora. Casi todas las cifras salen de lo que los otros módulos ya registran.</p>
+
+<h2>El ciclo en cinco pasos</h2>
+<table>
+  <thead><tr><th>Paso</th><th>Pantalla</th><th>Qué se hace</th></tr></thead>
+  <tbody>
+    <tr><td>1. Definir</td><td>Marco de calidad</td><td>Las dimensiones, sus criterios y los indicadores con sus metas</td></tr>
+    <tr><td>2. Medir</td><td>Indicadores</td><td>La cifra de cada indicador por año, frente a su meta</td></tr>
+    <tr><td>3. Respaldar</td><td>Evidencias</td><td>Los documentos, enlaces e informes que sostienen cada criterio</td></tr>
+    <tr><td>4. Juzgar</td><td>Autoevaluación</td><td>El nivel de cada criterio, con sus fortalezas y debilidades</td></tr>
+    <tr><td>5. Mejorar</td><td>Plan de mejora</td><td>Acciones con responsable y plazo, y sus avances</td></tr>
+  </tbody>
+</table>
+
+<h2>Marco de calidad</h2>
+<p><span class="ruta">Calidad → Marco de calidad</span> contiene nueve <strong>dimensiones</strong> (D1 a D9), cada una
+con sus <strong>criterios</strong>, y cada criterio con sus <strong>indicadores</strong>.</p>
+<figure class="captura "><img src="img/marco.png" alt="El marco de calidad: sus cifras, la escala de valoración, los atributos y las dimensiones, que se abren con un clic."><figcaption><b>Figura 40.</b> El marco de calidad: sus cifras, la escala de valoración, los atributos y las dimensiones, que se abren con un clic.</figcaption></figure>
+<div class="nota importante"><span class="rotulo">El marco es un borrador</span>
+  El sistema trae un borrador para que la Comisión de calidad lo discuta. Mientras el Consejo de Carrera no lo
+  apruebe, su vigencia queda en blanco. Revisarlo es una de las tareas más valiosas de esta fase.</div>
+<ul>
+  <li><strong>Escala de valoración:</strong> los niveles con que se juzga cada criterio. Por omisión son cuatro: no
+    cumple, cumple parcialmente, cumple y cumple plenamente.</li>
+  <li><strong>Atributos:</strong> los criterios de la Política de Calidad de la UMSA (pertinencia, equidad, eficacia…).
+    Cada indicador marca de cuáles da evidencia.</li>
+  <li><strong>Indicadores:</strong> cada uno tiene su fórmula en palabras, su fuente, su frecuencia y su lectura (mejor
+    si sube, mejor si baja o informativo). La fuente es <strong>automática</strong> cuando el sistema calcula la cifra
+    con lo que ya registra, o <strong>manual</strong> cuando hay que escribirla.</li>
+  <li><strong>Metas por año:</strong> se fijan en la ficha de cada indicador.</li>
+</ul>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Lo edita la <strong>Dirección de Carrera</strong>. Lo ven la Coordinación académica, la Dirección del Instituto, la
+  Comisión de calidad y Gestión de datos.</div>
+
+<h2>Indicadores</h2>
+<p><span class="ruta">Calidad → Indicadores</span> muestra las cifras de cada indicador en los años de evidencia,
+agrupadas por dimensión.</p>
+<figure class="captura "><img src="img/indicadores.png" alt="El tablero de indicadores. Las tarjetas de arriba cuentan los indicadores por estado; al pulsar una, se ven solo esos."><figcaption><b>Figura 41.</b> El tablero de indicadores. Las tarjetas de arriba cuentan los indicadores por estado; al pulsar una, se ven solo esos.</figcaption></figure>
+<table>
+  <thead><tr><th>Color</th><th>Significa</th></tr></thead>
+  <tbody>
+    <tr><td>Verde</td><td>La cifra cumple la meta de ese año</td></tr>
+    <tr><td>Rojo</td><td>No la cumple</td></tr>
+    <tr><td>Gris</td><td>El indicador no tiene meta</td></tr>
+    <tr><td>Azul</td><td>Es informativo: no se compara con una meta</td></tr>
+    <tr><td>Guion</td><td>No hay dato</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Al pasar el cursor por una cifra verá <strong>cómo se obtuvo</strong> y sobre cuántos casos.</li>
+  <li>Las cifras <strong>manuales</strong> las registran la Dirección de Carrera y Gestión de datos, en la ficha del
+    indicador.</li>
+  <li><strong>Cerrar un año</strong> ya terminado (Dirección de Carrera) congela sus cifras, para que lo informado no
+    cambie si después se corrigen datos.</li>
+</ul>
+
+<h2>Evidencias</h2>
+<p><span class="ruta">Calidad → Evidencias</span> reúne lo que respalda cada criterio. Hay tres clases:</p>
+<ul>
+  <li><strong>Documento:</strong> un archivo (actas, resoluciones, convenios) de hasta 20 MB.</li>
+  <li><strong>Enlace:</strong> una dirección web, como una publicación oficial.</li>
+  <li><strong>Informe del sistema:</strong> el sistema genera en el momento un informe y lo guarda tal cual.</li>
+</ul>
+<figure class="captura "><img src="img/evidencias.png" alt="Las evidencias registradas, con los criterios que respalda cada una."><figcaption><b>Figura 42.</b> Las evidencias registradas, con los criterios que respalda cada una.</figcaption></figure>
+<p>Cada evidencia indica qué criterios respalda y hasta cuándo vale. Los archivos guardan una <strong>huella</strong>,
+una especie de firma de su contenido exacto: con <span class="ui">Verificar un archivo</span> se comprueba si un
+documento entregado a una comisión es idéntico al registrado.</p>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Las registran la <strong>Dirección de Carrera</strong> y la <strong>Comisión de calidad</strong>.</div>
+
+<h2>Autoevaluación</h2>
+<ol class="pasos">
+  <li><strong>Abrir</strong> (Dirección de Carrera): nombre y periodo evaluado. Solo puede haber una en curso.</li>
+  <li><strong>Juzgar cada criterio</strong> (Comisión de calidad y Dirección de Carrera): al tocar un criterio se ven sus
+    indicadores y sus evidencias. Se elige el nivel, se escribe el juicio fundado, las fortalezas y las debilidades.</li>
+  <li><strong>Sintetizar</strong> cada dimensión y escribir el análisis global.</li>
+  <li><strong>Concluir</strong> (Dirección de Carrera): exige que todos los criterios tengan nivel. Concluida, ya no se
+    cambia; la Dirección puede reabrirla.</li>
+</ol>
+<figure class="captura "><img src="img/autoevaluacion.png" alt="Una autoevaluación en curso: el avance y, por dimensión, el nivel de cada criterio."><figcaption><b>Figura 43.</b> Una autoevaluación en curso: el avance y, por dimensión, el nivel de cada criterio.</figcaption></figure>
+<p><span class="ui">Informe</span> abre el informe de autoevaluación para imprimir, con membrete; dice «Borrador»
+mientras está en curso.</p>
+
+<h2>Plan de mejora</h2>
+<p>Las debilidades de la autoevaluación son el punto de partida. En <span class="ruta">Calidad → Plan de
+mejora</span>, cada <strong>acción</strong> tiene responsable, plazo, prioridad y el criterio que atiende.</p>
+<figure class="captura "><img src="img/mejora.png" alt="El plan de mejora: acciones abiertas, vencidas y cumplidas."><figcaption><b>Figura 44.</b> El plan de mejora: acciones abiertas, vencidas y cumplidas.</figcaption></figure>
+<ul>
+  <li>Las acciones se crean desde las <strong>debilidades de la autoevaluación</strong>, desde las recomendaciones de
+    una <strong>evaluación externa</strong>, o sueltas.</li>
+  <li>El <strong>responsable</strong> registra los avances, con una evidencia. No necesita un rol para eso.</li>
+  <li>La Dirección de Carrera marca la acción como cumplida o la cancela con su motivo.</li>
+  <li>El sistema avisa al responsable 30 días antes del plazo y, si vence, también a la Dirección.</li>
+</ul>
+
+<h2>Ficha estadística</h2>
+<p><span class="ruta">Calidad → Ficha estadística</span> reúne las cifras que suelen pedir los formularios de un
+proceso de evaluación: cuerpo académico, oferta por semestre, admisión y trayectoria de cada cohorte.</p>
+<figure class="captura "><img src="img/ficha-estadistica.png" alt="La ficha estadística de la Carrera."><figcaption><b>Figura 45.</b> La ficha estadística de la Carrera.</figcaption></figure>
+<div class="nota consejo"><span class="rotulo">Llenar un formulario externo</span>
+  Si un organismo entrega su propio formulario en Excel, <span class="ui">Llenar una plantilla</span> escribe las
+  cifras en las celdas que usted indique y deja intactos el formato, las fórmulas y los gráficos. Ninguno de los
+  archivos queda guardado en el sistema.</div>
+
+<h2>Capacitación, convenios e impacto social</h2>
+<table>
+  <thead><tr><th>Registro</th><th>Qué se anota</th><th>Quién lo registra</th></tr></thead>
+  <tbody>
+    <tr><td>Capacitación</td><td>Cursos, talleres y diplomados que concluyó cada docente</td><td>Dirección de Carrera y Gestión de datos</td></tr>
+    <tr><td>Convenios</td><td>Contraparte, vigencia, objeto y lo que se hizo con cada convenio</td><td>Dirección de Carrera</td></tr>
+    <tr><td>Impacto social</td><td>A cuántas personas llegó cada proyecto de interacción social y qué cambió</td><td>Las dos direcciones y el responsable del proyecto</td></tr>
+  </tbody>
+</table>
+
+<h2>La página pública</h2>
+<p>Es la página, sin inicio de sesión, donde la Carrera rinde cuentas. Tiene dos partes: los
+<strong>investigadores</strong> que decidieron publicar su perfil, y los <strong>indicadores</strong> que la Dirección
+de Carrera marcó como públicos, solo de años cerrados.</p>
+<figure class="captura "><img src="img/publico.png" alt="La página pública: perfiles de los investigadores que eligieron publicarlos."><figcaption><b>Figura 46.</b> La página pública: perfiles de los investigadores que eligieron publicarlos.</figcaption></figure>
+<div class="nota"><span class="rotulo">Qué no se publica nunca</span>
+  Correos, actividades, proyectos, ni una cifra calculada sobre menos de 5 personas.</div>
+</section>
+
+<section class="capitulo" id="informes">
+<header class="apertura"><span class="marca">§informes§</span><span class="numero">Capítulo 10</span><h1>Informes</h1><p>Su currículum, los informes de los proyectos y los informes institucionales, listos para imprimir.</p></header>
+
+<p class="entrada">Los informes no se escriben: se generan con lo que ya está registrado. Por eso vale la pena
+mantener los datos al día.</p>
+
+<h2>Qué informes hay</h2>
+<figure class="captura "><img src="img/informes.png" alt="«Informes», como lo ve una dirección. Cada persona ve solo los que le corresponden."><figcaption><b>Figura 47.</b> «Informes», como lo ve una dirección. Cada persona ve solo los que le corresponden.</figcaption></figure>
+<table>
+  <thead><tr><th>Informe</th><th>Qué contiene</th><th>Quién lo ve</th></tr></thead>
+  <tbody>
+    <tr><td>Mi CV</td><td>Sus productos por categoría, sus actividades y sus proyectos, en el periodo que elija</td><td>Cada investigador(a)</td></tr>
+    <tr><td>Informe de proyecto</td><td>Equipo, objetivos, productos y actividades aprobados, y el plan de actividades</td><td>Responsables y participantes</td></tr>
+    <tr><td>Memoria del Instituto</td><td>Productos que cuentan, actividades y proyectos, por año o por periodo</td><td>Direcciones y Comisión de calidad</td></tr>
+    <tr><td>Informe de I+D+i</td><td>La evidencia de los últimos cinco años, ordenada por las dimensiones del marco de calidad</td><td>Direcciones y Comisión de calidad</td></tr>
+    <tr><td>Carga docente</td><td>Carga contratada y su distribución, docencia prevista y asignada, paralelos sin docente</td><td>Direcciones, Coordinación académica y Comisión de calidad</td></tr>
+    <tr><td>Cuerpo académico</td><td>Docentes vinculados, jornadas equivalentes, grados, categorías y tramos de edad</td><td>Direcciones y Comisión de calidad</td></tr>
+    <tr><td>Seguimiento estudiantil</td><td>Cohortes, actividad estudiantil, encuestas, tutoría y egresados, solo en cifras</td><td>Dirección de Carrera, Coordinación académica, Gestión de datos y Comisión de calidad</td></tr>
+    <tr><td>Calidad de datos</td><td>Lo que falta o no cuadra antes de generar los demás informes</td><td>Direcciones, Coordinación académica, Comisión de calidad y Administración</td></tr>
+  </tbody>
+</table>
+
+<h2>Mi CV</h2>
+<ol class="pasos">
+  <li>Abra <span class="ruta">Calidad → Informes → Mi CV</span>.</li>
+  <li>Elija el periodo y, si quiere, «solo lo que cuenta para el informe» o «solo con filiación IIMAT/UMSA».</li>
+  <li>Pulse <span class="ui">Imprimir / Guardar PDF</span>. También puede descargarlo en BibTeX.</li>
+</ol>
+<figure class="captura media"><img src="img/cv.png" alt="El currículum de una investigadora, con el membrete de la Carrera."><figcaption><b>Figura 48.</b> El currículum de una investigadora, con el membrete de la Carrera.</figcaption></figure>
+
+<h2>Guardar un informe en PDF</h2>
+<p>Todos los informes llevan el membrete oficial en la primera página y, en cada página, un pie con el título y
+«Página X de Y».</p>
+<ol class="pasos">
+  <li>Pulse <span class="ui">Imprimir / Guardar PDF</span> en el informe.</li>
+  <li>En el cuadro de impresión del navegador, elija <strong>Guardar como PDF</strong> como destino.</li>
+  <li>En «Más opciones», desmarque <strong>Encabezados y pies de página</strong>: son los del navegador (la dirección web
+    y la fecha), no los del informe.</li>
+</ol>
+<figure class="captura media"><img src="img/memoria.png" alt="La memoria anual del Instituto, tal como se imprime."><figcaption><b>Figura 49.</b> La memoria anual del Instituto, tal como se imprime.</figcaption></figure>
+<div class="nota consejo"><span class="rotulo">Use Chrome o Edge para imprimir</span>
+  El pie con el número de página se ve en esos navegadores. En otros, el documento sale igual, sin ese pie.</div>
+
+<h2>¿De dónde sale este número?</h2>
+<p>En el informe de I+D+i, cada cifra del resumen es un <strong>enlace a los registros que la componen</strong>: qué
+artículos, qué personas, qué proyectos, y con qué regla se contaron. Así se responde de inmediato a esa pregunta
+frente a una comisión.</p>
+
+<h2>Calidad de datos</h2>
+<p>Antes de generar un informe importante, mire <span class="ruta">Calidad → Calidad de datos</span>. Son 16
+revisiones de lo que falta o no cuadra, agrupadas por tema. Cada una dice a qué afecta y quién lo corrige.</p>
+<figure class="captura "><img src="img/calidad-datos.png" alt="El tablero de calidad de datos. La página no cambia nada: señala qué completar."><figcaption><b>Figura 50.</b> El tablero de calidad de datos. La página no cambia nada: señala qué completar.</figcaption></figure>
+<p>En las revisiones que deben corregir otras personas, las direcciones y la Coordinación académica tienen el botón
+<span class="ui">Avisar a N personas</span>: cada una recibe la lista de lo suyo por completar.</p>
+
+<h2>Informes que llegan solos</h2>
+<table>
+  <thead><tr><th>Informe</th><th>Cuándo</th><th>A quién</th></tr></thead>
+  <tbody>
+    <tr><td>Preparación del semestre</td><td>4 semanas y 1 semana antes del inicio de cada semestre</td><td>Dirección de Carrera y Coordinación académica</td></tr>
+    <tr><td>Carga docente del semestre</td><td>Al inicio de cada semestre</td><td>Dirección de Carrera</td></tr>
+    <tr><td>Memoria anual del Instituto</td><td>Desde el 10 de enero, la del año anterior</td><td>Dirección del Instituto</td></tr>
+    <tr><td>Calidad de datos</td><td>Una vez al mes, si hay algo por completar</td><td>Quienes ven ese tablero</td></tr>
+  </tbody>
+</table>
+<p>Llegan como aviso, con las cifras clave y el enlace al informe. Los datos de las personas no viajan en el
+correo: para verlos hay que iniciar sesión.</p>
+</section>
+
+<section class="capitulo" id="administracion">
+<header class="apertura"><span class="marca">§administracion§</span><span class="numero">Capítulo 11</span><h1>Administración</h1><p>Cuentas, roles, cargas de datos en bloque, catálogos y auditoría.</p></header>
+
+<p class="entrada">Estas pantallas sostienen al resto del sistema. Las usan la Administración del sistema, las
+direcciones y Gestión de datos, cada una en lo suyo.</p>
+
+<h2>Usuarios</h2>
+<figure class="captura "><img src="img/usuarios.png" alt="La lista de usuarios, con el perfil, el estado y las acciones de cada cuenta."><figcaption><b>Figura 51.</b> La lista de usuarios, con el perfil, el estado y las acciones de cada cuenta.</figcaption></figure>
+
+<h3>Crear una cuenta</h3>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Administración del sistema</strong>.</div>
+<ol class="pasos">
+  <li>En <span class="ruta">Administración → Usuarios</span>, pulse <span class="ui">Nuevo usuario</span>.</li>
+  <li>Escriba el correo, los nombres y los apellidos.</li>
+  <li>Con <span class="ui">Enviar invitación por correo</span>, la persona define su contraseña. Sin invitación, el
+    sistema muestra una contraseña temporal para entregarla a mano.</li>
+</ol>
+<ul>
+  <li><strong>Sin acceso al sistema:</strong> registra a una persona solo por sus datos, por ejemplo un docente que no
+    usa el sistema. Tiene vínculo y ficha, pero no puede ingresar.</li>
+  <li><strong>La categoría</strong> (titular, contratado…) la define solo la Dirección de Carrera. Si quien crea la
+    cuenta no tiene ese rol, la cuenta queda «Sin categoría» hasta que la Dirección la registre.</li>
+</ul>
+
+<h3>Acciones sobre una cuenta</h3>
+<table>
+  <thead><tr><th>Acción</th><th>Qué hace</th><th>Quién</th></tr></thead>
+  <tbody>
+    <tr><td>Ficha</td><td>Abre los grados académicos de la persona</td><td>Direcciones y Gestión de datos</td></tr>
+    <tr><td>Roles</td><td>Asigna o quita roles, con su unidad y sus fechas</td><td>Administración del sistema</td></tr>
+    <tr><td>Vínculo</td><td>Abre el historial de vínculo y carga (capítulo 6)</td><td>Dirección de Carrera</td></tr>
+    <tr><td>Contraseña</td><td>Genera una contraseña temporal nueva</td><td>Administración del sistema</td></tr>
+    <tr><td>Desbloquear</td><td>Libera una cuenta bloqueada por intentos fallidos</td><td>Administración del sistema</td></tr>
+    <tr><td>Desactivar</td><td>La persona ya no puede ingresar; su sesión se cierra de inmediato</td><td>Administración del sistema</td></tr>
+  </tbody>
+</table>
+<div class="nota"><span class="rotulo">Al desactivar una cuenta</span>
+  Lo que la persona publicó mientras estuvo vinculada sigue contando en los informes. Desactivar no borra nada.</div>
+
+<h2>Roles</h2>
+<ol class="pasos">
+  <li>En la fila de la persona, pulse <span class="ui">Roles</span>.</li>
+  <li>Elija el rol y la unidad, la fecha desde la que rige y, si corresponde, hasta cuándo.</li>
+  <li>Anote en <span class="ui">Pedido de</span> qué dirección lo pidió y con qué documento.</li>
+  <li><span class="ui">Asignar rol</span>. Para terminarlo, <span class="ui">Quitar</span>: deja de regir desde hoy y
+    queda en el historial.</li>
+</ol>
+<figure class="captura media"><img src="img/roles.png" alt="Los roles de una persona, con su unidad y su vigencia."><figcaption><b>Figura 52.</b> Los roles de una persona, con su unidad y su vigencia.</figcaption></figure>
+
+<h2>Cargar datos en bloque</h2>
+<p>Varias pantallas aceptan una planilla (CSV) para no escribir registro por registro. Todas funcionan igual:</p>
+<ol class="pasos">
+  <li><strong>Descargue la plantilla</strong> de esa pantalla y llénela en Excel.</li>
+  <li><strong>Súbala.</strong> El sistema no guarda nada todavía: muestra una <strong>vista previa</strong> con lo que se
+    creará y los errores de cada fila.</li>
+  <li><strong>Confirme.</strong> Solo se guarda lo que no tiene errores.</li>
+</ol>
+<table>
+  <thead><tr><th>Carga</th><th>Dónde</th><th>Qué hace con lo que ya existe</th><th>Quién</th></tr></thead>
+  <tbody>
+    <tr><td>Cuentas</td><td>Usuarios → Importar CSV</td><td>Omite las cuentas que ya existen</td><td>Administración del sistema</td></tr>
+    <tr><td>Historial de vínculos</td><td>Usuarios → Importar historial</td><td><strong>Reemplaza</strong> el historial de cada persona del archivo</td><td>Dirección de Carrera</td></tr>
+    <tr><td>Grados académicos</td><td>Usuarios → Importar grados</td><td>Agrega; omite los repetidos</td><td>Direcciones y Gestión de datos</td></tr>
+    <tr><td>Oferta de gestiones pasadas</td><td>Oferta y docentes → Importar CSV</td><td><strong>Reemplaza</strong> la oferta de cada gestión del archivo</td><td>Dirección de Carrera y Coordinación académica</td></tr>
+    <tr><td>Cohortes de estudiantes</td><td>Cohortes → Cargar CSV</td><td>Actualiza a cada estudiante por su RU</td><td>Dirección de Carrera y Gestión de datos</td></tr>
+    <tr><td>Capacitaciones</td><td>Capacitación → Importar CSV</td><td>Agrega; omite las repetidas</td><td>Dirección de Carrera y Gestión de datos</td></tr>
+    <tr><td>Revistas</td><td>Catálogo de revistas → Importar CSV</td><td>Completa las existentes, sin borrar</td><td>Dirección del Instituto</td></tr>
+  </tbody>
+</table>
+<div class="nota importante"><span class="rotulo">Las dos cargas que reemplazan</span>
+  El historial de vínculos y la oferta de una gestión <strong>sustituyen</strong> lo que había para las personas o
+  las gestiones incluidas en el archivo. Lo que no figura en el archivo no cambia.</div>
+
+<h2>Catálogos del Instituto</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Dirección del Instituto</strong>.</div>
+<ul>
+  <li><strong>Catálogo de revistas:</strong> las revistas donde publica el Instituto y los índices en que figura cada
+    una, año por año, con la fuente consultada. Una revista <strong>verificada</strong> define la clasificación de los
+    artículos publicados en ella.</li>
+  <li><strong>Líneas de investigación:</strong> el catálogo de líneas institucionales, agrupadas por áreas. Cuando una
+    línea deja de regir, se le pone fecha de término en lugar de eliminarla.</li>
+  <li><strong>Tipos e índices:</strong> los tipos de actividad y de producto y los índices que ofrecen los formularios.
+    Los que trae el sistema se pueden reordenar y desactivar, pero no renombrar.</li>
+</ul>
+<figure class="captura "><img src="img/revistas.png" alt="El catálogo de revistas, con una revista verificada y otra pendiente de verificar."><figcaption><b>Figura 53.</b> El catálogo de revistas, con una revista verificada y otra pendiente de verificar.</figcaption></figure>
+
+<h2>Auditoría</h2>
+<p><span class="ruta">Administración → Auditoría</span> muestra quién hizo qué y cuándo, con filtros por persona,
+acción, texto y fechas. <span class="ui">Descargar CSV</span> exporta todo lo filtrado; esa descarga también queda
+registrada.</p>
+<figure class="captura "><img src="img/auditoria.png" alt="La auditoría: cada acción con su fecha, su persona y su detalle."><figcaption><b>Figura 54.</b> La auditoría: cada acción con su fecha, su persona y su detalle.</figcaption></figure>
+</section>
+
+<section class="capitulo" id="privacidad">
+<header class="apertura"><span class="marca">§privacidad§</span><span class="numero">Capítulo 12</span><h1>Privacidad, seguridad e inteligencia artificial</h1><p>Qué datos personales guarda TAU, quién los ve y cómo se usa la IA.</p></header>
+
+<h2>Sus datos personales</h2>
+<table>
+  <thead><tr><th>Dato</th><th>Quién lo ve</th></tr></thead>
+  <tbody>
+    <tr><td>Su perfil y su producción</td><td>El personal de la Carrera, en el directorio interno. Fuera de la Carrera, solo si usted activa «Perfil público»</td></tr>
+    <tr><td>Su fecha de nacimiento</td><td>Usted y la Administración del sistema. Los informes usan tramos de edad</td></tr>
+    <tr><td>Su vínculo y su carga horaria</td><td>Usted, las direcciones, la Coordinación académica y la Comisión de calidad</td></tr>
+    <tr><td>Los adjuntos de un producto</td><td>Quienes pueden editar ese producto</td></tr>
+    <tr><td>La situación académica de un estudiante</td><td>Dirección de Carrera, Coordinación académica y Gestión de datos. La Comisión de calidad ve solo cifras</td></tr>
+    <tr><td>Las reuniones de tutoría</td><td>El tutor que las escribió y la Dirección de Carrera, con registro en la auditoría</td></tr>
+    <tr><td>Las respuestas a una encuesta anónima</td><td>Nadie puede asociarlas con una persona</td></tr>
+    <tr><td>El correo de un estudiante o de un egresado</td><td>Entre ellos, solo cuando el egresado acepta una solicitud</td></tr>
+  </tbody>
+</table>
+
+<h2>Buenas prácticas</h2>
+<ul>
+  <li>Use una contraseña que no use en otros sitios, y no la comparta.</li>
+  <li>En una computadora compartida, pulse <span class="ui">Salir</span> al terminar.</li>
+  <li>Si recibe un enlace de ingreso que usted no pidió, no lo abra: avise a la Administración del sistema.</li>
+  <li>Antes de cargar una planilla, revise que no traiga datos que el sistema no necesita.</li>
+  <li>Los archivos que descarga (planillas, informes) quedan en su equipo: cuídelos como cualquier documento de la
+    Carrera.</li>
+</ul>
+
+<h2>Inteligencia artificial con criterio humano</h2>
+<p>TAU puede preparar <strong>borradores</strong> con inteligencia artificial (IA). La regla es una sola: <strong>la IA
+sugiere y la persona decide</strong>. Ningún borrador surte efecto hasta que alguien lo aprueba, y todo texto
+aprobado lleva la marca «Elaborado con apoyo de IA; revisado por…».</p>
+<figure class="captura "><img src="img/ia.png" alt="«Uso de IA en TAU»: cada función, qué datos usa, si salen del sistema y quién aprueba el resultado."><figcaption><b>Figura 55.</b> «Uso de IA en TAU»: cada función, qué datos usa, si salen del sistema y quién aprueba el resultado.</figcaption></figure>
+<ul>
+  <li><strong>Todo nace apagado.</strong> La Dirección de Carrera aprueba la política de uso, activa cada función y
+    designa a su responsable. Si una función no está activa, el botón no aparece.</li>
+  <li><strong>Las cifras nunca salen de la IA:</strong> salen de la base de datos. Donde vea «[cifra por verificar]»,
+    complete el dato real o borre la frase.</li>
+  <li><strong>Usted corrige antes de aprobar.</strong> El sistema registra si cambió el borrador.</li>
+</ul>
+<table>
+  <thead><tr><th>Dónde se puede usar</th><th>Qué prepara</th><th>Quién aprueba</th></tr></thead>
+  <tbody>
+    <tr><td>Memoria del Instituto</td><td>La presentación y la síntesis por línea</td><td>Dirección del Instituto</td></tr>
+    <tr><td>Informe de un proyecto</td><td>La síntesis del periodo</td><td>El responsable del proyecto</td></tr>
+    <tr><td>Ficha de un producto</td><td>Las líneas de investigación que le corresponden</td><td>Quien puede editar el producto</td></tr>
+    <tr><td>Mi perfil</td><td>El resumen de investigación</td><td>Usted</td></tr>
+    <tr><td>Resultados de una encuesta</td><td>Los temas de las respuestas abiertas</td><td>Quien gestiona las encuestas</td></tr>
+    <tr><td>Autoevaluación</td><td>Posibles evidencias y el texto del juicio; el nivel lo pone la Comisión</td><td>Comisión de calidad y Dirección de Carrera</td></tr>
+  </tbody>
+</table>
+<div class="nota importante"><span class="rotulo">Dónde no se usa</span>
+  En auxiliaturas, asignación docente y carga horaria, evaluación del desempeño, tutoría, tribunales de grado, ni
+  en ninguna decisión sobre una persona.</div>
+</section>
+
+<section class="capitulo" id="ayuda">
+<header class="apertura"><span class="marca">§ayuda§</span><span class="numero">Capítulo 13</span><h1>Preguntas frecuentes y glosario</h1><p>Las dudas más comunes y las palabras que el sistema usa con un sentido preciso.</p></header>
+
+<h2>Preguntas frecuentes</h2>
+
+<h3>No veo una opción del menú que aparece en el manual</h3>
+<p>El menú muestra solo lo que su cuenta puede usar. Si cree que le falta un permiso, pídalo a la dirección que
+corresponda: ella lo solicita a la Administración del sistema.</p>
+
+<h3>Registré un artículo y mi coautor de la Carrera también: ¿quedó duplicado?</h3>
+<p>El sistema avisa al escribir el DOI o el arXiv. Si aun así ocurrió, quien lo registró segundo puede eliminar el
+suyo y usar <span class="ui">Sumarme como autor</span> en el que ya existía.</p>
+
+<h3>¿Por qué mi artículo no aparece en la memoria anual?</h3>
+<p>Revise cuatro cosas: que sea indexado o arbitrado, que esté aceptado o publicado, que el año sea correcto y que
+al menos un autor vinculado haya declarado la filiación institucional.</p>
+
+<h3>Mi carga horaria o mi categoría no son correctas</h3>
+<p>Solo la Dirección de Carrera puede corregirlas. Escríbale con el dato correcto y, si lo tiene, el número de
+resolución.</p>
+
+<h3>Soy estudiante y el enlace de ingreso dice que ya no sirve</h3>
+<p>Cada enlace vale 30 minutos y una sola vez. Pida otro desde la pantalla de ingreso. Si pidió varios, solo sirve
+el último.</p>
+
+<h3>¿Quién ve lo que registro?</h3>
+<p>Sus colegas ven su perfil y su producción en el directorio interno. Fuera de la Carrera solo se ve lo que usted
+publique con «Perfil público». El capítulo 12 lo detalla.</p>
+
+<h3>Borré algo por error</h3>
+<p>Si el sistema ofreció <span class="ui">Deshacer</span>, úselo en ese momento. Si pidió confirmación, la acción
+no se puede revertir; consulte a la Administración del sistema, que puede ver en la auditoría qué se hizo.</p>
+
+<h3>¿Puedo usar TAU en el teléfono?</h3>
+<p>Sí, todo el sistema funciona en el teléfono. Para tablas grandes o formularios largos, una computadora es más
+cómoda.</p>
+
+<h3>¿Cómo obtengo un informe en PDF con membrete?</h3>
+<p>Con <span class="ui">Imprimir / Guardar PDF</span>, eligiendo «Guardar como PDF» y desmarcando «Encabezados y pies
+de página». El capítulo 10 lo explica paso a paso.</p>
+
+<h2>Glosario</h2>
+<dl>
+  <div><dt>Carga contratada</dt><dd>Las horas al mes por las que una persona está vinculada a la Carrera, de 32 a 160, distribuidas por actividad.</dd></div>
+  <div><dt>Categoría</dt><dd>Titular, contratado(a), interino(a), invitado(a) o externo(a). La define la Dirección de Carrera.</dd></div>
+  <div><dt>Cohorte</dt><dd>El grupo de estudiantes que ingresó en un mismo semestre, como 2022-I.</dd></div>
+  <div><dt>Criterio, dimensión, indicador</dt><dd>Los tres niveles del marco de calidad. Una dimensión agrupa criterios; cada criterio se mide con indicadores.</dd></div>
+  <div><dt>DOI</dt><dd>El identificador permanente de una publicación, como 10.1234/abcd. Con él, el sistema trae sus datos.</dd></div>
+  <div><dt>Egresado(a)</dt><dd>En TAU, quien ya se tituló y tiene fecha de titulación.</dd></div>
+  <div><dt>Evidencia</dt><dd>Un documento, enlace o informe que respalda un criterio del marco de calidad.</dd></div>
+  <div><dt>Filiación</dt><dd>La institución con que un autor firma una publicación. Para los informes cuenta la de IIMAT, CMAT, FCPN o UMSA.</dd></div>
+  <div><dt>Gestión</dt><dd>Un periodo académico: I, II, INV (invierno) o VER (verano).</dd></div>
+  <div><dt>JCE (jornada completa equivalente)</dt><dd>La carga contratada dividida entre 160. Dos personas a medio tiempo suman una JCE.</dd></div>
+  <div><dt>MSC2020</dt><dd>La clasificación internacional de las áreas de la matemática, con códigos como 13-XX o 11M06.</dd></div>
+  <div><dt>ORCID</dt><dd>El identificador personal y gratuito de un investigador, como 0000-0002-1825-0097.</dd></div>
+  <div><dt>Paralelo</dt><dd>Cada grupo en que se dicta una materia en una gestión: A, B…</dd></div>
+  <div><dt>Producto</dt><dd>Un resultado de investigación: artículo, libro, capítulo, preprint, presentación, tesis dirigida, patente…</dd></div>
+  <div><dt>Proyecto institucional</dt><dd>El que se propone en la convocatoria de septiembre y acepta la Dirección del Instituto. Rige de octubre a septiembre.</dd></div>
+  <div><dt>RU</dt><dd>Registro universitario: el número que identifica a cada estudiante.</dd></div>
+  <div><dt>SIAC</dt><dd>Sistema Interno de Aseguramiento de la Calidad de la Carrera.</dd></div>
+  <div><dt>Vínculo</dt><dd>La relación de una persona con la Carrera, por periodos, con su categoría y su carga.</dd></div>
+</dl>
+</section>
+
+<section class="capitulo" id="observaciones">
+<header class="apertura"><span class="marca">§observaciones§</span><span class="numero">Su opinión</span><h1>Hoja de observaciones</h1><p>Lo que usted anote aquí decide qué se ajusta en la fase de adecuación del sistema.</p></header>
+
+<p class="entrada">Gracias por revisar TAU. No hace falta escribir mucho: una línea por observación basta. Si
+prefiere, puede copiar esta tabla en un documento o enviar sus observaciones por correo, con los mismos datos.</p>
+
+<table>
+  <tbody>
+    <tr><td style="width:38mm"><strong>Nombre</strong></td><td></td><td style="width:26mm"><strong>Fecha</strong></td><td style="width:36mm"></td></tr>
+    <tr><td><strong>Cómo usa el sistema</strong></td><td colspan="3">Docente · Investigador(a) · Estudiante · Egresado(a) · Dirección de Carrera · Dirección del Instituto ·
+      Coordinación académica · Comisión de calidad · Gestión de datos · Administración del sistema</td></tr>
+  </tbody>
+</table>
+
+<h2>Preguntas para orientar la revisión</h2>
+<ul>
+  <li>¿Pudo hacer sus tareas habituales sin ayuda? ¿En cuál se detuvo?</li>
+  <li>¿Alguna palabra del sistema no es la que usa la Carrera?</li>
+  <li>¿Algo de lo que el sistema hace contradice un reglamento o una práctica vigente?</li>
+  <li>¿Qué dato le piden con frecuencia y no encuentra en el sistema?</li>
+  <li>¿Ve algo que no debería poder ver, o le falta algo que sí necesita?</li>
+  <li>¿Qué quitaría?</li>
+</ul>
+
+<h2 style="break-before: page; margin-top: 0">Observaciones</h2>
+<p class="leyenda">Tipo: <strong>E</strong> error · <strong>C</strong> no se entiende · <strong>R</strong> no coincide con el reglamento o la práctica ·
+<strong>F</strong> falta · <strong>S</strong> sobra · <strong>P</strong> permisos</p>
+<table class="observaciones">
+  <thead><tr><th>Página o figura</th><th>Pantalla o tarea</th><th>Observación y propuesta</th><th style="width:14mm">Tipo</th></tr></thead>
+  <tbody>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+  </tbody>
+</table>
+
+<h2>Lo más importante</h2>
+<p>Si solo pudiera cambiarse una cosa del sistema, ¿cuál sería?</p>
+<div class="renglon"></div><div class="renglon"></div><div class="renglon"></div>
+
+<p style="margin-top:8mm">Entregue esta hoja a la <strong>Dirección de Carrera</strong> o a la <strong>Dirección del
+Instituto</strong>.</p>
+</section>
+
+</body>
+</html>

@@ -3168,3 +3168,28 @@ aviso.
   todos en ese programa (no tiene columna de programa): si Seguimiento Académico distingue a los de Matemática
   Aplicada, conviene agregarla.
 
+## 64. Manual de usuario para la revisión de los usuarios (11-nov-2026)
+
+Pedido del usuario: un manual para usuarios no técnicos, con la marca de la Carrera, que describa la organización del
+sistema, los roles, los tipos de usuario y sus privilegios, con lenguaje claro y capturas. **Los usuarios lo revisarán y
+su opinión abre una fase de adecuación del sistema.**
+
+- **Dónde:** `docs/manual/` (capítulos en HTML, estilo, capturas) y `docs/manual/Manual-de-usuario-TAU.pdf`, que arma
+  `scripts/manual.py` con Chrome, como los informes. 14 capítulos: qué es TAU, cómo está organizado (con un esquema),
+  tipos de usuario, los seis roles y la matriz de privilegios, primeros pasos, un capítulo por módulo, informes,
+  administración, privacidad, preguntas frecuentes y glosario, y una **hoja de observaciones** para la revisión.
+- **Marca:** portada y aperturas de capítulo con el panel azul marino hacia el turquesa y el rótulo rojo inclinado,
+  como el Manual de Identidad (§55 y §63); Montserrat para títulos y EB Garamond para el texto.
+- **Capturas:** 54, tomadas sobre una base de demostración (seed más datos ficticios de estudiantes, tutoría,
+  servicios, encuestas y calidad), con la cuenta que corresponde a cada pantalla (dirección, docente o estudiante) y
+  algunas en tamaño de teléfono.
+- **Trato:** de usted, como la interfaz. Lo que solo puede hacer un rol lleva un recuadro «Quién puede hacerlo».
+- La guía de uso (`docs/guia-de-uso.md`) no cambia: es la referencia completa; el manual, la versión ilustrada.
+
+### Decisiones del agente por confirmar
+- La matriz de privilegios del capítulo 3 resume `permisos.ACCIONES` y las reglas de cada ruta al 11-nov-2026, agrupada
+  en tareas legibles; está escrita a mano y hay que revisarla si cambian los permisos.
+- Siglas de los roles en la matriz (DC, DI, CA, CC, GD, AS).
+- El PDF pesa unos 9 MB por las capturas; si hace falta enviarlo por correo, se pueden reducir.
+- La hoja de observaciones pide página, sección, qué ocurre y qué propone; las respuestas se volcarán aquí como
+  decisiones de la fase de adecuación.

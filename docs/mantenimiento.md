@@ -395,6 +395,25 @@ Orden de carga, cada una con su vista previa: cuentas (Usuarios → Importar CSV
 (Importar historial, Dirección de Carrera), grados (Importar grados), capacitación (Calidad → Capacitación → Importar
 CSV) y productos (Productos → Importar BibTeX). La capacitación exige que la persona ya tenga vínculo.
 
+### 5.10 Manual de usuario
+
+`docs/manual/` tiene el manual para usuarios no técnicos: un archivo HTML por capítulo en `capitulos/`, el estilo de
+la marca en `estilo.css`, las capturas en `img/` y el resultado (`manual.html` y `Manual-de-usuario-TAU.pdf`). La
+[guía de uso](guia-de-uso.md) sigue siendo la referencia completa; el manual es la versión ilustrada y por roles.
+
+```sh
+uv run python scripts/manual.py              # base de demostración, capturas y PDF
+uv run python scripts/manual.py --solo-pdf   # tras corregir un capítulo: solo vuelve a armar el PDF
+```
+
+- Una captura es `<captura archivo="nombre" clase="media|chica|telefono">pie</captura>`; la lista de capturas (quién
+  ingresa, qué ruta, qué botón se pulsa antes) está en `CAPTURAS` de `scripts/manual.py`. Las figuras se numeran solas.
+- Las capturas usan una base temporal con el seed y los datos de `datos()` en el mismo script, todo ficticio. Nunca
+  `data/portal.db`: el manual se publica con el repositorio.
+- Cuando cambie una pantalla que sale en el manual, vuelva a tomar las capturas. Si cambian los permisos
+  (`permisos.ACCIONES`), revise la matriz de privilegios del capítulo 3, que está escrita a mano.
+- El índice lleva números de página si está `pdftotext` (poppler); sin él, sale sin números.
+
 ## 6. Problemas frecuentes
 
 | Síntoma | Causa probable | Qué hacer |

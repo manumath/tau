@@ -1,0 +1,145 @@
+<section class="capitulo" id="investigacion" data-numero="5" data-titulo="Investigación"
+         data-resumen="Su perfil, sus productos y actividades, los proyectos y la convocatoria anual del Instituto.">
+
+<p class="entrada">Este módulo es de quienes investigan. Usted registra lo que produce y el sistema arma con eso su
+currículum, los informes de sus proyectos y la memoria del Instituto.</p>
+
+<h2>Mi perfil</h2>
+<p>Se abre desde el menú del usuario → <span class="ui">Mi perfil</span>. Cada sección se edita con su botón
+<span class="ui">Editar</span>. El indicador «Perfil completo» dice qué falta y lleva a donde se completa.</p>
+<captura archivo="perfil">El perfil de una investigadora: datos básicos, grados académicos y, más abajo, identificadores, áreas y resumen.</captura>
+<table>
+  <thead><tr><th>Sección</th><th>Qué registra</th></tr></thead>
+  <tbody>
+    <tr><td>Datos básicos</td><td>Su nombre. El <strong>cargo</strong> y la <strong>unidad o grupo</strong> no se escriben: el sistema los calcula de su vínculo y sus proyectos.</td></tr>
+    <tr><td>Grados académicos</td><td>Todos sus grados, con título, institución, país y año. Los piden los informes de calidad.</td></tr>
+    <tr><td>Identificadores</td><td>ORCID, MathSciNet, zbMATH, arXiv, Google Scholar y página web. Puede pegar la dirección de su perfil: el sistema guarda solo el identificador.</td></tr>
+    <tr><td>Líneas y áreas</td><td>Las líneas de investigación del Instituto en que trabaja y sus áreas según la clasificación MSC2020.</td></tr>
+    <tr><td>Resumen y foto</td><td>Un texto sobre su investigación (admite fórmulas en LaTeX) y una foto.</td></tr>
+    <tr><td>Privacidad y avisos</td><td>Si publica su perfil en la página pública, y si recibe avisos por correo.</td></tr>
+  </tbody>
+</table>
+<div class="nota"><span class="rotulo">Lo que usted no puede cambiar</span>
+  Su <strong>vínculo</strong> (categoría y fechas) y su <strong>fecha de nacimiento</strong> los registra la
+  Carrera. Si algo no es correcto, pida la corrección a la Dirección de Carrera. La fecha de nacimiento solo la ven
+  usted y la Administración del sistema; los informes usan tramos de edad.</div>
+
+<h2>Productos</h2>
+<p><span class="ruta">Investigación → Productos</span> lista los artículos, libros, capítulos, reportes, preprints,
+presentaciones, tesis dirigidas, patentes y demás de los que usted es autor(a).</p>
+<captura archivo="productos">«Mis productos». Cada producto muestra su tipo, su estado y, en verde, si cuenta para el informe del Instituto.</captura>
+
+<h3>Registrar un producto</h3>
+<p>Hay tres maneras, de la más rápida a la más manual:</p>
+<ol class="pasos">
+  <li><strong>Con el DOI o el identificador arXiv.</strong> Pulse <span class="ui">Nuevo producto</span>, pegue el DOI
+    (o su dirección web) en <span class="ui">Importar</span> y presione Enter. El formulario se llena solo con el
+    título, los autores, la revista, el año y las páginas. Revíselo y guarde.</li>
+  <li><strong>Desde un archivo BibTeX.</strong> En <span class="ui">Importar o exportar → Importar BibTeX</span>, suba su
+    archivo <code>.bib</code> (el de LaTeX, o el que exportan Google Scholar, MathSciNet o Zotero). Verá cada entrada
+    como nueva, ya registrada o con error, y elige cuáles crear.</li>
+  <li><strong>A mano.</strong> Complete el formulario: tipo, año, título, autores, estado y medio.</li>
+</ol>
+<captura archivo="producto-nuevo" clase="media">El formulario de un producto nuevo, con el recuadro para importar por DOI o arXiv.</captura>
+
+<div class="nota consejo"><span class="rotulo">Toda su producción de una vez</span>
+  Si tiene ORCID en su perfil, <span class="ui">Importar o exportar → Buscar en OpenAlex</span> encuentra sus obras de
+  los últimos años en ese catálogo abierto. Marque las que son suyas y regístrelas juntas. Revise cada una: a veces
+  OpenAlex atribuye obras por error.</div>
+
+<h3>Lo que conviene saber</h3>
+<ul>
+  <li><strong>Un producto con varios autores de la Carrera se registra una sola vez</strong> y aparece en el perfil de
+    cada uno. Si al escribir el DOI el sistema avisa que ya existe, use <span class="ui">Sumarme como autor</span>.</li>
+  <li><strong>Filiación.</strong> Junto a cada autor de la Carrera se indica si firmó la publicación con la filiación
+    institucional (IIMAT, CMAT, FCPN o UMSA). En los informes institucionales solo cuenta un producto si al menos un
+    autor vinculado firmó con ella.</li>
+  <li><strong>Cuenta para el informe</strong> el producto indexado o arbitrado que ya está aceptado o publicado. Lleva
+    una etiqueta verde.</li>
+  <li><strong>Revista.</strong> En un artículo, busque la revista en el catálogo del Instituto. Si está verificada, sus
+    índices se toman del catálogo. Si no está, propóngala: quedará pendiente hasta que la Dirección del Instituto la
+    verifique.</li>
+  <li><strong>Mes de publicación.</strong> Es opcional, pero sin él un producto no se puede ubicar en los informes de
+    octubre a septiembre.</li>
+  <li><strong>Preprint y versión publicada.</strong> Si registró un preprint y luego se publica, registre el artículo
+    aparte y enlácelos desde la ficha del preprint. El currículum mostrará solo la versión publicada.</li>
+  <li><strong>Adjuntos.</strong> En la ficha puede adjuntar PDF o imágenes de hasta 20 MB. Solo los ven quienes pueden
+    editar el producto.</li>
+</ul>
+
+<h2>Actividades</h2>
+<p><span class="ruta">Investigación → Actividades</span> reúne seminarios, congresos, escuelas, estancias, redes de
+investigación, transferencia de conocimiento, premios, arbitrajes y prestación de servicios. Indique el tipo, las
+fechas, el lugar, la modalidad, el ámbito y los participantes con su rol (expositor, organizador, asistente…).</p>
+<captura archivo="actividades">«Mis actividades», con el rol de la persona en cada una.</captura>
+<div class="nota consejo"><span class="rotulo">Una charla en un congreso</span>
+  Registre el congreso como <strong>actividad</strong> y la charla como <strong>producto</strong> de tipo
+  «Presentación», vinculada a esa actividad.</div>
+
+<h2>Proyectos</h2>
+<table>
+  <thead><tr><th></th><th>Proyecto individual</th><th>Proyecto institucional</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Quién lo crea</strong></td><td>Usted, con <span class="ui">Nuevo proyecto individual</span></td><td>Se propone en la convocatoria y lo acepta la Dirección del Instituto</td></tr>
+    <tr><td><strong>Aprobación</strong></td><td>No necesita</td><td>Aceptado, aceptado con condiciones o rechazado</td></tr>
+    <tr><td><strong>Clases</strong></td><td>Libre</td><td>De investigación o de interacción social</td></tr>
+    <tr><td><strong>Periodo</strong></td><td>El que usted indique</td><td>De octubre a septiembre</td></tr>
+    <tr><td><strong>Se puede eliminar</strong></td><td>Sí, por su responsable</td><td>No: sigue su ciclo (continuidad o término)</td></tr>
+  </tbody>
+</table>
+<captura archivo="proyectos">«Proyectos»: la convocatoria, los proyectos en que la persona participa y sus propuestas institucionales.</captura>
+
+<h3>Proponer un proyecto institucional</h3>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Investigadores <strong>titulares y contratados</strong>. Quien propone queda como responsable.</div>
+<ol class="pasos">
+  <li>La convocatoria está abierta <strong>todo septiembre</strong>. El borrador se puede preparar en cualquier momento;
+    solo el envío debe hacerse dentro del plazo.</li>
+  <li>Pulse <span class="ui">Proponer proyecto institucional</span>, elija la clase y escriba el nombre.</li>
+  <li>Complete las secciones: datos básicos y líneas de investigación, objetivos, metodología, resultados esperados,
+    actividades programadas y bibliografía. Una barra muestra qué requisitos faltan para enviar.</li>
+  <li>Agregue al equipo en <span class="ui">Gestionar participantes</span> y envíe. Después de enviar no se puede
+    modificar.</li>
+  <li>La Dirección del Instituto la acepta, la acepta con condiciones (usted corrige y reenvía) o la rechaza con el
+    motivo. La decisión le llega como aviso.</li>
+</ol>
+<div class="nota importante"><span class="rotulo">Continuidad</span>
+  En septiembre, el responsable de un proyecto que termina ve el botón <span class="ui">Proponer continuidad</span>.
+  <strong>Si no la presenta, el proyecto concluye el 30 de septiembre.</strong></div>
+
+<h3>Vincular su trabajo a un proyecto</h3>
+<p>En el formulario de un producto o de una actividad, marque el proyecto en <span class="ui">Vincular a
+proyectos</span>. Queda <strong>pendiente</strong> hasta que un responsable lo apruebe. Si lo rechaza, verá el motivo;
+corrija y vuelva a guardar.</p>
+
+<h3>Si usted es responsable de un proyecto</h3>
+<captura archivo="proyecto-ficha">La ficha de un proyecto institucional, con sus pestañas: Resumen, Participantes, Actividades, Productos, Plan y Pendientes.</captura>
+<ul>
+  <li>En <span class="ui">Pendientes</span>, apruebe o rechace lo que su equipo vinculó al proyecto.</li>
+  <li>En <span class="ui">Participantes</span>, agregue personas, cambie roles o dé de baja. En los proyectos
+    institucionales indique cuántas horas al mes dedica cada persona (en múltiplos de 32). Esas horas salen de la
+    carga de investigación o de extensión que la Dirección de Carrera registró en su vínculo.</li>
+  <li>En <span class="ui">Productos</span>, indique si cada publicación <strong>agradece al proyecto</strong>: los
+    fondos lo exigen, junto con la filiación.</li>
+  <li>En <span class="ui">Plan</span>, marque como realizadas las actividades previstas en la propuesta.</li>
+  <li><span class="ui">Informe</span> genera el informe de avance, listo para imprimir.</li>
+</ul>
+
+<h2>Decidir las propuestas</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Dirección del Instituto</strong>. La Comisión de calidad puede verlas.</div>
+<p><span class="ruta">Investigación → Propuestas</span> es la bandeja de propuestas institucionales por periodo. En
+cada una se puede aceptar, aceptar con condiciones o rechazar. En la misma página se ajusta el plazo de la
+convocatoria y se descargan todas las propuestas en una planilla para el comité.</p>
+<captura archivo="propuestas">La bandeja de propuestas institucionales, con el plazo de la convocatoria.</captura>
+
+<h2>Investigadores, estudiantes y coautores</h2>
+<p><span class="ruta">Investigación → Investigadores</span> es el directorio interno. Desde ahí se llega a dos listas:</p>
+<ul>
+  <li><strong>Estudiantes y tesistas:</strong> registre a los estudiantes que participan en su investigación, con sus
+    estudios. Las tesis que dirige se registran como producto «Tesis dirigida», con el tesista primero.</li>
+  <li><strong>Coautores externos:</strong> las personas sin cuenta, con su institución y su país. Con eso los informes
+    miden la colaboración internacional.</li>
+</ul>
+<captura archivo="investigadores">El directorio de investigadores.</captura>
+</section>
