@@ -3243,7 +3243,7 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 ### Etapas (un commit cada una)
 1. (hecha, 12-nov-2026) Migración (reforma, estados), lista con filtros, permisos y auditoría; los planes 2017 pasan a vigentes.
 2. (hecha, 13-nov-2026) Asistente de nueva reforma y datos generales del borrador.
-3. Editor de malla con validaciones.
+3. (hecha, 13-nov-2026) Editor de malla con validaciones.
 4. Menciones.
 5. Equivalencias, puesta en vigencia y cierre, y efectos en oferta y cohortes.
 6. Pruebas de navegador por rol, accesibilidad, capturas, capítulo del manual, guía y este PLAN.
@@ -3275,3 +3275,20 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 - **Datos generales del borrador** (modal) y **eliminación** de un borrador (con la reforma y el programa que queden
   sin planes). Un plan vigente, en cierre o cerrado no se edita ni se elimina por aquí.
 - La **importación por CSV** pasa a la etapa 3, como «Importar CSV» dentro de la malla de un borrador.
+
+### Etapa 3 (hecha): editor de malla y lista de verificación
+- **Migración 0067:** `plan_estudios.duracion_semestres` y `plan_ciclo` (ciclos como rangos de semestres; el ciclo de cada
+  asignatura se deduce y se vuelve a calcular al cambiar ciclos o semestres). Se migran los ciclos que ya tenían los planes.
+- **Editor** (`/docencia/planes/{id}/malla`, `app/academico/malla.py` y `rutas/malla.py`): una tarjeta por semestre, listas
+  de electivas, formulario por fila (tipo, semestre, sigla, nombre, línea formativa, horas o créditos, requisitos elegidos
+  entre las asignaturas del plan, «egresado»), ciclos, agregar semestre e importar CSV (reemplaza la malla; sin vista
+  previa: pide confirmación y no cambia nada si hay errores). Solo un plan en elaboración y solo quien elabora planes.
+- **Sigla:** formato `AAA-000` (2 a 4 letras); una nueva se agrega al catálogo (con `de_la_carrera` si empieza por MAT);
+  el nombre del catálogo no se cambia desde aquí (si el nombre escrito contradice al catálogo, se rechaza).
+- **Lista de verificación** (`malla.verificar`): datos generales y resolución, hay asignaturas, siglas válidas, requisitos
+  existentes, sin requisitos circulares, todos los semestres con asignaturas, casillas con su lista de electivas, horas o
+  créditos en cada fila; avisos (no impiden): totales declarados distintos de la suma y observaciones pendientes.
+  `malla.listo_para_vigencia` es lo que usará la etapa 5.
+- Quitar una asignatura que otras piden como requisito no las modifica: quedan marcadas en la lista de verificación.
+- **Por confirmar:** reordenar asignaturas dentro de un semestre (hoy van en el orden en que se agregan) y cambiar el
+  nombre de una asignatura del catálogo (afectaría a todos los planes).

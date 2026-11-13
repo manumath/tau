@@ -7,6 +7,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.academico import planes, reformas
+from app.academico.rutas.malla import panel_verificacion
 from app.comun import permisos
 from app.comun.componentes.layout import CERRAR, ID_MODAL, campo, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -281,7 +282,8 @@ def get(auth, pid: int):
         P(" · ".join(x for x in (p["nombre"], p["resolucion"], _vigencia(p), _medida(p),
                                  f"Nota mínima de aprobación: {p['nota_minima']} %" if p["nota_minima"] else None) if x),
           cls=(TextPresets.muted_sm, "mb-6")),
-        Div(tarjeta_observaciones(p, auth),
+        Div(panel_verificacion(pid) if p["estado"] == "elaboracion" and planes.puede_elaborar(auth) else "",
+            tarjeta_observaciones(p, auth),
             Card(H3("Totales", cls="text-base font-semibold mb-2"),
                  fh.Table(fh.Thead(fh.Tr(fh.Th(""), fh.Th("Documento"), fh.Th("Suma del plan"),
                                         fh.Th(""))), fh.Tbody(*filas_tot), cls="uk-table uk-table-small"),
@@ -298,7 +300,9 @@ def get(auth, pid: int):
 def _acciones_borrador(p, auth):
     if p["estado"] != "elaboracion" or not planes.puede_elaborar(auth):
         return []
-    return [Button(UkIcon("pencil", height=14, width=14), "Editar datos generales", hx_get=f"{BASE}/{p['id']}/editar",
+    return [A(UkIcon("layout-grid", height=14, width=14), "Editar la malla", href=f"{BASE}/{p['id']}/malla",
+              cls="uk-btn uk-btn-primary uk-btn-small inline-flex items-center gap-1"),
+            Button(UkIcon("pencil", height=14, width=14), "Editar datos generales", hx_get=f"{BASE}/{p['id']}/editar",
                    hx_target=f"#{ID_MODAL}", hx_swap="innerHTML", cls=(ButtonT.default, ButtonT.sm)),
             Button(UkIcon("trash-2", height=14, width=14), "Eliminar plan", hx_post=f"{BASE}/{p['id']}/eliminar",
                    hx_confirm="¿Eliminar este plan en elaboración con todas sus asignaturas? No se puede deshacer.",
@@ -307,7 +311,7 @@ def _acciones_borrador(p, auth):
 
 def _form_datos(p, errores=(), v=None):
     v = v or {c: ("" if p[c] is None else str(p[c])) for c in (
-        "nombre", "resolucion", "vigente_desde", "sistema", "semanas_semestre", "horas_por_credito", "nota_minima",
+        "nombre", "resolucion", "vigente_desde", "sistema", "duracion_semestres", "semanas_semestre", "horas_por_credito", "nota_minima",
         "total_teoricas", "total_practicas", "total_laboratorio", "total_creditos")} | {"titulo": p.get("titulo") or ""}
     def entrada(nombre, **kw):
         return Input(name=nombre, value=v.get(nombre, ""), cls="uk-input", **kw)
@@ -321,6 +325,7 @@ def _form_datos(p, errores=(), v=None):
             campo("Se mide en", Select(Option("Horas semanales", value="horas", selected=v.get("sistema") == "horas"),
                                        Option("Créditos", value="creditos", selected=v.get("sistema") == "creditos"),
                                        name="sistema", cls="uk-select")),
+            campo("Duración en semestres", entrada("duracion_semestres", inputmode="numeric")),
             campo("Semanas del semestre (horas)", entrada("semanas_semestre", inputmode="numeric")),
             campo("Horas por crédito (créditos)", entrada("horas_por_credito", inputmode="numeric")),
             campo("Nota mínima de aprobación", entrada("nota_minima", inputmode="numeric")),

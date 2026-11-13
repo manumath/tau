@@ -80,9 +80,7 @@ def asignaturas(pid: int) -> list[dict]:
 def por_semestre(pid: int) -> list[tuple[int, str | None, list[dict]]]:
     """[(semestre, ciclo, filas)] de las asignaturas y casillas ubicadas en un semestre."""
     res = []
-    for f in asignaturas(pid):
-        if f["semestre"] is None:
-            continue
+    for f in sorted((f for f in asignaturas(pid) if f["semestre"] is not None), key=lambda f: f["semestre"]):
         if not res or res[-1][0] != f["semestre"]:
             res.append((f["semestre"], f["ciclo"], []))
         res[-1][2].append(f)
@@ -162,6 +160,10 @@ def actualizar_datos(pid: int, f: dict, uid: int) -> list[str]:
     if sistema not in ("horas", "creditos"):
         errores.append("Elija cómo se mide el plan: horas o créditos.")
     anio = _entero(f.get("vigente_desde"), reformas_anio_min(), 2100, "Año en que rige", errores, True)
+    duracion = _entero(f.get("duracion_semestres"), 1, 20, "Duración en semestres", errores)
+    usados = get_db().q("SELECT MAX(semestre) m FROM plan_asignatura WHERE plan_id = ?", [pid])[0]["m"]
+    if duracion and usados and duracion < usados:
+        errores.append(f"Duración en semestres: el plan ya tiene asignaturas en el semestre {usados}.")
     semanas = _entero(f.get("semanas_semestre"), 1, 60, "Semanas del semestre", errores, sistema == "horas")
     por_credito = _entero(f.get("horas_por_credito"), 1, 200, "Horas por crédito", errores, sistema == "creditos")
     nota = _entero(f.get("nota_minima"), 0, 100, "Nota mínima de aprobación", errores)
@@ -172,9 +174,9 @@ def actualizar_datos(pid: int, f: dict, uid: int) -> list[str]:
     get_db().execute(
         """UPDATE plan_estudios SET nombre = ?, resolucion = ?, vigente_desde = ?, sistema = ?, semanas_semestre = ?,
            horas_por_credito = ?, nota_minima = ?, total_teoricas = ?, total_practicas = ?, total_laboratorio = ?,
-           total_creditos = ? WHERE id = ?""",
+           total_creditos = ?, duracion_semestres = ? WHERE id = ?""",
         [nombre, resolucion or None, anio, sistema, semanas if sistema == "horas" else None,
-         por_credito if sistema == "creditos" else None, nota, *totales_.values(), pid])
+         por_credito if sistema == "creditos" else None, nota, *totales_.values(), duracion, pid])
     get_db().execute("UPDATE programa SET titulo = ? WHERE id = ?", [titulo or None, p["programa_id"]])
     auditar(uid, "editar_plan", "plan_estudios", pid, f"{p['programa']} · {nombre}")
     return []

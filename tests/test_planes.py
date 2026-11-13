@@ -304,3 +304,155 @@ def test_editar_y_eliminar_borrador(client, app):
     assert planes.obtener(pid) is None
     assert get_db().q("SELECT COUNT(*) n FROM reforma_curricular WHERE id = ?", [rid])[0]["n"] == 0   # sin planes
     assert get_db().q("SELECT COUNT(*) n FROM plan_asignatura WHERE plan_id = ?", [pid])[0]["n"] == 0
+
+
+# --- PLAN §65, etapa 3: editor de malla y lista de verificación ----------------------------------------------------
+
+def _borrador_de(programa, modo="copia"):
+    from app.academico import reformas
+    ids = {p["nombre"]: p["id"] for p in get_db().q("SELECT id, nombre FROM programa")}
+    rid, errores = reformas.crear(1, "Plan 2027", "", "2027", {ids[programa]: modo}, [])
+    assert not errores
+    return get_db().q("SELECT id FROM plan_estudios WHERE reforma_id = ?", [rid])[0]["id"]
+
+
+def _niveles(pid):
+    from app.academico import malla
+    return {v["clave"]: v["nivel"] for v in malla.verificar(pid)}
+
+
+def test_copia_trae_duracion_y_ciclos(app):
+    from app.academico import malla
+    pid = _borrador_de("Licenciatura en Matemática")
+    assert planes.obtener(pid)["duracion_semestres"] == 8
+    assert [(c["nombre"], c["semestre_desde"], c["semestre_hasta"]) for c in malla.ciclos(pid)] == [
+        ("básico", 1, 4), ("intermedio", 5, 6), ("orientación", 7, 8)]
+    assert _niveles(pid)["datos"] == "falta"             # sin resolución
+    assert _niveles(pid)["requisitos"] == "falta"        # el plan 2017 trae requisitos que no existen
+
+
+def test_guardar_y_quitar_filas(app):
+    from app.academico import malla
+    pid = _borrador_de("Maestría en Matemática", "vacio")
+    get_db().execute("UPDATE plan_estudios SET duracion_semestres = 2 WHERE id = ?", [pid])
+    assert malla.guardar_fila(pid, None, {"tipo": "obligatoria", "semestre": "1", "sigla": "mat-901",
+                                         "nombre": "Topología", "creditos": "6"}, [], 1) == []
+    nueva = get_db().q("SELECT * FROM asignatura WHERE sigla = 'MAT-901'")[0]
+    assert (nueva["departamento"], nueva["de_la_carrera"]) == ("MAT", 1)
+    assert malla.guardar_fila(pid, None, {"tipo": "obligatoria", "semestre": "2", "sigla": "FIS-901",
+                                         "nombre": "Física", "creditos": "6"}, ["MAT-901"], 1) == []
+    assert get_db().q("SELECT de_la_carrera FROM asignatura WHERE sigla = 'FIS-901'")[0]["de_la_carrera"] == 0
+    fis = next(f for f in planes.asignaturas(pid) if f["sigla"] == "FIS-901")
+    assert fis["requisitos"] == ["MAT-901"] and fis["ciclo"] is None
+    # Errores: duplicada, sigla mal escrita, nombre que contradice al catálogo, requisito ajeno, semestre fuera.
+    base = {"tipo": "obligatoria", "semestre": "1", "sigla": "MAT-901", "creditos": "6"}
+    assert "ya está en este plan" in malla.guardar_fila(pid, None, base, [], 1)[0]
+    assert "debe ser como" in malla.guardar_fila(pid, None, base | {"sigla": "M1"}, [], 1)[0]
+    assert "ya existe en el catálogo" in malla.guardar_fila(pid, None, base | {"sigla": "MAT-111", "nombre": "Otro"}, [], 1)[0]
+    assert "no está en el plan" in malla.guardar_fila(pid, None, base | {"sigla": "MAT-902", "nombre": "X"}, ["MAT-999"], 1)[0]
+    assert "dura 2 semestres" in malla.guardar_fila(pid, None, base | {"sigla": "MAT-902", "nombre": "X", "semestre": "3"}, [], 1)[0]
+    assert "es una sigla nueva" in malla.guardar_fila(pid, None, base | {"sigla": "MAT-903"}, [], 1)[0]
+    assert get_db().q("SELECT COUNT(*) n FROM asignatura WHERE sigla IN ('MAT-902', 'MAT-903')")[0]["n"] == 0
+    # Una sigla del catálogo se reutiliza sin escribir el nombre; quitarla avisa quién la pedía.
+    assert malla.guardar_fila(pid, None, {"tipo": "trabajo_final", "semestre": "2", "sigla": "MAT-111", "creditos": "12"},
+                              [], 1) == []
+    mat901 = next(f for f in planes.asignaturas(pid) if f["sigla"] == "MAT-901")
+    assert malla.quitar_fila(pid, mat901["id"], 1) == 1          # FIS-901 lo pedía
+    assert "MAT-901" in _niveles_detalle(pid, "requisitos")
+    assert malla.quitar_fila(pid, mat901["id"], 1) is None        # ya no está
+    # El plan vigente no se toca.
+    vigente = _plan("Licenciatura en Matemática")["id"]
+    assert malla.guardar_fila(vigente, None, base, [], 1) == ["Solo se edita la malla de un plan en elaboración."]
+
+
+def _niveles_detalle(pid, clave):
+    from app.academico import malla
+    return next(v["detalle"] for v in malla.verificar(pid) if v["clave"] == clave)
+
+
+def test_verificacion_detecta_ciclos_semestres_y_electivas(app):
+    from app.academico import malla
+    pid = _borrador_de("Maestría en Matemática", "vacio")
+    get_db().execute("UPDATE plan_estudios SET duracion_semestres = 3, resolucion = 'HCU 1/2027' WHERE id = ?", [pid])
+    f = {"tipo": "obligatoria", "semestre": "1", "creditos": "6"}
+    assert malla.guardar_fila(pid, None, f | {"sigla": "MAT-801", "nombre": "A"}, [], 1) == []
+    assert malla.guardar_fila(pid, None, f | {"sigla": "MAT-802", "nombre": "B"}, ["MAT-801"], 1) == []
+    a = next(x for x in planes.asignaturas(pid) if x["sigla"] == "MAT-801")
+    assert malla.guardar_fila(pid, a["id"], f | {"sigla": "MAT-801"}, ["MAT-802"], 1) == []
+    assert malla.guardar_fila(pid, None, {"tipo": "casilla_electiva_a", "semestre": "2", "creditos": "6"}, [], 1) == []
+    n = _niveles(pid)
+    assert n["ciclos_requisitos"] == "falta" and n["semestres"] == "falta" and n["electivas"] == "falta"
+    assert "MAT-801 → MAT-802 → MAT-801" in _niveles_detalle(pid, "ciclos_requisitos") or \
+        "MAT-802 → MAT-801 → MAT-802" in _niveles_detalle(pid, "ciclos_requisitos")
+    assert "3" in _niveles_detalle(pid, "semestres")
+    assert not malla.listo_para_vigencia(pid)
+
+
+def test_plan_listo_para_vigencia(app):
+    from app.academico import malla
+    pid = _borrador_de("Maestría en Matemática", "vacio")
+    get_db().execute("UPDATE plan_estudios SET duracion_semestres = 1, resolucion = 'HCU 1/2027' WHERE id = ?", [pid])
+    assert malla.guardar_fila(pid, None, {"tipo": "obligatoria", "semestre": "1", "sigla": "MAT-801", "nombre": "A",
+                                         "creditos": "6"}, [], 1) == []
+    assert malla.listo_para_vigencia(pid), malla.verificar(pid)
+
+
+def test_ciclos_del_plan(app):
+    from app.academico import malla
+    pid = _borrador_de("Licenciatura en Matemática")
+    assert "compartir" in malla.guardar_ciclos(pid, [{"nombre": "A", "desde": "1", "hasta": "4"},
+                                                     {"nombre": "B", "desde": "4", "hasta": "8"}], 1)[0]
+    assert malla.guardar_ciclos(pid, [{"nombre": "Básico", "desde": "1", "hasta": "2"},
+                                      {"nombre": "Superior", "desde": "3", "hasta": "8"}, {}], 1) == []
+    ciclos = {f["semestre"]: f["ciclo"] for f in planes.asignaturas(pid) if f["semestre"]}
+    assert ciclos[1] == ciclos[2] == "Básico" and ciclos[3] == ciclos[8] == "Superior"
+    assert [c for _, c, _ in planes.por_semestre(pid)][:3] == ["Básico", "Básico", "Superior"]
+
+
+def test_importar_csv_de_malla(app):
+    from app.academico import malla
+    pid = _borrador_de("Licenciatura en Matemática", "vacio")
+    n, errores = malla.importar_csv(pid, malla.plantilla_csv(), 1)
+    assert errores == [] and n == 4
+    assert planes.obtener(pid)["duracion_semestres"] == 8                       # no se acorta
+    assert [f["sigla"] for f in planes.asignaturas(pid) if f["sigla"]] == ["MAT-111", "MAT-131", "MAT-392"]
+    n, errores = malla.importar_csv(pid, "sigla,nombre,tipo,semestre\nMAT-1,x,y,1\n", 1)
+    assert n == 0 and "Faltan columnas" in errores[0]
+    mal = malla.plantilla_csv() + "MAT-111,,obligatoria,3,,4,,,,\nXX,,rara,,,,,,,\n"
+    n, errores = malla.importar_csv(pid, mal, 1)
+    assert n == 0 and any("repetida" in e for e in errores) and any("no es válido" in e for e in errores)
+    assert len([f for f in planes.asignaturas(pid) if f["sigla"]]) == 3            # no cambió nada
+
+
+def test_pantallas_de_la_malla(client, app):
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    pid = _borrador_de("Maestría en Matemática", "vacio")
+    login(client, "inv@test.cl", PASS_TEMP)
+    for ruta in (f"/docencia/planes/{pid}/malla", f"/docencia/planes/{pid}/malla/fila/nueva?semestre=1",
+                 f"/docencia/planes/{pid}/malla/ciclos", f"/docencia/planes/{pid}/malla/importar"):
+        assert client.get(ruta, headers=HX).status_code == 403
+    assert client.post(f"/docencia/planes/{pid}/malla/fila", headers=HX, data={"tipo": "obligatoria"}).status_code == 403
+    permisos.asignar(emmy, "coordinacion_academica", unidades.id_de("CMAT"))
+    r = client.get(f"/docencia/planes/{pid}/malla")
+    assert "Para poner en vigencia" in r.text and "Agregar un semestre" in r.text
+    assert "Agregar al plan" in client.get(f"/docencia/planes/{pid}/malla/fila/nueva?semestre=1", headers=HX).text
+    r = client.post(f"/docencia/planes/{pid}/malla/fila", headers=HX, data={"tipo": "obligatoria", "semestre": "1",
+                                                                            "sigla": "x"})
+    assert "debe ser como" in r.text
+    r = client.post(f"/docencia/planes/{pid}/malla/fila", headers=HX, data={
+        "tipo": "obligatoria", "semestre": "1", "sigla": "MAT-801", "nombre": "Análisis", "creditos": "6"})
+    assert 'id="malla"' in r.text and "MAT-801" in r.text and "Análisis" in r.text
+    fid = next(f["id"] for f in planes.asignaturas(pid) if f["sigla"] == "MAT-801")
+    assert "Editar en el plan" in client.get(f"/docencia/planes/{pid}/malla/fila/{fid}", headers=HX).text
+    r = client.post(f"/docencia/planes/{pid}/malla/semestre", headers=HX)
+    assert "Quinto semestre" in r.text or "semestre" in r.text
+    assert "Panel" not in client.get(f"/docencia/planes/{pid}").text
+    assert "Para poner en vigencia" in client.get(f"/docencia/planes/{pid}").text and \
+        "Editar la malla" in client.get(f"/docencia/planes/{pid}").text
+    r = client.post(f"/docencia/planes/{pid}/malla/fila/{fid}/quitar", headers=HX)
+    assert "MAT-801" not in r.text
+    # Un plan vigente no tiene editor.
+    vigente = _plan("Licenciatura en Matemática")["id"]
+    assert client.get(f"/docencia/planes/{vigente}/malla").status_code == 404
+    assert "Editar la malla" not in client.get(f"/docencia/planes/{vigente}").text

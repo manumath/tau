@@ -495,6 +495,23 @@ Todos los planes nacen **en elaboración**. En la ficha de un borrador, **Editar
 resolución, el título que otorga el programa, cómo se mide (horas o créditos), la nota mínima y los totales que declara
 el documento; **Eliminar plan** lo borra con todo lo suyo (un plan vigente, en cierre o cerrado no se elimina nunca).
 
+**La malla de un borrador.** **Editar la malla** abre el editor: una tarjeta por semestre (con su ciclo), las listas de
+electivas y, arriba, la lista **«Para poner en vigencia»**, que dice qué falta (en rojo lo que impide ponerlo en
+vigencia, en ámbar lo que conviene revisar) y se actualiza con cada cambio.
+- **Agregar** (en cada semestre) o el lápiz de cada fila abren un formulario: tipo (obligatoria, trabajo final, casilla
+  de electiva o electiva de una lista), semestre, **sigla** (como «MAT-111»), nombre, horas teóricas, prácticas y de
+  laboratorio (o créditos, según cómo se mida el plan) y **requisitos**, que se marcan entre las demás asignaturas del
+  plan (o «Exige ser egresado»). Si la sigla ya existe en el catálogo, se usa su nombre y se deja el nombre en blanco;
+  si es nueva, se escribe el nombre y queda agregada al catálogo, que comparten todos los planes. Una casilla de electiva
+  no lleva sigla: se llena con una electiva de la lista del mismo grupo.
+- **Ciclos** define los ciclos del plan (por ejemplo, básico del semestre 1 al 4); el ciclo de cada asignatura se deduce
+  de su semestre. **Agregar un semestre** amplía la duración del plan.
+- **Importar CSV** reemplaza toda la malla por la de un archivo (las mismas columnas de `datos/planes`; hay plantilla).
+  Pide confirmación y, si el archivo tiene errores, no cambia nada y los lista.
+- Lo que se comprueba: datos generales completos (incluida la resolución), siglas con formato válido, requisitos que
+  existen en el plan y sin ciclos (A pide B y B pide A), todos los semestres con asignaturas, casillas de electiva con su
+  lista, horas o créditos en cada fila, y —como aviso— que los totales declarados cuadren con la suma.
+
 **Gestiones** (en el menú, para la Dirección de Carrera y la Coordinación): I y II (semestres), INV (invierno, julio) y VER (verano, en
 enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la gestión 2026). «Crear
 las gestiones del año» propone fechas que se ajustan al calendario aprobado y oferta ambos

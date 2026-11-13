@@ -34,7 +34,9 @@ def copiar_plan(origen: int, programa_id: int, nombre: str, reforma_id: int, ani
     db = get_db()
     o = db.q("SELECT * FROM plan_estudios WHERE id = ?", [origen])[0]
     nuevo = crear_plan(programa_id, nombre, reforma_id, anio, resolucion, o["sistema"], o["semanas_semestre"],
-                       o["horas_por_credito"], o["nota_minima"])
+                       o["horas_por_credito"], o["nota_minima"], o["duracion_semestres"])
+    for c in db.q("SELECT nombre, semestre_desde, semestre_hasta FROM plan_ciclo WHERE plan_id = ?", [origen]):
+        db.t.plan_ciclo.insert(plan_id=nuevo, **c)
     for pa in db.q("SELECT * FROM plan_asignatura WHERE plan_id = ? ORDER BY orden, id", [origen]):
         pid = db.t.plan_asignatura.insert(plan_id=nuevo, asignatura_id=pa["asignatura_id"], orden=pa["orden"],
                                           **{c: pa[c] for c in CAMPOS_PLAN})["id"]
@@ -44,11 +46,11 @@ def copiar_plan(origen: int, programa_id: int, nombre: str, reforma_id: int, ani
 
 
 def crear_plan(programa_id: int, nombre: str, reforma_id: int, anio: int, resolucion: str | None, sistema="horas",
-               semanas=None, horas_credito=None, nota_minima=None) -> int:
+               semanas=None, horas_credito=None, nota_minima=None, duracion=None) -> int:
     return get_db().t.plan_estudios.insert(
         programa_id=programa_id, nombre=nombre, resolucion=resolucion or None, vigente_desde=anio, sistema=sistema,
         semanas_semestre=semanas, horas_por_credito=horas_credito, nota_minima=nota_minima, estado="elaboracion",
-        reforma_id=reforma_id)["id"]
+        reforma_id=reforma_id, duracion_semestres=duracion)["id"]
 
 
 def crear(uid: int, nombre: str, resolucion: str, anio: str, continuar: dict[int, str], nuevos: list[dict]
@@ -102,8 +104,12 @@ def crear(uid: int, nombre: str, resolucion: str, anio: str, continuar: dict[int
             if modo == "copia":
                 copiar_plan(origen["id"], pr["id"], nombre, rid, anio_n, resolucion)
             else:
-                crear_plan(pr["id"], nombre, rid, anio_n, resolucion, origen["sistema"], origen["semanas_semestre"],
-                           origen["horas_por_credito"], origen["nota_minima"])
+                vacio = crear_plan(pr["id"], nombre, rid, anio_n, resolucion, origen["sistema"],
+                                   origen["semanas_semestre"], origen["horas_por_credito"], origen["nota_minima"],
+                                   origen["duracion_semestres"])
+                for c in db.q("SELECT nombre, semestre_desde, semestre_hasta FROM plan_ciclo WHERE plan_id = ?",
+                              [origen["id"]]):
+                    db.t.plan_ciclo.insert(plan_id=vacio, **c)
         for n in nuevos:
             prid = db.t.programa.insert(nombre=n["nombre"], nivel=n["nivel"], titulo=(n.get("titulo") or "").strip() or None,
                                         unidad_id=unidades.id_de("CMAT"))["id"]
