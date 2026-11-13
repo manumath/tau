@@ -78,6 +78,11 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
         investigacion.append(_item("proyectos", "Proyectos", "/proyectos", "folder-kanban",
                                    _contador("badge-pendientes", "/proyectos/pendientes/contador")))
     investigacion.append(_item("investigadores", "Investigadores", "/investigadores", "book-user"))
+    if auth["es_investigador"]:
+        investigacion += [_item("inv-pendientes", "Mis pendientes", "/investigacion/pendientes", "list-checks"),
+                          _item("inv-calendario", "Mi calendario", "/investigacion/calendario", "calendar-days"),
+                          _item("inv-acceso", "Acceso abierto", "/investigacion/acceso-abierto", "lock-open"),
+                          _item("inv-colaboraciones", "Mis colaboraciones", "/investigacion/coautores", "network")]
     if puede("decidir_propuestas"):
         investigacion.append(_item("propuestas", "Propuestas", "/admin/propuestas", "landmark",
                                    _contador("badge-propuestas", "/admin/propuestas/contador")))

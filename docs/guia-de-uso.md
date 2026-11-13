@@ -192,6 +192,54 @@ en las reuniones es confidencial). Solo usted lo ve. Desde ahí, **Mis certifica
 tribunal de grado ya **concluido** y de cada tribunal de auxiliaturas de una convocatoria concluida, con un código `TAU-…`. La Dirección de
 Carrera y quienes ven la carga horaria pueden **verificar un código** en «Verificar un código» (queda en la auditoría).
 
+## Mi investigación
+
+Servicios del personal con perfil de investigador. Son solo suyos: nadie más ve lo que aparece aquí y no se guarda nada nuevo.
+
+### Mis pendientes y mi calendario de investigación
+
+**Investigación → Mis pendientes** reúne en una lista lo que espera de usted, con lo que vence antes primero: enviar su propuesta o
+responder a sus condiciones mientras la convocatoria está abierta, proponer la continuidad de un proyecto que termina, los registros
+que los participantes proponen a su proyecto y debe aprobar (y los avisos de carga horaria), las actividades previstas atrasadas de
+su plan, el fin de un proyecto en los próximos 60 días, los productos «enviados» o «aceptados» sin novedades hace seis meses (¿ya se
+publicaron?), la filiación sin declarar, un preprint que parece ya publicado y lo que falta en su perfil. Cada línea lleva a la pantalla
+donde se resuelve. Lo vencido o a 7 días se marca.
+
+**Investigación → Mi calendario** muestra sus fechas en 30, 90 o 180 días: las de la convocatoria de proyectos (si puede proponer), las
+actividades en que participa, el término de sus proyectos, el fin del mes previsto de las actividades de su plan y los eventos a que lo
+convocan. **Llevar a mi calendario (.ics)** descarga el año para Google Calendar, Outlook o el teléfono.
+
+### Acceso abierto y datos de mis productos
+
+**Investigación → Acceso abierto** lista sus productos aceptados o publicados (no las presentaciones, las tesis dirigidas ni las
+patentes, que no se depositan) y dónde se puede leer cada texto. Arriba ve el porcentaje en acceso abierto, los que faltan por
+declarar, los que están en embargo y los que tienen datos o código publicados; puede filtrar por situación y por año.
+
+**Declarar** abre un formulario con dos partes. *El texto*: abierto en el sitio de la revista, copia en un repositorio (con la versión
+que depositó), en embargo (con la fecha en que termina), sin acceso abierto o no aplica; con enlace y licencia si es abierto o
+depositado. *Los datos y el código*: publicados (con su enlace), disponibles a pedido, que no se pueden compartir o que no hay. Si el
+producto tiene arXiv, el formulario se abre sugiriendo «copia en un repositorio» con ese enlace; usted lo confirma o lo cambia.
+También puede declarar desde la ficha del producto («Acceso abierto»). Cualquier autor del producto puede hacerlo y queda en la
+auditoría.
+
+Es una **declaración suya**: TAU no comprueba los enlaces ni obliga a nada. Lo que usted declara como abierto o depositado aparece
+como «Texto en acceso abierto» en su perfil público (y en la API pública de productos); un texto en embargo o cerrado no se muestra.
+«Mis pendientes» le pide declarar los productos de los últimos cinco años y le avisa cuando termina un embargo.
+
+### Mis colaboraciones
+
+**Investigación → Mis colaboraciones** muestra con quién firmó productos y con quién compartió proyectos, a partir de lo que ya está
+registrado: no hay nada que cargar. Arriba ve cuántas personas son, cuántas son externas al instituto, de cuántos países extranjeros y
+cuántas instituciones externas; debajo, la distribución por país y las instituciones externas más frecuentes, y la lista de personas con sus productos y
+proyectos en común y los años de su colaboración. Con **Desde el año** y **Hasta el año** acota el periodo (para un informe o un
+currículum). Al elegir una persona ve los productos y proyectos concretos que comparten. **Descargar la lista (CSV)** la lleva a una
+planilla.
+
+Solo usted ve esta pantalla y solo contiene lo que ya se ve en sus productos y proyectos (nombre, institución y país; nunca correo ni
+documento). Si le advierte que a un coautor externo le falta el país, el enlace lleva a «Coautores externos», donde se completa;
+si falta alguien, falta registrar el producto o el proyecto, o la persona externa está escrita de otra forma
+(«Coautores externos → Duplicados y cuentas»).
+
 ## Mi perfil
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».

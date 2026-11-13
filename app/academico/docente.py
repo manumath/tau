@@ -146,7 +146,7 @@ def _eventos_tutoria(uid: int):
                           f"/tutoria/{s['externo_id']}")
 
 
-def _eventos_comunicados(uid: int):
+def eventos_comunicados(uid: int):
     for c in get_db().q(
             """SELECT c.* FROM comunicado c WHERE c.tipo = 'evento' AND c.estado = 'publicado' AND c.inicio IS NOT NULL
                AND (c.para_todos = 1 OR EXISTS (SELECT 1 FROM comunicado_destinatario d WHERE d.comunicado_id = c.id
@@ -165,6 +165,6 @@ def eventos(uid: int, desde: date | None = None, hasta: date | None = None) -> l
     desde = desde or date.today()
     hasta = hasta or desde + timedelta(days=120)
     d, h = desde.isoformat(), hasta.isoformat()
-    todos = [e for fuente in (_eventos_gestiones(), _eventos_grado(uid), _eventos_tutoria(uid), _eventos_comunicados(uid),
+    todos = [e for fuente in (_eventos_gestiones(), _eventos_grado(uid), _eventos_tutoria(uid), eventos_comunicados(uid),
                               _eventos_vinculo(uid)) for e in fuente if e]
     return sorted((e for e in todos if d <= e["fecha"] <= h), key=lambda e: (e["fecha"], e["hora"], e["titulo"]))

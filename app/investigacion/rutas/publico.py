@@ -7,12 +7,12 @@ productos en curso.
 """
 from fasthtml.common import (A, APIRouter, Div, FileResponse, Footer, Form, Header, Input, JSONResponse,
                              Li, Main, P, Redirect, Response, Span, Title, Ul)
-from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets
+from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets, UkIcon
 
 from app.ia.rutas.panel import marca_si
 from app.comun import config, fotos
 from app.comun.componentes.layout import con_h1, isotipo
-from app.investigacion import lineas, perfiles, productos
+from app.investigacion import acceso_abierto, lineas, perfiles, productos
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
 from app.comun.db import get_db
@@ -41,7 +41,7 @@ def productos_publicos(uid: int) -> list[dict]:
         f"""SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
             WHERE pa.investigador_id = ? AND {FILTRO_PUBLICO}
             ORDER BY p.anio DESC, p.id DESC""", [uid])
-    return productos.sin_preprints_publicados(productos.obtener_varios(f["id"] for f in filas))
+    return acceso_abierto.con_acceso(productos.sin_preprints_publicados(productos.obtener_varios(f["id"] for f in filas)))
 
 
 def ids_publicos() -> set[int]:
@@ -95,6 +95,9 @@ def _cita_publica(p, publicos):
                         cls=TextPresets.muted_sm) if medio else "",
                       P(A(f"arXiv:{arxiv}", href=f"https://arxiv.org/abs/{arxiv}", target="_blank", rel="noopener",
                           cls="text-primary hover:underline"), cls="text-sm") if arxiv and p["doi"] else "",
+                      P(UkIcon("lock-open", height=12, width=12, cls="inline mr-1"),
+                        A("Texto en acceso abierto", href=p["acceso_abierto"], target="_blank", rel="noopener noreferrer nofollow",
+                          cls="text-primary hover:underline"), cls="text-sm") if p.get("acceso_abierto") else "",
                       P("MSC2020: " + ", ".join(m["codigo"] for m in p["msc"]), cls=(TextPresets.muted_sm, "nomath"),
                         title=" · ".join(m["texto_plano"] for m in p["msc"])) if p["msc"] else "",
                       cls="min-w-0"),
@@ -195,6 +198,7 @@ def _producto_json(p, publicos):
             "estado": p["estado_publicacion"], "revision": p["revision"],
             "indices": [i["nombre"] for i in p["indices"]], "medio": p["medio"], "volumen": p["volumen"],
             "numero": p["numero"], "paginas": p["paginas"], "doi": p["doi"], "arxiv": productos.arxiv_de(p),
+            "acceso_abierto": p.get("acceso_abierto"),
             "msc": [{"codigo": m["codigo"], "texto": m["texto_plano"], "principal": bool(m["principal"])}
                     for m in p["msc"]],
             "autores": [{"nombre": f"{a['nombres']} {a['apellidos']}",
@@ -229,5 +233,5 @@ def get(anio: str = ""):
         f"""SELECT DISTINCT p.id FROM producto p JOIN producto_autor pa ON pa.producto_id = p.id
             WHERE pa.investigador_id IN ({marcas}) AND {FILTRO_PUBLICO}
             {filtro} ORDER BY p.anio DESC, p.id DESC""", [*publicos, *params])
-    lista = productos.sin_preprints_publicados(productos.obtener_varios(f["id"] for f in filas))
+    lista = acceso_abierto.con_acceso(productos.sin_preprints_publicados(productos.obtener_varios(f["id"] for f in filas)))
     return _json([_producto_json(p, publicos) for p in lista])

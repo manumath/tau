@@ -6,7 +6,7 @@ se agrega a MODULOS. La importación es diferida para no crear ciclos al importa
 """
 from importlib import import_module
 
-MODULOS = ("perfil", "bibtex", "investigadores", "actividades", "productos", "personas", "adjuntos", "propuestas", "proyectos", "publico", "admin_revistas", "admin_lineas", "admin_catalogos",)
+MODULOS = ("perfil", "bibtex", "investigadores", "mis_pendientes", "acceso_abierto", "coautores", "actividades", "productos", "personas", "adjuntos", "propuestas", "proyectos", "publico", "admin_revistas", "admin_lineas", "admin_catalogos",)
 
 
 def routers() -> list:

@@ -3687,3 +3687,66 @@ docente). TAU sigue sin guardar notas ni asistencia.
 - **Pendiente de confirmar (resumen de §68):** contrato de la API de Kardex; si el auxiliar ve la lista; evaluación solo del titular y con ocho afirmaciones
   fijas; verificación de certificados solo interna; sin adjunto en el programa analítico.
 
+## 69. Servicios para el investigador (13-nov-2026)
+
+Pedido del usuario: qué más puede tener el investigador en su actividad. De siete servicios propuestos se toman **1, 3 y 4**; la
+convocatoria externa (2), las citas e indicadores propios (5) y los estudiantes en proyectos (6) quedan para después, y el presupuesto de
+proyectos (7) fuera **mientras los proyectos no manejen fondos que TAU deba registrar** (decisión del usuario, 13-nov-2026).
+
+### Servicios y etapas (un commit cada una)
+1. (hecha, 13-nov-2026) **Mis pendientes y Mi calendario** de investigación.
+2. (hecha, 13-nov-2026) **Acceso abierto y datos** por producto: declaración propia, sin verificación ni obligación.
+3. (hecha, 13-nov-2026) **Coautores y colaboraciones:** mapa derivado de los productos y proyectos propios.
+4. (hecha, 13-nov-2026) Pruebas de navegador, manual y documentación.
+
+### Etapa 1 (hecha): mis pendientes y mi calendario
+- `app/investigacion/mis_pendientes.py`: `pendientes` (propuesta en borrador o con condiciones y continuidad de proyectos que terminan,
+  con la convocatoria abierta; registros por aprobar y avisos de carga, y plan atrasado, solo de los proyectos que la persona
+  responde; fin de proyecto en 60 días; productos «enviado» o «aceptado» sin novedades en 180 días; filiación sin declarar; preprint
+  parecido a un producto publicado; perfil incompleto) y `eventos` (convocatoria, actividades en que participa, fin de proyecto, fin del
+  mes previsto del plan y eventos convocados). No guardan nada y solo reúnen lo de la propia persona (`auth["id"]`).
+- `/investigacion/pendientes`, `/investigacion/calendario` y `.ics`, en el grupo Investigación del menú para quien tiene perfil de
+  investigador (`auth["es_investigador"]`; las demás cuentas reciben 403). Sin migración.
+- `docente.eventos_comunicados` pasó a ser público porque lo usa también el calendario del investigador.
+
+### Etapa 2 (hecha): acceso abierto y datos
+- **Migración 0085:** `producto_acceso` (una fila por producto declarado: situación del texto `abierto`, `depositado`, `embargo`,
+  `cerrado` o `no_aplica`; versión depositada; enlace; licencia; fin del embargo; situación de los datos `publicados`, `a_pedido`,
+  `reservados` o `no_hay` con su enlace; nota; quién y cuándo). Sin fila = «sin declarar». Se borra con el producto.
+- `app/investigacion/acceso_abierto.py` (validación, consultas, resumen) y `rutas/acceso_abierto.py`: `/investigacion/acceso-abierto`
+  (solo `es_investigador`; lista propia con filtros por situación y año) y `/productos/{pid}/acceso` (formulario en modal; GET, POST y
+  DELETE; solo quien puede editar el producto y solo productos aceptados o publicados que no sean presentación, tesis dirigida ni
+  patente). Guardar y quitar se auditan (`declarar_acceso_abierto`, `quitar_acceso_abierto`).
+- **Declaración propia, sin verificación:** TAU no comprueba los enlaces (solo exige una dirección http o https válida), no obliga a
+  declarar ni se usa para evaluar. Ningún indicador institucional ni informe la usa todavía.
+- **Visibilidad:** el perfil público y `/api/v1/*` muestran solo el enlace de un texto declarado `abierto` o `depositado`
+  (`acceso_abierto`: dirección o `null`); el embargo, lo cerrado, las notas y los datos no salen. Los enlaces públicos llevan
+  `rel="noopener noreferrer nofollow"`. La ficha del producto muestra la declaración completa a quien ve el producto.
+- «Mis pendientes» pide declarar lo de los últimos 5 años (`ANIOS_A_DECLARAR`) y avisa cuando vence un embargo; el calendario trae
+  el fin de cada embargo. Si el producto tiene arXiv, el formulario nuevo sugiere «copia en un repositorio» con ese enlace.
+- **Decisión mía por confirmar:** cualquier autor del producto puede declarar y cambiar la declaración (gana la última, con
+  auditoría); la lista de opciones de licencia y de versión es la habitual de las revistas, no una política del instituto.
+
+### Etapa 3 (hecha): mis colaboraciones
+- `app/investigacion/coautores.py` y `rutas/coautores.py`: `/investigacion/coautores` (con `?desde=&hasta=` y `?con=<ref>` para el detalle
+  de una persona) y `/investigacion/coautores.csv` (`exportar.a_csv`, celdas neutralizadas). Solo `es_investigador`; la persona
+  sale de la sesión. Sin migración: deriva de `producto_autor` y `proyecto_participante`.
+- Una colaboración es haber firmado un producto o haber participado en un proyecto con la persona (en cualquier estado). El filtro
+  por años usa el año del producto y, para los proyectos, que su periodo se cruce con el rango (un proyecto sin fecha de término
+  cuenta). Los países se cuentan por persona, no por producto; los externos sin país se señalan aparte con el enlace para completarlos.
+- **Privacidad:** de cada persona solo se muestra lo que ya se ve en el producto o el proyecto (nombre, institución, país, si es del
+  instituto). No hay correo, ORCID ni documento; y cada quien ve solo sus propias colaboraciones, nunca las de otro.
+- **Decisión mía por confirmar:** «colaboración internacional» = país distinto del propio (`config.PAIS`) con la regla de
+  `app/comun/paises.py`; los coautores del instituto cuentan como del propio país. No hay gráfico de red: una tabla es más
+  accesible y suficiente para informes. La Dirección no ve estas pantallas (la de colaboración internacional institucional sigue en Informes).
+
+### Etapa 4 (hecha): navegador, manual y documentación
+- **Navegador:** `preparar.py` crea un artículo de Emmy con un coautor extranjero; `test_la_investigadora_usa_sus_servicios` declara el
+  acceso abierto, ve la colaboración con esa persona y abre sus pendientes y su calendario; las cuatro pantallas nuevas entran en
+  `test_accesibilidad_pantallas` (claro y oscuro).
+- **Manual:** sección «Servicios del investigador» en el capítulo 5 (6 capturas nuevas, con productos de Emmy ya declarados y otros por
+  declarar) y dos filas en la tabla de privacidad del capítulo 12. **CLAUDE.md:** regla «Servicios del investigador (PLAN §69)».
+  **Mantenimiento:** última migración, 0085.
+- **Fuera de este plan** (decisión del 13-nov-2026): convocatorias y plazos externos, citas e indicadores propios con OpenAlex, estudiantes
+  en proyectos y presupuesto de proyectos. Ningún indicador ni informe institucional usa todavía el acceso abierto.
+

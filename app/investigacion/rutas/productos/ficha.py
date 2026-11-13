@@ -7,6 +7,7 @@ from app.comun.db import auditar
 from app.ia import catalogo as ia_catalogo, servicio as ia
 from app.ia.rutas.panel import bloque as bloque_ia, respuesta_pedido
 from app.investigacion import actividades, lineas, productos, proyectos, revistas
+from app.investigacion.componentes.acceso import fila_ficha as fila_acceso
 from app.investigacion.componentes.lineas import insignias_lineas
 from app.investigacion.componentes.msc import chips as chips_msc
 from app.comun.componentes.layout import ID_MODAL, pagina
@@ -108,6 +109,7 @@ def ficha(p, auth):
                                     cls="text-primary hover:underline") if actividad else None),
             dato("Identificadores", Div(*[e for e in enlaces if e], cls="flex gap-4 flex-wrap"))
             if any(enlaces) else "",
+            dato("Acceso abierto", fila_acceso(p, editable)),
             dato("Proyectos", Div(*insignias_proyectos(proyectos.vinculos_de("producto", p["id"])),
                                   cls="flex flex-wrap gap-1.5")
                  if proyectos.vinculos_de("producto", p["id"]) else None),

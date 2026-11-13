@@ -19,7 +19,9 @@ def _grupos(auth):
 
 def test_cada_rol_ve_sus_grupos(app):
     emmy = _grupos(_auth("inv@test.cl"))
-    assert emmy[None] == ["inicio"] and emmy["Investigación"] == ["actividades", "productos", "proyectos", "investigadores"]
+    assert emmy[None] == ["inicio"] and emmy["Investigación"] == ["actividades", "productos", "proyectos", "investigadores",
+                                                                      "inv-pendientes", "inv-calendario", "inv-acceso",
+                                                                      "inv-colaboraciones"]
     assert "Administración" not in emmy and "Estudiantes" not in emmy        # ni cuentas ni seguimiento estudiantil
     admin = _grupos(_auth("admin@test.cl"))   # Administración del sistema y Dirección del Instituto
     assert admin["Administración"] == ["usuarios", "auditoria", "revistas", "lineas", "catalogos", "ia"]  # ia: PLAN §59
