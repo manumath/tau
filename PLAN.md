@@ -3480,7 +3480,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 1. (hecha, 13-nov-2026) Menú del estudiante agrupado y **Mi plan de estudios** (malla del plan, marcas privadas, compartir con el tutor).
 2. (hecha, 13-nov-2026) **Calendario académico:** semestre, plazos de convocatorias, defensas y eventos del estudiante; exportable (.ics).
 3. (hecha, 13-nov-2026) **Tutoría desde el estudiante:** ver su tutor y la fecha de sus reuniones (no su contenido), pedir una reunión; el tutor la ve.
-4. **Oportunidades:** becas, movilidad, pasantías, ayudantías de investigación (las publica el responsable de un proyecto) y
+4. (hecha, 13-nov-2026) **Oportunidades:** becas, movilidad, pasantías, ayudantías de investigación (las publica el responsable de un proyecto) y
    empleo para egresados, con postulación y decisión.
 5. **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
 6. **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
@@ -3509,3 +3509,12 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 - `app/estudiantil/tutoria.py` (`solicitar`, `programar`, `atender`, `cancelar`) y `rutas/mi_tutoria.py` (`/estudiante/tutoria`). El
   tutor recibe un aviso, programa la reunión desde la ficha del tutorado (`/tutoria/{id}`) y el estudiante recibe otro; la reunión
   programada aparece en su calendario. Una solicitud abierta por estudiante a la vez; solo su tutor vigente la atiende.
+
+### Etapa 4 (hecha): oportunidades
+- **Migración 0074:** `oportunidad` (tipo beca, movilidad, pasantía, ayudantía de investigación o empleo; para estudiantes, egresados
+  o todos; borrador → publicada → cerrada) y `postulacion_oportunidad` (postulada, preseleccionada, seleccionada, no seleccionada,
+  retirada). Acción `gestionar_oportunidades` (Dirección de Carrera y Coordinación académica).
+- `app/servicios/oportunidades.py` y `rutas/oportunidades.py`: `/servicios/oportunidades` (quien publica, decide y avisa) y
+  `/estudiante/oportunidades` (ver y postular). Una ayudante de investigación la publica solo el responsable vigente del
+  proyecto (o la Dirección). El empleo es por omisión para egresados y se publica a nombre de un empleador registrado (decisión del
+  13-nov-2026). El cierre entra en el calendario del estudiante.

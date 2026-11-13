@@ -215,3 +215,116 @@ def test_pantallas_de_tutoria_del_estudiante_y_del_tutor(client, sofia):
     client.post(f"/estudiante/tutoria/solicitud/{sid}/cancelar", follow_redirects=False)
     assert tutoria.solicitudes_de(ext)[0]["estado"] == "cancelada"
     assert client.post("/estudiante/tutoria/solicitud/99999/cancelar", follow_redirects=False).status_code == 404
+
+
+# --- Etapa 4: oportunidades -------------------------------------------------------------------------------------------------
+
+def _dir(client):
+    """Entra como la administración con la Dirección de Carrera (quien publica oportunidades)."""
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    return usuarios.por_email("admin@test.cl")
+
+
+def _datos(**k):
+    return {"tipo": "beca", "titulo": "Beca de excelencia", "descripcion": "Para estudiantes destacados", "para": "estudiantes",
+            "cierre": "2099-12-31", **k}
+
+
+def test_crear_publicar_postular_y_decidir(sofia):
+    from app.servicios import oportunidades as op
+    ext = _externo("1111111")
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert op.crear(_datos(titulo=""), admin)[1][0].startswith("El título")
+    assert "enlace" in op.crear(_datos(enlace="ftp://x"), admin)[1][0].lower()
+    assert "cierre" in op.crear(_datos(cierre="mañana"), admin)[1][0].lower()
+    oid, errores = op.crear(_datos(enlace="https://ejemplo.org/beca", plazas="2"), admin)
+    assert errores == [] and op.obtener(oid)["estado"] == "borrador"
+    assert op.para_estudiante(ext) == []                                              # un borrador no se ve
+    assert op.postular(oid, ext, "")[0].startswith("Esa oportunidad no está disponible")
+    assert op.cambiar_estado(oid, "cerrada", admin)[0].startswith("Ese cambio")
+    assert op.cambiar_estado(oid, "publicada", admin) == []
+    assert [o["id"] for o in op.para_estudiante(ext)] == [oid] and op.para_estudiante(ext, "empleo") == []
+    assert op.postular(oid, ext, "x" * 1001)[0].startswith("El mensaje")
+    assert op.postular(oid, ext, "Me interesa") == []
+    assert op.postular(oid, ext, "")[0] == "Ya postuló a esta oportunidad."
+    [x] = op.postulaciones(oid)
+    assert (x["nombres"], x["estado"], x["registro_universitario"]) == ("Sofía", "postulada", "1111111")
+    assert op.decidir(x["id"], "pendiente", "", admin)[0].startswith("Elija una decisión")
+    assert op.decidir(x["id"], "seleccionada", "Felicitaciones", admin) == []
+    assert op.postulacion_de(oid, ext)["estado"] == "seleccionada"
+    from app.comun import notificaciones
+    uid = estudiantes_uid(ext)
+    assert any("Seleccionada" in n["asunto"] for n in notificaciones.recientes(uid))
+    assert op.retirar(oid, ext)[0].startswith("No hay una postulación")                # ya decidida
+    # Retirar y volver a postular, antes de la decisión.
+    oid2, _ = op.crear(_datos(titulo="Pasantía", tipo="pasantia"), admin)
+    op.cambiar_estado(oid2, "publicada", admin)
+    assert op.postular(oid2, ext, "") == [] and op.retirar(oid2, ext) == [] and op.postular(oid2, ext, "otra vez") == []
+    assert op.postulacion_de(oid2, ext)["estado"] == "postulada"
+    assert op.cambiar_estado(oid, "cerrada", admin) == []
+    assert "cerrada" in op.actualizar(oid, _datos(), admin)[0]
+
+
+def test_el_empleo_es_para_egresados_y_la_ayudantia_para_el_responsable(sofia):
+    from app.investigacion import proyectos
+    from app.servicios import oportunidades as op
+    ext = _externo("1111111")
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    oid, _ = op.crear(_datos(tipo="empleo", titulo="Analista de datos", para=""), admin)
+    assert op.obtener(oid)["para"] == "egresados"                                      # por omisión
+    op.cambiar_estado(oid, "publicada", admin)
+    assert op.para_estudiante(ext) == []                                              # quien cursa no lo ve
+    get_db().execute("UPDATE estudiante SET estado = 'titulado', fecha_titulacion = '2025-12-01' WHERE registro_universitario = '1111111'")
+    assert [o["id"] for o in op.para_estudiante(ext)] == [oid]
+    # Ayudantía: la publica el responsable del proyecto, no cualquier docente.
+    emmy = {**usuarios.por_email("inv@test.cl")}
+    pid = proyectos.crear(dict(nombre="Anillos", estado="vigente", fecha_inicio="2026-01-01"), emmy["id"], emmy["id"])
+    assert op.puede_publicar(emmy) and op.crear(_datos(tipo="beca"), emmy)[1][0].startswith("Este tipo")
+    assert "proyecto" in op.crear(_datos(tipo="ayudantia"), emmy)[1][0]
+    otro = usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP)
+    assert op.crear(_datos(tipo="ayudantia", proyecto_id=str(pid)), {**otro, "roles": []})[1][0].startswith("Solo el responsable")
+    aid, errores = op.crear(_datos(tipo="ayudantia", titulo="Ayudante en Anillos", proyecto_id=str(pid)), emmy)
+    assert errores == [] and op.puede_gestionar(emmy, op.obtener(aid)) and not op.puede_gestionar({**otro, "roles": []}, op.obtener(aid))
+    assert [o["id"] for o in op.listar(emmy)] == [aid]
+
+
+def test_pantallas_de_oportunidades(client, sofia):
+    from app.servicios import oportunidades as op
+    ext = _externo("1111111")
+    r = client.get("/estudiante/oportunidades")
+    assert "No hay oportunidades abiertas" in r.text and "Oportunidades" in r.text
+    assert client.get("/servicios/oportunidades", follow_redirects=False).status_code == 303   # no es del personal
+    admin = _dir(client)
+    assert "Oportunidades" in client.get("/").text
+    r = client.post("/servicios/oportunidades", data=_datos(titulo="Beca Ejemplo"), follow_redirects=False)
+    oid = int(r.headers["location"].rsplit("/", 1)[1])
+    assert client.get(f"/servicios/oportunidades/{oid}").status_code == 200
+    r = client.post("/servicios/oportunidades", data={"tipo": "beca", "titulo": ""})
+    assert "El título es obligatorio" in r.text
+    client.post(f"/servicios/oportunidades/{oid}/publicar", follow_redirects=False)
+    assert op.obtener(oid)["estado"] == "publicada"
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    r = client.get("/estudiante/oportunidades")
+    assert "Beca Ejemplo" in r.text and "Cierra el 31 dic 2099" in r.text
+    r = client.get(f"/estudiante/oportunidades/{oid}")
+    assert "Postular" in r.text and "Para estudiantes destacados" in r.text
+    client.post(f"/estudiante/oportunidades/{oid}/postular", data={"mensaje": "Quiero"}, follow_redirects=False)
+    assert "Mi postulación" in client.get(f"/estudiante/oportunidades/{oid}").text
+    assert "Postulada" in client.get("/estudiante/oportunidades").text
+    assert client.get("/estudiante/oportunidades/99999").status_code == 404
+    # El estudiante no entra a las pantallas de quien publica.
+    assert client.get(f"/servicios/oportunidades/{oid}", follow_redirects=False).status_code == 303
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    r = client.get(f"/servicios/oportunidades/{oid}")
+    assert "Postulaciones (1)" in r.text and "Sofía" in r.text and "Mamani" in r.text
+    pid = op.postulaciones(oid)[0]["id"]
+    client.post(f"/servicios/oportunidades/{oid}/postulaciones/{pid}/preseleccionada", data={"nota": "Entrevista"},
+                follow_redirects=False)
+    assert op.postulacion_de(oid, ext)["estado"] == "preseleccionada" and op.postulacion_de(oid, ext)["nota"] == "Entrevista"
+    assert admin

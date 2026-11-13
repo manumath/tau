@@ -61,7 +61,8 @@ def test_cuenta_de_estudiante(sofia):  # noqa: F811
     # Su seguimiento, sus avisos y los servicios (PLAN §58 y §67), en el menú lateral (agrupado) y en la barra del teléfono
     # (cuatro secciones y «Más»).
     lateral = ["/estudiante", "/avisos", "/estudiante/plan", "/estudiante/calendario", "/estudiante/tutoria",
-               "/estudiante/comunicados", "/estudiante/auxiliaturas", "/estudiante/grado"]
-    movil = ["/estudiante", "/estudiante/plan", "/estudiante/calendario", "/estudiante/comunicados"]
+               "/estudiante/comunicados", "/estudiante/auxiliaturas", "/estudiante/oportunidades",
+               "/estudiante/grado"]
+    movil = ["/estudiante", "/estudiante/plan", "/estudiante/calendario", "/estudiante/oportunidades"]
     assert re.findall(r'href="([^"]+)"[^>]*data-nav', r) == lateral + movil
     assert 'id="busqueda-global"' not in r and "<span>Más</span>" in r   # sin búsqueda, con «Más»

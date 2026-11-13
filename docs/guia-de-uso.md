@@ -708,6 +708,19 @@ ve el pedido en la ficha de su tutorado (y «Pidió una reunión» en su lista) 
 mensaje (lugar, indicaciones) o la marca **atendida**. El estudiante recibe un aviso, ve la reunión en su calendario y puede
 cancelar la solicitud. Hay una sola solicitud abierta a la vez.
 
+**Oportunidades** (Servicios): becas, movilidad, pasantías, ayudantías de investigación y empleo. El estudiante ve las abiertas,
+filtra por tipo, lee los requisitos y el cierre, y **postula** con un mensaje (puede retirar su postulación antes de la
+decisión). Quien cursa ve lo que es «para estudiantes»; el **egresado** titulado ve lo que es «para egresados» (el empleo, por
+omisión). Recibe un aviso con la decisión (preseleccionada, seleccionada o no seleccionada) y un comentario. Las fechas de cierre
+van a su calendario.
+
+**Publicar oportunidades** (Servicios → Oportunidades, para la Dirección de Carrera y la Coordinación académica): **Nueva
+oportunidad** arma un borrador (tipo, para quién, título, descripción, requisitos, quién la ofrece, cierre, plazas, enlace y
+contacto); **Publicar** la muestra a los estudiantes y **Cerrar las postulaciones** la cierra. El **empleo** se publica a nombre de un
+empleador registrado (no hay cuentas de empleadores: la Carrera recibe la oferta por fuera y la publica). Las **ayudantías de
+investigación** las publica el **responsable de un proyecto** (le aparece «Oportunidades» en el menú, solo con las suyas). En cada
+oportunidad se ven las postulaciones, con el RU y el correo, y se decide con un comentario: la persona recibe el aviso.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

@@ -49,6 +49,13 @@ def _tutoria(externo_id: int, desde: str, hasta: str):
         yield _evento(s["fecha_reunion"], "Reunión con su tutor(a)", "tutoria", s["respuesta"] or "", "/estudiante/tutoria")
 
 
+def _oportunidades(externo_id: int, desde: str, hasta: str):
+    from app.servicios import oportunidades
+    for o in oportunidades.para_estudiante(externo_id):
+        yield _evento(o["cierre"], f"Cierra: {o['titulo']}", "oportunidad", oportunidades.TIPOS[o["tipo"]],
+                      f"/estudiante/oportunidades/{o['id']}")
+
+
 def _eventos(uid: int, desde: str, hasta: str):
     for c in get_db().q(
             """SELECT c.* FROM comunicado c WHERE c.tipo = 'evento' AND c.estado = 'publicado' AND c.inicio IS NOT NULL
@@ -65,7 +72,7 @@ def eventos(externo_id: int, desde: date | None = None, hasta: date | None = Non
     usuario = estudiantes.usuario_de(externo_id)
     uid = usuario["id"] if usuario else 0
     todos = [e for fuente in (_gestiones(d, h), _auxiliaturas(d, h), _grado(externo_id, d, h), _eventos(uid, d, h),
-                    _tutoria(externo_id, d, h))
+                    _tutoria(externo_id, d, h), _oportunidades(externo_id, d, h))
              for e in fuente if e]
     return sorted((e for e in todos if d <= e["fecha"] <= h), key=lambda e: (e["fecha"], e["hora"], e["titulo"]))
 
