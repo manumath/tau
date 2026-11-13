@@ -3244,7 +3244,7 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 1. (hecha, 12-nov-2026) Migración (reforma, estados), lista con filtros, permisos y auditoría; los planes 2017 pasan a vigentes.
 2. (hecha, 13-nov-2026) Asistente de nueva reforma y datos generales del borrador.
 3. (hecha, 13-nov-2026) Editor de malla con validaciones.
-4. Menciones.
+4. (hecha, 13-nov-2026) Menciones.
 5. Equivalencias, puesta en vigencia y cierre, y efectos en oferta y cohortes.
 6. Pruebas de navegador por rol, accesibilidad, capturas, capítulo del manual, guía y este PLAN.
 
@@ -3292,3 +3292,14 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 - Quitar una asignatura que otras piden como requisito no las modifica: quedan marcadas en la lista de verificación.
 - **Por confirmar:** reordenar asignaturas dentro de un semestre (hoy van en el orden en que se agregan) y cambiar el
   nombre de una asignatura del catálogo (afectaría a todos los planes).
+
+### Etapa 4 (hecha): menciones
+- **Migración 0068:** `mencion` (nombre, descripción, semestre de elección, mínimo de asignaturas y mínimo de créditos u
+  horas) y `mencion_asignatura` (qué filas del plan le son propias, obligatorias u optativas). Hoy no hay menciones
+  cargadas; el tronco común es lo que no pertenece a ninguna.
+- **Mínimo de «créditos u horas»:** en un plan por créditos suma los créditos; en uno por horas, las horas del semestre
+  completo (horas semanales × semanas del semestre), la misma medida de los totales del plan. Se decidió ofrecer ambos
+  mínimos (asignaturas y medida) porque no se sabía cuál usa la Carrera; los dos son opcionales.
+- Se editan en la tarjeta «Menciones» del editor de la malla; la ficha del plan las muestra de solo lectura. La lista de
+  verificación comprueba que cada mención tenga asignaturas y cumpla sus mínimos. Copiar un plan copia sus menciones.
+- **Pendiente (etapa posterior):** `estudiante.mencion_id` y la columna opcional `mencion` en la carga de cohortes.

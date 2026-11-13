@@ -512,6 +512,13 @@ vigencia, en ámbar lo que conviene revisar) y se actualiza con cada cambio.
   existen en el plan y sin ciclos (A pide B y B pide A), todos los semestres con asignaturas, casillas de electiva con su
   lista, horas o créditos en cada fila, y —como aviso— que los totales declarados cuadren con la suma.
 
+**Menciones.** Una mención es un énfasis dentro de un mismo título (si los títulos son distintos, son programas
+distintos). En el editor de la malla, la tarjeta **Menciones** permite **Agregar mención** (nombre, descripción, semestre
+en que se elige y mínimos de asignaturas y de créditos u horas) y, en **Asignaturas**, marcar cuáles de las asignaturas
+del plan son propias de la mención, obligatorias u optativas; una asignatura puede ser de varias menciones. Lo que no es
+de ninguna mención es el tronco común. La lista de verificación exige que cada mención tenga asignaturas y cumpla sus
+mínimos. Un plan nuevo copiado de otro trae sus menciones.
+
 **Gestiones** (en el menú, para la Dirección de Carrera y la Coordinación): I y II (semestres), INV (invierno, julio) y VER (verano, en
 enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la gestión 2026). «Crear
 las gestiones del año» propone fechas que se ajustan al calendario aprobado y oferta ambos

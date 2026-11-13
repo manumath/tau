@@ -4,7 +4,7 @@ Una reforma agrupa los planes de sus programas (hoy dos licenciaturas y dos maes
 traer uno, dos o tres). Cada programa de la reforma vigente se continúa copiando su plan, se empieza vacío o no
 continúa; además se pueden agregar programas nuevos. Todos los planes nacen en elaboración.
 """
-from app.academico import planes
+from app.academico import menciones, planes
 from app.comun import unidades
 from app.comun.db import auditar, get_db, transaccion
 
@@ -37,11 +37,14 @@ def copiar_plan(origen: int, programa_id: int, nombre: str, reforma_id: int, ani
                        o["horas_por_credito"], o["nota_minima"], o["duracion_semestres"])
     for c in db.q("SELECT nombre, semestre_desde, semestre_hasta FROM plan_ciclo WHERE plan_id = ?", [origen]):
         db.t.plan_ciclo.insert(plan_id=nuevo, **c)
+    mapa = {}
     for pa in db.q("SELECT * FROM plan_asignatura WHERE plan_id = ? ORDER BY orden, id", [origen]):
         pid = db.t.plan_asignatura.insert(plan_id=nuevo, asignatura_id=pa["asignatura_id"], orden=pa["orden"],
                                           **{c: pa[c] for c in CAMPOS_PLAN})["id"]
+        mapa[pa["id"]] = pid
         for r in db.q("SELECT sigla, condicion FROM requisito WHERE plan_asignatura_id = ?", [pa["id"]]):
             db.t.requisito.insert(plan_asignatura_id=pid, sigla=r["sigla"], condicion=r["condicion"])
+    menciones.copiar(origen, nuevo, mapa)
     return nuevo
 
 

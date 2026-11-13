@@ -4,7 +4,7 @@ import csv
 import io
 import re
 
-from app.academico import importar_planes, planes
+from app.academico import importar_planes, menciones, planes
 from app.comun.db import auditar, get_db, transaccion
 
 SIGLA = re.compile(r"^[A-Z]{2,4}-\d{3}$")
@@ -355,6 +355,9 @@ def verificar(pid: int) -> list[dict]:
     desiguales = [k for k, (d, c) in planes.totales(pid).items() if d is not None and d != c]
     punto("totales", "Los totales declarados cuadran con la suma", "aviso" if desiguales else "ok",
           f"No coinciden: {', '.join(desiguales)}." if desiguales else "")
+    men = menciones.verificar(pid)
+    if men:
+        res.append(men)
     pendientes = get_db().q("SELECT COUNT(*) n FROM observacion_plan WHERE plan_id = ? AND estado = 'pendiente'", [pid])[0]["n"]
     punto("observaciones", "Observaciones resueltas", "aviso" if pendientes else "ok",
           f"{pendientes} por revisar." if pendientes else "")

@@ -7,7 +7,8 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.academico import planes, reformas
-from app.academico.rutas.malla import panel_verificacion
+from app.academico import menciones
+from app.academico.rutas.malla import panel_verificacion, tarjeta_menciones
 from app.comun import permisos
 from app.comun.componentes.layout import CERRAR, ID_MODAL, campo, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -289,6 +290,7 @@ def get(auth, pid: int):
                                         fh.Th(""))), fh.Tbody(*filas_tot), cls="uk-table uk-table-small"),
                  P("Horas: suma de las horas semanales de cada semestre (con las casillas de electiva) por las "
                    "semanas del semestre.", cls=TextPresets.muted_sm) if sistema == "horas" else ""),
+            tarjeta_menciones(pid, editable=False) if menciones.listar(pid) else "",
             *bloques,
             H3("Asignaturas electivas", cls="text-lg font-semibold mt-8") if electivas else "",
             *electivas,

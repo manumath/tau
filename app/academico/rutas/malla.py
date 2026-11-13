@@ -5,7 +5,7 @@ from fasthtml.common import A, APIRouter, Datalist, Div, Input, Option, P, Redir
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 
-from app.academico import malla, planes
+from app.academico import malla, menciones, planes
 from app.comun import permisos
 from app.comun.componentes.layout import CERRAR, ID_MODAL, campo, cerrar_modal, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
@@ -55,13 +55,14 @@ def _medidas(f, sistema):
             for c in ("horas_teoricas", "horas_practicas", "horas_laboratorio")]
 
 
-def _fila(pid, f, sistema):
+def _fila(pid, f, sistema, men):
     casilla = f["asignatura_id"] is None
     return fh.Tr(
         fh.Td("" if casilla else f["sigla"], cls="font-mono text-sm whitespace-nowrap"),
         fh.Td(Span(planes.TIPOS[f["tipo"]], cls="italic") if casilla else f["nombre"],
               "" if f["tipo"] == "obligatoria" or casilla else Span(f" · {planes.TIPOS[f['tipo']]}",
-                                                                    cls=TextPresets.muted_sm), cls="text-sm"),
+                                                                    cls=TextPresets.muted_sm),
+              *[insignia(m, "azul") for m in men.get(f["id"], [])], cls="text-sm space-x-1"),
         *_medidas(f, sistema),
         fh.Td(", ".join(f["requisitos"]) or "—", cls="text-sm whitespace-nowrap"),
         fh.Td(Button(UkIcon("pencil", height=14, width=14), hx_get=f"{BASE}/{pid}/malla/fila/{f['id']}",
@@ -74,7 +75,7 @@ def _fila(pid, f, sistema):
         id=f"fila-{f['id']}")
 
 
-def _tabla(pid, filas, sistema):
+def _tabla(pid, filas, sistema, men):
     if not filas:
         return P("Sin asignaturas todavía.", cls=TextPresets.muted_sm)
     horas = [fh.Th("Créd.", cls="w-14")] if sistema == "creditos" else \
@@ -82,7 +83,7 @@ def _tabla(pid, filas, sistema):
          fh.Th("L", title="Horas de laboratorio semanales", cls="w-14")]
     return Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Sigla"), fh.Th("Asignatura"), *horas, fh.Th("Requisitos"),
                                        fh.Th(Span("Acciones", cls="sr-only")))),
-                        fh.Tbody(*[_fila(pid, f, sistema) for f in filas]),
+                        fh.Tbody(*[_fila(pid, f, sistema, men) for f in filas]),
                         cls="uk-table uk-table-divider uk-table-small"), cls="overflow-x-auto")
 
 
@@ -95,6 +96,7 @@ def _agregar(pid, texto, **params):
 def malla_fragmento(pid: int, oob=False):
     p = planes.obtener(pid)
     sistema = p["sistema"]
+    men = menciones.de_las_filas(pid)
     por_semestre = {s: (c, filas) for s, c, filas in planes.por_semestre(pid)}
     n = max([p["duracion_semestres"] or 0, *por_semestre])
     tarjetas = []
@@ -106,14 +108,14 @@ def malla_fragmento(pid: int, oob=False):
                 insignia(f"Ciclo {ciclo}", "azul") if ciclo else "", Div(_agregar(pid, "Agregar", semestre=s),
                                                                          cls="ml-auto"),
                 cls="flex flex-wrap items-center gap-2 mb-2"),
-            _tabla(pid, filas, sistema), id=f"semestre-{s}"))
+            _tabla(pid, filas, sistema, men), id=f"semestre-{s}"))
     electivas = []
     for g, titulo in planes.GRUPOS_ELECTIVAS.items():
         filas = planes.electivas(pid).get(g, [])
         if filas:
             electivas.append(Card(H3(f"{titulo} ({len(filas)})", cls="text-base font-semibold mb-2"),
-                                  _tabla(pid, filas, sistema)))
-    return Div(panel_verificacion(pid), *tarjetas or [P("El plan no tiene semestres: agregue uno.")],
+                                  _tabla(pid, filas, sistema, men)))
+    return Div(panel_verificacion(pid), tarjeta_menciones(pid), *tarjetas or [P("El plan no tiene semestres: agregue uno.")],
                Div(Button(UkIcon("plus", height=14, width=14), "Agregar un semestre", hx_post=f"{BASE}/{pid}/malla/semestre",
                           hx_target="#malla", hx_swap="outerHTML", cls=(ButtonT.default, ButtonT.sm)),
                    _agregar(pid, "Agregar una electiva a la lista", tipo="electiva_a"), cls="flex flex-wrap gap-2"),
@@ -149,6 +151,166 @@ def post(auth, pid: int):
     if actual < malla.MAX_SEMESTRES:
         get_db().execute("UPDATE plan_estudios SET duracion_semestres = ? WHERE id = ?", [actual + 1, pid])
     return malla_fragmento(pid)
+
+
+# --- Menciones --------------------------------------------------------------------------------------------------------
+
+def tarjeta_menciones(pid: int, editable=True):
+    p = planes.obtener(pid)
+    unidad = "créditos" if p["sistema"] == "creditos" else "horas"
+    items = []
+    for m in menciones.listar(pid):
+        reglas = " · ".join(x for x in (f"se elige en el semestre {m['semestre_eleccion']}" if m["semestre_eleccion"] else "",
+                                        f"mínimo {m['minimo_asignaturas']} asignaturas" if m["minimo_asignaturas"] else "",
+                                        f"mínimo {m['minimo_medida']} {unidad}" if m["minimo_medida"] else "") if x)
+        acciones = Div(
+            Button("Asignaturas", hx_get=f"{BASE}/{pid}/malla/mencion/{m['id']}/asignaturas", hx_target=f"#{ID_MODAL}",
+                   hx_swap="innerHTML", cls=(ButtonT.default, ButtonT.xs)),
+            Button(UkIcon("pencil", height=14, width=14), hx_get=f"{BASE}/{pid}/malla/mencion/{m['id']}",
+                   hx_target=f"#{ID_MODAL}", hx_swap="innerHTML", cls=(ButtonT.ghost, ButtonT.xs),
+                   aria_label=f"Editar la mención {m['nombre']}"),
+            Button(UkIcon("trash-2", height=14, width=14), hx_post=f"{BASE}/{pid}/malla/mencion/{m['id']}/quitar",
+                   hx_confirm=f"¿Quitar la mención {m['nombre']}? Sus asignaturas siguen en el plan.",
+                   hx_target="#malla", hx_swap="outerHTML", cls=(ButtonT.ghost, ButtonT.xs, "text-destructive"),
+                   aria_label=f"Quitar la mención {m['nombre']}"),
+            cls="flex items-center gap-1 ml-auto") if editable else ""
+        items.append(fh.Li(
+            Div(Span(m["nombre"], cls="font-medium"), acciones, cls="flex flex-wrap items-center gap-2"),
+            P(m["descripcion"], cls="text-sm") if m["descripcion"] else "",
+            P(f"{m['n']} asignatura{'s' if m['n'] != 1 else ''} ({m['total_medida']} {unidad})"
+              + (f" · {reglas}" if reglas else ""), cls=TextPresets.muted_sm),
+            P(", ".join(f"{f['sigla']}{'' if f['obligatoria'] else ' (optativa)'}" for f in m["asignaturas"]),
+              cls="text-sm") if m["asignaturas"] else "", cls="py-2"))
+    return Card(Div(H3("Menciones", cls="text-base font-semibold"),
+                    Button(UkIcon("plus", height=14, width=14), "Agregar mención", hx_get=f"{BASE}/{pid}/malla/mencion/nueva",
+                           hx_target=f"#{ID_MODAL}", hx_swap="innerHTML", cls=(ButtonT.default, ButtonT.sm, "ml-auto"))
+                    if editable else "", cls="flex items-center gap-2 mb-1"),
+                P("Una mención es un énfasis dentro de este mismo título: tiene sus asignaturas propias y sus mínimos. Si "
+                  "los títulos son distintos, son programas distintos. Lo que no es de ninguna mención es el tronco "
+                  "común.", cls=(TextPresets.muted_sm, "mb-2")),
+                fh.Ul(*items, cls="divide-y divide-border") if items else
+                P("Este plan no tiene menciones: todas las asignaturas son del tronco común.", cls="text-sm"),
+                id="menciones-plan")
+
+
+def _form_mencion(pid, m, errores=()):
+    def v(c):
+        return "" if m.get(c) is None else str(m[c])
+    p = planes.obtener(pid)
+    return fh.Form(
+        mensaje_error(*errores),
+        Input(type="hidden", name="mid", value=v("id")),
+        campo("Nombre de la mención", Input(name="nombre", value=v("nombre"), required=True, cls="uk-input")),
+        campo("Descripción (opcional)", fh.Textarea(m.get("descripcion") or "", name="descripcion", rows=3,
+                                                    cls="uk-textarea")),
+        Div(campo("Semestre en que se elige", Input(name="semestre_eleccion", value=v("semestre_eleccion"),
+                                                    inputmode="numeric", cls="uk-input")),
+            campo("Mínimo de asignaturas", Input(name="minimo_asignaturas", value=v("minimo_asignaturas"),
+                                                 inputmode="numeric", cls="uk-input")),
+            campo(f"Mínimo de {'créditos' if p['sistema'] == 'creditos' else 'horas (del semestre completo)'}",
+                  Input(name="minimo_medida", value=v("minimo_medida"), inputmode="numeric", cls="uk-input")),
+            cls="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3"),
+        Div(Button("Guardar", type="submit", cls=ButtonT.primary),
+            Button("Cancelar", type="button", cls=ButtonT.ghost, **CERRAR), cls="flex gap-2 justify-end mt-4"),
+        hx_post=f"{BASE}/{pid}/malla/mencion", hx_target=f"#{ID_MODAL}", hx_swap="innerHTML",
+        hx_disabled_elt="find button[type='submit']")
+
+
+@rt(f"{BASE}/{{pid}}/malla/mencion/nueva")
+def get(auth, pid: int):
+    p, error = _plan_editable(auth, pid)
+    if error:
+        return error
+    return modal("Agregar una mención", _form_mencion(pid, {}), ancho="max-w-xl")
+
+
+@rt(f"{BASE}/{{pid}}/malla/mencion/{{mid}}")
+def get(auth, pid: int, mid: int):
+    p, error = _plan_editable(auth, pid)
+    if error:
+        return error
+    m = menciones.obtener(mid)
+    if not m or m["plan_id"] != pid:
+        return Response("No encontrado", status_code=404)
+    return modal("Editar la mención", _form_mencion(pid, m), ancho="max-w-xl")
+
+
+@rt(f"{BASE}/{{pid}}/malla/mencion")
+async def post(auth, pid: int, req):
+    p, error = _plan_editable(auth, pid)
+    if error:
+        return error
+    form = await req.form()
+    datos = {k: form.get(k, "") for k in ("nombre", "descripcion", "semestre_eleccion", "minimo_asignaturas",
+                                          "minimo_medida")}
+    mid = int(form["mid"]) if str(form.get("mid", "")).isdigit() else None
+    errores = menciones.guardar(pid, mid, datos, auth["id"])
+    if errores:
+        return modal("Editar la mención" if mid else "Agregar una mención",
+                     _form_mencion(pid, {**datos, "id": mid}, errores), ancho="max-w-xl")
+    return cerrar_modal(), malla_fragmento(pid, oob=True)
+
+
+@rt(f"{BASE}/{{pid}}/malla/mencion/{{mid}}/quitar")
+def post(auth, pid: int, mid: int):
+    p, error = _plan_editable(auth, pid)
+    if error:
+        return error
+    if not menciones.eliminar(pid, mid, auth["id"]):
+        return Response("No encontrado", status_code=404)
+    return malla_fragmento(pid)
+
+
+def _form_asignaturas(pid, m):
+    actuales = {f["id"]: "o" if f["obligatoria"] else "p" for f in m["asignaturas"]}
+    filas = []
+    for f in planes.asignaturas(pid):
+        if f["asignatura_id"] is None:
+            continue
+        valor = actuales.get(f["id"], "")
+        filas.append(Div(
+            Span(f"{f['sigla']} · {f['nombre']}", cls="text-sm flex-1"),
+            Span(f"sem. {f['semestre']}" if f["semestre"] else "electiva", cls=TextPresets.muted_sm),
+            Select(Option("Tronco común", value="", selected=valor == ""), Option("Obligatoria", value="o", selected=valor == "o"),
+                   Option("Optativa", value="p", selected=valor == "p"), name=f"pa_{f['id']}",
+                   aria_label=f"{f['sigla']} en la mención", cls="uk-select h-8 text-sm w-36"),
+            cls="flex items-center gap-2 py-1"))
+    return fh.Form(
+        P("Marque qué asignaturas son propias de la mención. Una asignatura puede ser de varias menciones.",
+          cls=(TextPresets.muted_sm, "mb-2")),
+        Div(*filas or [P("El plan no tiene asignaturas.", cls=TextPresets.muted_sm)],
+            cls="max-h-[55vh] overflow-y-auto border border-border rounded-md px-2 divide-y divide-border"),
+        Div(Button("Guardar", type="submit", cls=ButtonT.primary),
+            Button("Cancelar", type="button", cls=ButtonT.ghost, **CERRAR), cls="flex gap-2 justify-end mt-4"),
+        hx_post=f"{BASE}/{pid}/malla/mencion/{m['id']}/asignaturas", hx_target=f"#{ID_MODAL}", hx_swap="innerHTML",
+        hx_disabled_elt="find button[type='submit']")
+
+
+@rt(f"{BASE}/{{pid}}/malla/mencion/{{mid}}/asignaturas")
+def get(auth, pid: int, mid: int):
+    p, error = _plan_editable(auth, pid)
+    if error:
+        return error
+    m = next((x for x in menciones.listar(pid) if x["id"] == mid), None)
+    if not m:
+        return Response("No encontrado", status_code=404)
+    return modal(f"Asignaturas de {m['nombre']}", _form_asignaturas(pid, m), ancho="max-w-2xl")
+
+
+@rt(f"{BASE}/{{pid}}/malla/mencion/{{mid}}/asignaturas")
+async def post(auth, pid: int, mid: int, req):
+    p, error = _plan_editable(auth, pid)
+    if error:
+        return error
+    m = menciones.obtener(mid)
+    if not m or m["plan_id"] != pid:
+        return Response("No encontrado", status_code=404)
+    form = await req.form()
+    seleccion = {int(k[3:]): v for k, v in form.items() if k.startswith("pa_") and k[3:].isdigit()}
+    errores = menciones.asignar(pid, mid, seleccion, auth["id"])
+    if errores:
+        return Response(errores[0], status_code=400)
+    return cerrar_modal(), malla_fragmento(pid, oob=True)
 
 
 # --- Una fila ---------------------------------------------------------------------------------------------------------

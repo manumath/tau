@@ -456,3 +456,71 @@ def test_pantallas_de_la_malla(client, app):
     vigente = _plan("Licenciatura en Matemática")["id"]
     assert client.get(f"/docencia/planes/{vigente}/malla").status_code == 404
     assert "Editar la malla" not in client.get(f"/docencia/planes/{vigente}").text
+
+
+# --- PLAN §65, etapa 4: menciones ----------------------------------------------------------------------------------
+
+def _plan_con_filas():
+    from app.academico import malla
+    pid = _borrador_de("Maestría en Matemática", "vacio")
+    get_db().execute("UPDATE plan_estudios SET duracion_semestres = 2, resolucion = 'HCU 1/2027' WHERE id = ?", [pid])
+    for sem, sigla in ((1, "MAT-801"), (1, "MAT-802"), (2, "MAT-803")):
+        assert malla.guardar_fila(pid, None, {"tipo": "obligatoria", "semestre": str(sem), "sigla": sigla,
+                                             "nombre": f"Materia {sigla}", "creditos": "6"}, [], 1) == []
+    return pid, {f["sigla"]: f["id"] for f in planes.asignaturas(pid) if f["sigla"]}
+
+
+def test_menciones_de_un_plan(app):
+    from app.academico import malla, menciones
+    pid, ids = _plan_con_filas()
+    assert menciones.guardar(pid, None, {"nombre": ""}, 1)[0].startswith("El nombre")
+    assert menciones.guardar(pid, None, {"nombre": "Álgebra", "semestre_eleccion": "9"}, 1)[0].startswith("Semestre de elec")
+    assert menciones.guardar(pid, None, {"nombre": "Álgebra", "semestre_eleccion": "2", "minimo_asignaturas": "2",
+                                        "minimo_medida": "12"}, 1) == []
+    assert "ya tiene una mención" in menciones.guardar(pid, None, {"nombre": "Álgebra"}, 1)[0]
+    [m] = menciones.listar(pid)
+    assert menciones.verificar(pid)["nivel"] == "falta" and "no tiene asignaturas" in menciones.verificar(pid)["detalle"]
+    assert menciones.asignar(pid, m["id"], {ids["MAT-801"]: "o", ids["MAT-803"]: "p", 999999: "o"}, 1) == []
+    [m] = menciones.listar(pid)
+    assert (m["n"], m["total_medida"]) == (2, 12)
+    assert [(f["sigla"], f["obligatoria"]) for f in m["asignaturas"]] == [("MAT-801", 1), ("MAT-803", 0)]
+    assert menciones.verificar(pid)["nivel"] == "ok"
+    assert menciones.de_las_filas(pid)[ids["MAT-801"]] == ["Álgebra"]
+    menciones.guardar(pid, m["id"], {"nombre": "Álgebra", "minimo_asignaturas": "3"}, 1)
+    assert "pide 3 asignaturas y tiene 2" in menciones.verificar(pid)["detalle"]
+    assert not malla.listo_para_vigencia(pid)
+    # Quitar una asignatura del plan la saca de la mención; la mención sigue.
+    malla.quitar_fila(pid, ids["MAT-803"], 1)
+    assert menciones.listar(pid)[0]["n"] == 1
+    # Un plan nuevo copia las menciones con sus asignaturas.
+    from app.academico import reformas
+    pr = get_db().q("SELECT id FROM programa WHERE nombre = 'Maestría en Matemática'")[0]["id"]
+    get_db().execute("UPDATE plan_estudios SET estado = 'cerrado' WHERE id = ?", [pid])
+    copia = reformas.copiar_plan(pid, pr, "Plan 2037", get_db().q("SELECT reforma_id FROM plan_estudios WHERE id = ?", [pid])[0]["reforma_id"], 2037, None)
+    [mc] = menciones.listar(copia)
+    assert (mc["nombre"], mc["n"]) == ("Álgebra", 1) and mc["asignaturas"][0]["sigla"] == "MAT-801"
+    assert menciones.eliminar(copia, mc["id"], 1) is True and menciones.listar(copia) == []
+    assert menciones.listar(pid) != []                                         # la del original no se tocó
+
+
+def test_pantallas_de_menciones(client, app):
+    from app.academico import menciones
+    _con_carrera(client)
+    pid, ids = _plan_con_filas()
+    r = client.get(f"/docencia/planes/{pid}/malla")
+    assert "Menciones" in r.text and "tronco común" in r.text
+    r = client.post(f"/docencia/planes/{pid}/malla/mencion", headers=HX, data={"nombre": ""})
+    assert "El nombre de la mención" in r.text
+    r = client.post(f"/docencia/planes/{pid}/malla/mencion", headers=HX, data={"nombre": "Análisis", "mid": ""})
+    assert 'id="malla"' in r.text and "Análisis" in r.text
+    [m] = menciones.listar(pid)
+    assert "Asignaturas de Análisis" in client.get(f"/docencia/planes/{pid}/malla/mencion/{m['id']}/asignaturas",
+                                                    headers=HX).text
+    r = client.post(f"/docencia/planes/{pid}/malla/mencion/{m['id']}/asignaturas", headers=HX,
+                    data={f"pa_{ids['MAT-801']}": "o", f"pa_{ids['MAT-802']}": ""})
+    assert "MAT-801" in r.text and menciones.listar(pid)[0]["n"] == 1
+    assert "Editar la mención" in client.get(f"/docencia/planes/{pid}/malla/mencion/{m['id']}", headers=HX).text
+    assert "Análisis" in client.get(f"/docencia/planes/{pid}").text              # la ficha las muestra
+    assert client.post(f"/docencia/planes/{pid}/malla/mencion/{m['id']}/quitar", headers=HX).status_code == 200
+    assert menciones.listar(pid) == []
+    assert client.post(f"/docencia/planes/{pid}/malla/mencion/99999/quitar", headers=HX).status_code == 404
