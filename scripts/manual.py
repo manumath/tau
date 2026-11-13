@@ -369,6 +369,17 @@ def datos(ruta: str):
     db.t.tramite_grado.insert(externo_id=camila, tipo="perfil", titulo="Grupos de Lie y simetrías de ecuaciones diferenciales", tutor_id=emmy,
                               estado="aprobado", enviado_en=f"{hoy_.year - 1}-09-15 10:00:00")
 
+    # Servicios del investigador (PLAN §69): declaraciones de acceso abierto de dos productos de Emmy (el otro queda sin declarar,
+    # para que «Mis pendientes» lo pida).
+    from app.investigacion import acceso_abierto as aa
+    modelos = [dict(texto="abierto", enlace="https://revista.ejemplo.test/articulo", licencia="cc_by", datos="publicados",
+                    datos_enlace="https://zenodo.ejemplo.test/registro/1"),
+               dict(texto="embargo", embargo_hasta=(hoy_ + timedelta(days=60)).isoformat())]     # el tercer producto queda sin declarar
+    for f, d in zip(aa.de_investigador(emmy), modelos):
+        valores, errores = aa.validar(d)
+        assert not errores, errores
+        aa.guardar(f["id"], valores, emmy)
+
     # Enlace de ingreso de la estudiante (como el que le llega por correo).
     Path(ruta).with_suffix(".enlace").write_text(f"/acceso/{tokens.emitir(andrea['uid'], 'acceso')}")
 
@@ -408,6 +419,12 @@ CAPTURAS = [
     ("docente-resultados", "docente", "resultados-evaluacion", {"alto": 1000}),
     ("docente-historial", "docente", "/docencia/historial", {"alto": 900}),
     ("docente-certificado", "docente", "certificado", {"alto": 620}),
+    ("inv-pendientes", "docente", "/investigacion/pendientes", {"alto": 640}),
+    ("inv-calendario", "docente", "/investigacion/calendario", {"alto": 560}),
+    ("inv-acceso", "docente", "/investigacion/acceso-abierto", {"alto": 900}),
+    ("inv-acceso-formulario", "docente", "/investigacion/acceso-abierto", {"clics": ["button:has-text('Declarar')"], "alto": 1000}),
+    ("inv-colaboraciones", "docente", "/investigacion/coautores", {"alto": 1000}),
+    ("inv-colaborador", "docente", "colaborador", {"alto": 620}),
     ("preferencias-personal", "direccion", "/docencia/preferencias/todas", {"alto": 560}),
     ("programas-cobertura", "direccion", "/docencia/programas/cobertura", {"alto": 560}),
     ("evaluacion-gestion", "direccion", "/docencia/evaluacion/gestion", {"alto": 900}),
@@ -513,6 +530,7 @@ def _rutas_de_la_base(db: Path) -> dict:
         "lista-curso": f"/docencia/listas/{uno('SELECT oferta_id FROM lista_curso LIMIT 1')}",
         "resultados-evaluacion": f"/docencia/evaluacion/{uno('SELECT id FROM evaluacion_docente')}/docente/{uno("SELECT docente_id FROM evaluacion_consulta LIMIT 1")}",
         "certificado": f"/docencia/certificados/tutor_grado/{uno("SELECT id FROM tramite_grado WHERE estado = 'aprobado'")}",
+        "colaborador": f"/investigacion/coautores?con=e:{uno("SELECT externo_id FROM producto_autor WHERE externo_id IS NOT NULL AND producto_id IN (SELECT producto_id FROM producto_autor WHERE investigador_id = (SELECT id FROM usuario WHERE email = 'emmy.noether@instituto.test')) GROUP BY externo_id ORDER BY COUNT(*) DESC LIMIT 1")}",
     }
     con.close()
     return rutas

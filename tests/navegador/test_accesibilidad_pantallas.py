@@ -67,7 +67,8 @@ REVISAR = r"""
 
 PANTALLAS = {
     "investigadora": ["/", "/productos", "/actividades", "/proyectos", "/perfil", "/informes",
-                      "/docencia", "/docencia/pendientes", "/docencia/calendario", "/docencia/preferencias", "/docencia/programas", "/docencia/listas", "/docencia/evaluacion", "/docencia/historial", "/docencia/certificados", "/avisos", "/buscar?q=noether"],
+                      "/docencia", "/docencia/pendientes", "/docencia/calendario", "/docencia/preferencias", "/docencia/programas", "/docencia/listas", "/docencia/evaluacion", "/docencia/historial", "/docencia/certificados", "/investigacion/pendientes", "/investigacion/calendario",
+                      "/investigacion/acceso-abierto", "/investigacion/coautores", "/avisos", "/buscar?q=noether"],
     "direccion": ["/", "/admin/usuarios", "/admin/propuestas", "/docencia/planes", "/docencia/planes?estado=elaboracion",
                   "/docencia/planes/reforma/nueva", "/docencia/planes/reforma/2", "/docencia/planes/5",
                   "/docencia/planes/5/malla", "/docencia/planes/5/equivalencias", "/docencia/oferta",

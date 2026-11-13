@@ -93,6 +93,12 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   Dirección, y es una copia temporal que se borra al concluir la gestión (o una consulta a la API de Kardex que no guarda nada). La
   **evaluación docente** es anónima: no enlace la participación con la respuesta ni guarde hora, no muestre resultados con menos de
   `MIN_RESPUESTAS` ni un desglose que permita restarlos, y registre en `evaluacion_consulta` toda consulta ajena.
+- **Servicios del investigador (PLAN §69):** «Mis pendientes», el calendario, el acceso abierto y las colaboraciones son solo de la persona
+  (siempre `auth["id"]`, y 403 si la cuenta no es de investigador). El **acceso abierto** (`producto_acceso`) es una declaración propia
+  que TAU no verifica ni exige: el perfil público y `/api/v1/*` muestran solo el enlace de lo declarado `abierto` o `depositado`, nunca el
+  embargo, las notas ni los datos, y ningún indicador o informe lo usa sin una decisión nueva (PLAN §69). Las **colaboraciones** se derivan
+  de `producto_autor` y `proyecto_participante` sin guardar nada y muestran solo nombre, institución y país: cada quien ve únicamente las
+  suyas, nunca correo, ORCID ni documento.
 - **Gestiones (PLAN §66):** cada gestión (I, II, INV, VER) está *en planificación* (oferta y docentes se editan libremente y se
   puede borrar), *activa* (todo cambio pide fecha de efecto y motivo, queda en `gestion_cambio` y se avisa al docente; no se
   borra nada: `oferta.retirada_en`, `oferta_docente.desde/hasta`) o *concluida* (historial de solo lectura; solo la Dirección de

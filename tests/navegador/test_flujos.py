@@ -590,3 +590,26 @@ def test_el_docente_usa_sus_servicios(page):
     assert "Mis pendientes" in page.locator("main").inner_text()
     page.goto("/docencia/historial")
     assert "MAT-111" in page.locator("main").inner_text()
+
+
+def test_la_investigadora_usa_sus_servicios(page):
+    """Declara el acceso abierto de un artículo, ve con quién colabora y consulta sus pendientes y su calendario (PLAN §69)."""
+    entrar(page, "investigadora")
+    page.goto("/investigacion/acceso-abierto")
+    assert "Anillos locales" in page.locator("main").inner_text() and "Acceso sin declarar" in page.locator("main").inner_text()
+    page.get_by_role("button", name="Declarar el acceso abierto de Anillos locales").click()
+    page.locator("select[name=texto]").select_option("depositado")
+    page.locator("select[name=version]").select_option("aceptada")
+    page.fill("input[name=enlace]", "https://repositorio.umsa.test/anillos")
+    page.get_by_role("button", name="Guardar", exact=True).click()
+    page.locator("#lista-acceso").get_by_text("Copia en un repositorio").wait_for()        # el modal se cierra y la lista se actualiza
+    assert "Acceso sin declarar" not in page.locator("main").inner_text()
+    page.goto("/investigacion/coautores")
+    page.get_by_role("link", name="Weyl, Hermann").click()
+    page.get_by_role("heading", name="Hermann Weyl").wait_for()
+    assert "Anillos locales" in page.locator("main").inner_text()
+    page.goto("/investigacion/pendientes")
+    assert "Mis pendientes de investigación" in page.locator("main").inner_text()
+    page.goto("/investigacion/calendario")
+    assert "Cierra la convocatoria de proyectos" in page.locator("main").inner_text()
+

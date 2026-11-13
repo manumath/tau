@@ -171,6 +171,15 @@ def preparar(ruta: str):
     plan = get_db().q("SELECT id FROM plan_estudios WHERE nombre = 'Plan 2027' AND programa_id = ?",
                       [ids["Licenciatura en Matemática"]])[0]["id"]
     menciones.guardar(plan, None, {"nombre": "Matemática Pura", "semestre_eleccion": "6"}, direccion["id"])
+    # Servicios del investigador (PLAN §69): un artículo de Emmy con un coautor extranjero, para acceso abierto y colaboraciones.
+    from app.comun import personas
+    weyl = personas.crear_externo("Hermann", "Weyl", "Institute for Advanced Study", "Estados Unidos", emmy)["id"]
+    articulo = get_db().q("SELECT id FROM tipo_producto WHERE nombre = 'Artículo en revista'")[0]["id"]
+    autores = [f"i:{emmy}", f"e:{weyl}"]
+    d, errores = productos.preparar(dict(tipo_id=str(articulo), titulo="Anillos locales", anio=str(date.today().year),
+                                         estado_publicacion="publicado", revision="arbitrado"), autores, [])
+    assert not errores, errores
+    productos.guardar(d, autores, emmy)
     hoy = date.today()
     periodo = institucionales.periodo_objetivo()
     institucionales.guardar_plazo(periodo, hoy.isoformat(), (hoy + timedelta(days=30)).isoformat(), 1)
