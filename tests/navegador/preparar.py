@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from app.academico import cambios, gestiones, menciones, oferta, reformas, semestre
+from app.estudiantil import tutoria
 from app.comun import estudiantes, permisos, tokens, unidades, usuarios
 from app.comun.componentes.registros import POR_PAGINA
 from app.comun.db import get_db, init_db
@@ -26,7 +27,7 @@ COMISION = "comision@prueba.test"
 DIRECCION = "direccion@prueba.test"   # las dos direcciones: ve casi todas las pantallas
 # Estudiantes con cuenta, sin haber aceptado el consentimiento: una por prueba que entra como estudiante, porque cada
 # enlace de ingreso anula el anterior de la misma cuenta.
-ESTUDIANTES = ("Sofía", "Rosa", "Julia", "Marta")
+ESTUDIANTES = ("Sofía", "Rosa", "Julia", "Marta", "Elena", "Paula")
 
 
 def archivo_enlaces(ruta_db: str) -> Path:
@@ -57,6 +58,47 @@ def _convocatoria(gestion, asignatura_id, docentes, tribunal_estudiantes):
     assert aux.agregar_item(aux.obtener(cid), {"asignatura_id": asignatura_id, "plazas": "1", "horas": "40"}) == []
     assert aux.fijar_tribunal(aux.items(cid)[0], docentes, tribunal_estudiantes) == []
     assert aux.publicar(cid) == [], aux.publicar(cid)
+
+
+def _servicios_del_estudiante(emmy, direccion_id):
+    """Datos para las pantallas de los servicios del estudiante (PLAN §67): plan, tutor, oportunidad, tema, recurso, orientación
+    y un evento con inscripción."""
+    from app.estudiantil import orientacion
+    from app.servicios import comunicados as com
+    from app.servicios import oportunidades, recursos, temas
+    db = get_db()
+    plan = db.q("""SELECT p.id FROM plan_estudios p JOIN programa pr ON pr.id = p.programa_id
+                   WHERE pr.nombre = 'Licenciatura en Matemática' AND p.estado = 'vigente'""")[0]["id"]
+    db.execute("UPDATE estudiante SET plan_id = ?", [plan])
+    cuentas = db.q("SELECT externo_id, usuario_id FROM cuenta_estudiante")
+    for c in cuentas:
+        assert tutoria.asignar(c["externo_id"], emmy, None) == []
+    direccion = usuarios.por_id(direccion_id)
+    doc = usuarios.por_id(emmy)
+    oid, errores = oportunidades.crear({"tipo": "beca", "titulo": "Beca de excelencia académica", "para": "estudiantes",
+                                        "descripcion": "Para estudiantes con buen desempeño.", "cierre": (date.today() + timedelta(days=30)).isoformat()},
+                                       direccion)
+    assert not errores, errores
+    assert oportunidades.cambiar_estado(oid, "publicada", direccion) == []
+    tid, errores = temas.crear({"titulo": "Coloraciones de grafos", "descripcion": "Un tema de combinatoria", "cupos": "2"}, doc)
+    assert not errores, errores
+    assert temas.cambiar_estado(tid, "publicado", doc) == []
+    pdf = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"
+    _, errores = recursos.crear({"tipo": "guia", "titulo": "Guía de ejercicios de Álgebra I"},
+                                [str(db.q("SELECT id FROM asignatura WHERE sigla = 'MAT-111'")[0]["id"])], doc, (pdf, "guia.pdf"))
+    assert not errores, errores
+    assert orientacion.guardar_pregunta({"categoria": "Trámites", "pregunta": "¿Dónde pido una constancia?",
+                                         "respuesta": "En Kardex, con su RU."}, direccion_id) == []
+    assert orientacion.guardar_servicio({"tipo": "bienestar", "nombre": "Bienestar universitario", "contacto": "Edificio central"},
+                                        direccion_id) == []
+    inicio = (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%dT15:00")
+    x, errores = com.validar({"tipo": "evento", "titulo": "Curso corto de LaTeX", "publica_como": "direccion_carrera", "inicio": inicio,
+                              "lugar": "Laboratorio", "inscripcion": "1", "cupos": "20", "horas": "8", "certificado": "1"},
+                             [("direccion_carrera", "Dirección de Carrera")])
+    assert not errores, errores
+    cid = com.crear(x, direccion_id)
+    com.agregar_convocados(cid, [c["usuario_id"] for c in cuentas])
+    assert com.publicar(cid) == []
 
 
 def _gestion_activa(emmy, grace, uid):
@@ -116,6 +158,7 @@ def preparar(ruta: str):
     hist, _ = gestiones.crear(date.today().year - 4, "II", direccion["id"], concluida=True)
     assert (activa["id"], hist["id"]) == (5, 6)
     oferta.agregar(hist["id"], "MAT-111", "A", "35", emmy)
+    _servicios_del_estudiante(emmy, direccion["id"])
     # Planes (PLAN §65): una reforma en elaboración (reforma 2; plan 5 = Licenciatura en Matemática copiada, plan 6 = Maestría
     # en Matemática vacía) con una mención, para revisar las pantallas del módulo.
     ids = {r["nombre"]: r["id"] for r in get_db().q("SELECT id, nombre FROM programa")}

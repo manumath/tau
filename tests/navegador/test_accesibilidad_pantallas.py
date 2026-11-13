@@ -106,7 +106,11 @@ def test_pantallas_del_estudiante_sin_problemas_de_accesibilidad(estudiante):
     for oscuro in (False, True):
         page.emulate_media(color_scheme="dark" if oscuro else "light")
         for ruta in ["/estudiante", "/estudiante/comunicados", "/estudiante/auxiliaturas", "/estudiante/grado",
-                     "/estudiante/grado/nuevo", "/avisos"]:
+                     "/estudiante/grado/nuevo", "/avisos",
+                     # Servicios del estudiante (PLAN §67).
+                     "/estudiante/plan", "/estudiante/calendario", "/estudiante/tutoria", "/estudiante/apoyo",
+                     "/estudiante/biblioteca", "/estudiante/orientacion", "/estudiante/buzon", "/estudiante/oportunidades",
+                     "/estudiante/temas", "/estudiante/encuestas"]:
             page.goto(ruta)
             page.wait_for_load_state("networkidle")
             if (p := page.evaluate(REVISAR)):

@@ -255,6 +255,78 @@ def datos(ruta: str):
         if o_sin:
             assert not cambios.retirar_materia(o_sin["id"], {"fecha": fecha, "motivo": "falta_inscritos"}, ada)
 
+    # Servicios del estudiante (PLAN §67): plan, oportunidades, temas, recursos, orientación, apoyo, evento con inscripción y una
+    # encuesta con retorno.
+    from app.estudiantil import apoyo, mi_plan, orientacion
+    from app.servicios import comunicados as com_
+    from app.servicios import oportunidades, recursos, temas
+    plan_lic = db.q("""SELECT p.id FROM plan_estudios p JOIN programa pr ON pr.id = p.programa_id
+                       WHERE pr.nombre = 'Licenciatura en Matemática' AND p.estado = 'vigente'""")[0]["id"]
+    db.execute("UPDATE estudiante SET plan_id = ?", [plan_lic])
+    for sigla in ("MAT-111", "MAT-112", "MAT-113", "MAT-114", "MAT-117", "MAT-131"):
+        mi_plan.marcar(andrea["externo"], db.q("SELECT id FROM asignatura WHERE sigla = ?", [sigla])[0]["id"], plan_lic)
+    db.execute("UPDATE cuenta_estudiante SET comparte_plan_tutor = 1 WHERE externo_id = ?", [andrea["externo"]])
+    ada_u, emmy_u = usuarios.por_id(ada), usuarios.por_id(emmy)
+    manana = lambda n: (date.today() + timedelta(days=n)).isoformat()  # noqa: E731
+    for tipo, titulo, desc, para, cierre in (
+            ("beca", "Beca de excelencia académica 2027", "Cubre materiales y transporte para estudiantes con buen desempeño.",
+             "estudiantes", manana(25)),
+            ("movilidad", "Movilidad estudiantil: semestre en la Universidad Mayor de San Simón", "Un semestre de intercambio con "
+             "reconocimiento de materias.", "estudiantes", manana(40)),
+            ("empleo", "Analista de datos junior", "Empresa del sector financiero, jornada completa.", "egresados", manana(20))):
+        oid, err = oportunidades.crear({"tipo": tipo, "titulo": titulo, "descripcion": desc, "para": para, "cierre": cierre,
+                                        "requisitos": "Estar en los últimos semestres de la licenciatura."
+                                        if tipo != "empleo" else "Licenciatura en Matemática o afín."}, ada_u)
+        assert not err, err
+        assert not oportunidades.cambiar_estado(oid, "publicada", ada_u)
+    beca = db.q("SELECT id FROM oportunidad WHERE tipo = 'beca'")[0]["id"]
+    assert not oportunidades.postular(beca, andrea["externo"], "Me interesa por mi trabajo en el perfil de grado.")
+    for titulo, desc in (("Coloraciones de grafos y el polinomio cromático", "Un tema de combinatoria con aplicaciones."),
+                         ("Teoría de números computacional", "Algoritmos de factorización y primalidad.")):
+        tid_, err = temas.crear({"titulo": titulo, "descripcion": desc, "cupos": "2", "modalidad": "cualquiera"}, emmy_u)
+        assert not err, err
+        assert not temas.cambiar_estado(tid_, "publicado", emmy_u)
+    assert not recursos.crear({"tipo": "guia", "titulo": "Guía de ejercicios de Álgebra I", "descripcion": "Con soluciones al final."},
+                              [str(db.q("SELECT id FROM asignatura WHERE sigla = 'MAT-111'")[0]["id"])], emmy_u,
+                              (b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF", "algebra-guia.pdf"))[1]
+    assert not recursos.crear({"tipo": "enlace", "titulo": "Cálculo diferencial en video", "enlace": "https://videos.ejemplo.test/calculo"},
+                              [str(db.q("SELECT id FROM asignatura WHERE sigla = 'MAT-112'")[0]["id"])], emmy_u, None)[1]
+    for cat, preg, resp in (("Trámites", "¿Dónde pido una constancia de estudios?", "En Kardex, con su registro universitario (RU)."),
+                            ("Becas", "¿Cuándo abren las becas?", "Se publican en «Oportunidades» y en el calendario."),
+                            ("Grado", "¿Cuántos días tiene el tribunal para revisar mi perfil?", "Quince días hábiles.")):
+        assert not orientacion.guardar_pregunta({"categoria": cat, "pregunta": preg, "respuesta": resp}, ada)
+    for tipo, nombre, contacto, horario in (("bienestar", "Bienestar universitario", "Edificio central, planta baja", "Lun a vie, 8:00 a 16:00"),
+                                            ("psicologia", "Apoyo psicológico de la Facultad", "bienestar@ejemplo.test", "Con cita previa")):
+        assert not orientacion.guardar_servicio({"tipo": tipo, "nombre": nombre, "contacto": contacto, "horario": horario}, ada)
+    # El evento del comunicado abre inscripción con cupos y certificado.
+    db.execute("UPDATE comunicado SET inscripcion = 1, cupos = 30, certificado = 1, horas = 4 WHERE id = ?", [com])
+    com_.inscribir(com, andrea["uid"])
+    # Un caso de apoyo que abrió la tutora y una reunión que ella programó.
+    cid_, err = apoyo.abrir(andrea["externo"], "academico", "Notamos que quiere avanzar con el perfil de grado y conviene organizar el semestre.",
+                            emmy_u, "tutor")
+    assert not err, err
+    assert not apoyo.responder(cid_, "Cuando quiera nos reunimos para organizar el calendario.", emmy_u, False)
+    tutoria.solicitar(andrea["externo"], "academico", "Quisiera revisar mi plan del próximo semestre.")
+    sol = db.q("SELECT id FROM tutoria_solicitud WHERE externo_id = ?", [andrea["externo"]])[0]["id"]
+    assert not tutoria.programar(sol, emmy, (date.today() + timedelta(days=4)).strftime("%Y-%m-%dT10:00"), "Oficina 12, segundo piso")
+    # Una consulta del buzón (la Dirección la verá) y otra anónima.
+    assert not orientacion.enviar(andrea["externo"], "consulta", "Horarios del laboratorio", "¿A qué hora abre el laboratorio de cómputo?", False)
+    assert not orientacion.enviar(andrea["externo"], "sugerencia", "Más salas de estudio", "Faltan salas de estudio en la tarde.", True)
+    # Una encuesta de bienestar ya cerrada, con retorno para quienes participaron.
+    eid2 = encuestas.crear_desde_plantilla("bienestar", ada)
+    assert not encuestas.abrir(eid2, ada)[2]
+    for n, ficha in enumerate([f["token"] for f in db.q("SELECT token FROM invitacion_encuesta WHERE encuesta_id = ? ORDER BY id", [eid2])][:6]):
+        crudo = {}
+        for i, q in enumerate(encuestas.preguntas(eid2)):
+            crudo[q["id"]] = {"escala": [str(3 + (n + i) % 3)], "si_no": ["si"],
+                              "opcion": [q["opciones"][(n + i) % len(q["opciones"])]] if q["opciones"] else [""],
+                              "multiple": q["opciones"][:1], "texto": ["Todo bien en general."]}[q["tipo"]]
+        assert not encuestas.responder(ficha, crudo)
+    assert encuestas.cerrar(eid2, ada)
+    assert not encuestas.guardar_retorno(eid2, "La mayoría se siente acompañada, pero pide más salas de estudio y horarios de consulta.",
+                                        "Habilitaremos una sala de estudio en la tarde y publicaremos los horarios de consulta de cada docente.")
+    assert not encuestas.publicar_retorno(eid2)
+
     # Enlace de ingreso de la estudiante (como el que le llega por correo).
     Path(ruta).with_suffix(".enlace").write_text(f"/acceso/{tokens.emitir(andrea['uid'], 'acceso')}")
 
@@ -315,7 +387,23 @@ CAPTURAS = [
     ("estudiante-telefono", "estudiante", "/estudiante", {"movil": True}),
     ("estudiante-auxiliaturas", "estudiante", "/estudiante/auxiliaturas", {"alto": 380}),
     ("estudiante-grado", "estudiante", "grado-estudiante", {"alto": 1000}),
-    ("estudiante-comunicado", "estudiante", "comunicado-estudiante", {"alto": 460}),
+    ("estudiante-comunicado", "estudiante", "comunicado-estudiante", {"alto": 760}),
+    ("mi-plan", "estudiante", "/estudiante/plan", {"alto": 1000}),
+    ("calendario", "estudiante", "/estudiante/calendario", {"alto": 760}),
+    ("mi-tutoria", "estudiante", "/estudiante/tutoria", {"alto": 820}),
+    ("apoyo", "estudiante", "/estudiante/apoyo", {"alto": 900}),
+    ("biblioteca", "estudiante", "/estudiante/biblioteca", {"alto": 620}),
+    ("orientacion", "estudiante", "/estudiante/orientacion", {"alto": 900}),
+    ("buzon", "estudiante", "/estudiante/buzon", {"alto": 860}),
+    ("oportunidades", "estudiante", "/estudiante/oportunidades", {"alto": 640}),
+    ("oportunidad", "estudiante", "oportunidad-beca", {"alto": 760}),
+    ("temas", "estudiante", "/estudiante/temas", {"alto": 640}),
+    ("estudiante-encuestas", "estudiante", "/estudiante/encuestas", {"alto": 900}),
+    ("oportunidades-personal", "direccion", "/servicios/oportunidades", {"alto": 560}),
+    ("temas-personal", "docente", "/servicios/temas", {"alto": 480}),
+    ("recursos-personal", "docente", "/servicios/recursos", {"alto": 480}),
+    ("buzon-personal", "direccion", "/servicios/buzon", {"alto": 520}),
+    ("apoyo-personal", "direccion", "/apoyo", {"alto": 480}),
     ("comunicado-ficha", "direccion", "comunicado", {"alto": 640}),
     ("auxiliaturas", "direccion", "convocatoria", {"alto": 1000}),
     ("grado-tribunal", "direccion", "grado", {"alto": 1000}),
@@ -354,6 +442,7 @@ def _rutas_de_la_base(db: Path) -> dict:
         "oferta-planificacion": f"/docencia/oferta?gestion={uno("SELECT id FROM gestion_academica WHERE anio = 2027 AND tipo = 'I'")}",
         "preparacion-planificacion": f"/docencia/preparacion?semestre={uno("SELECT tipo || '-' || anio FROM gestion_academica WHERE anio = 2027 AND tipo = 'I'")}",
         "cambios": f"/docencia/oferta/{uno("SELECT id FROM gestion_academica WHERE estado = 'activa' ORDER BY fecha_inicio DESC LIMIT 1")}/cambios",
+        "oportunidad-beca": f"/estudiante/oportunidades/{uno("SELECT id FROM oportunidad WHERE tipo = 'beca'")}",
         "plan-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}",
         "malla-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}/malla",
         "equivalencias-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}/equivalencias",

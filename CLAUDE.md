@@ -80,6 +80,14 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   es para asignar estudiantes u ofertar, usar solo `vigente` y `cierre`. Poner en vigencia y cerrar es solo de la Dirección de
   Carrera (`decidir_planes`). `vigente_hasta` es el año del último ingreso. El catálogo `asignatura` es común a todos los
   planes: la misma sigla en dos planes es la misma asignatura (y equivalente por sí sola).
+- **Servicios del estudiante (PLAN §67), con sus reglas de privacidad:** las marcas de «Mi plan de estudios» (`estudiante_aprobada`) son
+  privadas (solo el estudiante y, si lo decide, su tutor; nunca informes ni Dirección). Las **señales** de apoyo se calculan al momento,
+  no se guardan y solo las ve el estudiante; el personal ve solo los **casos** (`caso_apoyo`), que vencen a los seis meses si no se
+  renuevan. Un envío **anónimo** del buzón no guarda `externo_id`, solo el día, no se audita y su ruta (`registros.RUTAS_ANONIMAS`) no
+  lleva el usuario en el registro: no la ligue con la cuenta en ninguna consulta nueva. El retorno de una encuesta nunca muestra
+  respuestas abiertas y, si es anónima, exige `MIN_ANONIMO`. Toda ruta nueva de `/estudiante/*` saca la ficha de la cuenta
+  (`_requiere`) y no de la dirección; el menú del estudiante se arma en `navegacion.menu` (grupos «Mi carrera» y «Servicios») y la barra del
+  teléfono usa `PRIORIDAD_MOVIL_ESTUDIANTE`. Las constancias las emite Kardex: TAU no las genera.
 - **Gestiones (PLAN §66):** cada gestión (I, II, INV, VER) está *en planificación* (oferta y docentes se editan libremente y se
   puede borrar), *activa* (todo cambio pide fecha de efecto y motivo, queda en `gestion_cambio` y se avisa al docente; no se
   borra nada: `oferta.retirada_en`, `oferta_docente.desde/hasta`) o *concluida* (historial de solo lectura; solo la Dirección de

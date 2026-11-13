@@ -3488,7 +3488,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 8. (hecha, 13-nov-2026) **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
 9. (hecha, 13-nov-2026) **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
 10. (hecha, 13-nov-2026) **Biblioteca y recursos:** apuntes, guías y enlaces que suben los docentes, por asignatura.
-11. Pruebas de navegador, manual, guía y CLAUDE.md.
+11. (hecha, 13-nov-2026) Pruebas de navegador, manual, guía y CLAUDE.md.
 
 ### Etapa 1 (hecha): menú agrupado y «Mi plan de estudios»
 - **Migración 0072:** `estudiante_aprobada` (por asignatura, no por plan) y `cuenta_estudiante.comparte_plan_tutor`.
@@ -3567,3 +3567,14 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
   académica: retiran cualquiera; el autor retira lo suyo).
 - `app/servicios/recursos.py` y `rutas/recursos.py`: `/servicios/recursos` (docentes con vínculo: subir y retirar) y
   `/estudiante/biblioteca` (buscar sin tildes, filtrar por asignatura y tipo, descargar). Un recurso retirado no se ve ni se descarga.
+
+### Etapa 11 (hecha): pruebas de navegador, manual y documentación
+- **Navegador:** la base de `tests/navegador/preparar.py` trae un plan, tutor, una beca, un tema, un recurso, preguntas frecuentes, un servicio de
+  apoyo y un evento con inscripción; las pantallas nuevas del estudiante y del personal entran en la prueba de accesibilidad, y
+  `test_el_estudiante_usa_sus_servicios` recorre plan, oportunidad, inscripción y buzón anónimo.
+- **Manual:** nuevas secciones «Los servicios del estudiante» (capítulo 7) y «Oportunidades», «Temas de grado», «Eventos con inscripción»
+  y «Biblioteca y recursos» (capítulo 8), con 16 capturas más (ahora 94 páginas y 85 capturas) y tres filas en la matriz de privilegios.
+- **CLAUDE.md:** reglas de privacidad de los servicios del estudiante.
+- **Pendiente de confirmar:** que los empleadores publiquen por sí mismos con un enlace (hoy los publica la Dirección), mentorías de
+  egresados desde el portal (existen en el directorio, §50), verificación pública de los certificados de participación y límites de
+  envío del buzón anónimo (hoy solo hay estudiantes autenticados, sin tope por persona).

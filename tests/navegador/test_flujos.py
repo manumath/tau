@@ -537,3 +537,30 @@ def test_concluir_y_reabrir_un_semestre(page):
     page.get_by_role("button", name="Concluir el semestre").click()
     page.locator("#modal").get_by_role("button", name="Concluir el semestre").click()
     page.get_by_role("button", name="Reabrir para corregir").wait_for()
+
+
+def test_el_estudiante_usa_sus_servicios(estudiante):
+    """Marca una asignatura en su plan, postula a una oportunidad, se inscribe a un evento y escribe al buzón sin nombre (PLAN §67)."""
+    page = estudiante
+    page.goto("/estudiante/plan")
+    marca = page.locator("button[aria-label^='Aprobada: MAT-111']")
+    assert marca.get_attribute("aria-checked") == "false"
+    marca.click()
+    page.locator("button[aria-label^='Aprobada: MAT-111'][aria-checked='true']").wait_for()
+    page.goto("/estudiante/oportunidades")
+    page.get_by_role("link", name="Beca de excelencia académica").click()
+    page.get_by_role("button", name="Postular").click()
+    page.get_by_role("heading", name="Mi postulación").wait_for()
+    assert "Postulada" in page.locator("main").inner_text()
+    page.goto("/estudiante/comunicados")
+    page.get_by_role("link", name="Curso corto de LaTeX").first.click()
+    page.get_by_role("button", name="Inscribirme").click()
+    page.get_by_text("Inscrito", exact=True).wait_for()
+    page.goto("/estudiante/buzon")
+    page.fill("input[name=asunto]", "Horario del laboratorio")
+    page.fill("textarea[name=texto]", "¿A qué hora abre el laboratorio de cómputo?")
+    page.get_by_role("button", name="Enviar como anónimo").click()
+    page.wait_for_url("**/estudiante/buzon")
+    assert "Horario del laboratorio" not in page.locator("main").inner_text()        # los anónimos no figuran en «Mis envíos»
+    page.goto("/estudiante/calendario")
+    assert "Curso corto de LaTeX" in page.locator("main").inner_text()
