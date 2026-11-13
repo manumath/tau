@@ -702,6 +702,12 @@ eventos a los que lo convocan (o que son para todos) y, de su proyecto de grado,
 reunión y la defensa. **Llevar a mi calendario (.ics)** descarga el calendario del año para Google Calendar, Outlook o el
 teléfono. No guarda nada: reúne lo que ya está en el sistema.
 
+**Mi tutoría** (Mi carrera): muestra quién es su tutor(a), la fecha de las reuniones registradas (solo las fechas: lo que se habló
+es confidencial y el estudiante no lo ve) y permite **pedir una reunión** (tema y un mensaje opcional). El tutor recibe un aviso,
+ve el pedido en la ficha de su tutorado (y «Pidió una reunión» en su lista) y **programa** la reunión con fecha, hora y un
+mensaje (lugar, indicaciones) o la marca **atendida**. El estudiante recibe un aviso, ve la reunión en su calendario y puede
+cancelar la solicitud. Hay una sola solicitud abierta a la vez.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

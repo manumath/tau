@@ -44,6 +44,11 @@ def _grado(externo_id: int, desde: str, hasta: str):
         yield _evento(t.get("defensa_en"), f"Defensa: {t['titulo']}", "grado", "", href)
 
 
+def _tutoria(externo_id: int, desde: str, hasta: str):
+    for s in get_db().q("SELECT * FROM tutoria_solicitud WHERE externo_id = ? AND estado = 'programada'", [externo_id]):
+        yield _evento(s["fecha_reunion"], "Reunión con su tutor(a)", "tutoria", s["respuesta"] or "", "/estudiante/tutoria")
+
+
 def _eventos(uid: int, desde: str, hasta: str):
     for c in get_db().q(
             """SELECT c.* FROM comunicado c WHERE c.tipo = 'evento' AND c.estado = 'publicado' AND c.inicio IS NOT NULL
@@ -59,7 +64,8 @@ def eventos(externo_id: int, desde: date | None = None, hasta: date | None = Non
     d, h = desde.isoformat(), hasta.isoformat()
     usuario = estudiantes.usuario_de(externo_id)
     uid = usuario["id"] if usuario else 0
-    todos = [e for fuente in (_gestiones(d, h), _auxiliaturas(d, h), _grado(externo_id, d, h), _eventos(uid, d, h))
+    todos = [e for fuente in (_gestiones(d, h), _auxiliaturas(d, h), _grado(externo_id, d, h), _eventos(uid, d, h),
+                    _tutoria(externo_id, d, h))
              for e in fuente if e]
     return sorted((e for e in todos if d <= e["fecha"] <= h), key=lambda e: (e["fecha"], e["hora"], e["titulo"]))
 

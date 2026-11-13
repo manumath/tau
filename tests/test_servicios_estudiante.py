@@ -138,3 +138,80 @@ def test_pantalla_del_calendario_y_archivo_ics(client, sofia):
     assert "BEGIN:VCALENDAR" in r.text and "SUMMARY:Charla de\\, prueba\\; con signos" in r.text
     assert f"DTSTART:{(hoy + timedelta(days=2)):%Y%m%d}T153000" in r.text and r.text.endswith("END:VCALENDAR\r\n")
     assert "Calendario" in client.get("/estudiante").text
+
+
+# --- Etapa 3: tutoría desde el estudiante ------------------------------------------------------------------------------
+
+def _con_tutor(ext):
+    from app.comun import vinculos
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    vinculos.agregar(emmy, "titular", "2020-01-01")
+    assert tutoria.asignar(ext, emmy, None) == []
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    return emmy
+
+
+def test_solicitar_programar_y_atender_una_reunion(sofia, buzon):
+    from datetime import datetime, timedelta
+    ext = _externo("1111111")
+    assert tutoria.solicitar(ext, "academico", "")[0].startswith("Aún no tiene tutor")
+    emmy = _con_tutor(ext)
+    assert tutoria.solicitar(ext, "x", "")[0].startswith("Elija")
+    assert tutoria.solicitar(ext, "academico", "x" * 1001)[0].startswith("El mensaje")
+    assert tutoria.solicitar(ext, "academico", "Quisiera hablar de mis materias") == []
+    assert "ya tiene una solicitud abierta" in tutoria.solicitar(ext, "otro", "")[0].lower()
+    [s] = tutoria.solicitudes_abiertas_de_tutor(emmy)
+    assert (s["estado"], s["tema"], s["nombres"]) == ("pendiente", "academico", "Sofía")
+    from app.comun import notificaciones
+    assert any("Reunión pedida" in n["asunto"] for n in notificaciones.recientes(emmy))
+    assert tutoria.programar(s["id"], emmy, "", "")[0].startswith("Indique la fecha")
+    assert tutoria.programar(s["id"], emmy, "2020-01-01T10:00", "")[0].startswith("La reunión debe ser en el futuro")
+    otro = usuarios.por_email("admin@test.cl")["id"]
+    assert tutoria.programar(s["id"], otro, "2099-01-01T10:00", "")[0].startswith("Esa solicitud no está abierta")
+    cuando = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%dT10:00")
+    assert tutoria.programar(s["id"], emmy, cuando, "Aula 3") == []
+    assert tutoria.solicitudes_de(ext)[0]["estado"] == "programada"
+    from app.estudiantil import calendario
+    assert any(e["tipo"] == "tutoria" and e["detalle"] == "Aula 3" for e in calendario.eventos(ext))
+    assert tutoria.atender(s["id"], emmy) == [] and tutoria.solicitudes_abiertas_de_tutor(emmy) == []
+    assert tutoria.solicitar(ext, "otro", "") == [] and tutoria.cancelar(tutoria.solicitudes_de(ext)[0]["id"], ext) == []
+    assert tutoria.cancelar(s["id"], ext)[0].startswith("Esa solicitud no está abierta")      # ya atendida
+
+
+def test_pantallas_de_tutoria_del_estudiante_y_del_tutor(client, sofia):
+    from datetime import datetime, timedelta
+    ext = _externo("1111111")
+    r = client.get("/estudiante/tutoria")
+    assert "Todavía no tiene tutor" in r.text
+    emmy = _con_tutor(ext)
+    tutoria.registrar(ext, emmy, {"fecha": "2026-10-01", "modalidad": "presencial", "tema": "otro",
+                                  "resumen": "Texto reservado del tutor", "acuerdos": "", "derivacion": "ninguna"})
+    r = client.get("/estudiante/tutoria")
+    assert "Mi tutor(a)" in r.text and "1: 1 oct 2026" in r.text and "Texto reservado del tutor" not in r.text
+    assert "confidencial" in r.text and "Pedir una reunión" in r.text
+    r = client.post("/estudiante/tutoria/solicitud", data={"tema": "economico", "mensaje": "Necesito orientación"},
+                    follow_redirects=False)
+    assert r.headers["location"] == "/estudiante/tutoria"
+    r = client.get("/estudiante/tutoria")
+    assert "Económico" in r.text and "Pendiente" in r.text and "Ya tiene una solicitud abierta" in r.text
+    sid = tutoria.solicitudes_de(ext)[0]["id"]
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "Pidió una reunión" in client.get("/tutoria").text
+    r = client.get(f"/tutoria/{ext}")
+    assert "Reunión pedida por el estudiante" in r.text and "Necesito orientación" in r.text
+    cuando = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%dT09:30")
+    r = client.post(f"/tutoria/{ext}/solicitudes/{sid}/programar", data={"fecha_reunion": cuando, "respuesta": "Oficina 5"},
+                    follow_redirects=False)
+    assert r.status_code == 303 and tutoria.solicitudes_de(ext)[0]["estado"] == "programada"
+    # Otro docente no toca la solicitud.
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    assert client.post(f"/tutoria/{ext}/solicitudes/{sid}/atender", follow_redirects=False).status_code == 403
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    r = client.get("/estudiante/tutoria")
+    assert "Programada" in r.text and "Oficina 5" in r.text
+    client.post(f"/estudiante/tutoria/solicitud/{sid}/cancelar", follow_redirects=False)
+    assert tutoria.solicitudes_de(ext)[0]["estado"] == "cancelada"
+    assert client.post("/estudiante/tutoria/solicitud/99999/cancelar", follow_redirects=False).status_code == 404

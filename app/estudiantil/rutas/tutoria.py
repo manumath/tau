@@ -50,17 +50,19 @@ def _estudiante(externo_id):
 def get(auth):
     if not estudiantes.es_tutor(auth["id"]):
         return _no()
+    pidieron = {x["externo_id"] for x in tutoria.solicitudes_abiertas_de_tutor(auth["id"])}
     filas = [Tr(Td(A(f"{t['apellidos']}, {t['nombres']}", href=f"{BASE}/{t['externo_id']}", cls="font-medium hover:underline")),
                 Td(cohortes.texto(t["cohorte_anio"], t["cohorte_ciclo"]), cls="text-sm"),
                 Td(t["registro_universitario"] or "—", cls="text-sm"), Td(t["reuniones"]),
-                Td(t["ultima"] or insignia("Sin reuniones", "ambar"), cls="text-sm whitespace-nowrap"))
+                Td(t["ultima"] or insignia("Sin reuniones", "ambar"), cls="text-sm whitespace-nowrap"),
+                Td(insignia("Pidió una reunión", "azul", icono="message-circle") if t["externo_id"] in pidieron else ""))
              for t in tutoria.tutorados(auth["id"])]
     return pagina(
         "Mis tutorados",
         H2("Mis tutorados"),
         P("Estudiantes que la Carrera le asignó como tutor(a). Registre sus reuniones y derivaciones: son confidenciales (las ve "
           "usted y la Dirección de Carrera; el estudiante no las ve).", cls=(TextPresets.muted_sm, "max-w-3xl mb-6")),
-        Card(Div(Table(Thead(Tr(Th("Estudiante"), Th("Cohorte"), Th("RU"), Th("Reuniones"), Th("Última"))), Tbody(*filas),
+        Card(Div(Table(Thead(Tr(Th("Estudiante"), Th("Cohorte"), Th("RU"), Th("Reuniones"), Th("Última"), Th(""))), Tbody(*filas),
                        cls="uk-table-divider uk-table-middle"), cls="overflow-x-auto")),
         usuario=auth, seccion="tutoria")
 
@@ -88,6 +90,50 @@ def _reunion(r, propia):
                               aria_label="Eliminar"), hx_post=f"{BASE}/reuniones/{r['id']}/eliminar", hx_swap="none",
                     hx_confirm="¿Eliminar esta reunión?"), cls="flex shrink-0") if propia else "",
         cls="flex items-start justify-between gap-3 py-3")
+
+
+def _solicitudes(auth, externo_id):
+    """Las reuniones que el estudiante pidió (PLAN §67): el tutor las programa o las marca atendidas."""
+    filas = tutoria.solicitudes_abiertas_de_tutor(auth["id"], externo_id)
+    if not filas:
+        return ""
+    items = []
+    for s in filas:
+        programar = fh.Form(
+            Div(campo("Fecha y hora", fh.Input(type="datetime-local", name="fecha_reunion", value=s["fecha_reunion"] or "",
+                                               required=True, cls="uk-input")),
+                campo("Mensaje para el estudiante (lugar, indicaciones)",
+                      fh.Input(name="respuesta", value=s["respuesta"] or "", maxlength="500", cls="uk-input")),
+                cls="grid grid-cols-1 sm:grid-cols-2 gap-2"),
+            Div(Button("Programar la reunión" if s["estado"] == "pendiente" else "Cambiar la fecha", type="submit",
+                       cls=(ButtonT.primary, ButtonT.sm)),
+                Button("Marcar atendida", type="submit", formaction=f"{BASE}/{externo_id}/solicitudes/{s['id']}/atender",
+                       formnovalidate=True, cls=(ButtonT.default, ButtonT.sm)), cls="flex gap-2 mt-2"),
+            method="post", action=f"{BASE}/{externo_id}/solicitudes/{s['id']}/programar")
+        items.append(Li(Div(insignia(tutoria.TEMAS[s["tema"]], "azul"),
+                            insignia(tutoria.ESTADOS_SOLICITUD[s["estado"]], "ambar" if s["estado"] == "pendiente" else "azul"),
+                            cls="flex gap-2"),
+                        P(s["mensaje"], cls="text-sm") if s["mensaje"] else "", programar, cls="py-3 space-y-1"))
+    return Card(H3("Reunión pedida por el estudiante", cls="text-base font-semibold"), Ul(*items, cls="divide-y divide-border"),
+                cls="lg:col-span-3")
+
+
+@rt(f"{BASE}/{{externo_id}}/solicitudes/{{sid}}/programar")
+def post(auth, sess, externo_id: int, sid: int, fecha_reunion: str = "", respuesta: str = ""):
+    if not tutoria.es_tutor_de(auth["id"], externo_id):
+        return _no()
+    errores = tutoria.programar(sid, auth["id"], fecha_reunion, respuesta)
+    add_toast(sess, errores[0] if errores else "Reunión programada: se avisó al estudiante.", "error" if errores else "success")
+    return Redirect(f"{BASE}/{externo_id}")
+
+
+@rt(f"{BASE}/{{externo_id}}/solicitudes/{{sid}}/atender")
+def post(auth, sess, externo_id: int, sid: int):
+    if not tutoria.es_tutor_de(auth["id"], externo_id):
+        return _no()
+    errores = tutoria.atender(sid, auth["id"])
+    add_toast(sess, errores[0] if errores else "Solicitud atendida.", "error" if errores else "success")
+    return Redirect(f"{BASE}/{externo_id}")
 
 
 def _avance_compartido(auth, externo_id):
@@ -125,7 +171,8 @@ def get(auth, externo_id: int):
             Button(UkIcon("plus", height=16, width=16), "Registrar reunión", cls=ButtonT.primary, hx_get=f"{BASE}/{externo_id}/reuniones/nueva",
                    hx_target=f"#{ID_MODAL}") if rol == "tutor" else "",
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
-        Div(Div(Card(H3("Reuniones" + ("" if rol == "tutor" else " (de todos los tutores)"), cls="text-base font-semibold"),
+        Div(_solicitudes(auth, externo_id) if rol == "tutor" else "",
+            Div(Card(H3("Reuniones" + ("" if rol == "tutor" else " (de todos los tutores)"), cls="text-base font-semibold"),
                  P("Confidencial. " + ("Solo usted y la Dirección de Carrera ven estas notas." if rol == "tutor"
                                        else "Cada consulta suya queda en la auditoría."), cls=(TextPresets.muted_sm, "mb-2")),
                  Ul(*[_reunion(r, rol == "tutor" and r["tutor_id"] == auth["id"]) for r in lista], cls="divide-y divide-border")

@@ -4,10 +4,10 @@ sus reuniones y derivaciones.
 Las reuniones son confidenciales: las ve su autor y la Dirección de Carrera (`ver_tutorias_detalle`, con registro en la
 auditoría); el estudiante no las ve y los informes solo usan cifras agregadas. Un tutor nuevo no ve las reuniones del anterior.
 """
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
-from app.comun import notificaciones, usuarios
-from app.comun.db import auditar, get_db, transaccion
+from app.comun import estudiantes, formato, notificaciones, usuarios
+from app.comun.db import AHORA, auditar, get_db, transaccion
 from app.estudiantil import cohortes
 
 TEMAS = {"academico": "Académico", "economico": "Económico", "salud": "Salud", "vocacional": "Vocacional",
@@ -190,3 +190,88 @@ def indicadores(hoy: date | None = None) -> dict:
             "temas": {t: db.q("SELECT COUNT(*) n FROM tutoria_reunion WHERE tema = ?", [k])[0]["n"] for k, t in TEMAS.items()},
             "derivaciones": {t: db.q("SELECT COUNT(*) n FROM tutoria_reunion WHERE derivacion = ?", [k])[0]["n"]
                              for k, t in DERIVACIONES.items() if k != "ninguna"}}
+
+
+# --- Solicitudes de reunión del estudiante (PLAN §67, etapa 3) -------------------------------------------------------
+
+ESTADOS_SOLICITUD = {"pendiente": "Pendiente", "programada": "Programada", "atendida": "Atendida", "cancelada": "Cancelada"}
+ABIERTAS = ("pendiente", "programada")
+
+
+def solicitudes_de(externo_id: int) -> list[dict]:
+    return get_db().q("""SELECT s.*, u.nombres AS tutor_nombres, u.apellidos AS tutor_apellidos FROM tutoria_solicitud s
+                         JOIN usuario u ON u.id = s.tutor_id WHERE s.externo_id = ? ORDER BY s.id DESC""", [externo_id])
+
+
+def solicitudes_abiertas_de_tutor(tutor_id: int, externo_id: int | None = None) -> list[dict]:
+    return get_db().q(
+        f"""SELECT s.*, pe.nombres, pe.apellidos FROM tutoria_solicitud s JOIN persona_externa pe ON pe.id = s.externo_id
+            WHERE s.tutor_id = ? AND s.estado IN ('pendiente', 'programada') {"AND s.externo_id = ?" if externo_id else ""}
+            ORDER BY s.id""", [tutor_id, *([externo_id] if externo_id else [])])
+
+
+def fechas_de_reuniones(externo_id: int) -> list[str]:
+    """Solo las fechas de sus reuniones registradas: lo que se habló es confidencial y el estudiante no lo ve."""
+    return [f["fecha"] for f in get_db().q("SELECT fecha FROM tutoria_reunion WHERE externo_id = ? ORDER BY fecha DESC",
+                                           [externo_id])]
+
+
+def solicitar(externo_id: int, tema: str, mensaje: str) -> list[str]:
+    tutor = estudiantes.tutor_de(externo_id)
+    if not tutor:
+        return ["Aún no tiene tutor(a) asignado: avise a la Dirección de Carrera."]
+    if tema not in TEMAS:
+        return ["Elija de qué quiere hablar."]
+    mensaje = (mensaje or "").strip()
+    if len(mensaje) > 1000:
+        return ["El mensaje admite hasta 1.000 caracteres."]
+    if get_db().q("SELECT 1 FROM tutoria_solicitud WHERE externo_id = ? AND estado IN ('pendiente', 'programada')", [externo_id]):
+        return ["Ya tiene una solicitud abierta: espere la respuesta de su tutor(a) o cancélela."]
+    with transaccion():
+        get_db().t.tutoria_solicitud.insert(externo_id=externo_id, tutor_id=tutor["id"], tema=tema, mensaje=mensaje or None)
+        p = get_db().q("SELECT nombres, apellidos FROM persona_externa WHERE id = ?", [externo_id])[0]
+        notificaciones.avisar(usuarios.por_id(tutor["id"]), f"Reunión pedida por {p['nombres']} {p['apellidos']}",
+                              f"Tema: {TEMAS[tema].lower()}." + (f" «{mensaje[:200]}»" if mensaje else ""),
+                              f"/tutoria/{externo_id}")
+    return []
+
+
+def _de_tutor(sid: int, tutor_id: int) -> dict | None:
+    f = get_db().q("SELECT * FROM tutoria_solicitud WHERE id = ? AND tutor_id = ?", [sid, tutor_id])
+    return f[0] if f else None
+
+
+def programar(sid: int, tutor_id: int, fecha_reunion: str, respuesta: str) -> list[str]:
+    s = _de_tutor(sid, tutor_id)
+    if not s or s["estado"] not in ABIERTAS:
+        return ["Esa solicitud no está abierta."]
+    try:
+        f = datetime.strptime((fecha_reunion or "").strip(), "%Y-%m-%dT%H:%M")
+    except ValueError:
+        return ["Indique la fecha y la hora de la reunión."]
+    if f < datetime.now():
+        return ["La reunión debe ser en el futuro."]
+    respuesta = (respuesta or "").strip()[:500]
+    with transaccion():
+        get_db().execute(f"""UPDATE tutoria_solicitud SET estado = 'programada', fecha_reunion = ?, respuesta = ?,
+                             actualizada_en = {AHORA} WHERE id = ?""", [f.strftime("%Y-%m-%dT%H:%M"), respuesta or None, sid])
+        notificaciones.avisar(estudiantes.usuario_de(s["externo_id"]), "Su tutor(a) programó la reunión",
+                              f"{formato.momento(f.strftime('%Y-%m-%dT%H:%M'))}." + (f" {respuesta}" if respuesta else ""),
+                              "/estudiante/tutoria")
+    return []
+
+
+def atender(sid: int, tutor_id: int) -> list[str]:
+    s = _de_tutor(sid, tutor_id)
+    if not s or s["estado"] not in ABIERTAS:
+        return ["Esa solicitud no está abierta."]
+    get_db().execute(f"UPDATE tutoria_solicitud SET estado = 'atendida', actualizada_en = {AHORA} WHERE id = ?", [sid])
+    return []
+
+
+def cancelar(sid: int, externo_id: int) -> list[str]:
+    s = get_db().q("SELECT * FROM tutoria_solicitud WHERE id = ? AND externo_id = ?", [sid, externo_id])
+    if not s or s[0]["estado"] not in ABIERTAS:
+        return ["Esa solicitud no está abierta."]
+    get_db().execute(f"UPDATE tutoria_solicitud SET estado = 'cancelada', actualizada_en = {AHORA} WHERE id = ?", [sid])
+    return []

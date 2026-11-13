@@ -3479,7 +3479,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 ### Servicios y etapas (un commit cada una)
 1. (hecha, 13-nov-2026) Menú del estudiante agrupado y **Mi plan de estudios** (malla del plan, marcas privadas, compartir con el tutor).
 2. (hecha, 13-nov-2026) **Calendario académico:** semestre, plazos de convocatorias, defensas y eventos del estudiante; exportable (.ics).
-3. **Tutoría desde el estudiante:** ver su tutor y la fecha de sus reuniones (no su contenido), pedir una reunión; el tutor la ve.
+3. (hecha, 13-nov-2026) **Tutoría desde el estudiante:** ver su tutor y la fecha de sus reuniones (no su contenido), pedir una reunión; el tutor la ve.
 4. **Oportunidades:** becas, movilidad, pasantías, ayudantías de investigación (las publica el responsable de un proyecto) y
    empleo para egresados, con postulación y decisión.
 5. **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
@@ -3502,3 +3502,10 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
   convocatorias de auxiliaturas publicadas (cierre y examen), los eventos de comunicados (convocados o para todos) y, del
   proyecto de grado del estudiante, el plazo de revisión, la reunión y la defensa. Las etapas siguientes agregan sus fechas
   en `calendario.eventos` (becas, reuniones de tutoría, encuestas).
+
+### Etapa 3 (hecha): tutoría desde el estudiante
+- **Migración 0073:** `tutoria_solicitud` (pendiente → programada → atendida o cancelada). No es una reunión registrada: las
+  notas de las reuniones siguen siendo confidenciales y el estudiante solo ve sus fechas.
+- `app/estudiantil/tutoria.py` (`solicitar`, `programar`, `atender`, `cancelar`) y `rutas/mi_tutoria.py` (`/estudiante/tutoria`). El
+  tutor recibe un aviso, programa la reunión desde la ficha del tutorado (`/tutoria/{id}`) y el estudiante recibe otro; la reunión
+  programada aparece en su calendario. Una solicitud abierta por estudiante a la vez; solo su tutor vigente la atiende.
