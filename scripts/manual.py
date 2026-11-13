@@ -327,6 +327,48 @@ def datos(ruta: str):
                                         "Habilitaremos una sala de estudio en la tarde y publicaremos los horarios de consulta de cada docente.")
     assert not encuestas.publicar_retorno(eid2)
 
+    # Servicios del docente (PLAN §68): una lista de curso, un programa publicado, preferencias, una evaluación cerrada con resultados y
+    # un trabajo de grado concluido para certificar.
+    from app.academico import evaluacion, listas, preferencias, programas
+    from app.academico import oferta as ofertas_
+    mias = ofertas_.materias_de(emmy, g["id"])
+    sigla0 = mias[0]["sigla"]
+    asig0 = db.q("SELECT id FROM asignatura WHERE sigla = ?", [sigla0])[0]["id"]
+    estudiantes_lista = "".join(f"{sigla0},{mias[0]['paralelo']},{ru},{ap},{nom},\n" for ru, ap, nom in (
+        ("8101", "Limachi", "Andrea"), ("8102", "Mamani", "Carlos"), ("8103", "Quispe", "María"), ("8104", "Choque", "Jorge")))
+    assert not listas.cargar(("sigla,paralelo,ru,apellidos,nombres,correo\n" + estudiantes_lista).encode(), g["id"], ada)[1]
+    assert not programas.guardar(asig0, g["id"], emmy, {
+        "objetivos": "Que el estudiante domine los conceptos básicos del curso y los aplique a problemas concretos.",
+        "contenido": "1. Fundamentos\n2. Técnicas principales\n3. Aplicaciones", "metodologia": "Clases teóricas y sesiones de práctica.",
+        "evaluacion": "Dos exámenes parciales (60 %) y un examen final (40 %).", "bibliografia": "Apostol, T. Calculus. Reverté."})
+    assert not programas.publicar(asig0, g["id"], emmy)
+    sig = gestiones.crear(g["anio"] + 1, "I", ada)[0] or gestiones.por_codigo(f"I-{g['anio'] + 1}")
+    assert not preferencias.guardar(sig, emmy, {asig0: ("prefiere", "La dicté tres veces")}, ["lun-noche", "mar-noche"],
+                                    "Prefiero las clases por la mañana.")
+    pasada = gestiones.crear(g["anio"] - 1, "II", ada, concluida=True)[0] or gestiones.por_codigo(f"II-{g['anio'] - 1}")
+    db.execute("UPDATE gestion_academica SET estado = 'concluida' WHERE id = ?", [pasada["id"]])
+    po = next((o["id"] for o in ofertas_.listar(pasada["id"]) if o["sigla"] == sigla0 and o["paralelo"] == "A"), None)
+    if po is None:
+        po, _ = ofertas_.agregar(pasada["id"], sigla0, "A", "30", ada)
+    assert not ofertas_.fijar_titular(po, emmy)
+    hoy_ = date.today()
+    eid, err = evaluacion.crear(pasada["id"], (hoy_ - timedelta(days=10)).isoformat(), (hoy_ + timedelta(days=5)).isoformat(), ada)
+    assert not err, err
+    assert not evaluacion.anunciar(eid, ada)
+    db.execute("UPDATE evaluacion_docente SET anunciada_en = ? WHERE id = ?", [(hoy_ - timedelta(days=12)).isoformat() + " 09:00:00", eid])
+    assert not evaluacion.abrir(eid, ada)
+    for n in range(9):
+        r = db.t.evaluacion_respuesta.insert(evaluacion_id=eid, oferta_id=po)
+        for k, (clave, _t) in enumerate(evaluacion.CRITERIOS):
+            db.execute("INSERT INTO evaluacion_valor (respuesta_id, criterio, valor) VALUES (?, ?, ?)", [r["id"], clave, 3 + (n + k) % 3])
+    assert not evaluacion.cerrar(eid, ada)
+    assert not evaluacion.guardar_retorno(eid, "Reforzaremos las sesiones de práctica y publicaremos los programas antes del semestre.")
+    assert not evaluacion.publicar_retorno(eid, ada)
+    evaluacion.registrar_consulta(eid, emmy, ada)
+    camila = db.t.persona_externa.insert(nombres="Camila", apellidos="Rojas", email="camila.rojas@estudiante.test")["id"]
+    db.t.tramite_grado.insert(externo_id=camila, tipo="perfil", titulo="Grupos de Lie y simetrías de ecuaciones diferenciales", tutor_id=emmy,
+                              estado="aprobado", enviado_en=f"{hoy_.year - 1}-09-15 10:00:00")
+
     # Enlace de ingreso de la estudiante (como el que le llega por correo).
     Path(ruta).with_suffix(".enlace").write_text(f"/acceso/{tokens.emitir(andrea['uid'], 'acceso')}")
 
@@ -356,6 +398,20 @@ CAPTURAS = [
     ("cv", "docente", "/informes/cv", {"alto": 1000}),
     ("investigadores", "docente", "/investigadores", {"alto": 560}),
     ("mi-docencia", "docente", "/docencia", {"alto": 1000}),
+    ("docente-pendientes", "docente", "/docencia/pendientes", {"alto": 560}),
+    ("docente-calendario", "docente", "/docencia/calendario", {"alto": 560}),
+    ("docente-preferencias", "docente", "/docencia/preferencias", {"alto": 760}),
+    ("docente-programas", "docente", "/docencia/programas", {"alto": 460}),
+    ("docente-listas", "docente", "/docencia/listas", {"alto": 460}),
+    ("docente-lista", "docente", "lista-curso", {"alto": 560}),
+    ("docente-evaluacion", "docente", "/docencia/evaluacion", {"alto": 760}),
+    ("docente-resultados", "docente", "resultados-evaluacion", {"alto": 1000}),
+    ("docente-historial", "docente", "/docencia/historial", {"alto": 900}),
+    ("docente-certificado", "docente", "certificado", {"alto": 620}),
+    ("preferencias-personal", "direccion", "/docencia/preferencias/todas", {"alto": 560}),
+    ("programas-cobertura", "direccion", "/docencia/programas/cobertura", {"alto": 560}),
+    ("evaluacion-gestion", "direccion", "/docencia/evaluacion/gestion", {"alto": 900}),
+    ("listas-cargar", "direccion", "/docencia/listas/cargar", {"alto": 640}),
     ("planes", "direccion", "/docencia/planes?estado=vigente", {"alto": 480}),
     ("plan-ficha", "direccion", "plan", {"alto": 1000}),
     ("planes-elaboracion", "direccion", "/docencia/planes", {"alto": 820}),
@@ -454,6 +510,9 @@ def _rutas_de_la_base(db: Path) -> dict:
         "grado": f"/servicios/grado/{uno('SELECT MAX(id) FROM tramite_grado')}",
         "grado-estudiante": f"/estudiante/grado/{uno('SELECT MAX(id) FROM tramite_grado')}",
         "autoevaluacion": f"/calidad/autoevaluaciones/{uno('SELECT MAX(id) FROM autoevaluacion')}",
+        "lista-curso": f"/docencia/listas/{uno('SELECT oferta_id FROM lista_curso LIMIT 1')}",
+        "resultados-evaluacion": f"/docencia/evaluacion/{uno('SELECT id FROM evaluacion_docente')}/docente/{uno("SELECT docente_id FROM evaluacion_consulta LIMIT 1")}",
+        "certificado": f"/docencia/certificados/tutor_grado/{uno("SELECT id FROM tramite_grado WHERE estado = 'aprobado'")}",
     }
     con.close()
     return rutas

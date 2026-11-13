@@ -3602,7 +3602,7 @@ docente). TAU sigue sin guardar notas ni asistencia.
 4. (hecha, 13-nov-2026) **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
 5. (hecha, 13-nov-2026) **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
 6. (hecha, 13-nov-2026) **Mi historial docente** (materias, tesis tuteladas y juradas, proyectos) y **certificados** de tribunal y tutoría.
-7. Pruebas de navegador, manual y documentación.
+7. (hecha, 13-nov-2026) Pruebas de navegador, manual y documentación.
 
 ### Etapa 1 (hecha): mis pendientes y mi calendario
 - `app/academico/docente.py`: `pendientes` (visto bueno y informes de grado, notas de defensa, postulantes por calificar, reuniones
@@ -3674,4 +3674,16 @@ docente). TAU sigue sin guardar notas ni asistencia.
 - **Decisiones mías por confirmar:** la verificación es interna (no hay página pública: expondría datos personales); el certificado de tutor de un trabajo
   rechazado o reprobado también se emite (es un hecho: tuteló); no hay certificado de docencia (la emite la Universidad); las evaluaciones docentes
   no entran en el historial.
+
+### Etapa 7 (hecha): pruebas de navegador, manual y documentación
+- **Navegador:** `preparar.py` carga la lista de curso de MAT-111 A (que dicta Emmy); `test_el_docente_usa_sus_servicios` indica preferencias, escribe
+  y publica un programa, abre la lista de su curso y recorre pendientes e historial; las pantallas nuevas entran en la prueba de accesibilidad
+  (personal y estudiante).
+- **Manual:** sección «Servicios del docente» en el capítulo 6 (pendientes, calendario, preferencias, programa analítico, listas, evaluación
+  docente, historial y certificados) con 14 capturas más (ahora 100 páginas) y tres filas en la matriz de privilegios. `datos()` agrega una lista
+  de curso, un programa publicado, preferencias, una evaluación cerrada con resultados y un trabajo de grado concluido.
+- **CLAUDE.md:** reglas de privacidad de los servicios del docente. **Mantenimiento:** última migración, 0084; variables `PORTAL_LISTAS_*` en el README.
+- **Ajuste:** «Mis pendientes» pide las preferencias solo del próximo semestre (I o II) en planificación.
+- **Pendiente de confirmar (resumen de §68):** contrato de la API de Kardex; si el auxiliar ve la lista; evaluación solo del titular y con ocho afirmaciones
+  fijas; verificación de certificados solo interna; sin adjunto en el programa analítico.
 

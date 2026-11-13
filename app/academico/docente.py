@@ -74,13 +74,14 @@ def _vinculo(uid: int, hoy: date):
 
 
 def _preferencias(uid: int):
-    """Una gestión en planificación para la que aún no indicó preferencias (solo si puede indicarlas)."""
+    """El próximo semestre (I o II) en planificación para el que aún no indicó preferencias (solo si puede indicarlas). Los cursos
+    de temporada no se piden aquí: los dictan solo titulares y se arman aparte."""
     from app.academico import preferencias
-    for g in preferencias.gestiones_abiertas():
-        if preferencias.puede_indicar(uid, g) is None and not preferencias.tiene(g["id"], uid):
-            yield _pendiente("preferencias", f"Indique sus preferencias para {gestiones.codigo(g)}",
-                             "Materias que prefiere y turnos sin disponibilidad", g["fecha_inicio"],
-                             f"/docencia/preferencias?gestion={g['id']}")
+    g = next((x for x in preferencias.gestiones_abiertas() if x["tipo"] in ("I", "II")), None)
+    if g and preferencias.puede_indicar(uid, g) is None and not preferencias.tiene(g["id"], uid):
+        yield _pendiente("preferencias", f"Indique sus preferencias para {gestiones.codigo(g)}",
+                         "Materias que prefiere y turnos sin disponibilidad", g["fecha_inicio"],
+                         f"/docencia/preferencias?gestion={g['id']}")
 
 
 def _programas(uid: int):

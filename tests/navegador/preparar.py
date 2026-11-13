@@ -159,6 +159,10 @@ def preparar(ruta: str):
     assert (activa["id"], hist["id"]) == (5, 6)
     oferta.agregar(hist["id"], "MAT-111", "A", "35", emmy)
     _servicios_del_estudiante(emmy, direccion["id"])
+    # Servicios del docente (PLAN §68): la lista de curso de MAT-111 paralelo A, que dicta Emmy.
+    from app.academico import listas
+    lista = "sigla,paralelo,ru,apellidos,nombres,correo\n" + "".join(f"MAT-111,A,91{i},Estudiante,{n},\n" for i, n in enumerate(ESTUDIANTES))
+    assert listas.cargar(lista.encode(), g["id"], direccion["id"])[1] == []
     # Planes (PLAN §65): una reforma en elaboración (reforma 2; plan 5 = Licenciatura en Matemática copiada, plan 6 = Maestría
     # en Matemática vacía) con una mención, para revisar las pantallas del módulo.
     ids = {r["nombre"]: r["id"] for r in get_db().q("SELECT id, nombre FROM programa")}

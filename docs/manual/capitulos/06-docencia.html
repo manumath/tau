@@ -14,6 +14,65 @@ su carga en proyectos y su historial.</p>
   Si algo no coincide, la carga y el vínculo los corrige la Dirección de Carrera; las materias, la Dirección de Carrera
   o la Coordinación académica.</div>
 
+<h2>Servicios del docente</h2>
+<p>Además de «Mi docencia», cada docente tiene en <span class="ruta">Docencia</span> unas pantallas para su trabajo diario. Todas
+son <strong>solo suyas</strong>: se calculan al abrirlas y no las ve nadie más.</p>
+
+<h3>Mis pendientes y mi calendario</h3>
+<p><span class="ruta">Docencia → Mis pendientes</span> reúne lo que espera de usted, con lo que vence antes primero: el informe y la nota
+de defensa de un tribunal, el visto bueno de un trámite de grado, las reuniones y los temas que le piden los estudiantes, las
+postulaciones por calificar, sus preferencias de oferta, los programas por publicar y el término de su vínculo. Lo vencido o a siete días se marca.</p>
+<captura archivo="docente-pendientes" clase="media">«Mis pendientes»: cada fila lleva a la pantalla donde se resuelve.</captura>
+<p><span class="ruta">Docencia → Mi calendario</span> pone sus fechas en un solo lugar y se lleva al teléfono con el archivo <code>.ics</code>.</p>
+<captura archivo="docente-calendario" clase="media">«Mi calendario»: semestre, plazos y defensas de grado, reuniones de tutoría y eventos.</captura>
+
+<h3>Preferencias para la oferta</h3>
+<p>Antes de armar un semestre, <span class="ruta">Docencia → Mis preferencias</span> le deja indicar qué materias prefiere dictar o no puede
+dictar, en qué turnos no tiene disponibilidad y un comentario. Es una <strong>ayuda</strong>: no asigna nada. La Dirección de Carrera y la
+Coordinación académica las ven en <span class="ruta">Docencia → Preferencias de docentes</span>, y al asignar un docente a una materia el
+selector marca a quien la prefiere.</p>
+<captura archivo="docente-preferencias" clase="media">Sus preferencias: materias, turnos sin disponibilidad y un comentario.</captura>
+<captura archivo="preferencias-personal" clase="media">Lo que ven la Dirección de Carrera y la Coordinación al armar la oferta.</captura>
+
+<h3>Programa analítico</h3>
+<p><span class="ruta">Docencia → Mis programas</span> lista las materias que dicta como titular. Para cada una escribe el programa (objetivos y
+contenido son obligatorios) y lo publica. Cada publicación es una <strong>versión</strong> que ya no se edita: para cambiar algo se parte
+de la última y se publica otra. Sus estudiantes lo ven desde su plan de estudios.</p>
+<captura archivo="docente-programas" clase="media">«Mis programas»: el estado del programa de cada materia.</captura>
+<captura archivo="programas-cobertura" clase="media">La cobertura de la oferta, para la Dirección y la Coordinación.</captura>
+
+<h3>Listas de mis cursos</h3>
+<p><span class="ruta">Docencia → Listas de cursos</span> muestra los estudiantes inscritos en cada paralelo que dicta (titular o auxiliar), tal como
+los registra el sistema de notas (Kardex). <strong>Solo los docentes de ese paralelo</strong> la ven, ni siquiera la Dirección de Carrera, y
+cada consulta queda registrada. Hoy la Dirección o la Coordinación cargan el CSV de Kardex; cuando Kardex ofrezca su API, TAU consultará la
+lista en el momento y no guardará nada.</p>
+<captura archivo="docente-listas" clase="media">Los paralelos que dicta y si su lista ya está cargada.</captura>
+<captura archivo="docente-lista" clase="media">La lista de un paralelo.</captura>
+<captura archivo="listas-cargar" clase="media">La carga de las listas (Dirección de Carrera y Coordinación académica): solo ven cuántos estudiantes hay por paralelo.</captura>
+<div class="nota"><span class="rotulo">Copia temporal</span>
+  Mientras no haya API, la lista cargada es una copia que se <strong>retira al concluir la gestión</strong>. TAU no guarda notas ni asistencia.</div>
+
+<h3>Evaluación docente</h3>
+<p>Una vez por semestre, la Dirección de Carrera la <strong>anuncia</strong> (el instrumento, las fechas y cómo se usan los resultados quedan a la
+vista de docentes y estudiantes, con al menos una semana de anticipación), la abre y la cierra. Los estudiantes inscritos la responden una
+sola vez por paralelo, de forma <strong>anónima</strong>.</p>
+<captura archivo="docente-evaluacion" clase="media">El instrumento, el estado de la evaluación y las reglas que la rigen.</captura>
+<ul>
+  <li>Los resultados de un docente se muestran con la evaluación cerrada y solo desde <strong>5 respuestas</strong>; con menos, nadie los ve.</li>
+  <li>El docente ve los suyos, agrega su <strong>contexto</strong> y ve <strong>quién los consultó</strong> y cuándo.</li>
+  <li>La Dirección de Carrera ve cuántos respondieron, pero los resultados solo <strong>por docente</strong>: cada consulta queda en su bitácora y en la auditoría.</li>
+  <li>No hay respuestas abiertas, y los estudiantes reciben el <strong>retorno</strong> de lo que la Carrera hizo.</li>
+</ul>
+<captura archivo="docente-resultados" clase="media">Los resultados de un docente, su contexto y la bitácora de quién los consultó.</captura>
+<captura archivo="evaluacion-gestion" clase="media">La administración de la evaluación (Dirección de Carrera): participación por docente y retorno.</captura>
+
+<h3>Mi historial y mis certificados</h3>
+<p><span class="ruta">Docencia → Mi historial</span> reúne sus materias, tutorías y tribunales de grado, auxiliaturas y proyectos. Desde ahí,
+«Mis certificados» emite una constancia imprimible de cada tutoría o tribunal ya <strong>concluido</strong>, con un código que la Dirección de
+Carrera puede verificar.</p>
+<captura archivo="docente-historial" clase="media">«Mi historial»: lo que ha hecho en la Carrera, sin cargar nada.</captura>
+<captura archivo="docente-certificado" clase="media">Un certificado imprimible, con su código de verificación.</captura>
+
 <h2>Cómo se cuenta la carga horaria</h2>
 <p>Estas reglas explican las cifras de todas las pantallas de docencia:</p>
 <ul>

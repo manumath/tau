@@ -564,3 +564,29 @@ def test_el_estudiante_usa_sus_servicios(estudiante):
     assert "Horario del laboratorio" not in page.locator("main").inner_text()        # los anónimos no figuran en «Mis envíos»
     page.goto("/estudiante/calendario")
     assert "Curso corto de LaTeX" in page.locator("main").inner_text()
+
+
+def test_el_docente_usa_sus_servicios(page):
+    """Indica sus preferencias de oferta, escribe y publica el programa de una materia y ve la lista de su curso (PLAN §68)."""
+    entrar(page, "investigadora")
+    page.goto("/docencia/preferencias")
+    page.locator("select[aria-label='MAT-111: preferencia']").select_option("prefiere")
+    page.fill("textarea[name=comentario]", "Prefiero las mañanas.")
+    page.get_by_role("button", name="Guardar mis preferencias").click()
+    page.wait_for_url("**/docencia/preferencias?gestion=*")
+    assert page.locator("select[aria-label='MAT-111: preferencia']").input_value() == "prefiere"
+    page.goto("/docencia/programas")
+    page.locator("tr", has_text="MAT-111").get_by_role("link", name="Escribir").first.click()
+    page.fill("textarea[name=objetivos]", "Dominar el cálculo diferencial.")
+    page.fill("textarea[name=contenido]", "1. Límites\n2. Derivadas")
+    page.get_by_role("button", name="Guardar y publicar").click()
+    page.wait_for_url("**/docencia/programas")
+    assert "Publicado · versión 1" in page.locator("tr", has_text="MAT-111").first.inner_text()
+    page.goto("/docencia/listas")
+    page.get_by_role("link", name="Ver la lista").first.click()
+    page.get_by_role("heading", name="MAT-111", exact=False).wait_for()
+    assert "Estudiante, Sofía" in page.locator("main").inner_text()
+    page.goto("/docencia/pendientes")
+    assert "Mis pendientes" in page.locator("main").inner_text()
+    page.goto("/docencia/historial")
+    assert "MAT-111" in page.locator("main").inner_text()
