@@ -562,6 +562,19 @@ quita la troncal que se cierre (por ejemplo, por falta de inscritos). En semestr
 «Agregar las troncales» completa las que falten. La editan la Dirección de Carrera
 y la Coordinación académica; todos la consultan.
 
+**Con el semestre activo** (PLAN §66), la oferta y los docentes ya no se editan libremente: los botones de
+«Agregar las troncales», «Copiar», «Asignar en grilla» e «Importar CSV» desaparecen y cada cambio pide **fecha de efecto**
+(el primer día en que rige), **motivo** (renuncia, fallecimiento, licencia o baja, reasignación, falta de inscritos, error
+de planificación, necesidad académica u otro, que pide explicación) y un detalle opcional. Se puede:
+- **Agregar una materia** al semestre (botón arriba de la tabla).
+- **Retirar una materia** (la ✕ de su fila): queda en la tabla tachada, con la fecha y el motivo, y sus docentes dejan el
+  paralelo desde esa fecha. No se borra nada.
+- **Asignar un docente** a un paralelo («+ Asignar docente»), **reasignarlo** a otra persona (las flechas junto a su
+  nombre: el que dicta hoy deja el paralelo el día anterior a la fecha de efecto y entra el nuevo con el mismo rol) o
+  **retirarlo** (el muñeco con la raya). Quien deja un paralelo queda en la fila con sus fechas.
+Los docentes que entran o salen reciben un aviso. **Cambios del semestre** lista todo lo que cambió, con su fecha, motivo y
+quién lo registró. Los cambios los hacen la Dirección de Carrera y la Coordinación académica.
+
 **Importar CSV** (en «Oferta y docentes»): carga la oferta de gestiones pasadas, una fila por
 docente de cada paralelo (`gestion`, `sigla`, `paralelo`, `inscritos`, `email`, `rol`; hay
 plantilla). La oferta de cada gestión del archivo se reemplaza por la del archivo, así que puede

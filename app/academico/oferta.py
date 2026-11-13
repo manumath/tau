@@ -75,12 +75,15 @@ def programas_de(asignatura_id: int) -> list[str]:
            ORDER BY pr.nombre""", [asignatura_id])]
 
 
-def listar(gestion_id: int) -> list[dict]:
+def listar(gestion_id: int, historial: bool = False) -> list[dict]:
+    """Paralelos de la gestión con sus docentes. Por omisión, solo lo vigente (sin las materias retiradas ni los
+    docentes que ya dejaron el paralelo); con `historial`, todo, para mostrar lo que cambió con el semestre activo."""
     filas = get_db().q(
         """SELECT o.*, a.sigla, a.nombre FROM oferta o JOIN asignatura a ON a.id = o.asignatura_id
-           WHERE o.gestion_id = ? ORDER BY a.sigla, o.paralelo""", [gestion_id])
+           WHERE o.gestion_id = ? AND (? OR o.retirada_en IS NULL) ORDER BY a.sigla, o.paralelo""",
+        [gestion_id, 1 if historial else 0])
     for f in filas:
-        f["docentes"] = docentes(f["id"])
+        f["docentes"] = docentes(f["id"], historial)
     return filas
 
 
@@ -90,9 +93,11 @@ def obtener(oid: int) -> dict | None:
     return filas[0] if filas else None
 
 
-def docentes(oid: int) -> list[dict]:
+def docentes(oid: int, historial: bool = False) -> list[dict]:
+    """Docentes del paralelo; por omisión los vigentes (con `historial`, también los que ya lo dejaron)."""
     return get_db().q("""SELECT d.*, u.nombres, u.apellidos FROM oferta_docente d JOIN usuario u ON u.id = d.usuario_id
-                         WHERE d.oferta_id = ? ORDER BY d.rol = 'auxiliar', u.apellidos""", [oid])
+                         WHERE d.oferta_id = ? AND (? OR d.hasta IS NULL)
+                         ORDER BY d.hasta IS NOT NULL, d.rol = 'auxiliar', u.apellidos""", [oid, 1 if historial else 0])
 
 
 def _entero(v):
@@ -186,6 +191,7 @@ def materias_de(usuario_id: int, gestion_id: int, solo_titular: bool = True) -> 
     return get_db().q(
         f"""SELECT o.id, a.sigla, a.nombre, o.paralelo, d.rol FROM oferta_docente d JOIN oferta o ON o.id = d.oferta_id
             JOIN asignatura a ON a.id = o.asignatura_id WHERE d.usuario_id = ? AND o.gestion_id = ?
+            AND o.retirada_en IS NULL AND d.hasta IS NULL
             {"AND d.rol = 'titular'" if solo_titular else ""} ORDER BY a.sigla, o.paralelo""", [usuario_id, gestion_id])
 
 
@@ -230,7 +236,8 @@ def copiar(origen: dict, destino: dict, con_docentes: bool, uid: int) -> dict:
 
 
 def titular_de(oid: int) -> dict | None:
-    filas = get_db().q("SELECT * FROM oferta_docente WHERE oferta_id = ? AND rol = 'titular' ORDER BY id", [oid])
+    filas = get_db().q("SELECT * FROM oferta_docente WHERE oferta_id = ? AND rol = 'titular' AND hasta IS NULL ORDER BY id",
+                       [oid])
     return filas[0] if filas else None
 
 

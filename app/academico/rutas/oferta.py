@@ -1,6 +1,7 @@
 """Oferta por gestión y asignación docente; gestiones académicas. La consultan todos; la editan la
 Dirección de Carrera y la Coordinación académica (acción `gestionar_oferta`)."""
 from collections import Counter
+from datetime import date
 import base64
 
 import fasthtml.common as fh
@@ -9,12 +10,12 @@ from fasthtml.common import (A, APIRouter, Code, Datalist, Div, Input, Li, Optio
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
-from app.academico import gestiones, importar_oferta, oferta
+from app.academico import cambios, gestiones, importar_oferta, oferta
 from app.comun import permisos
 from app.comun import formato
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import CERRAR, ID_MODAL, campo, cerrar_modal, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
-from app.comun.db import auditar, transaccion
+from app.comun.db import auditar, get_db, transaccion
 
 rt = APIRouter()
 BASE = "/docencia/oferta"
@@ -60,16 +61,20 @@ def _form_docente(o, g):
         cls="flex flex-wrap gap-2 mt-2"))
 
 
-def seccion_oferta(g, auth, errores=()):
+def seccion_oferta(g, auth, errores=(), oob=False):
     puede = _puede(auth)
+    activa = g["estado"] == "activa"
     troncales = {a["id"] for a in oferta.troncales(g["anio"])}
-    paralelos = oferta.listar(g["id"])
+    paralelos = oferta.listar(g["id"], historial=g["estado"] != "planificacion")
     # Los programas se muestran solo donde difieren de los de la mayoría (PLAN §62, UX-02): repetidos en cada fila
     # no dicen nada.
     programas = {o["asignatura_id"]: ", ".join(oferta.programas_de(o["asignatura_id"])) for o in paralelos}
     comunes = Counter(programas.values()).most_common(1)[0][0] if programas else ""
     filas = []
     for o in paralelos:
+        if g["estado"] != "planificacion":
+            filas.append(_fila_activa(o, g, puede and activa, programas, comunes, troncales))
+            continue
         quitar = fh.Button(UkIcon("trash-2", height=14, width=14), type="button", aria_label="Quitar de la oferta",
                            cls="p-1 rounded hover:bg-muted hover:text-destructive", hx_delete=f"{BASE}/{o['id']}",
                            hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
@@ -98,8 +103,11 @@ def seccion_oferta(g, auth, errores=()):
             Button(UkIcon("plus", height=14, width=14), "Agregar a la oferta", type="submit", cls=ButtonT.primary),
             cls="flex flex-wrap gap-2"),
         lista, hx_post=f"{BASE}/{g['id']}", hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
-        cls="space-y-2 mb-4") if puede else ""
-    total = sum(len(o["docentes"]) == 0 for o in paralelos)
+        cls="space-y-2 mb-4") if puede and g["estado"] == "planificacion" else (
+        Div(Button(UkIcon("plus", height=14, width=14), "Agregar una materia", cls=ButtonT.primary,
+                   hx_get=f"{BASE}/cambio/{g['id']}/materia", hx_target=f"#{ID_MODAL}", hx_swap="innerHTML"), cls="mb-4")
+        if puede and activa else "")
+    total = sum(len(o["docentes"]) == 0 and not o["retirada_en"] for o in paralelos)
     return Div(
         agregar,
         Div(P(f"{len(filas)} paralelo(s)", f" · programas (salvo indicación): {comunes}" if comunes else "", cls=TextPresets.muted_sm),
@@ -112,7 +120,7 @@ def seccion_oferta(g, auth, errores=()):
                      cls="uk-table uk-table-divider uk-table-small", data_tabla=f"oferta-{gestiones.codigo(g)}"),
             cls="overflow-x-auto")
         if filas else P("Aún no hay asignaturas en la oferta de esta gestión.", cls=TextPresets.muted_sm),
-        id=ID_OFERTA)
+        id=ID_OFERTA, hx_swap_oob="true" if oob else None)
 
 
 @rt(BASE)
@@ -128,6 +136,14 @@ def get(auth, gestion: str = ""):
     temporada = P("Curso de temporada: solo lo dictan docentes titulares y no suma a la carga horaria del semestre "
                   "(cuenta como docencia dictada).", cls="text-sm text-amber-700 dark:text-amber-400 mb-4") \
         if g["tipo"] in oferta.TEMPORADA else ""
+    libre = gestiones.edicion_libre(g)
+    n_cambios = len(cambios.listar(g["id"])) if g["estado"] != "planificacion" else 0
+    estado = Div(estado_insignia(g), P("Los cambios en la oferta y en los docentes piden motivo y fecha de efecto, y quedan "
+                                       "registrados.", cls=TextPresets.muted_sm) if not libre else "",
+                 A(UkIcon("history", height=14, width=14), f"Cambios del semestre ({n_cambios})",
+                   href=f"{BASE}/{g['id']}/cambios",
+                   cls="inline-flex items-center gap-1 text-sm text-primary hover:underline") if n_cambios or not libre
+                 else "", cls="flex flex-wrap items-center gap-3 mb-4")
     return pagina(
         "Oferta y docentes",
         Div(Div(H2(gestiones.codigo(g)), P(f"{gestiones.nombre(g)} · {formato.periodo(g['fecha_inicio'], g['fecha_fin'])}",
@@ -136,17 +152,339 @@ def get(auth, gestion: str = ""):
                 Button(UkIcon("list-plus", height=16, width=16), "Agregar las troncales", cls=ButtonT.default,
                        hx_post=f"{BASE}/{g['id']}/troncales", hx_target=f"#{ID_OFERTA}", hx_swap="outerHTML",
                        hx_confirm="¿Agregar a la oferta las troncales de las licenciaturas que aún no están "
-                                  "(paralelo A)?") if _puede(auth) and g["tipo"] not in oferta.TEMPORADA else "",
+                                  "(paralelo A)?") if _puede(auth) and libre and g["tipo"] not in oferta.TEMPORADA else "",
                 Button(UkIcon("copy", height=16, width=16), f"Copiar de {gestiones.codigo(anterior)}", cls=ButtonT.default,
-                       hx_get=f"{BASE}/{g['id']}/copiar", hx_target=f"#{ID_MODAL}") if _puede(auth) and anterior else "",
+                       hx_get=f"{BASE}/{g['id']}/copiar", hx_target=f"#{ID_MODAL}") if _puede(auth) and libre and anterior else "",
                 A(UkIcon("grid-3x3", height=16, width=16), "Asignar en grilla", href=f"{BASE}/{g['id']}/grilla",
-                  cls="uk-btn uk-btn-default inline-flex items-center gap-1") if _puede(auth) else "",
+                  cls="uk-btn uk-btn-default inline-flex items-center gap-1") if _puede(auth) and libre else "",
                 Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
-                       hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if _puede(auth) else "",
+                       hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if _puede(auth) and libre else "",
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
-        temporada,
+        estado, temporada,
         seccion_oferta(g, auth),
+        usuario=auth, seccion="docencia")
+
+
+# --- Con el semestre activo: cambios con motivo y fecha (PLAN §66) ----------------------------------------------
+
+def _fecha(f):
+    return formato.fecha(f) if f else ""
+
+
+def _docente_activa(d, g, puede):
+    """Un docente con sus fechas, y —si sigue— los botones para reasignarlo o retirarlo."""
+    nombre = f"{d['nombres']} {d['apellidos']}"
+    if d["hasta"]:
+        return Li(Span(nombre, cls="text-sm line-through text-muted-foreground"),
+                  Span(f" · {oferta.ROLES[d['rol']].lower()} · {'del ' + _fecha(d['desde']) + ' ' if d['desde'] else ''}"
+                       f"hasta el {_fecha(d['hasta'])}", cls=TextPresets.muted_sm), cls="flex items-center gap-1")
+    desde = f" · desde el {_fecha(d['desde'])}" if d["desde"] else ""
+    botones = [fh.Button(UkIcon("arrow-left-right", height=12, width=12), type="button", aria_label=f"Reasignar a {nombre}",
+                         title="Reasignar a otra persona", cls="p-0.5 rounded hover:text-primary",
+                         hx_get=f"{BASE}/cambio/docente/{d['id']}/reasignar", hx_target=f"#{ID_MODAL}", hx_swap="innerHTML"),
+               fh.Button(UkIcon("user-minus", height=12, width=12), type="button", aria_label=f"Retirar a {nombre}",
+                         title="Retirar del paralelo", cls="p-0.5 rounded hover:text-destructive",
+                         hx_get=f"{BASE}/cambio/docente/{d['id']}/retirar", hx_target=f"#{ID_MODAL}",
+                         hx_swap="innerHTML")] if puede else []
+    carga = (f" · {oferta.HORAS_POR_MATERIA} h/mes" if d["rol"] == "titular" and g["tipo"] not in oferta.TEMPORADA else "")
+    return Li(Span(nombre, cls="text-sm"), Span(f" · {oferta.ROLES[d['rol']].lower()}{carga}{desde}", cls=TextPresets.muted_sm),
+              *botones, cls="flex items-center gap-1")
+
+
+def _fila_activa(o, g, puede, programas, comunes, troncales):
+    retirada = bool(o["retirada_en"])
+    boton = fh.Button(UkIcon("circle-x", height=14, width=14), type="button", aria_label=f"Retirar {o['sigla']} {o['paralelo']}",
+                      title="Retirar la materia del semestre", cls="p-1 rounded hover:bg-muted hover:text-destructive",
+                      hx_get=f"{BASE}/cambio/{o['id']}/retirar", hx_target=f"#{ID_MODAL}", hx_swap="innerHTML") \
+        if puede and not retirada else ""
+    nota = " · ".join(x for x in (programas[o["asignatura_id"]] if programas[o["asignatura_id"]] != comunes else "",
+                                  "troncal" if o["asignatura_id"] in troncales else "",
+                                  f"agregada el {_fecha(o['agregada_en'])}" if o["agregada_en"] else "") if x)
+    docentes = Ul(*[_docente_activa(d, g, puede and not retirada) for d in o["docentes"]]) if o["docentes"] else (
+        "" if retirada else insignia("Sin docente", "ambar", icono="circle-alert"))
+    agregar = fh.Button("+ Asignar docente", type="button", cls="cursor-pointer text-xs text-primary mt-1",
+                        hx_get=f"{BASE}/cambio/{o['id']}/docente", hx_target=f"#{ID_MODAL}", hx_swap="innerHTML") \
+        if puede and not retirada else ""
+    return fh.Tr(
+        fh.Td(o["sigla"], cls="font-mono text-sm whitespace-nowrap"),
+        fh.Td(Div(o["nombre"], cls="text-sm" + (" line-through text-muted-foreground" if retirada else "")),
+              Div(nota, cls=TextPresets.muted_sm) if nota else "",
+              Div(insignia(f"Retirada desde el {_fecha(o['retirada_en'])}", "gris", icono="circle-x"),
+                  Span(f" {o['motivo_retiro']}", cls=TextPresets.muted_sm)) if retirada else ""),
+        fh.Td(o["paralelo"], cls="text-sm"),
+        fh.Td(str(o["inscritos"]) if o["inscritos"] is not None else "—", cls="text-sm tabular-nums"),
+        fh.Td(docentes, agregar), fh.Td(boton))
+
+
+def _campos_cambio(g, v=None):
+    v = v or {}
+    hoy = date.today().isoformat()
+    por_omision = v.get("fecha") or (hoy if g["fecha_inicio"] <= hoy <= g["fecha_fin"] else g["fecha_inicio"])
+    return Div(
+        campo("Fecha de efecto (primer día en que rige el cambio)",
+              Input(type="date", name="fecha", value=por_omision, min=g["fecha_inicio"], max=g["fecha_fin"], required=True,
+                    cls="uk-input")),
+        campo("Motivo", Select(Option("Elija el motivo…", value=""),
+                               *[Option(t, value=k, selected=v.get("motivo") == k) for k, t in cambios.MOTIVOS.items()],
+                               name="motivo", required=True, cls="uk-select")),
+        campo("Detalle (obligatorio si el motivo es «Otro»)",
+              fh.Textarea(v.get("detalle", ""), name="detalle", rows=3, cls="uk-textarea")),
+        cls="space-y-3")
+
+
+def _modal_cambio(titulo, g, url, *extra, errores=(), v=None, boton="Registrar el cambio"):
+    return modal(titulo, fh.Form(
+        mensaje_error(*errores), P(f"{gestiones.codigo(g)} está activa: el cambio queda registrado con su fecha y su motivo.",
+                                    cls=(TextPresets.muted_sm, "mb-3")),
+        *extra, _campos_cambio(g, v),
+        Div(Button(boton, type="submit", cls=ButtonT.primary),
+            Button("Cancelar", type="button", cls=ButtonT.ghost, **CERRAR), cls="flex gap-2 justify-end mt-4"),
+        hx_post=url, hx_target=f"#{ID_MODAL}", hx_swap="innerHTML", hx_disabled_elt="find button[type='submit']",
+        cls="space-y-3"), ancho="max-w-xl")
+
+
+def _datos_cambio(form):
+    return {k: form.get(k, "") for k in ("fecha", "motivo", "detalle")}
+
+
+def _exito(g, auth):
+    """Cierra el modal y actualiza la oferta de la página (fuera de banda)."""
+    return cerrar_modal(), seccion_oferta(g, auth, oob=True)
+
+
+def _autoriza_cambio(auth):
+    return None if _puede(auth) else Response("No autorizado", status_code=403)
+
+
+def _paralelo_o_404(oid):
+    o = oferta.obtener(oid)
+    return o, (None if o else Response("No encontrado", status_code=404))
+
+
+def _docentes_para(g, excluir=()):
+    return [Option(f"{p['apellidos']}, {p['nombres']}" + ("" if p["con_vinculo"] else " (sin vínculo con la Carrera)"),
+                   value=str(p["id"])) for p in oferta.docentes_posibles(g) if p["id"] not in excluir]
+
+
+@rt(f"{BASE}/cambio/{{gid}}/materia")
+def get(auth, gid: int):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    g, error = _gestion_o_404(gid)
+    if error:
+        return error
+    if not cambios.exige_motivo(g):
+        return Response("Los cambios con motivo solo se hacen con la gestión activa.", status_code=409)
+    return _modal_cambio("Agregar una materia al semestre", g, f"{BASE}/cambio/{gid}/materia", _campos_materia(),
+                         boton="Agregar la materia")
+
+
+def _campos_materia(v=None):
+    v = v or {}
+    return Div(Div(Input(name="asignatura", list="asignaturas-ofertables", value=v.get("asignatura", ""), required=True,
+                         cls="uk-input", placeholder="Asignatura (sigla o nombre)", aria_label="Asignatura"),
+                   Datalist(*[Option(value=f"{a['sigla']} · {a['nombre']}") for a in oferta.asignaturas_ofertables()],
+                            id="asignaturas-ofertables"), cls="mb-2"),
+               Div(campo("Paralelo", Input(name="paralelo", value=v.get("paralelo", "A"), cls="uk-input")),
+                   campo("Inscritos (opcional)", Input(name="inscritos", value=v.get("inscritos", ""),
+                                                       inputmode="numeric", cls="uk-input")),
+                   cls="grid grid-cols-2 gap-3"))
+
+
+@rt(f"{BASE}/cambio/{{gid}}/materia")
+async def post(auth, sess, gid: int, req):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    g, error = _gestion_o_404(gid)
+    if error:
+        return error
+    f = await req.form()
+    v = {**_datos_cambio(f), "asignatura": f.get("asignatura", ""), "paralelo": f.get("paralelo", "A"),
+         "inscritos": f.get("inscritos", "")}
+    errores = cambios.agregar_materia(gid, v["asignatura"], v["paralelo"], v["inscritos"], v, auth["id"])
+    if errores:
+        return _modal_cambio("Agregar una materia al semestre", g, f"{BASE}/cambio/{gid}/materia", _campos_materia(v),
+                             errores=errores, v=v, boton="Agregar la materia")
+    add_toast(sess, "Materia agregada al semestre.", "success")
+    return _exito(g, auth)
+
+
+@rt(f"{BASE}/cambio/{{oid}}/retirar")
+def get(auth, oid: int):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    o, error = _paralelo_o_404(oid)
+    if error:
+        return error
+    g = gestiones.obtener(o["gestion_id"])
+    return _modal_cambio(f"Retirar {o['sigla']} {o['paralelo']}", g, f"{BASE}/cambio/{oid}/retirar",
+                         P(f"{o['nombre']}. La materia queda en el registro, marcada como retirada; sus docentes dejan "
+                           "el paralelo desde la fecha de efecto.", cls="text-sm"), boton="Retirar la materia")
+
+
+@rt(f"{BASE}/cambio/{{oid}}/retirar")
+async def post(auth, sess, oid: int, req):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    o, error = _paralelo_o_404(oid)
+    if error:
+        return error
+    g = gestiones.obtener(o["gestion_id"])
+    v = _datos_cambio(await req.form())
+    errores = cambios.retirar_materia(oid, v, auth["id"])
+    if errores:
+        return _modal_cambio(f"Retirar {o['sigla']} {o['paralelo']}", g, f"{BASE}/cambio/{oid}/retirar", errores=errores,
+                             v=v, boton="Retirar la materia")
+    add_toast(sess, f"{o['sigla']} retirada del semestre.", "success")
+    return _exito(g, auth)
+
+
+@rt(f"{BASE}/cambio/{{oid}}/docente")
+def get(auth, oid: int):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    o, error = _paralelo_o_404(oid)
+    if error:
+        return error
+    g = gestiones.obtener(o["gestion_id"])
+    return _modal_cambio(f"Asignar un docente a {o['sigla']} {o['paralelo']}", g, f"{BASE}/cambio/{oid}/docente",
+                         _campos_docente(g), boton="Asignar")
+
+
+def _campos_docente(g, v=None, etiqueta="Docente"):
+    v = v or {}
+    return Div(campo(etiqueta, Select(Option("Elija a la persona…", value=""), *_docentes_para(g), name="usuario",
+                                      required=True, cls="uk-select")),
+               campo("Rol", Select(*[Option(t, value=k, selected=v.get("rol") == k) for k, t in oferta.ROLES.items()],
+                                   name="rol", cls="uk-select")), cls="grid grid-cols-2 gap-3 mb-3")
+
+
+@rt(f"{BASE}/cambio/{{oid}}/docente")
+async def post(auth, sess, oid: int, req):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    o, error = _paralelo_o_404(oid)
+    if error:
+        return error
+    g = gestiones.obtener(o["gestion_id"])
+    f = await req.form()
+    v = {**_datos_cambio(f), "rol": f.get("rol", "titular")}
+    usuario = f.get("usuario", "")
+    errores = cambios.agregar_docente(oid, int(usuario) if usuario.isdigit() else 0, v["rol"], v, auth["id"])
+    if errores:
+        return _modal_cambio(f"Asignar un docente a {o['sigla']} {o['paralelo']}", g, f"{BASE}/cambio/{oid}/docente",
+                             _campos_docente(g, v), errores=errores, v=v, boton="Asignar")
+    add_toast(sess, "Docente asignado.", "success")
+    return _exito(g, auth)
+
+
+def _docente_o_404(did):
+    filas = get_db().q("SELECT * FROM oferta_docente WHERE id = ?", [did])
+    if not filas:
+        return None, None, Response("No encontrado", status_code=404)
+    o = oferta.obtener(filas[0]["oferta_id"])
+    return filas[0], o, None
+
+
+@rt(f"{BASE}/cambio/docente/{{did}}/reasignar")
+def get(auth, did: int):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    d, o, error = _docente_o_404(did)
+    if error:
+        return error
+    g = gestiones.obtener(o["gestion_id"])
+    return _modal_cambio(f"Reasignar {o['sigla']} {o['paralelo']}", g, f"{BASE}/cambio/docente/{did}/reasignar",
+                         Div(P("La persona que dicta hoy deja el paralelo desde la fecha de efecto y entra la nueva, con "
+                               "el mismo rol. Los dos reciben un aviso.", cls=(TextPresets.muted_sm, "mb-2")),
+                             campo("Nueva persona", Select(Option("Elija a la persona…", value=""),
+                                                           *_docentes_para(g), name="usuario", required=True,
+                                                           cls="uk-select")), cls="mb-3"), boton="Reasignar")
+
+
+@rt(f"{BASE}/cambio/docente/{{did}}/reasignar")
+async def post(auth, sess, did: int, req):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    d, o, error = _docente_o_404(did)
+    if error:
+        return error
+    g = gestiones.obtener(o["gestion_id"])
+    f = await req.form()
+    v = _datos_cambio(f)
+    usuario = f.get("usuario", "")
+    errores = cambios.reasignar_docente(did, int(usuario) if usuario.isdigit() else 0, v, auth["id"])
+    if errores:
+        return _modal_cambio(f"Reasignar {o['sigla']} {o['paralelo']}", g, f"{BASE}/cambio/docente/{did}/reasignar",
+                             Div(campo("Nueva persona", Select(Option("Elija a la persona…", value=""),
+                                                               *_docentes_para(g), name="usuario", required=True,
+                                                               cls="uk-select")), cls="mb-3"),
+                             errores=errores, v=v, boton="Reasignar")
+    add_toast(sess, "Docente reasignado.", "success")
+    return _exito(g, auth)
+
+
+@rt(f"{BASE}/cambio/docente/{{did}}/retirar")
+def get(auth, did: int):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    d, o, error = _docente_o_404(did)
+    if error:
+        return error
+    g = gestiones.obtener(o["gestion_id"])
+    return _modal_cambio(f"Retirar a un docente de {o['sigla']} {o['paralelo']}", g,
+                         f"{BASE}/cambio/docente/{did}/retirar",
+                         P("La persona deja el paralelo desde la fecha de efecto y recibe un aviso. Si era la titular, el "
+                           "paralelo queda sin titular.", cls="text-sm"), boton="Retirar")
+
+
+@rt(f"{BASE}/cambio/docente/{{did}}/retirar")
+async def post(auth, sess, did: int, req):
+    if (no := _autoriza_cambio(auth)):
+        return no
+    d, o, error = _docente_o_404(did)
+    if error:
+        return error
+    g = gestiones.obtener(o["gestion_id"])
+    v = _datos_cambio(await req.form())
+    errores = cambios.retirar_docente(did, v, auth["id"])
+    if errores:
+        return _modal_cambio(f"Retirar a un docente de {o['sigla']} {o['paralelo']}", g,
+                             f"{BASE}/cambio/docente/{did}/retirar", errores=errores, v=v, boton="Retirar")
+    add_toast(sess, "Docente retirado del paralelo.", "success")
+    return _exito(g, auth)
+
+
+@rt(f"{BASE}/{{gid}}/cambios")
+def get(auth, gid: int):
+    if not (_puede(auth) or permisos.puede(auth, "ver_carga")):
+        return Response("No autorizado", status_code=403)
+    g, error = _gestion_o_404(gid)
+    if error:
+        return error
+    filas = []
+    for c in cambios.listar(gid):
+        quien = " → ".join(x for x in (c["anterior"], c["nuevo"]) if x)
+        filas.append(fh.Tr(fh.Td(_fecha(c["fecha_efecto"]), cls="text-sm whitespace-nowrap"),
+                           fh.Td(cambios.TIPOS[c["tipo"]], cls="text-sm"),
+                           fh.Td(f"{c['sigla']} {c['paralelo']}" if c["sigla"] else "", cls="font-mono text-sm"),
+                           fh.Td(quien, cls="text-sm"),
+                           fh.Td(Div(cambios.MOTIVOS[c["motivo"]], cls="text-sm"),
+                                 Div(c["detalle"] or "", cls=TextPresets.muted_sm)),
+                           fh.Td(Div(c["por"] or "", cls="text-sm"), Div(formato.fecha_hora(c["registrado_en"]),
+                                                                         cls=TextPresets.muted_sm))))
+    return pagina(
+        f"Cambios de {gestiones.codigo(g)}",
+        A(UkIcon("arrow-left", height=14, width=14), "Oferta y docentes", href=f"{BASE}?gestion={gid}",
+          cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
+        H2(f"Cambios de {gestiones.codigo(g)}"),
+        P("Lo que cambió con el semestre en marcha: materias agregadas o retiradas y docentes agregados, reasignados o "
+          "retirados, con su fecha de efecto, su motivo y quién lo registró.", cls=(TextPresets.muted_sm, "mb-4")),
+        Card(Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Desde"), fh.Th("Cambio"), fh.Th("Materia"), fh.Th("Docente"),
+                                         fh.Th("Motivo"), fh.Th("Registró"))), fh.Tbody(*filas),
+                          cls="uk-table uk-table-divider uk-table-small"), cls="overflow-x-auto")
+             if filas else P("Todavía no hay cambios registrados.", cls="text-sm")),
         usuario=auth, seccion="docencia")
 
 
@@ -159,6 +497,8 @@ def get(auth, gid: int):
     g, error = _gestion_o_404(gid)
     if error:
         return error
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
     origen = oferta.mismo_semestre_anio_anterior(g)
     if not origen:
         return Response("No hay gestión del año anterior", status_code=404)
@@ -184,6 +524,8 @@ def post(auth, sess, gid: int, con_docentes: str = ""):
     g, error = _gestion_o_404(gid)
     if error:
         return error
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
     origen = oferta.mismo_semestre_anio_anterior(g)
     if not origen:
         return Response("No hay gestión del año anterior", status_code=404)
@@ -236,7 +578,11 @@ def get(auth, gid: int):
     if not _puede(auth):
         return Response("No autorizado", status_code=403)
     g, error = _gestion_o_404(gid)
-    return error or _pagina_grilla(g, auth)
+    if error:
+        return error
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
+    return _pagina_grilla(g, auth)
 
 
 @rt(f"{BASE}/{{gid}}/grilla")
@@ -246,6 +592,8 @@ async def post(auth, sess, req, gid: int):
     g, error = _gestion_o_404(gid)
     if error:
         return error
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
     form = await req.form()
     cambios, errores = 0, []
     with transaccion():
@@ -270,6 +618,12 @@ async def post(auth, sess, req, gid: int):
     return Redirect(f"{BASE}?gestion={gid}")
 
 
+def _con_motivo():
+    """Respuesta cuando se intenta editar libremente una gestión activa: ahí los cambios piden motivo y fecha."""
+    return Response("La gestión está activa: los cambios en la oferta y en los docentes piden motivo y fecha de efecto.",
+                    status_code=409)
+
+
 def _gestion_o_404(gid):
     g = gestiones.obtener(gid)
     return g, (None if g else Response("No encontrado", status_code=404))
@@ -282,6 +636,8 @@ def post(auth, gid: int, asignatura: str = "", paralelo: str = "A", inscritos: s
     g, error = _gestion_o_404(gid)
     if error:
         return error
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
     oid, errores = oferta.agregar(gid, asignatura, paralelo, inscritos, auth["id"])
     if not errores:
         o = oferta.obtener(oid)
@@ -296,6 +652,8 @@ def post(auth, sess, gid: int):
     g, error = _gestion_o_404(gid)
     if error:
         return error
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
     n = oferta.ofertar_troncales(g, auth["id"])
     auditar(auth["id"], "ofertar_troncales", "gestion_academica", gid, f"{gestiones.codigo(g)}: {n}")
     add_toast(sess, f"{n} troncal(es) agregada(s)." if n else "Todas las troncales ya estaban en la oferta.",
@@ -310,8 +668,10 @@ def delete(auth, oid: int):
     o = oferta.obtener(oid)
     if not o:
         return Response("No encontrado", status_code=404)
-    oferta.quitar(oid)
     g = gestiones.obtener(o["gestion_id"])
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
+    oferta.quitar(oid)
     auditar(auth["id"], "quitar_oferta", "oferta", oid, f"{gestiones.codigo(g)} {o['sigla']} {o['paralelo']}")
     return seccion_oferta(g, auth)
 
@@ -324,6 +684,8 @@ def post(auth, sess, oid: int, usuario: str = "", rol: str = "titular"):
     if not o:
         return Response("No encontrado", status_code=404)
     g = gestiones.obtener(o["gestion_id"])
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
     errores = oferta.asignar(oid, int(usuario) if usuario.isdigit() else 0, rol)
     if not errores:
         auditar(auth["id"], "asignar_docente", "oferta", oid, f"{gestiones.codigo(g)} {o['sigla']} {o['paralelo']}: "
@@ -336,11 +698,14 @@ def post(auth, sess, oid: int, usuario: str = "", rol: str = "titular"):
 def delete(auth, did: int):
     if not _puede(auth):
         return Response("No autorizado", status_code=403)
-    d = oferta.quitar_docente(did)
-    if not d:
+    d0 = get_db().q("SELECT * FROM oferta_docente WHERE id = ?", [did])
+    if not d0:
         return Response("No encontrado", status_code=404)
-    o = oferta.obtener(d["oferta_id"])
+    o = oferta.obtener(d0[0]["oferta_id"])
     g = gestiones.obtener(o["gestion_id"])
+    if not gestiones.edicion_libre(g):
+        return _con_motivo()
+    d = oferta.quitar_docente(did)
     auditar(auth["id"], "quitar_docente", "oferta", o["id"], f"{gestiones.codigo(g)} {o['sigla']}: usuario {d['usuario_id']}")
     return seccion_oferta(g, auth)
 

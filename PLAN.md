@@ -3386,7 +3386,7 @@ borra el dato sin dejar cuándo ni por qué.
 ### Etapas (un commit cada una)
 1. (hecha, 13-nov-2026) Migración con el estado, borrado, creación suelta y lista de gestiones con estado y enlace a planificar.
 2. (hecha, 13-nov-2026) Planificación como lista de verificación y botón Activar; pendientes en el inicio.
-3. Semestre activo: cambios con motivo y fecha, vigencia de docentes, registro de cambios y avisos a los docentes.
+3. (hecha, 13-nov-2026) Semestre activo: cambios con motivo y fecha, vigencia de docentes, registro de cambios y avisos a los docentes.
 4. Concluir, historial de solo lectura, reabrir, CSV histórico y efectos en carga, «Mi docencia» e indicadores.
 5. Pruebas de navegador, manual, guía y este PLAN.
 
@@ -3409,3 +3409,21 @@ borra el dato sin dejar cuándo ni por qué.
   que conviene revisar. Quien solo planifica (Coordinación académica) ve que la activa la Dirección de Carrera.
 - **Pendientes del inicio:** una gestión en planificación que empieza en 15 días o menos (o ya empezó) se avisa a la
   Dirección de Carrera y a la Coordinación, con lo que falta para activarla.
+
+### Etapa 3 (hecha): el semestre activo
+- **Migración 0071:** `oferta.agregada_en`, `retirada_en` y `motivo_retiro`; `oferta_docente.desde` y `hasta` (vacíos = todo el
+  semestre); `gestion_cambio` (el registro: fecha de efecto, tipo, materia, docente anterior y nuevo, motivo, detalle, quién).
+- **`app/academico/cambios.py`:** agregar o retirar una materia; agregar, reasignar o retirar un docente. Siempre con fecha
+  dentro de la gestión, motivo (renuncia, fallecimiento, licencia, reasignación, falta de inscritos, error de planificación,
+  necesidad académica, otro —que pide detalle—) y registro + auditoría. Nada se borra: la materia retirada queda marcada
+  y el docente que sale conserva su fila con `hasta` = el día anterior a la fecha de efecto; el que entra tiene `desde` =
+  la fecha de efecto. Los dos reciben un aviso. Un paralelo sin titular vigente vuelve a aparecer en la planificación y en los
+  pendientes.
+- **Lo vigente:** `oferta.listar`, `docentes`, `materias_de` y `titular_de` devuelven solo lo vigente (sin materias retiradas
+  ni docentes que ya salieron); `historial=True` devuelve todo. También lo usan la preparación, el inicio y los chequeos de
+  calidad.
+- **Pantalla:** con la gestión activa, la oferta cierra la edición libre (las rutas responden 409) y ofrece los cambios en
+  ventanas con fecha y motivo, la materia retirada tachada con su motivo y los docentes con sus fechas; «Cambios del semestre»
+  es el registro. La importación por CSV no acepta una gestión activa.
+- **Pendiente (etapa 4):** la carga horaria sigue contando al docente vigente (todavía no por meses dictados), y una gestión
+  concluida sigue editándose libremente.

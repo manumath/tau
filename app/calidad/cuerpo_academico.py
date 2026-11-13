@@ -39,9 +39,9 @@ def inscripciones(gestion_id: int) -> dict:
     fila = get_db().q(
         """SELECT COUNT(*) AS paralelos, COALESCE(SUM(inscritos), 0) AS inscritos,
                   SUM(inscritos IS NULL) AS sin_dato,
-                  SUM(NOT EXISTS (SELECT 1 FROM oferta_docente d WHERE d.oferta_id = o.id AND d.rol = 'titular'))
-                      AS sin_docente
-           FROM oferta o WHERE o.gestion_id = ?""", [gestion_id])[0]
+                  SUM(NOT EXISTS (SELECT 1 FROM oferta_docente d WHERE d.oferta_id = o.id AND d.rol = 'titular'
+                                  AND d.hasta IS NULL)) AS sin_docente
+           FROM oferta o WHERE o.gestion_id = ? AND o.retirada_en IS NULL""", [gestion_id])[0]
     return {k: fila[k] or 0 for k in ("paralelos", "inscritos", "sin_dato", "sin_docente")}
 
 

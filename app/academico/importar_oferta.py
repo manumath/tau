@@ -77,6 +77,9 @@ def leer(contenido: bytes) -> tuple[list[dict], list[str]]:
             existente = gestiones.por_codigo(g["codigo"])
             g["existe"] = bool(existente)
             g["actuales"] = len(oferta.listar(existente["id"])) if existente else 0
+            if existente and existente["estado"] == "activa":
+                g["errores"].append(f"{g['codigo']} está activa: sus cambios se registran con motivo y fecha en «Oferta y "
+                                    "docentes», no se importan.")
             _avisos(g)
     if not por_gestion:
         return [], ["El archivo no tiene filas con datos."]

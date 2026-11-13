@@ -163,3 +163,137 @@ def test_el_inicio_avisa_de_una_gestion_sin_activar(client, carrera):
     r = client.get("/")
     assert f"II-{hoy.year + 1} empezó el" in r.text and "sigue en planificación" in r.text
     assert "Para activarla: falta cargar la oferta" in r.text
+
+
+# --- Etapa 3: cambios con el semestre activo -----------------------------------------------------------------------------
+
+def _semestre_activo():
+    """II-2031 activa con MAT-111 A (titular: Emmy) y MAT-112 A (sin docente), más Alan y Grace con vínculo."""
+    from app.comun import vinculos
+    from app.academico import semestre
+    gestiones.crear_anio(2031)
+    g = gestiones.por_codigo("II-2031")
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    alan = usuarios.crear("alan@test.cl", "Alan", "Turing", PASS_TEMP)["id"]
+    grace = usuarios.crear("grace@test.cl", "Grace", "Hopper", PASS_TEMP)["id"]
+    for u in (emmy, alan, grace):
+        vinculos.agregar(u, "titular", "2020-01-01")
+    o1, _ = oferta.agregar(g["id"], "MAT-111", "A", "40", 1)
+    o2, _ = oferta.agregar(g["id"], "MAT-112", "A", "", 1)
+    oferta.asignar(o1, emmy, "titular")
+    oferta.asignar(o2, alan, "titular")
+    assert semestre.activar(g["id"], 1) == []
+    return gestiones.por_codigo("II-2031"), o1, o2, emmy, alan, grace
+
+
+def _f(fecha="2031-09-01", motivo="renuncia", detalle=""):
+    return {"fecha": fecha, "motivo": motivo, "detalle": detalle}
+
+
+def test_reasignar_un_docente_conserva_las_fechas(app):
+    from app.academico import cambios
+    g, o1, _, emmy, alan, grace = _semestre_activo()
+    did = oferta.docentes(o1)[0]["id"]
+    assert "motivo" in cambios.reasignar_docente(did, grace, {"fecha": "2031-09-01", "motivo": ""}, 1)[0]
+    assert "entre el inicio y el término" in cambios.reasignar_docente(did, grace, _f("2031-01-01"), 1)[0]
+    assert "explique" in cambios.reasignar_docente(did, grace, _f(motivo="otro"), 1)[0]
+    assert "otra persona" in cambios.reasignar_docente(did, emmy, _f(), 1)[0]
+    assert "posterior al día" in cambios.reasignar_docente(did, grace, _f("2031-08-01"), 1)[0]
+    assert cambios.reasignar_docente(did, grace, _f(detalle="Presentó su carta"), 1) == []
+    todos = oferta.docentes(o1, historial=True)
+    por = {d["usuario_id"]: d for d in todos}
+    assert (por[emmy]["desde"], por[emmy]["hasta"]) == (None, "2031-08-31")
+    assert (por[grace]["desde"], por[grace]["hasta"], por[grace]["rol"]) == ("2031-09-01", None, "titular")
+    assert [d["usuario_id"] for d in oferta.docentes(o1)] == [grace]                # solo la vigente
+    assert oferta.titular_de(o1)["usuario_id"] == grace
+    assert [m["id"] for m in oferta.materias_de(emmy, g["id"])] == []              # Emmy ya no la dicta
+    [c] = cambios.listar(g["id"])
+    assert (c["tipo"], c["motivo"], c["anterior"], c["nuevo"]) == ("reasignar_docente", "renuncia", "Emmy Noether",
+                                                                    "Grace Hopper")
+    # Avisos a los dos (Emmy y Grace; quien registra, 1, no se avisa a sí mismo).
+    assert {n["usuario_id"] for n in get_db().q("SELECT usuario_id FROM notificacion")} == {emmy, grace}
+    assert get_db().q("SELECT accion FROM auditoria WHERE accion = 'reasignar_docente'")
+    # Quien dejó el paralelo no puede volver a salir ni entrar con el mismo registro.
+    assert "ya dejó" in cambios.retirar_docente(did, _f("2031-10-01"), 1)[0]
+    assert "ya está asignada" in cambios.agregar_docente(o1, emmy, "titular", _f("2031-10-01"), 1)[0]
+
+
+def test_retirar_docente_y_agregar_docente(app):
+    from app.academico import cambios, preparacion
+    g, o1, o2, emmy, alan, grace = _semestre_activo()
+    assert cambios.retirar_docente(oferta.docentes(o2)[0]["id"], _f("2031-10-15", "fallecimiento"), 1) == []
+    assert [x["sigla"] for x in preparacion._sin_docente(g["id"])] == ["MAT-112"]   # queda sin titular
+    assert cambios.agregar_docente(o2, grace, "titular", _f("2031-10-15", "reasignacion"), 1) == []
+    assert preparacion._sin_docente(g["id"]) == []
+    alan_fila = next(d for d in oferta.docentes(o2, historial=True) if d["usuario_id"] == alan)
+    assert alan_fila["hasta"] == "2031-10-14"
+    assert [c["tipo"] for c in cambios.listar(g["id"])] == ["agregar_docente", "retirar_docente"]
+
+
+def test_agregar_y_retirar_materia(app):
+    from app.academico import cambios
+    g, o1, o2, emmy, alan, grace = _semestre_activo()
+    assert "Elija una asignatura del catálogo" in cambios.agregar_materia(g["id"], "MAT-XYZ", "A", "", _f(), 1)[0]
+    assert cambios.agregar_materia(g["id"], "MAT-113", "A", "25", _f("2031-09-15", "necesidad"), 1) == []
+    nueva = next(o for o in oferta.listar(g["id"]) if o["sigla"] == "MAT-113")
+    assert nueva["agregada_en"] == "2031-09-15"
+    assert cambios.retirar_materia(o2, _f("2031-10-20", "falta_inscritos"), 1) == []
+    assert [o["sigla"] for o in oferta.listar(g["id"])] == ["MAT-111", "MAT-113"]            # la retirada sale de lo vigente
+    historial = {o["sigla"]: o for o in oferta.listar(g["id"], historial=True)}
+    assert historial["MAT-112"]["retirada_en"] == "2031-10-20" and historial["MAT-112"]["motivo_retiro"] == "Falta de inscritos"
+    assert oferta.docentes(o2) == [] and oferta.docentes(o2, historial=True)[0]["hasta"] == "2031-10-19"
+    assert "ya fue retirada" in cambios.retirar_materia(o2, _f("2031-10-21"), 1)[0]
+    assert "ya está en la oferta" in cambios.agregar_materia(g["id"], "MAT-112", "A", "", _f("2031-10-25"), 1)[0]
+    assert [c["tipo"] for c in cambios.listar(g["id"])] == ["retirar_materia", "agregar_materia"]
+    assert oferta.materias_de(alan, g["id"]) == []
+
+
+def test_los_cambios_solo_con_la_gestion_activa(app):
+    from app.academico import cambios
+    gestiones.crear_anio(2031)
+    g = gestiones.por_codigo("I-2031")                           # en planificación
+    o, _ = oferta.agregar(g["id"], "MAT-111", "A", "", 1)
+    assert "solo se hacen con la gestión activa" in cambios.retirar_materia(o, _f("2031-03-01"), 1)[0]
+    assert "solo se hacen con la gestión activa" in cambios.agregar_materia(g["id"], "MAT-112", "A", "", _f("2031-03-01"), 1)[0]
+
+
+def test_pantallas_del_semestre_activo(client, app):
+    from app.academico import cambios
+    g, o1, o2, emmy, alan, grace = _semestre_activo()
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    login(client, "inv@test.cl", PASS_TEMP)
+    url = f"/docencia/oferta?gestion={g['id']}"
+    assert "Agregar una materia" not in client.get(url).text                    # solo consulta
+    assert client.get(f"/docencia/oferta/cambio/{o1}/retirar", headers=HX).status_code == 403
+    assert client.get(f"/docencia/oferta/{g['id']}/cambios").status_code == 403
+    permisos.asignar(emmy, "coordinacion_academica", unidades.id_de("CMAT"))
+    r = client.get(url)
+    assert "Activa" in r.text and "piden motivo y fecha de efecto" in r.text and "Agregar una materia" in r.text
+    assert "Agregar las troncales" not in r.text and "Asignar en grilla" not in r.text and "Importar CSV" not in r.text
+    assert "Retirar MAT-111 A" in r.text and "Reasignar a Emmy Noether" in r.text
+    # La edición libre queda cerrada: 409 con la explicación.
+    assert client.post(f"/docencia/oferta/{g['id']}", headers=HX, data={"asignatura": "MAT-113"}).status_code == 409
+    assert client.delete(f"/docencia/oferta/{o1}", headers=HX).status_code == 409
+    did = oferta.docentes(o1)[0]["id"]
+    assert client.delete(f"/docencia/oferta/docentes/{did}", headers=HX).status_code == 409
+    assert client.post(f"/docencia/oferta/{o1}/docentes", headers=HX, data={"usuario": str(grace)}).status_code == 409
+    assert client.get(f"/docencia/oferta/{g['id']}/grilla").status_code == 409
+    # Los formularios de cambio y su resultado.
+    assert "Fecha de efecto" in client.get(f"/docencia/oferta/cambio/docente/{did}/reasignar", headers=HX).text
+    r = client.post(f"/docencia/oferta/cambio/docente/{did}/reasignar", headers=HX,
+                    data={"usuario": str(grace), "fecha": "2031-09-01", "motivo": ""})
+    assert "Elija el motivo" in r.text
+    r = client.post(f"/docencia/oferta/cambio/docente/{did}/reasignar", headers=HX,
+                    data={"usuario": str(grace), "fecha": "2031-09-01", "motivo": "licencia"})
+    assert 'id="oferta-gestion"' in r.text and "Hopper" in r.text and "hasta el" in r.text
+    r = client.get(f"/docencia/oferta/{g['id']}/cambios")
+    assert "Docente reasignado" in r.text and "Licencia o baja" in r.text and "Emmy Noether → Grace Hopper" in r.text
+    r = client.post(f"/docencia/oferta/cambio/{o2}/retirar", headers=HX, data={"fecha": "2031-10-20", "motivo": "falta_inscritos"})
+    assert "Retirada desde" in r.text and cambios.listar(g["id"])[0]["tipo"] == "retirar_materia"
+    r = client.post(f"/docencia/oferta/cambio/{g['id']}/materia", headers=HX, data={
+        "asignatura": "MAT-113 · Geometría I", "paralelo": "A", "fecha": "2031-09-20", "motivo": "necesidad"})
+    assert "MAT-113" in r.text and "agregada el" in r.text
+    # Un archivo CSV no importa una gestión activa.
+    from app.academico import importar_oferta
+    lista, _ = importar_oferta.leer(b"gestion,sigla,paralelo,email\nII-2031,MAT-111,A,\n")
+    assert "está activa" in lista[0]["errores"][0]

@@ -88,8 +88,9 @@ def _para_carrera(auth):
     items = []
     if g:
         sin_docente = get_db().q(
-            """SELECT COUNT(*) n FROM oferta o WHERE o.gestion_id = ? AND NOT EXISTS (
-                   SELECT 1 FROM oferta_docente d WHERE d.oferta_id = o.id AND d.rol = 'titular')""", [g["id"]])[0]["n"]
+            """SELECT COUNT(*) n FROM oferta o WHERE o.gestion_id = ? AND o.retirada_en IS NULL AND NOT EXISTS (
+                   SELECT 1 FROM oferta_docente d WHERE d.oferta_id = o.id AND d.rol = 'titular'
+                   AND d.hasta IS NULL)""", [g["id"]])[0]["n"]
         if sin_docente:
             items.append(_item(f"{_plural(sin_docente, 'materia')} sin docente titular en {gestiones.codigo(g)}",
                                f"/docencia/oferta?gestion={g['id']}"))

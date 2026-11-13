@@ -67,6 +67,12 @@ def crear_anio_con_nuevas(anio: int) -> list[tuple[dict, bool]]:
             for g in get_db().q("SELECT * FROM gestion_academica WHERE anio = ? ORDER BY fecha_inicio", [anio])]
 
 
+def edicion_libre(g: dict) -> bool:
+    """¿Se edita la oferta y los docentes sin motivo ni fecha de efecto? Con la gestión activa, los cambios pasan por
+    `app.academico.cambios` (con motivo y registro)."""
+    return g["estado"] != "activa"
+
+
 def crear(anio: int, tipo: str, uid: int, concluida: bool = False) -> tuple[dict | None, str | None]:
     """Crea una gestión suelta, con las fechas por omisión. `concluida`: para cargar el historial de un semestre que ya
     terminó (se crea directamente como concluida). → (gestión, error)."""

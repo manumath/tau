@@ -177,8 +177,9 @@ def oferta_incompleta():
         return _chequeo("oferta", "Docencia", "Oferta del semestre", "", "carrera", "Carga docente", [])
     filas = get_db().q(
         """SELECT a.sigla, a.nombre, o.paralelo, o.inscritos,
-                  EXISTS (SELECT 1 FROM oferta_docente d WHERE d.oferta_id = o.id AND d.rol = 'titular') AS con_docente
-           FROM oferta o JOIN asignatura a ON a.id = o.asignatura_id WHERE o.gestion_id = ?
+                  EXISTS (SELECT 1 FROM oferta_docente d WHERE d.oferta_id = o.id AND d.rol = 'titular'
+                          AND d.hasta IS NULL) AS con_docente
+           FROM oferta o JOIN asignatura a ON a.id = o.asignatura_id WHERE o.gestion_id = ? AND o.retirada_en IS NULL
            ORDER BY a.sigla, o.paralelo""", [g["id"]])
     href = f"/docencia/oferta?gestion={g['id']}"
     items = [_item(f"{f['sigla']} {f['paralelo']} · {f['nombre']}", href,

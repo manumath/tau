@@ -33,8 +33,9 @@ def semestres_elegibles(hoy: date | None = None) -> list[tuple[int, str]]:
 def _sin_docente(gid: int) -> list[dict]:
     return get_db().q(
         """SELECT o.id, o.paralelo, a.sigla, a.nombre FROM oferta o JOIN asignatura a ON a.id = o.asignatura_id
-           WHERE o.gestion_id = ? AND NOT EXISTS (SELECT 1 FROM oferta_docente d WHERE d.oferta_id = o.id
-                                                   AND d.rol = 'titular')
+           WHERE o.gestion_id = ? AND o.retirada_en IS NULL
+             AND NOT EXISTS (SELECT 1 FROM oferta_docente d WHERE d.oferta_id = o.id AND d.rol = 'titular'
+                                                                  AND d.hasta IS NULL)
            ORDER BY a.sigla, o.paralelo""", [gid])
 
 
