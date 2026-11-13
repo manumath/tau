@@ -61,7 +61,38 @@ def detalle_recibido(c, base):
         Div(*[P(x) for x in (c["texto"] or "").split("\n\n") if x.strip()], cls="space-y-3 text-sm max-w-3xl whitespace-pre-line"),
         A(UkIcon("arrow-right", height=14, width=14), "Ir a la convocatoria", href=c["enlace"],
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline") if c["enlace"] else "",
-        respuesta, cls="space-y-3")
+        respuesta, _inscripcion(c, base), cls="space-y-3")
+
+
+def _inscripcion(c, base):
+    """Inscripción con cupos y lista de espera, y el certificado de participación (PLAN §67)."""
+    if not c.get("inscripcion"):
+        return ""
+    uid = c.get("_uid")
+    libres = com.cupos_libres(c)
+    cupos = P(f"Cupos: {libres} libres de {c['cupos']}." if libres is not None else "Sin límite de cupos.",
+              cls=TextPresets.muted_sm)
+    if not uid:
+        return tarjeta("Inscripción", cupos, P("El certificado de participación se entrega a quien se inscribe y asiste."
+                                                 if c["certificado"] else "", cls=TextPresets.muted_sm))
+    mia = com.mi_inscripcion(c["id"], uid)
+    cert = com.certificado(c["id"], uid)
+    abierta = c["estado"] == "publicado" and (c["inicio"] or "") >= datetime.now().strftime("%Y-%m-%dT%H:%M")
+    if mia:
+        estado = insignia("Inscrito", "verde", icono="check") if mia["estado"] == "inscrito" else \
+            insignia(f"En lista de espera: posición {mia['posicion']}", "ambar", icono="clock")
+        accion = formulario(f"{base}/{c['id']}/inscripcion/cancelar", enviar("Cancelar mi inscripción", cls=(ButtonT.ghost, ButtonT.sm))) \
+            if abierta else ""
+    else:
+        estado = insignia("No está inscrito", "gris")
+        accion = formulario(f"{base}/{c['id']}/inscripcion",
+                            enviar("Inscribirme" if libres is None or libres > 0 else "Anotarme en la lista de espera",
+                                   cls=ButtonT.primary)) if abierta else P("La inscripción ya cerró.", cls=TextPresets.muted_sm)
+    return tarjeta("Inscripción", cupos, estado, accion,
+                   A(UkIcon("award", height=14, width=14), "Ver mi certificado de participación", href=f"{base}/{c['id']}/certificado",
+                     cls="inline-flex items-center gap-1 text-sm text-primary hover:underline") if cert else
+                   P("Recibirá un certificado de participación si se inscribe y asiste." if c["certificado"] else "",
+                     cls=TextPresets.muted_sm))
 
 
 # --- Personal: lista ---------------------------------------------------------------------------------------------------
@@ -110,6 +141,13 @@ def _form(auth, c=None):
                 cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
             fh.Label(fh.Input(type="checkbox", name="confirmar", value="1", checked=bool(c.get("confirmar")), cls="uk-checkbox"),
                      " Pedir que confirmen su asistencia", cls="flex items-center gap-2 text-sm"),
+            fh.Label(fh.Input(type="checkbox", name="inscripcion", value="1", checked=bool(c.get("inscripcion")), cls="uk-checkbox"),
+                     " Abrir inscripción (con cupos y lista de espera)", cls="flex items-center gap-2 text-sm"),
+            Div(LabelInput("Cupos (vacío = sin límite)", id="cupos", value=str(c.get("cupos") or ""), inputmode="numeric"),
+                LabelInput("Horas académicas del certificado", id="horas", value=str(c.get("horas") or ""), inputmode="numeric"),
+                cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
+            fh.Label(fh.Input(type="checkbox", name="certificado", value="1", checked=bool(c.get("certificado")), cls="uk-checkbox"),
+                     " Entregar certificado de participación a quien se inscribió y asistió", cls="flex items-center gap-2 text-sm"),
             cls="space-y-3 rounded-md border border-border p-4"),
         LabelInput("Enlace dentro del sistema (opcional)", id="enlace", value=c.get("enlace") or "",
                    placeholder="/estudiante/auxiliaturas"),
@@ -127,7 +165,8 @@ def get(auth):
 
 async def _datos(req):
     f = await req.form()
-    return {k: f.get(k, "") for k in ("tipo", "titulo", "texto", "publica_como", "inicio", "lugar", "confirmar", "enlace")}
+    return {k: f.get(k, "") for k in ("tipo", "titulo", "texto", "publica_como", "inicio", "lugar", "confirmar", "enlace",
+                                       "inscripcion", "cupos", "horas", "certificado")}
 
 
 @rt(BASE)
@@ -216,10 +255,14 @@ def _asistencia(c):
     resumen = Div(*[Div(Div(str(v), cls="text-2xl font-semibold"), Div(t, cls=TextPresets.muted_sm))
                     for v, t in ((k["asistire"], "asistirán"), (k["no_podre"], "no podrán"), (k["sin_respuesta"], "sin respuesta"))],
                   cls="grid grid-cols-3 gap-3 mb-3") if c["confirmar"] else ""
-    tabla = Table(Thead(Tr(Th("Persona"), Th("Respuesta", cls="w-28"), Th("Asistió", cls="w-20 text-center")
+    insc = {i["usuario_id"]: i["estado"] for i in com.inscripciones(c["id"])} if c["inscripcion"] else {}
+    tabla = Table(Thead(Tr(Th("Persona"), Th("Respuesta", cls="w-28"), *([Th("Inscripción", cls="w-32")] if c["inscripcion"] else []),
+                           Th("Asistió", cls="w-20 text-center")
                            if com.puede_registrar_asistencia(c) or k["registrada"] else "")),
                   Tbody(*[Tr(Td(f"{d['nombres']} {d['apellidos']}", Div(d["email"], cls=TextPresets.muted_sm)),
                              Td(com.RESPUESTAS.get(d["respuesta"], "—")),
+                             *([Td({"inscrito": "Inscrito", "espera": "En espera"}.get(insc.get(d["usuario_id"]), "—"),
+                                   cls="text-sm")] if c["inscripcion"] else []),
                              Td(fh.Input(type="checkbox", name="presentes", value=str(d["usuario_id"]), cls="uk-checkbox",
                                          checked=d["asistio"] == 1, aria_label=f"Asistió {d['nombres']} {d['apellidos']}"),
                                 cls="text-center") if com.puede_registrar_asistencia(c) else
@@ -230,7 +273,8 @@ def _asistencia(c):
         cuerpo = formulario(f"{url}/asistencia", tabla, Div(enviar("Guardar asistencia"), cls="flex justify-end"))
     else:
         cuerpo = tabla
-    nota = P("La asistencia se registra después de que empieza el evento." if c["tipo"] == "evento" and not c["para_todos"]
+    nota = P("La asistencia se registra después de que empieza el evento." if c["tipo"] == "evento"
+             and (not c["para_todos"] or c["inscripcion"])
              and not com.puede_registrar_asistencia(c) else "", cls=TextPresets.muted_sm)
     return tarjeta(f"Respuestas · {k['asistieron']} asistieron" if k["registrada"] else "Respuestas", resumen, nota, cuerpo)
 
@@ -434,6 +478,54 @@ def get(auth, cid: int):
     c["_uid"] = auth["id"]
     return pagina(c["titulo"], A("← Comunicados", href=EST, cls="text-sm text-primary"),
                   Div(detalle_recibido(c, EST), cls="mt-4"), usuario=auth)
+
+
+@rt(f"{EST}/{{cid}}/inscripcion")
+def post(auth, sess, cid: int):
+    externo, error = _estudiante(auth)
+    if error:
+        return error
+    errores = com.inscribir(cid, auth["id"])
+    mia = com.mi_inscripcion(cid, auth["id"])
+    add_toast(sess, errores[0] if errores else ("Quedó inscrito." if mia["estado"] == "inscrito" else
+                                                f"El evento no tiene cupos: quedó en la lista de espera (posición {mia['posicion']})."),
+              "error" if errores else "success")
+    return Redirect(f"{EST}/{cid}")
+
+
+@rt(f"{EST}/{{cid}}/inscripcion/cancelar")
+def post(auth, sess, cid: int):
+    externo, error = _estudiante(auth)
+    if error:
+        return error
+    errores = com.cancelar_inscripcion(cid, auth["id"])
+    add_toast(sess, errores[0] if errores else "Inscripción cancelada.", "error" if errores else "info")
+    return Redirect(f"{EST}/{cid}")
+
+
+@rt(f"{EST}/{{cid}}/certificado")
+def get(auth, cid: int):
+    externo, error = _estudiante(auth)
+    if error:
+        return error
+    cert = com.certificado(cid, auth["id"])
+    if not cert:
+        return no_encontrado()
+    from app.comun import config
+    nombre = f"{auth['nombres']} {auth['apellidos']}"
+    return pagina(
+        "Certificado de participación",
+        Div(fh.Button(UkIcon("printer", height=14, width=14), "Imprimir", type="button", data_accion="imprimir",
+                      cls="uk-btn uk-btn-default uk-btn-sm gap-1 no-imprimir"), cls="flex justify-end"),
+        Div(P(config.UNIVERSIDAD, cls="font-semibold"), P(config.FACULTAD), P(config.NOMBRE_CARRERA), cls="text-center text-sm"),
+        H2("Certificado de participación", cls="text-center mt-6"),
+        P("Se certifica que", cls="text-center mt-6"),
+        P(nombre, cls="text-center text-2xl font-semibold my-2"),
+        P(f"participó en «{cert['titulo']}», realizado el {com.fecha_hora(cert['inicio'])}"
+          + (f" en {cert['lugar']}" if cert["lugar"] else "") + (f", con una carga de {cert['horas']} horas académicas" if cert["horas"] else "") + ".",
+          cls="text-center max-w-2xl mx-auto"),
+        P(f"Código de verificación: {cert['codigo']}", cls=(TextPresets.muted_sm, "text-center mt-10")),
+        P(f"Emitido por {config.NOMBRE_SISTEMA}.", cls=(TextPresets.muted_sm, "text-center")), usuario=auth)
 
 
 @rt(f"{EST}/{{cid}}/respuesta")

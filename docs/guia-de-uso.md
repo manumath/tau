@@ -731,6 +731,17 @@ tener hasta 3 pedidos pendientes y no puede pedir un tema si ya tiene un perfil 
 conocimientos previos, línea, modalidad y cupos) crea un borrador; **Publicar** lo muestra y **Retirar el tema** lo oculta. Cuando
 acepta a tantos estudiantes como cupos, el tema deja de aparecer. En cada tema se ven los pedidos con el RU y el correo.
 
+**Eventos con inscripción** (Comunicados): un evento puede **abrir inscripción**. Quien lo recibe ve «Inscripción» con los cupos
+libres y se **inscribe**; si ya no quedan cupos, se anota en la **lista de espera** (ve su posición) y, si alguien cancela, entra el
+primero y recibe un aviso. Puede cancelar su inscripción mientras el evento no empiece. Si el evento entrega **certificado de
+participación**, quien se inscribió y cuya asistencia registró el organizador ve «Ver mi certificado de participación»: una hoja
+imprimible con su nombre, el evento, la fecha, las horas académicas y un código de verificación.
+
+**Organizar un evento con inscripción** (Servicios → Comunicados y eventos): en «Si es un evento» están **Abrir inscripción**,
+**Cupos** (vacío = sin límite), **Horas académicas del certificado** y **Entregar certificado de participación**. En la ficha del
+evento, la tarjeta de asistencia muestra para cada persona su estado de inscripción (inscrito o en espera); después de que empieza
+el evento, el organizador marca quién asistió, también en los eventos para todos.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

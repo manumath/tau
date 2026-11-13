@@ -402,3 +402,84 @@ def test_pantallas_de_temas_y_perfil_con_el_tema(client, sofia):
     assert "Grafos" not in client.get("/estudiante/grado/nuevo?tema=99999").text
     # Quien no es docente no publica.
     assert client.get("/servicios/temas", follow_redirects=False).status_code == 303
+
+
+# --- Etapa 6: eventos con inscripción ---------------------------------------------------------------------------------------
+
+def _evento_con_inscripcion(cupos="1"):
+    from datetime import datetime, timedelta
+    from app.servicios import comunicados as com
+    inicio = (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%dT15:00")
+    opciones = [("direccion_carrera", "Dirección de Carrera")]
+    x, errores = com.validar({"tipo": "evento", "titulo": "Curso corto de LaTeX", "publica_como": "direccion_carrera",
+                              "inicio": inicio, "lugar": "Laboratorio", "inscripcion": "1", "cupos": cupos, "horas": "8",
+                              "certificado": "1"}, opciones)
+    assert errores == []
+    cid = com.crear(x, 1)
+    ext_s, ext_l = _externo("1111111"), _externo("2222222")
+    com.agregar_convocados(cid, [estudiantes_uid(ext_s), estudiantes_uid(ext_l)])
+    assert com.publicar(cid) == []
+    return cid, estudiantes_uid(ext_s), estudiantes_uid(ext_l)
+
+
+def test_validar_la_inscripcion(app):
+    from app.servicios import comunicados as com
+    base = {"tipo": "evento", "titulo": "T", "publica_como": "direccion_carrera", "inicio": "2030-01-01T10:00",
+            "inscripcion": "1"}
+    o = [("direccion_carrera", "D")]
+    assert "cupos" in com.validar({**base, "cupos": "0"}, o)[1][0].lower()
+    assert "horas" in com.validar({**base, "horas": "x"}, o)[1][0].lower()
+    x, e = com.validar({**base, "cupos": "30", "horas": "4", "certificado": "1"}, o)
+    assert e == [] and (x["inscripcion"], x["cupos"], x["horas"], x["certificado"]) == (1, 30, 4, 1)
+    x, e = com.validar({**base, "tipo": "comunicado", "cupos": "30"}, o)                 # solo un evento inscribe
+    assert (x["inscripcion"], x["cupos"], x["certificado"]) == (0, None, 0)
+    assert com.validar({**base, "cupos": "", "certificado": "1"}, o)[0]["cupos"] is None
+
+
+def test_cupos_lista_de_espera_y_certificado(estudiantes_cargados):
+    from app.servicios import comunicados as com
+    from app.comun import notificaciones
+    cid, sofia_u, luis_u = _evento_con_inscripcion()
+    assert com.inscribir(cid, sofia_u) == [] and com.inscribir(cid, luis_u) == []
+    assert com.mi_inscripcion(cid, sofia_u)["estado"] == "inscrito"
+    espera = com.mi_inscripcion(cid, luis_u)
+    assert (espera["estado"], espera["posicion"]) == ("espera", 1) and com.cupos_libres(com.obtener(cid)) == 0
+    assert com.inscribir(cid, luis_u) == ["Ya está inscrito."]
+    otro = usuarios.por_email("inv@test.cl")["id"]
+    assert com.inscribir(cid, otro)[0].startswith("La inscripción a este evento no está abierta")     # no lo recibió
+    assert [i["estado"] for i in com.inscripciones(cid)] == ["inscrito", "espera"]
+    assert com.cancelar_inscripcion(cid, sofia_u) == []                                          # entra Luis
+    assert com.mi_inscripcion(cid, luis_u)["estado"] == "inscrito" and com.mi_inscripcion(cid, sofia_u) is None
+    assert any("Tiene un cupo" in n["asunto"] for n in notificaciones.recientes(luis_u))
+    assert com.cancelar_inscripcion(cid, sofia_u) == ["No está inscrito."]
+    # Certificado: solo quien se inscribió y asistió, y cuando el organizador registró la asistencia.
+    assert com.certificado(cid, luis_u) is None
+    get_db().execute("UPDATE comunicado SET inicio = '2020-01-01T10:00' WHERE id = ?", [cid])
+    assert com.puede_registrar_asistencia(com.obtener(cid)) and com.inscribir(cid, sofia_u)[0].startswith("La inscripción")
+    com.registrar_asistencia(cid, {luis_u})
+    cert = com.certificado(cid, luis_u)
+    assert cert["horas"] == 8 and cert["codigo"].startswith("TAU-") and len(cert["codigo"]) == 14
+    assert com.certificado(cid, luis_u)["codigo"] == cert["codigo"] and com.certificado(cid, sofia_u) is None
+
+
+def test_pantallas_de_inscripcion_y_certificado(client, sofia):
+    from app.servicios import comunicados as com
+    cid, sofia_u, luis_u = _evento_con_inscripcion("1")
+    com.inscribir(cid, luis_u)                                   # Luis ocupa el único cupo
+    r = client.get(f"/estudiante/comunicados/{cid}")
+    assert "Inscripción" in r.text and "Cupos: 0 libres de 1" in r.text and "Anotarme en la lista de espera" in r.text
+    client.post(f"/estudiante/comunicados/{cid}/inscripcion", follow_redirects=False)
+    r = client.get(f"/estudiante/comunicados/{cid}")
+    assert "posición 1" in r.text and "Cancelar mi inscripción" in r.text and "certificado de participación" in r.text
+    assert client.get(f"/estudiante/comunicados/{cid}/certificado").status_code == 404
+    client.post(f"/estudiante/comunicados/{cid}/inscripcion/cancelar", follow_redirects=False)
+    assert com.mi_inscripcion(cid, sofia_u) is None
+    client.post(f"/estudiante/comunicados/{cid}/inscripcion", follow_redirects=False)
+    com.cancelar_inscripcion(cid, luis_u)                         # Sofía pasa a inscrita
+    get_db().execute("UPDATE comunicado SET inicio = '2020-01-01T10:00' WHERE id = ?", [cid])
+    com.registrar_asistencia(cid, {sofia_u})
+    r = client.get(f"/estudiante/comunicados/{cid}")
+    assert "Ver mi certificado de participación" in r.text and "La inscripción ya cerró" not in r.text
+    r = client.get(f"/estudiante/comunicados/{cid}/certificado")
+    assert "Certificado de participación" in r.text and "Curso corto de LaTeX" in r.text and "8 horas académicas" in r.text
+    assert "Código de verificación: TAU-" in r.text and "Sofía" in r.text

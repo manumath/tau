@@ -3483,7 +3483,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 4. (hecha, 13-nov-2026) **Oportunidades:** becas, movilidad, pasantías, ayudantías de investigación (las publica el responsable de un proyecto) y
    empleo para egresados, con postulación y decisión.
 5. (hecha, 13-nov-2026) **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
-6. **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
+6. (hecha, 13-nov-2026) **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
 7. **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
 8. **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
 9. **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
@@ -3525,3 +3525,11 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
   el estudiante pide tutor sobre un tema (hasta 3 pendientes; no si ya tiene un perfil en curso) y el docente acepta o no.
 - Un tema aceptado abre `/estudiante/grado/nuevo?tema=ID` con el título, la modalidad y el tutor ya puestos (solo para quien fue
   aceptado). El tema deja de ofrecerse al completar sus cupos.
+
+### Etapa 6 (hecha): eventos con inscripción
+- **Migración 0076:** `comunicado.inscripcion`, `cupos`, `certificado` y `horas`, e `inscripcion_evento` (inscrito o en espera).
+  `comunicados.inscribir`, `cancelar_inscripcion` (promueve al primero de la lista de espera y lo avisa), `certificado`.
+- La inscripción es de quienes recibieron el comunicado (convocados; un evento «para todos» los convoca a todos al publicarse). La
+  asistencia sigue siendo `comunicado_destinatario.asistio` (ahora también se registra en eventos para todos con inscripción) y el
+  certificado exige estar inscrito (no en espera) y haber asistido. Código de verificación: hash corto del evento, la persona y
+  la fecha (no hay verificación pública).

@@ -156,6 +156,16 @@ def validar(d: dict, opciones: list[tuple[str, str]]) -> tuple[dict, list[str]]:
          "lugar": ((d.get("lugar") or "").strip()[:200] or None) if tipo == "evento" else None,
          "confirmar": 1 if tipo == "evento" and str(d.get("confirmar") or "") in ("1", "on") else 0,
          "enlace": (d.get("enlace") or "").strip()[:300] or None}
+    # Inscripción, cupos y certificado (PLAN §67): solo en un evento.
+    inscripcion = tipo == "evento" and str(d.get("inscripcion") or "") in ("1", "on")
+    cupos, horas = (d.get("cupos") or "").strip(), (d.get("horas") or "").strip()
+    if inscripcion and cupos and (not cupos.isdigit() or int(cupos) < 1):
+        errores.append("Los cupos son un número entero mayor que cero (o déjelos vacíos si no hay límite).")
+    if inscripcion and horas and (not horas.isdigit() or int(horas) < 1):
+        errores.append("Las horas académicas son un número entero mayor que cero.")
+    x.update(inscripcion=int(inscripcion), cupos=int(cupos) if inscripcion and cupos.isdigit() and int(cupos) > 0 else None,
+             certificado=int(inscripcion and str(d.get("certificado") or "") in ("1", "on")),
+             horas=int(horas) if inscripcion and horas.isdigit() and int(horas) > 0 else None)
     if x["enlace"] and not x["enlace"].startswith("/"):
         errores.append("El enlace debe ser una dirección dentro del sistema (empieza con /).")
     return x, errores
@@ -298,7 +308,7 @@ def mios(auth: dict) -> list[dict]:
 
 
 def puede_registrar_asistencia(c: dict) -> bool:
-    return (c["tipo"] == "evento" and c["estado"] == "publicado" and not c["para_todos"]
+    return (c["tipo"] == "evento" and c["estado"] == "publicado" and (not c["para_todos"] or c["inscripcion"])
             and (c["inicio"] or "9999") <= datetime.now().strftime("%Y-%m-%dT%H:%M"))
 
 
@@ -328,3 +338,79 @@ def fecha_hora(iso: str | None) -> str:
     meses = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
              "noviembre", "diciembre")
     return f"{dias[f.weekday()]} {f.day} de {meses[f.month - 1]} de {f.year}" + (f", {f:%H:%M}" if "T" in iso or " " in iso else "")
+
+
+# --- Inscripción, cupos y certificado (PLAN §67, etapa 6) --------------------------------------------------------------------
+
+def inscripciones(cid: int) -> list[dict]:
+    """Quienes se inscribieron, en orden de llegada (los inscritos primero y luego la lista de espera)."""
+    return get_db().q("""SELECT i.*, u.nombres, u.apellidos, u.email FROM inscripcion_evento i JOIN usuario u ON u.id = i.usuario_id
+                         WHERE i.comunicado_id = ? ORDER BY i.estado = 'espera', i.creada_en, i.rowid""", [cid])
+
+
+def mi_inscripcion(cid: int, uid: int) -> dict | None:
+    """Su inscripción y, si está en espera, su posición."""
+    f = get_db().q("SELECT * FROM inscripcion_evento WHERE comunicado_id = ? AND usuario_id = ?", [cid, uid])
+    if not f:
+        return None
+    f = f[0]
+    if f["estado"] == "espera":
+        f["posicion"] = 1 + len([x for x in inscripciones(cid) if x["estado"] == "espera"
+                                 and (x["creada_en"], x["usuario_id"]) < (f["creada_en"], uid)])
+    return f
+
+
+def cupos_libres(c: dict) -> int | None:
+    if not c["cupos"]:
+        return None
+    inscritos = get_db().q("SELECT COUNT(*) n FROM inscripcion_evento WHERE comunicado_id = ? AND estado = 'inscrito'",
+                           [c["id"]])[0]["n"]
+    return max(c["cupos"] - inscritos, 0)
+
+
+def _abierta(c: dict) -> bool:
+    return (c["tipo"] == "evento" and c["estado"] == "publicado" and bool(c["inscripcion"])
+            and (c["inicio"] or "") >= datetime.now().strftime("%Y-%m-%dT%H:%M"))
+
+
+def inscribir(cid: int, uid: int) -> list[str]:
+    c = recibido(uid, cid)
+    if not c or not _abierta(c):
+        return ["La inscripción a este evento no está abierta."]
+    if mi_inscripcion(cid, uid):
+        return ["Ya está inscrito."]
+    libres = cupos_libres(c)
+    estado = "inscrito" if libres is None or libres > 0 else "espera"
+    get_db().t.inscripcion_evento.insert(comunicado_id=cid, usuario_id=uid, estado=estado)
+    return []
+
+
+def cancelar_inscripcion(cid: int, uid: int) -> list[str]:
+    """Quita la inscripción; si liberó un cupo, entra el primero de la lista de espera y recibe un aviso."""
+    c = obtener(cid)
+    previa = get_db().q("SELECT estado FROM inscripcion_evento WHERE comunicado_id = ? AND usuario_id = ?", [cid, uid])
+    if not c or not previa:
+        return ["No está inscrito."]
+    with transaccion():
+        get_db().execute("DELETE FROM inscripcion_evento WHERE comunicado_id = ? AND usuario_id = ?", [cid, uid])
+        if previa[0]["estado"] == "inscrito":
+            siguiente = next((x for x in inscripciones(cid) if x["estado"] == "espera"), None)
+            if siguiente and (cupos_libres(c) or 0) > 0:
+                get_db().execute("UPDATE inscripcion_evento SET estado = 'inscrito' WHERE comunicado_id = ? AND usuario_id = ?",
+                                 [cid, siguiente["usuario_id"]])
+                notificaciones.avisar(usuarios.por_id(siguiente["usuario_id"]), f"Tiene un cupo: {c['titulo']}",
+                                      "Se liberó un cupo y quedó inscrito.", url_para(siguiente["usuario_id"], cid))
+    return []
+
+
+def certificado(cid: int, uid: int) -> dict | None:
+    """Los datos del certificado de participación, si el evento lo entrega y la persona estuvo inscrita y asistió."""
+    f = get_db().q("""SELECT c.*, d.asistio FROM comunicado c JOIN comunicado_destinatario d ON d.comunicado_id = c.id
+                      AND d.usuario_id = ? JOIN inscripcion_evento i ON i.comunicado_id = c.id AND i.usuario_id = d.usuario_id
+                      WHERE c.id = ? AND c.certificado = 1 AND c.estado = 'publicado' AND i.estado = 'inscrito'
+                        AND d.asistio = 1""", [uid, cid])
+    if not f:
+        return None
+    import hashlib
+    f[0]["codigo"] = "TAU-" + hashlib.sha256(f"{cid}:{uid}:{f[0]['inicio']}".encode()).hexdigest()[:10].upper()
+    return f[0]
