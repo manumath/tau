@@ -58,7 +58,9 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                 ("Mi carrera", [_item("plan", "Mi plan de estudios", "/estudiante/plan", "book-marked"),
                                 _item("calendario", "Calendario", "/estudiante/calendario", "calendar-days"),
                                 _item("tutoria", "Mi tutoría", "/estudiante/tutoria", "message-circle-heart"),
-                                _item("apoyo", "Apoyo", "/estudiante/apoyo", "life-buoy")]),
+                                _item("apoyo", "Apoyo", "/estudiante/apoyo", "life-buoy"),
+                                _item("orientacion", "Orientación", "/estudiante/orientacion", "compass"),
+                                _item("buzon", "Buzón", "/estudiante/buzon", "mail")]),
                 ("Servicios", [_item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
                                _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
                                _item("oportunidades", "Oportunidades", "/estudiante/oportunidades", "briefcase"),
@@ -105,6 +107,8 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
     servicios = [_item("comunicados", "Comunicados y eventos", "/servicios/comunicados", "megaphone")]
     if puede("gestionar_auxiliaturas") or puede("gestionar_auxiliaturas_investigacion") or _miembro_auxiliatura(auth["id"]):
         servicios.append(_item("auxiliaturas", "Auxiliaturas", "/servicios/auxiliaturas", "badge-check"))
+    if puede("gestionar_buzon"):
+        servicios.append(_item("buzon", "Buzón de consultas", "/servicios/buzon", "inbox"))
     if temas.puede_publicar(auth):
         servicios.append(_item("temas", "Temas de grado", "/servicios/temas", "lightbulb"))
     if oportunidades.puede_publicar(auth):

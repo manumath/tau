@@ -3486,7 +3486,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 6. (hecha, 13-nov-2026) **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
 7. (hecha, 13-nov-2026) **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
 8. (hecha, 13-nov-2026) **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
-9. **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
+9. (hecha, 13-nov-2026) **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
 10. **Biblioteca y recursos:** apuntes, guías y enlaces que suben los docentes, por asignatura.
 11. Pruebas de navegador, manual, guía y CLAUDE.md.
 
@@ -3550,3 +3550,13 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
   como tal (`estado_efectivo`) hasta que se renueva. Abrir y responder avisan a la otra parte; todo queda en la auditoría.
 - Pantallas: `/estudiante/apoyo`, `/apoyo` y `/apoyo/{id}` (personal) y la tarjeta «Apoyo» de la ficha de tutoría, donde el tutor(a) o la
   Dirección ofrecen apoyo explicando por qué.
+
+### Etapa 9 (hecha): bienestar y orientación
+- **Migración 0079:** `pregunta_frecuente`, `servicio_apoyo` y `consulta` (consulta, reclamo o sugerencia). Acción `gestionar_buzon`
+  (Dirección de Carrera y Coordinación académica).
+- **Anónimo de verdad** (decisión del 13-nov-2026): una consulta anónima no guarda `externo_id`, solo el día (no la hora), no se
+  audita y su ruta (`/estudiante/buzon/anonima`) no lleva el usuario en el registro de peticiones (`registros.RUTAS_ANONIMAS`). No
+  tiene respuesta personal: solo se responde publicándola en las preguntas frecuentes. La identificada se responde en el portal y
+  con un aviso, y puede publicarse también en las preguntas frecuentes (sin el nombre).
+- `app/estudiantil/orientacion.py` y `rutas/orientacion.py`: `/estudiante/orientacion` y `/estudiante/buzon`; para el personal,
+  `/servicios/buzon` y `/servicios/orientacion` (preguntas frecuentes y servicios de apoyo).

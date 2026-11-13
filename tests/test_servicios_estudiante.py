@@ -656,3 +656,103 @@ def test_pantallas_de_apoyo(client, sofia):
     assert "Lo abrió la Dirección de Carrera" in r.text and "Notamos que le cuesta" in r.text
     client.post(f"/estudiante/apoyo/{apoyo.casos_de(ext)[0]['id']}/cerrar", follow_redirects=False)
     assert apoyo.casos_de(ext)[0]["estado"] == "cerrado"
+
+
+# --- Etapa 9: bienestar, orientación y buzón ----------------------------------------------------------------------------------
+
+def _gestor():
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    return {**usuarios.por_id(admin["id"])}
+
+
+def test_preguntas_frecuentes_y_servicios(app):
+    from app.estudiantil import orientacion as ori
+    g = _gestor()
+    assert ori.guardar_pregunta({"categoria": "", "pregunta": "¿Cómo?", "respuesta": "Así"}, g["id"])[0].startswith("Escriba la categoría")
+    assert ori.guardar_pregunta({"categoria": "Trámites", "pregunta": "¿Dónde pido una beca?", "respuesta": "En la Dirección"}, g["id"]) == []
+    assert ori.guardar_pregunta({"categoria": "Trámites", "pregunta": "Oculta", "respuesta": "x", "publicada": "0"}, g["id"]) == []
+    assert [q["pregunta"] for q in ori.preguntas()] == ["¿Dónde pido una beca?"]
+    assert len(ori.preguntas(solo_publicadas=False)) == 2
+    assert ori.guardar_servicio({"tipo": "x", "nombre": "A"}, g["id"])[0].startswith("Elija el tipo")
+    assert ori.guardar_servicio({"tipo": "salud", "nombre": "Posta", "enlace": "ftp://x"}, g["id"])[0].startswith("El enlace")
+    assert ori.guardar_servicio({"tipo": "psicologia", "nombre": "Apoyo psicológico", "contacto": "Of. 3", "horario": "L–V"}, g["id"]) == []
+    assert [s["nombre"] for s in ori.servicios()] == ["Apoyo psicológico"]
+
+
+def test_el_buzon_identificado_y_el_anonimo(sofia):
+    from app.estudiantil import orientacion as ori
+    from app.comun import notificaciones
+    ext = _externo("1111111")
+    g = _gestor()
+    assert ori.enviar(ext, "x", "Asunto", "Texto largo suficiente", False)[0].startswith("Elija")
+    assert ori.enviar(ext, "reclamo", "", "Texto largo suficiente", False)[0].startswith("Escriba el asunto")
+    assert ori.enviar(ext, "reclamo", "Asunto", "corto", False)[0].startswith("Cuente su consulta")
+    assert ori.enviar(ext, "reclamo", "Falta el aula", "No hay aula para la clase de Álgebra", False) == []
+    assert ori.enviar(ext, "sugerencia", "Más laboratorios", "Sería bueno tener más laboratorios abiertos", True) == []
+    ident = next(c for c in ori.listar() if not c["anonima"])
+    anon = next(c for c in ori.listar() if c["anonima"])
+    assert (ident["externo_id"], ident["anonima"]) == (ext, 0)
+    assert (anon["externo_id"], anon["anonima"], len(anon["creada_en"])) == (None, 1, 10)       # sin cuenta y solo el día
+    assert [c["asunto"] for c in ori.mias(ext)] == ["Falta el aula"]                              # la anónima no figura
+    assert any("anónima" in n["asunto"] for n in notificaciones.recientes(g["id"]))
+    assert not get_db().q("SELECT 1 FROM auditoria WHERE accion LIKE '%consulta%' AND entidad_id = ?", [anon["id"]])
+    # La identificada se responde a la persona; la anónima, solo publicándola en las preguntas frecuentes.
+    otro = {**usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP), "roles": []}
+    assert ori.responder(ident["id"], "Ya hay aula", otro, False)[0].startswith("No puede")
+    assert ori.responder(anon["id"], "Se abrirán más horarios", g, False)[0].startswith("Una consulta anónima")
+    assert ori.responder(anon["id"], "Se abrirán más horarios", g, True, "Laboratorios") == []
+    assert ori.preguntas()[0]["categoria"] == "Laboratorios" and ori.obtener(anon["id"])["estado"] == "respondida"
+    assert ori.obtener(anon["id"])["respondida_por"] == g["id"]
+    assert ori.responder(ident["id"], "Ya hay aula en el edificio nuevo", g, False) == []
+    assert ori.mias(ext)[0]["respuesta"] == "Ya hay aula en el edificio nuevo"
+    assert any("Respondieron su reclamo" in n["asunto"] for n in notificaciones.recientes(estudiantes_uid(ext)))
+    assert ori.responder(ident["id"], "Otra vez", g, False)[0].startswith("Esa consulta ya se respondió")
+
+
+def test_el_registro_no_liga_el_envio_anonimo_con_la_cuenta(client, sofia, caplog):
+    import logging
+    caplog.set_level(logging.INFO, logger="portal.peticiones")
+    client.post("/estudiante/buzon/anonima", data={"tipo": "consulta", "asunto": "Anónimo", "texto": "Mensaje anónimo largo"},
+                follow_redirects=False)
+    client.post("/estudiante/buzon", data={"tipo": "consulta", "asunto": "Firmado", "texto": "Mensaje firmado largo"},
+                follow_redirects=False)
+    lineas = [r.getMessage() for r in caplog.records if "/estudiante/buzon" in r.getMessage() and "POST" in r.getMessage()]
+    assert any("/estudiante/buzon/anonima" in x and x.endswith("usuario=-") for x in lineas)
+    assert any(x.startswith("POST /estudiante/buzon ") and "usuario=" in x and not x.endswith("usuario=-") for x in lineas)
+
+
+def test_pantallas_de_orientacion_y_buzon(client, sofia):
+    from app.estudiantil import orientacion as ori
+    g = _gestor()
+    ori.guardar_pregunta({"categoria": "Becas", "pregunta": "¿Cuándo abre la beca?", "respuesta": "En marzo"}, g["id"])
+    ori.guardar_servicio({"tipo": "bienestar", "nombre": "Bienestar universitario", "contacto": "Edificio central"}, g["id"])
+    r = client.get("/estudiante/orientacion")
+    assert "Servicios de apoyo" in r.text and "Bienestar universitario" in r.text and "¿Cuándo abre la beca?" in r.text and "En marzo" in r.text
+    r = client.get("/estudiante/buzon")
+    assert "Enviar como anónimo" in r.text and "no se guarda su cuenta" in r.text
+    client.post("/estudiante/buzon", data={"tipo": "consulta", "asunto": "Horarios", "texto": "¿Dónde veo los horarios?"}, follow_redirects=False)
+    assert "Horarios" in client.get("/estudiante/buzon").text
+    assert client.get("/servicios/buzon", follow_redirects=False).status_code == 303               # no es del personal
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    cid = next(c["id"] for c in ori.listar() if c["asunto"] == "Horarios")
+    r = client.get("/servicios/buzon")
+    assert "Horarios" in r.text and "Preguntas frecuentes y servicios de apoyo" in r.text
+    r = client.get(f"/servicios/buzon/{cid}")
+    assert "Responder" in r.text and "Sofía" in r.text
+    client.post(f"/servicios/buzon/{cid}/estado/en_atencion", follow_redirects=False)
+    assert ori.obtener(cid)["estado"] == "en_atencion"
+    client.post(f"/servicios/buzon/{cid}/responder", data={"respuesta": "En la página de la Carrera"}, follow_redirects=False)
+    assert ori.obtener(cid)["estado"] == "respondida"
+    r = client.get("/servicios/orientacion")
+    assert "¿Cuándo abre la beca?" in r.text and "Bienestar universitario" in r.text
+    client.post("/servicios/orientacion/preguntas", data={"categoria": "Grado", "pregunta": "¿Qué es un perfil?", "respuesta": "Un plan"},
+                follow_redirects=False)
+    assert "¿Qué es un perfil?" in client.get("/servicios/orientacion").text
+    qid = [q for q in ori.preguntas() if q["categoria"] == "Grado"][0]["id"]
+    client.post(f"/servicios/orientacion/preguntas/{qid}/eliminar", follow_redirects=False)
+    assert all(q["categoria"] != "Grado" for q in ori.preguntas())
+    sid = ori.servicios()[0]["id"]
+    client.post(f"/servicios/orientacion/servicios/{sid}", data={"tipo": "salud", "nombre": "Posta médica"}, follow_redirects=False)
+    assert ori.servicios() == []                                                                       # activo no marcado: se oculta

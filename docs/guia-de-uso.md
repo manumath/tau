@@ -765,6 +765,18 @@ psicológico…), se pasa a «en seguimiento», se **renueva seis meses** o se c
 apoyo** desde la ficha de tutoría de un tutorado, explicando por qué: el estudiante recibe un aviso y ve quién lo abrió. Las notas
 confidenciales de las reuniones de tutoría nunca pasan a estos casos.
 
+**Orientación y buzón** (Mi carrera): **Orientación** reúne los **servicios de apoyo** de la Carrera y la Facultad (bienestar, apoyo
+psicológico, salud, ayuda económica…, con su contacto y horario) y las **preguntas frecuentes** por categoría. El **buzón** recibe
+consultas, reclamos y sugerencias. Enviadas «con mi nombre», la respuesta llega al estudiante en el mismo buzón y en sus avisos. Enviadas
+**como anónimo**, no se guarda quién las envió (ni su cuenta, ni la hora: solo el día, ni siquiera en el registro de peticiones) y por eso
+no tienen respuesta personal: la Carrera responde publicando la respuesta en las preguntas frecuentes. Las anónimas no aparecen en «Mis
+envíos».
+
+**Atender el buzón y mantener la orientación** (Servicios → Buzón de consultas, para la Dirección de Carrera y la Coordinación académica):
+la lista se filtra por estado (recibida, en atención, respondida, cerrada). En cada consulta se **responde** (y, si se quiere,
+se publica en las preguntas frecuentes, sin el nombre), se marca **en atención** o se cierra. «Preguntas frecuentes y servicios de apoyo»
+permite agregar, editar, ocultar y eliminar lo que ven los estudiantes en «Orientación».
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

@@ -53,7 +53,13 @@ def ruta_registrable(ruta: str) -> str:
     return _TOKENS.sub(r"\1…", ruta)
 
 
+# Rutas de envío anónimo (PLAN §67): su registro no lleva el usuario, para que el registro no desanonimice al estudiante.
+RUTAS_ANONIMAS = ("/estudiante/buzon/anonima",)
+
+
 def _usuario(scope) -> str:
+    if str(scope.get("path", "")).startswith(RUTAS_ANONIMAS):
+        return "-"
     auth = scope.get("auth")
     return str(auth["id"]) if isinstance(auth, dict) and auth.get("id") else "-"
 
