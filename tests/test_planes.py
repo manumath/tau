@@ -95,9 +95,12 @@ def test_carga_detecta_requisito_inexistente(app, tmp_path):
     tipos = sorted(o["tipo"] for o in planes.observaciones(nuevo))
     assert tipos == ["requisito"]  # 8 h × 20 = 160 teóricas: coincide
     assert "MAT-999" in planes.observaciones(nuevo)[0]["detalle"]
-    # El plan 2017 y el 2027 del mismo programa coexisten.
-    assert [p["nombre"] for p in planes.listar() if p["programa"] == "Licenciatura en Matemática"] == [
-        "Plan 2027", "Plan 2017"]
+    # El plan 2017 y el 2027 del mismo programa coexisten; el nuevo nace como borrador (no lo ve cualquiera).
+    nombres = [(f["nombre"], f["estado"]) for f in get_db().q(
+        "SELECT p.nombre, p.estado FROM plan_estudios p JOIN programa pr ON pr.id = p.programa_id "
+        "WHERE pr.nombre = 'Licenciatura en Matemática' ORDER BY p.id DESC")]
+    assert nombres == [("Plan 2027", "elaboracion"), ("Plan 2017", "vigente")]
+    assert nuevo not in [p["id"] for p in planes.listar()]
 
 
 def test_pantallas_y_resolucion(client, app):
@@ -121,3 +124,72 @@ def test_pantallas_y_resolucion(client, app):
                     data={"resolucion": "Confirmado: el total correcto es 1.160."})
     assert "Resuelta" in r.text and "Confirmado: el total correcto es 1.160." in r.text
     assert planes.observacion(oid)["estado"] == "resuelta"
+
+
+# --- PLAN §65, etapa 1: reformas y estados -------------------------------------------------------------------------
+
+def _borrador(programa="Licenciatura en Matemática", nombre="Plan 2027"):
+    db = get_db()
+    pid = db.q("SELECT id FROM programa WHERE nombre = ?", [programa])[0]["id"]
+    ref = db.t.reforma_curricular.insert(nombre="Reforma 2027", resolucion=None, vigente_desde=2027)["id"]
+    return db.t.plan_estudios.insert(programa_id=pid, nombre=nombre, vigente_desde=2027, sistema="horas",
+                                     estado="elaboracion", reforma_id=ref)["id"]
+
+
+def test_los_planes_2017_son_vigentes_de_una_reforma(app):
+    todos = planes.listar()
+    assert {p["estado"] for p in todos} == {"vigente"} and {p["reforma"] for p in todos} == {"Plan 2017"}
+    [(reforma, grupo)] = planes.por_reforma(todos)
+    assert reforma["resolucion"] == "HCU 041/2017" and len(grupo) == 4
+
+
+def test_solo_un_plan_vigente_por_programa(app):
+    pid = _borrador()
+    import apsw
+    import pytest
+    with pytest.raises(apsw.ConstraintError):
+        get_db().execute("UPDATE plan_estudios SET estado = 'vigente' WHERE id = ?", [pid])
+
+
+def test_el_borrador_solo_lo_ven_quienes_elaboran(client, app):
+    pid = _borrador()
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert pid not in [p["id"] for p in planes.listar(usuarios.por_email("inv@test.cl"))]
+    assert "Plan 2027" not in client.get("/docencia/planes").text
+    assert "En elaboración" not in client.get("/docencia/planes").text            # ni el filtro
+    assert "no existe" in client.get(f"/docencia/planes/{pid}").text
+    permisos.asignar(emmy, "coordinacion_academica", unidades.id_de("CMAT"))
+    r = client.get("/docencia/planes")
+    assert "Plan 2027" in r.text and "En elaboración" in r.text
+    assert "Octavo" not in client.get(f"/docencia/planes/{pid}").text            # existe (vacío)
+    assert "no existe" not in client.get(f"/docencia/planes/{pid}").text
+
+
+def test_filtro_por_estado(client, app):
+    pid = _borrador()
+    get_db().execute("UPDATE plan_estudios SET estado = 'cierre', vigente_hasta = 2026 WHERE id = 1")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    from app.comun import permisos as p
+    p.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    r = client.get("/docencia/planes?estado=cierre")
+    assert "En proceso de cierre" in r.text and "Licenciatura en Matemática Aplicada" not in r.text
+    assert "Plan 2027" not in r.text
+    assert "Plan 2027" in client.get("/docencia/planes?estado=elaboracion").text
+    assert "No hay planes" in client.get("/docencia/planes?estado=cerrado").text
+    assert pid
+
+
+def test_los_borradores_no_entran_en_oferta_ni_en_cohortes(app):
+    from app.academico import oferta
+    from app.estudiantil import importar
+    antes = len(oferta.troncales(2027))
+    pid = _borrador()
+    get_db().execute("""INSERT INTO plan_asignatura (plan_id, asignatura_id, tipo, semestre, horas_teoricas)
+                        VALUES (?, (SELECT id FROM asignatura WHERE sigla = 'MAT-111'), 'obligatoria', 1, 4)""", [pid])
+    get_db().execute("INSERT INTO asignatura (sigla, nombre, departamento) VALUES ('MAT-900', 'Nueva', 'MAT')")
+    get_db().execute("""INSERT INTO plan_asignatura (plan_id, asignatura_id, tipo, semestre)
+                        VALUES (?, (SELECT id FROM asignatura WHERE sigla = 'MAT-900'), 'obligatoria', 1)""", [pid])
+    assert len(oferta.troncales(2027)) == antes                      # MAT-900 solo está en el borrador
+    assert pid not in [p["id"] for p in importar.planes_de_licenciatura()]

@@ -72,6 +72,8 @@ ACCIONES = {
     "actualizar_citas": {"direccion_instituto"},
     # Docencia (Carrera)
     "revisar_planes": {"direccion_carrera", "coordinacion_academica"},
+    "elaborar_planes": {"direccion_carrera", "coordinacion_academica"},   # reformas y borradores de planes (PLAN §65)
+    "decidir_planes": {"direccion_carrera"},          # poner en vigencia un plan y cerrarlo (PLAN §65)
     "gestionar_oferta": {"direccion_carrera", "coordinacion_academica"},
     "ver_carga": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
     # Lectura

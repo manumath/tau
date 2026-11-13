@@ -3193,3 +3193,74 @@ su opinión abre una fase de adecuación del sistema.**
 - El PDF pesa unos 9 MB por las capturas; si hace falta enviarlo por correo, se pueden reducir.
 - La hoja de observaciones pide página, sección, qué ocurre y qué propone; las respuestas se volcarán aquí como
   decisiones de la fase de adecuación.
+
+## 65. Módulo de creación y cierre de planes de estudio (propuesta, 12-nov-2026)
+
+Pedido del usuario: el plan de estudios se evalúa y cambia cada 10 años; hace falta un módulo para crear y cerrar planes,
+con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se cargan por CSV desde una migración
+(§24, `app/academico/importar_planes.py`) y la pantalla `/docencia/planes` es de solo lectura.
+
+### Decisiones del 12-nov-2026
+- **Estados de un plan:** en elaboración → vigente → en proceso de cierre → cerrado. El borrador solo lo ven la
+  Coordinación académica y la Dirección de Carrera; no aparece en oferta, cohortes ni portal del estudiante.
+- **Programa = titulación; mención = énfasis dentro de un mismo título.** Las dos licenciaturas (y las dos maestrías
+  terminales) otorgan títulos distintos, por eso son **programas**, no menciones. Las menciones quedan para énfasis
+  dentro de un plan (itinerarios con sus materias propias y un mínimo de créditos u horas).
+- **Reforma curricular que agrupa planes.** Lo que se revisa cada 10 años es el conjunto (hoy: HCU 041/2017, cuatro
+  planes). Una reforma agrupa N planes, cada uno de un programa: pueden ser 1, 2, 3 o los que haga falta. El estado vive
+  en el plan, pero la reforma los pone en vigencia juntos y pasa a «en cierre» los que reemplazan. Un programa que
+  desaparece conserva su plan cerrado como historial.
+- **Equivalencias entre planes** (materia vieja ≡ materia nueva, 1 a 1 o agrupadas) y vista de brechas. Sirven para pasar
+  de 2 licenciaturas a 1, o de 1 a 3. Son solo del catálogo: TAU no guarda materias cursadas ni notas (§49).
+- **Permisos:** `elaborar_planes` (Coordinación académica y Dirección de Carrera); `decidir_planes` (poner en vigencia y
+  cerrar, solo la Dirección de Carrera, con resolución y auditoría). Los demás roles consultan.
+- **Un solo plan vigente por programa.** Al poner en vigencia el nuevo, el vigente pasa a «en proceso de cierre».
+  Un plan se cierra cuando no quedan estudiantes cursando en él; si quedan, se avisa cuántos y la Dirección de Carrera
+  puede cerrar dejando el motivo. Los planes 2017 pasan a «vigente»; los cuatro se agrupan en la reforma «Plan 2017».
+
+### Diseño
+- **Datos:** `reforma_curricular` (nombre, resolución, año); `plan_estudios` con `reforma_id`, `estado`, `ingreso_hasta`,
+  datos de la puesta en vigencia y del cierre (`vigente_desde` opcional mientras es borrador, lo que obliga a reconstruir
+  la tabla en SQLite); `plan_ciclo` (ciclos por rango de semestres: el ciclo de cada asignatura se deduce); `mencion` y
+  `mencion_asignatura`; `equivalencia` y `equivalencia_item`. El catálogo `asignatura` no cambia de esquema; se valida el
+  formato de sigla (`MAT-111`) y se avisa al renombrar una materia que está en varios planes.
+- **Nueva reforma (asistente de 3 pasos):** (1) nombre, resolución, año y nivel; (2) qué planes tendrá: por cada programa de
+  la reforma vigente, continuar (copiando su plan), unir con otro o no continuar, y «agregar programa nuevo» (nombre,
+  nivel, título que otorga); (3) cómo arranca cada plan: copiar, importar CSV (mismo formato, plantilla y vista previa) o
+  desde cero. Para licenciaturas con tronco común se copia un plan al otro y se edita lo que cambia (no hay malla común
+  compartida: sería mucho más compleja).
+- **Ficha del borrador:** pestañas Datos generales, Malla (columnas por semestre; buscar o crear la materia en el
+  catálogo; horas teóricas, prácticas y de laboratorio o créditos según el sistema; requisitos elegidos entre las
+  materias del plan; guardado al instante con «Deshacer»), Electivas, Menciones, Equivalencias y Validación. Un panel
+  «Para poner en vigencia» lista cada requisito en verde o ámbar con enlace a donde se corrige.
+- **Validaciones:** siglas únicas y con formato; requisitos que existen y sin ciclos; cada semestre con al menos una
+  materia; casillas de electiva con su lista; horas o créditos coherentes con el sistema; totales declarados contra la
+  suma; mención que cumple su mínimo; resolución y año de vigencia. Las observaciones (`observacion_plan`) siguen siendo
+  el mecanismo para lo que no cuadra.
+- **Efectos:** la oferta solo ofrece materias de planes vigentes o en cierre; la carga de cohortes solo asigna a planes
+  vigentes o en cierre.
+
+### Etapas (un commit cada una)
+1. (hecha, 12-nov-2026) Migración (reforma, estados), lista con filtros, permisos y auditoría; los planes 2017 pasan a vigentes.
+2. Asistente de nueva reforma y datos generales del borrador.
+3. Editor de malla con validaciones.
+4. Menciones.
+5. Equivalencias, puesta en vigencia y cierre, y efectos en oferta y cohortes.
+6. Pruebas de navegador por rol, accesibilidad, capturas, capítulo del manual, guía y este PLAN.
+
+### Por confirmar
+- **Editar un plan vigente:** solo erratas, con auditoría; los cambios estructurales exigirían un plan nuevo. Si hace falta
+  ajustar a mitad de los 10 años, habría que permitir una «modificación» con resolución.
+- **Mención del estudiante:** columna opcional `mencion` en la carga de cohortes y `estudiante.mencion_id` (etapa posterior).
+- **Menciones reales de hoy:** ¿existen y cómo se eligen (mínimo de créditos, materias propias o ambos)?
+
+### Etapa 1 (hecha): reformas y estados
+- **Migración 0065:** `reforma_curricular`; `plan_estudios` con `reforma_id`, `estado` (`elaboracion`, `vigente`, `cierre`,
+  `cerrado`) y los datos de la puesta en vigencia y del cierre; índice único «un plan vigente por programa». Los cuatro
+  planes 2017 quedan agrupados en la reforma «Plan 2017» y vigentes. `vigente_hasta` sigue siendo el año del último
+  ingreso (no se agregó otra columna) y `vigente_desde` sigue siendo obligatorio: un borrador lleva el año de su reforma.
+- **Permisos:** `elaborar_planes` (Dirección de Carrera y Coordinación académica) y `decidir_planes` (Dirección de Carrera).
+- **Visibilidad:** un borrador solo lo ven quienes elaboran; no entra en la oferta (`oferta.troncales`), en la búsqueda,
+  en los indicadores de calidad ni en la carga de cohortes (que solo asigna a planes vigentes o en cierre). Un plan
+  cargado con `importar_planes` nace como borrador.
+- **Pantalla:** la lista se agrupa por reforma, con el estado de cada plan y filtros por estado.

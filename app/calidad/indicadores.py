@@ -143,7 +143,7 @@ def _revisiones(c, a):
 def _planes_licenciatura(a):
     return get_db().q(
         """SELECT p.nombre, p.vigente_desde, pr.nombre AS programa FROM plan_estudios p
-           JOIN programa pr ON pr.id = p.programa_id WHERE pr.nivel = 'licenciatura'
+           JOIN programa pr ON pr.id = p.programa_id WHERE pr.nivel = 'licenciatura' AND p.estado <> 'elaboracion'
              AND p.vigente_desde <= ? AND (p.vigente_hasta IS NULL OR p.vigente_hasta >= ?)""", [a, a])
 
 

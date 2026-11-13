@@ -33,7 +33,7 @@ def troncales(anio: int) -> list[dict]:
     return get_db().q(
         """SELECT DISTINCT a.* FROM plan_asignatura pa JOIN asignatura a ON a.id = pa.asignatura_id
            JOIN plan_estudios p ON p.id = pa.plan_id JOIN programa pr ON pr.id = p.programa_id
-           WHERE pr.nivel = 'licenciatura' AND pa.tipo IN ('obligatoria', 'trabajo_final') AND a.de_la_carrera = 1
+           WHERE pr.nivel = 'licenciatura' AND p.estado <> 'elaboracion' AND pa.tipo IN ('obligatoria', 'trabajo_final') AND a.de_la_carrera = 1
              AND p.vigente_desde <= :anio
              AND (p.vigente_hasta IS NULL OR :anio <= p.vigente_hasta
                   + (SELECT (MAX(semestre) + 1) / 2 FROM plan_asignatura WHERE plan_id = p.id))
@@ -63,14 +63,16 @@ def horas_del_plan(asignatura_id: int) -> int | None:
     mayor), como dato de la asignatura. None si solo está en planes por créditos."""
     fila = get_db().q("""SELECT MAX(COALESCE(horas_teoricas, 0) + COALESCE(horas_practicas, 0)
                                     + COALESCE(horas_laboratorio, 0)) AS h
-                         FROM plan_asignatura WHERE asignatura_id = ?""", [asignatura_id])[0]
+                         FROM plan_asignatura pa JOIN plan_estudios p ON p.id = pa.plan_id
+                         WHERE pa.asignatura_id = ? AND p.estado <> 'elaboracion'""", [asignatura_id])[0]
     return fila["h"] or None
 
 
 def programas_de(asignatura_id: int) -> list[str]:
     return [f["nombre"] for f in get_db().q(
         """SELECT DISTINCT pr.nombre FROM plan_asignatura pa JOIN plan_estudios p ON p.id = pa.plan_id
-           JOIN programa pr ON pr.id = p.programa_id WHERE pa.asignatura_id = ? ORDER BY pr.nombre""", [asignatura_id])]
+           JOIN programa pr ON pr.id = p.programa_id WHERE pa.asignatura_id = ? AND p.estado <> 'elaboracion'
+           ORDER BY pr.nombre""", [asignatura_id])]
 
 
 def listar(gestion_id: int) -> list[dict]:

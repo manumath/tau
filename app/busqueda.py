@@ -78,6 +78,7 @@ def _asignaturas(q, auth, limite):
     filas = get_db().q(
         """SELECT a.sigla, a.nombre, MAX(pa.plan_id) AS plan_id FROM asignatura a
            JOIN plan_asignatura pa ON pa.asignatura_id = a.id
+           JOIN plan_estudios pl ON pl.id = pa.plan_id AND pl.estado <> 'elaboracion'
            WHERE a.sigla LIKE :p OR sin_tildes(a.nombre) LIKE :p
            GROUP BY a.id ORDER BY a.sigla LIMIT :l""", {"p": _patron(q), "l": limite})
     return [{"texto": f"{f['sigla']} · {f['nombre']}", "href": f"/docencia/planes/{f['plan_id']}#asignatura-{f['sigla']}",

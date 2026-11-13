@@ -476,6 +476,12 @@ relaciona; las listas de electivas; los totales del documento frente a la suma d
 cuadra en el documento (se cargó tal como está). La Dirección de Carrera y la Coordinación
 académica las marcan como resueltas indicando cómo se resolvió.
 
+Los planes se agrupan por **reforma curricular**: el conjunto de planes que se aprueba junto (hoy, el Plan 2017,
+HCU 041/2017). Cada plan tiene un **estado**: *en elaboración* (borrador: solo lo ven la Dirección de Carrera y la
+Coordinación académica, y no aparece en la oferta, en las cohortes ni en la búsqueda), *vigente*, *en proceso de cierre*
+(ya no admite nuevos ingresos, pero sigue en la oferta mientras egresan los últimos) y *cerrado* (solo historial).
+Cada programa tiene a lo sumo un plan vigente. Arriba de la lista hay filtros por estado.
+
 **Gestiones** (en el menú, para la Dirección de Carrera y la Coordinación): I y II (semestres), INV (invierno, julio) y VER (verano, en
 enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la gestión 2026). «Crear
 las gestiones del año» propone fechas que se ajustan al calendario aprobado y oferta ambos

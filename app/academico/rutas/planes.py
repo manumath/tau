@@ -26,24 +26,55 @@ def _medida(p):
     return f"Horas semanales · semestres de {p['semanas_semestre']} semanas"
 
 
+def estado_insignia(p):
+    return insignia(planes.ESTADOS[p["estado"]], planes.TONOS_ESTADO[p["estado"]], icono=planes.ICONOS_ESTADO[p["estado"]])
+
+
+def _filtros(auth, actual):
+    """Chips para ver solo los planes de un estado: son enlaces (la página se vuelve a pedir con ?estado=)."""
+    opciones = [("", "Todos")] + [(k, v) for k, v in planes.ESTADOS.items()
+                                  if k != "elaboracion" or planes.puede_elaborar(auth)]
+    return Div(*[A(texto, href=f"{BASE}?estado={clave}" if clave else BASE,
+                   aria_current="true" if clave == actual else None,
+                   cls="text-sm rounded-full border px-3 py-1 " + (
+                       "bg-primary text-primary-foreground border-primary" if clave == actual
+                       else "hover:bg-muted")) for clave, texto in opciones],
+               cls="flex flex-wrap gap-2 mb-6", role="navigation", aria_label="Filtrar por estado")
+
+
 @rt(BASE)
-def get(auth):
-    filas = [fh.Tr(fh.Td(A(p["programa"], href=f"{BASE}/{p['id']}", cls="font-medium hover:underline"),
-                         Div(planes.NIVELES[p["nivel"]], cls=TextPresets.muted_sm)),
-                   fh.Td(p["nombre"], Div(p["resolucion"] or "", cls=TextPresets.muted_sm)),
-                   fh.Td(_vigencia(p), cls="text-sm"),
-                   fh.Td(str(p["n_asignaturas"]), cls="text-sm tabular-nums"),
-                   fh.Td(insignia(f"{p['n_pendientes']} por revisar", "ambar", icono="circle-alert")
-                         if p["n_pendientes"] else insignia("Sin observaciones", "verde", icono="check")))
-             for p in planes.listar()]
+def get(auth, estado: str = ""):
+    estado = estado if estado in planes.ESTADOS else ""
+    if estado == "elaboracion" and not planes.puede_elaborar(auth):
+        estado = ""
+    reformas = planes.por_reforma(planes.listar(auth, estado or None))
+    bloques = []
+    for reforma, filas_plan in reformas:
+        filas = [fh.Tr(fh.Td(A(p["programa"], href=f"{BASE}/{p['id']}", cls="font-medium hover:underline"),
+                             Div(planes.NIVELES[p["nivel"]], cls=TextPresets.muted_sm)),
+                       fh.Td(p["nombre"], Div(p["resolucion"] or "", cls=TextPresets.muted_sm)),
+                       fh.Td(estado_insignia(p), Div(_vigencia(p), cls=(TextPresets.muted_sm, "mt-1"))),
+                       fh.Td(str(p["n_asignaturas"]), cls="text-sm tabular-nums"),
+                       fh.Td(insignia(f"{p['n_pendientes']} por revisar", "ambar", icono="circle-alert")
+                             if p["n_pendientes"] else insignia("Sin observaciones", "verde", icono="check")))
+                 for p in filas_plan]
+        bloques.append(Div(
+            H3(f"Reforma {reforma['nombre']}", Span(" · ".join(str(x) for x in (reforma["resolucion"],
+                                                                                 f"desde {reforma['vigente_desde']}")
+                                                               if x), cls=(TextPresets.muted_sm, "ml-2 font-normal")),
+               cls="text-base font-semibold mb-2"),
+            Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Programa"), fh.Th("Plan"), fh.Th("Estado"), fh.Th("Asignaturas"),
+                                        fh.Th("Revisión"))), fh.Tbody(*filas),
+                         cls="uk-table uk-table-divider uk-table-middle"), cls="overflow-x-auto"),
+            cls="mb-8"))
     return pagina(
         "Planes de estudio",
         H2("Planes de estudio"),
-        P("Programas de la Carrera de Matemática y sus planes vigentes. Las inconsistencias de los documentos "
-          "quedan marcadas para revisión de la Dirección Académica.", cls=(TextPresets.muted_sm, "mb-6")),
-        Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Programa"), fh.Th("Plan"), fh.Th("Vigencia"), fh.Th("Asignaturas"),
-                                    fh.Th("Revisión"))), fh.Tbody(*filas),
-                     cls="uk-table uk-table-divider uk-table-middle"), cls="overflow-x-auto"),
+        P("Cada reforma curricular agrupa los planes de los programas de la Carrera. Un plan está en elaboración, "
+          "vigente, en proceso de cierre (sin nuevos ingresos) o cerrado. Las inconsistencias de los documentos "
+          "quedan marcadas para revisión de la Dirección Académica.", cls=(TextPresets.muted_sm, "mb-4")),
+        _filtros(auth, estado),
+        *(bloques or [P("No hay planes en este estado.", cls=TextPresets.muted_sm)]),
         usuario=auth, seccion="docencia")
 
 
@@ -118,7 +149,7 @@ def tarjeta_observaciones(p, auth, errores=(), abierta=None):
 @rt(f"{BASE}/{{pid}}")
 def get(auth, pid: int):
     p = planes.obtener(pid)
-    if not p:
+    if not p or not planes.puede_ver(p, auth):
         return pagina("No encontrado", P("El plan no existe."), usuario=auth)
     sistema = p["sistema"]
     bloques, ciclo_actual = [], None
@@ -142,6 +173,7 @@ def get(auth, pid: int):
         A(UkIcon("arrow-left", height=14, width=14), "Planes de estudio", href=BASE,
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         H2(f"{p['programa']}"),
+        Div(estado_insignia(p), cls="mb-2"),
         P(" · ".join(x for x in (p["nombre"], p["resolucion"], _vigencia(p), _medida(p),
                                  f"Nota mínima de aprobación: {p['nota_minima']} %" if p["nota_minima"] else None) if x),
           cls=(TextPresets.muted_sm, "mb-6")),
@@ -166,6 +198,8 @@ def post(auth, sess, oid: int, resolucion: str = ""):
     if not o:
         return Response("No encontrado", status_code=404)
     p = planes.obtener(o["plan_id"])
+    if not planes.puede_ver(p, auth):
+        return Response("No encontrado", status_code=404)
     error = planes.resolver(oid, resolucion, auth["id"])
     if error:
         return tarjeta_observaciones(p, auth, [error], oid)

@@ -1,5 +1,6 @@
 """Consultas de los planes de estudio (catálogo curricular, PLAN.md sección 24)."""
 from app.academico import importar_planes
+from app.comun import permisos
 from app.comun.db import AHORA, get_db
 
 NIVELES = {"licenciatura": "Licenciatura", "maestria": "Maestría", "doctorado": "Doctorado",
@@ -12,19 +13,50 @@ ORDINALES = ["", "Primer", "Segundo", "Tercer", "Cuarto", "Quinto", "Sexto", "S�
              "Décimo"]
 
 
-def listar() -> list[dict]:
-    return get_db().q(
-        """SELECT p.*, pr.nombre AS programa, pr.nivel,
+# Ciclo de vida de un plan (PLAN §65): un borrador solo lo ven quienes elaboran planes.
+ESTADOS = {"elaboracion": "En elaboración", "vigente": "Vigente", "cierre": "En proceso de cierre",
+           "cerrado": "Cerrado"}
+TONOS_ESTADO = {"elaboracion": "azul", "vigente": "verde", "cierre": "ambar", "cerrado": "gris"}
+ICONOS_ESTADO = {"elaboracion": "pencil", "vigente": "check", "cierre": "hourglass", "cerrado": "lock"}
+
+
+def puede_elaborar(auth) -> bool:
+    return permisos.puede(auth, "elaborar_planes")
+
+
+def puede_ver(plan: dict, auth) -> bool:
+    """Los borradores solo los ven la Dirección de Carrera y la Coordinación académica."""
+    return plan["estado"] != "elaboracion" or puede_elaborar(auth)
+
+
+def listar(auth=None, estado: str | None = None) -> list[dict]:
+    """Planes que `auth` puede ver (sin `auth`, solo los que ve todo el mundo), por programa; con `estado`, solo
+    los de ese estado."""
+    filas = get_db().q(
+        """SELECT p.*, pr.nombre AS programa, pr.nivel, r.nombre AS reforma, r.resolucion AS reforma_resolucion,
                   (SELECT COUNT(*) FROM plan_asignatura WHERE plan_id = p.id AND asignatura_id IS NOT NULL) AS n_asignaturas,
                   (SELECT COUNT(*) FROM observacion_plan WHERE plan_id = p.id AND estado = 'pendiente') AS n_pendientes
            FROM plan_estudios p JOIN programa pr ON pr.id = p.programa_id
-           ORDER BY CASE pr.nivel WHEN 'licenciatura' THEN 1 WHEN 'maestria' THEN 2 ELSE 3 END, pr.nombre,
-                    p.vigente_desde DESC""")
+           LEFT JOIN reforma_curricular r ON r.id = p.reforma_id
+           ORDER BY p.vigente_desde DESC, CASE pr.nivel WHEN 'licenciatura' THEN 1 WHEN 'maestria' THEN 2 ELSE 3 END,
+                    pr.nombre""")
+    return [p for p in filas if puede_ver(p, auth) and (estado is None or p["estado"] == estado)]
+
+
+def por_reforma(planes_: list[dict]) -> list[tuple[dict, list[dict]]]:
+    """[(reforma, planes)] en el orden en que vienen (la reforma más reciente primero)."""
+    grupos: dict = {}
+    for p in planes_:
+        clave = p["reforma_id"]
+        grupos.setdefault(clave, ({"nombre": p["reforma"] or p["nombre"], "resolucion": p["reforma_resolucion"],
+                                   "vigente_desde": p["vigente_desde"]}, []))[1].append(p)
+    return list(grupos.values())
 
 
 def obtener(pid: int) -> dict | None:
-    filas = get_db().q("""SELECT p.*, pr.nombre AS programa, pr.nivel FROM plan_estudios p
-                          JOIN programa pr ON pr.id = p.programa_id WHERE p.id = ?""", [pid])
+    filas = get_db().q("""SELECT p.*, pr.nombre AS programa, pr.nivel, r.nombre AS reforma
+                          FROM plan_estudios p JOIN programa pr ON pr.id = p.programa_id
+                          LEFT JOIN reforma_curricular r ON r.id = p.reforma_id WHERE p.id = ?""", [pid])
     return filas[0] if filas else None
 
 

@@ -80,15 +80,23 @@ def cargar_lineas_formativas(con, carpeta: Path = CARPETA) -> int:
     return n
 
 
+def _tiene_estado(con) -> bool:
+    """La migración 0028 carga los planes 2017 antes de que exista la columna `estado` (0065)."""
+    return any(c[1] == "estado" for c in con.execute("PRAGMA table_info(plan_estudios)"))
+
+
 def cargar_plan(con, p: dict, filas: list[dict], conocidas: list[dict] = ()) -> int | None:
     unidad = _uno(con, "SELECT id FROM unidad WHERE sigla = 'CMAT'")
     programa = _uno(con, "SELECT id FROM programa WHERE nombre = ?", (p["programa"],)) or _insertar(
         con, "INSERT INTO programa (nombre, nivel, unidad_id) VALUES (?, ?, ?)", (p["programa"], p["nivel"], unidad))
     if _uno(con, "SELECT id FROM plan_estudios WHERE programa_id = ? AND nombre = ?", (programa, p["plan"])):
         return None
-    plan = _insertar(con, """INSERT INTO plan_estudios (programa_id, nombre, resolucion, vigente_desde, sistema,
+    # Tras la migración 0065, un plan cargado nace como borrador (PLAN §65): no choca con el vigente del programa.
+    estado = ", estado" if _tiene_estado(con) else ""
+    plan = _insertar(con, f"""INSERT INTO plan_estudios (programa_id, nombre, resolucion, vigente_desde, sistema,
                              semanas_semestre, horas_por_credito, nota_minima, total_teoricas, total_practicas,
-                             total_laboratorio, total_creditos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                             total_laboratorio, total_creditos{estado})
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?{", 'elaboracion'" if estado else ""})""",
                      (programa, p["plan"], p["resolucion"] or None, int(p["vigente_desde"]), p["sistema"],
                       _entero(p["semanas_semestre"]), _entero(p["horas_por_credito"]), _entero(p["nota_minima"]),
                       _entero(p["total_teoricas"]), _entero(p["total_practicas"]), _entero(p["total_laboratorio"]),

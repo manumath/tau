@@ -96,7 +96,8 @@ def _normal(texto: str) -> str:
 
 def planes_de_licenciatura() -> list[dict]:
     return get_db().q("""SELECT pe.id, pe.nombre, pr.nombre AS programa FROM plan_estudios pe
-                         JOIN programa pr ON pr.id = pe.programa_id WHERE pr.nivel = 'licenciatura' ORDER BY pe.id""")
+                         JOIN programa pr ON pr.id = pe.programa_id WHERE pr.nivel = 'licenciatura' AND pe.estado IN ('vigente', 'cierre')
+                         ORDER BY pe.id""")
 
 
 def _plan(texto: str, planes: list[dict]) -> tuple[int | None, str | None]:

@@ -195,7 +195,7 @@ def observaciones_de_planes():
     filas = get_db().q(
         """SELECT o.detalle, p.id AS plan_id, p.nombre AS plan, pr.nombre AS programa FROM observacion_plan o
            JOIN plan_estudios p ON p.id = o.plan_id JOIN programa pr ON pr.id = p.programa_id
-           WHERE o.estado = 'pendiente' ORDER BY pr.nombre, o.id""")
+           WHERE o.estado = 'pendiente' AND p.estado <> 'elaboracion' ORDER BY pr.nombre, o.id""")
     return _chequeo("planes", "Docencia", "Observaciones de los planes de estudio por revisar",
                     "Inconsistencias de los documentos oficiales, cargadas tal cual.", "carrera",
                     "Planes de estudio", [_item(f"{f['programa']} · {f['plan']}", f"/docencia/planes/{f['plan_id']}",
