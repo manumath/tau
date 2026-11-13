@@ -11,7 +11,7 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from app.academico import gestiones, menciones, oferta, reformas
+from app.academico import cambios, gestiones, menciones, oferta, reformas, semestre
 from app.comun import estudiantes, permisos, tokens, unidades, usuarios
 from app.comun.componentes.registros import POR_PAGINA
 from app.comun.db import get_db, init_db
@@ -59,6 +59,24 @@ def _convocatoria(gestion, asignatura_id, docentes, tribunal_estudiantes):
     assert aux.publicar(cid) == [], aux.publicar(cid)
 
 
+def _gestion_activa(emmy, grace, uid):
+    """Un semestre de un año futuro con las fechas puestas para que cubra hoy, con dos paralelos y un docente reasignado."""
+    anio = date.today().year + 5
+    g, _ = gestiones.crear(anio, "I", uid)
+    get_db().execute("UPDATE gestion_academica SET fecha_inicio = ?, fecha_fin = ? WHERE id = ?",
+                     [(date.today() - timedelta(days=60)).isoformat(), (date.today() + timedelta(days=60)).isoformat(),
+                      g["id"]])
+    o1, _ = oferta.agregar(g["id"], "MAT-113", "A", "30", uid)
+    o2, _ = oferta.agregar(g["id"], "MAT-114", "A", "28", uid)
+    oferta.asignar(o1, emmy, "titular")
+    oferta.asignar(o2, grace, "titular")
+    assert semestre.activar(g["id"], uid) == []
+    did = oferta.docentes(o1)[0]["id"]
+    assert cambios.reasignar_docente(did, grace, {"fecha": (date.today() - timedelta(days=10)).isoformat(),
+                                                   "motivo": "licencia", "detalle": "Licencia por salud"}, uid) == []
+    return gestiones.obtener(g["id"])
+
+
 def preparar(ruta: str):
     init_db(ruta)
     usuarios.crear(ADMIN, "Ada", "Administradora", CLAVE, es_admin=True, es_investigador=False,
@@ -93,6 +111,11 @@ def preparar(ruta: str):
                                         [f"i:{alan}"], [])
         assert not errores, errores
         productos.guardar(d, [f"i:{alan}"], alan)
+    # Gestiones (PLAN §66): una activa (id 5, con un cambio ya registrado) y una concluida (id 6) para revisar sus pantallas.
+    activa = _gestion_activa(emmy, grace, direccion["id"])
+    hist, _ = gestiones.crear(date.today().year - 4, "II", direccion["id"], concluida=True)
+    assert (activa["id"], hist["id"]) == (5, 6)
+    oferta.agregar(hist["id"], "MAT-111", "A", "35", emmy)
     # Planes (PLAN §65): una reforma en elaboración (reforma 2; plan 5 = Licenciatura en Matemática copiada, plan 6 = Maestría
     # en Matemática vacía) con una mención, para revisar las pantallas del módulo.
     ids = {r["nombre"]: r["id"] for r in get_db().q("SELECT id, nombre FROM programa")}

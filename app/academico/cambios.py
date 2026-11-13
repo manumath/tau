@@ -8,7 +8,7 @@ Las gestiones en planificación se editan sin motivo (`app.academico.oferta`); l
 from datetime import date, timedelta
 
 from app.academico import gestiones, oferta
-from app.comun import notificaciones, usuarios
+from app.comun import formato, notificaciones, usuarios
 from app.comun.db import auditar, get_db, transaccion
 
 MOTIVOS = {"renuncia": "Renuncia", "fallecimiento": "Fallecimiento", "licencia": "Licencia o baja",
@@ -70,7 +70,7 @@ def _registrar(g, tipo, fecha, o_sigla, o_paralelo, asignatura_id, anterior, nue
         docente_anterior_id=anterior, docente_nuevo_id=nuevo, rol=rol, motivo=motivo, detalle=detalle,
         registrado_por=uid)
     auditar(uid, tipo, "gestion_academica", g["id"],
-            f"{gestiones.codigo(g)} {o_sigla} {o_paralelo}: desde {fecha}, {MOTIVOS[motivo].lower()}"
+            f"{gestiones.codigo(g)} {o_sigla} {o_paralelo}: desde el {formato.fecha(fecha)}, {MOTIVOS[motivo].lower()}"
             + (f" ({detalle})" if detalle else ""))
 
 
@@ -118,7 +118,7 @@ def retirar_materia(oid: int, f: dict, uid: int) -> list[str]:
         for d in vigentes:
             _avisar(d["usuario_id"], f"Se retiró {o['sigla']} de {gestiones.codigo(g)}",
                     f"La materia {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}) se retiró de la oferta desde el "
-                    f"{fecha}. Motivo: {MOTIVOS[motivo].lower()}.", g, uid)
+                    f"{formato.fecha(fecha)}. Motivo: {MOTIVOS[motivo].lower()}.", g, uid)
     return []
 
 
@@ -150,7 +150,7 @@ def agregar_docente(oid: int, usuario_id: int, rol: str, f: dict, uid: int) -> l
         _registrar(g, "agregar_docente", fecha, o["sigla"], o["paralelo"], o["asignatura_id"], None, usuario_id, rol,
                    motivo, detalle, uid)
         _avisar(usuario_id, f"Se le asignó {o['sigla']} en {gestiones.codigo(g)}",
-                f"Desde el {fecha} dicta {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}) como "
+                f"Desde el {formato.fecha(fecha)} dicta {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}) como "
                 f"{oferta.ROLES[rol].lower()}.", g, uid)
     return []
 
@@ -177,10 +177,10 @@ def reasignar_docente(did: int, nuevo_id: int, f: dict, uid: int) -> list[str]:
         _registrar(g, "reasignar_docente", fecha, o["sigla"], o["paralelo"], o["asignatura_id"], d["usuario_id"],
                    nuevo_id, d["rol"], motivo, detalle, uid)
         _avisar(d["usuario_id"], f"Deja {o['sigla']} en {gestiones.codigo(g)}",
-                f"Desde el {fecha} ya no dicta {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}). Motivo: "
+                f"Desde el {formato.fecha(fecha)} ya no dicta {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}). Motivo: "
                 f"{MOTIVOS[motivo].lower()}.", g, uid)
         _avisar(nuevo_id, f"Se le asignó {o['sigla']} en {gestiones.codigo(g)}",
-                f"Desde el {fecha} dicta {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}) como "
+                f"Desde el {formato.fecha(fecha)} dicta {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}) como "
                 f"{oferta.ROLES[d['rol']].lower()}.", g, uid)
     return []
 
@@ -200,7 +200,7 @@ def retirar_docente(did: int, f: dict, uid: int) -> list[str]:
         _registrar(g, "retirar_docente", fecha, o["sigla"], o["paralelo"], o["asignatura_id"], d["usuario_id"], None,
                    d["rol"], motivo, detalle, uid)
         _avisar(d["usuario_id"], f"Deja {o['sigla']} en {gestiones.codigo(g)}",
-                f"Desde el {fecha} ya no dicta {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}). Motivo: "
+                f"Desde el {formato.fecha(fecha)} ya no dicta {o['sigla']} {o['nombre']} (paralelo {o['paralelo']}). Motivo: "
                 f"{MOTIVOS[motivo].lower()}.", g, uid)
     return []
 

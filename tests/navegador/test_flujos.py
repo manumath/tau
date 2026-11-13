@@ -4,6 +4,7 @@ Cubren lo que las pruebas con TestClient no ven: htmx, modales, confirmaciones, 
 Franken UI y KaTeX, la política de seguridad de contenido y las descargas.
 """
 import re
+from datetime import date
 
 import openpyxl
 from playwright.sync_api import expect
@@ -492,3 +493,47 @@ def test_elaborar_un_plan_nuevo(page):
     page.fill("input[name=nombre]", "Análisis")
     page.get_by_role("button", name="Guardar").click()
     page.locator("#menciones-plan").get_by_text("Análisis").wait_for()
+
+
+def test_crear_y_borrar_una_gestion(page):
+    """La Dirección de Carrera crea una gestión suelta (nace en planificación) y la borra con confirmación (PLAN §66)."""
+    entrar(page, "direccion")
+    anio = str(date.today().year + 7)
+    page.goto("/docencia/gestiones")
+    page.get_by_text("Crear una sola gestión").click()
+    page.fill("input[aria-label='Año de la gestión']", anio)
+    page.get_by_role("button", name="Crear", exact=True).click()
+    fila = page.locator("tr", has_text=f"I-{anio}")
+    fila.wait_for()
+    assert "En planificación" in fila.inner_text()
+    fila.get_by_role("button", name=f"Borrar la gestión I-{anio}").click()
+    confirmar(page)
+    page.wait_for_function("(a) => !document.body.innerText.includes('I-' + a)", arg=anio)
+
+
+def test_cambiar_el_semestre_activo_con_motivo(page):
+    """Con el semestre activo, retirar una materia pide fecha y motivo y queda marcada y registrada (PLAN §66)."""
+    entrar(page, "direccion")
+    page.goto("/docencia/oferta?gestion=5")
+    assert "Activa" in page.locator("main").inner_text()
+    page.get_by_role("button", name="Retirar MAT-114 A").click()
+    page.get_by_role("button", name="Retirar la materia").click()          # sin motivo: el formulario no se envía
+    assert page.locator("#modal").inner_text().strip() != ""
+    page.select_option("select[name=motivo]", "falta_inscritos")
+    page.get_by_role("button", name="Retirar la materia").click()
+    page.locator("#oferta-gestion").get_by_text("Retirada desde").wait_for()
+    page.goto("/docencia/oferta/5/cambios")
+    assert "Materia retirada" in page.locator("main").inner_text()
+
+
+def test_concluir_y_reabrir_un_semestre(page):
+    entrar(page, "direccion")
+    page.goto(f"/docencia/preparacion?semestre=II-{date.today().year - 4}")
+    assert "Concluida" in page.locator("main").inner_text()
+    page.get_by_role("button", name="Reabrir para corregir").click()
+    page.fill("textarea[name=motivo]", "Corregir una asignación")
+    page.get_by_role("button", name="Reabrir", exact=True).click()
+    page.get_by_role("button", name="Concluir el semestre").wait_for()
+    page.get_by_role("button", name="Concluir el semestre").click()
+    page.locator("#modal").get_by_role("button", name="Concluir el semestre").click()
+    page.get_by_role("button", name="Reabrir para corregir").wait_for()

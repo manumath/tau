@@ -44,7 +44,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - `app/investigacion`: perfiles, productos, actividades, proyectos, propuestas institucionales,
   líneas, revistas, importaciones (DOI, arXiv, BibTeX, OpenAlex).
 - `app/academico`: planes de estudio (con su ciclo de vida: `reformas`, `malla`, `menciones`, `equivalencias`, `vigencia`;
-  PLAN §65), gestiones, oferta y asignación docente, carga horaria.
+  PLAN §65), gestiones (con su ciclo de vida: `semestre`, `cambios`; PLAN §66), oferta y asignación docente, carga horaria.
 - `app/calidad`: Aseguramiento de la Calidad (PLAN §57): memoria, informe de I+D+i, cuerpo académico, calidad de
   datos, seguimiento estudiantil. Sin nombres de agencias ni de sus instrumentos (decisión del 6-nov-2026).
 - `app/estudiantil`: seguimiento estudiantil (PLAN §49): cohortes, carga del CSV de Seguimiento Académico,
@@ -80,6 +80,12 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   es para asignar estudiantes u ofertar, usar solo `vigente` y `cierre`. Poner en vigencia y cerrar es solo de la Dirección de
   Carrera (`decidir_planes`). `vigente_hasta` es el año del último ingreso. El catálogo `asignatura` es común a todos los
   planes: la misma sigla en dos planes es la misma asignatura (y equivalente por sí sola).
+- **Gestiones (PLAN §66):** cada gestión (I, II, INV, VER) está *en planificación* (oferta y docentes se editan libremente y se
+  puede borrar), *activa* (todo cambio pide fecha de efecto y motivo, queda en `gestion_cambio` y se avisa al docente; no se
+  borra nada: `oferta.retirada_en`, `oferta_docente.desde/hasta`) o *concluida* (historial de solo lectura; solo la Dirección de
+  Carrera la reabre). Activar, concluir y reabrir son de `decidir_gestion`. Toda edición de oferta o docentes debe comprobar
+  `gestiones.edicion_libre(g)` o pasar por `app.academico.cambios`; toda consulta de lo vigente excluye lo retirado
+  (`retirada_en IS NULL`, `hasta IS NULL`) y la carga cuenta por meses dictados (`oferta.tramos_de`).
 - **Carga horaria:** unidades de 32 h/mes; carga contratada 32–160 h/mes por periodo de vínculo,
   distribuida por actividad (docencia, investigación, extensión, gestión, otras) y que suma el
   total. Cada materia como titular = 32 h/mes; auxiliares y cursos de verano/invierno no suman.

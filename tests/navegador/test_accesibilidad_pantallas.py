@@ -6,6 +6,8 @@ una verificación propia, en el navegador, de lo que la auditoría encontró y q
 - ids repetidos;
 - un solo <h1> por página (WCAG 1.3.1 y 2.4.6) y fechas legibles: ni «2026-08-01» ni «08-11-2026» (PLAN §62, etapa 3).
 """
+from datetime import date
+
 import pytest
 
 from tests.navegador.conftest import entrar
@@ -69,6 +71,10 @@ PANTALLAS = {
     "direccion": ["/", "/admin/usuarios", "/admin/propuestas", "/docencia/planes", "/docencia/planes?estado=elaboracion",
                   "/docencia/planes/reforma/nueva", "/docencia/planes/reforma/2", "/docencia/planes/5",
                   "/docencia/planes/5/malla", "/docencia/planes/5/equivalencias", "/docencia/oferta",
+                  # Gestiones (PLAN §66): lista, planificación (en planificación, activa y concluida) y oferta con cambios.
+                  "/docencia/preparacion", f"/docencia/preparacion?semestre=I-{date.today().year + 5}",
+                  f"/docencia/preparacion?semestre=II-{date.today().year - 4}", "/docencia/oferta?gestion=5",
+                  "/docencia/oferta?gestion=6", "/docencia/oferta/5/cambios",
                   "/docencia/carga", "/docencia/gestiones", "/docencia/preparacion", "/docencia/cohortes",
                   "/docencia/encuestas", "/docencia/tutoria", "/docencia/egresados", "/estudiantes",
                   "/servicios/comunicados", "/servicios/auxiliaturas", "/servicios/grado", "/informes",

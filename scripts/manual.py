@@ -232,6 +232,29 @@ def datos(ruta: str):
     tardias = [f["id"] for f in planes_.asignaturas(borrador) if f["sigla"] and (f["semestre"] or 0) >= 7][:4]
     assert not menciones.asignar(borrador, pura, {i: "o" for i in tardias}, ada)
 
+    # Gestiones (PLAN §66): I-2027 en planificación, con las troncales y algunos titulares.
+    from app.academico import oferta as ofertas_
+    plan27 = {g["tipo"]: g for g in gestiones.crear_anio(2027)}["I"]
+    ofertas_.ofertar_troncales(plan27, ada)
+    for o, u in zip(ofertas_.listar(plan27["id"])[:6], (emmy, sofia, alan, emmy, sofia, alan)):
+        ofertas_.asignar(o["id"], u, "titular")
+
+    # Gestiones (PLAN §66): con el semestre activo, un docente reasignado y una materia retirada, para ilustrar los cambios.
+    from datetime import date as _date
+    from app.academico import cambios, oferta as ofertas
+    act = db.q("SELECT * FROM gestion_academica WHERE estado = 'activa' ORDER BY fecha_inicio DESC")
+    if act:
+        ga = act[0]
+        hoy = _date.today().isoformat()
+        fecha = hoy if ga["fecha_inicio"] <= hoy <= ga["fecha_fin"] else ga["fecha_inicio"]
+        o_con = next((o for o in ofertas.listar(ga["id"]) if o["docentes"]), None)
+        o_sin = next((o for o in ofertas.listar(ga["id"]) if not o["docentes"]), None)
+        if o_con and fecha > ga["fecha_inicio"]:
+            assert not cambios.reasignar_docente(o_con["docentes"][0]["id"], sofia,
+                                                 {"fecha": fecha, "motivo": "licencia", "detalle": "Licencia por salud"}, ada)
+        if o_sin:
+            assert not cambios.retirar_materia(o_sin["id"], {"fecha": fecha, "motivo": "falta_inscritos"}, ada)
+
     # Enlace de ingreso de la estudiante (como el que le llega por correo).
     Path(ruta).with_suffix(".enlace").write_text(f"/acceso/{tokens.emitir(andrea['uid'], 'acceso')}")
 
@@ -273,9 +296,14 @@ CAPTURAS = [
     ("equivalencias", "direccion", "equivalencias-borrador", {"alto": 1000}),
     ("reforma", "direccion", "reforma", {"alto": 520}),
     ("plan-cierre", "direccion", "plan", {"clics": ["text=Iniciar el cierre"], "alto": 700}),
-    ("oferta", "direccion", "/docencia/oferta", {}),
+    ("gestiones", "direccion", "/docencia/gestiones", {"alto": 640}),
+    ("oferta", "direccion", "oferta-planificacion", {}),
+    ("oferta-activa", "direccion", "/docencia/oferta", {"alto": 640}),
+    ("cambio-docente", "direccion", "/docencia/oferta", {"clics": ["button[aria-label^='Reasignar a']"], "alto": 760}),
+    ("cambios-semestre", "direccion", "cambios", {"alto": 520}),
+    ("concluir", "direccion", "/docencia/preparacion?semestre=II-2026", {"clics": ["text=Concluir el semestre"], "alto": 700}),
     ("carga", "direccion", "/docencia/carga", {"alto": 600}),
-    ("preparacion", "direccion", "/docencia/preparacion", {"alto": 600}),
+    ("preparacion", "direccion", "preparacion-planificacion", {"alto": 760}),
     ("vinculo", "direccion", "/admin/usuarios?q=noether", {"clics": ["text=Vínculo"], "alto": 900}),
     ("cohortes", "direccion", "/docencia/cohortes", {"alto": 640}),
     ("encuestas", "direccion", "/docencia/encuestas", {"alto": 480}),
@@ -323,6 +351,9 @@ def _rutas_de_la_base(db: Path) -> dict:
     rutas = {
         "proyecto": f"/proyectos/{uno("SELECT id FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01'")}",
         "plan": f"/docencia/planes/{uno('SELECT MIN(id) FROM plan_estudios')}",
+        "oferta-planificacion": f"/docencia/oferta?gestion={uno("SELECT id FROM gestion_academica WHERE anio = 2027 AND tipo = 'I'")}",
+        "preparacion-planificacion": f"/docencia/preparacion?semestre={uno("SELECT tipo || '-' || anio FROM gestion_academica WHERE anio = 2027 AND tipo = 'I'")}",
+        "cambios": f"/docencia/oferta/{uno("SELECT id FROM gestion_academica WHERE estado = 'activa' ORDER BY fecha_inicio DESC LIMIT 1")}/cambios",
         "plan-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}",
         "malla-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}/malla",
         "equivalencias-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}/equivalencias",

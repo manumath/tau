@@ -3388,7 +3388,7 @@ borra el dato sin dejar cuándo ni por qué.
 2. (hecha, 13-nov-2026) Planificación como lista de verificación y botón Activar; pendientes en el inicio.
 3. (hecha, 13-nov-2026) Semestre activo: cambios con motivo y fecha, vigencia de docentes, registro de cambios y avisos a los docentes.
 4. (hecha, 13-nov-2026) Concluir, historial de solo lectura, reabrir, CSV histórico y efectos en carga, «Mi docencia» e indicadores.
-5. Pruebas de navegador, manual, guía y este PLAN.
+5. (hecha, 13-nov-2026) Pruebas de navegador, manual, guía y este PLAN.
 
 ### Etapa 1 (hecha): estado, borrado y creación de gestiones
 - **Migración 0070:** `gestion_academica.estado` (`planificacion`, `activa`, `concluida`), `activada_en/por`, `concluida_en/por` y
@@ -3442,3 +3442,18 @@ borra el dato sin dejar cuándo ni por qué.
   periodo en que dictó cada materia y las retiradas. Las materias retiradas no cuentan en las cifras de oferta (auxiliaturas,
   calidad, inscritos).
 - Las fechas de la planificación se muestran legibles (`formato.fecha`).
+
+### Etapa 5 (hecha): pruebas de navegador, manual y documentación
+- **Navegador:** la base de `tests/navegador/preparar.py` trae una gestión activa (id 5, con un docente reasignado) y una concluida
+  (id 6); sus pantallas (lista de gestiones, planificación en los tres estados, oferta y «Cambios del semestre») entran en la
+  prueba de accesibilidad, y tres flujos recorren crear y borrar una gestión, retirar una materia con motivo y concluir y
+  reabrir un semestre. Las fechas de los avisos y de la auditoría se muestran legibles.
+- **Manual de usuario:** el capítulo de Docencia pasa a «Gestiones y semestres», «Planificar y activar un semestre», «Oferta y
+  docentes», «Con el semestre en marcha» y «Concluir el semestre y el historial», con 6 capturas más (ahora 84 páginas y 69
+  capturas), la regla de carga por meses dictados y dos filas nuevas en la matriz de privilegios. Los datos de demostración
+  incluyen I-2027 en planificación y, en el semestre activo, un docente reasignado y una materia retirada.
+- **CLAUDE.md:** regla de negocio de las gestiones.
+- **Pendiente de confirmar con la Dirección de Carrera:** si un docente retirado vuelve al mismo paralelo (hoy no: la fila
+  queda y hay que usar otro paralelo o reabrir), si las materias retiradas deben contar en el cuerpo de materias dictadas de
+  los informes de calidad, y el aviso a docentes por correo cuando se cambia una asignación (hoy siguen su preferencia de
+  avisos).
