@@ -3385,7 +3385,7 @@ borra el dato sin dejar cuándo ni por qué.
 
 ### Etapas (un commit cada una)
 1. (hecha, 13-nov-2026) Migración con el estado, borrado, creación suelta y lista de gestiones con estado y enlace a planificar.
-2. Planificación como lista de verificación y botón Activar; pendientes en el inicio.
+2. (hecha, 13-nov-2026) Planificación como lista de verificación y botón Activar; pendientes en el inicio.
 3. Semestre activo: cambios con motivo y fecha, vigencia de docentes, registro de cambios y avisos a los docentes.
 4. Concluir, historial de solo lectura, reabrir, CSV histórico y efectos en carga, «Mi docencia» e indicadores.
 5. Pruebas de navegador, manual, guía y este PLAN.
@@ -3400,3 +3400,12 @@ borra el dato sin dejar cuándo ni por qué.
 - La lista de gestiones muestra el estado y los enlaces «Planificar» y de borrado. «Preparación del semestre» ya acepta los
   cursos de temporada (sin etapas de contratos ni carga) y su selector incluye todas las gestiones.
 - Aún sin efecto (etapas 2 a 4): activar, los cambios con motivo y la lectura del historial.
+
+### Etapa 2 (hecha): planificación y activación
+- **Acción `decidir_gestion`** (Dirección de Carrera): activar, y luego concluir y reabrir. `app/academico/semestre.py`:
+  `bloqueos` (oferta cargada; titular en cada paralelo), `avisos` (contratos y carga, que no impiden) y `activar`.
+- **Preparación del semestre** es la planificación de la gestión: muestra el estado, el botón «Activar el semestre»
+  (con confirmación; deshabilitado mientras haya bloqueos, que se listan), «Borrar la gestión» (en planificación) y lo
+  que conviene revisar. Quien solo planifica (Coordinación académica) ve que la activa la Dirección de Carrera.
+- **Pendientes del inicio:** una gestión en planificación que empieza en 15 días o menos (o ya empezó) se avisa a la
+  Dirección de Carrera y a la Coordinación, con lo que falta para activarla.

@@ -585,8 +585,13 @@ Carrera en los contratos):
   académica): las cinco etapas para que un semestre arranque, con su avance: gestión creada, oferta
   cargada, contratos renovados, docentes asignados (paralelos con titular) y carga cuadrada (docentes
   sin observaciones en su carga). Cada etapa muestra lo que falta y enlaza a donde se resuelve. Por
-  omisión muestra el próximo semestre; el selector permite revisar los demás. La página no cambia
-  nada: es un tablero.
+  omisión muestra el próximo semestre; el selector permite revisar los demás, también los cursos de
+  temporada (INV y VER), que solo tienen las etapas de gestión, oferta y docentes. Es la **planificación** de
+  la gestión: mientras está *en planificación* se sigue editando la oferta y los docentes con libertad. Cuando
+  la oferta está cargada y cada paralelo tiene titular, la **Dirección de Carrera activa el semestre**
+  («Activar el semestre»); contratos por renovar y carga con observaciones solo se avisan. La página dice
+  qué falta para activar y permite borrar la gestión mientras está en planificación. En el inicio aparece un
+  pendiente cuando una gestión empieza en menos de 15 días (o ya empezó) y sigue sin activar.
 - **Renovar contratos** (botón en «Carga horaria»; también desde el aviso del inicio): contratados,
   interinos e invitados cuyo periodo terminó antes del semestre y aún no tienen uno nuevo. Se abre en
   bloque un periodo con la misma categoría y la misma carga contratada, entre las fechas que indique.

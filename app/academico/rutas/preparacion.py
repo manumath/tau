@@ -1,9 +1,11 @@
 """Preparación del semestre (Dirección de Carrera y Coordinación académica): las etapas para que un
 semestre arranque, con su avance, lo que falta y un enlace a donde se resuelve cada cosa."""
-from fasthtml.common import A, APIRouter, Div, Li, Option, P, Response, Select, Span, Ul
-from monsterui.all import H2, H3, Card, Progress, TextPresets, UkIcon
+from fasthtml.common import A, APIRouter, Div, Li, Option, P, Redirect, Response, Select, Span, Ul
+from fasthtml.toaster import add_toast
+from monsterui.all import H2, H3, Button, ButtonT, Card, Progress, TextPresets, UkIcon
 
-from app.academico import gestiones, preparacion
+from app.academico import gestiones, preparacion, semestre as ciclo
+from app.academico.rutas.oferta import estado_insignia
 from app.academico.componentes import prepara_semestres
 from app.comun import permisos, vinculos
 from app.comun.componentes.etapas import etapas
@@ -56,6 +58,72 @@ def _tarjeta(e, auth):
         cls="space-y-2")
 
 
+def _estado_y_acciones(g, auth):
+    """El estado de la gestión y lo que se puede hacer con él (activar, borrar); explica qué falta para activar."""
+    if not g:
+        return ""
+    partes = [Div(estado_insignia(g), cls="mb-2")]
+    if g["estado"] == "planificacion":
+        falta, avisos = ciclo.bloqueos(g), ciclo.avisos(g)
+        botones = []
+        if permisos.puede(auth, "decidir_gestion"):
+            botones.append(Button(UkIcon("play", height=14, width=14), "Activar el semestre",
+                                  hx_post=f"{BASE}/{g['id']}/activar", hx_swap="none", disabled=bool(falta),
+                                  hx_confirm=f"¿Activar {gestiones.codigo(g)}? A partir de ahora, los cambios en la oferta y "
+                                             "en los docentes piden motivo y fecha de efecto, y quedan registrados.",
+                                  cls=ButtonT.primary))
+        if permisos.puede(auth, "gestionar_oferta"):
+            botones.append(Button(UkIcon("trash-2", height=14, width=14), "Borrar la gestión",
+                                  hx_post=f"{BASE}/{g['id']}/borrar", hx_swap="none",
+                                  hx_confirm=f"¿Borrar la gestión {gestiones.codigo(g)} con toda su oferta y docentes? No se "
+                                             "puede deshacer.", cls=(ButtonT.ghost, "text-destructive")))
+        partes.append(Div(*botones, cls="flex flex-wrap gap-2 mb-2"))
+        if falta:
+            partes.append(Div(P("Para activarla falta:", cls="text-sm font-medium"),
+                              Ul(*[Li(x, cls="text-sm") for x in falta], cls="list-disc pl-5"), cls="mb-2"))
+        if avisos:
+            partes.append(Div(P("Conviene revisar (no impide activarla):", cls="text-sm font-medium"),
+                              Ul(*[Li(x, cls="text-sm") for x in avisos], cls="list-disc pl-5"), cls="mb-2"))
+        if not permisos.puede(auth, "decidir_gestion"):
+            partes.append(P("La activa la Dirección de Carrera.", cls=TextPresets.muted_sm))
+    elif g["estado"] == "activa":
+        partes.append(P(f"Activa desde el {(g['activada_en'] or g['fecha_inicio'])[:10]}: los cambios en la oferta y en los "
+                        "docentes piden motivo y fecha de efecto.", cls=TextPresets.muted_sm))
+    else:
+        partes.append(P("Concluida: es parte del historial.", cls=TextPresets.muted_sm))
+    return Div(*partes, cls="mb-6")
+
+
+@rt(f"{BASE}/{{gid}}/activar")
+def post(auth, sess, gid: int):
+    if not permisos.puede(auth, "decidir_gestion"):
+        return Response("No autorizado", status_code=403)
+    g = gestiones.obtener(gid)
+    if not g:
+        return Response("No encontrado", status_code=404)
+    errores = ciclo.activar(gid, auth["id"])
+    if errores:
+        add_toast(sess, errores[0], "error")
+    else:
+        add_toast(sess, f"{gestiones.codigo(g)} está activa.", "success")
+    return Redirect(f"{BASE}?semestre={gestiones.codigo(g)}")
+
+
+@rt(f"{BASE}/{{gid}}/borrar")
+def post(auth, sess, gid: int):
+    if not permisos.puede(auth, "gestionar_oferta"):
+        return Response("No autorizado", status_code=403)
+    g = gestiones.obtener(gid)
+    if not g:
+        return Response("No encontrado", status_code=404)
+    error = gestiones.eliminar(gid, auth["id"])
+    if error:
+        add_toast(sess, error, "error")
+        return Redirect(f"{BASE}?semestre={gestiones.codigo(g)}")
+    add_toast(sess, f"Gestión {gestiones.codigo(g)} borrada.", "success")
+    return Redirect("/docencia/gestiones")
+
+
 @rt(BASE)
 def get(auth, semestre: str = ""):
     if not puede_ver(auth):
@@ -73,8 +141,10 @@ def get(auth, semestre: str = ""):
         Div(Div(H2(f"Preparación de {est['codigo']}"),
                 P(cuando, cls=TextPresets.muted_sm),
                 P("Lo necesario para que el semestre arranque: gestión, oferta, contratos, docentes y carga. Cada "
-                  "etapa enlaza a donde se resuelve; esta página no cambia nada.", cls=TextPresets.muted_sm)),
+                  "etapa enlaza a donde se resuelve. Cuando está lista, la Dirección de Carrera activa el semestre.",
+                  cls=TextPresets.muted_sm)),
             selector, cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
+        _estado_y_acciones(g, auth),
         Card(Div(Span(f"{est['hechas']} de {est['total']} etapas listas", cls="text-sm font-medium"),
                  Span("El semestre está listo." if est["hechas"] == est["total"] else "", cls="text-sm text-green-700 dark:text-green-400"),
                  cls="flex flex-wrap justify-between gap-2 mb-4"),

@@ -93,3 +93,73 @@ def test_la_preparacion_acepta_las_gestiones_de_temporada(app):
     assert [e["clave"] for e in preparacion.estado(2030, "I")["etapas"]] == ["gestion", "oferta", "contratos", "docentes",
                                                                              "carga"]
     assert [e["clave"] for e in preparacion.estado(2031, "VER")["etapas"]] == ["gestion", "oferta", "docentes"]
+
+
+# --- Etapa 2: activar el semestre ---------------------------------------------------------------------------------------
+
+def test_para_activar_hace_falta_oferta_y_titulares(app):
+    from app.academico import semestre
+    [i, inv, _, _] = gestiones.crear_anio(2031)
+    inv = gestiones.por_codigo("INV-2031")
+    assert semestre.bloqueos(inv) == ["Falta cargar la oferta del semestre."]
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    oid, _ = oferta.agregar(inv["id"], "MAT-111", "A", "", 1)
+    assert semestre.bloqueos(inv) == ["Falta asignar titular a 1 paralelo."]
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    from app.comun import vinculos
+    vinculos.agregar(emmy, "titular", "2020-01-01")
+    assert oferta.asignar(oid, emmy, "titular") == []
+    assert semestre.bloqueos(inv) == []
+    # Contratos y carga solo avisan, y los cursos de temporada no los tienen.
+    assert semestre.avisos(inv) == []
+    assert semestre.activar(i["id"], 1) == ["Falta cargar la oferta del semestre."]
+    assert gestiones.por_codigo("I-2031")["estado"] == "planificacion"
+    assert semestre.activar(inv["id"], 1) == []
+    a = gestiones.por_codigo("INV-2031")
+    assert a["estado"] == "activa" and a["activada_en"] and a["activada_por"] == 1
+    assert semestre.activar(inv["id"], 1) == ["Solo se activa una gestión en planificación."]
+    assert "planificación" in gestiones.eliminar(inv["id"], 1)               # ya no se borra
+    assert get_db().q("SELECT accion FROM auditoria WHERE accion = 'activar_gestion'")
+
+
+def test_pantalla_de_planificacion_con_activar_y_borrar(client, app):
+    from app.comun import vinculos
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    login(client, "inv@test.cl", PASS_TEMP)
+    vinculos.agregar(emmy, "titular", "2020-01-01")
+    permisos.asignar(emmy, "coordinacion_academica", unidades.id_de("CMAT"))     # planifica, no decide
+    gestiones.crear_anio(2031)
+    g = gestiones.por_codigo("INV-2031")
+    r = client.get("/docencia/preparacion?semestre=INV-2031")
+    assert "En planificación" in r.text and "Para activarla falta" in r.text and "La activa la Dirección de Carrera" in r.text
+    assert "Activar el semestre" not in r.text and "Borrar la gestión" in r.text
+    assert client.post(f"/docencia/preparacion/{g['id']}/activar", headers=HX).status_code == 403
+    oid, _ = oferta.agregar(g["id"], "MAT-111", "A", "", 1)
+    oferta.asignar(oid, emmy, "titular")
+    permisos.asignar(emmy, "direccion_carrera", unidades.id_de("CMAT"))
+    r = client.get("/docencia/preparacion?semestre=INV-2031")
+    assert "Activar el semestre" in r.text and "Para activarla falta" not in r.text
+    r = client.post(f"/docencia/preparacion/{g['id']}/activar", headers=HX)
+    assert r.headers["hx-redirect"] == "/docencia/preparacion?semestre=INV-2031"
+    assert gestiones.por_codigo("INV-2031")["estado"] == "activa"
+    r = client.get("/docencia/preparacion?semestre=INV-2031")
+    assert "Activa desde" in r.text and "Activar el semestre" not in r.text and "Borrar la gestión" not in r.text
+    assert client.post(f"/docencia/preparacion/{g['id']}/borrar", headers=HX).headers["hx-redirect"] == \
+        "/docencia/preparacion?semestre=INV-2031"                                # activa: no se borra
+    assert gestiones.por_codigo("INV-2031")
+    ii = gestiones.por_codigo("II-2031")
+    assert client.post(f"/docencia/preparacion/{ii['id']}/borrar", headers=HX).headers["hx-redirect"] == "/docencia/gestiones"
+    assert gestiones.por_codigo("II-2031") is None
+    assert client.post("/docencia/preparacion/99999/activar", headers=HX).status_code == 404
+
+
+def test_el_inicio_avisa_de_una_gestion_sin_activar(client, carrera):
+    from datetime import timedelta
+    hoy = date.today()
+    g, _ = gestiones.crear(hoy.year + 1, "II", 1)
+    get_db().execute("UPDATE gestion_academica SET fecha_inicio = ?, fecha_fin = ? WHERE id = ?",
+                     [(hoy - timedelta(days=3)).isoformat(), (hoy + timedelta(days=100)).isoformat(), g["id"]])
+    r = client.get("/")
+    assert f"II-{hoy.year + 1} empezó el" in r.text and "sigue en planificación" in r.text
+    assert "Para activarla: falta cargar la oferta" in r.text

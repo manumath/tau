@@ -75,6 +75,7 @@ ACCIONES = {
     "elaborar_planes": {"direccion_carrera", "coordinacion_academica"},   # reformas y borradores de planes (PLAN §65)
     "decidir_planes": {"direccion_carrera"},          # poner en vigencia un plan y cerrarlo (PLAN §65)
     "gestionar_oferta": {"direccion_carrera", "coordinacion_academica"},
+    "decidir_gestion": {"direccion_carrera"},         # activar, concluir y reabrir un semestre (PLAN §66)
     "ver_carga": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
     # Lectura
     "ver_todos_los_proyectos": {"direccion_instituto", "comision_calidad"},

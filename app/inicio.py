@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from fasthtml.common import A, APIRouter, Div, Li, P, Span, Ul
 from monsterui.all import H2, H3, Card, TextPresets, UkIcon
 
-from app.academico import carga, gestiones, preparacion
+from app.academico import carga, gestiones, preparacion, semestre as ciclo_semestre
 from app.academico.componentes import tiene_docencia
 from app.calidad import anexo, calidad_datos as calidad
 from app.comun import estudiantes, permisos, vinculos
@@ -98,6 +98,15 @@ def _para_carrera(auth):
             if revisar:
                 items.append(_item(f"{_plural(len(revisar), 'docente')} con la carga de {gestiones.codigo(g)} por revisar",
                                    f"/docencia/carga?gestion={g['id']}", detalle=_nombres(revisar)))
+    hoy = date.today()
+    for pl in get_db().q("""SELECT * FROM gestion_academica WHERE estado = 'planificacion' AND fecha_inicio <= ?
+                            ORDER BY fecha_inicio""", [(hoy + timedelta(days=15)).isoformat()]):
+        empezo = pl["fecha_inicio"] <= hoy.isoformat()
+        falta = ciclo_semestre.bloqueos(pl)
+        items.append(_item(f"{gestiones.codigo(pl)} {'empezó el' if empezo else 'empieza el'} {formato.fecha(pl['fecha_inicio'])} "
+                           "y sigue en planificación", f"/docencia/preparacion?semestre={gestiones.codigo(pl)}",
+                           tono="rojo" if empezo else "info",
+                           detalle=(f"Para activarla: {falta[0].lower()}" if falta else "Está lista para activarse.")))
     prox = preparacion.estado(*preparacion.semestre_siguiente())
     if prox["hechas"] < prox["total"]:
         falta = next(e for e in prox["etapas"] if not e["listo"])
