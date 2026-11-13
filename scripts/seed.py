@@ -418,6 +418,11 @@ def _cargar_docencia() -> bool:
     if gestiones.listar():
         return False
     por = {g["tipo"]: g for g in gestiones.crear_anio(2026)}
+    # Como en una instalación real: las gestiones ya terminadas son historial y la que está en curso, activa (PLAN §66).
+    from app.comun.db import get_db as _db
+    _db().execute("""UPDATE gestion_academica SET estado = CASE WHEN fecha_fin < ? THEN 'concluida'
+                     WHEN fecha_inicio <= ? THEN 'activa' ELSE 'planificacion' END WHERE anio = 2026""",
+                  [date.today().isoformat(), date.today().isoformat()])
     emmy = usuarios.por_email("emmy.noether@instituto.test")
     alan = usuarios.por_email("alan.turing@instituto.test")
     for tipo in ("I", "II"):

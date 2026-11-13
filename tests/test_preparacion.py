@@ -17,7 +17,8 @@ def test_semestre_siguiente(app):
     gestiones.crear_anio(2027)
     gestiones.actualizar_fechas(gestiones.por_codigo("I-2027")["id"], "2027-03-01", "2027-07-10")
     assert preparacion.semestre_siguiente(date(2027, 2, 20)) == (2027, "I")       # aún no empieza (marzo)
-    assert preparacion.semestres_elegibles(date(2027, 2, 20)) == [(2027, "II"), (2027, "I")]
+    # El selector incluye también los cursos de temporada (PLAN §66).
+    assert preparacion.semestres_elegibles(date(2027, 2, 20)) == [(2027, "VER"), (2027, "II"), (2027, "INV"), (2027, "I")]
 
 
 def test_sin_gestion_solo_se_puede_crear(app):

@@ -544,6 +544,13 @@ las gestiones del año» propone fechas que se ajustan al calendario aprobado y 
 semestres (I y II) con todas las troncales de las licenciaturas (obligatorias y proyecto de grado de
 la Carrera), en el paralelo A y sin docente.
 
+Cada gestión tiene un **estado**: *en planificación* (se arma su oferta y se asignan los docentes; se edita libremente y
+**se puede borrar** con su oferta, salvo que ya tenga convocatorias a auxiliaturas), *activa* (el semestre está en marcha) y
+*concluida* (historial, de solo lectura, con sus fechas fijas). Una gestión nueva nace en planificación. «Crear las
+gestiones del año» crea las cuatro; **Crear una sola gestión** crea una suelta, y marcando «Ya terminó» se crea
+directamente como concluida, para cargar el historial de un semestre pasado. La columna de acciones tiene **Planificar**
+(abre la planificación de esa gestión, también para los cursos de temporada) y, en planificación, el borrado.
+
 **Oferta y docentes** (pestaña «Oferta y docentes»): para cada gestión, las asignaturas de la Carrera
 que se dictan, por paralelo, con sus inscritos y docentes (titular o auxiliar). En los semestres,
 cada materia de un titular cuenta 32 h/mes de carga; los auxiliares no suman carga. Los cursos de

@@ -5,9 +5,14 @@ las fechas. El curso de verano se cuenta con la gestión anterior: VER-2026 se d
 """
 from datetime import date
 
-from app.comun.db import get_db
+from app.comun.db import AHORA, auditar, get_db, transaccion
 
 TIPOS = {"I": "Primer semestre", "INV": "Curso de invierno", "II": "Segundo semestre", "VER": "Curso de verano"}
+# Ciclo de vida (PLAN §66): planificación (se edita libremente y se puede borrar) → activa (el semestre está en marcha:
+# los cambios piden motivo y fecha) → concluida (historial, solo lectura).
+ESTADOS = {"planificacion": "En planificación", "activa": "Activa", "concluida": "Concluida"}
+TONOS = {"planificacion": "azul", "activa": "verde", "concluida": "gris"}
+ICONOS = {"planificacion": "pencil", "activa": "play", "concluida": "archive"}
 
 
 def fechas_por_omision(anio: int, tipo: str) -> tuple[str, str]:
@@ -62,7 +67,57 @@ def crear_anio_con_nuevas(anio: int) -> list[tuple[dict, bool]]:
             for g in get_db().q("SELECT * FROM gestion_academica WHERE anio = ? ORDER BY fecha_inicio", [anio])]
 
 
+def crear(anio: int, tipo: str, uid: int, concluida: bool = False) -> tuple[dict | None, str | None]:
+    """Crea una gestión suelta, con las fechas por omisión. `concluida`: para cargar el historial de un semestre que ya
+    terminó (se crea directamente como concluida). → (gestión, error)."""
+    if tipo not in TIPOS:
+        return None, "Elija el tipo de gestión."
+    if not 2000 <= anio <= 2100:
+        return None, "Indique un año entre 2000 y 2100."
+    if get_db().q("SELECT 1 FROM gestion_academica WHERE anio = ? AND tipo = ?", [anio, tipo]):
+        return None, f"Ya existe la gestión {tipo}-{anio}."
+    inicio, fin = fechas_por_omision(anio, tipo)
+    if concluida and fin >= date.today().isoformat():
+        return None, f"{tipo}-{anio} todavía no termina (el {fin}): no puede crearse como concluida."
+    with transaccion():
+        gid = get_db().t.gestion_academica.insert(anio=anio, tipo=tipo, fecha_inicio=inicio, fecha_fin=fin)["id"]
+        if concluida:
+            get_db().execute(f"""UPDATE gestion_academica SET estado = 'concluida', activada_en = fecha_inicio,
+                                 concluida_en = {AHORA}, concluida_por = ?,
+                                 motivo_conclusion = 'Gestión pasada, creada para cargar su historial.' WHERE id = ?""",
+                             [uid, gid])
+        auditar(uid, "crear_gestion", "gestion_academica", gid, f"{tipo}-{anio}" + (" (historial)" if concluida else ""))
+    return obtener(gid), None
+
+
+def en_uso(gid: int) -> list[str]:
+    """Qué otras cosas dependen de la gestión (impiden borrarla)."""
+    n = get_db().q("SELECT COUNT(*) n FROM convocatoria_auxiliatura WHERE gestion_id = ?", [gid])[0]["n"]
+    return [f"{n} convocatoria{'s' if n != 1 else ''} a auxiliaturas"] if n else []
+
+
+def eliminar(gid: int, uid: int) -> str | None:
+    """Borra una gestión en planificación con su oferta y docentes. → error o None."""
+    g = obtener(gid)
+    if not g:
+        return "La gestión no existe."
+    if g["estado"] != "planificacion":
+        return "Solo se borra una gestión en planificación: una gestión activa o concluida es parte del historial."
+    uso = en_uso(gid)
+    if uso:
+        return f"No se puede borrar {codigo(g)}: tiene {' y '.join(uso)}."
+    paralelos = get_db().q("SELECT COUNT(*) n FROM oferta WHERE gestion_id = ?", [gid])[0]["n"]
+    with transaccion():
+        get_db().execute("DELETE FROM oferta WHERE gestion_id = ?", [gid])
+        get_db().execute("DELETE FROM gestion_academica WHERE id = ?", [gid])
+        auditar(uid, "eliminar_gestion", "gestion_academica", gid, f"{codigo(g)} (en planificación, {paralelos} paralelo(s))")
+    return None
+
+
 def actualizar_fechas(gid: int, inicio: str, fin: str) -> str | None:
+    g = obtener(gid)
+    if g and g["estado"] == "concluida":
+        return "Una gestión concluida es parte del historial: sus fechas no cambian."
     try:
         i, f = date.fromisoformat(inicio), date.fromisoformat(fin)
     except ValueError:

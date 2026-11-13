@@ -24,9 +24,10 @@ def semestre_siguiente(hoy: date | None = None) -> tuple[int, str]:
 
 
 def semestres_elegibles(hoy: date | None = None) -> list[tuple[int, str]]:
-    """El próximo semestre y los ya creados (para el selector), del más reciente al más antiguo."""
-    creados = {(g["anio"], g["tipo"]) for g in gestiones.listar() if g["tipo"] in carga.SEMESTRES}
-    return sorted(creados | {semestre_siguiente(hoy)}, key=lambda x: (x[0], x[1] == "II"), reverse=True)
+    """El próximo semestre y las gestiones ya creadas, también las de temporada (para el selector), de la más reciente a la
+    más antigua."""
+    creados = {(g["anio"], g["tipo"]) for g in gestiones.listar()}
+    return sorted(creados | {semestre_siguiente(hoy)}, key=lambda x: (gestiones.fechas_por_omision(*x)[0]), reverse=True)
 
 
 def _sin_docente(gid: int) -> list[dict]:
@@ -59,16 +60,18 @@ def estado(anio: int, tipo: str) -> dict:
     paralelos = oferta.listar(g["id"]) if g else []
     if g:
         ofertadas = {p["asignatura_id"] for p in paralelos}
-        troncales = [a for a in oferta.troncales(anio) if a["id"] not in ofertadas]
+        troncales = [] if tipo in oferta.TEMPORADA else [a for a in oferta.troncales(anio) if a["id"] not in ofertadas]
         etapa("oferta", "Oferta cargada", bool(paralelos),
               f"{len(paralelos)} paralelos" + (f"; {len(troncales)} troncales no ofertadas" if troncales else "")
               if paralelos else "Sin materias ofertadas", f"/docencia/oferta?gestion={g['id']}",
               falta="cargar la oferta", pendientes=[f"{a['sigla']} {a['nombre']} (troncal no ofertada)" for a in troncales])
-        renovar = carga.candidatos_renovacion(g)
-        etapa("contratos", "Contratos renovados", not renovar,
-              f"{len(renovar)} por renovar" if renovar else "Ninguno pendiente",
-              f"/docencia/renovaciones?gestion={g['id']}",
-              falta=f"renovar {n(len(renovar), 'contrato', 'contratos')}", pendientes=[f"{v['apellidos']}, {v['nombres']} (terminó el {v['fecha_fin']})" for v in renovar])
+        temporada = tipo in oferta.TEMPORADA   # los cursos de temporada no llevan contratos ni carga (PLAN §66)
+        if not temporada:
+            renovar = carga.candidatos_renovacion(g)
+            etapa("contratos", "Contratos renovados", not renovar,
+                  f"{len(renovar)} por renovar" if renovar else "Ninguno pendiente",
+                  f"/docencia/renovaciones?gestion={g['id']}",
+                  falta=f"renovar {n(len(renovar), 'contrato', 'contratos')}", pendientes=[f"{v['apellidos']}, {v['nombres']} (terminó el {v['fecha_fin']})" for v in renovar])
         sin = _sin_docente(g["id"])
         etapa("docentes", "Docentes asignados", bool(paralelos) and not sin,
               f"{len(paralelos) - len(sin)} de {len(paralelos)} paralelos con titular" if paralelos else "Sin oferta",
@@ -76,18 +79,21 @@ def estado(anio: int, tipo: str) -> dict:
               falta=f"asignar titular a {n(len(sin), 'paralelo', 'paralelos')}",
               pendientes=[f"{x['sigla']} {x['nombre']}, paralelo {x['paralelo']}" for x in sin],
               bloqueada=not paralelos)
-        personas = [p for p in carga.personas(g) if p["vinculo"] or p["materias"]]
-        revisar = [p for p in personas if p["avisos"]]
-        etapa("carga", "Carga cuadrada", bool(personas) and not revisar,
-              f"{len(personas) - len(revisar)} de {len(personas)} docentes sin observaciones" if personas
-              else "Nadie con vínculo ni materias", f"/docencia/carga?gestion={g['id']}",
-              hechos=len(personas) - len(revisar), total=len(personas),
-              falta=f"revisar la carga de {n(len(revisar), 'docente', 'docentes')}" if personas else "asignar docentes",
-              pendientes=[f"{p['apellidos']}, {p['nombres']}: {' '.join(p['avisos'])}" for p in revisar],
-              bloqueada=not paralelos)
+        if not temporada:
+            personas = [p for p in carga.personas(g) if p["vinculo"] or p["materias"]]
+            revisar = [p for p in personas if p["avisos"]]
+            etapa("carga", "Carga cuadrada", bool(personas) and not revisar,
+                  f"{len(personas) - len(revisar)} de {len(personas)} docentes sin observaciones" if personas
+                  else "Nadie con vínculo ni materias", f"/docencia/carga?gestion={g['id']}",
+                  hechos=len(personas) - len(revisar), total=len(personas),
+                  falta=f"revisar la carga de {n(len(revisar), 'docente', 'docentes')}" if personas else "asignar docentes",
+                  pendientes=[f"{p['apellidos']}, {p['nombres']}: {' '.join(p['avisos'])}" for p in revisar],
+                  bloqueada=not paralelos)
     else:
         for clave, titulo in (("oferta", "Oferta cargada"), ("contratos", "Contratos renovados"),
                               ("docentes", "Docentes asignados"), ("carga", "Carga cuadrada")):
+            if tipo in oferta.TEMPORADA and clave in ("contratos", "carga"):
+                continue
             etapa(clave, titulo, False, "Primero, la gestión", None, bloqueada=True)
 
     # Estado para el indicador: la primera etapa sin terminar que se puede trabajar es la actual.

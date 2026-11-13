@@ -347,27 +347,56 @@ def delete(auth, did: int):
 
 # --- Gestiones ---------------------------------------------------------------------------------------------
 
+def estado_insignia(g):
+    return insignia(gestiones.ESTADOS[g["estado"]], gestiones.TONOS[g["estado"]], icono=gestiones.ICONOS[g["estado"]])
+
+
 def seccion_gestiones(auth, errores=()):
     puede = _puede(auth)
     filas = []
     for g in gestiones.listar():
+        editable = puede and g["estado"] != "concluida"
         fechas = fh.Form(Input(type="date", name="inicio", value=g["fecha_inicio"], cls="uk-input h-8 w-40",
                                aria_label="Inicio"),
                          Input(type="date", name="fin", value=g["fecha_fin"], cls="uk-input h-8 w-40", aria_label="Término"),
                          Button("Guardar", type="submit", cls=(ButtonT.ghost, ButtonT.sm)),
                          hx_put=f"/docencia/gestiones/{g['id']}", hx_target="#gestiones", hx_swap="outerHTML",
-                         cls="flex flex-wrap gap-2") if puede else Span(f"{g['fecha_inicio']} a {g['fecha_fin']}",
-                                                                        cls="text-sm")
+                         cls="flex flex-wrap gap-2") if editable else Span(formato.periodo(g["fecha_inicio"], g["fecha_fin"]),
+                                                                           cls="text-sm")
+        planificar = A(UkIcon("clipboard-check", height=14, width=14),
+                       "Planificar" if g["estado"] == "planificacion" else "Ver la planificación",
+                       href=f"/docencia/preparacion?semestre={gestiones.codigo(g)}",
+                       cls="inline-flex items-center gap-1 text-sm text-primary hover:underline whitespace-nowrap")
+        borrar = Button(UkIcon("trash-2", height=14, width=14), hx_delete=f"/docencia/gestiones/{g['id']}",
+                        hx_confirm=f"¿Borrar la gestión {gestiones.codigo(g)} con toda su oferta y docentes? No se puede "
+                                   "deshacer.", hx_target="#gestiones", hx_swap="outerHTML",
+                        cls=(ButtonT.ghost, ButtonT.xs, "text-destructive"),
+                        aria_label=f"Borrar la gestión {gestiones.codigo(g)}") \
+            if puede and g["estado"] == "planificacion" else ""
         filas.append(fh.Tr(fh.Td(A(gestiones.codigo(g), href=f"{BASE}?gestion={g['id']}",
                                    cls="font-mono hover:underline")),
-                           fh.Td(gestiones.nombre(g), cls="text-sm"), fh.Td(fechas)))
-    crear = fh.Form(Input(name="anio", placeholder="Año", cls="uk-input w-28", inputmode="numeric", aria_label="Año"),
-                    Button(UkIcon("plus", height=14, width=14), "Crear las gestiones del año", type="submit",
-                           cls=ButtonT.primary),
-                    hx_post="/docencia/gestiones", hx_target="#gestiones", hx_swap="outerHTML",
-                    cls="flex gap-2 mb-4") if puede else ""
+                           fh.Td(gestiones.nombre(g), cls="text-sm"), fh.Td(estado_insignia(g)), fh.Td(fechas),
+                           fh.Td(planificar, borrar, cls="flex items-center gap-2")))
+    crear = Div(
+        fh.Form(Input(name="anio", placeholder="Año", cls="uk-input w-28", inputmode="numeric", aria_label="Año"),
+                Button(UkIcon("plus", height=14, width=14), "Crear las gestiones del año", type="submit",
+                       cls=ButtonT.primary),
+                hx_post="/docencia/gestiones", hx_target="#gestiones", hx_swap="outerHTML", cls="flex gap-2"),
+        fh.Details(fh.Summary("Crear una sola gestión", cls="text-sm cursor-pointer text-primary"),
+                   fh.Form(Input(name="anio", placeholder="Año", cls="uk-input w-28", inputmode="numeric",
+                                 aria_label="Año de la gestión"),
+                           Select(*[Option(f"{t} · {n}", value=t) for t, n in gestiones.TIPOS.items()], name="tipo",
+                                  aria_label="Tipo de gestión", cls="uk-select w-56"),
+                           fh.Label(Input(type="checkbox", name="concluida", value="1"),
+                                    Span("Ya terminó: crearla como concluida, para cargar su historial", cls="text-sm"),
+                                    cls="flex items-center gap-2"),
+                           Button("Crear", type="submit", cls=ButtonT.default),
+                           hx_post="/docencia/gestiones/una", hx_target="#gestiones", hx_swap="outerHTML",
+                           cls="flex flex-wrap items-center gap-3 mt-2"), cls="mt-3"),
+        cls="mb-4") if puede else ""
     return Div(mensaje_error(*errores), crear,
-               Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Código"), fh.Th("Gestión"), fh.Th("Fechas"))), fh.Tbody(*filas),
+               Div(fh.Table(fh.Thead(fh.Tr(fh.Th("Código"), fh.Th("Gestión"), fh.Th("Estado"), fh.Th("Fechas"),
+                                           fh.Th(Span("Acciones", cls="sr-only")))), fh.Tbody(*filas),
                             cls="uk-table uk-table-divider uk-table-small"), cls="overflow-x-auto")
                if filas else P("Sin gestiones registradas.", cls=TextPresets.muted_sm),
                id="gestiones")
@@ -377,9 +406,10 @@ def seccion_gestiones(auth, errores=()):
 def get(auth):
     return pagina("Gestiones académicas", H2("Gestiones académicas"),
                   P("Semestres (I, II) y cursos de temporada (INV en julio; VER en enero del año siguiente, que se "
-                    "cuenta con la gestión anterior). Las fechas propuestas se ajustan al calendario aprobado. Al "
-                    "crear las gestiones, los semestres se ofertan con las troncales de las licenciaturas "
-                    "(paralelo A); las electivas y los docentes se agregan en «Oferta y docentes».",
+                    "cuenta con la gestión anterior). Una gestión nace en planificación: se arma su oferta y se asignan "
+                    "los docentes (en «Planificar») hasta que la Dirección de Carrera la active; mientras está en "
+                    "planificación se puede borrar. Las fechas propuestas se ajustan al calendario aprobado. Al crear "
+                    "las gestiones, los semestres se ofertan con las troncales de las licenciaturas (paralelo A).",
                     cls=(TextPresets.muted_sm, "mb-6")),
                   seccion_gestiones(auth), usuario=auth, seccion="docencia")
 
@@ -398,6 +428,36 @@ def post(auth, sess, anio: str = ""):
         add_toast(sess, f"Gestiones {anio} creadas; los semestres se ofertaron con las troncales de las "
                         "licenciaturas. Agregue las electivas y asigne los docentes.", "success")
     return seccion_gestiones(auth)
+
+
+@rt("/docencia/gestiones/una")
+def post(auth, sess, anio: str = "", tipo: str = "", concluida: str = ""):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    if not anio.isdigit():
+        return seccion_gestiones(auth, ["Indique el año de la gestión."])
+    g, error = gestiones.crear(int(anio), tipo, auth["id"], concluida=bool(concluida))
+    if error:
+        return seccion_gestiones(auth, [error])
+    n = 0
+    if g["estado"] == "planificacion" and g["tipo"] not in oferta.TEMPORADA:
+        n = oferta.ofertar_troncales(g, auth["id"])
+    add_toast(sess, f"Gestión {gestiones.codigo(g)} creada" + (" como concluida (historial)." if concluida else
+              (f" con {n} troncales ofertadas." if n else ".")), "success")
+    return seccion_gestiones(auth)
+
+
+@rt("/docencia/gestiones/{gid}")
+def delete(auth, sess, gid: int):
+    if not _puede(auth):
+        return Response("No autorizado", status_code=403)
+    g, error = _gestion_o_404(gid)
+    if error:
+        return error
+    e = gestiones.eliminar(gid, auth["id"])
+    if not e:
+        add_toast(sess, f"Gestión {gestiones.codigo(g)} borrada.", "success")
+    return seccion_gestiones(auth, [e] if e else [])
 
 
 @rt("/docencia/gestiones/{gid}")

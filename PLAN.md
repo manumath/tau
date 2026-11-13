@@ -3334,3 +3334,69 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 - **Pendiente de confirmar con la Dirección de Carrera:** editar un plan vigente (hoy no se puede; solo erratas con auditoría
   sería la alternativa), reordenar asignaturas dentro de un semestre, cambiar el nombre de una asignatura del catálogo,
   la mención en la ficha del estudiante (`estudiante.mencion_id` y columna `mencion` en la carga de cohortes) 
+
+## 66. Ciclo de vida de las gestiones y planificación del semestre (propuesta, 13-nov-2026)
+
+Pedido del usuario: una gestión no se puede borrar una vez creada y no se vincula con la «Preparación del semestre»
+(§24, `app/academico/preparacion.py`, hoy un tablero que solo lee). Se quiere: planificar y seguir editando hasta
+**activar** el semestre; con el semestre activo, editar **con auditoría** tanto las materias (quitar o agregar: un semestre
+se cierra a medias por varias causas) como los docentes (reasignación, renuncia, fallecimiento…); y que un semestre (regular
+o de temporada) **pase a historial solo cuando concluye**.
+
+### Estado actual
+`gestion_academica` solo guarda año, tipo y fechas; «Crear las gestiones del año» crea las cuatro y no hay forma de borrar
+una. La referencian `oferta`, `carga_semestral` y `convocatoria_auxiliatura`. Quitar una materia o un docente de la oferta
+borra el dato sin dejar cuándo ni por qué.
+
+### Decisiones del 13-nov-2026
+- **Estados de una gestión:** *planificación* → *activa* → *concluida* (historial). Cada gestión (I, II, INV, VER) tiene su ciclo.
+- **Planificación:** se edita todo libremente y **se puede borrar** (con su oferta y docentes), salvo que ya la use una
+  carga semestral o una convocatoria: entonces se explica y no se borra. «Preparación del semestre» pasa a ser la lista de
+  verificación de la gestión y de ella sale el botón **Activar**: bloquean oferta cargada y titular en todos los paralelos;
+  avisan contratos por renovar y carga con observaciones.
+- **Activa:** los cambios piden **motivo y fecha de efecto** y quedan en un registro. No se borra nada: una materia retirada
+  queda marcada con su fecha y motivo; un docente reasignado conserva su fila con fecha de inicio y de fin y el nuevo entra
+  desde la fecha de efecto. Motivos: renuncia, fallecimiento, licencia o baja, reasignación, falta de inscritos, error de
+  planificación, otro. Se avisa al docente que entra o sale.
+- **Carga por meses dictados:** cada titular cuenta la materia solo por los meses en que la tuvo (32 h/mes × meses),
+  según la fecha de efecto.
+- **Permisos:** activar, concluir y reabrir, solo la Dirección de Carrera (`decidir_gestion`, nueva); los cambios con motivo
+  durante el semestre, la Dirección de Carrera y la Coordinación académica (`gestionar_oferta`, como hoy).
+- **Concluir:** manual con aviso. Al pasar la fecha de término aparece el pendiente «Concluir I-2026»; antes de la fecha
+  solo se concluye con motivo (cierre anticipado). Una gestión concluida es solo lectura; la Dirección puede reabrirla con
+  motivo. También aparece un pendiente al acercarse el inicio de una gestión sin activar.
+- **Historial por CSV:** se permite crear una gestión de un año pasado directamente como concluida; la carga por CSV
+  reemplaza su oferta con vista previa y auditoría. En una gestión activa no se importa.
+- **Creación:** además de «Crear las gestiones del año», se crea una gestión suelta (año y tipo).
+
+### Diseño
+- **Datos:** `gestion_academica.estado`, `activada_en/por`, `concluida_en/por`, `motivo_conclusion`. `oferta`: `retirada_en`
+  y `motivo_retiro` (retiro lógico) y `agregada_en` (si entró con el semestre activo). `oferta_docente`: `desde` y `hasta`
+  (vacíos = todo el semestre). `gestion_cambio`: el registro (gestión, fecha de efecto, tipo, materia y paralelo, docente
+  anterior y nuevo, motivo, detalle, quién y cuándo). Las gestiones existentes se clasifican solas: terminadas →
+  concluidas, en curso → activas, futuras → planificación.
+- **Pantallas:** «Gestiones» muestra estado, enlace «Planificar», borrar (solo en planificación) y crear una suelta;
+  «Planificación del semestre» (la página de preparación) muestra el estado y los botones Activar, Concluir, Reabrir y
+  Eliminar según corresponda; «Oferta y docentes» muestra el estado: libre en planificación, con un cuadro de motivo y
+  fecha en activa, de solo lectura en el historial, que se separa del resto en el selector. Una pestaña «Cambios del
+  semestre» lista el registro.
+- **Efectos:** carga horaria, «Mi docencia», indicadores y calidad cuentan por vigencia (meses dictados) y distinguen lo
+  planificado de lo activo y lo concluido; una materia retirada no cuenta desde su fecha de retiro.
+
+### Etapas (un commit cada una)
+1. (hecha, 13-nov-2026) Migración con el estado, borrado, creación suelta y lista de gestiones con estado y enlace a planificar.
+2. Planificación como lista de verificación y botón Activar; pendientes en el inicio.
+3. Semestre activo: cambios con motivo y fecha, vigencia de docentes, registro de cambios y avisos a los docentes.
+4. Concluir, historial de solo lectura, reabrir, CSV histórico y efectos en carga, «Mi docencia» e indicadores.
+5. Pruebas de navegador, manual, guía y este PLAN.
+
+### Etapa 1 (hecha): estado, borrado y creación de gestiones
+- **Migración 0070:** `gestion_academica.estado` (`planificacion`, `activa`, `concluida`), `activada_en/por`, `concluida_en/por` y
+  `motivo_conclusion`. Las gestiones existentes se clasifican por sus fechas (terminadas → concluidas, en curso → activas,
+  futuras → planificación). El seed hace lo mismo con las de 2026.
+- **Borrado** (`gestiones.eliminar`): solo en planificación; borra la oferta y los docentes; no se borra si hay
+  convocatorias a auxiliaturas. **Creación suelta** (`gestiones.crear`): año y tipo, y «ya terminó» la crea concluida (historial).
+  Una gestión concluida no cambia de fechas.
+- La lista de gestiones muestra el estado y los enlaces «Planificar» y de borrado. «Preparación del semestre» ya acepta los
+  cursos de temporada (sin etapas de contratos ni carga) y su selector incluye todas las gestiones.
+- Aún sin efecto (etapas 2 a 4): activar, los cambios con motivo y la lectura del historial.
