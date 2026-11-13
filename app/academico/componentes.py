@@ -18,6 +18,11 @@ def es_docente(auth: dict | None) -> bool:
     return docente.es_docente(auth)
 
 
+def ve_evaluacion(auth: dict | None) -> bool:
+    """Docentes (ven su instrumento y resultados) y la Dirección de Carrera (la administra)."""
+    return es_docente(auth) or bool(auth) and permisos.puede(auth, "gestionar_evaluacion_docente")
+
+
 def prepara_semestres(auth: dict | None) -> bool:
     """Dirección de Carrera y Coordinación académica (preparación del semestre)."""
     return bool(auth) and (permisos.puede(auth, "gestionar_oferta")
@@ -29,6 +34,7 @@ def prepara_semestres(auth: dict | None) -> bool:
 PESTANAS = (("mia", "Mi docencia", "/docencia/mia", tiene_docencia),
             ("pendientes", "Mis pendientes", "/docencia/pendientes", es_docente),
             ("calendario", "Mi calendario", "/docencia/calendario", es_docente),
+            ("evaluacion", "Evaluación docente", "/docencia/evaluacion", ve_evaluacion),
             ("listas", "Listas de cursos", "/docencia/listas", es_docente),
             ("programas", "Mis programas", "/docencia/programas", es_docente),
             ("preferencias", "Mis preferencias", "/docencia/preferencias", es_docente),

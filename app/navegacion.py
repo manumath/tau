@@ -13,9 +13,9 @@ from app.comun import permisos
 from app.comun.db import get_db
 from app.servicios import oportunidades, recursos, temas
 
-DOCENCIA = ("mia", "pendientes", "calendario", "listas", "programas", "preferencias", "preparacion", "planes", "oferta", "preferencias_todas", "carga", "gestiones")
+DOCENCIA = ("mia", "pendientes", "calendario", "listas", "evaluacion", "programas", "preferencias", "preparacion", "planes", "oferta", "preferencias_todas", "carga", "gestiones")
 ESTUDIANTES = ("cohortes", "encuestas", "tutoria", "egresados", "empleadores")
-ICONOS = {"mia": "presentation", "pendientes": "list-checks", "calendario": "calendar-days", "listas": "users", "programas": "notebook-text", "preferencias": "list-filter", "preferencias_todas": "users-round", "preparacion": "calendar-check", "planes": "book-marked", "oferta": "layout-list",
+ICONOS = {"mia": "presentation", "pendientes": "list-checks", "calendario": "calendar-days", "listas": "users", "evaluacion": "clipboard-check", "programas": "notebook-text", "preferencias": "list-filter", "preferencias_todas": "users-round", "preparacion": "calendar-check", "planes": "book-marked", "oferta": "layout-list",
           "carga": "clock", "gestiones": "calendar-range", "cohortes": "users-round", "encuestas": "clipboard-list",
           "tutoria": "message-circle", "egresados": "graduation-cap",
           "empleadores": "building-2"}
@@ -63,6 +63,7 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                                 _item("orientacion", "Orientación", "/estudiante/orientacion", "compass"),
                                 _item("buzon", "Buzón", "/estudiante/buzon", "mail")]),
                 ("Servicios", [_item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
+                               _item("evaluacion", "Evaluación docente", "/estudiante/evaluacion", "clipboard-check"),
                                _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
                                _item("oportunidades", "Oportunidades", "/estudiante/oportunidades", "briefcase"),
                                _item("temas", "Temas de grado", "/estudiante/temas", "lightbulb"),

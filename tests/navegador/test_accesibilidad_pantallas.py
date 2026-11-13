@@ -67,7 +67,7 @@ REVISAR = r"""
 
 PANTALLAS = {
     "investigadora": ["/", "/productos", "/actividades", "/proyectos", "/perfil", "/informes",
-                      "/docencia", "/docencia/pendientes", "/docencia/calendario", "/docencia/preferencias", "/docencia/programas", "/docencia/listas", "/avisos", "/buscar?q=noether"],
+                      "/docencia", "/docencia/pendientes", "/docencia/calendario", "/docencia/preferencias", "/docencia/programas", "/docencia/listas", "/docencia/evaluacion", "/avisos", "/buscar?q=noether"],
     "direccion": ["/", "/admin/usuarios", "/admin/propuestas", "/docencia/planes", "/docencia/planes?estado=elaboracion",
                   "/docencia/planes/reforma/nueva", "/docencia/planes/reforma/2", "/docencia/planes/5",
                   "/docencia/planes/5/malla", "/docencia/planes/5/equivalencias", "/docencia/oferta",
@@ -75,7 +75,7 @@ PANTALLAS = {
                   "/docencia/preparacion", f"/docencia/preparacion?semestre=I-{date.today().year + 5}",
                   f"/docencia/preparacion?semestre=II-{date.today().year - 4}", "/docencia/oferta?gestion=5",
                   "/docencia/oferta?gestion=6", "/docencia/oferta/5/cambios",
-                  "/docencia/carga", "/docencia/preferencias/todas", "/docencia/programas/cobertura", "/docencia/listas/cargar", "/docencia/gestiones", "/docencia/preparacion", "/docencia/cohortes",
+                  "/docencia/carga", "/docencia/preferencias/todas", "/docencia/programas/cobertura", "/docencia/listas/cargar", "/docencia/evaluacion/gestion", "/docencia/gestiones", "/docencia/preparacion", "/docencia/cohortes",
                   "/docencia/encuestas", "/docencia/tutoria", "/docencia/egresados", "/estudiantes",
                   "/servicios/comunicados", "/servicios/auxiliaturas", "/servicios/grado", "/informes",
                   "/calidad/marco", "/calidad/indicadores", "/calidad/evidencias", "/calidad/autoevaluaciones",
@@ -110,7 +110,7 @@ def test_pantallas_del_estudiante_sin_problemas_de_accesibilidad(estudiante):
                      # Servicios del estudiante (PLAN §67).
                      "/estudiante/plan", "/estudiante/calendario", "/estudiante/tutoria", "/estudiante/apoyo",
                      "/estudiante/biblioteca", "/estudiante/orientacion", "/estudiante/buzon", "/estudiante/oportunidades",
-                     "/estudiante/temas", "/estudiante/encuestas"]:
+                     "/estudiante/temas", "/estudiante/encuestas", "/estudiante/evaluacion"]:
             page.goto(ruta)
             page.wait_for_load_state("networkidle")
             if (p := page.evaluate(REVISAR)):

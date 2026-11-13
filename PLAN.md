@@ -3600,7 +3600,7 @@ docente). TAU sigue sin guardar notas ni asistencia.
 2. (hecha, 13-nov-2026) **Preferencias para la oferta:** qué materias quiere o no puede dictar y en qué turnos no tiene disponibilidad, visibles para la Coordinación al armar la oferta.
 3. (hecha, 13-nov-2026) **Programa analítico (syllabus)** por materia y gestión, con versión; el estudiante lo ve en su plan.
 4. (hecha, 13-nov-2026) **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
-5. **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
+5. (hecha, 13-nov-2026) **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
 6. **Mi historial docente** (materias, tesis tuteladas y juradas, proyectos, productos) y **certificados** de tribunal y tutoría.
 7. Pruebas de navegador, manual y documentación.
 
@@ -3645,4 +3645,23 @@ docente). TAU sigue sin guardar notas ni asistencia.
   `gestionar_oferta`) y solo ve cuántos hay por paralelo. Sin exportación: la lista no se descarga.
 - **Decisiones mías por confirmar:** el auxiliar también ve la lista; el contrato de la API es una propuesta que habrá que ajustar a lo
   que defina Kardex (nombres de campos y autenticación); la lista no cambia el número de inscritos de la oferta.
+
+### Etapa 5 (hecha): evaluación docente con transparencia
+- **Migración 0084:** `evaluacion_docente` (una por gestión: borrador → anunciada → abierta → cerrada, con el instrumento congelado en
+  `criterios`), `evaluacion_participacion` (sin hora y **sin rowid**, para que no se cruce con el orden de las respuestas),
+  `evaluacion_respuesta` y `evaluacion_valor` (sin autor ni hora), `evaluacion_contexto` y `evaluacion_consulta` (la bitácora).
+- `app/academico/evaluacion.py`. **Políticas de transparencia aplicadas:** instrumento y criterios públicos al **anunciar**, con
+  `ANTICIPACION_DIAS` = 7 antes de abrir; anonimato real (como las encuestas, §49) y mínimo `MIN_RESPUESTAS` = 5 (igual a
+  `encuestas.MIN_ANONIMO`, lo vigila una prueba); el desglose por paralelo solo si todos llegan al mínimo (si no, restar revelaría el que
+  no llega); sin respuestas abiertas; el docente ve sus resultados, agrega su **contexto** (derecho a réplica) y ve **quién los consultó**;
+  la Dirección ve la participación en lista pero los resultados **por docente**, y cada consulta va a la bitácora y a la auditoría;
+  el **retorno** a los estudiantes (qué hará la Carrera) se escribe y publica con la evaluación cerrada.
+- Responden los inscritos en el paralelo según la **lista de curso** (etapa 4) por su RU (`listas.ofertas_de_ru`); sin lista cargada ni API, nadie
+  puede evaluar. `/estudiante/evaluacion*` no lleva el usuario en el registro de peticiones (`registros.RUTAS_ANONIMAS`) y no se audita
+  la respuesta. Acción nueva `gestionar_evaluacion_docente` (Dirección de Carrera).
+- Pantallas: `/docencia/evaluacion` (todos los docentes: instrumento, estado y resultados propios), `/docencia/evaluacion/gestion`
+  (Dirección), `/docencia/evaluacion/{eid}/docente/{uid}` (el propio docente o la Dirección) y `/estudiante/evaluacion`.
+- **Decisiones mías por confirmar:** se evalúa al titular del paralelo (no a los auxiliares); ocho afirmaciones fijas (no editables por ahora);
+  una evaluación por semestre I o II (no de temporada); con la API de Kardex, saber en qué paralelos está un estudiante cuesta una
+  llamada por paralelo hasta que ofrezca una consulta por estudiante; los resultados no entran en el CV ni en los informes.
 

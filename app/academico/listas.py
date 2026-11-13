@@ -156,3 +156,15 @@ def purgar(gid: int) -> int:
                    [gid])[0]["n"]
     get_db().execute("DELETE FROM lista_curso WHERE oferta_id IN (SELECT id FROM oferta WHERE gestion_id = ?)", [gid])
     return n
+
+
+def ofertas_de_ru(gid: int, ru: str) -> list[int]:
+    """Paralelos de la gestión en que el estudiante (por su RU) está inscrito según la lista de curso. Con la copia es una
+    consulta; con la API, una llamada por paralelo (hasta que Kardex ofrezca una consulta por estudiante)."""
+    if not ru:
+        return []
+    if usa_api():
+        return [o["id"] for o in oferta.listar(gid) if any(e["ru"] == ru for e in lista(o["id"])["estudiantes"])]
+    return [f["oferta_id"] for f in get_db().q(
+        """SELECT l.oferta_id FROM lista_curso l JOIN oferta o ON o.id = l.oferta_id
+           WHERE o.gestion_id = ? AND l.ru = ? AND o.retirada_en IS NULL""", [gid, ru])]

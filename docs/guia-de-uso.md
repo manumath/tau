@@ -171,6 +171,19 @@ académica cargan en **Cargar listas** el CSV que entrega Kardex (sigla, paralel
 cada paralelo del archivo reemplaza la anterior y es una copia temporal que se retira al concluir la gestión. Cuando Kardex ofrezca su
 API, TAU consultará la lista en el momento y no guardará nada.
 
+### Evaluación docente
+
+Una vez por semestre la Dirección de Carrera organiza la evaluación docente en **Docencia → Evaluación docente → Administrar**: la
+crea para un semestre activo o concluido, la **anuncia** (docentes y estudiantes ven el instrumento, las fechas y cómo se usan los
+resultados; debe pasar al menos una semana antes de abrirla), la abre y la cierra, y publica el **retorno** a los estudiantes. Los
+estudiantes inscritos en un paralelo (según la lista de curso) lo evalúan una sola vez, en **Evaluación docente**, con ocho
+afirmaciones de 1 a 5; es **anónima**: la respuesta no se enlaza con quien la dio ni guarda la hora, y no hay respuestas abiertas.
+
+Los resultados de un docente aparecen con la evaluación cerrada y solo desde **5 respuestas**. El desglose por paralelo solo se muestra
+si todos sus paralelos llegan a 5. El docente ve los suyos en **Evaluación docente → Ver mis resultados**, puede agregar su
+**contexto** y ve **quién los consultó y cuándo**. La Dirección de Carrera no ve resultados en lista (solo cuántos respondieron):
+abre a cada docente y esa consulta queda en su bitácora y en la auditoría.
+
 ## Mi perfil
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».

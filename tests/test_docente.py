@@ -333,3 +333,173 @@ def test_pantallas_de_listas(client, sofia):
     assert client.get("/docencia/listas/cargar").status_code == 403
     assert client.post("/docencia/listas/cargar", data={"gestion": str(g["id"])},
                        files={"archivo": ("lista.csv", CSV, "text/csv")}).status_code == 403
+
+
+# --- Etapa 5: evaluación docente con transparencia ---------------------------------------------------------------------------
+
+def _evaluacion_abierta(ru="1111111"):
+    """Curso con el docente de prueba y un estudiante inscrito; evaluación abierta hoy. → (docente, oid, gestión, eid)."""
+    from app.academico import evaluacion, listas
+    doc, oid, g = _curso()
+    admin = usuarios.por_email("admin@test.cl")["id"]
+    get_db().execute("UPDATE gestion_academica SET estado = 'activa' WHERE id = ?", [g["id"]])
+    assert listas.cargar(f"sigla,paralelo,ru,apellidos,nombres\nMAT-111,A,{ru},Perez,Sofia\n".encode(), g["id"], admin)[1] == []
+    hoy = date.today()
+    eid, e = evaluacion.crear(g["id"], hoy.isoformat(), (hoy + timedelta(days=10)).isoformat(), admin)
+    assert e == []
+    assert evaluacion.anunciar(eid, admin) == []
+    get_db().execute("UPDATE evaluacion_docente SET anunciada_en = ? WHERE id = ?", [(hoy - timedelta(days=8)).isoformat() + " 10:00:00", eid])
+    assert evaluacion.abrir(eid, admin) == []
+    return doc, oid, g, eid
+
+
+def _respuestas_falsas(eid, oid, n, valor=4):
+    """n respuestas ya guardadas (sin pasar por estudiantes) para probar los resultados."""
+    for _ in range(n):
+        r = get_db().t.evaluacion_respuesta.insert(evaluacion_id=eid, oferta_id=oid)
+        for clave, _t in __import__("app.academico.evaluacion", fromlist=["x"]).CRITERIOS:
+            get_db().execute("INSERT INTO evaluacion_valor (respuesta_id, criterio, valor) VALUES (?, ?, ?)", [r["id"], clave, valor])
+
+
+def test_el_minimo_es_el_de_las_encuestas_anonimas():
+    from app.academico import evaluacion
+    from app.estudiantil import encuestas
+    assert evaluacion.MIN_RESPUESTAS == encuestas.MIN_ANONIMO
+
+
+def test_ciclo_de_la_evaluacion(app):
+    from app.academico import evaluacion
+    doc, oid, g = _curso()
+    admin = usuarios.por_email("admin@test.cl")["id"]
+    hoy = date.today()
+    assert "ya esté activo" in evaluacion.crear(g["id"], "2033-01-01", "2033-01-10", admin)[1][0]      # en planificación
+    get_db().execute("UPDATE gestion_academica SET estado = 'activa' WHERE id = ?", [g["id"]])
+    assert evaluacion.crear(g["id"], "2033-01-10", "2033-01-01", admin)[1][0].startswith("El cierre")
+    assert evaluacion.crear(g["id"], "", "", admin)[1][0].startswith("Indique")
+    eid, e = evaluacion.crear(g["id"], hoy.isoformat(), (hoy + timedelta(days=10)).isoformat(), admin)
+    assert e == [] and "ya tiene" in evaluacion.crear(g["id"], "2033-01-01", "2033-01-10", admin)[1][0]
+    assert "Solo se abre" in evaluacion.abrir(eid, admin)[0]                      # primero se anuncia
+    assert evaluacion.anunciar(eid, admin) == [] and "Solo se anuncia" in evaluacion.anunciar(eid, admin)[0]
+    assert "al menos 7 días" in evaluacion.abrir(eid, admin)[0]                   # anticipación
+    assert evaluacion.actualizar_fechas(eid, "2033-02-01", "2033-01-01", admin)[0].startswith("El cierre")
+    from app.comun import notificaciones
+    assert any("Evaluación docente" in n["asunto"] for n in notificaciones.recientes(doc["id"]))
+    get_db().execute("UPDATE evaluacion_docente SET anunciada_en = ? WHERE id = ?", [(hoy - timedelta(days=8)).isoformat() + " 10:00:00", eid])
+    assert evaluacion.abrir(eid, admin) == [] and evaluacion.estado(evaluacion.obtener(eid)) == "abierta"
+    assert evaluacion.eliminar(eid, admin)[0].startswith("Solo se elimina")
+    assert evaluacion.guardar_retorno(eid, "x")[0].startswith("El retorno")         # solo cerrada
+    # Pasada la fecha de cierre, ya está cerrada aunque nadie la haya cerrado.
+    assert evaluacion.estado(evaluacion.obtener(eid), hoy + timedelta(days=11)) == "cerrada"
+    assert evaluacion.cerrar(eid, admin) == [] and evaluacion.cerrar(eid, admin)[0].startswith("Solo se cierra")
+
+
+def test_el_estudiante_inscrito_evalua_una_vez_y_sin_enlace_con_su_respuesta(sofia):
+    from app.academico import evaluacion
+    doc, oid, g, eid = _evaluacion_abierta()
+    ext = _externo("1111111")
+    e, cursos = evaluacion.por_evaluar(ext)
+    assert e["id"] == eid and [(c["sigla"], c["hecho"]) for c in cursos] == [("MAT-111", False)]
+    assert evaluacion.responder(ext, oid, {"dominio": "5"})[0].startswith("Responda todas")
+    assert evaluacion.responder(ext, oid, {c: "9" for c, _t in evaluacion.CRITERIOS})[0].startswith("Responda todas")
+    todo = {c: "4" for c, _t in evaluacion.CRITERIOS}
+    assert evaluacion.responder(ext, oid, todo) == [] and evaluacion.n_respuestas(eid, oid) == 1
+    assert "Ya evaluó" in evaluacion.responder(ext, oid, todo)[0] and evaluacion.por_evaluar(ext)[1][0]["hecho"] is True
+    # Anonimato: la respuesta no tiene autor ni hora, y la participación no tiene hora ni orden de inserción.
+    cols = {c["name"] for c in get_db().q("PRAGMA table_info(evaluacion_respuesta)")}
+    assert cols == {"id", "evaluacion_id", "oferta_id"}
+    cols = {c["name"] for c in get_db().q("PRAGMA table_info(evaluacion_participacion)")}
+    assert cols == {"evaluacion_id", "oferta_id", "externo_id"}
+    assert "WITHOUT ROWID" in get_db().q("SELECT sql FROM sqlite_master WHERE name = 'evaluacion_participacion'")[0]["sql"]
+    # Quien no está inscrito (otro RU) no puede evaluar.
+    otro = _externo("2222222")
+    assert "inscritos" in evaluacion.responder(otro, oid, todo)[0]
+
+
+def test_resultados_solo_desde_el_minimo_y_sin_desglose_que_revele(app):
+    from app.academico import evaluacion, oferta
+    doc, oid, g, eid = _evaluacion_abierta()
+    admin = usuarios.por_email("admin@test.cl")["id"]
+    assert evaluacion.resultados_de(eid, doc["id"]) is None                       # abierta: nadie ve resultados
+    _respuestas_falsas(eid, oid, 4)
+    evaluacion.cerrar(eid, admin)
+    r = evaluacion.resultados_de(eid, doc["id"])
+    assert r["n"] == 4 and r["suficiente"] is False and r["criterios"] == [] and evaluacion.media_global(r) is None
+    _respuestas_falsas(eid, oid, 1, valor=5)
+    r = evaluacion.resultados_de(eid, doc["id"])
+    assert r["suficiente"] and evaluacion.media_global(r) == 4.2 and r["criterios"][0]["distribucion"][5] == 1
+    assert r["paralelos"] == []                                                    # un solo paralelo: sin desglose
+    # Con dos paralelos, el desglose solo sale si ambos llegan al mínimo.
+    oid2, e = oferta.agregar(g["id"], "MAT-112", "A", "", admin)
+    assert e == [] and oferta.asignar(oid2, doc["id"], "titular") == []
+    _respuestas_falsas(eid, oid2, 2)
+    r = evaluacion.resultados_de(eid, doc["id"])
+    assert r["n"] == 7 and r["suficiente"] and r["paralelos"] == []                # el segundo no llega: no se desglosa
+    _respuestas_falsas(eid, oid2, 3)
+    assert len(evaluacion.resultados_de(eid, doc["id"])["paralelos"]) == 2
+    otro = usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP)
+    assert evaluacion.resultados_de(eid, otro["id"])["n"] == 0                     # no ve lo de otro docente
+
+
+def test_bitacora_contexto_y_retorno(app):
+    from app.academico import evaluacion
+    doc, oid, g, eid = _evaluacion_abierta()
+    admin = usuarios.por_email("admin@test.cl")["id"]
+    _respuestas_falsas(eid, oid, 5)
+    evaluacion.cerrar(eid, admin)
+    evaluacion.registrar_consulta(eid, doc["id"], doc["id"])                       # el propio docente no deja huella
+    assert evaluacion.consultas(eid, doc["id"]) == []
+    evaluacion.registrar_consulta(eid, doc["id"], admin)
+    assert [c["nombres"] for c in evaluacion.consultas(eid, doc["id"])] == [usuarios.por_email("admin@test.cl")["nombres"]]
+    assert get_db().q("SELECT 1 FROM auditoria WHERE accion = 'ver_resultados_evaluacion_docente'")
+    assert evaluacion.guardar_contexto(eid, doc["id"], "x" * 2001)[0].startswith("El contexto")
+    assert evaluacion.guardar_contexto(eid, doc["id"], "Primera vez con 60 estudiantes") == []
+    assert evaluacion.contexto(eid, doc["id"]).startswith("Primera") and evaluacion.guardar_contexto(eid, doc["id"], "") == []
+    assert evaluacion.contexto(eid, doc["id"]) == ""
+    assert "Escriba el retorno" in evaluacion.publicar_retorno(eid, admin)[0]
+    assert evaluacion.guardar_retorno(eid, "Reforzaremos la tutoría de Cálculo") == [] and evaluacion.publicar_retorno(eid, admin) == []
+    assert [r["id"] for r in evaluacion.retornos_publicados()] == [eid]
+    evaluacion.retirar_retorno(eid)
+    assert evaluacion.retornos_publicados() == []
+    p = evaluacion.participacion(eid)[0]
+    assert (p["n"], p["inscritos"], p["suficiente"]) == (5, 1, True)
+
+
+def test_pantallas_de_evaluacion_del_personal(client, sofia):
+    from app.academico import evaluacion
+    from app.comun import permisos, unidades
+    doc, oid, g, eid = _evaluacion_abierta()
+    _respuestas_falsas(eid, oid, 5)
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert "Administrar la evaluación" in client.get("/docencia/evaluacion").text
+    r = client.post(f"/docencia/evaluacion/{eid}/cerrar", follow_redirects=False)
+    assert r.status_code in (302, 303) and evaluacion.estado(evaluacion.obtener(eid)) == "cerrada"
+    r = client.get("/docencia/evaluacion/gestion")
+    assert r.status_code == 200 and "Participación por docente" in r.text and "Hay resultados" in r.text
+    assert "Dominio" not in r.text and "Media" not in r.text                         # sin resultados en lista
+    r = client.get(f"/docencia/evaluacion/{eid}/docente/{doc['id']}")
+    assert r.status_code == 200 and "Demuestra dominio" in r.text and "Media global" in r.text
+    assert len(evaluacion.consultas(eid, doc["id"])) == 1                           # la consulta quedó en la bitácora
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert client.get("/docencia/evaluacion/gestion").status_code == 403
+    r = client.get(f"/docencia/evaluacion/{eid}/docente/{doc['id']}")
+    assert r.status_code == 200 and "Quién consultó sus resultados" in r.text
+    assert client.get(f"/docencia/evaluacion/{eid}/docente/{usuarios.por_email('admin@test.cl')['id']}").status_code == 403
+    assert client.post(f"/docencia/evaluacion/{eid}/anunciar", follow_redirects=False).status_code == 403
+    r = client.post(f"/docencia/evaluacion/{eid}/contexto", data={"contexto": "Curso numeroso"}, follow_redirects=False)
+    assert r.status_code in (302, 303) and evaluacion.contexto(eid, doc["id"]) == "Curso numeroso"
+
+
+def test_pantallas_de_evaluacion_del_estudiante(sofia):
+    from app.academico import evaluacion
+    doc, oid, g, eid = _evaluacion_abierta()
+    r = sofia.get("/estudiante/evaluacion")
+    assert r.status_code == 200 and "MAT-111" in r.text and "Evaluar" in r.text and "Demuestra dominio" in r.text
+    assert sofia.get(f"/estudiante/evaluacion/{oid}").status_code == 200
+    assert sofia.get("/estudiante/evaluacion/999999").status_code == 403
+    r = sofia.post(f"/estudiante/evaluacion/{oid}", data={c: "5" for c, _t in evaluacion.CRITERIOS}, follow_redirects=False)
+    assert r.status_code in (302, 303) and evaluacion.n_respuestas(eid) == 1
+    assert sofia.get(f"/estudiante/evaluacion/{oid}").status_code == 403           # ya evaluó
+    assert "Ya evaluó" in sofia.get("/estudiante/evaluacion").text
