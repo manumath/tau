@@ -9,7 +9,7 @@ from app.comun import vinculos
 from app.comun.db import get_db
 
 TIPOS = {"grado": "Grado", "auxiliatura": "Auxiliaturas", "tutoria": "Tutoría", "tema": "Temas de grado",
-         "vinculo": "Vínculo", "gestion": "Semestre", "evento": "Evento"}
+         "vinculo": "Vínculo", "preferencias": "Oferta", "gestion": "Semestre", "evento": "Evento"}
 DIAS_VINCULO = 60       # avisa cuando el periodo del vínculo termina en menos de estos días
 
 
@@ -73,7 +73,17 @@ def _vinculo(uid: int, hoy: date):
                          "/docencia/mia")
 
 
-FUENTES_PENDIENTES = (_grado, _auxiliaturas, _tutoria, _temas)
+def _preferencias(uid: int):
+    """Una gestión en planificación para la que aún no indicó preferencias (solo si puede indicarlas)."""
+    from app.academico import preferencias
+    for g in preferencias.gestiones_abiertas():
+        if preferencias.puede_indicar(uid, g) is None and not preferencias.tiene(g["id"], uid):
+            yield _pendiente("preferencias", f"Indique sus preferencias para {gestiones.codigo(g)}",
+                             "Materias que prefiere y turnos sin disponibilidad", g["fecha_inicio"],
+                             f"/docencia/preferencias?gestion={g['id']}")
+
+
+FUENTES_PENDIENTES = (_grado, _auxiliaturas, _tutoria, _temas, _preferencias)
 
 
 def pendientes(uid: int, hoy: date | None = None) -> list[dict]:

@@ -3597,7 +3597,7 @@ docente). TAU sigue sin guardar notas ni asistencia.
 
 ### Servicios y etapas (un commit cada una)
 1. (hecha, 13-nov-2026) **Mis pendientes y Mi calendario** del docente.
-2. **Preferencias para la oferta:** qué materias y horarios quiere dictar, visibles para la Coordinación al armar la oferta.
+2. (hecha, 13-nov-2026) **Preferencias para la oferta:** qué materias quiere o no puede dictar y en qué turnos no tiene disponibilidad, visibles para la Coordinación al armar la oferta.
 3. **Programa analítico (syllabus)** por materia y gestión, con versión; el estudiante lo ve en su plan.
 4. **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
 5. **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
@@ -3610,4 +3610,15 @@ docente). TAU sigue sin guardar notas ni asistencia.
   eventos, fin del vínculo). No guardan nada y solo reúnen lo de la propia persona (`auth["id"]`, nunca la dirección).
 - `/docencia/pendientes`, `/docencia/calendario` y `.ics`, en las pestañas de Docencia para quien tenga algo como docente
   (`docente.es_docente`). Lo vencido o a 7 días se marca.
+
+### Etapa 2 (hecha): preferencias para la oferta
+- **Migración 0081:** `preferencia_oferta` (por gestión, persona y asignatura: «la prefiere» o «no puede dictarla», con nota) y
+  `preferencia_gestion` (turnos sin disponibilidad `lun-manana,…`, comentario). Se borran con la gestión (`ON DELETE CASCADE`).
+- `app/academico/preferencias.py` y `rutas/preferencias.py`: `/docencia/preferencias` (la persona, con vínculo, mientras la gestión
+  está en planificación; la persona sale de la sesión) y `/docencia/preferencias/todas` (`gestionar_oferta`: lo que indicó cada uno y
+  quiénes faltan). Guardar reemplaza lo anterior y se audita.
+- Es una ayuda y no asigna: en «Oferta y docentes», el selector de docente pone primero a quien prefiere la materia y marca a
+  quien indicó que no puede. «Mis pendientes» recuerda indicarlas mientras hay una gestión en planificación sin respuesta.
+- **Decisión mía por confirmar:** solo pueden indicar quienes tienen vínculo con la Carrera al inicio de la gestión o ya dictaron
+  alguna materia; no hay fecha límite (se cierra al activar la gestión).
 

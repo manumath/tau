@@ -57,3 +57,90 @@ def test_pantallas_del_docente(client, sofia):
 
 def test_un_estudiante_no_entra(sofia):
     assert sofia.get("/docencia/pendientes", follow_redirects=False).status_code in (303, 403)
+
+
+# --- Etapa 2: preferencias para la oferta ------------------------------------------------------------------------------------
+
+def _gestion_en_planificacion(anio=2031, tipo="I"):
+    from app.academico import gestiones
+    g, e = gestiones.crear(anio, tipo, usuarios.por_email("admin@test.cl")["id"])
+    assert e is None
+    return g
+
+
+def _asignatura(sigla="MAT-101"):
+    r = get_db().q("SELECT id FROM asignatura WHERE sigla = ?", [sigla])
+    if r:
+        return r[0]["id"]
+    get_db().execute("INSERT INTO asignatura (sigla, nombre, departamento) VALUES (?, ?, ?)", [sigla, "Cálculo I", sigla[:3]])
+    return get_db().q("SELECT id FROM asignatura WHERE sigla = ?", [sigla])[0]["id"]
+
+
+def test_guardar_y_leer_preferencias(sofia):
+    from app.academico import preferencias
+    doc = _docente()
+    g = _gestion_en_planificacion()
+    a = _asignatura()
+    assert preferencias.tiene(g["id"], doc["id"]) is False
+    assert preferencias.guardar(g, doc["id"], {a: ("quizas", "")}, [], "")[0].startswith("Elija")
+    assert preferencias.guardar(g, doc["id"], {99999: ("prefiere", "")}, [], "")[0].startswith("Una de las")
+    assert preferencias.guardar(g, doc["id"], {a: ("prefiere", "x" * 301)}, [], "")[0].startswith("Las notas")
+    assert preferencias.guardar(g, doc["id"], {a: ("prefiere", "La dicté tres veces")}, ["lun-manana", "lun-tarde", "zzz"],
+                                "Solo puedo martes y jueves") == []
+    mio = preferencias.de_persona(g["id"], doc["id"])
+    assert mio["materias"][a] == {"nivel": "prefiere", "nota": "La dicté tres veces"}
+    assert mio["indisponible"] == {"lun-manana", "lun-tarde"} and mio["comentario"].startswith("Solo")
+    assert preferencias.texto_turnos(mio["indisponible"]) == "lunes: mañana y tarde"
+    # Guardar de nuevo reemplaza lo anterior.
+    assert preferencias.guardar(g, doc["id"], {a: ("no_puede", "")}, [], "") == []
+    assert preferencias.de_persona(g["id"], doc["id"])["materias"][a]["nivel"] == "no_puede"
+    assert preferencias.por_asignatura(g["id"], a) == {doc["id"]: "no_puede"}
+    [p] = preferencias.de_gestion(g["id"])
+    assert p["materias"][0]["sigla"] == "MAT-101" and preferencias.sin_indicar(g["id"]) == []
+
+
+def test_no_se_indica_sin_vinculo_ni_con_la_gestion_activa(sofia):
+    from app.academico import preferencias
+    g = _gestion_en_planificacion()
+    sin = usuarios.por_email("inv@test.cl")["id"]
+    assert "vínculo" in preferencias.puede_indicar(sin, g)
+    _docente()
+    assert preferencias.puede_indicar(sin, g) is None
+    get_db().execute("UPDATE gestion_academica SET estado = 'activa' WHERE id = ?", [g["id"]])
+    g = {**g, "estado": "activa"}
+    assert "ya no está en planificación" in preferencias.puede_indicar(sin, g)
+    assert preferencias.guardar(g, sin, {}, [], "")[0].startswith("La gestión ya no")
+
+
+def test_pendiente_de_indicar_preferencias_y_su_desaparicion(sofia):
+    from app.academico import preferencias
+    doc = _docente()
+    g = _gestion_en_planificacion()
+    assert any(x["tipo"] == "preferencias" for x in docente.pendientes(doc["id"]))
+    assert preferencias.guardar(g, doc["id"], {}, ["vie-noche"], "") == []
+    assert not any(x["tipo"] == "preferencias" for x in docente.pendientes(doc["id"]))
+
+
+def test_pantallas_de_preferencias_y_selector_de_la_oferta(client, sofia):
+    from app.academico import oferta, preferencias
+    from app.comun import permisos, unidades
+    doc = _docente()
+    g = _gestion_en_planificacion()
+    a = _asignatura()
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    r = client.get(f"/docencia/preferencias?gestion={g['id']}")
+    assert r.status_code == 200 and "MAT-101" in r.text and "Cálculo I" in r.text
+    r = client.post("/docencia/preferencias", data={"gestion": str(g["id"]), f"m_{a}": "prefiere", "turno": ["sab-noche"],
+                                                    "comentario": "Hola"}, follow_redirects=False)
+    assert r.status_code in (302, 303) and preferencias.de_persona(g["id"], doc["id"])["materias"][a]["nivel"] == "prefiere"
+    assert client.get("/docencia/preferencias/todas").status_code == 403           # solo quien arma la oferta
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    r = client.get(f"/docencia/preferencias/todas?gestion={g['id']}")
+    assert r.status_code == 200 and "MAT-101" in r.text and "sábado: noche" in r.text
+    oid, e = oferta.agregar(g["id"], "MAT-101", "A", "", usuarios.por_email("admin@test.cl")["id"])
+    assert e == []
+    r = client.get(f"/docencia/oferta?gestion={g['id']}")
+    assert "(la prefiere)" in r.text

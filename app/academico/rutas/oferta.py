@@ -10,7 +10,7 @@ from fasthtml.common import (A, APIRouter, Code, Datalist, Div, Input, Li, Optio
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, TextPresets, UkIcon
 
-from app.academico import cambios, gestiones, importar_oferta, oferta
+from app.academico import cambios, gestiones, importar_oferta, oferta, preferencias
 from app.comun import permisos
 from app.comun import formato
 from app.comun.componentes.layout import CERRAR, ID_MODAL, campo, cerrar_modal, mensaje_error, modal, pagina
@@ -49,10 +49,13 @@ def _docente(d, g, puede):
 
 
 def _form_docente(o, g):
+    pref = preferencias.por_asignatura(g["id"], o["asignatura_id"])
+    marca = {"prefiere": " (la prefiere)", "no_puede": " (indicó que no puede dictarla)"}
+    posibles = sorted(oferta.docentes_posibles(g), key=lambda p: pref.get(p["id"]) != "prefiere")   # primero quien la prefiere
     return fh.Details(fh.Summary("+ Asignar docente", cls="cursor-pointer text-xs text-primary mt-1"), fh.Form(
         Select(Option("Docente…", value=""),
-               *[Option(f"{p['apellidos']}, {p['nombres']}" + ("" if p["con_vinculo"] else " (sin vínculo con la Carrera)"),
-                        value=str(p["id"])) for p in oferta.docentes_posibles(g)],
+               *[Option(f"{p['apellidos']}, {p['nombres']}" + ("" if p["con_vinculo"] else " (sin vínculo con la Carrera)")
+                        + marca.get(pref.get(p["id"]), ""), value=str(p["id"])) for p in posibles],
                name="usuario", cls="uk-select h-8 text-sm w-64", aria_label="Docente", required=True),
         Select(*[Option(t, value=k) for k, t in oferta.ROLES.items()], name="rol", cls="uk-select h-8 text-sm w-28",
                aria_label="Rol"),

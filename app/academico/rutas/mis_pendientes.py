@@ -13,7 +13,7 @@ from app.comun.componentes.registros import insignia
 rt = APIRouter()
 PENDIENTES = "/docencia/pendientes"
 CALENDARIO = "/docencia/calendario"
-TONOS = {"grado": "verde", "auxiliatura": "ambar", "tutoria": "gris", "tema": "azul", "vinculo": "ambar", "gestion": "gris",
+TONOS = {"grado": "verde", "auxiliatura": "ambar", "tutoria": "gris", "tema": "azul", "vinculo": "ambar", "preferencias": "azul", "gestion": "gris",
          "evento": "azul"}
 SITUACIONES = {"vencido": ("Vencido", "rojo"), "proximo": ("Próximo", "ambar")}
 PLAZOS = {"30": 30, "90": 90, "180": 180}

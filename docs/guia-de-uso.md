@@ -144,6 +144,15 @@ vence en los próximos siete días se marca. **Docencia → Mi calendario** pone
 defensas de grado, reuniones de tutoría programadas, eventos a los que lo convocan) y se descarga en `.ics` para el teléfono.
 Ambas son solo suyas y no guardan nada: se calculan al abrirlas.
 
+### Mis preferencias de oferta
+
+Antes de armar un semestre, **Docencia → Mis preferencias** (con la gestión en planificación) le deja indicar qué materias
+prefiere dictar o no puede dictar (con una nota opcional), en qué turnos de la semana no tiene disponibilidad y un comentario.
+Puede cambiarlas hasta que la gestión se active. Es una ayuda: no asigna nada. Solo usted, la Dirección de Carrera y la Coordinación
+académica las ven; esta ve en **Preferencias de docentes** lo que indicó cada uno (y quiénes aún no), y al asignar un docente a
+una materia de la oferta el selector lo marca «(la prefiere)» o «(indicó que no puede dictarla)» y pone primero a quien la prefiere.
+«Mis pendientes» le recuerda hacerlo.
+
 ## Mi perfil
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».
