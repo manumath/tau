@@ -153,6 +153,15 @@ académica las ven; esta ve en **Preferencias de docentes** lo que indicó cada 
 una materia de la oferta el selector lo marca «(la prefiere)» o «(indicó que no puede dictarla)» y pone primero a quien la prefiere.
 «Mis pendientes» le recuerda hacerlo.
 
+### Mis programas analíticos
+
+**Docencia → Mis programas** lista las materias que usted dicta como titular en gestiones vigentes o en planificación. Para cada una
+escribe el programa (objetivos y contenido son obligatorios; metodología, evaluación y bibliografía, no) y lo guarda como borrador o
+lo publica. Cada publicación es una **versión** que ya no se edita: para cambiar algo, «Partir del último programa publicado» crea un
+borrador con lo anterior y se publica otra versión. Sus estudiantes ven el programa vigente desde «Mi plan de estudios», con el
+enlace «Ver el programa». La Dirección de Carrera y la Coordinación académica ven en **Cobertura de la oferta** qué asignaturas ya
+tienen programa; «Mis pendientes» le recuerda publicarlo.
+
 ## Mi perfil
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».

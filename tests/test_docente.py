@@ -144,3 +144,92 @@ def test_pantallas_de_preferencias_y_selector_de_la_oferta(client, sofia):
     assert e == []
     r = client.get(f"/docencia/oferta?gestion={g['id']}")
     assert "(la prefiere)" in r.text
+
+
+# --- Etapa 3: programa analítico --------------------------------------------------------------------------------------------
+
+DATOS = {"objetivos": "Dominar el cálculo diferencial", "contenido": "1. Límites\n2. Derivadas", "metodologia": "Clases",
+         "evaluacion": "Dos parciales", "bibliografia": "Apostol, Calculus"}
+
+
+def _titular_de(sigla="MAT-111"):
+    """El docente de prueba como titular de la asignatura en una gestión en planificación → (docente, asignatura_id, gestión)."""
+    from app.academico import oferta
+    doc = _docente()
+    g = _gestion_en_planificacion(2032, "I")
+    oid, e = oferta.agregar(g["id"], sigla, "A", "", doc["id"])
+    assert e == [] and oferta.asignar(oid, doc["id"], "titular") == []
+    return doc, get_db().q("SELECT id FROM asignatura WHERE sigla = ?", [sigla])[0]["id"], g
+
+
+def test_escribir_publicar_y_versionar_un_programa(sofia):
+    from app.academico import programas
+    doc, aid, g = _titular_de()
+    otro = usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP)
+    assert "titular" in programas.guardar(aid, g["id"], otro["id"], DATOS)[0]
+    assert [m["sigla"] for m in programas.pendientes_de(doc["id"])] == ["MAT-111"]
+    assert programas.guardar(aid, g["id"], doc["id"], {**DATOS, "objetivos": "x" * 6001})[0].startswith("Objetivos")
+    assert programas.guardar(aid, g["id"], doc["id"], {"metodologia": "Solo esto"}) == []
+    assert "Complete antes de publicar" in programas.publicar(aid, g["id"], doc["id"])[0]
+    assert programas.guardar(aid, g["id"], doc["id"], DATOS) == [] and programas.publicar(aid, g["id"], doc["id"]) == []
+    assert programas.publicado(aid, g["id"])["version"] == 1 and programas.borrador(aid, g["id"]) is None
+    assert programas.pendientes_de(doc["id"]) == [] and programas.vigente(aid)["objetivos"].startswith("Dominar")
+    # Para cambiar algo se parte de la última versión y se publica otra: la primera se conserva.
+    assert programas.partir_de_la_vigente(aid, g["id"], doc["id"]) == []
+    assert "borrador" in programas.partir_de_la_vigente(aid, g["id"], doc["id"])[0]
+    assert programas.guardar(aid, g["id"], doc["id"], {**DATOS, "evaluacion": "Tres parciales"}) == []
+    assert programas.publicar(aid, g["id"], doc["id"]) == []
+    assert [v["version"] for v in programas.versiones(aid, g["id"])] == [2, 1]
+    assert programas.vigente(aid)["evaluacion"] == "Tres parciales" and aid in programas.con_programa()
+    assert programas.cobertura(g["id"])[0]["version"] == 2 and programas.cobertura(g["id"])[0]["titulares"] == "Noether"
+    # Una gestión concluida es historial.
+    get_db().execute("UPDATE gestion_academica SET estado = 'concluida' WHERE id = ?", [g["id"]])
+    assert "concluyó" in programas.guardar(aid, g["id"], doc["id"], DATOS)[0]
+
+
+def test_descartar_el_borrador(sofia):
+    from app.academico import programas
+    doc, aid, g = _titular_de()
+    assert programas.guardar(aid, g["id"], doc["id"], DATOS) == []
+    assert programas.descartar(aid, g["id"], doc["id"]) == [] and programas.borrador(aid, g["id"]) is None
+    assert programas.partir_de_la_vigente(aid, g["id"], doc["id"])[0].startswith("Aún no hay")
+
+
+def test_pantallas_del_programa_y_vista_del_estudiante(client, sofia):
+    from app.academico import programas
+    from app.comun import permisos, unidades
+    from tests.test_servicios_estudiante import _con_plan
+    _con_plan()
+    doc, aid, g = _titular_de()
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "MAT-111" in client.get("/docencia/programas").text
+    r = client.get(f"/docencia/programas/{aid}/{g['id']}")
+    assert r.status_code == 200 and "Guardar y publicar" in r.text
+    r = client.post(f"/docencia/programas/{aid}/{g['id']}/publicar", data=DATOS, follow_redirects=False)
+    assert r.status_code in (302, 303) and programas.publicado(aid, g["id"])["version"] == 1
+    assert client.get(f"/docencia/programas/{aid}/{g['id']}").status_code == 200       # otra vez, como autor
+    assert client.get("/docencia/programas/cobertura").status_code == 403
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    r = client.get(f"/docencia/programas/cobertura?gestion={g['id']}")
+    assert r.status_code == 200 and "MAT-111" in r.text and "Versión 1" in r.text
+    r = client.get(f"/docencia/programas/{aid}/{g['id']}")                                  # solo lectura para el resto
+    assert "Dominar el cálculo" in r.text and "Guardar y publicar" not in r.text
+    assert client.post(f"/docencia/programas/{aid}/{g['id']}", data=DATOS, follow_redirects=False).status_code in (302, 303)
+    assert programas.borrador(aid, g["id"]) is None                                         # no es titular: no escribió nada
+
+
+def test_el_estudiante_ve_el_programa_publicado_desde_su_plan(sofia):
+    from app.academico import programas
+    from tests.test_servicios_estudiante import _con_plan
+    _con_plan()
+    doc, aid, g = _titular_de()
+    assert "Ver el programa" not in sofia.get("/estudiante/plan").text
+    assert sofia.get(f"/estudiante/programa/{aid}").status_code == 404                  # aún sin publicar
+    assert programas.guardar(aid, g["id"], doc["id"], DATOS) == [] and programas.publicar(aid, g["id"], doc["id"]) == []
+    assert "Ver el programa" in sofia.get("/estudiante/plan").text
+    r = sofia.get(f"/estudiante/programa/{aid}")
+    assert r.status_code == 200 and "Dominar el cálculo" in r.text and "Apostol" in r.text
+    assert sofia.get("/estudiante/programa/999999").status_code == 404

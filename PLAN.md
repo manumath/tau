@@ -3598,7 +3598,7 @@ docente). TAU sigue sin guardar notas ni asistencia.
 ### Servicios y etapas (un commit cada una)
 1. (hecha, 13-nov-2026) **Mis pendientes y Mi calendario** del docente.
 2. (hecha, 13-nov-2026) **Preferencias para la oferta:** qué materias quiere o no puede dictar y en qué turnos no tiene disponibilidad, visibles para la Coordinación al armar la oferta.
-3. **Programa analítico (syllabus)** por materia y gestión, con versión; el estudiante lo ve en su plan.
+3. (hecha, 13-nov-2026) **Programa analítico (syllabus)** por materia y gestión, con versión; el estudiante lo ve en su plan.
 4. **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
 5. **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
 6. **Mi historial docente** (materias, tesis tuteladas y juradas, proyectos, productos) y **certificados** de tribunal y tutoría.
@@ -3621,4 +3621,14 @@ docente). TAU sigue sin guardar notas ni asistencia.
   quien indicó que no puede. «Mis pendientes» recuerda indicarlas mientras hay una gestión en planificación sin respuesta.
 - **Decisión mía por confirmar:** solo pueden indicar quienes tienen vínculo con la Carrera al inicio de la gestión o ya dictaron
   alguna materia; no hay fecha límite (se cierra al activar la gestión).
+
+### Etapa 3 (hecha): programa analítico
+- **Migración 0082:** `programa_analitico` (por asignatura y gestión; objetivos, contenido, metodología, evaluación y bibliografía;
+  borrador único por asignatura y gestión y versiones publicadas que no se editan). Se borra con la gestión (`ON DELETE CASCADE`).
+- `app/academico/programas.py` y `rutas/programas.py`: escribe y publica **solo el titular** de la materia en esa gestión (no la
+  Coordinación, que ve la cobertura en `/docencia/programas/cobertura`); gestión concluida = historial. Publicar exige objetivos y
+  contenido, asigna la versión y se audita. «Partir del último programa publicado» copia la versión vigente de cualquier gestión.
+- El estudiante ve la última versión publicada de la gestión más reciente en `/estudiante/programa/{aid}`, con enlace en «Mi plan de
+  estudios». Es información pública de la materia, no personal. «Mis pendientes» avisa de las materias sin programa publicado.
+- **Decisión mía por confirmar:** no hay adjunto (PDF) del programa, solo texto; no se avisa al estudiante cuando se publica una versión.
 

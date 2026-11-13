@@ -29,6 +29,7 @@ def prepara_semestres(auth: dict | None) -> bool:
 PESTANAS = (("mia", "Mi docencia", "/docencia/mia", tiene_docencia),
             ("pendientes", "Mis pendientes", "/docencia/pendientes", es_docente),
             ("calendario", "Mi calendario", "/docencia/calendario", es_docente),
+            ("programas", "Mis programas", "/docencia/programas", es_docente),
             ("preferencias", "Mis preferencias", "/docencia/preferencias", es_docente),
             ("preferencias_todas", "Preferencias de docentes", "/docencia/preferencias/todas", "gestionar_oferta"),
             ("preparacion", "Preparación del semestre", "/docencia/preparacion", prepara_semestres),
