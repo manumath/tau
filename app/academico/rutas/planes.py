@@ -6,8 +6,7 @@ from fasthtml.common import A, APIRouter, Div, Input, Li, Option, P, Redirect, R
 from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 
-from app.academico import planes, reformas
-from app.academico import menciones
+from app.academico import menciones, planes, reformas, vigencia
 from app.academico.rutas.malla import panel_verificacion, tarjeta_menciones
 from app.comun import permisos
 from app.comun.componentes.layout import CERRAR, ID_MODAL, campo, mensaje_error, modal, pagina
@@ -61,7 +60,8 @@ def get(auth, estado: str = ""):
                              if p["n_pendientes"] else insignia("Sin observaciones", "verde", icono="check")))
                  for p in filas_plan]
         bloques.append(Div(
-            H3(f"Reforma {reforma['nombre']}", Span(" · ".join(str(x) for x in (reforma["resolucion"],
+            H3(A(f"Reforma {reforma['nombre']}", href=f"{BASE}/reforma/{reforma['id']}", cls="hover:underline")
+               if planes.puede_elaborar(auth) and reforma["id"] else f"Reforma {reforma['nombre']}", Span(" · ".join(str(x) for x in (reforma["resolucion"],
                                                                                  f"desde {reforma['vigente_desde']}")
                                                                if x), cls=(TextPresets.muted_sm, "ml-2 font-normal")),
                cls="text-base font-semibold mb-2"),
@@ -279,7 +279,12 @@ def get(auth, pid: int):
         A(UkIcon("arrow-left", height=14, width=14), "Planes de estudio", href=BASE,
           cls="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"),
         H2(f"{p['programa']}"),
-        Div(estado_insignia(p), *_acciones_borrador(p, auth), cls="flex flex-wrap items-center gap-3 mb-2"),
+        Div(estado_insignia(p), *_acciones_borrador(p, auth), *acciones_estado(p, auth),
+            *([A(UkIcon("arrow-left-right", height=14, width=14), "Equivalencias", href=f"{BASE}/{pid}/equivalencias",
+                 cls="uk-btn uk-btn-default uk-btn-small inline-flex items-center gap-1")]
+              if p["estado"] == "elaboracion" and planes.puede_elaborar(auth) else []),
+            cls="flex flex-wrap items-center gap-3 mb-2"),
+        P(f"Motivo del cierre: {p['motivo_cierre']}", cls=(TextPresets.muted_sm, "mb-2")) if p["motivo_cierre"] else "",
         P(" · ".join(x for x in (p["nombre"], p["resolucion"], _vigencia(p), _medida(p),
                                  f"Nota mínima de aprobación: {p['nota_minima']} %" if p["nota_minima"] else None) if x),
           cls=(TextPresets.muted_sm, "mb-6")),
@@ -297,6 +302,27 @@ def get(auth, pid: int):
             cls="space-y-4"),
         usuario=auth, seccion="docencia")
 
+
+
+def acciones_estado(p, auth):
+    """Botones para la Dirección de Carrera según el estado del plan."""
+    if not permisos.puede(auth, "decidir_planes"):
+        return []
+    pid = p["id"]
+    if p["estado"] == "elaboracion":
+        falta = vigencia.faltantes(pid)
+        return [Button(UkIcon("rocket", height=14, width=14), "Poner en vigencia", hx_post=f"{BASE}/{pid}/vigencia",
+                       hx_confirm=f"¿Poner en vigencia el plan {p['nombre']} de {p['programa']}? El plan vigente de este "
+                                  "programa pasará a «en proceso de cierre» y el nuevo dejará de poder editarse.",
+                       hx_swap="none", disabled=bool(falta), title="Faltan puntos de la lista de verificación"
+                       if falta else None, cls=(ButtonT.primary, ButtonT.sm))]
+    if p["estado"] == "vigente":
+        return [Button(UkIcon("hourglass", height=14, width=14), "Iniciar el cierre", hx_get=f"{BASE}/{pid}/cierre/iniciar",
+                       hx_target=f"#{ID_MODAL}", hx_swap="innerHTML", cls=(ButtonT.default, ButtonT.sm))]
+    if p["estado"] == "cierre":
+        return [Button(UkIcon("lock", height=14, width=14), "Cerrar el plan", hx_get=f"{BASE}/{pid}/cierre/cerrar",
+                       hx_target=f"#{ID_MODAL}", hx_swap="innerHTML", cls=(ButtonT.default, ButtonT.sm))]
+    return []
 
 
 def _acciones_borrador(p, auth):

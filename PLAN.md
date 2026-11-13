@@ -3245,7 +3245,7 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 2. (hecha, 13-nov-2026) Asistente de nueva reforma y datos generales del borrador.
 3. (hecha, 13-nov-2026) Editor de malla con validaciones.
 4. (hecha, 13-nov-2026) Menciones.
-5. Equivalencias, puesta en vigencia y cierre, y efectos en oferta y cohortes.
+5. (hecha, 13-nov-2026) Equivalencias, puesta en vigencia y cierre, y efectos en oferta y cohortes.
 6. Pruebas de navegador por rol, accesibilidad, capturas, capítulo del manual, guía y este PLAN.
 
 ### Por confirmar
@@ -3303,3 +3303,21 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 - Se editan en la tarjeta «Menciones» del editor de la malla; la ficha del plan las muestra de solo lectura. La lista de
   verificación comprueba que cada mención tenga asignaturas y cumpla sus mínimos. Copiar un plan copia sus menciones.
 - **Pendiente (etapa posterior):** `estudiante.mencion_id` y la columna opcional `mencion` en la carga de cohortes.
+
+### Etapa 5 (hecha): equivalencias, vigencia y cierre
+- **Migración 0069:** `equivalencia` y `equivalencia_item` (grupos «asignaturas del plan anterior ≡ asignaturas del nuevo», una
+  a una o agrupadas). Como el catálogo de asignaturas es común, una asignatura con la misma sigla en los dos planes es
+  equivalente por sí sola y no se registra: solo se anotan las que cambian. Se registran desde el borrador, contra
+  cualquier plan que no lo sea (para unir dos licenciaturas, una vez por cada plan anterior). La lista de verificación
+  avisa (no impide) las obligatorias del plan anterior de su programa sin equivalente.
+- **Poner en vigencia** (`app/academico/vigencia.py`, `decidir_planes`): exige la lista de verificación sin puntos en rojo;
+  el plan vigente del mismo programa pasa a «en proceso de cierre» con `vigente_hasta` = año del plan nuevo − 1 (o su
+  propio año, si es menor) y el motivo «Reemplazado por…». Los planes de otros programas no se tocan. **La reforma**
+  (`/docencia/planes/reforma/{id}`) pone en vigencia todos sus borradores o ninguno.
+- **Iniciar el cierre** pide el año del último ingreso y la resolución o el motivo. Un programa que desaparece en la
+  reforma **no se cierra solo**: la Dirección de Carrera inicia su cierre a mano (decisión del agente, por ser lo más
+  seguro; confirmar).
+- **Cerrar:** cuenta los estudiantes con `estado` cursando o congelado en el plan; si quedan, solo cierra con la casilla
+  «aunque queden» y un motivo. Un plan cerrado sale de la oferta (`oferta.troncales` solo considera vigentes y en cierre) y
+  de la carga de cohortes, y no se reabre.
+- Toda transición queda en la auditoría (`poner_plan_en_vigencia`, `iniciar_cierre_plan`, `cerrar_plan`).

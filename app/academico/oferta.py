@@ -33,7 +33,7 @@ def troncales(anio: int) -> list[dict]:
     return get_db().q(
         """SELECT DISTINCT a.* FROM plan_asignatura pa JOIN asignatura a ON a.id = pa.asignatura_id
            JOIN plan_estudios p ON p.id = pa.plan_id JOIN programa pr ON pr.id = p.programa_id
-           WHERE pr.nivel = 'licenciatura' AND p.estado <> 'elaboracion' AND pa.tipo IN ('obligatoria', 'trabajo_final') AND a.de_la_carrera = 1
+           WHERE pr.nivel = 'licenciatura' AND p.estado IN ('vigente', 'cierre') AND pa.tipo IN ('obligatoria', 'trabajo_final') AND a.de_la_carrera = 1
              AND p.vigente_desde <= :anio
              AND (p.vigente_hasta IS NULL OR :anio <= p.vigente_hasta
                   + (SELECT (MAX(semestre) + 1) / 2 FROM plan_asignatura WHERE plan_id = p.id))

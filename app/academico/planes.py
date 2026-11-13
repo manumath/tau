@@ -48,7 +48,7 @@ def por_reforma(planes_: list[dict]) -> list[tuple[dict, list[dict]]]:
     grupos: dict = {}
     for p in planes_:
         clave = p["reforma_id"]
-        grupos.setdefault(clave, ({"nombre": p["reforma"] or p["nombre"], "resolucion": p["reforma_resolucion"],
+        grupos.setdefault(clave, ({"id": clave, "nombre": p["reforma"] or p["nombre"], "resolucion": p["reforma_resolucion"],
                                    "vigente_desde": p["vigente_desde"]}, []))[1].append(p)
     return list(grupos.values())
 

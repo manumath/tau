@@ -519,6 +519,25 @@ del plan son propias de la mención, obligatorias u optativas; una asignatura pu
 de ninguna mención es el tronco común. La lista de verificación exige que cada mención tenga asignaturas y cumpla sus
 mínimos. Un plan nuevo copiado de otro trae sus menciones.
 
+**Equivalencias con el plan anterior.** En la ficha de un borrador, **Equivalencias** compara su malla con la del plan que
+reemplaza (se puede elegir otro, por ejemplo cuando dos licenciaturas pasan a una: se compara con cada una). Cada
+asignatura del plan anterior queda *igual* (la misma sigla está en el plan nuevo, sin hacer nada), *equivalente* (se
+registró un grupo) o *sin equivalente*. **Agregar equivalencia** marca asignaturas del plan anterior y las del nuevo que
+las reemplazan: una a una, o varias por una. La lista de verificación avisa qué obligatorias del plan anterior no tienen
+equivalente. TAU no guarda materias cursadas ni notas: las equivalencias son del catálogo.
+
+**Poner en vigencia, iniciar el cierre y cerrar** (solo la Dirección de Carrera).
+- **Poner en vigencia:** el botón está en la ficha del borrador y se habilita cuando la lista de verificación no tiene
+  puntos en rojo. El plan vigente del mismo programa pasa solo a *en proceso de cierre*, con el último ingreso en el año
+  anterior al del plan nuevo; el plan nuevo deja de poder editarse. La página de la **reforma** (el título de cada grupo
+  en la lista) pone en vigencia todos sus planes a la vez, o ninguno.
+- **Iniciar el cierre** (plan vigente): pide el año del último ingreso y la resolución o el motivo. El plan ya no admite
+  nuevos ingresos, pero sigue en la oferta mientras egresa el último ingreso. Es lo que se usa con un programa que
+  desaparece en la reforma: no se cierra solo.
+- **Cerrar el plan** (en proceso de cierre): muestra cuántos estudiantes siguen cursando en él. Si quedan, hay que marcar
+  «Cerrar aunque queden estudiantes cursando» y dar el motivo. Un plan cerrado queda solo como historial, sale de la
+  oferta y no se vuelve a abrir.
+
 **Gestiones** (en el menú, para la Dirección de Carrera y la Coordinación): I y II (semestres), INV (invierno, julio) y VER (verano, en
 enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la gestión 2026). «Crear
 las gestiones del año» propone fechas que se ajustan al calendario aprobado y oferta ambos

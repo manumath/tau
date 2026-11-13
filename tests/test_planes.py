@@ -524,3 +524,141 @@ def test_pantallas_de_menciones(client, app):
     assert client.post(f"/docencia/planes/{pid}/malla/mencion/{m['id']}/quitar", headers=HX).status_code == 200
     assert menciones.listar(pid) == []
     assert client.post(f"/docencia/planes/{pid}/malla/mencion/99999/quitar", headers=HX).status_code == 404
+
+
+# --- PLAN §65, etapa 5: vigencia, cierre, equivalencias ------------------------------------------------------------
+
+def _listo(pid):
+    """Deja al borrador sin puntos por resolver (resolución puesta y requisitos que no existen, quitados)."""
+    from app.academico import malla
+    get_db().execute("UPDATE plan_estudios SET resolucion = 'HCU 1/2027' WHERE id = ?", [pid])
+    get_db().execute("""DELETE FROM requisito WHERE plan_asignatura_id IN (SELECT id FROM plan_asignatura WHERE plan_id = ?)
+                        AND sigla IS NOT NULL AND sigla NOT IN (SELECT a.sigla FROM plan_asignatura pa
+                        JOIN asignatura a ON a.id = pa.asignatura_id WHERE pa.plan_id = ?)""", [pid, pid])
+    assert malla.listo_para_vigencia(pid), malla.verificar(pid)
+
+
+def test_poner_en_vigencia_cierra_el_anterior(app):
+    from app.academico import vigencia
+    pid = _borrador_de("Maestría en Matemática")
+    antes = _plan("Maestría en Matemática")["id"]
+    assert vigencia.poner_en_vigencia(pid, 1)[0].startswith("Todavía falta")          # sin resolución
+    _listo(pid)
+    assert vigencia.poner_en_vigencia(pid, 1) == []
+    nuevo, viejo = planes.obtener(pid), planes.obtener(antes)
+    assert (nuevo["estado"], nuevo["vigente_hasta"]) == ("vigente", None) and nuevo["en_vigencia_en"]
+    assert (viejo["estado"], viejo["vigente_hasta"]) == ("cierre", 2026) and viejo["cierre_en"]
+    assert "Plan 2027" in viejo["motivo_cierre"]
+    assert vigencia.poner_en_vigencia(pid, 1) == ["Solo se pone en vigencia un plan en elaboración."]
+    assert pid in [p["id"] for p in planes.listar()]                                  # ya lo ve todo el mundo
+
+
+def test_reforma_en_vigencia_todo_o_nada(app):
+    from app.academico import reformas, vigencia
+    ids = {p["nombre"]: p["id"] for p in get_db().q("SELECT id, nombre FROM programa")}
+    rid, _ = reformas.crear(1, "Plan 2027", "HCU 1/2027", "2027", {ids["Maestría en Matemática"]: "copia",
+                                                                    ids["Licenciatura en Matemática"]: "copia"}, [])
+    errores = vigencia.poner_reforma_en_vigencia(rid, 1)
+    assert errores and "Licenciatura en Matemática" in errores[0]                     # el plan 2017 trae requisitos rotos
+    assert {p["estado"] for p in planes.listar(None)} == {"vigente"}                  # no cambió nada
+    for p in get_db().q("SELECT id FROM plan_estudios WHERE reforma_id = ?", [rid]):
+        _listo(p["id"])
+    assert vigencia.poner_reforma_en_vigencia(rid, 1) == []
+    estados = {(p["programa"], p["nombre"]): p["estado"] for p in planes.listar()}
+    assert estados[("Licenciatura en Matemática", "Plan 2027")] == "vigente"
+    assert estados[("Licenciatura en Matemática", "Plan 2017")] == "cierre"
+    assert estados[("Licenciatura en Matemática Aplicada", "Plan 2017")] == "vigente"  # otro programa: no se toca
+
+
+def test_iniciar_cierre_y_cerrar(app):
+    from app.academico import vigencia
+    pid = _plan("Maestría en Matemática Aplicada")["id"]
+    assert "último ingreso" in vigencia.iniciar_cierre(pid, "2010", "x", 1)[0]
+    assert "motivo" in vigencia.iniciar_cierre(pid, "2026", "", 1)[0]
+    assert vigencia.iniciar_cierre(pid, "2026", "Resolución HCU 5/2026", 1) == []
+    p = planes.obtener(pid)
+    assert (p["estado"], p["vigente_hasta"], p["motivo_cierre"]) == ("cierre", 2026, "Resolución HCU 5/2026")
+    assert vigencia.iniciar_cierre(pid, "2026", "x", 1) == ["Solo se inicia el cierre de un plan vigente."]
+    ext = get_db().t.persona_externa.insert(nombres="Ana", apellidos="Uno")["id"]
+    get_db().t.estudiante.insert(externo_id=ext, nivel="maestria", desde=2020, plan_id=pid, estado="cursando")
+    assert vigencia.estudiantes_en(pid) == 1
+    assert "Quedan 1 estudiantes" in vigencia.cerrar(pid, "", False, 1)[0]
+    assert "Indique el motivo" in vigencia.cerrar(pid, "", True, 1)[0]
+    assert vigencia.cerrar(pid, "Se reubican en el nuevo plan", True, 1) == []
+    p = planes.obtener(pid)
+    assert p["estado"] == "cerrado" and p["cerrado_en"] and "Cierre: Se reubican" in p["motivo_cierre"]
+    from app.academico import oferta
+    assert pid not in [x["id"] for x in get_db().q("SELECT id FROM plan_estudios WHERE estado IN ('vigente', 'cierre')")]
+    assert oferta.troncales(2027)                                                     # las licenciaturas siguen
+
+
+def test_equivalencias_entre_planes(app):
+    from app.academico import equivalencias
+    pid = _borrador_de("Licenciatura en Matemática", "vacio")
+    get_db().execute("UPDATE plan_estudios SET duracion_semestres = 1 WHERE id = ?", [pid])
+    from app.academico import malla
+    # Una igual (MAT-111, misma sigla), una nueva que reemplaza a MAT-112 y MAT-113 juntas.
+    for sigla, nombre in (("MAT-111", ""), ("MAT-190", "Cálculo y geometría")):
+        assert malla.guardar_fila(pid, None, {"tipo": "obligatoria", "semestre": "1", "sigla": sigla, "nombre": nombre,
+                                             "horas_teoricas": "4"}, [], 1) == []
+    ant = equivalencias.anterior(pid)
+    assert ant["id"] == _plan("Licenciatura en Matemática")["id"]
+    b = equivalencias.brechas(ant["id"], pid)
+    estados = {r["fila"]["sigla"]: r["estado"] for r in b["filas"]}
+    assert estados["MAT-111"] == "igual" and estados["MAT-112"] == "sin" and b["sin_obligatorias"] > 20
+    assert [f["sigla"] for f in b["nuevas"]] == ["MAT-190"]
+    ids = {a["sigla"]: a["id"] for a in get_db().q("SELECT id, sigla FROM asignatura")}
+    assert "ya está en el nuevo" in equivalencias.crear(ant["id"], pid, [ids["MAT-111"]], [ids["MAT-190"]], "", 1)[0]
+    assert equivalencias.crear(ant["id"], pid, [ids["MAT-112"], ids["MAT-113"]], [ids["MAT-190"]], "Se fusionan", 1) == []
+    assert "otra equivalencia" in equivalencias.crear(ant["id"], pid, [ids["MAT-112"]], [ids["MAT-190"]], "", 1)[0]
+    b = equivalencias.brechas(ant["id"], pid)
+    estados = {r["fila"]["sigla"]: r for r in b["filas"]}
+    assert estados["MAT-112"]["estado"] == estados["MAT-113"]["estado"] == "equivalente"
+    assert estados["MAT-112"]["destino"] == ["MAT-190"] and b["nuevas"] == []
+    aviso = next(v for v in malla.verificar(pid) if v["clave"] == "equivalencias")
+    assert aviso["nivel"] == "aviso" and "MAT-114" in aviso["detalle"]
+    assert equivalencias.eliminar(pid, b["grupos"][0]["id"], 1) and equivalencias.grupos(ant["id"], pid) == []
+    # Solo desde un borrador, y contra un plan que no sea borrador.
+    assert equivalencias.crear(pid, ant["id"], [], [], "", 1) == ["Las equivalencias se registran desde un plan en elaboración."]
+
+
+def test_pantallas_de_vigencia_y_equivalencias(client, app):
+    from app.academico import vigencia
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    pid = _borrador_de("Maestría en Matemática")
+    rid = planes.obtener(pid)["reforma_id"]
+    login(client, "inv@test.cl", PASS_TEMP)
+    permisos.asignar(emmy, "coordinacion_academica", unidades.id_de("CMAT"))     # elabora, pero no decide
+    r = client.get(f"/docencia/planes/{pid}")
+    assert "Poner en vigencia" not in r.text and "Equivalencias" in r.text
+    r = client.get(f"/docencia/planes/reforma/{rid}")
+    assert "Planes de la reforma" in r.text and "Poner en vigencia la reforma" not in r.text
+    for ruta in (f"/docencia/planes/{pid}/vigencia", f"/docencia/planes/reforma/{rid}/vigencia"):
+        assert client.post(ruta, headers=HX).status_code == 403
+    vigente = _plan("Maestría en Matemática")["id"]
+    assert client.get(f"/docencia/planes/{vigente}/cierre/iniciar", headers=HX).status_code == 403
+    r = client.get(f"/docencia/planes/{pid}/equivalencias")
+    assert "Equivalencias con el plan anterior" in r.text and "iguales" in r.text
+    r = client.post(f"/docencia/planes/{pid}/equivalencias", headers=HX, data={"origen": str(vigente)})
+    assert "al menos una asignatura" in r.text
+    # La Dirección de Carrera decide.
+    permisos.asignar(emmy, "direccion_carrera", unidades.id_de("CMAT"))
+    assert "Poner en vigencia" in client.get(f"/docencia/planes/{pid}").text
+    assert "Iniciar el cierre" in client.get(f"/docencia/planes/{vigente}").text
+    assert "Iniciar el cierre del plan" in client.get(f"/docencia/planes/{vigente}/cierre/iniciar", headers=HX).text
+    assert client.get(f"/docencia/planes/{pid}/cierre/iniciar", headers=HX).status_code == 404   # no es vigente
+    r = client.post(f"/docencia/planes/{vigente}/cierre/iniciar", headers=HX, data={"anio": "2026", "motivo": ""})
+    assert "resolución o el motivo" in r.text
+    r = client.post(f"/docencia/planes/{pid}/vigencia", headers=HX)
+    assert r.headers["hx-redirect"] == f"/docencia/planes/{pid}" and planes.obtener(pid)["estado"] == "elaboracion"  # falta resolución
+    _listo(pid)
+    assert "Cerrar el plan" not in client.get(f"/docencia/planes/{pid}").text
+    client.post(f"/docencia/planes/{pid}/vigencia", headers=HX)
+    assert planes.obtener(pid)["estado"] == "vigente"
+    assert "Cerrar el plan" in client.get(f"/docencia/planes/{vigente}").text
+    assert "Quedan" not in client.get(f"/docencia/planes/{vigente}/cierre/cerrar", headers=HX).text
+    r = client.post(f"/docencia/planes/{vigente}/cierre/cerrar", headers=HX, data={"motivo": "Sin estudiantes"})
+    assert r.headers["hx-redirect"] == f"/docencia/planes/{vigente}" and vigencia.estudiantes_en(vigente) == 0
+    assert planes.obtener(vigente)["estado"] == "cerrado"
+    assert "Motivo del cierre" in client.get(f"/docencia/planes/{vigente}").text

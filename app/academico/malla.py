@@ -4,7 +4,7 @@ import csv
 import io
 import re
 
-from app.academico import importar_planes, menciones, planes
+from app.academico import equivalencias, importar_planes, menciones, planes
 from app.comun.db import auditar, get_db, transaccion
 
 SIGLA = re.compile(r"^[A-Z]{2,4}-\d{3}$")
@@ -358,6 +358,9 @@ def verificar(pid: int) -> list[dict]:
     men = menciones.verificar(pid)
     if men:
         res.append(men)
+    eq = equivalencias.verificar(pid)
+    if eq:
+        res.append(eq)
     pendientes = get_db().q("SELECT COUNT(*) n FROM observacion_plan WHERE plan_id = ? AND estado = 'pendiente'", [pid])[0]["n"]
     punto("observaciones", "Observaciones resueltas", "aviso" if pendientes else "ok",
           f"{pendientes} por revisar." if pendientes else "")
