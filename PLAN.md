@@ -3457,3 +3457,42 @@ borra el dato sin dejar cuándo ni por qué.
   queda y hay que usar otro paralelo o reabrir), si las materias retiradas deben contar en el cuerpo de materias dictadas de
   los informes de calidad, y el aviso a docentes por correo cuando se cambia una asignación (hoy siguen su preferencia de
   avisos).
+
+## 67. Más servicios para el estudiante (13-nov-2026)
+
+Pedido del usuario: ampliar el portal del estudiante (§49, §58) con servicios que se apoyen en lo que TAU ya tiene. **Quedan
+fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin guardar materias ni notas oficiales.
+
+### Decisiones del 13-nov-2026
+- **Alerta temprana y apoyo:** el estudiante **pide apoyo** en un clic y **ve en su pantalla las señales** que TAU observa de él
+  (estado, último ciclo, reuniones de tutoría, encuestas sin responder). Las señales se calculan al momento, no se guardan
+  como etiqueta. Su tutor y la Dirección de Carrera ven los casos abiertos (los que él pidió o abrió el tutor o la Dirección
+  avisándole) con fecha de vencimiento: ningún caso dura más de un semestre sin renovarse. Las notas confidenciales de
+  tutoría nunca entran.
+- **Buzón de consultas y reclamos:** identificado por omisión, con respuesta; puede marcarse **anónimo** (sin vínculo con la
+  cuenta: la respuesta se publica en las preguntas frecuentes). Lo atienden la Dirección de Carrera y la Coordinación académica.
+- **Bolsa de empleo:** la **Dirección de Carrera publica** las ofertas a nombre de los empleadores registrados (sin cuentas nuevas).
+- **«Mi plan de estudios»:** el estudiante marca lo que aprobó como ayuda personal, **privada**; puede **compartirla con su
+  tutor**. Nunca va a informes ni a la Dirección.
+- **Mentorías de egresados:** ya existen (§50, directorio de egresados); no se repiten.
+
+### Servicios y etapas (un commit cada una)
+1. (hecha, 13-nov-2026) Menú del estudiante agrupado y **Mi plan de estudios** (malla del plan, marcas privadas, compartir con el tutor).
+2. **Calendario académico:** semestre, plazos de convocatorias, defensas y eventos del estudiante; exportable (.ics).
+3. **Tutoría desde el estudiante:** ver su tutor y la fecha de sus reuniones (no su contenido), pedir una reunión; el tutor la ve.
+4. **Oportunidades:** becas, movilidad, pasantías, ayudantías de investigación (las publica el responsable de un proyecto) y
+   empleo para egresados, con postulación y decisión.
+5. **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
+6. **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
+7. **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
+8. **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
+9. **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
+10. **Biblioteca y recursos:** apuntes, guías y enlaces que suben los docentes, por asignatura.
+11. Pruebas de navegador, manual, guía y CLAUDE.md.
+
+### Etapa 1 (hecha): menú agrupado y «Mi plan de estudios»
+- **Migración 0072:** `estudiante_aprobada` (por asignatura, no por plan) y `cuenta_estudiante.comparte_plan_tutor`.
+- `app/estudiantil/mi_plan.py` y `rutas/mi_plan.py` (`/estudiante/plan`): avance en las obligatorias, asignaturas que puede cursar
+  (requisitos aprobados; «Egresado» exige las demás obligatorias) y las marcas, que alternan con un botón. Las marcas son
+  privadas; con «Compartir con mi tutor» las ve el tutor en `/tutoria/{id}`. No las ve ni la Dirección.
+- El menú del estudiante pasa a grupos (Mi carrera, Servicios) y la barra del teléfono tiene sus cuatro primeras secciones y «Más».

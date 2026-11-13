@@ -19,6 +19,7 @@ ICONOS = {"mia": "presentation", "preparacion": "calendar-check", "planes": "boo
           "tutoria": "message-circle", "egresados": "graduation-cap",
           "empleadores": "building-2"}
 # Las tres secciones de la barra de abajo en el teléfono (además de Inicio y «Más»): las primeras que la persona ve.
+PRIORIDAD_MOVIL_ESTUDIANTE = ("estudiante", "plan", "calendario", "oportunidades", "comunicados", "grado")
 PRIORIDAD_MOVIL = ("productos", "proyectos", "mia", "investigadores", "informes", "usuarios", "cohortes")
 
 
@@ -50,11 +51,13 @@ def _en_grado(uid: int) -> bool:
 def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
     """[(título del grupo o None, ítems)], solo los grupos con algo visible."""
     if auth.get("solo_estudiante"):
+        # El portal del estudiante, en grupos (PLAN §67): cada servicio nuevo se agrega a su grupo.
         return [(None, [_item("estudiante", "Mi seguimiento", "/estudiante", "graduation-cap"),
-                        _item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
-                        _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
-                        _item("grado", "Grado", "/estudiante/grado", "scroll"),
-                        _item("avisos", "Avisos", "/avisos", "bell")])]
+                        _item("avisos", "Avisos", "/avisos", "bell")]),
+                ("Mi carrera", [_item("plan", "Mi plan de estudios", "/estudiante/plan", "book-marked")]),
+                ("Servicios", [_item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
+                               _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
+                               _item("grado", "Grado", "/estudiante/grado", "scroll")])]
     puede = lambda accion: permisos.puede(auth, accion)  # noqa: E731
     investigacion = []
     if auth["es_investigador"]:
@@ -117,7 +120,7 @@ def movil(auth: dict) -> list[dict]:
     """Barra de abajo en el teléfono: Inicio y las tres primeras secciones según PRIORIDAD_MOVIL (sin
     insignias: sus ids ya están en el menú lateral)."""
     todos = {i["clave"]: i for _, items in menu(auth) for i in items}
-    if auth.get("solo_estudiante"):
-        return list(todos.values())
+    if auth.get("solo_estudiante"):      # la barra de abajo: cuatro secciones (las más usadas que tenga) y «Más»
+        return [{**todos[c], "insignia": None} for c in PRIORIDAD_MOVIL_ESTUDIANTE if c in todos][:4]
     elegidos = [todos[c] for c in PRIORIDAD_MOVIL if c in todos][:3]
     return [todos["inicio"], *[{**i, "insignia": None} for i in elegidos]]

@@ -685,6 +685,17 @@ puede ser «Por verificar», «Verificada» o «Con observaciones»; si el estud
 su evidencia, vuelve a quedar por verificar. Puede eliminar lo que registró. El sistema no muestra ni guarda
 materias ni notas.
 
+### Más servicios del estudiante (PLAN §67)
+
+El menú del estudiante se agrupa en **Mi carrera** y **Servicios**. Cada servicio nuevo aparece en su grupo.
+
+**Mi plan de estudios** (Mi carrera): la malla del plan del estudiante, por semestre, con sus horas y requisitos. El
+estudiante marca (el botón junto a cada asignatura) lo que aprobó, solo como **ayuda personal**: TAU no tiene sus notas y lo
+oficial lo emite Kardex. El sistema calcula cuántas obligatorias aprobó y qué **puede cursar ahora** (las que tienen sus
+requisitos aprobados; el trabajo final se habilita con todas las demás). Las marcas son **privadas**: no van a informes ni
+a la Dirección. «Compartir mi avance con mi tutor(a)» las muestra al tutor en su ficha de tutoría (tarjeta «Avance en su
+plan»). Si el plan del estudiante aún no está registrado, la pantalla lo dice y pide avisar a la Dirección de Carrera.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

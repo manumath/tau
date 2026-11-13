@@ -13,7 +13,7 @@ from app.comun import estudiantes, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
-from app.estudiantil import cohortes, tutoria
+from app.estudiantil import cohortes, mi_plan, tutoria
 
 rt = APIRouter()
 BASE = "/tutoria"
@@ -90,6 +90,19 @@ def _reunion(r, propia):
         cls="flex items-start justify-between gap-3 py-3")
 
 
+def _avance_compartido(auth, externo_id):
+    """El avance en su plan, solo si el estudiante decidió compartirlo con su tutor(a) (PLAN §67)."""
+    av = mi_plan.para_tutor(auth["id"], externo_id)
+    if not av:
+        return ""
+    return Card(H3("Avance en su plan", cls="text-base font-semibold mb-1"),
+                P("Lo marca el propio estudiante y lo comparte con usted; no es oficial (lo oficial lo emite Kardex).",
+                  cls=(TextPresets.muted_sm, "mb-2")),
+                Span(f"{av['hechas']} de {av['obligatorias']} obligatorias ({av['pct']} %)", cls="text-sm font-medium"),
+                P("Puede cursar: " + (", ".join(f"{f['sigla']}" for f in av["disponibles"][:10]) or "—"),
+                  cls=(TextPresets.muted_sm, "mt-1")))
+
+
 @rt(f"{BASE}/{{externo_id}}")
 def get(auth, externo_id: int):
     rol = _acceso(auth, externo_id)
@@ -118,6 +131,7 @@ def get(auth, externo_id: int):
                  Ul(*[_reunion(r, rol == "tutor" and r["tutor_id"] == auth["id"]) for r in lista], cls="divide-y divide-border")
                  if lista else P("Aún no hay reuniones registradas.", cls=(TextPresets.muted_sm, "py-4 text-center"))),
                 cls="lg:col-span-2"),
+            _avance_compartido(auth, externo_id) if rol == "tutor" else "",
             Card(H3("Actividad estudiantil verificada", cls="text-base font-semibold mb-2"),
                  Ul(*[Li(a["titulo"], Span(f" · {act.TIPOS[a['tipo']]} · {a['fecha_inicio']}", cls=TextPresets.muted_sm), cls="text-sm")
                       for a in actividad], cls="space-y-1") if actividad

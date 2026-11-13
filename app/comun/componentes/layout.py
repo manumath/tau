@@ -193,11 +193,10 @@ def pestanas_movil(usuario: dict):
                href=i["href"], data_nav=True,
                cls="enlace-menu flex flex-col items-center justify-center gap-0.5 px-1 text-[11px] "
                    "text-muted-foreground") for i in MENU_MOVIL(usuario)]
-    if not usuario.get("solo_estudiante"):
-        items.append(fh.Button(UkIcon("ellipsis", height=20, width=20), Span("Más"), type="button",
-                               data_accion="abrir-menu", aria_controls="menu-lateral",
-                               cls="flex flex-col items-center justify-center gap-0.5 px-1 text-[11px] "
-                                   "text-muted-foreground"))
+    items.append(fh.Button(UkIcon("ellipsis", height=20, width=20), Span("Más"), type="button",
+                           data_accion="abrir-menu", aria_controls="menu-lateral",
+                           cls="flex flex-col items-center justify-center gap-0.5 px-1 text-[11px] "
+                               "text-muted-foreground"))
     return fh.Nav(*items, aria_label="Secciones principales",
                   cls="pestanas-movil no-imprimir lg:hidden fixed inset-x-0 bottom-0 z-30 grid h-16 border-t "
                       "border-border bg-background " + COLUMNAS[len(items)])
