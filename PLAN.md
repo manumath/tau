@@ -3484,7 +3484,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
    empleo para egresados, con postulación y decisión.
 5. (hecha, 13-nov-2026) **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
 6. (hecha, 13-nov-2026) **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
-7. **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
+7. (hecha, 13-nov-2026) **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
 8. **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
 9. **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
 10. **Biblioteca y recursos:** apuntes, guías y enlaces que suben los docentes, por asignatura.
@@ -3533,3 +3533,10 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
   asistencia sigue siendo `comunicado_destinatario.asistio` (ahora también se registra en eventos para todos con inscripción) y el
   certificado exige estar inscrito (no en espera) y haber asistido. Código de verificación: hash corto del evento, la persona y
   la fecha (no hay verificación pública).
+
+### Etapa 7 (hecha): encuestas con retorno
+- **Migración 0077:** `encuesta.retorno`, `acciones` y `retorno_publicado_en`. `encuestas.guardar_retorno`, `publicar_retorno` (encuesta
+  cerrada; si es anónima, desde `MIN_ANONIMO` respuestas), `retirar_retorno`, `por_responder` y `retornos_para`.
+- `/estudiante/encuestas`: las encuestas por responder (con su enlace personal; el cierre va al calendario) y el retorno de las que
+  cerraron, para los invitados: hallazgos, acciones y resultados agregados de escala y opciones. **Nunca** las respuestas
+  abiertas. El personal lo escribe y publica en los resultados de la encuesta (`gestionar_encuestas`).

@@ -483,3 +483,66 @@ def test_pantallas_de_inscripcion_y_certificado(client, sofia):
     r = client.get(f"/estudiante/comunicados/{cid}/certificado")
     assert "Certificado de participación" in r.text and "Curso corto de LaTeX" in r.text and "8 horas académicas" in r.text
     assert "Código de verificación: TAU-" in r.text and "Sofía" in r.text
+
+
+# --- Etapa 7: encuestas con retorno -------------------------------------------------------------------------------------------
+
+def _encuesta_de_sofia(anonima=1, cierra=None):
+    from app.estudiantil import encuestas
+    from tests.test_encuestas import _respuestas_validas
+    eid = encuestas.crear_desde_plantilla("satisfaccion", None)
+    get_db().execute("UPDATE encuesta SET anonima = ?, cierra_el = ? WHERE id = ?", [anonima, cierra, eid])
+    ext = _externo("1111111")
+    encuestas.abrir(eid, None)
+    inv = get_db().q("SELECT token FROM invitacion_encuesta WHERE encuesta_id = ? AND externo_id = ?", [eid, ext])
+    assert inv, "Sofía debería estar invitada"
+    return eid, ext, inv[0]["token"], _respuestas_validas
+
+
+def test_por_responder_y_retorno_de_una_encuesta(sofia):
+    from datetime import date, timedelta
+    from app.estudiantil import calendario, encuestas
+    cierre = (date.today() + timedelta(days=9)).isoformat()
+    eid, ext, token, validas = _encuesta_de_sofia(anonima=1, cierra=cierre)
+    [p] = encuestas.por_responder(ext)
+    assert (p["id"], p["token"]) == (eid, token)
+    assert any(e["tipo"] == "encuesta" and e["fecha"] == cierre for e in calendario.eventos(ext))
+    assert encuestas.guardar_retorno(eid, "x", "")[0].startswith("El retorno se escribe")     # aún abierta
+    assert encuestas.responder(token, validas(eid)) == [] and encuestas.por_responder(ext) == []
+    assert encuestas.cerrar(eid, None)
+    assert encuestas.publicar_retorno(eid)[0].startswith("Escriba")
+    assert encuestas.guardar_retorno(eid, "Piden más laboratorios", "Compraremos equipos") == []
+    assert "anónima" in encuestas.publicar_retorno(eid)[0]                                   # 1 respuesta < 5
+    assert encuestas.retornos_para(ext) == []
+    get_db().execute("UPDATE encuesta SET anonima = 0 WHERE id = ?", [eid])
+    assert encuestas.publicar_retorno(eid) == []
+    [r] = encuestas.retornos_para(ext)
+    assert r["retorno"] == "Piden más laboratorios" and r["n"] == 1 and r["invitadas"] >= 1
+    assert r["preguntas"] and all(p["pregunta"]["tipo"] != "texto" for p in r["preguntas"])       # sin respuestas abiertas
+    assert not any("textos" in p for p in r["preguntas"])
+    encuestas.retirar_retorno(eid)
+    assert encuestas.retornos_para(ext) == []
+
+
+def test_pantallas_de_encuestas_del_estudiante_y_del_personal(client, sofia):
+    from app.estudiantil import encuestas
+    eid, ext, token, validas = _encuesta_de_sofia(anonima=0)
+    r = client.get("/estudiante/encuestas")
+    assert "Por responder" in r.text and f"/encuesta/{token}" in r.text and "Encuestas" in r.text
+    encuestas.responder(token, validas(eid))
+    encuestas.cerrar(eid, None)
+    assert "No tiene encuestas por responder" in client.get("/estudiante/encuestas").text
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    r = client.get(f"/docencia/encuestas/{eid}/resultados")
+    assert "Retorno a quienes participaron" in r.text
+    r = client.post(f"/docencia/encuestas/{eid}/retorno/publicar", data={"retorno": "Hallazgo", "acciones": "Acción"},
+                    follow_redirects=False)
+    assert r.status_code == 303 and encuestas.obtener(eid)["retorno_publicado_en"]
+    assert "Publicado a los participantes" in client.get(f"/docencia/encuestas/{eid}/resultados").text
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    r = client.get("/estudiante/encuestas")
+    assert "Lo que encontramos" in r.text and "Hallazgo" in r.text and "Lo que haremos" in r.text and "Acción" in r.text
+    assert "Participaron 1 de" in r.text and "Resultados" in r.text and "Más laboratorios" not in r.text

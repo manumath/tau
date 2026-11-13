@@ -56,6 +56,12 @@ def _oportunidades(externo_id: int, desde: str, hasta: str):
                       f"/estudiante/oportunidades/{o['id']}")
 
 
+def _encuestas(externo_id: int, desde: str, hasta: str):
+    from app.estudiantil import encuestas
+    for e in encuestas.por_responder(externo_id):
+        yield _evento(e["cierra_el"], f"Cierra la encuesta: {e['titulo']}", "encuesta", "", f"/encuesta/{e['token']}")
+
+
 def _eventos(uid: int, desde: str, hasta: str):
     for c in get_db().q(
             """SELECT c.* FROM comunicado c WHERE c.tipo = 'evento' AND c.estado = 'publicado' AND c.inicio IS NOT NULL
@@ -72,7 +78,7 @@ def eventos(externo_id: int, desde: date | None = None, hasta: date | None = Non
     usuario = estudiantes.usuario_de(externo_id)
     uid = usuario["id"] if usuario else 0
     todos = [e for fuente in (_gestiones(d, h), _auxiliaturas(d, h), _grado(externo_id, d, h), _eventos(uid, d, h),
-                    _tutoria(externo_id, d, h), _oportunidades(externo_id, d, h))
+                    _tutoria(externo_id, d, h), _oportunidades(externo_id, d, h), _encuestas(externo_id, d, h))
              for e in fuente if e]
     return sorted((e for e in todos if d <= e["fecha"] <= h), key=lambda e: (e["fecha"], e["hora"], e["titulo"]))
 

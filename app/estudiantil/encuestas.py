@@ -494,3 +494,56 @@ def csv_resultados(eid: int) -> str | None:
         for k, n in p["conteo"].items():
             w.writerow([q["texto"], TIPOS_PREGUNTA[q["tipo"]], texto_valor(q, str(k)), n])
     return sal.getvalue()
+
+
+# --- Retorno a quienes participaron (PLAN §67, etapa 7) --------------------------------------------------------------------
+
+def guardar_retorno(eid: int, retorno: str, acciones: str) -> list[str]:
+    e = obtener(eid)
+    if not e or e["estado"] != "cerrada":
+        return ["El retorno se escribe cuando la encuesta está cerrada."]
+    retorno, acciones = (retorno or "").strip(), (acciones or "").strip()
+    if len(retorno) > 4000 or len(acciones) > 4000:
+        return ["Cada texto admite hasta 4.000 caracteres."]
+    get_db().execute("UPDATE encuesta SET retorno = ?, acciones = ? WHERE id = ?", [retorno or None, acciones or None, eid])
+    return []
+
+
+def publicar_retorno(eid: int) -> list[str]:
+    e = obtener(eid)
+    if not e or e["estado"] != "cerrada":
+        return ["Solo se publica el retorno de una encuesta cerrada."]
+    if not (e["retorno"] or "").strip():
+        return ["Escriba «lo que encontramos» antes de publicar."]
+    if e["anonima"] and n_respuestas(eid) < MIN_ANONIMO:
+        return [f"Es anónima y tiene menos de {MIN_ANONIMO} respuestas: no se publica nada, para proteger a quienes respondieron."]
+    get_db().execute(f"UPDATE encuesta SET retorno_publicado_en = {AHORA} WHERE id = ?", [eid])
+    return []
+
+
+def retirar_retorno(eid: int):
+    get_db().execute("UPDATE encuesta SET retorno_publicado_en = NULL WHERE id = ?", [eid])
+
+
+def por_responder(externo_id: int) -> list[dict]:
+    """Encuestas abiertas a las que lo invitaron y aún no responde (con su enlace personal)."""
+    return get_db().q(
+        """SELECT e.id, e.titulo, e.cierra_el, i.token FROM invitacion_encuesta i JOIN encuesta e ON e.id = i.encuesta_id
+           WHERE i.externo_id = ? AND e.estado = 'abierta' AND i.token IS NOT NULL AND i.respondida_en IS NULL
+           ORDER BY e.cierra_el IS NULL, e.cierra_el, e.id""", [externo_id])
+
+
+def retornos_para(externo_id: int) -> list[dict]:
+    """Retornos publicados de encuestas a las que lo invitaron, con los resultados agregados de las preguntas de escala y de
+    opciones (las respuestas abiertas no se muestran: podrían identificar a alguien)."""
+    filas = get_db().q(
+        """SELECT e.* FROM encuesta e WHERE e.estado = 'cerrada' AND e.retorno_publicado_en IS NOT NULL
+           AND EXISTS (SELECT 1 FROM invitacion_encuesta i WHERE i.encuesta_id = e.id AND i.externo_id = ?)
+           ORDER BY e.retorno_publicado_en DESC""", [externo_id])
+    res = []
+    for e in filas:
+        r = resultados(e["id"])
+        e["n"], e["invitadas"], e["oculto"] = r["n"], r["invitadas"], r["oculto"]
+        e["preguntas"] = [p for p in r["preguntas"] if p["pregunta"]["tipo"] != "texto"]
+        res.append(e)
+    return res

@@ -62,6 +62,7 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                                _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
                                _item("oportunidades", "Oportunidades", "/estudiante/oportunidades", "briefcase"),
                                _item("temas", "Temas de grado", "/estudiante/temas", "lightbulb"),
+                               _item("encuestas", "Encuestas", "/estudiante/encuestas", "clipboard-list"),
                                _item("grado", "Grado", "/estudiante/grado", "scroll")])]
     puede = lambda accion: permisos.puede(auth, accion)  # noqa: E731
     investigacion = []

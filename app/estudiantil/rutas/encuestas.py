@@ -380,6 +380,56 @@ def _resultado_pregunta(p, eid=None, auth=None):
                 cls="space-y-2")
 
 
+def _retorno(e, r):
+    """«Lo que encontramos» y «lo que haremos» para quienes participaron (PLAN §67): se publica con la encuesta cerrada."""
+    publicado = bool(e["retorno_publicado_en"])
+    url = f"{BASE}/{e['id']}/retorno"
+    return Card(
+        H3("Retorno a quienes participaron", cls="text-base font-semibold"),
+        P("Cuente a los invitados qué encontró la Carrera y qué hará. Lo ven en su portal junto con los resultados agregados "
+          "(las respuestas abiertas nunca se muestran)." + (" Esta encuesta es anónima: se publica desde "
+                                                            f"{r['minimo']} respuestas." if e["anonima"] else ""),
+          cls=(TextPresets.muted_sm, "mb-2")),
+        insignia("Publicado a los participantes", "verde", icono="check") if publicado else "",
+        Form(campo("Lo que encontramos", fh.Textarea(e["retorno"] or "", name="retorno", rows=4, maxlength="4000", cls="uk-textarea")),
+             campo("Lo que haremos", fh.Textarea(e["acciones"] or "", name="acciones", rows=4, maxlength="4000", cls="uk-textarea")),
+             Div(Button("Guardar", type="submit", cls=ButtonT.default),
+                 Button("Publicar" if not publicado else "Volver a publicar", type="submit", formaction=f"{url}/publicar",
+                        cls=ButtonT.primary),
+                 Button("Retirar", type="submit", formaction=f"{url}/retirar", cls=ButtonT.ghost) if publicado else "",
+                 cls="flex gap-2"), method="post", action=url, cls="space-y-3"), cls="mb-6")
+
+
+@rt(f"{BASE}/{{eid}}/retorno")
+async def post(auth, sess, eid: int, req):
+    if not _gestiona(auth):
+        return _no()
+    f = await req.form()
+    errores = encuestas.guardar_retorno(eid, f.get("retorno", ""), f.get("acciones", ""))
+    add_toast(sess, errores[0] if errores else "Guardado.", "error" if errores else "success")
+    return Redirect(f"{BASE}/{eid}/resultados")
+
+
+@rt(f"{BASE}/{{eid}}/retorno/publicar")
+async def post(auth, sess, eid: int, req):
+    if not _gestiona(auth):
+        return _no()
+    f = await req.form()
+    errores = encuestas.guardar_retorno(eid, f.get("retorno", ""), f.get("acciones", "")) or encuestas.publicar_retorno(eid)
+    add_toast(sess, errores[0] if errores else "Publicado: los participantes ya lo ven en su portal.",
+              "error" if errores else "success")
+    return Redirect(f"{BASE}/{eid}/resultados")
+
+
+@rt(f"{BASE}/{{eid}}/retorno/retirar")
+def post(auth, sess, eid: int):
+    if not _gestiona(auth):
+        return _no()
+    encuestas.retirar_retorno(eid)
+    add_toast(sess, "El retorno ya no se muestra.", "info")
+    return Redirect(f"{BASE}/{eid}/resultados")
+
+
 @rt(f"{BASE}/{{eid}}/resultados")
 def get(auth, eid: int):
     if not _ver(auth):
@@ -398,6 +448,7 @@ def get(auth, eid: int):
             A(UkIcon("download", height=16, width=16), "Descargar CSV", href=f"{BASE}/{eid}/resultados.csv",
               cls="uk-btn uk-btn-default inline-flex items-center gap-1") if not r["oculto"] else "",
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
+        _retorno(e, r) if _gestiona(auth) and e["estado"] == "cerrada" else "",
         Card(P(f"Por ser anónima, los resultados se muestran desde {r['minimo']} respuestas, para que nadie pueda saber "
                f"quién respondió qué. Hay {r['n']}.", cls="text-sm")) if r["oculto"]
         else Div(*[_resultado_pregunta(p, eid, auth) for p in r["preguntas"]], cls="space-y-4"),

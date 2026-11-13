@@ -62,7 +62,7 @@ def test_cuenta_de_estudiante(sofia):  # noqa: F811
     # (cuatro secciones y «Más»).
     lateral = ["/estudiante", "/avisos", "/estudiante/plan", "/estudiante/calendario", "/estudiante/tutoria",
                "/estudiante/comunicados", "/estudiante/auxiliaturas", "/estudiante/oportunidades",
-               "/estudiante/temas", "/estudiante/grado"]
+               "/estudiante/temas", "/estudiante/encuestas", "/estudiante/grado"]
     movil = ["/estudiante", "/estudiante/plan", "/estudiante/calendario", "/estudiante/oportunidades"]
     assert re.findall(r'href="([^"]+)"[^>]*data-nav', r) == lateral + movil
     assert 'id="busqueda-global"' not in r and "<span>Más</span>" in r   # sin búsqueda, con «Más»

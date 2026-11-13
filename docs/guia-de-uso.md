@@ -742,6 +742,15 @@ imprimible con su nombre, el evento, la fecha, las horas académicas y un códig
 evento, la tarjeta de asistencia muestra para cada persona su estado de inscripción (inscrito o en espera); después de que empieza
 el evento, el organizador marca quién asistió, también en los eventos para todos.
 
+**Encuestas** (Servicios): el estudiante ve las encuestas a las que lo invitaron y aún no responde (con el enlace personal para
+responderlas; el cierre entra en su calendario) y, de las que ya cerraron, el **retorno** que publicó la Carrera: «lo que
+encontramos», «lo que haremos» y los resultados agregados de las preguntas de escala y de opciones. Las respuestas abiertas
+nunca se muestran. Una encuesta anónima solo publica su retorno si alcanzó el mínimo de respuestas.
+
+**Publicar el retorno de una encuesta** (Dirección de Carrera y Coordinación académica, en los resultados de una encuesta cerrada):
+la tarjeta «Retorno a quienes participaron» tiene «Lo que encontramos» y «Lo que haremos». **Publicar** los muestra a las personas
+invitadas en su portal; **Retirar** los oculta.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes
