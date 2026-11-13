@@ -3601,7 +3601,7 @@ docente). TAU sigue sin guardar notas ni asistencia.
 3. (hecha, 13-nov-2026) **Programa analítico (syllabus)** por materia y gestión, con versión; el estudiante lo ve en su plan.
 4. (hecha, 13-nov-2026) **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
 5. (hecha, 13-nov-2026) **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
-6. **Mi historial docente** (materias, tesis tuteladas y juradas, proyectos, productos) y **certificados** de tribunal y tutoría.
+6. (hecha, 13-nov-2026) **Mi historial docente** (materias, tesis tuteladas y juradas, proyectos) y **certificados** de tribunal y tutoría.
 7. Pruebas de navegador, manual y documentación.
 
 ### Etapa 1 (hecha): mis pendientes y mi calendario
@@ -3664,4 +3664,14 @@ docente). TAU sigue sin guardar notas ni asistencia.
 - **Decisiones mías por confirmar:** se evalúa al titular del paralelo (no a los auxiliares); ocho afirmaciones fijas (no editables por ahora);
   una evaluación por semestre I o II (no de temporada); con la API de Kardex, saber en qué paralelos está un estudiante cuesta una
   llamada por paralelo hasta que ofrezca una consulta por estudiante; los resultados no entran en el CV ni en los informes.
+
+### Etapa 6 (hecha): mi historial y certificados
+- Sin migración. `app/academico/historial.py` reúne materias (de `oferta_docente`, con su rol y las retiradas), tutorías y tribunales de grado,
+  tribunales de auxiliaturas, proyectos y la cifra de tutorados; solo de la propia persona (`auth["id"]`).
+- **Certificados:** tutoría y tribunal de **trámites de grado concluidos** (aprobado, defendido, rechazado, reprobado) y tribunal de auxiliaturas de
+  **convocatorias concluidas**. Código `TAU-` + hash corto de (tipo, referencia, persona). La Dirección y quienes ven la carga
+  (`ver_carga`) **verifican un código** en `/docencia/certificados/verificar` (se audita). Incluye el nombre del estudiante del trabajo.
+- **Decisiones mías por confirmar:** la verificación es interna (no hay página pública: expondría datos personales); el certificado de tutor de un trabajo
+  rechazado o reprobado también se emite (es un hecho: tuteló); no hay certificado de docencia (la emite la Universidad); las evaluaciones docentes
+  no entran en el historial.
 

@@ -1,4 +1,5 @@
 """PLAN §68: servicios para el docente (pendientes, calendario…)."""
+import re
 from datetime import date, timedelta
 
 from app.academico import docente
@@ -503,3 +504,77 @@ def test_pantallas_de_evaluacion_del_estudiante(sofia):
     assert r.status_code in (302, 303) and evaluacion.n_respuestas(eid) == 1
     assert sofia.get(f"/estudiante/evaluacion/{oid}").status_code == 403           # ya evaluó
     assert "Ya evaluó" in sofia.get("/estudiante/evaluacion").text
+
+
+# --- Etapa 6: historial y certificados ----------------------------------------------------------------------------------------
+
+def _trabajos(sofia_cliente_ext, doc, otro_id):
+    """Un perfil aprobado y un documento final en borrador de Sofía, con el docente de prueba como tutor y otro en el tribunal."""
+    db = get_db()
+    a = db.t.tramite_grado.insert(externo_id=sofia_cliente_ext, tipo="perfil", titulo="Grafos aleatorios", tutor_id=doc["id"],
+                                  estado="aprobado", enviado_en="2033-03-01 10:00:00")["id"]
+    b = db.t.tramite_grado.insert(externo_id=sofia_cliente_ext, tipo="final", titulo="Tesis abierta", tutor_id=doc["id"],
+                                  estado="en_revision")["id"]
+    db.execute("INSERT INTO tribunal_grado (tramite_id, usuario_id) VALUES (?, ?)", [a, otro_id])
+    db.execute("INSERT INTO tribunal_grado (tramite_id, usuario_id) VALUES (?, ?)", [b, otro_id])
+    return a, b
+
+
+def test_historial_y_certificados_solo_de_trabajos_concluidos(sofia):
+    from app.academico import historial
+    doc, oid, g = _curso()
+    otro = usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP)
+    a, b = _trabajos(_externo("1111111"), doc, otro["id"])
+    h = historial.historial(doc["id"])
+    assert [m["sigla"] for m in h["materias"]] == ["MAT-111"] and h["materias"][0]["gestion"] == "II-2033"
+    assert {t["id"] for t in h["tutor"]} == {a, b} and h["tribunal"] == [] and h["tutorados"] == {"total": 0, "vigentes": 0}
+    certs = historial.elegibles(doc["id"])                          # el documento final sigue en revisión: no se certifica
+    assert [(c["tipo"], c["ref"]) for c in certs] == [("tutor_grado", a)] and certs[0]["fecha"] == "2033-03-01"
+    assert historial.obtener_cert(doc["id"], "tutor_grado", b) is None and historial.obtener_cert(otro["id"], "tutor_grado", a) is None
+    assert [(c["tipo"], c["ref"]) for c in historial.elegibles(otro["id"])] == [("tribunal_grado", a)]
+    # El código verifica a la persona y al trámite correctos, y uno inventado no existe.
+    v = historial.verificar(certs[0]["codigo"].lower())
+    assert v["persona"] == f"{doc['nombres']} {doc['apellidos']}" and v["ref"] == a
+    assert historial.verificar("TAU-0000000000") is None and historial.verificar("") is None
+    assert historial.codigo("tutor_grado", a, doc["id"]) != historial.codigo("tribunal_grado", a, doc["id"])
+
+
+def test_certificado_de_tribunal_de_auxiliatura(app):
+    from app.academico import historial
+    doc, oid, g = _curso()
+    admin = usuarios.por_email("admin@test.cl")["id"]
+    db = get_db()
+    c = db.t.convocatoria_auxiliatura.insert(gestion_id=g["id"], modalidad="docencia", titulo="Auxiliaturas II-2033", creado_por=admin,
+                                             estado="publicada")["id"]
+    i = db.t.item_auxiliatura.insert(convocatoria_id=c, titulo="MAT-111 Cálculo I")["id"]
+    db.execute("INSERT INTO tribunal_auxiliatura (item_id, usuario_id, tipo) VALUES (?, ?, 'docente')", [i, doc["id"]])
+    assert historial.elegibles(doc["id"]) == []                       # la convocatoria sigue publicada
+    db.execute("UPDATE convocatoria_auxiliatura SET estado = 'concluida' WHERE id = ?", [c])
+    [cert] = historial.elegibles(doc["id"])
+    assert cert["tipo"] == "tribunal_auxiliatura" and cert["titulo"] == "Auxiliaturas II-2033" and historial.verificar(cert["codigo"])
+
+
+def test_pantallas_de_historial_y_certificados(client, sofia):
+    from app.comun import permisos, unidades
+    doc, oid, g = _curso()
+    otro = usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP)
+    a, b = _trabajos(_externo("1111111"), doc, otro["id"])
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    r = client.get("/docencia/historial")
+    assert r.status_code == 200 and "MAT-111" in r.text and "Grafos aleatorios" in r.text and "II-2033" in r.text
+    r = client.get("/docencia/certificados")
+    assert r.status_code == 200 and "Grafos aleatorios" in r.text and "Tesis abierta" not in r.text
+    r = client.get(f"/docencia/certificados/tutor_grado/{a}")
+    assert r.status_code == 200 and "Se certifica que" in r.text and "Código de verificación: TAU-" in r.text
+    assert client.get(f"/docencia/certificados/tutor_grado/{b}").status_code == 404          # sin concluir
+    assert client.get(f"/docencia/certificados/tribunal_grado/{a}").status_code == 404        # no es de su tribunal
+    assert client.get("/docencia/certificados/verificar").status_code == 403
+    codigo = re.search(r"TAU-[0-9A-F]{10}", r.text).group(0)
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    r = client.get(f"/docencia/certificados/verificar?codigo={codigo}")
+    assert "Certificado válido" in r.text and "Grafos aleatorios" in r.text
+    assert "No existe" in client.get("/docencia/certificados/verificar?codigo=TAU-FFFFFFFFFF").text
+    assert get_db().q("SELECT 1 FROM auditoria WHERE accion = 'verificar_certificado_docente'")

@@ -184,6 +184,14 @@ si todos sus paralelos llegan a 5. El docente ve los suyos en **Evaluación doce
 **contexto** y ve **quién los consultó y cuándo**. La Dirección de Carrera no ve resultados en lista (solo cuántos respondieron):
 abre a cada docente y esa consulta queda en su bitácora y en la auditoría.
 
+### Mi historial y mis certificados
+
+**Docencia → Mi historial** reúne, sin que usted cargue nada, las materias que dictó (por gestión y con su rol), los proyectos de grado que
+tuteló o en cuyo tribunal estuvo, los tribunales de auxiliaturas, sus proyectos y cuántos estudiantes tuteló (solo la cifra: lo hablado
+en las reuniones es confidencial). Solo usted lo ve. Desde ahí, **Mis certificados** emite una constancia imprimible de cada tutoría o
+tribunal de grado ya **concluido** y de cada tribunal de auxiliaturas de una convocatoria concluida, con un código `TAU-…`. La Dirección de
+Carrera y quienes ven la carga horaria pueden **verificar un código** en «Verificar un código» (queda en la auditoría).
+
 ## Mi perfil
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».
