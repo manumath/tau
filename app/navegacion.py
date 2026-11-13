@@ -11,7 +11,7 @@ from app.academico.componentes import PESTANAS, visible
 from app.calidad import impacto, mejora
 from app.comun import permisos
 from app.comun.db import get_db
-from app.servicios import oportunidades, temas
+from app.servicios import oportunidades, recursos, temas
 
 DOCENCIA = ("mia", "preparacion", "planes", "oferta", "carga", "gestiones")
 ESTUDIANTES = ("cohortes", "encuestas", "tutoria", "egresados", "empleadores")
@@ -59,6 +59,7 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                                 _item("calendario", "Calendario", "/estudiante/calendario", "calendar-days"),
                                 _item("tutoria", "Mi tutoría", "/estudiante/tutoria", "message-circle-heart"),
                                 _item("apoyo", "Apoyo", "/estudiante/apoyo", "life-buoy"),
+                                _item("biblioteca", "Biblioteca", "/estudiante/biblioteca", "library-big"),
                                 _item("orientacion", "Orientación", "/estudiante/orientacion", "compass"),
                                 _item("buzon", "Buzón", "/estudiante/buzon", "mail")]),
                 ("Servicios", [_item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
@@ -109,6 +110,8 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
         servicios.append(_item("auxiliaturas", "Auxiliaturas", "/servicios/auxiliaturas", "badge-check"))
     if puede("gestionar_buzon"):
         servicios.append(_item("buzon", "Buzón de consultas", "/servicios/buzon", "inbox"))
+    if recursos.puede_publicar(auth):
+        servicios.append(_item("recursos", "Biblioteca y recursos", "/servicios/recursos", "library-big"))
     if temas.puede_publicar(auth):
         servicios.append(_item("temas", "Temas de grado", "/servicios/temas", "lightbulb"))
     if oportunidades.puede_publicar(auth):

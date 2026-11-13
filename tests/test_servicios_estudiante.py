@@ -756,3 +756,73 @@ def test_pantallas_de_orientacion_y_buzon(client, sofia):
     sid = ori.servicios()[0]["id"]
     client.post(f"/servicios/orientacion/servicios/{sid}", data={"tipo": "salud", "nombre": "Posta médica"}, follow_redirects=False)
     assert ori.servicios() == []                                                                       # activo no marcado: se oculta
+
+
+# --- Etapa 10: biblioteca y recursos ------------------------------------------------------------------------------------------
+
+PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"
+
+
+def _asig(sigla):
+    return str(_aid(sigla))
+
+
+def test_subir_buscar_y_retirar_un_recurso(sofia):
+    from app.servicios import recursos
+    doc = _docente()
+    otro = {**usuarios.crear("otro@test.cl", "Otro", "Sin vinculo", PASS_TEMP), "roles": []}
+    assert recursos.crear({"tipo": "apunte", "titulo": "X", "enlace": "https://a.org"}, [], otro, None)[1][0].startswith("Solo los docentes")
+    assert "Elija el tipo" in recursos.crear({"tipo": "z", "titulo": "X", "enlace": "https://a.org"}, [], doc, None)[1][0]
+    assert recursos.crear({"tipo": "apunte", "titulo": ""}, [], doc, None)[1][0].startswith("El título")
+    assert "Suba un archivo" in recursos.crear({"tipo": "apunte", "titulo": "Álgebra I"}, [], doc, None)[1][-1]
+    assert "enlace" in recursos.crear({"tipo": "apunte", "titulo": "A", "enlace": "ftp://x"}, [], doc, None)[1][0].lower()
+    assert "PDF" in recursos.crear({"tipo": "apunte", "titulo": "A"}, [], doc, (b"no es un pdf", "x.pdf"))[1][0]
+    assert "no existe" in recursos.crear({"tipo": "apunte", "titulo": "A", "enlace": "https://a.org"}, ["99999"], doc, None)[1][0]
+    rid, e = recursos.crear({"tipo": "examen", "titulo": "Examen final de Álgebra I", "anio": "2025", "descripcion": "Con solución"},
+                            [_asig("MAT-111")], doc, (PDF, "examen.pdf"))
+    assert e == [] and [a["sigla"] for a in recursos.asignaturas_de(rid)] == ["MAT-111"]
+    [adj] = recursos.archivos(rid)
+    assert (adj["entidad"], adj["mime"], adj["nombre"]) == ("recurso", "application/pdf", "examen.pdf")
+    rid2, _ = recursos.crear({"tipo": "enlace", "titulo": "Videos de cálculo", "enlace": "https://videos.example.org"},
+                             [_asig("MAT-112")], doc, None)
+    assert [r["titulo"] for r in recursos.buscar()] == ["Videos de cálculo", "Examen final de Álgebra I"]
+    assert [r["id"] for r in recursos.buscar("algebra")] == [rid]                       # sin tildes ni mayúsculas
+    assert [r["id"] for r in recursos.buscar(asignatura=_asig("MAT-112"))] == [rid2]
+    assert [r["id"] for r in recursos.buscar(tipo="examen")] == [rid] and recursos.buscar("zzz") == []
+    assert recursos.retirar(rid, otro)[0].startswith("No puede retirar")
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert recursos.retirar(rid, doc) == [] and [r["id"] for r in recursos.buscar()] == [rid2]
+    assert recursos.retirar(rid, doc)[0].startswith("No puede retirar")
+    assert len(recursos.mis_recursos(doc)) == 2 and len(recursos.mis_recursos(admin)) == 2   # la Dirección ve todos
+
+
+def test_pantallas_de_biblioteca(client, sofia):
+    from io import BytesIO
+    from app.servicios import recursos
+    doc = _docente()
+    rid, _ = recursos.crear({"tipo": "guia", "titulo": "Guía de límites", "descripcion": "Ejercicios resueltos"},
+                            [_asig("MAT-112")], doc, (PDF, "guia.pdf"))
+    r = client.get("/estudiante/biblioteca")
+    assert "Guía de límites" in r.text and "MAT-112" in r.text and "guia.pdf" in r.text
+    assert "Guía de límites" in client.get("/estudiante/biblioteca?q=limites").text
+    assert "No hay recursos" in client.get("/estudiante/biblioteca?q=zzz").text
+    aid = recursos.archivos(rid)[0]["id"]
+    r = client.get(f"/estudiante/biblioteca/{rid}/archivo/{aid}")
+    assert r.status_code == 200 and r.content.startswith(b"%PDF") and "attachment" in r.headers["content-disposition"]
+    assert client.get(f"/estudiante/biblioteca/{rid}/archivo/99999").status_code == 404
+    assert client.get("/servicios/recursos", follow_redirects=False).status_code == 303          # no es del personal
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "Guía de límites" in client.get("/servicios/recursos").text
+    r = client.post("/servicios/recursos", data={"tipo": "apunte", "titulo": "Apuntes de Topología", "asignaturas": _asig("MAT-111")},
+                    files={"archivo": ("apuntes.pdf", BytesIO(PDF), "application/pdf")}, follow_redirects=False)
+    assert r.status_code == 303 and any(x["titulo"] == "Apuntes de Topología" for x in recursos.buscar())
+    r = client.post("/servicios/recursos", data={"tipo": "apunte", "titulo": "Sin nada"})
+    assert "Suba un archivo" in r.text
+    assert client.get(f"/servicios/recursos/{rid}/archivo/{aid}").status_code == 200
+    client.post(f"/servicios/recursos/{rid}/retirar", follow_redirects=False)
+    assert all(x["id"] != rid for x in recursos.buscar())
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    assert client.get(f"/estudiante/biblioteca/{rid}/archivo/{aid}").status_code == 404           # retirado

@@ -3487,7 +3487,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 7. (hecha, 13-nov-2026) **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
 8. (hecha, 13-nov-2026) **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
 9. (hecha, 13-nov-2026) **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
-10. **Biblioteca y recursos:** apuntes, guías y enlaces que suben los docentes, por asignatura.
+10. (hecha, 13-nov-2026) **Biblioteca y recursos:** apuntes, guías y enlaces que suben los docentes, por asignatura.
 11. Pruebas de navegador, manual, guía y CLAUDE.md.
 
 ### Etapa 1 (hecha): menú agrupado y «Mi plan de estudios»
@@ -3560,3 +3560,10 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
   con un aviso, y puede publicarse también en las preguntas frecuentes (sin el nombre).
 - `app/estudiantil/orientacion.py` y `rutas/orientacion.py`: `/estudiante/orientacion` y `/estudiante/buzon`; para el personal,
   `/servicios/buzon` y `/servicios/orientacion` (preguntas frecuentes y servicios de apoyo).
+
+### Etapa 10 (hecha): biblioteca y recursos
+- **Migración 0080:** `recurso` (apunte, guía, examen, libro, enlace u otro) y `recurso_asignatura`; la tabla `adjunto` se recrea para
+  aceptar la entidad «recurso» (SQLite no permite cambiar un CHECK). Acción `gestionar_recursos` (Dirección de Carrera y Coordinación
+  académica: retiran cualquiera; el autor retira lo suyo).
+- `app/servicios/recursos.py` y `rutas/recursos.py`: `/servicios/recursos` (docentes con vínculo: subir y retirar) y
+  `/estudiante/biblioteca` (buscar sin tildes, filtrar por asignatura y tipo, descargar). Un recurso retirado no se ve ni se descarga.

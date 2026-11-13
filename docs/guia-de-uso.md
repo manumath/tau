@@ -777,6 +777,14 @@ la lista se filtra por estado (recibida, en atención, respondida, cerrada). En 
 se publica en las preguntas frecuentes, sin el nombre), se marca **en atención** o se cierra. «Preguntas frecuentes y servicios de apoyo»
 permite agregar, editar, ocultar y eliminar lo que ven los estudiantes en «Orientación».
 
+**Biblioteca** (Mi carrera): apuntes, guías de ejercicios, exámenes pasados, libros y enlaces que suben los docentes. El estudiante busca por
+título, asignatura (sin distinguir tildes ni mayúsculas) o docente, filtra por asignatura y tipo, y descarga los archivos o abre el enlace.
+
+**Subir recursos** (Servicios → Biblioteca y recursos, para los docentes con vínculo con la Carrera): **Subir un recurso** pide el tipo, el
+título, una descripción, la o las asignaturas, y un archivo (PDF, PNG o JPG de hasta 20 MB) o un enlace. Suba solo material propio o que
+tenga permiso de compartir. El autor puede **retirar** lo suyo y la Dirección de Carrera y la Coordinación académica, cualquiera: un
+recurso retirado deja de verse y de descargarse.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

@@ -78,6 +78,7 @@ ACCIONES = {
     "gestionar_oportunidades": {"direccion_carrera", "coordinacion_academica"},   # becas, movilidad, pasantías, empleo (PLAN §67)
     "gestionar_apoyo": {"direccion_carrera"},         # ver y atender todos los casos de apoyo estudiantil (PLAN §67)
     "gestionar_buzon": {"direccion_carrera", "coordinacion_academica"},   # buzón, preguntas frecuentes y servicios de apoyo (PLAN §67)
+    "gestionar_recursos": {"direccion_carrera", "coordinacion_academica"},   # retirar cualquier recurso de la biblioteca (PLAN §67)
     "decidir_gestion": {"direccion_carrera"},         # activar, concluir y reabrir un semestre (PLAN §66)
     "ver_carga": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
     # Lectura
