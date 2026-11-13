@@ -482,6 +482,19 @@ Coordinación académica, y no aparece en la oferta, en las cohortes ni en la b�
 (ya no admite nuevos ingresos, pero sigue en la oferta mientras egresan los últimos) y *cerrado* (solo historial).
 Cada programa tiene a lo sumo un plan vigente. Arriba de la lista hay filtros por estado.
 
+**Elaborar una reforma** (Dirección de Carrera y Coordinación académica). En «Planes de estudio», **Nueva reforma
+curricular** abre un asistente de una sola pantalla:
+1. *Datos de la reforma:* nombre («Plan 2027»), año en que rige y resolución, si ya la tiene.
+2. *Qué programas tendrá:* para cada programa de la reforma vigente, **Copiar su plan** (parte de las mismas asignaturas
+   y requisitos), **Empezar vacío** o **No continúa**. Para pasar de dos licenciaturas a una, se copia una y la otra
+   queda en «No continúa».
+3. *Programas nuevos* (opcional): nombre, nivel, título que otorga, si se mide en horas o créditos, y si empieza vacío o
+   con la copia de un plan existente.
+
+Todos los planes nacen **en elaboración**. En la ficha de un borrador, **Editar datos generales** cambia su nombre, año,
+resolución, el título que otorga el programa, cómo se mide (horas o créditos), la nota mínima y los totales que declara
+el documento; **Eliminar plan** lo borra con todo lo suyo (un plan vigente, en cierre o cerrado no se elimina nunca).
+
 **Gestiones** (en el menú, para la Dirección de Carrera y la Coordinación): I y II (semestres), INV (invierno, julio) y VER (verano, en
 enero del año siguiente: VER-2026 se dicta en enero de 2027 y se cuenta con la gestión 2026). «Crear
 las gestiones del año» propone fechas que se ajustan al calendario aprobado y oferta ambos

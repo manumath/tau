@@ -1,7 +1,7 @@
 """Consultas de los planes de estudio (catálogo curricular, PLAN.md sección 24)."""
 from app.academico import importar_planes
 from app.comun import permisos
-from app.comun.db import AHORA, get_db
+from app.comun.db import AHORA, auditar, get_db, transaccion
 
 NIVELES = {"licenciatura": "Licenciatura", "maestria": "Maestría", "doctorado": "Doctorado",
            "especialidad": "Especialidad", "diplomado": "Diplomado"}
@@ -122,3 +122,78 @@ def resolver(oid: int, resolucion: str, uid: int) -> str | None:
 def observacion(oid: int) -> dict | None:
     filas = get_db().q("SELECT * FROM observacion_plan WHERE id = ?", [oid])
     return filas[0] if filas else None
+
+
+# --- Edición del borrador (PLAN §65, etapa 2) ------------------------------------------------------------------------
+
+def _entero(texto, minimo, maximo, etiqueta, errores, obligatorio=False):
+    texto = (texto or "").strip()
+    if not texto:
+        if obligatorio:
+            errores.append(f"{etiqueta}: escriba un número.")
+        return None
+    try:
+        n = int(texto.replace(".", ""))
+        if not minimo <= n <= maximo:
+            raise ValueError
+        return n
+    except ValueError:
+        errores.append(f"{etiqueta}: debe ser un número entre {minimo} y {maximo}.")
+        return None
+
+
+def actualizar_datos(pid: int, f: dict, uid: int) -> list[str]:
+    """Datos generales de un plan en elaboración (y el título que otorga su programa). → errores."""
+    p = obtener(pid)
+    if not p or p["estado"] != "elaboracion":
+        return ["Solo se pueden editar los datos de un plan en elaboración."]
+    errores = []
+    nombre = (f.get("nombre") or "").strip()
+    if not nombre or len(nombre) > 60:
+        errores.append("El nombre del plan es obligatorio (hasta 60 caracteres).")
+    elif get_db().q("SELECT 1 FROM plan_estudios WHERE programa_id = ? AND nombre = ? AND id <> ?",
+                    [p["programa_id"], nombre, pid]):
+        errores.append(f"El programa ya tiene un plan llamado «{nombre}».")
+    resolucion = (f.get("resolucion") or "").strip()
+    titulo = (f.get("titulo") or "").strip()
+    if len(resolucion) > 120 or len(titulo) > 120:
+        errores.append("La resolución y el título admiten hasta 120 caracteres.")
+    sistema = f.get("sistema")
+    if sistema not in ("horas", "creditos"):
+        errores.append("Elija cómo se mide el plan: horas o créditos.")
+    anio = _entero(f.get("vigente_desde"), reformas_anio_min(), 2100, "Año en que rige", errores, True)
+    semanas = _entero(f.get("semanas_semestre"), 1, 60, "Semanas del semestre", errores, sistema == "horas")
+    por_credito = _entero(f.get("horas_por_credito"), 1, 200, "Horas por crédito", errores, sistema == "creditos")
+    nota = _entero(f.get("nota_minima"), 0, 100, "Nota mínima de aprobación", errores)
+    totales_ = {k: _entero(f.get(k), 0, 1_000_000, "Total declarado", errores)
+                for k in ("total_teoricas", "total_practicas", "total_laboratorio", "total_creditos")}
+    if errores:
+        return errores
+    get_db().execute(
+        """UPDATE plan_estudios SET nombre = ?, resolucion = ?, vigente_desde = ?, sistema = ?, semanas_semestre = ?,
+           horas_por_credito = ?, nota_minima = ?, total_teoricas = ?, total_practicas = ?, total_laboratorio = ?,
+           total_creditos = ? WHERE id = ?""",
+        [nombre, resolucion or None, anio, sistema, semanas if sistema == "horas" else None,
+         por_credito if sistema == "creditos" else None, nota, *totales_.values(), pid])
+    get_db().execute("UPDATE programa SET titulo = ? WHERE id = ?", [titulo or None, p["programa_id"]])
+    auditar(uid, "editar_plan", "plan_estudios", pid, f"{p['programa']} · {nombre}")
+    return []
+
+
+def reformas_anio_min() -> int:
+    return 2000
+
+
+def eliminar_borrador(pid: int, uid: int) -> str | None:
+    """Elimina un plan en elaboración con todo lo suyo, y la reforma si se queda sin planes. → error o None."""
+    p = obtener(pid)
+    if not p or p["estado"] != "elaboracion":
+        return "Solo se puede eliminar un plan en elaboración."
+    with transaccion():
+        get_db().execute("DELETE FROM plan_estudios WHERE id = ?", [pid])
+        if p["reforma_id"] and not get_db().q("SELECT 1 FROM plan_estudios WHERE reforma_id = ?", [p["reforma_id"]]):
+            get_db().execute("DELETE FROM reforma_curricular WHERE id = ?", [p["reforma_id"]])
+        if not get_db().q("SELECT 1 FROM plan_estudios WHERE programa_id = ?", [p["programa_id"]]):
+            get_db().execute("DELETE FROM programa WHERE id = ?", [p["programa_id"]])
+        auditar(uid, "eliminar_plan", "plan_estudios", pid, f"{p['programa']} · {p['nombre']} (en elaboración)")
+    return None

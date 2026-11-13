@@ -3242,7 +3242,7 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 
 ### Etapas (un commit cada una)
 1. (hecha, 12-nov-2026) Migración (reforma, estados), lista con filtros, permisos y auditoría; los planes 2017 pasan a vigentes.
-2. Asistente de nueva reforma y datos generales del borrador.
+2. (hecha, 13-nov-2026) Asistente de nueva reforma y datos generales del borrador.
 3. Editor de malla con validaciones.
 4. Menciones.
 5. Equivalencias, puesta en vigencia y cierre, y efectos en oferta y cohortes.
@@ -3264,3 +3264,14 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
   en los indicadores de calidad ni en la carga de cohortes (que solo asigna a planes vigentes o en cierre). Un plan
   cargado con `importar_planes` nace como borrador.
 - **Pantalla:** la lista se agrupa por reforma, con el estado de cada plan y filtros por estado.
+
+### Etapa 2 (hecha): asistente de nueva reforma y datos del borrador
+- **Migración 0066:** `programa.titulo` (título que otorga; opcional).
+- **Asistente** (`/docencia/planes/reforma/nueva`, `app/academico/reformas.py`) en una sola pantalla en vez de tres: datos de
+  la reforma; por cada programa de la reforma vigente, copiar su plan, empezar vacío o no continuar; y hasta tres programas
+  nuevos (nombre, nivel, título, sistema y plan de partida). Todo en una transacción; los planes nacen en elaboración y
+  se copian asignaturas, casillas, electivas y requisitos (no los totales declarados ni las observaciones). El plan
+  vacío de un programa existente hereda sus parámetros (horas o créditos, semanas, nota mínima).
+- **Datos generales del borrador** (modal) y **eliminación** de un borrador (con la reforma y el programa que queden
+  sin planes). Un plan vigente, en cierre o cerrado no se edita ni se elimina por aquí.
+- La **importación por CSV** pasa a la etapa 3, como «Importar CSV» dentro de la malla de un borrador.

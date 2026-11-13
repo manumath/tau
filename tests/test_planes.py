@@ -193,3 +193,114 @@ def test_los_borradores_no_entran_en_oferta_ni_en_cohortes(app):
                         VALUES (?, (SELECT id FROM asignatura WHERE sigla = 'MAT-900'), 'obligatoria', 1)""", [pid])
     assert len(oferta.troncales(2027)) == antes                      # MAT-900 solo está en el borrador
     assert pid not in [p["id"] for p in importar.planes_de_licenciatura()]
+
+
+# --- PLAN §65, etapa 2: nueva reforma y datos del borrador ---------------------------------------------------------
+
+def _con_carrera(client):
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    return client
+
+
+def _prog(nombre):
+    return get_db().q("SELECT id FROM programa WHERE nombre = ?", [nombre])[0]["id"]
+
+
+def test_crear_reforma_copia_vacio_y_programa_nuevo(app):
+    from app.academico import reformas
+    lic, apl = _prog("Licenciatura en Matemática"), _prog("Licenciatura en Matemática Aplicada")
+    mae, mea = _prog("Maestría en Matemática"), _prog("Maestría en Matemática Aplicada")
+    estadistica = {"nombre": "Licenciatura en Estadística", "nivel": "licenciatura", "titulo": "Licenciado en Estadística",
+                   "sistema": "horas", "inicio": str(_plan("Licenciatura en Matemática")["id"])}
+    rid, errores = reformas.crear(1, "Plan 2027", "HCU 1/2027", "2027",
+                                  {lic: "copia", apl: "no", mae: "vacio", mea: "no"}, [estadistica])
+    assert errores == [] and rid
+    nuevos = get_db().q("SELECT p.*, pr.nombre AS programa FROM plan_estudios p JOIN programa pr ON pr.id = p.programa_id "
+                        "WHERE p.reforma_id = ?", [rid])
+    assert {p["programa"] for p in nuevos} == {"Licenciatura en Matemática", "Maestría en Matemática",
+                                               "Licenciatura en Estadística"}
+    assert {p["estado"] for p in nuevos} == {"elaboracion"} and {p["vigente_desde"] for p in nuevos} == {2027}
+    por = {p["programa"]: p for p in nuevos}
+    original = _plan("Licenciatura en Matemática")
+    copia = por["Licenciatura en Matemática"]
+    def n(pid):
+        return get_db().q("SELECT COUNT(*) n FROM plan_asignatura WHERE plan_id = ?", [pid])[0]["n"]
+    assert n(copia["id"]) == n(original["id"]) == n(por["Licenciatura en Estadística"]["id"])
+    assert n(por["Maestría en Matemática"]["id"]) == 0
+    assert copia["total_teoricas"] is None and copia["resolucion"] == "HCU 1/2027"
+    def req(pid):
+        return get_db().q("SELECT COUNT(*) n FROM requisito r JOIN plan_asignatura pa ON pa.id = r.plan_asignatura_id "
+                          "WHERE pa.plan_id = ?", [pid])[0]["n"]
+    assert req(copia["id"]) == req(original["id"]) > 0
+    assert get_db().q("SELECT titulo FROM programa WHERE nombre = 'Licenciatura en Estadística'")[0]["titulo"]
+    assert not planes.listar() or all(p["estado"] != "elaboracion" for p in planes.listar())  # nadie más los ve
+
+
+def test_crear_reforma_valida(app):
+    from app.academico import reformas
+    lic = _prog("Licenciatura en Matemática")
+    _, e = reformas.crear(1, "", "", "abc", {lic: "copia"}, [])
+    assert len(e) == 2
+    _, e = reformas.crear(1, "Plan 2017", "", "2027", {lic: "copia"}, [])
+    assert "Ya existe una reforma" in e[0]
+    _, e = reformas.crear(1, "Plan 2027", "", "2027", {lic: "no"}, [])
+    assert "al menos un plan" in e[0]
+    _, e = reformas.crear(1, "Plan 2027", "", "2027", {lic: "copia"},
+                          [{"nombre": "licenciatura en matemática", "nivel": "licenciatura"}])
+    assert "Ya existe un programa" in e[0]
+    assert get_db().q("SELECT COUNT(*) n FROM reforma_curricular")[0]["n"] == 1      # nada quedó a medias
+
+
+def test_asistente_de_reforma_por_rol(client, app):
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert client.get("/docencia/planes/reforma/nueva").status_code == 403
+    assert client.post("/docencia/planes/reforma/nueva", headers=HX, data={"nombre": "X"}).status_code == 403
+    assert "Nueva reforma curricular" not in client.get("/docencia/planes").text
+    permisos.asignar(emmy, "coordinacion_academica", unidades.id_de("CMAT"))
+    assert "Nueva reforma curricular" in client.get("/docencia/planes").text
+    r = client.get("/docencia/planes/reforma/nueva")
+    assert "Qué programas tendrá" in r.text and "Licenciatura en Matemática Aplicada" in r.text
+    r = client.post("/docencia/planes/reforma/nueva", headers=HX, data={"nombre": "", "anio": "2027"})
+    assert "Escriba el nombre de la reforma" in r.text
+    datos = {"nombre": "Plan 2027", "anio": "2027", "resolucion": "",
+             f"prog_{_prog('Licenciatura en Matemática')}": "copia",
+             f"prog_{_prog('Licenciatura en Matemática Aplicada')}": "no",
+             f"prog_{_prog('Maestría en Matemática')}": "no", f"prog_{_prog('Maestría en Matemática Aplicada')}": "no",
+             "nuevo_nombre": ["", "", ""], "nuevo_nivel": ["licenciatura"] * 3, "nuevo_titulo": ["", "", ""],
+             "nuevo_sistema": ["horas"] * 3, "nuevo_inicio": ["vacio"] * 3}
+    r = client.post("/docencia/planes/reforma/nueva", headers=HX, data=datos)
+    assert r.headers["hx-redirect"] == "/docencia/planes?estado=elaboracion"
+    r = client.get("/docencia/planes?estado=elaboracion")
+    assert "Reforma Plan 2027" in r.text and "En elaboración" in r.text
+
+
+def test_editar_y_eliminar_borrador(client, app):
+    _con_carrera(client)
+    from app.academico import reformas
+    lic = _prog("Licenciatura en Matemática")
+    rid, _ = reformas.crear(1, "Plan 2027", "", "2027", {lic: "copia"}, [])
+    pid = get_db().q("SELECT id FROM plan_estudios WHERE reforma_id = ?", [rid])[0]["id"]
+    assert "Datos generales del plan" in client.get(f"/docencia/planes/{pid}/editar", headers=HX).text
+    base = {"nombre": "Plan 2027", "vigente_desde": "2027", "sistema": "horas", "semanas_semestre": "18",
+            "resolucion": "HCU 7/2027", "titulo": "Licenciado en Matemática", "nota_minima": "51",
+            "total_teoricas": "2.500", "total_practicas": "", "total_laboratorio": "", "total_creditos": ""}
+    r = client.post(f"/docencia/planes/{pid}/editar", headers=HX, data=base | {"semanas_semestre": "0"})
+    assert "Semanas del semestre" in r.text
+    r = client.post(f"/docencia/planes/{pid}/editar", headers=HX, data=base)
+    assert r.headers["hx-redirect"] == f"/docencia/planes/{pid}"
+    p = planes.obtener(pid)
+    assert (p["semanas_semestre"], p["resolucion"], p["total_teoricas"]) == (18, "HCU 7/2027", 2500)
+    assert get_db().q("SELECT titulo FROM programa WHERE id = ?", [lic])[0]["titulo"] == "Licenciado en Matemática"
+    # Un plan vigente no se edita ni se elimina por aquí.
+    vigente = _plan("Licenciatura en Matemática")["id"]
+    assert client.get(f"/docencia/planes/{vigente}/editar", headers=HX).status_code == 404
+    assert client.post(f"/docencia/planes/{vigente}/eliminar", headers=HX).status_code == 404
+    assert planes.obtener(vigente)
+    r = client.post(f"/docencia/planes/{pid}/eliminar", headers=HX)
+    assert r.headers["hx-redirect"] == "/docencia/planes?estado=elaboracion"
+    assert planes.obtener(pid) is None
+    assert get_db().q("SELECT COUNT(*) n FROM reforma_curricular WHERE id = ?", [rid])[0]["n"] == 0   # sin planes
+    assert get_db().q("SELECT COUNT(*) n FROM plan_asignatura WHERE plan_id = ?", [pid])[0]["n"] == 0
