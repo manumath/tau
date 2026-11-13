@@ -12,6 +12,12 @@ def tiene_docencia(auth: dict | None) -> bool:
                               UNION SELECT 1 FROM oferta_docente WHERE usuario_id = :u LIMIT 1""", {"u": auth["id"]}))
 
 
+def es_docente(auth: dict | None) -> bool:
+    """Vínculo, materias, tutorías, temas, tribunales o trámites de grado (para «Mis pendientes» y «Mi calendario»)."""
+    from app.academico import docente
+    return docente.es_docente(auth)
+
+
 def prepara_semestres(auth: dict | None) -> bool:
     """Dirección de Carrera y Coordinación académica (preparación del semestre)."""
     return bool(auth) and (permisos.puede(auth, "gestionar_oferta")
@@ -21,6 +27,8 @@ def prepara_semestres(auth: dict | None) -> bool:
 # Secciones de Docencia y Estudiantes en el menú lateral (app/navegacion.py, PLAN.md §53).
 # (clave, texto, url, condición): la condición es una acción de permisos o una función de auth.
 PESTANAS = (("mia", "Mi docencia", "/docencia/mia", tiene_docencia),
+            ("pendientes", "Mis pendientes", "/docencia/pendientes", es_docente),
+            ("calendario", "Mi calendario", "/docencia/calendario", es_docente),
             ("preparacion", "Preparación del semestre", "/docencia/preparacion", prepara_semestres),
             ("planes", "Planes de estudio", "/docencia/planes", None),
             ("oferta", "Oferta y docentes", "/docencia/oferta", None),

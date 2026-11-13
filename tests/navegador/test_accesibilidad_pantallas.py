@@ -67,7 +67,7 @@ REVISAR = r"""
 
 PANTALLAS = {
     "investigadora": ["/", "/productos", "/actividades", "/proyectos", "/perfil", "/informes",
-                      "/docencia", "/avisos", "/buscar?q=noether"],
+                      "/docencia", "/docencia/pendientes", "/docencia/calendario", "/avisos", "/buscar?q=noether"],
     "direccion": ["/", "/admin/usuarios", "/admin/propuestas", "/docencia/planes", "/docencia/planes?estado=elaboracion",
                   "/docencia/planes/reforma/nueva", "/docencia/planes/reforma/2", "/docencia/planes/5",
                   "/docencia/planes/5/malla", "/docencia/planes/5/equivalencias", "/docencia/oferta",

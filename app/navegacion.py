@@ -13,9 +13,9 @@ from app.comun import permisos
 from app.comun.db import get_db
 from app.servicios import oportunidades, recursos, temas
 
-DOCENCIA = ("mia", "preparacion", "planes", "oferta", "carga", "gestiones")
+DOCENCIA = ("mia", "pendientes", "calendario", "preparacion", "planes", "oferta", "carga", "gestiones")
 ESTUDIANTES = ("cohortes", "encuestas", "tutoria", "egresados", "empleadores")
-ICONOS = {"mia": "presentation", "preparacion": "calendar-check", "planes": "book-marked", "oferta": "layout-list",
+ICONOS = {"mia": "presentation", "pendientes": "list-checks", "calendario": "calendar-days", "preparacion": "calendar-check", "planes": "book-marked", "oferta": "layout-list",
           "carga": "clock", "gestiones": "calendar-range", "cohortes": "users-round", "encuestas": "clipboard-list",
           "tutoria": "message-circle", "egresados": "graduation-cap",
           "empleadores": "building-2"}

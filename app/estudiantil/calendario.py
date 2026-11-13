@@ -87,9 +87,9 @@ def _ics(texto: str) -> str:
     return texto.replace("\\", "\\\\").replace(";", r"\;").replace(",", "\\,").replace("\n", "\\n")
 
 
-def ics(lista: list[dict], nombre: str = "TAU") -> str:
+def ics(lista: list[dict], nombre: str = "TAU", titulo: str = "Calendario del estudiante") -> str:
     """Los eventos como archivo de calendario (.ics) para Google Calendar, Outlook o el teléfono."""
-    lineas = ["BEGIN:VCALENDAR", "VERSION:2.0", f"PRODID:-//{nombre}//Calendario del estudiante//ES", "CALSCALE:GREGORIAN"]
+    lineas = ["BEGIN:VCALENDAR", "VERSION:2.0", f"PRODID:-//{nombre}//{titulo}//ES", "CALSCALE:GREGORIAN"]
     for n, e in enumerate(lista):
         f = e["fecha"].replace("-", "")
         inicio = f"DTSTART:{f}T{e['hora'].replace(':', '')}00" if e["hora"] else f"DTSTART;VALUE=DATE:{f}"

@@ -135,6 +135,15 @@ asignada (con una barra de avance), su vínculo y su carga horaria contratada po
 investigación o extensión ya asignadas en proyectos) y su historial de vínculo. Es solo lectura: la carga y el vínculo los corrige la Dirección de Carrera; las
 materias, la Dirección de Carrera o la Coordinación académica.
 
+### Mis pendientes y mi calendario
+
+**Docencia → Mis pendientes** reúne en una lista lo que espera de usted, con lo que vence antes primero: el informe y la nota de
+defensa que le toca como tribunal, el visto bueno de un trámite de grado de su tutorado, las reuniones y los temas que le piden los
+estudiantes, las postulaciones que debe calificar en una auxiliatura y el término de su periodo de vínculo. Lo vencido y lo que
+vence en los próximos siete días se marca. **Docencia → Mi calendario** pone sus fechas en un solo lugar (semestre, plazos y
+defensas de grado, reuniones de tutoría programadas, eventos a los que lo convocan) y se descarga en `.ics` para el teléfono.
+Ambas son solo suyas y no guardan nada: se calculan al abrirlas.
+
 ## Mi perfil
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».

@@ -3578,3 +3578,36 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 - **Pendiente de confirmar:** que los empleadores publiquen por sí mismos con un enlace (hoy los publica la Dirección), mentorías de
   egresados desde el portal (existen en el directorio, §50), verificación pública de los certificados de participación y límites de
   envío del buzón anónimo (hoy solo hay estudiantes autenticados, sin tope por persona).
+
+
+## 68. Servicios para el docente (13-nov-2026)
+
+Pedido del usuario: qué más puede tener el docente en su actividad. Se toma el alcance recomendado (sin reserva de aulas ni formación
+docente). TAU sigue sin guardar notas ni asistencia.
+
+### Decisiones del 13-nov-2026
+- **Lista de estudiantes por materia:** la genera el sistema de notas vía Kardex y, en el futuro próximo, se consumirá por una API con
+  un endpoint restringido. TAU se construye **ya para consumirla**: una interfaz de proveedor (`listas.proveedor`) con un
+  proveedor de archivo CSV hoy y el de la API después, sin cambiar las pantallas. Solo lectura, solo de las materias del docente
+  en la gestión, sin guardar la lista en TAU más allá de la carga (el CSV se usa para probar).
+- **Evaluación docente:** hoy es incipiente y a mano; la ven solo la Dirección y el docente, agregada o en medias. Se diseña con las
+  **políticas de transparencia** más documentadas: instrumento y criterios públicos con anticipación, anonimato con mínimo de
+  respuestas, el docente ve sus resultados y **quién los consultó**, la Dirección solo ve lo agregado, cada consulta se audita, y el
+  estudiante recibe el retorno de lo que la Carrera hizo (como las encuestas, §67). Nunca se muestran respuestas abiertas sin revisión.
+
+### Servicios y etapas (un commit cada una)
+1. (hecha, 13-nov-2026) **Mis pendientes y Mi calendario** del docente.
+2. **Preferencias para la oferta:** qué materias y horarios quiere dictar, visibles para la Coordinación al armar la oferta.
+3. **Programa analítico (syllabus)** por materia y gestión, con versión; el estudiante lo ve en su plan.
+4. **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
+5. **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
+6. **Mi historial docente** (materias, tesis tuteladas y juradas, proyectos, productos) y **certificados** de tribunal y tutoría.
+7. Pruebas de navegador, manual y documentación.
+
+### Etapa 1 (hecha): mis pendientes y mi calendario
+- `app/academico/docente.py`: `pendientes` (visto bueno y informes de grado, notas de defensa, postulantes por calificar, reuniones
+  y temas que piden los estudiantes, fin del vínculo en 60 días) y `eventos` (gestiones, plazos y defensas, reuniones programadas,
+  eventos, fin del vínculo). No guardan nada y solo reúnen lo de la propia persona (`auth["id"]`, nunca la dirección).
+- `/docencia/pendientes`, `/docencia/calendario` y `.ics`, en las pestañas de Docencia para quien tenga algo como docente
+  (`docente.es_docente`). Lo vencido o a 7 días se marca.
+
