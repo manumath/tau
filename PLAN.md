@@ -3315,8 +3315,8 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
   propio año, si es menor) y el motivo «Reemplazado por…». Los planes de otros programas no se tocan. **La reforma**
   (`/docencia/planes/reforma/{id}`) pone en vigencia todos sus borradores o ninguno.
 - **Iniciar el cierre** pide el año del último ingreso y la resolución o el motivo. Un programa que desaparece en la
-  reforma **no se cierra solo**: la Dirección de Carrera inicia su cierre a mano (decisión del agente, por ser lo más
-  seguro; confirmar).
+  reforma (sin plan en ella) **se cierra con la reforma**: su plan vigente pasa a «en proceso de cierre» con el último
+  ingreso en el año anterior (decisión de la Dirección, 13-nov-2026; el aviso del botón de la reforma los nombra).
 - **Cerrar:** cuenta los estudiantes con `estado` cursando o congelado en el plan; si quedan, solo cierra con la casilla
   «aunque queden» y un motivo. Un plan cerrado sale de la oferta (`oferta.troncales` solo considera vigentes y en cierre) y
   de la carga de cohortes, y no se reabre.
@@ -3333,5 +3333,4 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 - **CLAUDE.md:** regla de negocio de los planes (estados, reforma, borradores invisibles, un plan vigente por programa).
 - **Pendiente de confirmar con la Dirección de Carrera:** editar un plan vigente (hoy no se puede; solo erratas con auditoría
   sería la alternativa), reordenar asignaturas dentro de un semestre, cambiar el nombre de una asignatura del catálogo,
-  la mención en la ficha del estudiante (`estudiante.mencion_id` y columna `mencion` en la carga de cohortes) y si un
-  programa que desaparece debería cerrarse junto con la reforma (hoy se hace a mano).
+  la mención en la ficha del estudiante (`estudiante.mencion_id` y columna `mencion` en la carga de cohortes) 

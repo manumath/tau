@@ -156,13 +156,16 @@ def get(auth, rid: int):
                            fh.Td(p["nombre"]), fh.Td(estado_insignia(p)), fh.Td(str(p["n_asignaturas"]), cls="tabular-nums"),
                            fh.Td(estado_verif)))
     anio = r["vigente_desde"]
+    cierran = [planes.obtener(f["id"]) for f in vigencia.programas_que_cierran(rid)]
+    aviso_cierre = (f" Los programas que no tienen plan en la reforma dejan de existir y su plan pasa también a «en proceso "
+                    f"de cierre»: {', '.join(p['programa'] for p in cierran)}.") if cierran else ""
     boton = Div(
         Button(UkIcon("rocket", height=14, width=14), "Poner en vigencia la reforma", hx_post=f"{BASE}/reforma/{rid}/vigencia",
                hx_confirm=f"¿Poner en vigencia los {borradores} planes de la reforma {r['nombre']}? Los planes vigentes "
                           f"de los mismos programas pasarán a «en proceso de cierre» (último ingreso en {anio - 1}). "
-                          "Los planes nuevos dejarán de poder editarse.", hx_swap="none",
+                          "Los planes nuevos dejarán de poder editarse." + aviso_cierre, hx_swap="none",
                disabled=listos != borradores, cls=ButtonT.primary),
-        P("Se ponen en vigencia todos los planes juntos, o ninguno." if listos == borradores else
+        P(("Se ponen en vigencia todos los planes juntos, o ninguno." + aviso_cierre) if listos == borradores else
           f"Aún no: {borradores - listos} plan(es) tienen puntos por resolver en su lista de verificación.",
           cls=(TextPresets.muted_sm, "mt-1")), cls="mt-4") if borradores and permisos.puede(auth, "decidir_planes") else ""
     return pagina(

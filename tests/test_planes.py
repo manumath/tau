@@ -567,7 +567,11 @@ def test_reforma_en_vigencia_todo_o_nada(app):
     estados = {(p["programa"], p["nombre"]): p["estado"] for p in planes.listar()}
     assert estados[("Licenciatura en Matemática", "Plan 2027")] == "vigente"
     assert estados[("Licenciatura en Matemática", "Plan 2017")] == "cierre"
-    assert estados[("Licenciatura en Matemática Aplicada", "Plan 2017")] == "vigente"  # otro programa: no se toca
+    # Los programas que no tienen plan en la reforma desaparecen: su plan pasa a cierre (decisión del 13-nov-2026).
+    assert estados[("Licenciatura en Matemática Aplicada", "Plan 2017")] == "cierre"
+    assert estados[("Maestría en Matemática Aplicada", "Plan 2017")] == "cierre"
+    apl = next(p for p in planes.listar() if p["programa"] == "Licenciatura en Matemática Aplicada")
+    assert apl["vigente_hasta"] == 2026 and "no continúa en la reforma Plan 2027" in apl["motivo_cierre"]
 
 
 def test_iniciar_cierre_y_cerrar(app):

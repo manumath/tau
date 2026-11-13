@@ -46,8 +46,16 @@ def poner_en_vigencia(pid: int, uid: int) -> list[str]:
     return []
 
 
+def programas_que_cierran(rid: int) -> list[dict]:
+    """Planes vigentes de programas que no tienen plan en la reforma: el programa desaparece y su plan pasa a cierre."""
+    return get_db().q(
+        """SELECT p.id FROM plan_estudios p WHERE p.estado = 'vigente' AND p.programa_id NOT IN
+           (SELECT programa_id FROM plan_estudios WHERE reforma_id = ?)""", [rid])
+
+
 def poner_reforma_en_vigencia(rid: int, uid: int) -> list[str]:
-    """Pone en vigencia todos los planes en elaboración de la reforma, o ninguno."""
+    """Pone en vigencia todos los planes en elaboración de la reforma, o ninguno. Los programas que no tienen plan en la
+    reforma desaparecen: su plan vigente pasa a «en proceso de cierre» (decisión del 13-nov-2026)."""
     borradores = [planes.obtener(f["id"]) for f in get_db().q(
         "SELECT id FROM plan_estudios WHERE reforma_id = ? AND estado = 'elaboracion' ORDER BY id", [rid])]
     if not borradores:
@@ -55,9 +63,19 @@ def poner_reforma_en_vigencia(rid: int, uid: int) -> list[str]:
     errores = [f"{p['programa']} · {p['nombre']}: {x}" for p in borradores for x in faltantes(p["id"])]
     if errores:
         return errores
+    reforma = get_db().q("SELECT * FROM reforma_curricular WHERE id = ?", [rid])[0]
+    desaparecen = [planes.obtener(f["id"]) for f in programas_que_cierran(rid)]
     with transaccion():
         for p in borradores:
             _activar(p, uid)
+        for v in desaparecen:
+            ultimo = max(v["vigente_desde"], reforma["vigente_desde"] - 1)
+            get_db().execute(f"""UPDATE plan_estudios SET estado = 'cierre', vigente_hasta = ?, cierre_en = {AHORA},
+                                 cierre_por = ?, motivo_cierre = ? WHERE id = ?""",
+                             [ultimo, uid, f"El programa no continúa en la reforma {reforma['nombre']}.", v["id"]])
+            auditar(uid, "iniciar_cierre_plan", "plan_estudios", v["id"],
+                    f"{v['programa']} · {v['nombre']}: el programa no continúa en la reforma {reforma['nombre']} "
+                    f"(último ingreso {ultimo})")
     return []
 
 

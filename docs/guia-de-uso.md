@@ -530,10 +530,10 @@ equivalente. TAU no guarda materias cursadas ni notas: las equivalencias son del
 - **Poner en vigencia:** el botón está en la ficha del borrador y se habilita cuando la lista de verificación no tiene
   puntos en rojo. El plan vigente del mismo programa pasa solo a *en proceso de cierre*, con el último ingreso en el año
   anterior al del plan nuevo; el plan nuevo deja de poder editarse. La página de la **reforma** (el título de cada grupo
-  en la lista) pone en vigencia todos sus planes a la vez, o ninguno.
+  en la lista) pone en vigencia todos sus planes a la vez, o ninguno; además, **los programas que no tienen plan en la
+  reforma dejan de existir** y su plan vigente pasa también a «en proceso de cierre» (el aviso del botón los nombra).
 - **Iniciar el cierre** (plan vigente): pide el año del último ingreso y la resolución o el motivo. El plan ya no admite
-  nuevos ingresos, pero sigue en la oferta mientras egresa el último ingreso. Es lo que se usa con un programa que
-  desaparece en la reforma: no se cierra solo.
+  nuevos ingresos, pero sigue en la oferta mientras egresa el último ingreso.
 - **Cerrar el plan** (en proceso de cierre): muestra cuántos estudiantes siguen cursando en él. Si quedan, hay que marcar
   «Cerrar aunque queden estudiantes cursando» y dar el motivo. Un plan cerrado queda solo como historial, sale de la
   oferta y no se vuelve a abrir.
