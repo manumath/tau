@@ -43,7 +43,8 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   correo, componentes de interfaz. **No importa de los otros paquetes.**
 - `app/investigacion`: perfiles, productos, actividades, proyectos, propuestas institucionales,
   líneas, revistas, importaciones (DOI, arXiv, BibTeX, OpenAlex).
-- `app/academico`: planes de estudio, gestiones, oferta y asignación docente, carga horaria.
+- `app/academico`: planes de estudio (con su ciclo de vida: `reformas`, `malla`, `menciones`, `equivalencias`, `vigencia`;
+  PLAN §65), gestiones, oferta y asignación docente, carga horaria.
 - `app/calidad`: Aseguramiento de la Calidad (PLAN §57): memoria, informe de I+D+i, cuerpo académico, calidad de
   datos, seguimiento estudiantil. Sin nombres de agencias ni de sus instrumentos (decisión del 6-nov-2026).
 - `app/estudiantil`: seguimiento estudiantil (PLAN §49): cohortes, carga del CSV de Seguimiento Académico,
@@ -71,6 +72,14 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   auditoría. La Comisión de calidad ve todo y solo registra evidencias y juicios de la autoevaluación (PLAN §57).
 - **Vínculo por periodos:** contratados, interinos e invitados con fecha de término obligatoria;
   titular permanente (se termina a mano con motivo: retiro, renuncia, despido, fallecimiento).
+- **Planes de estudio (PLAN §65):** un plan está *en elaboración*, *vigente*, *en proceso de cierre* o *cerrado*, y los
+  planes se agrupan en una **reforma curricular** (la que se revisa cada 10 años; puede traer 1, 2 o 3 programas). Programa =
+  titulación (títulos distintos); mención = énfasis dentro de un mismo título. Un programa tiene a lo sumo un plan vigente.
+  Un borrador solo lo ven quienes tienen `elaborar_planes` (Dirección de Carrera y Coordinación académica) y no entra en
+  oferta, búsqueda, indicadores ni cohortes: toda consulta nueva sobre planes debe excluirlo (`estado <> 'elaboracion'`) y, si
+  es para asignar estudiantes u ofertar, usar solo `vigente` y `cierre`. Poner en vigencia y cerrar es solo de la Dirección de
+  Carrera (`decidir_planes`). `vigente_hasta` es el año del último ingreso. El catálogo `asignatura` es común a todos los
+  planes: la misma sigla en dos planes es la misma asignatura (y equivalente por sí sola).
 - **Carga horaria:** unidades de 32 h/mes; carga contratada 32–160 h/mes por periodo de vínculo,
   distribuida por actividad (docencia, investigación, extensión, gestión, otras) y que suma el
   total. Cada materia como titular = 32 h/mes; auxiliares y cursos de verano/invierno no suman.

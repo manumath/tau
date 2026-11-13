@@ -30,13 +30,123 @@ su carga en proyectos y su historial.</p>
 
 <h2>Planes de estudio</h2>
 <p><span class="ruta">Docencia → Planes de estudio</span> muestra los programas de la Carrera con su plan vigente:
-las dos licenciaturas y las dos maestrías.</p>
+las dos licenciaturas y las dos maestrías. Todos pueden consultarlos; quien elabora un plan nuevo lo hace aquí
+mismo (ver «Elaborar un plan nuevo» más abajo).</p>
 <captura archivo="planes">Los planes de estudio. La última columna indica cuántas observaciones tiene cada plan por revisar.</captura>
 <p>La ficha de cada plan lista las asignaturas por semestre, con sus horas o créditos, sus requisitos y su línea
 formativa. Los planes se cargaron <strong>tal como están en los documentos oficiales</strong>: lo que no cuadra
 (un requisito que no existe, un total que no suma) no se corrigió, sino que quedó anotado como
 <strong>observación</strong>.</p>
 <captura archivo="plan-ficha">La ficha de un plan, con las observaciones del documento. La Dirección de Carrera o la Coordinación académica las marcan como resueltas indicando cómo se resolvió.</captura>
+
+<h2>Estados de un plan</h2>
+<p>Cada plan está en uno de cuatro estados, que decide quién lo ve y qué puede hacerse con él:</p>
+<table>
+  <thead><tr><th>Estado</th><th>Quién lo ve</th><th>Qué significa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>En elaboración</strong></td><td>Dirección de Carrera y Coordinación académica</td><td>Es un borrador. Se edita libremente y no aparece en la oferta, en las cohortes ni en la búsqueda.</td></tr>
+    <tr><td><strong>Vigente</strong></td><td>Todos</td><td>Es el plan de los nuevos ingresos. Cada programa tiene uno solo.</td></tr>
+    <tr><td><strong>En proceso de cierre</strong></td><td>Todos</td><td>Ya no admite nuevos ingresos, pero sigue en la oferta mientras egresan quienes lo cursan.</td></tr>
+    <tr><td><strong>Cerrado</strong></td><td>Todos</td><td>Solo historial. Sale de la oferta y no se vuelve a abrir.</td></tr>
+  </tbody>
+</table>
+<p>Los planes se agrupan por <strong>reforma curricular</strong>: el conjunto de planes que se aprueba junto, con una sola
+resolución (hoy, el Plan 2017). Una reforma puede traer uno, dos o tres programas, según lo que decida la Carrera.</p>
+<captura archivo="planes-elaboracion" clase="media">La lista de planes agrupada por reforma, con el estado de cada plan. «En elaboración» solo lo ven quienes elaboran planes.</captura>
+
+<h2>Elaborar un plan nuevo</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Dirección de Carrera</strong> y la <strong>Coordinación académica</strong> elaboran. Solo la Dirección de
+  Carrera pone en vigencia y cierra.</div>
+
+<h3>1. Crear la reforma</h3>
+<p>En <span class="ruta">Docencia → Planes de estudio</span>, el botón <span class="ui">Nueva reforma curricular</span>
+abre un asistente de una sola pantalla.</p>
+<ol class="pasos">
+  <li><strong>Datos de la reforma:</strong> el nombre («Plan 2027»), el año en que rige y la resolución, si ya la tiene.</li>
+  <li><strong>Qué programas tendrá:</strong> para cada programa actual, elija <span class="ui">Copiar su plan</span>
+    (parte de las mismas asignaturas y requisitos), <span class="ui">Empezar vacío</span> o
+    <span class="ui">No continúa</span>. Para pasar de dos licenciaturas a una, se copia una y la otra queda en «No continúa».</li>
+  <li><strong>Programas nuevos</strong> (opcional): una reforma puede crear titulaciones que hoy no existen, con su
+    nombre, nivel, título que otorga y plan de partida.</li>
+</ol>
+<captura archivo="reforma-nueva" clase="media">El asistente de nueva reforma curricular.</captura>
+<div class="nota consejo"><span class="rotulo">¿Programa o mención?</span>
+  Si dos carreras otorgan <strong>títulos distintos</strong> (por ejemplo, Licenciado en Matemática y Licenciado en
+  Matemática Aplicada) son <strong>programas</strong>. Si el título es el mismo y solo cambia un grupo de materias, son
+  <strong>menciones</strong> de un solo plan.</div>
+
+<h3>2. Completar los datos y la malla</h3>
+<p>Cada plan nuevo nace «en elaboración». Su ficha tiene tres botones: <span class="ui">Editar la malla</span>,
+<span class="ui">Editar datos generales</span> y <span class="ui">Equivalencias</span>; y, arriba, la lista
+<strong>«Para poner en vigencia»</strong>, que dice con una marca qué está listo y qué falta.</p>
+<captura archivo="plan-borrador">La ficha de un plan en elaboración, con su lista de verificación.</captura>
+<p><span class="ui">Editar datos generales</span> cambia el nombre, el año, la resolución, el título que otorga el
+programa, la duración en semestres, si el plan se mide en horas o en créditos, la nota mínima y los totales que declara
+el documento del plan.</p>
+<captura archivo="plan-datos" clase="media">Los datos generales de un plan en elaboración.</captura>
+
+<h3>La malla</h3>
+<p>El editor muestra una tarjeta por semestre, con su ciclo, y debajo las listas de electivas. Cada cambio se guarda al
+instante y la lista de verificación se actualiza sola.</p>
+<captura archivo="malla">El editor de la malla: la lista de verificación, las menciones y la tarjeta de cada semestre.</captura>
+<ul>
+  <li><span class="ui">Agregar</span> (en cada semestre) abre el formulario de una asignatura. El lápiz de cada fila la
+    modifica y el bote de basura la quita.</li>
+  <li><strong>Sigla:</strong> escriba la sigla como «MAT-111». Si ya existe en el catálogo, deje el nombre en blanco: se
+    usa el que tiene, porque todos los planes comparten el catálogo. Si es nueva, escriba su nombre y queda agregada.</li>
+  <li><strong>Horas o créditos:</strong> el formulario pide las horas teóricas, prácticas y de laboratorio, o los
+    créditos, según cómo se mida el plan.</li>
+  <li><strong>Requisitos:</strong> se marcan entre las asignaturas del plan, o «Exige ser egresado». No se escriben a mano.</li>
+  <li><strong>Tipo:</strong> obligatoria, trabajo final, o una electiva. Una <em>casilla de electiva</em> no lleva sigla:
+    se llena con una de la lista de electivas del mismo grupo.</li>
+</ul>
+<captura archivo="malla-fila" clase="media">El formulario para agregar una asignatura al plan.</captura>
+<ul>
+  <li><span class="ui">Ciclos</span> define los ciclos (por ejemplo, básico del semestre 1 al 4); el ciclo de cada
+    asignatura se deduce de su semestre.</li>
+  <li><span class="ui">Agregar un semestre</span> amplía la duración del plan.</li>
+  <li><span class="ui">Importar CSV</span> reemplaza <strong>toda</strong> la malla por la de un archivo. Hay una
+    plantilla para descargar. Si el archivo tiene errores, no cambia nada y se listan.</li>
+</ul>
+<div class="nota importante"><span class="rotulo">Lo que comprueba la lista de verificación</span>
+  Datos completos (incluida la resolución), siglas válidas, requisitos que existen y que no son circulares (A pide B y
+  B pide A), todos los semestres con asignaturas, casillas de electiva con su lista, y horas o créditos en cada fila.
+  Como aviso, que los totales declarados cuadren con la suma. Mientras haya puntos en rojo, el plan no se puede poner en
+  vigencia.</div>
+
+<h3>Menciones</h3>
+<p>La tarjeta <strong>Menciones</strong> del editor permite agregar una mención con su nombre, descripción, el semestre
+en que se elige y sus mínimos (de asignaturas y de créditos u horas). Con <span class="ui">Asignaturas</span> se marca
+cuáles son propias de la mención, obligatorias u optativas; una asignatura puede ser de varias menciones. Lo que no es de
+ninguna mención es el tronco común.</p>
+<captura archivo="mencion-asignaturas" clase="media">Las asignaturas propias de una mención.</captura>
+
+<h3>3. Equivalencias con el plan anterior</h3>
+<p><span class="ui">Equivalencias</span> compara el plan nuevo con el que reemplaza (se puede elegir otro). Cada asignatura
+del plan anterior queda <strong>igual</strong> (la misma sigla está en el plan nuevo; no hay que hacer nada),
+<strong>equivalente</strong> (se registró un grupo) o <strong>sin equivalente</strong>. Con
+<span class="ui">Agregar equivalencia</span> se marcan las asignaturas del plan anterior y las del nuevo que las
+reemplazan, una a una o varias por una. TAU no guarda materias cursadas ni notas: las equivalencias son del catálogo.</p>
+<captura archivo="equivalencias">Las equivalencias con el plan 2017: dos asignaturas se fusionan en una.</captura>
+
+<h2>Poner en vigencia y cerrar</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Solo la <strong>Dirección de Carrera</strong>.</div>
+<ul>
+  <li><strong>Poner en vigencia:</strong> el botón está en la ficha del plan y se habilita cuando la lista de
+    verificación no tiene puntos en rojo. El plan vigente del mismo programa pasa solo a «en proceso de cierre», con el
+    último ingreso en el año anterior. La página de la <strong>reforma</strong> (el título de cada grupo en la lista)
+    pone en vigencia todos sus planes a la vez, o ninguno.</li>
+  <li><strong>Iniciar el cierre</strong> (plan vigente): pide el año del último ingreso y la resolución o el motivo.
+    Es lo que se usa con un programa que desaparece en la reforma: no se cierra solo.</li>
+  <li><strong>Cerrar el plan</strong> (en proceso de cierre): muestra cuántos estudiantes siguen cursando en él. Si
+    quedan, hay que marcar «Cerrar aunque queden estudiantes cursando» y dar el motivo.</li>
+</ul>
+<captura archivo="reforma" clase="media">La página de la reforma: todos sus planes y si están listos para ponerse en vigencia.</captura>
+<captura archivo="plan-cierre" clase="media">Iniciar el cierre de un plan vigente.</captura>
+<div class="nota importante"><span class="rotulo">No se puede deshacer</span>
+  Un plan que pasó a vigente ya no se edita, y uno cerrado no se vuelve a abrir. Por eso cada paso pide confirmación.</div>
 
 <h2>Gestiones</h2>
 <p>Una <strong>gestión</strong> es un periodo académico. Hay cuatro por año:</p>

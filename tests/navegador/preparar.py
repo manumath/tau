@@ -11,7 +11,7 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from app.academico import gestiones, oferta
+from app.academico import gestiones, menciones, oferta, reformas
 from app.comun import estudiantes, permisos, tokens, unidades, usuarios
 from app.comun.componentes.registros import POR_PAGINA
 from app.comun.db import get_db, init_db
@@ -93,6 +93,14 @@ def preparar(ruta: str):
                                         [f"i:{alan}"], [])
         assert not errores, errores
         productos.guardar(d, [f"i:{alan}"], alan)
+    # Planes (PLAN §65): una reforma en elaboración (reforma 2; plan 5 = Licenciatura en Matemática copiada, plan 6 = Maestría
+    # en Matemática vacía) con una mención, para revisar las pantallas del módulo.
+    ids = {r["nombre"]: r["id"] for r in get_db().q("SELECT id, nombre FROM programa")}
+    reformas.crear(direccion["id"], "Plan 2027", "HCU 9/2027", "2027",
+                   {ids["Licenciatura en Matemática"]: "copia", ids["Maestría en Matemática"]: "vacio"}, [])
+    plan = get_db().q("SELECT id FROM plan_estudios WHERE nombre = 'Plan 2027' AND programa_id = ?",
+                      [ids["Licenciatura en Matemática"]])[0]["id"]
+    menciones.guardar(plan, None, {"nombre": "Matemática Pura", "semestre_eleccion": "6"}, direccion["id"])
     hoy = date.today()
     periodo = institucionales.periodo_objetivo()
     institucionales.guardar_plazo(periodo, hoy.isoformat(), (hoy + timedelta(days=30)).isoformat(), 1)

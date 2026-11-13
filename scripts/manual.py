@@ -203,6 +203,35 @@ def datos(ruta: str):
     assert not err, err
     mejora.crear(m["id"], x, ada)
 
+    # Planes (PLAN §65): una reforma en elaboración con la Licenciatura en Matemática copiada (con una asignatura nueva
+    # que reemplaza a dos, y una mención) y la Maestría en Matemática vacía.
+    from app.academico import equivalencias, malla, menciones, planes as planes_, reformas
+    ids = {r["nombre"]: r["id"] for r in db.q("SELECT id, nombre FROM programa")}
+    rid, err = reformas.crear(ada, "Plan 2027", "HCU 9/2027", "2027",
+                              {ids["Licenciatura en Matemática"]: "copia", ids["Maestría en Matemática"]: "vacio"}, [])
+    assert not err, err
+    borrador = db.q("SELECT id FROM plan_estudios WHERE reforma_id = ? AND programa_id = ?",
+                    [rid, ids["Licenciatura en Matemática"]])[0]["id"]
+    vigente = db.q("SELECT id FROM plan_estudios WHERE nombre = 'Plan 2017' AND programa_id = ?",
+                   [ids["Licenciatura en Matemática"]])[0]["id"]
+    db.execute("""DELETE FROM requisito WHERE plan_asignatura_id IN (SELECT id FROM plan_asignatura WHERE plan_id = ?)
+                  AND sigla IN ('MAT-241', 'MAT-242')""", [borrador])         # requisitos que el plan 2017 trae rotos
+    por_sigla = {f["sigla"]: f["id"] for f in planes_.asignaturas(borrador) if f["sigla"]}
+    for sigla in ("MAT-112", "MAT-122"):
+        malla.quitar_fila(borrador, por_sigla[sigla], ada)
+    assert not malla.guardar_fila(borrador, None, {"tipo": "obligatoria", "semestre": "1", "sigla": "MAT-190",
+                                                  "nombre": "Cálculo en una y varias variables", "horas_teoricas": "6",
+                                                  "horas_practicas": "4"}, [], ada)
+    ant = {a["sigla"]: a["id"] for a in db.q("SELECT id, sigla FROM asignatura")}
+    assert not equivalencias.crear(vigente, borrador, [ant["MAT-112"], ant["MAT-122"]], [ant["MAT-190"]],
+                                   "Se fusionan en un solo curso", ada)
+    assert not menciones.guardar(borrador, None, {"nombre": "Matemática pura", "semestre_eleccion": "6",
+                                                  "descripcion": "Énfasis en álgebra, análisis y topología.",
+                                                  "minimo_asignaturas": "3"}, ada)
+    pura = menciones.listar(borrador)[0]["id"]
+    tardias = [f["id"] for f in planes_.asignaturas(borrador) if f["sigla"] and (f["semestre"] or 0) >= 7][:4]
+    assert not menciones.asignar(borrador, pura, {i: "o" for i in tardias}, ada)
+
     # Enlace de ingreso de la estudiante (como el que le llega por correo).
     Path(ruta).with_suffix(".enlace").write_text(f"/acceso/{tokens.emitir(andrea['uid'], 'acceso')}")
 
@@ -232,8 +261,18 @@ CAPTURAS = [
     ("cv", "docente", "/informes/cv", {"alto": 1000}),
     ("investigadores", "docente", "/investigadores", {"alto": 560}),
     ("mi-docencia", "docente", "/docencia", {"alto": 1000}),
-    ("planes", "direccion", "/docencia/planes", {"alto": 480}),
+    ("planes", "direccion", "/docencia/planes?estado=vigente", {"alto": 480}),
     ("plan-ficha", "direccion", "plan", {"alto": 1000}),
+    ("planes-elaboracion", "direccion", "/docencia/planes", {"alto": 820}),
+    ("reforma-nueva", "direccion", "/docencia/planes/reforma/nueva", {"alto": 1100}),
+    ("plan-borrador", "direccion", "plan-borrador", {"alto": 900}),
+    ("plan-datos", "direccion", "plan-borrador", {"clics": ["text=Editar datos generales"], "alto": 800}),
+    ("malla", "direccion", "malla-borrador", {"alto": 1150}),
+    ("malla-fila", "direccion", "malla-borrador", {"clics": ["#semestre-1 button:has-text('Agregar')"], "alto": 900}),
+    ("mencion-asignaturas", "direccion", "malla-borrador", {"clics": ["button:has-text('Asignaturas')"], "alto": 900}),
+    ("equivalencias", "direccion", "equivalencias-borrador", {"alto": 1000}),
+    ("reforma", "direccion", "reforma", {"alto": 520}),
+    ("plan-cierre", "direccion", "plan", {"clics": ["text=Iniciar el cierre"], "alto": 700}),
     ("oferta", "direccion", "/docencia/oferta", {}),
     ("carga", "direccion", "/docencia/carga", {"alto": 600}),
     ("preparacion", "direccion", "/docencia/preparacion", {"alto": 600}),
@@ -284,6 +323,10 @@ def _rutas_de_la_base(db: Path) -> dict:
     rutas = {
         "proyecto": f"/proyectos/{uno("SELECT id FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01'")}",
         "plan": f"/docencia/planes/{uno('SELECT MIN(id) FROM plan_estudios')}",
+        "plan-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}",
+        "malla-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}/malla",
+        "equivalencias-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}/equivalencias",
+        "reforma": f"/docencia/planes/reforma/{uno("SELECT id FROM reforma_curricular WHERE nombre = 'Plan 2027'")}",
         "encuesta": f"/docencia/encuestas/{uno('SELECT MAX(id) FROM encuesta')}",
         "comunicado": f"/servicios/comunicados/{uno('SELECT MAX(id) FROM comunicado')}",
         "comunicado-estudiante": f"/estudiante/comunicados/{uno('SELECT MAX(id) FROM comunicado')}",

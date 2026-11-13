@@ -3246,7 +3246,7 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
 3. (hecha, 13-nov-2026) Editor de malla con validaciones.
 4. (hecha, 13-nov-2026) Menciones.
 5. (hecha, 13-nov-2026) Equivalencias, puesta en vigencia y cierre, y efectos en oferta y cohortes.
-6. Pruebas de navegador por rol, accesibilidad, capturas, capítulo del manual, guía y este PLAN.
+6. (hecha, 13-nov-2026) Pruebas de navegador por rol, accesibilidad, capturas, capítulo del manual, guía y este PLAN.
 
 ### Por confirmar
 - **Editar un plan vigente:** solo erratas, con auditoría; los cambios estructurales exigirían un plan nuevo. Si hace falta
@@ -3321,3 +3321,17 @@ con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se ca
   «aunque queden» y un motivo. Un plan cerrado sale de la oferta (`oferta.troncales` solo considera vigentes y en cierre) y
   de la carga de cohortes, y no se reabre.
 - Toda transición queda en la auditoría (`poner_plan_en_vigencia`, `iniciar_cierre_plan`, `cerrar_plan`).
+
+### Etapa 6 (hecha): pruebas de navegador, manual y documentación
+- **Navegador:** la base de `tests/navegador/preparar.py` trae una reforma «Plan 2027» en elaboración (reforma 2; planes 5 y 6) con una
+  mención; las pantallas del módulo (lista con filtro, asistente, reforma, ficha del borrador, malla y equivalencias) entran en la
+  prueba de accesibilidad (contraste, etiquetas, un solo `h1`, claro y oscuro) y `test_elaborar_un_plan_nuevo` recorre el flujo
+  de la Dirección de Carrera: crear la reforma, agregar una asignatura y una mención.
+- **Manual de usuario:** nuevas secciones en el capítulo de Docencia (estados de un plan, elaborar un plan, poner en vigencia y
+  cerrar) con 10 capturas más, y dos filas en la matriz de privilegios. Ahora son 81 páginas y 64 capturas; los datos
+  de demostración incluyen un borrador con una asignatura nueva que reemplaza a dos, una equivalencia y una mención.
+- **CLAUDE.md:** regla de negocio de los planes (estados, reforma, borradores invisibles, un plan vigente por programa).
+- **Pendiente de confirmar con la Dirección de Carrera:** editar un plan vigente (hoy no se puede; solo erratas con auditoría
+  sería la alternativa), reordenar asignaturas dentro de un semestre, cambiar el nombre de una asignatura del catálogo,
+  la mención en la ficha del estudiante (`estudiante.mencion_id` y columna `mencion` en la carga de cohortes) y si un
+  programa que desaparece debería cerrarse junto con la reforma (hoy se hace a mano).

@@ -461,3 +461,34 @@ def test_llenar_plantilla_con_la_ficha(page, tmp_path):
     descarga.value.save_as(archivo)
     assert archivo.name == "formulario-llena.xlsx"
     assert openpyxl.load_workbook(archivo)["Antecedentes"]["B2"].value == 2          # Emmy (titular desde 2015) y Grace (desde 2018)
+
+
+def test_elaborar_un_plan_nuevo(page):
+    """La Dirección de Carrera crea una reforma, agrega una asignatura a la malla de un plan vacío y ve la lista de
+    verificación (PLAN §65)."""
+    entrar(page, "direccion")
+    page.goto("/docencia/planes")
+    page.get_by_role("link", name="Nueva reforma curricular").click()
+    page.fill("input[name=nombre]", "Plan 2037")
+    page.fill("input[name=anio]", "2037")
+    page.select_option("select[aria-label='Qué hacer con Maestría en Matemática']", "vacio")
+    for otro in ("Licenciatura en Matemática", "Licenciatura en Matemática Aplicada", "Maestría en Matemática Aplicada"):
+        page.select_option(f"select[aria-label='Qué hacer con {otro}']", "no")
+    page.get_by_role("button", name="Crear la reforma").click()
+    page.wait_for_url("**/docencia/planes?estado=elaboracion")
+    assert page.get_by_text("Reforma Plan 2037").is_visible()
+    page.get_by_role("link", name="Maestría en Matemática", exact=True).last.click()
+    page.get_by_role("link", name="Editar la malla").click()
+    assert page.locator("#verificacion-plan").is_visible()
+    page.locator("#semestre-1").get_by_role("button", name="Agregar").click()
+    page.fill("input[name=sigla]", "MAT-801")
+    page.fill("input[name=nombre]", "Análisis funcional")
+    page.fill("input[name=creditos]", "6")
+    page.get_by_role("button", name="Guardar").click()
+    page.locator("#semestre-1").get_by_text("MAT-801").wait_for()
+    assert page.locator("#modal").inner_html().strip() == ""
+    assert "Falta" in page.locator("#verificacion-plan").inner_text()
+    page.get_by_role("button", name="Agregar mención").click()
+    page.fill("input[name=nombre]", "Análisis")
+    page.get_by_role("button", name="Guardar").click()
+    page.locator("#menciones-plan").get_by_text("Análisis").wait_for()
