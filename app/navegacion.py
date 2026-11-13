@@ -57,7 +57,8 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                         _item("avisos", "Avisos", "/avisos", "bell")]),
                 ("Mi carrera", [_item("plan", "Mi plan de estudios", "/estudiante/plan", "book-marked"),
                                 _item("calendario", "Calendario", "/estudiante/calendario", "calendar-days"),
-                                _item("tutoria", "Mi tutoría", "/estudiante/tutoria", "message-circle-heart")]),
+                                _item("tutoria", "Mi tutoría", "/estudiante/tutoria", "message-circle-heart"),
+                                _item("apoyo", "Apoyo", "/estudiante/apoyo", "life-buoy")]),
                 ("Servicios", [_item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
                                _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
                                _item("oportunidades", "Oportunidades", "/estudiante/oportunidades", "briefcase"),
@@ -79,6 +80,8 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
     estudiantes = _academico(ESTUDIANTES, auth)
     if auth.get("es_tutor"):
         estudiantes.insert(0, _item("mis-tutorados", "Mis tutorados", "/tutoria", "message-circle-heart"))
+    if auth.get("es_tutor") or puede("gestionar_apoyo"):
+        estudiantes.append(_item("apoyo-estudiantil", "Apoyo estudiantil", "/apoyo", "life-buoy"))
     calidad = []
     if auth["es_investigador"] or puede("ver_informes_institucionales") or puede("ver_cv_ajeno"):
         calidad.append(_item("informes", "Informes", "/informes", "file-text"))

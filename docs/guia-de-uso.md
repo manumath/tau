@@ -751,6 +751,20 @@ nunca se muestran. Una encuesta anónima solo publica su retorno si alcanzó el 
 la tarjeta «Retorno a quienes participaron» tiene «Lo que encontramos» y «Lo que haremos». **Publicar** los muestra a las personas
 invitadas en su portal; **Retirar** los oculta.
 
+**Apoyo** (Mi carrera): dos cosas distintas.
+- **Lo que TAU observa de usted:** señales que solo ve el estudiante (que su matrícula figura congelada, que su último ciclo
+  registrado no es el más reciente, que hace más de seis meses que no hay una reunión con su tutor(a), que tiene encuestas por
+  responder). No se guardan como etiqueta ni las ve nadie más: se calculan al momento y dicen de dónde salen.
+- **Pedir apoyo:** el estudiante elige el tema y cuenta qué necesita; su tutor(a) y la Dirección de Carrera reciben un aviso y le
+  responden en el mismo lugar (la conversación la ven las dos partes). Puede cerrar el caso cuando ya no lo necesite. Un caso que
+  nadie renueva **vence a los seis meses**.
+
+**Atender el apoyo** (Estudiantes → Apoyo estudiantil, para tutores y la Dirección de Carrera): lista los casos (el tutor, los de sus
+tutorados; la Dirección, todos), con su vencimiento. En cada caso se responde, se anota la derivación (bienestar, apoyo
+psicológico…), se pasa a «en seguimiento», se **renueva seis meses** o se cierra. El tutor o la Dirección también pueden **ofrecer
+apoyo** desde la ficha de tutoría de un tutorado, explicando por qué: el estudiante recibe un aviso y ve quién lo abrió. Las notas
+confidenciales de las reuniones de tutoría nunca pasan a estos casos.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

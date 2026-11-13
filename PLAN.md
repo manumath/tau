@@ -3485,7 +3485,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 5. (hecha, 13-nov-2026) **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
 6. (hecha, 13-nov-2026) **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
 7. (hecha, 13-nov-2026) **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
-8. **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
+8. (hecha, 13-nov-2026) **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
 9. **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
 10. **Biblioteca y recursos:** apuntes, guías y enlaces que suben los docentes, por asignatura.
 11. Pruebas de navegador, manual, guía y CLAUDE.md.
@@ -3540,3 +3540,13 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 - `/estudiante/encuestas`: las encuestas por responder (con su enlace personal; el cierre va al calendario) y el retorno de las que
   cerraron, para los invitados: hallazgos, acciones y resultados agregados de escala y opciones. **Nunca** las respuestas
   abiertas. El personal lo escribe y publica en los resultados de la encuesta (`gestionar_encuestas`).
+
+### Etapa 8 (hecha): apoyo estudiantil
+- **Migración 0078:** `caso_apoyo` (origen estudiante, tutor o dirección; abierto, en seguimiento, cerrado; `vence_el` a 180 días) y
+  `caso_apoyo_mensaje` (la conversación, visible a las dos partes). Acción `gestionar_apoyo` (Dirección de Carrera); el tutor(a)
+  vigente atiende los casos de sus tutorados.
+- `app/estudiantil/apoyo.py`: **las señales** (`senales`: congelado, último ciclo, sin reuniones en 6 meses, encuestas por responder)
+  se calculan al momento, no se guardan y **solo las ve el estudiante**; el personal ve únicamente los casos. Un caso vencido figura
+  como tal (`estado_efectivo`) hasta que se renueva. Abrir y responder avisan a la otra parte; todo queda en la auditoría.
+- Pantallas: `/estudiante/apoyo`, `/apoyo` y `/apoyo/{id}` (personal) y la tarjeta «Apoyo» de la ficha de tutoría, donde el tutor(a) o la
+  Dirección ofrecen apoyo explicando por qué.

@@ -136,6 +136,26 @@ def post(auth, sess, externo_id: int, sid: int):
     return Redirect(f"{BASE}/{externo_id}")
 
 
+def _apoyo(auth, externo_id, rol):
+    """Casos de apoyo del estudiante y, para su tutor(a) o la Dirección, abrir uno avisándole (PLAN §67)."""
+    from app.estudiantil import apoyo
+    casos = [c for c in apoyo.casos_de(externo_id) if c["estado"] != "cerrado"]
+    puede_abrir = rol == "tutor" or permisos.puede(auth, "gestionar_apoyo")
+    if not casos and not puede_abrir:
+        return ""
+    return Card(
+        H3("Apoyo", cls="text-base font-semibold mb-1"),
+        Ul(*[Li(A(f"{apoyo.TEMAS[c['tema']]} · {apoyo.ESTADOS[c['estado_efectivo']]}", href=f"/apoyo/{c['id']}",
+                  cls="text-sm text-primary hover:underline"), cls="py-1") for c in casos]) if casos else
+        P("No hay un caso de apoyo abierto.", cls=TextPresets.muted_sm),
+        fh.Form(campo("Tema", Select(*[Option(t, value=k) for k, t in apoyo.TEMAS.items()], name="tema", cls="uk-select")),
+                campo("Por qué le ofrece apoyo (el estudiante lo ve)", fh.Textarea("", name="motivo", rows=3, minlength="10",
+                                                                                     maxlength="2000", required=True, cls="uk-textarea")),
+                Button("Ofrecer apoyo y avisarle", type="submit", cls=(ButtonT.default, ButtonT.sm)), method="post",
+                action=f"/apoyo/ofrecer/{externo_id}", cls="space-y-2 mt-2") if puede_abrir and not casos else "",
+        cls="lg:col-span-3")
+
+
 def _avance_compartido(auth, externo_id):
     """El avance en su plan, solo si el estudiante decidió compartirlo con su tutor(a) (PLAN §67)."""
     av = mi_plan.para_tutor(auth["id"], externo_id)
@@ -171,7 +191,7 @@ def get(auth, externo_id: int):
             Button(UkIcon("plus", height=16, width=16), "Registrar reunión", cls=ButtonT.primary, hx_get=f"{BASE}/{externo_id}/reuniones/nueva",
                    hx_target=f"#{ID_MODAL}") if rol == "tutor" else "",
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
-        Div(_solicitudes(auth, externo_id) if rol == "tutor" else "",
+        Div(_solicitudes(auth, externo_id) if rol == "tutor" else "", _apoyo(auth, externo_id, rol),
             Div(Card(H3("Reuniones" + ("" if rol == "tutor" else " (de todos los tutores)"), cls="text-base font-semibold"),
                  P("Confidencial. " + ("Solo usted y la Dirección de Carrera ven estas notas." if rol == "tutor"
                                        else "Cada consulta suya queda en la auditoría."), cls=(TextPresets.muted_sm, "mb-2")),

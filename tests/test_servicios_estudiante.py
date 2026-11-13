@@ -546,3 +546,113 @@ def test_pantallas_de_encuestas_del_estudiante_y_del_personal(client, sofia):
     r = client.get("/estudiante/encuestas")
     assert "Lo que encontramos" in r.text and "Hallazgo" in r.text and "Lo que haremos" in r.text and "Acción" in r.text
     assert "Participaron 1 de" in r.text and "Resultados" in r.text and "Más laboratorios" not in r.text
+
+
+# --- Etapa 8: apoyo estudiantil ---------------------------------------------------------------------------------------------
+
+def test_las_senales_solo_dicen_lo_que_se_observa(sofia):
+    from datetime import date, timedelta
+    from app.estudiantil import apoyo, cohortes
+    ext = _externo("1111111")
+    assert apoyo.senales(ext) == []
+    get_db().execute("UPDATE estudiante SET estado = 'congelado' WHERE registro_universitario = '1111111'")
+    assert [s["clave"] for s in apoyo.senales(ext)] == ["congelado"]
+    get_db().execute("UPDATE estudiante SET estado = 'cursando', ultimo_anio = 2020, ultimo_ciclo = 'I' WHERE registro_universitario = '1111111'")
+    assert [s["clave"] for s in apoyo.senales(ext)] == ["ciclo"] and cohortes.ciclo_actual()
+    emmy = _con_tutor(ext)
+    assert "tutoria" not in [s["clave"] for s in apoyo.senales(ext)]                  # asignado hoy: aún no pasan 6 meses
+    futuro = date.today() + timedelta(days=400)
+    assert "tutoria" in [s["clave"] for s in apoyo.senales(ext, futuro)]
+    assert tutoria.registrar(ext, emmy, {"fecha": date.today().isoformat(), "modalidad": "presencial", "tema": "otro", "resumen": "",
+                                         "acuerdos": "", "derivacion": "ninguna"}) == []
+    assert "tutoria" not in [s["clave"] for s in apoyo.senales(ext, date.today() + timedelta(days=100))]   # reunión reciente
+    assert "tutoria" in [s["clave"] for s in apoyo.senales(ext, futuro)]                                  # 400 días después, otra vez
+    _encuesta_de_sofia()
+    assert "encuestas" in [s["clave"] for s in apoyo.senales(ext)]
+
+
+def test_abrir_atender_y_vencer_un_caso(sofia):
+    from datetime import date, timedelta
+    from app.comun import notificaciones
+    from app.estudiantil import apoyo
+    ext = _externo("1111111")
+    alumno = {**usuarios.por_id(estudiantes_uid(ext)), "roles": []}
+    emmy = _con_tutor(ext)
+    tutor = {**usuarios.por_id(emmy)}
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert apoyo.abrir(ext, "x", "Necesito ayuda con mis materias", alumno, "estudiante")[1][0] == "Elija el tema."
+    assert "detalle" in apoyo.abrir(ext, "academico", "corto", alumno, "estudiante")[1][0]
+    assert "Solo su tutor" in apoyo.abrir(ext, "academico", "Un motivo largo y claro", admin, "tutor")[1][0]
+    cid, e = apoyo.abrir(ext, "economico", "No puedo pagar mis fotocopias y libros", alumno, "estudiante")
+    assert e == [] and "ya hay un caso" in apoyo.abrir(ext, "otro", "Otro motivo suficientemente largo", alumno, "estudiante")[1][0].lower()
+    assert any("Pidió apoyo" in n["asunto"] for n in notificaciones.recientes(emmy))            # el tutor
+    assert any("Pidió apoyo" in n["asunto"] for n in notificaciones.recientes(admin["id"]))      # y la Dirección
+    c = apoyo.obtener(cid)
+    assert c["estado_efectivo"] == "abierto" and c["vence_el"] == (date.today() + apoyo.VIGENCIA).isoformat()
+    # Quién lo ve: su tutor y la Dirección; otro docente, no.
+    otro = {**usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP), "roles": []}
+    assert apoyo.puede_atender(tutor, c) and apoyo.puede_atender(admin, c) and not apoyo.puede_atender(otro, c)
+    assert [x["id"] for x in apoyo.listar(tutor)] == [cid] and apoyo.listar(otro) == []
+    # Conversación y seguimiento.
+    assert apoyo.responder(cid, "", tutor, False)[0].startswith("Escriba")
+    assert apoyo.responder(cid, "Vamos a ver una beca de materiales", tutor, False) == []
+    assert any("Respuesta a su caso" in n["asunto"] for n in notificaciones.recientes(estudiantes_uid(ext)))
+    assert apoyo.responder(cid, "Gracias", alumno, True) == [] and [m["del_estudiante"] for m in apoyo.mensajes(cid)] == [0, 1]
+    assert apoyo.cambiar_estado(cid, "en_seguimiento", otro)[0].startswith("No puede atender")
+    assert apoyo.cambiar_estado(cid, "en_seguimiento", tutor, "economica") == []
+    assert apoyo.obtener(cid)["derivacion"] == "economica"
+    # Vence si nadie lo renueva; renovar lo devuelve.
+    get_db().execute("UPDATE caso_apoyo SET vence_el = '2020-01-01' WHERE id = ?", [cid])
+    assert apoyo.obtener(cid)["estado_efectivo"] == "vencido" and apoyo.abrir(ext, "otro", "Un motivo nuevo y largo", alumno, "estudiante")[0]
+    assert apoyo.renovar(cid, tutor) == [] and apoyo.obtener(cid)["estado_efectivo"] == "en_seguimiento"
+    assert apoyo.cambiar_estado(cid, "cerrado", admin) == []
+    assert apoyo.obtener(cid)["estado"] == "cerrado" and apoyo.responder(cid, "Hola", alumno, True)[0].startswith("Ese caso está cerrado")
+    assert apoyo.cambiar_estado(cid, "cerrado", admin)[0] == "Ese caso ya está cerrado."
+    assert apoyo.cerrar_por_el_estudiante(cid, ext)[0].startswith("No hay un caso")
+
+
+def test_pantallas_de_apoyo(client, sofia):
+    from app.estudiantil import apoyo
+    ext = _externo("1111111")
+    _con_tutor(ext)
+    get_db().execute("UPDATE estudiante SET estado = 'congelado' WHERE registro_universitario = '1111111'")
+    r = client.get("/estudiante/apoyo")
+    assert "Lo que TAU observa de usted" in r.text and "congelada" in r.text and "Solo usted ve esto" in r.text
+    client.post("/estudiante/apoyo", data={"tema": "salud", "motivo": "Corto"}, follow_redirects=False)
+    assert apoyo.casos_de(ext) == []
+    client.post("/estudiante/apoyo", data={"tema": "salud", "motivo": "Estoy pasando por un momento difícil"}, follow_redirects=False)
+    [c] = apoyo.casos_de(ext)
+    r = client.get("/estudiante/apoyo")
+    assert "Ya tiene un caso abierto" in r.text and "Lo pidió el estudiante" in r.text and "Salud" in r.text
+    client.post(f"/estudiante/apoyo/{c['id']}/mensaje", data={"texto": "¿Pueden llamarme?"}, follow_redirects=False)
+    assert [m["texto"] for m in apoyo.mensajes(c["id"])] == ["¿Pueden llamarme?"]
+    assert client.post("/estudiante/apoyo/99999/mensaje", data={"texto": "x"}, follow_redirects=False).status_code == 404
+    # El tutor lo atiende; otro docente no.
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "Apoyo estudiantil" in client.get("/").text
+    assert "Mamani" in client.get("/apoyo").text and "Salud" in client.get("/apoyo").text
+    r = client.get(f"/apoyo/{c['id']}")
+    assert "¿Pueden llamarme?" in r.text and "El estudiante ve todo lo que escriba aquí" in r.text
+    client.post(f"/apoyo/{c['id']}/mensaje", data={"texto": "Sí, la llamamos mañana"}, follow_redirects=False)
+    client.post(f"/apoyo/{c['id']}/estado/en_seguimiento", data={"derivacion": "psicologia"}, follow_redirects=False)
+    assert apoyo.obtener(c["id"])["estado"] == "en_seguimiento"
+    assert "Apoyo" in client.get(f"/tutoria/{ext}").text and "Salud" in client.get(f"/tutoria/{ext}").text
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    assert client.get("/apoyo", follow_redirects=False).status_code == 403                  # la administración sola no atiende
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert client.get(f"/apoyo/{c['id']}").status_code == 200
+    client.post(f"/apoyo/{c['id']}/estado/cerrado", follow_redirects=False)
+    assert apoyo.obtener(c["id"])["estado"] == "cerrado"
+    # Ofrecer apoyo desde la ficha del tutorado: el estudiante se entera.
+    r = client.post(f"/apoyo/ofrecer/{ext}", data={"tema": "academico", "motivo": "Notamos que le cuesta el primer semestre"},
+                    follow_redirects=False)
+    assert r.status_code == 303 and apoyo.casos_de(ext)[0]["origen"] == "direccion"
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    r = client.get("/estudiante/apoyo")
+    assert "Lo abrió la Dirección de Carrera" in r.text and "Notamos que le cuesta" in r.text
+    client.post(f"/estudiante/apoyo/{apoyo.casos_de(ext)[0]['id']}/cerrar", follow_redirects=False)
+    assert apoyo.casos_de(ext)[0]["estado"] == "cerrado"
