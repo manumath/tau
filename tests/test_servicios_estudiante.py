@@ -85,3 +85,56 @@ def test_el_menu_del_estudiante_esta_agrupado(client, sofia):
     for texto in ("Mi carrera", "Mi plan de estudios", "Servicios", "Comunicados", "Auxiliaturas"):
         assert texto in r.text
     assert "Más" in r.text                                                          # la barra del teléfono
+
+
+# --- Etapa 2: calendario académico ---------------------------------------------------------------------------------------
+
+def test_el_calendario_reune_las_fechas_del_estudiante(sofia):
+    from datetime import date, timedelta
+    from app.academico import gestiones
+    from app.estudiantil import calendario
+    ext = _externo("1111111")
+    hoy = date.today()
+    g = gestiones.crear_anio(hoy.year + 1)[0]                 # I-(año+1): sus fechas caen a menos de 120 días solo a veces
+    get_db().execute("UPDATE gestion_academica SET fecha_inicio = ? WHERE id = ?", [(hoy + timedelta(days=10)).isoformat(), g["id"]])
+    # Un evento al que lo convocan, otro para todos, uno de otra persona y uno en borrador.
+    u = estudiantes_uid(ext)
+    def ev(**k):
+        return get_db().t.comunicado.insert(tipo="evento", titulo=k["t"], publica_como="direccion_carrera",
+                                            para_todos=k.get("todos", 0), inicio=k.get("inicio"), lugar="Aula 1",
+                                            estado=k.get("estado", "publicado"), creado_por=1)["id"]
+    manana = (hoy + timedelta(days=1)).strftime("%Y-%m-%dT15:00")
+    mio = ev(t="Seminario", inicio=manana)
+    ev(t="Feria", inicio=manana, todos=1)
+    ev(t="Ajeno", inicio=manana)
+    ev(t="Borrador", inicio=manana, estado="borrador")
+    get_db().t.comunicado_destinatario.insert(comunicado_id=mio, usuario_id=u)
+    get_db().t.convocatoria_auxiliatura.insert(gestion_id=g["id"], modalidad="docencia", numero=1, titulo="Auxiliaturas I",
+                                               estado="publicada", cierre=(hoy + timedelta(days=5)).strftime("%Y-%m-%dT18:00"),
+                                               examen=(hoy + timedelta(days=9)).strftime("%Y-%m-%dT09:00"), creado_por=1)
+    titulos = [e["titulo"] for e in calendario.eventos(ext)]
+    assert "Seminario" in titulos and "Feria" in titulos and "Ajeno" not in titulos and "Borrador" not in titulos
+    assert any(t.startswith("Cierra la recepción") for t in titulos) and "Inicia I-%d" % (hoy.year + 1) in titulos
+    assert titulos == [e["titulo"] for e in sorted(calendario.eventos(ext), key=lambda e: (e["fecha"], e["hora"], e["titulo"]))]
+    assert all(e["fecha"] >= hoy.isoformat() for e in calendario.eventos(ext))
+    assert calendario.eventos(ext, hoy, hoy) == []
+
+
+def estudiantes_uid(ext):
+    return get_db().q("SELECT usuario_id FROM cuenta_estudiante WHERE externo_id = ?", [ext])[0]["usuario_id"]
+
+
+def test_pantalla_del_calendario_y_archivo_ics(client, sofia):
+    from datetime import date, timedelta
+    hoy = date.today()
+    inicio = (hoy + timedelta(days=2)).strftime("%Y-%m-%dT15:30")
+    get_db().t.comunicado.insert(tipo="evento", titulo="Charla de, prueba; con signos", publica_como="direccion_carrera", para_todos=1,
+                                 inicio=inicio, lugar="Auditorio", estado="publicado", creado_por=1)
+    r = client.get("/estudiante/calendario")
+    assert "Calendario académico" in r.text and "Charla de, prueba; con signos" in r.text and "15:30" in r.text
+    assert "30 días" in r.text and "Llevar a mi calendario" in r.text
+    r = client.get("/estudiante/calendario.ics")
+    assert r.headers["content-type"].startswith("text/calendar") and "attachment" in r.headers["content-disposition"]
+    assert "BEGIN:VCALENDAR" in r.text and "SUMMARY:Charla de\\, prueba\\; con signos" in r.text
+    assert f"DTSTART:{(hoy + timedelta(days=2)):%Y%m%d}T153000" in r.text and r.text.endswith("END:VCALENDAR\r\n")
+    assert "Calendario" in client.get("/estudiante").text

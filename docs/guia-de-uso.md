@@ -696,6 +696,12 @@ requisitos aprobados; el trabajo final se habilita con todas las demás). Las ma
 a la Dirección. «Compartir mi avance con mi tutor(a)» las muestra al tutor en su ficha de tutoría (tarjeta «Avance en su
 plan»). Si el plan del estudiante aún no está registrado, la pantalla lo dice y pide avisar a la Dirección de Carrera.
 
+**Calendario** (Mi carrera): las fechas del estudiante en un solo lugar, por mes, para los próximos 30, 90 o 180 días: el
+inicio y el término de cada semestre o curso de temporada, el cierre y el examen de las convocatorias a auxiliaturas, los
+eventos a los que lo convocan (o que son para todos) y, de su proyecto de grado, el vencimiento de la revisión del tribunal, la
+reunión y la defensa. **Llevar a mi calendario (.ics)** descarga el calendario del año para Google Calendar, Outlook o el
+teléfono. No guarda nada: reúne lo que ya está en el sistema.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

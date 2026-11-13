@@ -3478,7 +3478,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 
 ### Servicios y etapas (un commit cada una)
 1. (hecha, 13-nov-2026) Menú del estudiante agrupado y **Mi plan de estudios** (malla del plan, marcas privadas, compartir con el tutor).
-2. **Calendario académico:** semestre, plazos de convocatorias, defensas y eventos del estudiante; exportable (.ics).
+2. (hecha, 13-nov-2026) **Calendario académico:** semestre, plazos de convocatorias, defensas y eventos del estudiante; exportable (.ics).
 3. **Tutoría desde el estudiante:** ver su tutor y la fecha de sus reuniones (no su contenido), pedir una reunión; el tutor la ve.
 4. **Oportunidades:** becas, movilidad, pasantías, ayudantías de investigación (las publica el responsable de un proyecto) y
    empleo para egresados, con postulación y decisión.
@@ -3496,3 +3496,9 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
   (requisitos aprobados; «Egresado» exige las demás obligatorias) y las marcas, que alternan con un botón. Las marcas son
   privadas; con «Compartir con mi tutor» las ve el tutor en `/tutoria/{id}`. No las ve ni la Dirección.
 - El menú del estudiante pasa a grupos (Mi carrera, Servicios) y la barra del teléfono tiene sus cuatro primeras secciones y «Más».
+
+### Etapa 2 (hecha): calendario académico
+- `app/estudiantil/calendario.py` y `rutas/calendario.py` (`/estudiante/calendario`, `.ics`): reúne, sin guardar nada, las gestiones, las
+  convocatorias de auxiliaturas publicadas (cierre y examen), los eventos de comunicados (convocados o para todos) y, del
+  proyecto de grado del estudiante, el plazo de revisión, la reunión y la defensa. Las etapas siguientes agregan sus fechas
+  en `calendario.eventos` (becas, reuniones de tutoría, encuestas).

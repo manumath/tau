@@ -54,7 +54,8 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
         # El portal del estudiante, en grupos (PLAN §67): cada servicio nuevo se agrega a su grupo.
         return [(None, [_item("estudiante", "Mi seguimiento", "/estudiante", "graduation-cap"),
                         _item("avisos", "Avisos", "/avisos", "bell")]),
-                ("Mi carrera", [_item("plan", "Mi plan de estudios", "/estudiante/plan", "book-marked")]),
+                ("Mi carrera", [_item("plan", "Mi plan de estudios", "/estudiante/plan", "book-marked"),
+                                _item("calendario", "Calendario", "/estudiante/calendario", "calendar-days")]),
                 ("Servicios", [_item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
                                _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
                                _item("grado", "Grado", "/estudiante/grado", "scroll")])]
