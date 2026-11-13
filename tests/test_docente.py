@@ -233,3 +233,103 @@ def test_el_estudiante_ve_el_programa_publicado_desde_su_plan(sofia):
     r = sofia.get(f"/estudiante/programa/{aid}")
     assert r.status_code == 200 and "Dominar el cálculo" in r.text and "Apostol" in r.text
     assert sofia.get("/estudiante/programa/999999").status_code == 404
+
+
+# --- Etapa 4: lista de estudiantes por paralelo --------------------------------------------------------------------------------
+
+CSV = ("sigla,paralelo,ru,apellidos,nombres,correo\n"
+       "MAT-111,A,2222222,Zeta,Ana,ana@ejemplo.bo\n"
+       "MAT-111,A,1111111,Alfa,Beto,\n"
+       "MAT-999,A,3333333,Omega,Omar,\n").encode()
+
+
+def _curso(rol="titular"):
+    """El docente de prueba en el paralelo A de MAT-111 de una gestión en planificación → (docente, oferta_id, gestión)."""
+    from app.academico import oferta
+    doc = _docente()
+    g = _gestion_en_planificacion(2033, "II")
+    oid, e = oferta.agregar(g["id"], "MAT-111", "A", "", doc["id"])
+    assert e == [] and oferta.asignar(oid, doc["id"], rol) == []
+    return doc, oid, g
+
+
+def test_cargar_la_copia_y_ver_la_lista(app):
+    from app.academico import listas
+    doc, oid, g = _curso("auxiliar")
+    admin = usuarios.por_email("admin@test.cl")["id"]
+    assert listas.consultar(doc["id"], oid)["estudiantes"] == [] and listas.cargar(b"", g["id"], admin)[1] == ["El archivo está vacío."]
+    assert "Faltan columnas" in listas.cargar(b"sigla,ru\nMAT-111,1\n", g["id"], admin)[1][0]
+    resumen, errores = listas.cargar(CSV, g["id"], admin)
+    assert errores == [] and resumen == {"paralelos": 1, "estudiantes": 2, "omitidos": ["MAT-999 A"]}
+    r = listas.consultar(doc["id"], oid)                                           # el auxiliar también la ve
+    assert [e["ru"] for e in r["estudiantes"]] == ["1111111", "2222222"] and r["origen"] == "csv"   # por apellido
+    assert get_db().q("SELECT 1 FROM auditoria WHERE accion = 'ver_lista_curso' AND usuario_id = ?", [doc["id"]])
+    assert listas.consultar(admin, oid) is None                                    # ni la Dirección ve nombres
+    otro = usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP)
+    assert listas.consultar(otro["id"], oid) is None
+    # Cargar de nuevo reemplaza; una fila incompleta no carga nada.
+    assert listas.cargar(b"sigla,paralelo,ru,apellidos,nombres\nMAT-111,A,,Sin,RU\n", g["id"], admin)[1][0].startswith("Línea 2")
+    assert len(listas.consultar(doc["id"], oid)["estudiantes"]) == 2
+    assert listas.cargar(b"sigla,paralelo,ru,apellidos,nombres\nMAT-111,A,5555555,Nuevo,Uno\n", g["id"], admin)[0]["estudiantes"] == 1
+    assert [e["ru"] for e in listas.consultar(doc["id"], oid)["estudiantes"]] == ["5555555"]
+    assert listas.cursos_de(doc["id"])[0]["cargados"] == 1 and listas.cargadas(g["id"])[0]["cargados"] == 1
+
+
+def test_la_copia_se_retira_al_concluir_la_gestion(app):
+    from app.academico import listas, semestre
+    doc, oid, g = _curso()
+    admin = usuarios.por_email("admin@test.cl")["id"]
+    assert listas.cargar(CSV, g["id"], admin)[0]["estudiantes"] == 2
+    get_db().execute("UPDATE gestion_academica SET estado = 'activa' WHERE id = ?", [g["id"]])
+    assert semestre.concluir(g["id"], "Cierre de prueba", admin) == []
+    assert get_db().q("SELECT COUNT(*) n FROM lista_curso")[0]["n"] == 0
+    assert listas.consultar(doc["id"], oid) is None and listas.cargar(CSV, g["id"], admin)[1][0].startswith("Elija")
+
+
+def test_proveedor_de_api_sin_guardar_nada(app, monkeypatch):
+    import json
+    from app.academico import listas
+    from app.comun import config
+    doc, oid, g = _curso()
+    admin = usuarios.por_email("admin@test.cl")["id"]
+    monkeypatch.setattr(config, "LISTAS_URL", "https://kardex.ejemplo.bo/api")
+    pedidos = []
+
+    def _pedir(url):
+        pedidos.append(url)
+        return json.dumps({"estudiantes": [{"ru": 77, "apellidos": "Beta", "nombres": "Ana", "correo": None}]}).encode()
+    monkeypatch.setattr(listas, "_pedir", _pedir)
+    r = listas.consultar(doc["id"], oid)
+    assert r["origen"] == "api" and r["estudiantes"][0]["ru"] == "77" and r["cargada_en"] is None
+    assert pedidos == ["https://kardex.ejemplo.bo/api/gestiones/II-2033/cursos/MAT-111/A/estudiantes"]
+    assert get_db().q("SELECT COUNT(*) n FROM lista_curso")[0]["n"] == 0                  # nada se guarda
+    assert "no hace falta" in listas.cargar(CSV, g["id"], admin)[1][0]
+    monkeypatch.setattr(listas, "_pedir", lambda url: b"no es json")                      # respuesta ilegible
+    r = listas.consultar(doc["id"], oid)
+    assert r["estudiantes"] == [] and "no respondió" in r["error"]
+    monkeypatch.undo()
+    monkeypatch.setattr(config, "LISTAS_URL", "http://externo.ejemplo.bo/api")             # sin https, no sale a la red
+    r = listas.lista(oid)
+    assert r["error"] and r["estudiantes"] == []
+
+
+def test_pantallas_de_listas(client, sofia):
+    from app.comun import permisos, unidades
+    doc, oid, g = _curso()
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert "MAT-111" in client.get(f"/docencia/listas/cargar?gestion={g['id']}").text
+    assert client.get("/docencia/listas/plantilla").status_code == 200
+    r = client.post("/docencia/listas/cargar", data={"gestion": str(g["id"])}, files={"archivo": ("lista.csv", CSV, "text/csv")})
+    assert r.status_code == 200 and "Se cargaron 2 estudiantes" in r.text and "MAT-999 A" in r.text
+    assert client.get(f"/docencia/listas/{oid}").status_code == 403                    # la Dirección no es docente del paralelo
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    r = client.get("/docencia/listas")
+    assert r.status_code == 200 and "MAT-111" in r.text and "Cargar listas" not in r.text
+    r = client.get(f"/docencia/listas/{oid}")
+    assert r.status_code == 200 and "Alfa, Beto" in r.text and "1111111" in r.text
+    assert client.get("/docencia/listas/cargar").status_code == 403
+    assert client.post("/docencia/listas/cargar", data={"gestion": str(g["id"])},
+                       files={"archivo": ("lista.csv", CSV, "text/csv")}).status_code == 403

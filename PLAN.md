@@ -3599,7 +3599,7 @@ docente). TAU sigue sin guardar notas ni asistencia.
 1. (hecha, 13-nov-2026) **Mis pendientes y Mi calendario** del docente.
 2. (hecha, 13-nov-2026) **Preferencias para la oferta:** qué materias quiere o no puede dictar y en qué turnos no tiene disponibilidad, visibles para la Coordinación al armar la oferta.
 3. (hecha, 13-nov-2026) **Programa analítico (syllabus)** por materia y gestión, con versión; el estudiante lo ve en su plan.
-4. **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
+4. (hecha, 13-nov-2026) **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
 5. **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
 6. **Mi historial docente** (materias, tesis tuteladas y juradas, proyectos, productos) y **certificados** de tribunal y tutoría.
 7. Pruebas de navegador, manual y documentación.
@@ -3631,4 +3631,18 @@ docente). TAU sigue sin guardar notas ni asistencia.
 - El estudiante ve la última versión publicada de la gestión más reciente en `/estudiante/programa/{aid}`, con enlace en «Mi plan de
   estudios». Es información pública de la materia, no personal. «Mis pendientes» avisa de las materias sin programa publicado.
 - **Decisión mía por confirmar:** no hay adjunto (PDF) del programa, solo texto; no se avisa al estudiante cuando se publica una versión.
+
+### Etapa 4 (hecha): lista de estudiantes por paralelo
+- **Migración 0083:** `lista_curso` (RU, apellidos, nombres y correo por paralelo): copia **temporal** de lo que entrega Kardex, que se
+  borra al concluir la gestión (`semestre.concluir` llama `listas.purgar`) y con la oferta (`ON DELETE CASCADE`).
+- `app/academico/listas.py`: dos proveedores con la misma salida. **csv** (hoy): `cargar` lee el CSV de Kardex (todo o nada por
+  errores de fila; los paralelos que no están en la oferta se omiten y se informan). **api** (mañana): con `PORTAL_LISTAS_URL` y
+  `PORTAL_LISTAS_CLAVE`, `GET {URL}/gestiones/{codigo}/cursos/{sigla}/{paralelo}/estudiantes` con `Authorization: Bearer` y respuesta
+  `{"estudiantes": [{"ru", "apellidos", "nombres", "correo"}]}`; exige https (salvo localhost), no guarda nada y, si falla, muestra
+  un aviso sin datos. Las pruebas reemplazan `listas._pedir`: nunca salen a la red.
+- `/docencia/listas` y `/docencia/listas/{oid}`: solo los docentes vigentes del paralelo (titular o auxiliar) en una gestión no
+  concluida; cada consulta se audita (`ver_lista_curso`). **Ni la Dirección de Carrera ve nombres**: carga (`/docencia/listas/cargar`,
+  `gestionar_oferta`) y solo ve cuántos hay por paralelo. Sin exportación: la lista no se descarga.
+- **Decisiones mías por confirmar:** el auxiliar también ve la lista; el contrato de la API es una propuesta que habrá que ajustar a lo
+  que defina Kardex (nombres de campos y autenticación); la lista no cambia el número de inscritos de la oferta.
 

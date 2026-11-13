@@ -162,6 +162,15 @@ borrador con lo anterior y se publica otra versión. Sus estudiantes ven el prog
 enlace «Ver el programa». La Dirección de Carrera y la Coordinación académica ven en **Cobertura de la oferta** qué asignaturas ya
 tienen programa; «Mis pendientes» le recuerda publicarlo.
 
+### Listas de mis cursos
+
+**Docencia → Listas de cursos** muestra, de cada paralelo que usted dicta (titular o auxiliar), los estudiantes inscritos con su RU y
+su correo, tal como los registra el sistema de notas (Kardex). Solo los docentes de ese paralelo la ven (ni siquiera la Dirección
+de Carrera), y cada consulta queda registrada. TAU no guarda notas ni asistencia. Hoy la Dirección de Carrera o la Coordinación
+académica cargan en **Cargar listas** el CSV que entrega Kardex (sigla, paralelo, RU, apellidos, nombres y, si quieren, correo): la lista de
+cada paralelo del archivo reemplaza la anterior y es una copia temporal que se retira al concluir la gestión. Cuando Kardex ofrezca su
+API, TAU consultará la lista en el momento y no guardará nada.
+
 ## Mi perfil
 
 Menú con su nombre → «Mi perfil». Cada sección se edita con su botón «Editar».

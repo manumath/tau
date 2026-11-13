@@ -228,6 +228,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_PAIS` | `Bolivia` | Las revistas de este país son «nacionales» en los informes |
 | `PORTAL_OPENALEX_CLAVE` | — | Clave de OpenAlex (opcional; OpenAlex contabiliza el uso y la clave permite superar el cupo gratuito) |
 | `PORTAL_IA_LOCAL_URL`, `PORTAL_IA_LOCAL_MODELO` | — | Modelo de IA local con API compatible con OpenAI (p. ej., Ollama en `http://127.0.0.1:11434/v1`); PLAN §59 |
+| `PORTAL_LISTAS_URL`, `PORTAL_LISTAS_CLAVE`, `PORTAL_LISTAS_TIEMPO_S` | — | API del sistema de notas (Kardex) para la lista de estudiantes por paralelo; sin ella se usa la copia temporal que carga la Dirección; PLAN §68 |
 | `PORTAL_IA_EXT_URL`, `PORTAL_IA_EXT_MODELO`, `PORTAL_IA_EXT_CLAVE` | — | Proveedor de IA externo (opcional) |
 | `PORTAL_IA_EXT_ZDR` | `false` | `true` declara retención cero de datos; sin ella, el proveedor externo no se usa |
 | `PORTAL_IA_TIEMPO_S` | `300` | Límite de cada llamada a la IA, en segundos |

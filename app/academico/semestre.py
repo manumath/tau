@@ -62,6 +62,8 @@ def concluir(gid: int, motivo: str, uid: int) -> list[str]:
     with transaccion():
         get_db().execute(f"UPDATE gestion_academica SET estado = 'concluida', concluida_en = {AHORA}, concluida_por = ?, "
                          "motivo_conclusion = ? WHERE id = ?", [uid, motivo or None, gid])
+        from app.academico import listas
+        listas.purgar(gid)      # las listas de curso son una copia temporal (PLAN §68, etapa 4)
         auditar(uid, "concluir_gestion", "gestion_academica", gid,
                 gestiones.codigo(g) + (f" (antes de su término: {motivo})" if anticipado else ""))
     return []

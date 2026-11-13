@@ -46,6 +46,11 @@ IA_EXT_MODELO = os.environ.get("PORTAL_IA_EXT_MODELO")
 IA_EXT_CLAVE = os.environ.get("PORTAL_IA_EXT_CLAVE")
 IA_EXT_ZDR = os.environ.get("PORTAL_IA_EXT_ZDR", "").strip().lower() in ("1", "true", "si", "sí")
 IA_TIEMPO_S = float(os.environ.get("PORTAL_IA_TIEMPO_S", "300"))  # límite por llamada (un modelo local es lento)
+# Lista de estudiantes por paralelo (PLAN §68): la genera el sistema de notas (Kardex). Con PORTAL_LISTAS_URL, TAU la consulta a esa
+# API en el momento, con la clave PORTAL_LISTAS_CLAVE, y no guarda nada. Sin ella se usa la copia temporal que carga la Dirección.
+LISTAS_URL = (os.environ.get("PORTAL_LISTAS_URL") or "").rstrip("/")
+LISTAS_CLAVE = os.environ.get("PORTAL_LISTAS_CLAVE")
+LISTAS_TIEMPO_S = float(os.environ.get("PORTAL_LISTAS_TIEMPO_S", "10"))
 # Correo de contacto que se envía a Crossref (su «polite pool» responde mejor si se identifica).
 CONTACTO = os.environ.get("PORTAL_CONTACTO")
 
