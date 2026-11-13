@@ -3482,7 +3482,7 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
 3. (hecha, 13-nov-2026) **Tutoría desde el estudiante:** ver su tutor y la fecha de sus reuniones (no su contenido), pedir una reunión; el tutor la ve.
 4. (hecha, 13-nov-2026) **Oportunidades:** becas, movilidad, pasantías, ayudantías de investigación (las publica el responsable de un proyecto) y
    empleo para egresados, con postulación y decisión.
-5. **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
+5. (hecha, 13-nov-2026) **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
 6. **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
 7. **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
 8. **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
@@ -3518,3 +3518,10 @@ fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin
   `/estudiante/oportunidades` (ver y postular). Una ayudante de investigación la publica solo el responsable vigente del
   proyecto (o la Dirección). El empleo es por omisión para egresados y se publica a nombre de un empleador registrado (decisión del
   13-nov-2026). El cierre entra en el calendario del estudiante.
+
+### Etapa 5 (hecha): banco de temas de grado
+- **Migración 0075:** `tema_grado` (borrador, publicado, retirado; cupos y modalidad) y `solicitud_tema` (pendiente, aceptada, no
+  aceptada, retirada). `app/servicios/temas.py` y `rutas/temas.py`: los docentes con vínculo (los que pueden ser tutores) publican;
+  el estudiante pide tutor sobre un tema (hasta 3 pendientes; no si ya tiene un perfil en curso) y el docente acepta o no.
+- Un tema aceptado abre `/estudiante/grado/nuevo?tema=ID` con el título, la modalidad y el tutor ya puestos (solo para quien fue
+  aceptado). El tema deja de ofrecerse al completar sus cupos.

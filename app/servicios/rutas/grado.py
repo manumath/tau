@@ -424,13 +424,16 @@ def get(auth):
         usuario=auth)
 
 
-def _form_nuevo():
+def _form_nuevo(tema: dict | None = None):
+    """`tema`: un tema del banco que el docente aceptó (PLAN §67): parte con su título, su modalidad y su tutor(a)."""
+    modalidad = tema["modalidad"] if tema and tema["modalidad"] in grado.MODALIDADES else "proyecto_grado"
     return formulario(
         EST,
-        LabelInput("Título del trabajo", id="titulo", required=True, maxlength="300",
+        LabelInput("Título del trabajo", id="titulo", required=True, maxlength="300", value=tema["titulo"] if tema else "",
                    placeholder="Puede usar LaTeX: Existencia global para $iu_t + \\Delta u = 0$"),
-        Div(seleccion("Modalidad", "modalidad", list(grado.MODALIDADES.items()), "proyecto_grado"),
-            seleccion("Tutor(a)", "tutor_id", [(u["id"], f"{u['apellidos']}, {u['nombres']}") for u in grado.tutores()], vacio="— Elija —"),
+        Div(seleccion("Modalidad", "modalidad", list(grado.MODALIDADES.items()), modalidad),
+            seleccion("Tutor(a)", "tutor_id", [(u["id"], f"{u['apellidos']}, {u['nombres']}") for u in grado.tutores()],
+                      tema["docente_id"] if tema else None, vacio="— Elija —"),
             cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
         Div(P("Secciones del perfil", cls="text-sm font-medium"),
             P("Las obligatorias de la Carrera ya están; agregue las que le sirvan (puede cambiarlas después).", cls=TextPresets.muted_sm),
@@ -442,12 +445,16 @@ def _form_nuevo():
 
 
 @rt(f"{EST}/nuevo")
-def get(auth):
+def get(auth, tema: str = ""):
     externo, error = _estudiante(auth)
     if error:
         return error
+    from app.servicios import temas
+    elegido = temas.aceptado_para(externo, int(tema)) if tema.isdigit() else None
     return pagina("Nuevo perfil", A("← Proyecto de grado", href=EST, cls="text-sm text-primary"), H2("Nuevo perfil"),
-                  Div(_form_nuevo(), cls="max-w-3xl mt-4"), usuario=auth)
+                  P(f"Con el tema «{elegido['titulo']}» que aceptó {elegido['nombres']} {elegido['apellidos']}.",
+                    cls=TextPresets.muted_sm) if elegido else "",
+                  Div(_form_nuevo(elegido), cls="max-w-3xl mt-4"), usuario=auth)
 
 
 @rt(EST)

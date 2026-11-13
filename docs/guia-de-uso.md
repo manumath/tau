@@ -721,6 +721,16 @@ empleador registrado (no hay cuentas de empleadores: la Carrera recibe la oferta
 investigación** las publica el **responsable de un proyecto** (le aparece «Oportunidades» en el menú, solo con las suyas). En cada
 oportunidad se ven las postulaciones, con el RU y el correo, y se decide con un comentario: la persona recibe el aviso.
 
+**Temas de grado** (Servicios): un banco de temas de tesis y proyecto de grado. El estudiante busca por título, línea de investigación
+o modalidad, lee la descripción y los conocimientos previos, y **le pide al docente ser su tutor(a)** en ese tema, con un mensaje. El
+docente responde (**Aceptar** o **No aceptar**, con un mensaje) y el estudiante recibe un aviso. Si lo aceptaron, «Empezar mi
+perfil con este tema» abre el formulario de **Grado** con el título, la modalidad y el tutor(a) ya puestos. Cada estudiante puede
+tener hasta 3 pedidos pendientes y no puede pedir un tema si ya tiene un perfil en curso o aprobado.
+
+**Publicar temas** (Servicios → Temas de grado, para los docentes con vínculo con la Carrera): **Nuevo tema** (título, descripción,
+conocimientos previos, línea, modalidad y cupos) crea un borrador; **Publicar** lo muestra y **Retirar el tema** lo oculta. Cuando
+acepta a tantos estudiantes como cupos, el tema deja de aparecer. En cada tema se ven los pedidos con el RU y el correo.
+
 ### Verificar la actividad estudiantil (Dirección de Carrera y Coordinación académica)
 
 En **Estudiantes → Cohortes estudiantiles → Actividades por verificar** aparece lo que los estudiantes

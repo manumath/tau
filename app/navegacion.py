@@ -11,7 +11,7 @@ from app.academico.componentes import PESTANAS, visible
 from app.calidad import impacto, mejora
 from app.comun import permisos
 from app.comun.db import get_db
-from app.servicios import oportunidades
+from app.servicios import oportunidades, temas
 
 DOCENCIA = ("mia", "preparacion", "planes", "oferta", "carga", "gestiones")
 ESTUDIANTES = ("cohortes", "encuestas", "tutoria", "egresados", "empleadores")
@@ -61,6 +61,7 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
                 ("Servicios", [_item("comunicados", "Comunicados", "/estudiante/comunicados", "megaphone"),
                                _item("auxiliaturas", "Auxiliaturas", "/estudiante/auxiliaturas", "badge-check"),
                                _item("oportunidades", "Oportunidades", "/estudiante/oportunidades", "briefcase"),
+                               _item("temas", "Temas de grado", "/estudiante/temas", "lightbulb"),
                                _item("grado", "Grado", "/estudiante/grado", "scroll")])]
     puede = lambda accion: permisos.puede(auth, accion)  # noqa: E731
     investigacion = []
@@ -100,6 +101,8 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
     servicios = [_item("comunicados", "Comunicados y eventos", "/servicios/comunicados", "megaphone")]
     if puede("gestionar_auxiliaturas") or puede("gestionar_auxiliaturas_investigacion") or _miembro_auxiliatura(auth["id"]):
         servicios.append(_item("auxiliaturas", "Auxiliaturas", "/servicios/auxiliaturas", "badge-check"))
+    if temas.puede_publicar(auth):
+        servicios.append(_item("temas", "Temas de grado", "/servicios/temas", "lightbulb"))
     if oportunidades.puede_publicar(auth):
         servicios.append(_item("oportunidades", "Oportunidades", "/servicios/oportunidades", "handshake"))
     if puede("gestionar_grado") or _en_grado(auth["id"]):

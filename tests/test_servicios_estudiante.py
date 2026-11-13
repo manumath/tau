@@ -328,3 +328,77 @@ def test_pantallas_de_oportunidades(client, sofia):
                 follow_redirects=False)
     assert op.postulacion_de(oid, ext)["estado"] == "preseleccionada" and op.postulacion_de(oid, ext)["nota"] == "Entrevista"
     assert admin
+
+
+# --- Etapa 5: banco de temas de grado -----------------------------------------------------------------------------------------
+
+def _docente():
+    from app.comun import vinculos
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    vinculos.agregar(emmy, "titular", "2020-01-01")
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    return {**usuarios.por_email("inv@test.cl")}
+
+
+def test_publicar_pedir_y_aceptar_un_tema(sofia):
+    from app.servicios import temas
+    ext = _externo("1111111")
+    doc = _docente()
+    assert temas.crear({"titulo": ""}, doc)[1][0].startswith("El título")
+    assert temas.crear({"titulo": "T", "cupos": "99"}, doc)[1][0].startswith("Los cupos")
+    tid, e = temas.crear({"titulo": "Coloraciones de grafos", "descripcion": "Polinomio cromático", "cupos": "1",
+                          "modalidad": "tesis"}, doc)
+    assert e == [] and temas.disponibles() == []                                       # borrador
+    assert temas.solicitar(tid, ext, "")[0] == "Ese tema no está disponible."
+    assert temas.cambiar_estado(tid, "publicado", doc) == []
+    assert [t["id"] for t in temas.disponibles()] == [tid] and temas.disponibles("grafos") != [] and temas.disponibles("zzz") == []
+    assert temas.disponibles(modalidad="proyecto_grado") == []                         # el tema es solo para tesis
+    assert temas.solicitar(tid, ext, "Me interesa") == []
+    assert temas.solicitar(tid, ext, "")[0] == "Ya pidió este tema."
+    [s] = temas.solicitudes(tid)
+    assert (s["nombres"], s["estado"], s["registro_universitario"]) == ("Sofía", "pendiente", "1111111")
+    from app.comun import notificaciones
+    assert any("Pidieron su tema" in n["asunto"] for n in notificaciones.recientes(doc["id"]))
+    otro = {**usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP), "roles": []}
+    assert temas.responder(s["id"], True, "", otro)[0].startswith("Esa solicitud no está pendiente")
+    assert temas.responder(s["id"], True, "Adelante", doc) == []
+    assert temas.aceptado_para(ext, tid)["titulo"] == "Coloraciones de grafos" and temas.disponibles() == []   # sin cupos
+    assert temas.responder(s["id"], False, "", doc)[0].startswith("Esa solicitud no está pendiente")
+    assert "Aceptaron su pedido" in notificaciones.recientes(estudiantes_uid(ext))[0]["asunto"]
+    assert temas.actualizar(tid, {"titulo": "X", "cupos": "1"}, doc) == []
+    assert temas.cambiar_estado(tid, "retirado", doc) == [] and temas.actualizar(tid, {"titulo": "Y"}, doc)[0].startswith("No puede")
+
+
+def test_pantallas_de_temas_y_perfil_con_el_tema(client, sofia):
+    from app.servicios import temas
+    ext = _externo("1111111")
+    doc = _docente()
+    tid, _ = temas.crear({"titulo": "Grafos y álgebra", "descripcion": "Un tema", "modalidad": "cualquiera", "cupos": "2"}, doc)
+    temas.cambiar_estado(tid, "publicado", doc)
+    r = client.get("/estudiante/temas")
+    assert "Grafos y álgebra" in r.text and "Temas de grado" in r.text
+    r = client.get(f"/estudiante/temas/{tid}")
+    assert "Pedirle ser mi tutor(a)" in r.text and "Un tema" in r.text
+    client.post(f"/estudiante/temas/{tid}/pedir", data={"mensaje": "Hola"}, follow_redirects=False)
+    assert "Pendiente" in client.get(f"/estudiante/temas/{tid}").text
+    assert client.get("/estudiante/temas/99999").status_code == 404
+    # El docente responde por la pantalla.
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "Grafos y álgebra" in client.get("/servicios/temas").text
+    r = client.get(f"/servicios/temas/{tid}")
+    assert "Pedidos de tutoría (1)" in r.text and "Mamani" in r.text
+    sid = temas.solicitudes(tid)[0]["id"]
+    client.post(f"/servicios/temas/{tid}/solicitudes/{sid}/aceptar", data={"respuesta": "Bienvenida"}, follow_redirects=False)
+    assert temas.solicitud_de(tid, ext)["estado"] == "aceptada"
+    # El estudiante empieza su perfil con el tema: título y tutor ya puestos.
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    assert "Empezar mi perfil con este tema" in client.get("/estudiante/temas").text
+    r = client.get(f"/estudiante/grado/nuevo?tema={tid}")
+    assert 'value="Grafos y álgebra"' in r.text and "que aceptó Emmy Noether" in r.text
+    assert f'value="{doc["id"]}" selected' in r.text or f'value="{doc["id"]}"' in r.text
+    assert "Grafos y álgebra" not in client.get("/estudiante/grado/nuevo").text         # sin el tema, el formulario va vacío
+    assert "Grafos" not in client.get("/estudiante/grado/nuevo?tema=99999").text
+    # Quien no es docente no publica.
+    assert client.get("/servicios/temas", follow_redirects=False).status_code == 303
