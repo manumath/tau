@@ -297,3 +297,109 @@ def test_pantallas_del_semestre_activo(client, app):
     from app.academico import importar_oferta
     lista, _ = importar_oferta.leer(b"gestion,sigla,paralelo,email\nII-2031,MAT-111,A,\n")
     assert "está activa" in lista[0]["errores"][0]
+
+
+# --- Etapa 4: concluir, historial y carga por meses dictados -------------------------------------------------------------
+
+def test_concluir_y_reabrir(app):
+    from app.academico import semestre
+    g, *_ = _semestre_activo()                              # II-2031 termina en el futuro
+    assert "para concluirla antes, indique el motivo" in semestre.concluir(g["id"], "", 1)[0]
+    assert semestre.concluir(g["id"], "Cierre anticipado por paro docente", 1) == []
+    c = gestiones.obtener(g["id"])
+    assert c["estado"] == "concluida" and c["concluida_en"] and c["concluida_por"] == 1
+    assert c["motivo_conclusion"] == "Cierre anticipado por paro docente"
+    assert semestre.concluir(g["id"], "x", 1) == ["Solo se concluye una gestión activa."]
+    assert "por qué se reabre" in semestre.reabrir(g["id"], "", 1)[0]
+    assert semestre.reabrir(g["id"], "Se omitió una reasignación", 1) == []
+    a = gestiones.obtener(g["id"])
+    assert (a["estado"], a["concluida_en"], a["motivo_conclusion"]) == ("activa", None, None)
+    assert semestre.reabrir(g["id"], "otra vez", 1) == ["Solo se reabre una gestión concluida."]
+    # Un semestre que ya terminó se concluye sin motivo.
+    get_db().execute("UPDATE gestion_academica SET fecha_inicio = '2025-08-01', fecha_fin = '2025-12-31' WHERE id = ?", [g["id"]])
+    assert semestre.concluir(g["id"], "", 1) == []
+    assert gestiones.obtener(g["id"])["motivo_conclusion"] is None
+    acciones = [x["accion"] for x in get_db().q("SELECT accion FROM auditoria ORDER BY id")]
+    assert acciones.count("concluir_gestion") == 2 and "reabrir_gestion" in acciones
+
+
+def test_una_gestion_concluida_es_solo_lectura(client, app):
+    from app.academico import cambios, semestre
+    g, o1, o2, emmy, alan, grace = _semestre_activo()
+    assert semestre.concluir(g["id"], "Cierre anticipado", 1) == []
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    login(client, "inv@test.cl", PASS_TEMP)
+    permisos.asignar(emmy, "direccion_carrera", unidades.id_de("CMAT"))
+    r = client.get(f"/docencia/oferta?gestion={g['id']}")
+    assert "Concluida" in r.text and "Es historial, de solo lectura" in r.text
+    assert "Agregar una materia" not in r.text and "Retirar MAT-111" not in r.text and "Importar CSV" in r.text
+    r = client.post(f"/docencia/oferta/{g['id']}", headers=HX, data={"asignatura": "MAT-113"})
+    assert r.status_code == 409 and "concluida" in r.text
+    assert cambios.retirar_materia(o1, _f(), 1) == ["Los cambios con motivo solo se hacen con la gestión activa."]
+    assert client.get(f"/docencia/oferta/{g['id']}/grilla").status_code == 409
+    # La Dirección de Carrera la reabre desde la planificación.
+    r = client.get("/docencia/preparacion?semestre=II-2031")
+    assert "Concluida el" in r.text and "Reabrir para corregir" in r.text and "Cierre anticipado" in r.text
+    assert "Reabrir II-2031" in client.get(f"/docencia/preparacion/{g['id']}/reabrir", headers=HX).text
+    r = client.post(f"/docencia/preparacion/{g['id']}/reabrir", headers=HX, data={"motivo": ""})
+    assert "Indique por qué se reabre" in r.text
+    r = client.post(f"/docencia/preparacion/{g['id']}/reabrir", headers=HX, data={"motivo": "Corregir una asignación"})
+    assert r.headers["hx-redirect"] == "/docencia/preparacion?semestre=II-2031"
+    assert gestiones.obtener(g["id"])["estado"] == "activa"
+    assert "Concluir el semestre" in client.get("/docencia/preparacion?semestre=II-2031").text
+    assert "Concluir II-2031" in client.get(f"/docencia/preparacion/{g['id']}/concluir", headers=HX).text
+    r = client.post(f"/docencia/preparacion/{g['id']}/concluir", headers=HX, data={"motivo": ""})
+    assert "indique el motivo" in r.text                                          # termina en 2031
+    r = client.post(f"/docencia/preparacion/{g['id']}/concluir", headers=HX, data={"motivo": "Fin anticipado"})
+    assert r.headers["hx-redirect"] == "/docencia/preparacion?semestre=II-2031"
+
+
+def test_el_inicio_pide_concluir_un_semestre_terminado(client, carrera):
+    from datetime import timedelta
+    hoy = date.today()
+    g, _ = gestiones.crear(hoy.year + 1, "I", 1)
+    get_db().execute("UPDATE gestion_academica SET estado = 'activa', fecha_inicio = ?, fecha_fin = ? WHERE id = ?",
+                     [(hoy - timedelta(days=150)).isoformat(), (hoy - timedelta(days=2)).isoformat(), g["id"]])
+    r = client.get("/")
+    assert f"I-{hoy.year + 1} terminó el" in r.text and "sigue activa" in r.text and "Al concluirlo pasa al historial" in r.text
+
+
+def test_la_carga_se_cuenta_por_meses_dictados(app):
+    from app.academico import cambios, carga
+    from app.comun import vinculos
+    from tests.test_carga import _carga
+    g, o1, o2, emmy, alan, grace = _semestre_activo()
+    for u in (emmy, grace):                              # carga contratada de 32 h/mes de docencia
+        get_db().execute("DELETE FROM vinculo WHERE usuario_id = ?", [u])
+        assert vinculos.agregar(u, "titular", "2020-01-01", carga=_carga(32, docencia=32)) == []
+    assert oferta.horas_de_docencia(emmy, g["id"]) == 32 and carga.resumen(emmy, g)["avisos"] == []
+    did = oferta.docentes(o1)[0]["id"]
+    assert cambios.reasignar_docente(did, grace, _f("2031-09-01", "renuncia"), 1) == []
+    # II-2031 va del 1 de agosto al 31 de diciembre (153 días): Emmy dictó 31 y Grace 122.
+    assert oferta.horas_de_docencia(emmy, g["id"]) == 6.5
+    assert oferta.horas_de_docencia(grace, g["id"]) == 25.5 + 32 * 0                 # MAT-111 desde septiembre
+    [t] = oferta.tramos_de(emmy, g["id"])
+    assert (t["sigla"], t["parcial"], t["inicio"], t["fin"]) == ("MAT-111", True, "2031-08-01", "2031-08-31")
+    assert round(t["fraccion"], 3) == 0.203
+    aviso = carga.resumen(emmy, g)["avisos"][0]
+    assert "Falta asignar 0,8 materias" in aviso and "asignada: 6,5 h/mes" in aviso
+    assert "por los meses dictados" in aviso
+    # Los dos juntos suman la materia entera.
+    assert oferta.horas_de_docencia(emmy, g["id"]) + oferta.horas_de_docencia(grace, g["id"]) == 32
+    # Una materia retirada deja de contar desde su fecha, y no cuenta si se retira el primer día.
+    assert cambios.retirar_materia(o2, _f("2031-09-01", "falta_inscritos"), 1) == []
+    assert oferta.horas_de_docencia(alan, g["id"]) == 6.5
+    assert [m["parcial"] for m in carga.materias_con_detalle(alan, g["id"])] == [True]
+
+
+def test_el_historial_por_csv_crea_la_gestion_pasada_como_concluida(app):
+    from app.academico import importar_oferta
+    lista, errores = importar_oferta.leer(b"gestion,sigla,paralelo,email\nI-2019,MAT-111,A,\n")
+    assert errores == [] and lista[0]["errores"] == []
+    assert importar_oferta.aplicar(lista, 1) == 1
+    g = gestiones.por_codigo("I-2019")
+    assert g["estado"] == "concluida" and "historial" in g["motivo_conclusion"]
+    assert [o["sigla"] for o in oferta.listar(g["id"])] == ["MAT-111"]
+    # Se puede volver a cargar (reemplaza), pero no una gestión activa.
+    assert importar_oferta.aplicar(importar_oferta.leer(b"gestion,sigla,paralelo,email\nI-2019,MAT-112,A,\n")[0], 1) == 1
+    assert [o["sigla"] for o in oferta.listar(g["id"])] == ["MAT-112"]

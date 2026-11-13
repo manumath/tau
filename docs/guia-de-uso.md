@@ -572,6 +572,18 @@ de planificación, necesidad académica u otro, que pide explicación) y un deta
 - **Asignar un docente** a un paralelo («+ Asignar docente»), **reasignarlo** a otra persona (las flechas junto a su
   nombre: el que dicta hoy deja el paralelo el día anterior a la fecha de efecto y entra el nuevo con el mismo rol) o
   **retirarlo** (el muñeco con la raya). Quien deja un paralelo queda en la fila con sus fechas.
+**Concluir un semestre** (Dirección de Carrera, en la planificación de la gestión): al pasar la fecha de término, el inicio
+avisa «I-2026 terminó… y sigue activa». «Concluir el semestre» lo pasa al **historial**: queda de solo lectura (la oferta y
+los docentes ya no cambian) y sale de los pendientes. Antes de su término solo se concluye con motivo (cierre anticipado).
+Si hay algo que corregir, «Reabrir para corregir» (con motivo) lo devuelve a *activa*. Cada gestión, semestre o curso de
+temporada, se concluye por separado. La oferta de un semestre pasado también se carga por CSV (Oferta y docentes →
+Importar CSV): una gestión que no existía y ya terminó se crea directamente como concluida.
+
+**Carga por meses dictados.** Si un titular deja una materia o entra a mitad de semestre, cada persona cuenta la materia por
+el tiempo que la dictó: 32 h/mes × la parte del semestre dictada (por días), como promedio del semestre. Quien dictó 31 de
+153 días aporta 6,5 h/mes y quien siguió, 25,5: juntos suman las 32 de la materia. La ficha de carga y «Mi docencia»
+muestran el periodo en que dictó cada materia.
+
 Los docentes que entran o salen reciben un aviso. **Cambios del semestre** lista todo lo que cambió, con su fecha, motivo y
 quién lo registró. Los cambios los hacen la Dirección de Carrera y la Coordinación académica.
 

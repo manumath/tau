@@ -13,6 +13,7 @@
   quitar (por ejemplo, si se cierra por falta de inscritos).
 """
 import re
+from datetime import date, timedelta
 
 from app.comun import vinculos
 from app.comun.db import get_db
@@ -195,12 +196,55 @@ def materias_de(usuario_id: int, gestion_id: int, solo_titular: bool = True) -> 
             {"AND d.rol = 'titular'" if solo_titular else ""} ORDER BY a.sigla, o.paralelo""", [usuario_id, gestion_id])
 
 
-def horas_de_docencia(usuario_id: int, gestion_id: int) -> int:
-    """Carga de docencia (h/mes) en la gestión: 32 por materia como titular; 0 en verano e invierno."""
+def _dias(inicio: str, fin: str) -> int:
+    return max(0, (date.fromisoformat(fin) - date.fromisoformat(inicio)).days + 1)
+
+
+def periodo_dictado(fila: dict, g: dict) -> tuple[str, str]:
+    """Primer y último día en que esa persona dictó esa materia en la gestión: desde que entró (o que la materia se agregó)
+    hasta que salió (o que la materia se retiró)."""
+    inicio = max(g["fecha_inicio"], fila.get("desde") or g["fecha_inicio"], fila.get("agregada_en") or g["fecha_inicio"])
+    fin = min(g["fecha_fin"], fila.get("hasta") or g["fecha_fin"])
+    if fila.get("retirada_en"):
+        fin = min(fin, (date.fromisoformat(fila["retirada_en"]) - timedelta(days=1)).isoformat())
+    return inicio, fin
+
+
+def fraccion(fila: dict, g: dict) -> float:
+    """Qué parte del semestre dictó esa persona esa materia (0 a 1), por los días del periodo dictado. Sin cambios, 1."""
+    inicio, fin = periodo_dictado(fila, g)
+    return _dias(inicio, fin) / _dias(g["fecha_inicio"], g["fecha_fin"]) if fin >= inicio else 0.0
+
+
+def tramos_de(usuario_id: int, gestion_id: int, solo_titular: bool = True) -> list[dict]:
+    """Lo que la persona dictó en la gestión, incluso lo que dejó o se retiró con el semestre en marcha: un tramo por
+    paralelo, con la fracción del semestre dictada (`fraccion`) y las h/mes que aporta (`horas`, promedio del semestre)."""
+    g = get_db().q("SELECT * FROM gestion_academica WHERE id = ?", [gestion_id])[0]
+    filas = get_db().q(
+        f"""SELECT o.id, a.sigla, a.nombre, o.paralelo, o.inscritos, d.rol, d.desde, d.hasta, o.agregada_en, o.retirada_en,
+                   o.motivo_retiro FROM oferta_docente d JOIN oferta o ON o.id = d.oferta_id
+            JOIN asignatura a ON a.id = o.asignatura_id WHERE d.usuario_id = ? AND o.gestion_id = ?
+            {"AND d.rol = 'titular'" if solo_titular else ""} ORDER BY d.rol = 'auxiliar', a.sigla, o.paralelo""",
+        [usuario_id, gestion_id])
+    res = []
+    for f in filas:
+        f["fraccion"] = fraccion(f, g)
+        f["parcial"] = f["fraccion"] < 1
+        f["inicio"], f["fin"] = periodo_dictado(f, g)
+        f["horas"] = round(HORAS_POR_MATERIA * f["fraccion"], 1)
+        if f["fraccion"] > 0:
+            res.append(f)
+    return res
+
+
+def horas_de_docencia(usuario_id: int, gestion_id: int) -> float | int:
+    """Carga de docencia (h/mes, promedio del semestre) en la gestión: 32 por materia como titular, por los meses que la
+    dictó (PLAN §66); 0 en verano e invierno."""
     g = get_db().q("SELECT tipo FROM gestion_academica WHERE id = ?", [gestion_id])
     if not g or g[0]["tipo"] in TEMPORADA:
         return 0
-    return HORAS_POR_MATERIA * len(materias_de(usuario_id, gestion_id))
+    total = round(sum(t["horas"] for t in tramos_de(usuario_id, gestion_id)), 1)
+    return int(total) if total == int(total) else total
 
 
 # --- Acciones masivas ---------------------------------------------------------------------------------

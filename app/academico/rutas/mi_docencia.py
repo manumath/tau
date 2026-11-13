@@ -5,7 +5,7 @@ from monsterui.all import H2, H3, Button, ButtonT, Card, Progress, TextPresets, 
 
 from app.academico import carga, gestiones, oferta
 from app.academico.componentes import tiene_docencia
-from app.comun import adscripcion, permisos, vinculos
+from app.comun import adscripcion, formato, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, pagina
 from app.comun.db import get_db
 from app.comun.componentes.registros import insignia
@@ -42,7 +42,10 @@ def _tarjeta_materias(uid, g):
     materias = carga.materias_con_detalle(uid, g["id"])
     temporada = g["tipo"] in oferta.TEMPORADA
     r = carga.resumen(uid, g) if not temporada else None
-    filas = [fh.Tr(fh.Td(m["sigla"], cls="font-mono text-sm whitespace-nowrap"), fh.Td(m["nombre"], cls="text-sm"),
+    filas = [fh.Tr(fh.Td(m["sigla"], cls="font-mono text-sm whitespace-nowrap"),
+                   fh.Td(m["nombre"], Div((f"Retirada del semestre: {m['motivo_retiro'].lower()}" if m["retirada_en"]
+                                           else f"La dictó del {formato.fecha(m['inicio'])} al {formato.fecha(m['fin'])}")
+                                          if m["parcial"] else "", cls=TextPresets.muted_sm), cls="text-sm"),
                    fh.Td(m["paralelo"], cls="text-sm"),
                    fh.Td(str(m["inscritos"]) if m["inscritos"] is not None else "—", cls="text-sm tabular-nums"),
                    fh.Td(oferta.ROLES[m["rol"]], cls="text-sm")) for m in materias]
@@ -55,7 +58,7 @@ def _tarjeta_materias(uid, g):
         P("Curso de temporada: cuenta como docencia dictada, no como carga del semestre.",
           cls="text-sm text-amber-700 dark:text-amber-400 mt-2") if temporada else "",
         Div(P(f"Docencia prevista: {r['prevista'] if r['prevista'] is not None else '—'} h/mes · asignada: "
-              f"{r['asignada']} h/mes (32 por materia como titular).", cls="text-sm"),
+              f"{formato.numero(r['asignada'])} h/mes (32 por materia como titular, por los meses dictados).", cls="text-sm"),
             _barra(r["asignada"], r["prevista"], "Docencia asignada respecto de la prevista") if r["prevista"] else "",
             *[insignia(a, "ambar", icono="circle-alert") for a in r["avisos"]],
             cls="mt-3 space-y-1") if r else "")

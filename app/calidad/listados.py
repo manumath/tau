@@ -137,8 +137,8 @@ def _dictado(desde: int, hasta: int) -> dict[int, dict]:
     """asignatura → {veces: gestiones en que se ofreció, max: máximo de inscritos en un paralelo}."""
     return {f["asignatura_id"]: {"veces": f["veces"], "max": f["max"]} for f in get_db().q(
         """SELECT o.asignatura_id, COUNT(DISTINCT o.gestion_id) AS veces, MAX(o.inscritos) AS max
-           FROM oferta o JOIN gestion_academica g ON g.id = o.gestion_id WHERE g.anio BETWEEN ? AND ?
-           GROUP BY o.asignatura_id""", [desde, hasta])}
+           FROM oferta o JOIN gestion_academica g ON g.id = o.gestion_id
+           WHERE g.anio BETWEEN ? AND ? AND o.retirada_en IS NULL GROUP BY o.asignatura_id""", [desde, hasta])}
 
 
 def _fila_plan(f: dict, dictado: dict, semestre: str) -> dict:

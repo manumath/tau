@@ -208,7 +208,7 @@ def item(iid: int) -> dict | None:
 
 def asignaturas_de_la_oferta(gestion_id: int) -> list[dict]:
     return get_db().q("""SELECT DISTINCT a.id, a.sigla, a.nombre FROM oferta o JOIN asignatura a ON a.id = o.asignatura_id
-                         WHERE o.gestion_id = ? ORDER BY a.sigla""", [gestion_id])
+                         WHERE o.gestion_id = ? AND o.retirada_en IS NULL ORDER BY a.sigla""", [gestion_id])
 
 
 def proyectos_vigentes() -> list[dict]:

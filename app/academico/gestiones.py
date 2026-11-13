@@ -68,9 +68,9 @@ def crear_anio_con_nuevas(anio: int) -> list[tuple[dict, bool]]:
 
 
 def edicion_libre(g: dict) -> bool:
-    """¿Se edita la oferta y los docentes sin motivo ni fecha de efecto? Con la gestión activa, los cambios pasan por
-    `app.academico.cambios` (con motivo y registro)."""
-    return g["estado"] != "activa"
+    """¿Se edita la oferta y los docentes sin motivo ni fecha de efecto? Solo en planificación. Con la gestión activa, los
+    cambios pasan por `app.academico.cambios` (con motivo y registro); la concluida es historial (PLAN §66)."""
+    return g["estado"] == "planificacion"
 
 
 def crear(anio: int, tipo: str, uid: int, concluida: bool = False) -> tuple[dict | None, str | None]:

@@ -6,8 +6,8 @@ import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, Li, Option, P, Response, Select, Span, Ul
 from monsterui.all import H2, H3, Button, ButtonT, TextPresets, UkIcon
 
-from app.academico import carga, gestiones, oferta
-from app.comun import permisos, vinculos
+from app.academico import carga, gestiones
+from app.comun import formato, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import get_db
@@ -124,8 +124,9 @@ def get(auth, gid: int, uid: int):
                        f"{x['horas']} h/mes", cls="text-sm py-0.5") for x in carga.en_proyectos(v["id"])])]
               if v and carga.en_proyectos(v["id"]) else []),
             H3("Docencia asignada", cls="text-base font-semibold mt-4"),
-            Ul(*[Li(f"{m['sigla']} {m['nombre']} · paralelo {m['paralelo']} · {oferta.HORAS_POR_MATERIA} h/mes",
-                    cls="text-sm py-0.5") for m in r["materias"]]) if r["materias"]
+            Ul(*[Li(f"{m['sigla']} {m['nombre']} · paralelo {m['paralelo']} · {formato.numero(m['horas'])} h/mes"
+                    + (f" (la dictó del {formato.fecha(m['inicio'])} al {formato.fecha(m['fin'])}, por los meses "
+                       "dictados)" if m["parcial"] else ""), cls="text-sm py-0.5") for m in r["materias"]]) if r["materias"]
             else P("Sin materias como titular en la oferta de este semestre.", cls=TextPresets.muted_sm),
             P("Se cambia en «Oferta y docentes».", cls=TextPresets.muted_sm),
             Div(*[insignia(a, "ambar", icono="circle-alert") for a in r["avisos"]]

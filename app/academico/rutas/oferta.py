@@ -138,8 +138,11 @@ def get(auth, gestion: str = ""):
         if g["tipo"] in oferta.TEMPORADA else ""
     libre = gestiones.edicion_libre(g)
     n_cambios = len(cambios.listar(g["id"])) if g["estado"] != "planificacion" else 0
-    estado = Div(estado_insignia(g), P("Los cambios en la oferta y en los docentes piden motivo y fecha de efecto, y quedan "
-                                       "registrados.", cls=TextPresets.muted_sm) if not libre else "",
+    estado = Div(estado_insignia(g),
+                 P("Los cambios en la oferta y en los docentes piden motivo y fecha de efecto, y quedan registrados."
+                   if g["estado"] == "activa" else "Es historial, de solo lectura. La Dirección de Carrera puede reabrirla "
+                   "para corregirla; la oferta de un semestre pasado también se carga por CSV.",
+                   cls=TextPresets.muted_sm) if not libre else "",
                  A(UkIcon("history", height=14, width=14), f"Cambios del semestre ({n_cambios})",
                    href=f"{BASE}/{g['id']}/cambios",
                    cls="inline-flex items-center gap-1 text-sm text-primary hover:underline") if n_cambios or not libre
@@ -158,7 +161,7 @@ def get(auth, gestion: str = ""):
                 A(UkIcon("grid-3x3", height=16, width=16), "Asignar en grilla", href=f"{BASE}/{g['id']}/grilla",
                   cls="uk-btn uk-btn-default inline-flex items-center gap-1") if _puede(auth) and libre else "",
                 Button(UkIcon("file-up", height=16, width=16), "Importar CSV", cls=ButtonT.default,
-                       hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if _puede(auth) and libre else "",
+                       hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if _puede(auth) and g["estado"] != "activa" else "",
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
         estado, temporada,
@@ -498,7 +501,7 @@ def get(auth, gid: int):
     if error:
         return error
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     origen = oferta.mismo_semestre_anio_anterior(g)
     if not origen:
         return Response("No hay gestión del año anterior", status_code=404)
@@ -525,7 +528,7 @@ def post(auth, sess, gid: int, con_docentes: str = ""):
     if error:
         return error
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     origen = oferta.mismo_semestre_anio_anterior(g)
     if not origen:
         return Response("No hay gestión del año anterior", status_code=404)
@@ -581,7 +584,7 @@ def get(auth, gid: int):
     if error:
         return error
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     return _pagina_grilla(g, auth)
 
 
@@ -593,7 +596,7 @@ async def post(auth, sess, req, gid: int):
     if error:
         return error
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     form = await req.form()
     cambios, errores = 0, []
     with transaccion():
@@ -618,9 +621,11 @@ async def post(auth, sess, req, gid: int):
     return Redirect(f"{BASE}?gestion={gid}")
 
 
-def _con_motivo():
-    """Respuesta cuando se intenta editar libremente una gestión activa: ahí los cambios piden motivo y fecha."""
-    return Response("La gestión está activa: los cambios en la oferta y en los docentes piden motivo y fecha de efecto.",
+def _con_motivo(g):
+    """Respuesta cuando se intenta editar libremente una gestión que ya no está en planificación."""
+    return Response("La gestión está activa: los cambios en la oferta y en los docentes piden motivo y fecha de efecto."
+                    if g["estado"] == "activa" else
+                    "La gestión está concluida: es historial. Para corregirla, la Dirección de Carrera puede reabrirla.",
                     status_code=409)
 
 
@@ -637,7 +642,7 @@ def post(auth, gid: int, asignatura: str = "", paralelo: str = "A", inscritos: s
     if error:
         return error
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     oid, errores = oferta.agregar(gid, asignatura, paralelo, inscritos, auth["id"])
     if not errores:
         o = oferta.obtener(oid)
@@ -653,7 +658,7 @@ def post(auth, sess, gid: int):
     if error:
         return error
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     n = oferta.ofertar_troncales(g, auth["id"])
     auditar(auth["id"], "ofertar_troncales", "gestion_academica", gid, f"{gestiones.codigo(g)}: {n}")
     add_toast(sess, f"{n} troncal(es) agregada(s)." if n else "Todas las troncales ya estaban en la oferta.",
@@ -670,7 +675,7 @@ def delete(auth, oid: int):
         return Response("No encontrado", status_code=404)
     g = gestiones.obtener(o["gestion_id"])
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     oferta.quitar(oid)
     auditar(auth["id"], "quitar_oferta", "oferta", oid, f"{gestiones.codigo(g)} {o['sigla']} {o['paralelo']}")
     return seccion_oferta(g, auth)
@@ -685,7 +690,7 @@ def post(auth, sess, oid: int, usuario: str = "", rol: str = "titular"):
         return Response("No encontrado", status_code=404)
     g = gestiones.obtener(o["gestion_id"])
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     errores = oferta.asignar(oid, int(usuario) if usuario.isdigit() else 0, rol)
     if not errores:
         auditar(auth["id"], "asignar_docente", "oferta", oid, f"{gestiones.codigo(g)} {o['sigla']} {o['paralelo']}: "
@@ -704,7 +709,7 @@ def delete(auth, did: int):
     o = oferta.obtener(d0[0]["oferta_id"])
     g = gestiones.obtener(o["gestion_id"])
     if not gestiones.edicion_libre(g):
-        return _con_motivo()
+        return _con_motivo(g)
     d = oferta.quitar_docente(did)
     auditar(auth["id"], "quitar_docente", "oferta", o["id"], f"{gestiones.codigo(g)} {o['sigla']}: usuario {d['usuario_id']}")
     return seccion_oferta(g, auth)

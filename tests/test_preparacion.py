@@ -48,7 +48,7 @@ def test_avance_del_semestre(app):
     est = preparacion.estado(2027, "I")
     e = _etapas(est)
     assert e["oferta"]["estado"] == "hecho" and e["oferta"]["detalle"].startswith("2 paralelos")
-    assert e["contratos"]["estado"] == "actual" and e["contratos"]["pendientes"] == ["Turing, Alan (terminó el 2026-12-31)"]
+    assert e["contratos"]["estado"] == "actual" and e["contratos"]["pendientes"] == ["Turing, Alan (terminó el 31 dic 2026)"]
     assert (e["docentes"]["hechos"], e["docentes"]["total"], e["docentes"]["estado"]) == (1, 2, "pendiente")
     assert e["docentes"]["pendientes"][0].startswith("MAT-112")
     assert (e["contratos"]["falta"], e["docentes"]["falta"]) == ("renovar 1 contrato", "asignar titular a 1 paralelo")

@@ -108,6 +108,11 @@ def _para_carrera(auth):
                            "y sigue en planificación", f"/docencia/preparacion?semestre={gestiones.codigo(pl)}",
                            tono="rojo" if empezo else "info",
                            detalle=(f"Para activarla: {falta[0].lower()}" if falta else "Está lista para activarse.")))
+    for ac in get_db().q("SELECT * FROM gestion_academica WHERE estado = 'activa' AND fecha_fin < ? ORDER BY fecha_fin",
+                         [hoy.isoformat()]):
+        items.append(_item(f"{gestiones.codigo(ac)} terminó el {formato.fecha(ac['fecha_fin'])} y sigue activa",
+                           f"/docencia/preparacion?semestre={gestiones.codigo(ac)}",
+                           detalle="Al concluirlo pasa al historial." if dirige else "La concluye la Dirección de Carrera."))
     prox = preparacion.estado(*preparacion.semestre_siguiente())
     if prox["hechas"] < prox["total"]:
         falta = next(e for e in prox["etapas"] if not e["listo"])

@@ -3387,7 +3387,7 @@ borra el dato sin dejar cuándo ni por qué.
 1. (hecha, 13-nov-2026) Migración con el estado, borrado, creación suelta y lista de gestiones con estado y enlace a planificar.
 2. (hecha, 13-nov-2026) Planificación como lista de verificación y botón Activar; pendientes en el inicio.
 3. (hecha, 13-nov-2026) Semestre activo: cambios con motivo y fecha, vigencia de docentes, registro de cambios y avisos a los docentes.
-4. Concluir, historial de solo lectura, reabrir, CSV histórico y efectos en carga, «Mi docencia» e indicadores.
+4. (hecha, 13-nov-2026) Concluir, historial de solo lectura, reabrir, CSV histórico y efectos en carga, «Mi docencia» e indicadores.
 5. Pruebas de navegador, manual, guía y este PLAN.
 
 ### Etapa 1 (hecha): estado, borrado y creación de gestiones
@@ -3427,3 +3427,18 @@ borra el dato sin dejar cuándo ni por qué.
   es el registro. La importación por CSV no acepta una gestión activa.
 - **Pendiente (etapa 4):** la carga horaria sigue contando al docente vigente (todavía no por meses dictados), y una gestión
   concluida sigue editándose libremente.
+
+### Etapa 4 (hecha): concluir, historial y carga por meses dictados
+- **Concluir** (`semestre.concluir`, `decidir_gestion`): de activa a concluida; antes de la fecha de término exige motivo
+  (cierre anticipado). **Reabrir** (`semestre.reabrir`): de concluida a activa, con motivo; borra los datos de la conclusión.
+  Ambos en la planificación de la gestión, con ventana de motivo y auditoría. El inicio avisa de una gestión activa que ya
+  terminó («Concluirlo»).
+- **Historial de solo lectura:** `gestiones.edicion_libre` es verdadera solo en planificación; una gestión concluida responde
+  409 a toda edición, sin botones, y sus fechas no cambian. La carga por CSV de un semestre pasado reemplaza su oferta con
+  vista previa (también en una concluida); una gestión pasada que no existía se crea ya concluida; una activa no se importa.
+- **Carga por meses dictados** (decisión del 13-nov-2026): `oferta.tramos_de`, `periodo_dictado`, `fraccion`: 32 h/mes × la
+  parte del semestre (por días) en que la persona dictó la materia, como promedio del semestre. `carga.resumen` compara esa
+  cifra con la docencia prevista y lo dice en el aviso (con decimales en coma); la ficha de carga y «Mi docencia» muestran el
+  periodo en que dictó cada materia y las retiradas. Las materias retiradas no cuentan en las cifras de oferta (auxiliaturas,
+  calidad, inscritos).
+- Las fechas de la planificación se muestran legibles (`formato.fecha`).

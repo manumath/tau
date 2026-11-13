@@ -5,6 +5,8 @@ planificación → activa → concluida (historial). Activar, concluir y reabrir
 (`app.academico.preparacion`) no puede tener puntos que lo impidan: la oferta cargada y un titular en cada paralelo.
 Contratos por renovar y carga con observaciones solo avisan.
 """
+from datetime import date
+
 from app.academico import gestiones, preparacion
 from app.comun.db import AHORA, auditar, get_db, transaccion
 
@@ -43,4 +45,38 @@ def activar(gid: int, uid: int) -> list[str]:
         get_db().execute(f"UPDATE gestion_academica SET estado = 'activa', activada_en = {AHORA}, activada_por = ? "
                          "WHERE id = ?", [uid, gid])
         auditar(uid, "activar_gestion", "gestion_academica", gid, gestiones.codigo(g))
+    return []
+
+
+def concluir(gid: int, motivo: str, uid: int) -> list[str]:
+    """Pasa una gestión activa al historial. Antes de su término solo se concluye con motivo (cierre anticipado)."""
+    g = gestiones.obtener(gid)
+    if not g or g["estado"] != "activa":
+        return ["Solo se concluye una gestión activa."]
+    motivo = (motivo or "").strip()
+    anticipado = g["fecha_fin"] >= date.today().isoformat()
+    if anticipado and not motivo:
+        return [f"{gestiones.codigo(g)} termina el {g['fecha_fin']}: para concluirla antes, indique el motivo."]
+    if len(motivo) > 500:
+        return ["El motivo admite hasta 500 caracteres."]
+    with transaccion():
+        get_db().execute(f"UPDATE gestion_academica SET estado = 'concluida', concluida_en = {AHORA}, concluida_por = ?, "
+                         "motivo_conclusion = ? WHERE id = ?", [uid, motivo or None, gid])
+        auditar(uid, "concluir_gestion", "gestion_academica", gid,
+                gestiones.codigo(g) + (f" (antes de su término: {motivo})" if anticipado else ""))
+    return []
+
+
+def reabrir(gid: int, motivo: str, uid: int) -> list[str]:
+    """Devuelve una gestión concluida a «activa» para corregirla; exige el motivo."""
+    g = gestiones.obtener(gid)
+    if not g or g["estado"] != "concluida":
+        return ["Solo se reabre una gestión concluida."]
+    motivo = (motivo or "").strip()
+    if not motivo or len(motivo) > 500:
+        return ["Indique por qué se reabre (hasta 500 caracteres)."]
+    with transaccion():
+        get_db().execute("UPDATE gestion_academica SET estado = 'activa', concluida_en = NULL, concluida_por = NULL, "
+                         "motivo_conclusion = NULL WHERE id = ?", [gid])
+        auditar(uid, "reabrir_gestion", "gestion_academica", gid, f"{gestiones.codigo(g)}: {motivo}")
     return []

@@ -8,6 +8,7 @@ sin gestión no hay oferta y sin oferta no hay docentes ni carga que revisar.
 from datetime import date
 
 from app.academico import carga, gestiones, oferta
+from app.comun import formato
 from app.comun.db import get_db
 
 
@@ -56,7 +57,8 @@ def estado(anio: int, tipo: str) -> dict:
         return f"{cantidad} {singular if cantidad == 1 else plural}"
 
     etapa("gestion", "Gestión creada", bool(g),
-          f"Del {g['fecha_inicio']} al {g['fecha_fin']}" if g else f"Crear las gestiones de {anio}", "/docencia/gestiones",
+          f"Del {formato.fecha(g['fecha_inicio'])} al {formato.fecha(g['fecha_fin'])}" if g
+          else f"Crear las gestiones de {anio}", "/docencia/gestiones",
           falta=f"crear las gestiones de {anio}")
     paralelos = oferta.listar(g["id"]) if g else []
     if g:
@@ -72,7 +74,7 @@ def estado(anio: int, tipo: str) -> dict:
             etapa("contratos", "Contratos renovados", not renovar,
                   f"{len(renovar)} por renovar" if renovar else "Ninguno pendiente",
                   f"/docencia/renovaciones?gestion={g['id']}",
-                  falta=f"renovar {n(len(renovar), 'contrato', 'contratos')}", pendientes=[f"{v['apellidos']}, {v['nombres']} (terminó el {v['fecha_fin']})" for v in renovar])
+                  falta=f"renovar {n(len(renovar), 'contrato', 'contratos')}", pendientes=[f"{v['apellidos']}, {v['nombres']} (terminó el {formato.fecha(v['fecha_fin'])})" for v in renovar])
         sin = _sin_docente(g["id"])
         etapa("docentes", "Docentes asignados", bool(paralelos) and not sin,
               f"{len(paralelos) - len(sin)} de {len(paralelos)} paralelos con titular" if paralelos else "Sin oferta",

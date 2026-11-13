@@ -157,7 +157,11 @@ def aplicar(lista: list[dict], uid: int) -> int:
         if g["errores"] or g["anio"] is None:
             continue
         with transaccion():
-            gestiones.crear_anio(g["anio"])
+            if not gestiones.por_codigo(g["codigo"]):
+                # Un semestre pasado que no existía se crea ya concluido: es historial (PLAN §66).
+                nueva, _ = gestiones.crear(g["anio"], g["tipo"], uid, concluida=True)
+                if not nueva:
+                    gestiones.crear_anio(g["anio"])
             gid = gestiones.por_codigo(g["codigo"])["id"]
             get_db().execute("DELETE FROM oferta WHERE gestion_id = ?", [gid])
             for p in g["paralelos"].values():

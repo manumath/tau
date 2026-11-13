@@ -11,7 +11,7 @@
 from datetime import date, timedelta
 
 from app.academico import gestiones, oferta
-from app.comun import vinculos
+from app.comun import formato, vinculos
 from app.comun.db import get_db
 
 UNIDAD = vinculos.UNIDAD_CARGA
@@ -32,7 +32,7 @@ def resumen(usuario_id: int, gestion: dict) -> dict:
     """Vínculo, carga contratada, distribución prevista, docencia asignada y avisos del semestre."""
     v = vinculo_en(usuario_id, gestion["fecha_inicio"])
     c = vinculos.carga_de(v)
-    materias = oferta.materias_de(usuario_id, gestion["id"])
+    materias = oferta.tramos_de(usuario_id, gestion["id"])
     asignada = oferta.horas_de_docencia(usuario_id, gestion["id"])
     prevista = c["actividades"]["docencia"] if c else None
     avisos = []
@@ -41,11 +41,14 @@ def resumen(usuario_id: int, gestion: dict) -> dict:
     elif not c:
         if v["categoria"] not in SIN_CARGA_OBLIGATORIA or materias:
             avisos.append("Falta registrar la carga contratada en su vínculo con la Carrera (la registra la Dirección de Carrera).")
-    elif asignada != prevista:
-        n = abs(prevista - asignada) // oferta.HORAS_POR_MATERIA
-        materias_txt = "1 materia" if n == 1 else f"{n} materias"
+    elif abs(asignada - prevista) >= 0.05:
+        parcial = any(m["parcial"] for m in materias)
+        n = abs(prevista - asignada) / oferta.HORAS_POR_MATERIA
+        materias_txt = "1 materia" if n == 1 else f"{formato.numero(round(n, 1)) if parcial else int(n)} materias"
+        cifras = (f"(docencia prevista: {formato.numero(prevista)} h/mes; asignada: {formato.numero(asignada)} h/mes"
+                  + (", promedio del semestre por los meses dictados" if parcial else "") + ").")
         avisos.append((f"Falta asignar {materias_txt}" if asignada < prevista else f"Tiene {materias_txt} más de lo previsto")
-                      + f" (docencia prevista: {prevista} h/mes; asignada: {asignada} h/mes).")
+                      + f" {cifras}")
     return {"vinculo": v, "carga": c, "contratada": c["horas"] if c else None, "materias": materias,
             "prevista": prevista, "asignada": asignada, "avisos": avisos}
 
@@ -129,12 +132,19 @@ def gestiones_de(usuario_id: int) -> list[dict]:
 
 
 def materias_con_detalle(usuario_id: int, gestion_id: int) -> list[dict]:
-    """Paralelos que dicta en la gestión (titular o auxiliar), con inscritos."""
-    return get_db().q(
-        """SELECT a.sigla, a.nombre, o.paralelo, o.inscritos, d.rol FROM oferta_docente d
+    """Paralelos que dictó en la gestión (titular o auxiliar), con inscritos y, si cambiaron con el semestre activo, el
+    periodo en que los dictó (`parcial`, `inicio`, `fin`) o si la materia se retiró."""
+    g = gestiones.obtener(gestion_id)
+    filas = get_db().q(
+        """SELECT a.sigla, a.nombre, o.paralelo, o.inscritos, d.rol, d.desde, d.hasta, o.agregada_en, o.retirada_en,
+                  o.motivo_retiro FROM oferta_docente d
            JOIN oferta o ON o.id = d.oferta_id JOIN asignatura a ON a.id = o.asignatura_id
            WHERE d.usuario_id = ? AND o.gestion_id = ? ORDER BY d.rol = 'auxiliar', a.sigla, o.paralelo""",
         [usuario_id, gestion_id])
+    for f in filas:
+        f["inicio"], f["fin"] = oferta.periodo_dictado(f, g)
+        f["parcial"] = oferta.fraccion(f, g) < 1
+    return filas
 
 
 def proyectos_con_carga(usuario_id: int) -> list[dict]:
