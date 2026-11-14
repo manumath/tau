@@ -78,7 +78,11 @@ PANTALLAS = {
                   "/docencia/oferta?gestion=6", "/docencia/oferta/5/cambios",
                   "/docencia/carga", "/docencia/preferencias/todas", "/docencia/programas/cobertura", "/docencia/listas/cargar", "/docencia/evaluacion/gestion", "/docencia/certificados/verificar", "/docencia/gestiones", "/docencia/preparacion", "/docencia/cohortes",
                   "/docencia/encuestas", "/docencia/tutoria", "/docencia/egresados", "/estudiantes",
-                  "/servicios/comunicados", "/servicios/auxiliaturas", "/servicios/grado", "/informes",
+                  "/servicios/comunicados", "/servicios/auxiliaturas",
+                  # Auxiliaturas según el reglamento de 2023 (PLAN §70): convocatoria, ítem, resultado y los cinco formularios.
+                  "/servicios/auxiliaturas/nueva", "/servicios/auxiliaturas/1", "/servicios/auxiliaturas/1/designacion", "/servicios/auxiliaturas/item/1",
+                  *[f"/servicios/auxiliaturas/item/1/formulario/{n}" for n in range(1, 6)],
+                  "/servicios/grado", "/informes",
                   "/calidad/marco", "/calidad/indicadores", "/calidad/evidencias", "/calidad/autoevaluaciones",
                   "/calidad/ficha", "/calidad/mejora", "/admin/revistas", "/admin/lineas", "/admin/catalogos",
                   "/personas/externos"],

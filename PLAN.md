@@ -3898,3 +3898,13 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
   «Acta de calificaciones». Enlaces desde la página del ítem. Sin migración.
 - Los formularios 6 (ficha de asistencia) y la seguimiento posterior son del §71.
 
+### Etapa 7 (hecha, 14-nov-2026): navegador, manual y documentación
+- **Navegador:** las pantallas nuevas de la Dirección (nueva convocatoria, convocatoria, resultado y designación, ítem y los cinco formularios) entran en `test_accesibilidad_pantallas` (claro y
+  oscuro); `test_la_direccion_registra_la_comision_y_abre_los_formularios` guarda la resolución de la comisión y abre el formulario 1. La preparación de datos del navegador y la del manual
+  toman un semestre cuando la gestión actual es de temporada.
+- **Manual:** el capítulo 8 se reescribe con el reglamento de 2023 (modalidades, comisión, mínimos 5 y 18, formularios de méritos y rúbrica del oral, cinco temas, segunda convocatoria,
+  invitados y designación) y trae cuatro capturas nuevas sobre una segunda convocatoria concluida que arma `scripts/manual.py` (formularios de méritos, oral y acta final, y la pantalla
+  de resultado y designación). **CLAUDE.md:** regla ampliada. **Mantenimiento:** última migración, 0090.
+- **Fuera de este plan** (decisión del usuario del 14-nov-2026): el seguimiento posterior a la designación —ficha de asistencia mensual (formulario 6), informes de actividades, evaluación,
+  remoción, cese y pagos (arts. 29 a 47)—, que será el §71.
+

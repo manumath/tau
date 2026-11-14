@@ -23,7 +23,7 @@ import sys
 import tempfile
 import time
 import urllib.request
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -122,6 +122,62 @@ def datos(ruta: str):
     assert aux.fijar_tribunal(aux.items(cid)[0], [emmy, sofia], [cuentas["Mateo"]["uid"], cuentas["Sofía"]["uid"]]) == []
     aux.guardar_resolucion_comision(cid, "Res. CC 130/2026", "Res. CF 52/2026")
     assert aux.publicar(cid) == [], aux.publicar(cid)
+
+    # Una segunda convocatoria ya concluida (PLAN §70), para mostrar los formularios, el resultado y las invitaciones: dos titulares, una postulante
+    # con 53 puntos (invitable) y otra que no llegó al mínimo del escrito.
+    from app.servicios import designaciones as des
+    from app.servicios import rubricas
+    codigo = gestiones.codigo(g)
+    segunda = db.t.convocatoria_auxiliatura.insert(
+        gestion_id=g["id"], modalidad="docencia", numero=2, titulo=f"Auxiliaturas de docencia {codigo}, segunda convocatoria",
+        publicacion=(date.today() - timedelta(days=30)).isoformat(), cierre=(ahora - timedelta(days=20)).strftime("%Y-%m-%dT18:00"),
+        examen=(ahora - timedelta(days=15)).strftime("%Y-%m-%dT09:00"), lugar="Aula 4 de la Carrera",
+        recepcion_lugar="Secretaría de la Carrera", recepcion_horario="Lunes a viernes, de 9:00 a 12:00", resolucion="Res. HCC 052/2026",
+        comision_resolucion="Res. HCC 053/2026", comision_resolucion_hcf="Res. CF 21/2026", estado="concluida", creado_por=ada,
+        reglamento=aux.REGLAMENTO_VIGENTE, primera_id=cid)["id"]
+    for r in aux.requisitos(cid):
+        db.t.requisito_auxiliatura.insert(convocatoria_id=segunda, texto=r["texto"], acredita=r["acredita"], orden=r["orden"],
+                                          opcional=r["opcional"], clave=r["clave"])
+    hoy_s = datetime.now(timezone.utc).replace(tzinfo=None)
+    iid2 = db.t.item_auxiliatura.insert(
+        convocatoria_id=segunda, asignatura_id=of["asignatura_id"], titulo=aux.items(cid)[0]["titulo"], plazas=3, horas=20, fase="concluido",
+        tema_oral="Series de potencias", temas_oral="Límites\nDerivadas parciales\nSeries de potencias\nIntegrales dobles\nSucesiones",
+        tema_oral_en=(hoy_s - timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S"))["id"]
+    miembros = [(emmy, "docente"), (sofia, "docente"), (cuentas["Mateo"]["uid"], "estudiante"), (cuentas["Sofía"]["uid"], "estudiante")]
+    for uid_m, tipo_m in miembros:
+        db.t.tribunal_auxiliatura.insert(item_id=iid2, usuario_id=uid_m, tipo=tipo_m)
+    segunda_c = aux.obtener(segunda)
+    meritos_base = {"1a": 1, "1b": 2, "2a": 2, "2b": 1, "3a": 1, "3b": 2, "5a": 1, "6a": 1}
+    for dia, fase in ((6, "habilitacion"), (5, "meritos"), (3, "escrito"), (1, "oral")):
+        db.execute("INSERT INTO fase_auxiliatura (item_id, fase, cerrada_por, cerrada_en) VALUES (?, ?, ?, ?)",
+                   [iid2, fase, ada, (hoy_s - timedelta(days=dia)).strftime("%Y-%m-%d %H:%M:%S")])
+    oral_base = {"conocimiento": 6, "preparacion": 7, "didactica": 8, "metodologia": 4, "respuestas": 4}
+    for nombre_e, estado_e, nota_materia, escrito_e, oral_extra, orden_e in (("Andrea", "titular", 88, 30, 0, 1), ("Carlos", "titular", 72, 27, -1, 2),
+                                                                           ("Jorge", "no_seleccionada", 55, 18, -9, 3), ("María", "eliminada", 60, 14, None, None)):
+        ext = cuentas[nombre_e]["externo"]
+        pid_e = db.t.postulacion_auxiliatura.insert(
+            item_id=iid2, externo_id=ext, estado=estado_e, propuesta="Apoyar las prácticas semanales y las consultas de los estudiantes.",
+            enviada_en=(hoy_s - timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S"), orden_oral=orden_e,
+            hora_oral=f"{8 + orden_e:02d}:00" if orden_e else None, fase_fin="escrito" if estado_e == "eliminada" else None)["id"]
+        for miembro_ in (emmy, sofia, cuentas["Mateo"]["uid"]):
+            entradas = {**meritos_base, "4": nota_materia}
+            for clave_, cant_ in entradas.items():
+                db.t.calificacion_detalle.insert(postulacion_id=pid_e, fase="meritos", miembro_id=miembro_, clave=clave_, cantidad=cant_)
+            db.t.calificacion_auxiliatura.insert(postulacion_id=pid_e, fase="habilitacion", miembro_id=miembro_, valor=1)
+            db.t.calificacion_auxiliatura.insert(postulacion_id=pid_e, fase="meritos", miembro_id=miembro_,
+                                                 valor=aux.puntaje_detalle(segunda_c, "meritos", entradas))
+            db.t.calificacion_auxiliatura.insert(postulacion_id=pid_e, fase="escrito", miembro_id=miembro_, valor=escrito_e)
+            if oral_extra is not None:
+                rubrica_ = {k: max(0, v + (oral_extra if k == "didactica" else 0)) for k, v in oral_base.items()}
+                for clave_, cant_ in rubrica_.items():
+                    db.t.calificacion_detalle.insert(postulacion_id=pid_e, fase="oral", miembro_id=miembro_, clave=clave_, cantidad=cant_)
+                db.t.calificacion_auxiliatura.insert(postulacion_id=pid_e, fase="oral", miembro_id=miembro_, valor=rubricas.calcular_oral(rubrica_))
+    des.designaciones(segunda)
+    des.guardar_designacion(db.q("SELECT id FROM designacion_auxiliatura ORDER BY id LIMIT 1")[0]["id"],
+                            {"cert_deudas": date.today().isoformat(), "cert_procesos": date.today().isoformat(), "sigep": date.today().isoformat(),
+                             "memorandum": "MEM 218/2026", "memorandum_fecha": date.today().isoformat(),
+                             "inicio": date.today().replace(day=1).isoformat()})
+    des.guardar_informe(segunda, date.today().isoformat(), "Res. HCC 061/2026", "")
 
     # Proyecto de grado: el perfil de Andrea, con visto bueno de su tutora y tribunal designado.
     tid, err = grado.crear_perfil(andrea["externo"], {
@@ -485,7 +541,11 @@ CAPTURAS = [
     ("buzon-personal", "direccion", "/servicios/buzon", {"alto": 520}),
     ("apoyo-personal", "direccion", "/apoyo", {"alto": 480}),
     ("comunicado-ficha", "direccion", "comunicado", {"alto": 640}),
-    ("auxiliaturas", "direccion", "convocatoria", {"alto": 1000}),
+    ("auxiliaturas", "direccion", "convocatoria", {"alto": 1100}),
+    ("auxiliaturas-designacion", "direccion", "designacion", {"alto": 1200}),
+    ("auxiliaturas-formulario-meritos", "direccion", "formulario-meritos", {"alto": 1000}),
+    ("auxiliaturas-formulario-oral", "direccion", "formulario-oral", {"alto": 560}),
+    ("auxiliaturas-formulario-final", "direccion", "formulario-final", {"alto": 760}),
     ("grado-tribunal", "direccion", "grado", {"alto": 1000}),
     ("marco", "direccion", "/calidad/marco", {}),
     ("indicadores", "direccion", "/calidad/indicadores", {"abrir": "details:has(summary:has-text('Cuerpo académico'))",
@@ -530,7 +590,11 @@ def _rutas_de_la_base(db: Path) -> dict:
         "encuesta": f"/docencia/encuestas/{uno('SELECT MAX(id) FROM encuesta')}",
         "comunicado": f"/servicios/comunicados/{uno('SELECT MAX(id) FROM comunicado')}",
         "comunicado-estudiante": f"/estudiante/comunicados/{uno('SELECT MAX(id) FROM comunicado')}",
-        "convocatoria": f"/servicios/auxiliaturas/{uno('SELECT MAX(id) FROM convocatoria_auxiliatura')}",
+        "convocatoria": f"/servicios/auxiliaturas/{uno('SELECT MIN(id) FROM convocatoria_auxiliatura')}",
+        "designacion": f"/servicios/auxiliaturas/{uno('SELECT MAX(id) FROM convocatoria_auxiliatura')}/designacion",
+        "formulario-meritos": f"/servicios/auxiliaturas/item/{uno('SELECT MAX(id) FROM item_auxiliatura')}/formulario/2",
+        "formulario-oral": f"/servicios/auxiliaturas/item/{uno('SELECT MAX(id) FROM item_auxiliatura')}/formulario/4",
+        "formulario-final": f"/servicios/auxiliaturas/item/{uno('SELECT MAX(id) FROM item_auxiliatura')}/formulario/5",
         "grado": f"/servicios/grado/{uno('SELECT MAX(id) FROM tramite_grado')}",
         "grado-estudiante": f"/estudiante/grado/{uno('SELECT MAX(id) FROM tramite_grado')}",
         "autoevaluacion": f"/calidad/autoevaluaciones/{uno('SELECT MAX(id) FROM autoevaluacion')}",

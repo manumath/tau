@@ -602,8 +602,9 @@ def test_la_investigadora_usa_sus_servicios(page):
     page.locator("select[name=version]").select_option("aceptada")
     page.fill("input[name=enlace]", "https://repositorio.umsa.test/anillos")
     page.get_by_role("button", name="Guardar", exact=True).click()
-    page.locator("#lista-acceso").get_by_text("Copia en un repositorio").wait_for()        # el modal se cierra y la lista se actualiza
-    assert "Acceso sin declarar" not in page.locator("main").inner_text()
+    fila = page.locator("#lista-acceso div.flex.items-start.gap-3.py-2", has_text="Anillos locales")
+    expect(fila).to_contain_text("Copia en un repositorio")                              # el modal se cierra y la lista se actualiza
+    expect(fila).not_to_contain_text("Acceso sin declarar")                                # (otros productos de la base pueden seguir sin declarar)
     page.goto("/investigacion/coautores")
     page.get_by_role("link", name="Weyl, Hermann").click()
     page.get_by_role("heading", name="Hermann Weyl").wait_for()
@@ -612,4 +613,22 @@ def test_la_investigadora_usa_sus_servicios(page):
     assert "Mis pendientes de investigación" in page.locator("main").inner_text()
     page.goto("/investigacion/calendario")
     assert "Cierra la convocatoria de proyectos" in page.locator("main").inner_text()
+
+
+def test_la_direccion_registra_la_comision_y_abre_los_formularios(page):
+    """Registra la resolución que designa la comisión de una convocatoria y abre un formulario del reglamento de 2023 (PLAN §70)."""
+    entrar(page, "direccion")
+    page.goto("/servicios/auxiliaturas/1")
+    expect(page.locator("main")).to_contain_text("HCU 424/2023")
+    expect(page.locator("main")).to_contain_text("mín. 5")
+    page.fill("#comision_resolucion", "Res. CC 200/2026")
+    page.locator("form", has=page.locator("#comision_resolucion")).get_by_role("button", name="Guardar").click()
+    page.wait_for_url("**/servicios/auxiliaturas/1")
+    expect(page.locator("main")).to_contain_text("designada por Res. CC 200/2026")
+    page.goto("/servicios/auxiliaturas/item/1")
+    page.get_by_role("link", name="Formulario 1 · Habilitación").click()
+    expect(page.locator("main")).to_contain_text("FORMULARIO DE HABILITACIÓN")
+    expect(page.get_by_role("button", name="Imprimir")).to_be_visible()
+    page.goto("/servicios/auxiliaturas/1/designacion")
+    expect(page.locator("main")).to_contain_text("Informe final y resoluciones")
 

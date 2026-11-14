@@ -102,7 +102,11 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - **Auxiliaturas (PLAN §58 y §70):** rige el **Reglamento Específico de Auxiliares Académicos del Pregrado** (Res. HCU 424/2023, mod. 364/2025); el
   de 2021 (251/2021) quedó sin efecto. Cada convocatoria guarda su `reglamento` y conserva sus reglas (`auxiliaturas.REGLAS`: mínimos, plazos): nunca
   recalcule una convocatoria con las reglas de otro. Solo se convoca sobre los semestres I y II, nunca INV ni VER. Los PDF del reglamento no se
-  versionan; el resumen artículo por artículo está en PLAN §70.
+  versionan; el resumen artículo por artículo está en PLAN §70. Con el reglamento de 2023: los méritos y el oral se califican por formulario
+  (`rubricas.py` → `calificar_detalle`; cada miembro califica por su cuenta y la nota es el promedio), la comisión debe cumplir `revisar_comision`
+  (art. 15), las invitaciones (`designaciones.py`) solo proceden tras una **segunda** convocatoria y TAU no guarda notas de Kardex (los mejores
+  estudiantes los certifica Kardex y aquí solo se anota a quién se invitó). Los plazos de los arts. 12, 13, 14, 18, 20, 22, 23 y 27 solo advierten.
+  Los formularios impresos están en `rutas/formularios.py`. El seguimiento posterior a la designación (asistencia, remoción) es del §71.
 - **Gestiones (PLAN §66):** cada gestión (I, II, INV, VER) está *en planificación* (oferta y docentes se editan libremente y se
   puede borrar), *activa* (todo cambio pide fecha de efecto y motivo, queda en `gestion_cambio` y se avisa al docente; no se
   borra nada: `oferta.retirada_en`, `oferta_docente.desde/hasta`) o *concluida* (historial de solo lectura; solo la Dirección de
