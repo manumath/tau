@@ -183,11 +183,12 @@ def get(auth, ver: str = "", prioridad: str = "", responsable: str = "", anio: s
 
 def _aprobacion(m, gestiona):
     if am.aprobado(m):
-        return P(UkIcon("badge-check", height=14, width=14, cls="inline mr-1"),
-                 f"Plan aprobado con {m['plan_resolucion']} el {formato.fecha(m['plan_aprobado_en'])}. Desde entonces el plazo "
-                 "de una actividad cambia solo por reprogramación, con su causa.",
-                 Button("Corregir", type="button", cls=(ButtonT.ghost, ButtonT.xs, "ml-1"), hx_get=f"{BASE}/aprobacion",
-                        hx_target=f"#{ID_MODAL}") if gestiona else "", cls="text-sm mb-4")
+        return Div(UkIcon("badge-check", height=16, width=16, cls="shrink-0 mt-0.5"),
+                   P(f"Plan aprobado con {m['plan_resolucion']} el {formato.fecha(m['plan_aprobado_en'])}. Desde entonces el "
+                     "plazo de una actividad cambia solo por reprogramación, con su causa.",
+                     Button("Corregir", type="button", cls=(ButtonT.ghost, ButtonT.xs, "ml-1"), hx_get=f"{BASE}/aprobacion",
+                            hx_target=f"#{ID_MODAL}") if gestiona else ""),
+                   cls="flex items-start gap-2 text-sm mb-4")
     return Div(P("El plan aún no está aprobado: los plazos se pueden editar libremente. Al registrar la resolución que lo "
                  "aprueba, cada cambio de plazo pasará a ser una reprogramación con su causa.", cls="text-sm"),
                Button("Registrar la aprobación", type="button", cls=(ButtonT.default, ButtonT.sm), hx_get=f"{BASE}/aprobacion",
@@ -236,7 +237,7 @@ def post(auth, sess, resolucion: str = "", fecha: str = ""):
     errores = am.aprobar_plan(m["id"], resolucion, fecha)
     if errores:
         return _form_aprobacion(m, {"resolucion": resolucion, "fecha": fecha}, errores)
-    auditar(auth["id"], "aprobar_plan_mejora", "marco_calidad", m["id"], f"{resolucion.strip()} · {fecha}")
+    auditar(auth["id"], "aprobar_plan_mejora", "marco_calidad", m["id"], f"{resolucion.strip()} · {formato.fecha(fecha)}")
     add_toast(sess, "Aprobación del plan registrada.", "success")
     return Redirect(BASE)
 
@@ -613,7 +614,7 @@ def post(auth, sess, aid: int, fecha: str = ""):
     if errores:
         add_toast(sess, " ".join(errores), "error")
     else:
-        auditar(auth["id"], "cumplir_accion_mejora", "accion_mejora", aid, fecha)
+        auditar(auth["id"], "cumplir_accion_mejora", "accion_mejora", aid, formato.fecha(fecha))
         add_toast(sess, "Acción cumplida.", "success")
     return Redirect(f"{BASE}/acciones/{aid}")
 

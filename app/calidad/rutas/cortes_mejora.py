@@ -92,7 +92,7 @@ def post(auth, sess, tipo: str = "", fecha: str = ""):
     cid, errores = cm.abrir(m["id"], tipo, fecha, auth["id"])
     if errores:
         return _form_abrir({"tipo": tipo, "fecha": fecha}, errores)
-    auditar(auth["id"], "abrir_corte_mejora", "corte_mejora", cid, f"{tipo} {fecha}")
+    auditar(auth["id"], "abrir_corte_mejora", "corte_mejora", cid, f"{tipo} {formato.fecha(fecha)}")
     add_toast(sess, "Corte abierto.", "success")
     return Redirect(f"{URL}/{cid}")
 

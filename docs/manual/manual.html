@@ -82,11 +82,11 @@ figura. Entréguela a la Dirección de Carrera o a la Dirección del Instituto, 
 <li><a href="#estudiantes"><span class="numero">7</span><span class="titulo">Estudiantes y egresados</span><span class="puntos"></span><span class="pagina">58</span></a></li>
 <li><a href="#servicios"><span class="numero">8</span><span class="titulo">Servicios</span><span class="puntos"></span><span class="pagina">71</span></a></li>
 <li><a href="#calidad"><span class="numero">9</span><span class="titulo">Calidad</span><span class="puntos"></span><span class="pagina">85</span></a></li>
-<li><a href="#informes"><span class="numero">10</span><span class="titulo">Informes</span><span class="puntos"></span><span class="pagina">93</span></a></li>
-<li><a href="#administracion"><span class="numero">11</span><span class="titulo">Administración</span><span class="puntos"></span><span class="pagina">98</span></a></li>
-<li><a href="#privacidad"><span class="numero">12</span><span class="titulo">Privacidad, seguridad e inteligencia artificial</span><span class="puntos"></span><span class="pagina">102</span></a></li>
-<li><a href="#ayuda"><span class="numero">13</span><span class="titulo">Preguntas frecuentes y glosario</span><span class="puntos"></span><span class="pagina">105</span></a></li>
-<li><a href="#observaciones"><span class="numero"></span><span class="titulo">Hoja de observaciones</span><span class="puntos"></span><span class="pagina">107</span></a></li></ol>
+<li><a href="#informes"><span class="numero">10</span><span class="titulo">Informes</span><span class="puntos"></span><span class="pagina">97</span></a></li>
+<li><a href="#administracion"><span class="numero">11</span><span class="titulo">Administración</span><span class="puntos"></span><span class="pagina">102</span></a></li>
+<li><a href="#privacidad"><span class="numero">12</span><span class="titulo">Privacidad, seguridad e inteligencia artificial</span><span class="puntos"></span><span class="pagina">106</span></a></li>
+<li><a href="#ayuda"><span class="numero">13</span><span class="titulo">Preguntas frecuentes y glosario</span><span class="puntos"></span><span class="pagina">110</span></a></li>
+<li><a href="#observaciones"><span class="numero"></span><span class="titulo">Hoja de observaciones</span><span class="puntos"></span><span class="pagina">112</span></a></li></ol>
 </section>
 
 <section class="capitulo" id="que-es">
@@ -1550,20 +1550,53 @@ mientras está en curso.</p>
 
 <h2>Plan de mejora</h2>
 <p>Las debilidades de la autoevaluación son el punto de partida. En <span class="ruta">Calidad → Plan de
-mejora</span>, cada <strong>acción</strong> tiene responsable, plazo, prioridad y el criterio que atiende.</p>
-<figure class="captura "><img src="img/mejora.png" alt="El plan de mejora: acciones abiertas, vencidas y cumplidas."><figcaption><b>Figura 100.</b> El plan de mejora: acciones abiertas, vencidas y cumplidas.</figcaption></figure>
+mejora</span>, cada <strong>acción</strong> tiene código, responsable, prioridad (P1 alta, P2 media, P3 baja) y el criterio
+que atiende, y se divide en <strong>actividades</strong>, cada una con su responsable, plazo, línea base, meta,
+presupuesto y medio de verificación.</p>
+<figure class="captura "><img src="img/mejora.png" alt="El tablero: cifras por semáforo arriba y una tarjeta por acción con su avance."><figcaption><b>Figura 100.</b> El tablero: cifras por semáforo arriba y una tarjeta por acción con su avance.</figcaption></figure>
 <ul>
-  <li>Las acciones se crean desde las <strong>debilidades de la autoevaluación</strong>, desde las recomendaciones de
-    una <strong>evaluación externa</strong>, o sueltas.</li>
-  <li>El <strong>responsable</strong> registra los avances, con una evidencia. No necesita un rol para eso.</li>
-  <li>La Dirección de Carrera marca la acción como cumplida o la cancela con su motivo.</li>
-  <li>El sistema avisa al responsable 30 días antes del plazo y, si vence, también a la Dirección.</li>
+  <li>El <strong>semáforo</strong> de cada actividad se calcula solo: <em>al día</em>, <em>en riesgo</em> (vence en 30
+    días o menos, o pasó más de la mitad del plazo con menos de la mitad del avance), <em>vencida</em> o
+    <em>cumplida</em>. El avance de una acción es el promedio de sus actividades.</li>
+  <li>Las cifras de arriba filtran el tablero; también se filtra por prioridad, responsable y año.</li>
+  <li>Las acciones se crean desde las debilidades de la autoevaluación, desde las recomendaciones de una evaluación
+    externa, sueltas o <strong>todas de una vez desde un CSV</strong>.</li>
 </ul>
+<figure class="captura "><img src="img/mejora-cronograma.png" alt="El cronograma: las actividades de cada año por el trimestre en que vencen."><figcaption><b>Figura 101.</b> El cronograma: las actividades de cada año por el trimestre en que vencen.</figcaption></figure>
+
+<h3>Cargar el plan completo</h3>
+<p><span class="ui">Cargar CSV</span> recibe un archivo con una fila por actividad (descargue la plantilla desde la misma
+ventana). Antes de guardar, la vista previa muestra a quién propone el sistema como responsable de cada acción (la
+persona que hoy ocupa el cargo que nombra el archivo), qué actividades ya mide un indicador del sistema (puede desmarcar
+el enlace) y las filas con errores. Las acciones cuyo código ya está en el plan se omiten: cargar dos veces el mismo
+archivo no duplica nada.</p>
+<figure class="captura "><img src="img/mejora-importar.png" alt="La carga del plan desde un CSV."><figcaption><b>Figura 102.</b> La carga del plan desde un CSV.</figcaption></figure>
+
+<h3>Avances, aprobación y reprogramación</h3>
+<p>Cada actividad tiene su página: avances con su porcentaje y evidencia, cumplimiento, cancelación y el historial de
+plazos. Quien tiene una actividad a su cargo la encuentra en <span class="ruta">Mis pendientes</span>, en «Mi parte del
+plan de mejora», y registra el avance sin salir de esa pantalla. No necesita un rol para eso.</p>
+<figure class="captura "><img src="img/mejora-mi-parte.png" alt="«Mi parte del plan de mejora» en los pendientes de una docente."><figcaption><b>Figura 103.</b> «Mi parte del plan de mejora» en los pendientes de una docente.</figcaption></figure>
+<p>Cuando el Consejo aprueba el plan, la Dirección de Carrera registra la resolución y la fecha. Desde entonces el plazo de
+una actividad ya no se edita: el responsable <strong>pide una reprogramación</strong> con el plazo nuevo y la causa, y la
+Dirección la aprueba o la rechaza con su motivo. El historial conserva el plazo anterior.</p>
+<figure class="captura "><img src="img/mejora-actividad.png" alt="Una actividad con su avance y una reprogramación por resolver."><figcaption><b>Figura 104.</b> Una actividad con su avance y una reprogramación por resolver.</figcaption></figure>
+
+<h3>Cortes de seguimiento</h3>
+<p>En <span class="ui">Cortes</span>, la Dirección de Carrera o la Comisión de calidad abre un corte (trimestral, anual
+o bienal): copia el estado de cada actividad a esa fecha, de modo que sus cifras ya no cambian. Arriba aparece lo que
+<strong>pide atención</strong> (vencidas, en riesgo y sin avance desde el corte anterior), con un espacio para el
+comentario de la Comisión; el resumen compara con el corte anterior. Al <span class="ui">Cerrar el corte</span>, su
+informe en XLSX queda como evidencia del criterio que se elija. El informe se imprime o se guarda en PDF.</p>
+<figure class="captura "><img src="img/mejora-corte.png" alt="Un corte trimestral abierto: lo que pide atención y el resumen."><figcaption><b>Figura 105.</b> Un corte trimestral abierto: lo que pide atención y el resumen.</figcaption></figure>
+<div class="nota"><span class="rotulo">Avisos</span>
+  El responsable de cada actividad recibe un aviso 30 y 7 días antes de su plazo, y 15 días antes del fin de cada
+  trimestre si su actividad no tiene avance desde el último corte. Su calendario muestra esos plazos.</div>
 
 <h2>Ficha estadística</h2>
 <p><span class="ruta">Calidad → Ficha estadística</span> reúne las cifras que suelen pedir los formularios de un
 proceso de evaluación: cuerpo académico, oferta por semestre, admisión y trayectoria de cada cohorte.</p>
-<figure class="captura "><img src="img/ficha-estadistica.png" alt="La ficha estadística de la Carrera."><figcaption><b>Figura 101.</b> La ficha estadística de la Carrera.</figcaption></figure>
+<figure class="captura "><img src="img/ficha-estadistica.png" alt="La ficha estadística de la Carrera."><figcaption><b>Figura 106.</b> La ficha estadística de la Carrera.</figcaption></figure>
 <div class="nota consejo"><span class="rotulo">Llenar un formulario externo</span>
   Si un organismo entrega su propio formulario en Excel, <span class="ui">Llenar una plantilla</span> escribe las
   cifras en las celdas que usted indique y deja intactos el formato, las fórmulas y los gráficos. Ninguno de los
@@ -1583,7 +1616,7 @@ proceso de evaluación: cuerpo académico, oferta por semestre, admisión y tray
 <p>Es la página, sin inicio de sesión, donde la Carrera rinde cuentas. Tiene dos partes: los
 <strong>investigadores</strong> que decidieron publicar su perfil, y los <strong>indicadores</strong> que la Dirección
 de Carrera marcó como públicos, solo de años cerrados.</p>
-<figure class="captura "><img src="img/publico.png" alt="La página pública: perfiles de los investigadores que eligieron publicarlos."><figcaption><b>Figura 102.</b> La página pública: perfiles de los investigadores que eligieron publicarlos.</figcaption></figure>
+<figure class="captura "><img src="img/publico.png" alt="La página pública: perfiles de los investigadores que eligieron publicarlos."><figcaption><b>Figura 107.</b> La página pública: perfiles de los investigadores que eligieron publicarlos.</figcaption></figure>
 <div class="nota"><span class="rotulo">Qué no se publica nunca</span>
   Correos, actividades, proyectos, ni una cifra calculada sobre menos de 5 personas.</div>
 </section>
@@ -1595,7 +1628,7 @@ de Carrera marcó como públicos, solo de años cerrados.</p>
 mantener los datos al día.</p>
 
 <h2>Qué informes hay</h2>
-<figure class="captura "><img src="img/informes.png" alt="«Informes», como lo ve una dirección. Cada persona ve solo los que le corresponden."><figcaption><b>Figura 103.</b> «Informes», como lo ve una dirección. Cada persona ve solo los que le corresponden.</figcaption></figure>
+<figure class="captura "><img src="img/informes.png" alt="«Informes», como lo ve una dirección. Cada persona ve solo los que le corresponden."><figcaption><b>Figura 108.</b> «Informes», como lo ve una dirección. Cada persona ve solo los que le corresponden.</figcaption></figure>
 <table>
   <thead><tr><th>Informe</th><th>Qué contiene</th><th>Quién lo ve</th></tr></thead>
   <tbody>
@@ -1616,7 +1649,7 @@ mantener los datos al día.</p>
   <li>Elija el periodo y, si quiere, «solo lo que cuenta para el informe» o «solo con filiación IIMAT/UMSA».</li>
   <li>Pulse <span class="ui">Imprimir / Guardar PDF</span>. También puede descargarlo en BibTeX.</li>
 </ol>
-<figure class="captura media"><img src="img/cv.png" alt="El currículum de una investigadora, con el membrete de la Carrera."><figcaption><b>Figura 104.</b> El currículum de una investigadora, con el membrete de la Carrera.</figcaption></figure>
+<figure class="captura media"><img src="img/cv.png" alt="El currículum de una investigadora, con el membrete de la Carrera."><figcaption><b>Figura 109.</b> El currículum de una investigadora, con el membrete de la Carrera.</figcaption></figure>
 
 <h2>Guardar un informe en PDF</h2>
 <p>Todos los informes llevan el membrete oficial en la primera página y, en cada página, un pie con el título y
@@ -1627,7 +1660,7 @@ mantener los datos al día.</p>
   <li>En «Más opciones», desmarque <strong>Encabezados y pies de página</strong>: son los del navegador (la dirección web
     y la fecha), no los del informe.</li>
 </ol>
-<figure class="captura media"><img src="img/memoria.png" alt="La memoria anual del Instituto, tal como se imprime."><figcaption><b>Figura 105.</b> La memoria anual del Instituto, tal como se imprime.</figcaption></figure>
+<figure class="captura media"><img src="img/memoria.png" alt="La memoria anual del Instituto, tal como se imprime."><figcaption><b>Figura 110.</b> La memoria anual del Instituto, tal como se imprime.</figcaption></figure>
 <div class="nota consejo"><span class="rotulo">Use Chrome o Edge para imprimir</span>
   El pie con el número de página se ve en esos navegadores. En otros, el documento sale igual, sin ese pie.</div>
 
@@ -1639,7 +1672,7 @@ frente a una comisión.</p>
 <h2>Calidad de datos</h2>
 <p>Antes de generar un informe importante, mire <span class="ruta">Calidad → Calidad de datos</span>. Son 16
 revisiones de lo que falta o no cuadra, agrupadas por tema. Cada una dice a qué afecta y quién lo corrige.</p>
-<figure class="captura "><img src="img/calidad-datos.png" alt="El tablero de calidad de datos. La página no cambia nada: señala qué completar."><figcaption><b>Figura 106.</b> El tablero de calidad de datos. La página no cambia nada: señala qué completar.</figcaption></figure>
+<figure class="captura "><img src="img/calidad-datos.png" alt="El tablero de calidad de datos. La página no cambia nada: señala qué completar."><figcaption><b>Figura 111.</b> El tablero de calidad de datos. La página no cambia nada: señala qué completar.</figcaption></figure>
 <p>En las revisiones que deben corregir otras personas, las direcciones y la Coordinación académica tienen el botón
 <span class="ui">Avisar a N personas</span>: cada una recibe la lista de lo suyo por completar.</p>
 
@@ -1664,7 +1697,7 @@ correo: para verlos hay que iniciar sesión.</p>
 direcciones y Gestión de datos, cada una en lo suyo.</p>
 
 <h2>Usuarios</h2>
-<figure class="captura "><img src="img/usuarios.png" alt="La lista de usuarios, con el perfil, el estado y las acciones de cada cuenta."><figcaption><b>Figura 107.</b> La lista de usuarios, con el perfil, el estado y las acciones de cada cuenta.</figcaption></figure>
+<figure class="captura "><img src="img/usuarios.png" alt="La lista de usuarios, con el perfil, el estado y las acciones de cada cuenta."><figcaption><b>Figura 112.</b> La lista de usuarios, con el perfil, el estado y las acciones de cada cuenta.</figcaption></figure>
 
 <h3>Crear una cuenta</h3>
 <div class="nota"><span class="rotulo">Quién puede hacerlo</span>
@@ -1705,7 +1738,7 @@ direcciones y Gestión de datos, cada una en lo suyo.</p>
   <li><span class="ui">Asignar rol</span>. Para terminarlo, <span class="ui">Quitar</span>: deja de regir desde hoy y
     queda en el historial.</li>
 </ol>
-<figure class="captura media"><img src="img/roles.png" alt="Los roles de una persona, con su unidad y su vigencia."><figcaption><b>Figura 108.</b> Los roles de una persona, con su unidad y su vigencia.</figcaption></figure>
+<figure class="captura media"><img src="img/roles.png" alt="Los roles de una persona, con su unidad y su vigencia."><figcaption><b>Figura 113.</b> Los roles de una persona, con su unidad y su vigencia.</figcaption></figure>
 
 <h2>Cargar datos en bloque</h2>
 <p>Varias pantallas aceptan una planilla (CSV) para no escribir registro por registro. Todas funcionan igual:</p>
@@ -1743,13 +1776,13 @@ direcciones y Gestión de datos, cada una en lo suyo.</p>
   <li><strong>Tipos e índices:</strong> los tipos de actividad y de producto y los índices que ofrecen los formularios.
     Los que trae el sistema se pueden reordenar y desactivar, pero no renombrar.</li>
 </ul>
-<figure class="captura "><img src="img/revistas.png" alt="El catálogo de revistas, con una revista verificada y otra pendiente de verificar."><figcaption><b>Figura 109.</b> El catálogo de revistas, con una revista verificada y otra pendiente de verificar.</figcaption></figure>
+<figure class="captura "><img src="img/revistas.png" alt="El catálogo de revistas, con una revista verificada y otra pendiente de verificar."><figcaption><b>Figura 114.</b> El catálogo de revistas, con una revista verificada y otra pendiente de verificar.</figcaption></figure>
 
 <h2>Auditoría</h2>
 <p><span class="ruta">Administración → Auditoría</span> muestra quién hizo qué y cuándo, con filtros por persona,
 acción, texto y fechas. <span class="ui">Descargar CSV</span> exporta todo lo filtrado; esa descarga también queda
 registrada.</p>
-<figure class="captura "><img src="img/auditoria.png" alt="La auditoría: cada acción con su fecha, su persona y su detalle."><figcaption><b>Figura 110.</b> La auditoría: cada acción con su fecha, su persona y su detalle.</figcaption></figure>
+<figure class="captura "><img src="img/auditoria.png" alt="La auditoría: cada acción con su fecha, su persona y su detalle."><figcaption><b>Figura 115.</b> La auditoría: cada acción con su fecha, su persona y su detalle.</figcaption></figure>
 </section>
 
 <section class="capitulo" id="privacidad">
@@ -1772,6 +1805,13 @@ registrada.</p>
   </tbody>
 </table>
 
+<p>La página pública <span class="ruta">Privacidad</span> (enlace en la cabecera de las páginas públicas) lo explica
+por módulo: qué datos se guardan, para qué, quién los ve y cuánto se conservan. Cada formulario que pide datos personales
+lo resume junto al botón de enviar, con un enlace a esa página.</p>
+<figure class="captura "><img src="img/aviso-privacidad.png" alt="El aviso de privacidad sobre el botón de enviar del buzón."><figcaption><b>Figura 116.</b> El aviso de privacidad sobre el botón de enviar del buzón.</figcaption></figure>
+<figure class="captura "><img src="img/privacidad.png" alt="La página pública de privacidad."><figcaption><b>Figura 117.</b> La página pública de privacidad.</figcaption></figure>
+<p>Para ver, corregir o pedir que se eliminen sus datos, diríjase a la Dirección de Carrera.</p>
+
 <h2>Buenas prácticas</h2>
 <ul>
   <li>Use una contraseña que no use en otros sitios, y no la comparta.</li>
@@ -1786,7 +1826,7 @@ registrada.</p>
 <p>TAU puede preparar <strong>borradores</strong> con inteligencia artificial (IA). La regla es una sola: <strong>la IA
 sugiere y la persona decide</strong>. Ningún borrador surte efecto hasta que alguien lo aprueba, y todo texto
 aprobado lleva la marca «Elaborado con apoyo de IA; revisado por…».</p>
-<figure class="captura "><img src="img/ia.png" alt="«Uso de IA en TAU»: cada función, qué datos usa, si salen del sistema y quién aprueba el resultado."><figcaption><b>Figura 111.</b> «Uso de IA en TAU»: cada función, qué datos usa, si salen del sistema y quién aprueba el resultado.</figcaption></figure>
+<figure class="captura "><img src="img/ia.png" alt="«Uso de IA en TAU»: cada función, qué datos usa, si salen del sistema y quién aprueba el resultado."><figcaption><b>Figura 118.</b> «Uso de IA en TAU»: cada función, qué datos usa, si salen del sistema y quién aprueba el resultado.</figcaption></figure>
 <ul>
   <li><strong>Todo nace apagado.</strong> La Dirección de Carrera aprueba la política de uso, activa cada función y
     designa a su responsable. Si una función no está activa, el botón no aparece.</li>

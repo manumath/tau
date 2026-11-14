@@ -88,15 +88,48 @@ mientras está en curso.</p>
 
 <h2>Plan de mejora</h2>
 <p>Las debilidades de la autoevaluación son el punto de partida. En <span class="ruta">Calidad → Plan de
-mejora</span>, cada <strong>acción</strong> tiene responsable, plazo, prioridad y el criterio que atiende.</p>
-<captura archivo="mejora">El plan de mejora: acciones abiertas, vencidas y cumplidas.</captura>
+mejora</span>, cada <strong>acción</strong> tiene código, responsable, prioridad (P1 alta, P2 media, P3 baja) y el criterio
+que atiende, y se divide en <strong>actividades</strong>, cada una con su responsable, plazo, línea base, meta,
+presupuesto y medio de verificación.</p>
+<captura archivo="mejora">El tablero: cifras por semáforo arriba y una tarjeta por acción con su avance.</captura>
 <ul>
-  <li>Las acciones se crean desde las <strong>debilidades de la autoevaluación</strong>, desde las recomendaciones de
-    una <strong>evaluación externa</strong>, o sueltas.</li>
-  <li>El <strong>responsable</strong> registra los avances, con una evidencia. No necesita un rol para eso.</li>
-  <li>La Dirección de Carrera marca la acción como cumplida o la cancela con su motivo.</li>
-  <li>El sistema avisa al responsable 30 días antes del plazo y, si vence, también a la Dirección.</li>
+  <li>El <strong>semáforo</strong> de cada actividad se calcula solo: <em>al día</em>, <em>en riesgo</em> (vence en 30
+    días o menos, o pasó más de la mitad del plazo con menos de la mitad del avance), <em>vencida</em> o
+    <em>cumplida</em>. El avance de una acción es el promedio de sus actividades.</li>
+  <li>Las cifras de arriba filtran el tablero; también se filtra por prioridad, responsable y año.</li>
+  <li>Las acciones se crean desde las debilidades de la autoevaluación, desde las recomendaciones de una evaluación
+    externa, sueltas o <strong>todas de una vez desde un CSV</strong>.</li>
 </ul>
+<captura archivo="mejora-cronograma">El cronograma: las actividades de cada año por el trimestre en que vencen.</captura>
+
+<h3>Cargar el plan completo</h3>
+<p><span class="ui">Cargar CSV</span> recibe un archivo con una fila por actividad (descargue la plantilla desde la misma
+ventana). Antes de guardar, la vista previa muestra a quién propone el sistema como responsable de cada acción (la
+persona que hoy ocupa el cargo que nombra el archivo), qué actividades ya mide un indicador del sistema (puede desmarcar
+el enlace) y las filas con errores. Las acciones cuyo código ya está en el plan se omiten: cargar dos veces el mismo
+archivo no duplica nada.</p>
+<captura archivo="mejora-importar">La carga del plan desde un CSV.</captura>
+
+<h3>Avances, aprobación y reprogramación</h3>
+<p>Cada actividad tiene su página: avances con su porcentaje y evidencia, cumplimiento, cancelación y el historial de
+plazos. Quien tiene una actividad a su cargo la encuentra en <span class="ruta">Mis pendientes</span>, en «Mi parte del
+plan de mejora», y registra el avance sin salir de esa pantalla. No necesita un rol para eso.</p>
+<captura archivo="mejora-mi-parte">«Mi parte del plan de mejora» en los pendientes de una docente.</captura>
+<p>Cuando el Consejo aprueba el plan, la Dirección de Carrera registra la resolución y la fecha. Desde entonces el plazo de
+una actividad ya no se edita: el responsable <strong>pide una reprogramación</strong> con el plazo nuevo y la causa, y la
+Dirección la aprueba o la rechaza con su motivo. El historial conserva el plazo anterior.</p>
+<captura archivo="mejora-actividad">Una actividad con su avance y una reprogramación por resolver.</captura>
+
+<h3>Cortes de seguimiento</h3>
+<p>En <span class="ui">Cortes</span>, la Dirección de Carrera o la Comisión de calidad abre un corte (trimestral, anual
+o bienal): copia el estado de cada actividad a esa fecha, de modo que sus cifras ya no cambian. Arriba aparece lo que
+<strong>pide atención</strong> (vencidas, en riesgo y sin avance desde el corte anterior), con un espacio para el
+comentario de la Comisión; el resumen compara con el corte anterior. Al <span class="ui">Cerrar el corte</span>, su
+informe en XLSX queda como evidencia del criterio que se elija. El informe se imprime o se guarda en PDF.</p>
+<captura archivo="mejora-corte">Un corte trimestral abierto: lo que pide atención y el resumen.</captura>
+<div class="nota"><span class="rotulo">Avisos</span>
+  El responsable de cada actividad recibe un aviso 30 y 7 días antes de su plazo, y 15 días antes del fin de cada
+  trimestre si su actividad no tiene avance desde el último corte. Su calendario muestra esos plazos.</div>
 
 <h2>Ficha estadística</h2>
 <p><span class="ruta">Calidad → Ficha estadística</span> reúne las cifras que suelen pedir los formularios de un

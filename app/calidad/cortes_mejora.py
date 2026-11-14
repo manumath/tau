@@ -14,7 +14,7 @@ from datetime import date, timedelta
 
 from app.calidad import actividades_mejora as am
 from app.calidad import evidencias, marco, mejora
-from app.comun import exportar, notificaciones, usuarios
+from app.comun import exportar, formato, notificaciones, usuarios
 from app.comun.db import get_db, marca_tiempo, transaccion
 
 TIPOS = {"trimestral": "Trimestral", "anual": "Anual", "bienal": "Bienal"}
@@ -186,7 +186,7 @@ def cerrar(c: dict, conclusion: str, criterio_id: str, uid: int) -> list[str]:
         get_db().t.corte_mejora.update({"conclusion": (conclusion or "").strip()[:4000] or None}, c["id"])
         nombre = f"corte-{c['tipo']}-{c['fecha']}.xlsx"
         eid = evidencias.crear(c["marco_id"], "informe",
-                               {"titulo": f"Plan de mejora: corte {c['tipo']} al {c['fecha']}",
+                               {"titulo": f"Plan de mejora: corte {c['tipo']} al {formato.fecha(c['fecha'])}",
                                 "descripcion": "Informe de seguimiento del plan de mejora generado al cerrar el corte.",
                                 "fecha": c["fecha"], "vigente_hasta": None, "url": None, "criterios": [cr]},
                                uid, nombre, a_xlsx(c["id"]), "corte_mejora", f"corte {c['id']}")

@@ -106,11 +106,12 @@ TRATAMIENTOS: dict[str, Tratamiento] = {
         "Perfil de docentes e investigadores",
         "Nombres, grados, categoría, producción, proyectos, identificadores (ORCID y otros) y fecha de nacimiento.",
         "La gestión académica y científica de la Carrera y su difusión.",
-        "El perfil público y los datos abiertos muestran nombre, grados, producción y proyectos. La fecha de nacimiento la "
-        "ven solo usted y la Administración del sistema; los informes usan tramos de edad.",
+        "El personal de la Carrera, dentro del sistema. Fuera de él, solo si usted activa «Perfil público»: nombre, grados, "
+        "producción y proyectos (también en los datos abiertos). La fecha de nacimiento la ven solo usted y la "
+        "Administración del sistema; los informes usan tramos de edad.",
         "Mientras la persona tenga relación con la Carrera, y después como registro histórico de su producción.",
-        "Su perfil público muestra nombre, grados, producción y proyectos; la fecha de nacimiento solo la ven usted y la "
-        "Administración del sistema."),
+        "Su perfil lo ve el personal de la Carrera y, si usted lo publica, cualquier persona; la fecha de nacimiento solo "
+        "la ven usted y la Administración del sistema."),
 }
 
 # Formularios que piden datos personales: (módulo de rutas, clave de TRATAMIENTOS). La prueba exige que el módulo llame a

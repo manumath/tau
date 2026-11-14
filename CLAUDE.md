@@ -76,6 +76,10 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - **Plan de mejora (PLAN §72):** acciones con actividades (`app/calidad/actividades_mejora.py`). El avance y el semáforo se
   calculan, no se guardan. Aprobado el plan (`marco_calidad.plan_aprobado_en`), el plazo de una actividad cambia solo por
   reprogramación (`reprogramacion_mejora`: el responsable pide y la Dirección de Carrera aprueba); nunca lo edite directo.
+  Un **corte** (`cortes_mejora.py`) congela el estado de cada actividad: sus cifras no se recalculan después; solo los
+  comentarios de un corte abierto cambian. El plan de la Carrera se carga de `datos/calidad/plan-de-mejora-2026-2030.csv`
+  (`importar_mejora.py`), sin nombres de agencias ni columna de criterio de agencia. Las hojas imprimibles (`.hoja`) usan
+  los colores claros también en modo oscuro: dentro de una, use la clase `apagado` para el texto secundario.
 - **Planes de estudio (PLAN §65):** un plan está *en elaboración*, *vigente*, *en proceso de cierre* o *cerrado*, y los
   planes se agrupan en una **reforma curricular** (la que se revisa cada 10 años; puede traer 1, 2 o 3 programas). Programa =
   titulación (títulos distintos); mención = énfasis dentro de un mismo título. Un programa tiene a lo sumo un plan vigente.

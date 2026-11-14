@@ -25,7 +25,7 @@ uv sync                                   # dependencias, incluidas las de desar
 uv run python scripts/seed.py             # base de ejemplo en data/portal.db, con cuentas de demostración
 uv run python main.py                     # http://127.0.0.1:5001
 uv run pytest                             # ~675 pruebas, unos tres minutos
-uv run pytest --navegador                 # además, 15 flujos en Chrome
+uv run pytest --navegador                 # además, los flujos en Chrome (tests/navegador)
 ```
 
 `scripts/seed.py` imprime las cuentas de demostración y su contraseña temporal. Es idempotente:

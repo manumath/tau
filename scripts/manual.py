@@ -266,6 +266,28 @@ def datos(ruta: str):
     assert not err, err
     mejora.crear(m["id"], x, ada)
 
+    # Plan de mejora 2026–2030 (PLAN §72): cargado del CSV, con avances, aprobado, una actividad a cargo de Emmy con una
+    # reprogramación pedida y un corte trimestral abierto.
+    from app.calidad import actividades_mejora as am
+    from app.calidad import cortes_mejora, importar_mejora
+    acciones, err = importar_mejora.leer((RAIZ / "datos/calidad/plan-de-mejora-2026-2030.csv").read_bytes(), m["id"], ada)
+    assert not err, err
+    importar_mejora.aplicar(acciones, m["id"], ada, set())
+    actividades = am.de_marco(m["id"])
+    for n, t in enumerate(actividades[:24]):
+        if n % 3 != 2:
+            am.registrar_avance(t, {"texto": "Avance informado en la reunión de seguimiento.", "fecha": hace(20 + n),
+                                    "porcentaje": 15 + (n * 7) % 70, "evidencia_id": None}, ada)
+    suya = actividades[3]
+    db.execute("UPDATE actividad_mejora SET responsable_id = ? WHERE id IN (?, ?)", [emmy, suya["id"], actividades[7]["id"]])
+    assert not am.aprobar_plan(m["id"], "Res. HCC N.º 12/2026", hace(30))
+    auth_emmy = {**usuarios.con_perfil(emmy), "roles": permisos.roles_vigentes(emmy)}
+    _, errores = am.solicitar_reprogramacion(auth_emmy, am.obtener(suya["id"]),
+                                             {"plazo_nuevo": (date.today() + timedelta(days=400)).isoformat(),
+                                              "causa": "El laboratorio de computación está en refacción."})
+    assert not errores, errores
+    assert cortes_mejora.abrir(m["id"], "trimestral", date.today().isoformat(), ada)[1] == []
+
     # Planes (PLAN §65): una reforma en elaboración con la Licenciatura en Matemática copiada (con una asignatura nueva
     # que reemplaza a dos, y una mención) y la Maestría en Matemática vacía.
     from app.academico import equivalencias, malla, menciones, planes as planes_, reformas
@@ -552,7 +574,12 @@ CAPTURAS = [
                                                           "alto": 1000}),
     ("evidencias", "direccion", "/calidad/evidencias", {"alto": 500}),
     ("autoevaluacion", "direccion", "autoevaluacion", {"alto": 1000}),
-    ("mejora", "direccion", "/calidad/mejora", {"alto": 520}),
+    ("mejora", "direccion", "/calidad/mejora", {"alto": 1000}),
+    ("mejora-cronograma", "direccion", "/calidad/mejora/cronograma", {"alto": 760}),
+    ("mejora-actividad", "direccion", "mejora-actividad", {"alto": 1000}),
+    ("mejora-importar", "direccion", "/calidad/mejora", {"clics": ["text=Cargar CSV"], "alto": 640}),
+    ("mejora-corte", "direccion", "mejora-corte", {"alto": 1000}),
+    ("mejora-mi-parte", "docente", "/investigacion/pendientes", {"alto": 640}),
     ("ficha-estadistica", "direccion", "/calidad/ficha", {"alto": 640}),
     ("calidad-datos", "direccion", "/informes/calidad", {"alto": 640}),
     ("usuarios", "direccion", "/admin/usuarios?q=instituto.test", {"alto": 640}),
@@ -562,6 +589,8 @@ CAPTURAS = [
     ("propuestas", "direccion", "/admin/propuestas", {"alto": 600}),
     ("ia", "direccion", "/ia", {}),
     ("publico", "nadie", "/publico", {"alto": 400}),
+    ("privacidad", "nadie", "/publico/privacidad", {"alto": 900}),
+    ("aviso-privacidad", "estudiante", "/estudiante/buzon", {"alto": 640}),
 ]
 
 
@@ -598,6 +627,8 @@ def _rutas_de_la_base(db: Path) -> dict:
         "grado": f"/servicios/grado/{uno('SELECT MAX(id) FROM tramite_grado')}",
         "grado-estudiante": f"/estudiante/grado/{uno('SELECT MAX(id) FROM tramite_grado')}",
         "autoevaluacion": f"/calidad/autoevaluaciones/{uno('SELECT MAX(id) FROM autoevaluacion')}",
+        "mejora-actividad": f"/calidad/mejora/actividades/{uno('SELECT actividad_id FROM reprogramacion_mejora LIMIT 1')}",
+        "mejora-corte": f"/calidad/mejora/cortes/{uno('SELECT MAX(id) FROM corte_mejora')}",
         "lista-curso": f"/docencia/listas/{uno('SELECT oferta_id FROM lista_curso LIMIT 1')}",
         "resultados-evaluacion": f"/docencia/evaluacion/{uno('SELECT id FROM evaluacion_docente')}/docente/{uno("SELECT docente_id FROM evaluacion_consulta LIMIT 1")}",
         "certificado": f"/docencia/certificados/tutor_grado/{uno("SELECT id FROM tramite_grado WHERE estado = 'aprobado'")}",

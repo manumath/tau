@@ -398,7 +398,7 @@ def post(auth, sess, tid: int, fecha: str = ""):
     if errores:
         add_toast(sess, " ".join(errores), "error")
     else:
-        auditar(auth["id"], "cumplir_actividad_mejora", "actividad_mejora", tid, fecha)
+        auditar(auth["id"], "cumplir_actividad_mejora", "actividad_mejora", tid, formato.fecha(fecha))
         add_toast(sess, "Actividad cumplida.", "success")
     return Redirect(_url(tid))
 
@@ -493,7 +493,8 @@ def post(auth, sess, tid: int, plazo_nuevo: str = "", causa: str = "", evidencia
     rid, errores = am.solicitar_reprogramacion(auth, t, d)
     if errores:
         return _form_reprogramar(auth, t, m, d, errores)
-    auditar(auth["id"], "reprogramar_actividad_mejora", "actividad_mejora", tid, f"{t['plazo']} → {plazo_nuevo}")
+    auditar(auth["id"], "reprogramar_actividad_mejora", "actividad_mejora", tid,
+            f"{formato.fecha(t['plazo'])} → {formato.fecha(plazo_nuevo)}")
     add_toast(sess, "Plazo reprogramado." if _gestiona(auth, m) else "Pedido enviado a la Dirección de Carrera.", "success")
     return Redirect(_url(tid))
 
@@ -515,7 +516,7 @@ def post(auth, sess, rid: int):
         add_toast(sess, " ".join(errores), "error")
     else:
         auditar(auth["id"], "aprobar_reprogramacion_mejora", "actividad_mejora", r["actividad_id"],
-                f"{r['plazo_anterior']} → {r['plazo_nuevo']}")
+                f"{formato.fecha(r['plazo_anterior'])} → {formato.fecha(r['plazo_nuevo'])}")
         add_toast(sess, "Reprogramación aprobada: el plazo cambió.", "success")
     return Redirect(_url(r["actividad_id"]))
 

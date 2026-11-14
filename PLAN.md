@@ -3909,7 +3909,7 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
   remoción, cese y pagos (arts. 29 a 47)—, que será el §71.
 
 
-## 72. Consolidación: plan de mejora completo, rendimiento, brechas del plan y piloto (propuesta, 14-nov-2026)
+## 72. Consolidación: plan de mejora completo, rendimiento, brechas del plan y piloto (hecha, 14-nov-2026; piloto por realizar)
 
 Tras la evaluación global del 14-nov-2026 (TAU frente al informe de autoevaluación y su plan de mejora 2026–2030), el
 usuario aceptó **dejar de agregar módulos** y consolidar lo que existe. Este plan ordena ese trabajo pensando en quien
@@ -4187,11 +4187,22 @@ implementarla (por confirmar):
   TAU consume; titularidad del software (consulta a la Dirección); dónde se alojan los datos de los estudiantes frente a
   la Política TIC de la UMSA (por verificar; alternativa: un servidor de la DTIC).
 
-### Etapa 10: navegador, manual y documentación
-- Pantallas nuevas en `test_accesibilidad_pantallas` (claro y oscuro); flujos en Chrome: cargar el plan, registrar un
-  avance desde «Mis pendientes», reprogramar y cerrar un corte.
-- Manual: capítulo del plan de mejora reescrito con capturas sobre el plan de ejemplo de `scripts/manual.py`; guía de
-  uso, CLAUDE.md (congelamiento y reglas del plan) y mantenimiento.
+### Etapa 10 (hecha, 14-nov-2026): navegador, manual y documentación
+- `tests/navegador/test_plan_de_mejora.py`: la Dirección carga el plan desde el CSV del repositorio (14 acciones nuevas;
+  A4 se omite), la responsable registra su avance desde «Mis pendientes» y vuelve a esa pantalla, la Dirección registra la
+  aprobación, la responsable pide una reprogramación y la Dirección la aprueba, y la Dirección cierra el corte, cuyo informe
+  queda en Evidencias. Las pantallas nuevas de las etapas 3 a 9 ya estaban en `test_accesibilidad_pantallas` (claro y
+  oscuro).
+- La prueba encontró una fecha ISO en el título de la evidencia del corte («al 2026-11-14»): ahora usa `formato.fecha`.
+- Manual (`scripts/manual.py`): la base de demostración carga el plan 2026–2030 desde el CSV, registra avances, aprueba el
+  plan, deja una reprogramación por resolver a cargo de Emmy y abre un corte; el capítulo 9 explica tablero, semáforo,
+  cronograma, carga del CSV, «Mi parte del plan», aprobación y reprogramación, y cortes, con seis capturas nuevas; el
+  capítulo 12 suma la página de privacidad y el aviso de los formularios.
+- La tabla de privacidad aclara que el perfil sale fuera del sistema solo si la persona activa «Perfil público» (lo dice el
+  manual desde antes; el texto de la etapa 8 lo omitía).
+- La revisión de `/admin/auditoria` encontró fechas ISO en los detalles que registran el plan de mejora (aprobación del
+  plan, cumplir, reprogramar, aprobar una reprogramación, abrir un corte): ahora se guardan con `formato.fecha`.
+- CLAUDE.md: cortes congelados, carga del plan, hojas imprimibles en colores claros.
 
 ### Orden y commits
 Un commit por etapa. Las etapas 1 y 2 no dependen entre sí; 3 a 6 van en orden; 7 y 8 son independientes del plan; 9
