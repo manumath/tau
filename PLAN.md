@@ -4094,7 +4094,19 @@ informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se gu
   `scripts/tema_marca.py` redefine las variables del tema dentro de ella. Lo detectó la prueba de accesibilidad con la
   hoja del corte, la primera que lleva formularios e insignias.
 
-### Etapa 6: «Mi parte del plan» en los pendientes
+### Etapa 6 (hecha, 14-nov-2026): «Mi parte del plan» en los pendientes
+- `actividades_mejora.mi_parte(auth, volver)`: tarjeta con las actividades abiertas a cargo de la persona (la más urgente
+  primero, con semáforo, plazo y avance) y «Registrar avance», que abre un modal (`/calidad/mejora/actividades/{id}/avance`)
+  y al guardar vuelve a la misma pantalla (`volver`, solo direcciones del propio sitio). Va en «Mis pendientes» del docente
+  y del investigador.
+- **Inicio:** «Lo mío» dice cuántas actividades del plan tiene la persona y cuántas están vencidas o en riesgo; el enlace
+  lleva a sus pendientes o, si no tiene esa pantalla, al plan (que le muestra solo lo suyo).
+- **Calendario** (y su `.ics`), del docente y del investigador: el plazo de cada actividad abierta y el fin de cada
+  trimestre (`cortes_mejora.eventos`), solo si la persona tiene actividades. Los cortes no tienen fecha fija hasta que se
+  abren; el fin del trimestre es cuando suelen hacerse.
+- Pruebas: `tests/test_mi_parte_mejora.py`.
+
+**Lo planificado:**
 - En «Mis pendientes» del docente y del investigador (y en el inicio de quien no los tiene): las actividades del plan a
   cargo de la persona, con plazo, semáforo y un botón que abre «Registrar avance» en un modal sin salir de la pantalla.
 - En el calendario personal (y su `.ics`): los plazos de esas actividades y las fechas de los cortes.

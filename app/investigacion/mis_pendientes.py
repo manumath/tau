@@ -10,7 +10,8 @@ from app.comun.db import get_db
 from app.investigacion import acceso_abierto, carga_proyectos, filiacion, institucionales, perfiles, productos, proyectos
 
 TIPOS = {"propuesta": "Convocatoria", "proyecto": "Proyectos", "plan": "Plan del proyecto", "producto": "Productos",
-         "perfil": "Perfil", "carga": "Carga horaria", "actividad": "Actividades", "evento": "Evento", "acceso": "Acceso abierto"}
+         "perfil": "Perfil", "carga": "Carga horaria", "actividad": "Actividades", "evento": "Evento", "acceso": "Acceso abierto",
+         "mejora": "Plan de mejora"}
 DIAS_FIN_PROYECTO = 60      # avisa cuando un proyecto termina en menos de estos días
 DIAS_SIN_NOVEDAD = 180      # un producto «enviado» o «aceptado» sin cambios en este tiempo: ¿ya se publicó?
 
@@ -188,7 +189,9 @@ def eventos(uid: int, desde: date | None = None, hasta: date | None = None) -> l
     desde = desde or date.today()
     hasta = hasta or desde + timedelta(days=120)
     d, h = desde.isoformat(), hasta.isoformat()
+    from app.calidad import cortes_mejora      # diferida: el plan de mejora (PLAN §72) no es de Investigación
     todos = [e for fuente in (_eventos_convocatoria(uid), _eventos_actividades(uid), _eventos_proyectos(uid),
-                              _eventos_embargos(uid), docente.eventos_comunicados(uid)) for e in fuente if e]
+                              _eventos_embargos(uid), docente.eventos_comunicados(uid),
+                              cortes_mejora.eventos(uid, desde, hasta)) for e in fuente if e]
     return sorted((e for e in todos if d <= e["fecha"] <= h), key=lambda e: (e["fecha"], e["hora"], e["titulo"]))
 

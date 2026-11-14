@@ -8,7 +8,7 @@ from monsterui.all import H2, H3, Card, TextPresets, UkIcon
 
 from app.academico import carga, gestiones, preparacion, semestre as ciclo_semestre
 from app.academico.componentes import tiene_docencia
-from app.calidad import anexo, calidad_datos as calidad
+from app.calidad import actividades_mejora, anexo, calidad_datos as calidad
 from app.comun import estudiantes, permisos, vinculos
 from app.comun import formato
 from app.estudiantil import actividad as actividad_estudiantil, tutoria
@@ -193,6 +193,14 @@ def _para_mi(auth):
                                + (f" · {r['contratada']} h/mes contratadas" if r["contratada"] else ""),
                                "/docencia/mia", tono="ambar" if r["avisos"] else "info",
                                detalle=r["avisos"][0] if r["avisos"] else None))
+    acts = actividades_mejora.de_responsable(uid)
+    if acts:
+        urgentes = sum(t["semaforo"] in ("vencida", "en_riesgo") for t in acts)
+        items.append(_item(f"{_plural(len(acts), 'actividad', 'actividades')} del plan de mejora a su cargo"
+                           + (f" ({urgentes} vencida(s) o en riesgo)" if urgentes else ""),
+                           "/docencia/pendientes" if tiene_docencia(auth) else
+                           "/investigacion/pendientes" if auth["es_investigador"] else "/calidad/mejora",
+                           tono="ambar" if urgentes else "info"))
     return _grupo("list-checks", "Lo mío", items) if items or auth["es_investigador"] else None
 
 

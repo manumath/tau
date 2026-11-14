@@ -7,6 +7,7 @@ from monsterui.all import H2, H3, Card, TextPresets, UkIcon
 from app.comun import formato
 from app.comun.componentes.layout import pagina
 from app.comun.componentes.registros import insignia
+from app.calidad.rutas.actividades_mejora import mi_parte
 from app.estudiantil import calendario
 from app.investigacion import mis_pendientes as mp
 
@@ -14,7 +15,7 @@ rt = APIRouter()
 PENDIENTES = "/investigacion/pendientes"
 CALENDARIO = "/investigacion/calendario"
 TONOS = {"propuesta": "azul", "proyecto": "verde", "plan": "ambar", "producto": "gris", "perfil": "gris", "carga": "ambar",
-         "actividad": "azul", "evento": "azul", "acceso": "verde"}
+         "actividad": "azul", "evento": "azul", "acceso": "verde", "mejora": "azul"}
 SITUACIONES = {"vencido": ("Vencido", "rojo"), "proximo": ("Próximo", "ambar")}
 PLAZOS = {"30": 30, "90": 90, "180": 180}
 MESES = ("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre",
@@ -48,6 +49,7 @@ def get(auth):
         P("Lo que espera de usted: la convocatoria de proyectos, lo que debe aprobar como responsable, el plan de sus "
           "proyectos, sus productos por actualizar y su perfil. Solo usted ve esta lista; no se guarda.",
           cls=(TextPresets.muted_sm, "mb-4 max-w-3xl")),
+        mi_parte(auth, PENDIENTES),
         Card(Ul(*[_fila(p, hoy) for p in lista], cls="divide-y divide-border")) if lista
         else Card(P(UkIcon("circle-check", height=16, width=16, cls="inline mr-1"), "No tiene nada pendiente.", cls="text-sm")),
         P(A("Ver mi calendario", href=CALENDARIO, cls="text-sm text-primary hover:underline"), cls="mt-4"),

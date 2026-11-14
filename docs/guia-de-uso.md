@@ -1252,6 +1252,10 @@ En **Calidad → Plan de mejora**:
    **Evidencias**. El informe se imprime o se guarda en PDF con **Imprimir / Guardar PDF**. Un corte abierto se puede
    descartar; uno cerrado, no.
 
+**Si una actividad está a su cargo:** la encuentra en **Mis pendientes** (docencia o investigación), en «Mi parte del
+plan de mejora», con su semáforo y su plazo. **Registrar avance** abre el formulario sin salir de la pantalla. El inicio le
+recuerda cuántas tiene y su calendario muestra sus plazos y el fin de cada trimestre, cuando suele hacerse el corte.
+
 El sistema avisa al responsable de cada actividad **30 y 7 días antes** de su plazo, y 15 días antes del fin de cada
 trimestre si su actividad no tiene avance desde el último corte. Una acción sin actividades avisa a su responsable
 **30 días antes** del plazo y, si vence sin cumplirse, a él y a la Dirección de Carrera. Un responsable sin acceso al plan completo ve en el tablero solo las acciones en que tiene algo a su cargo. El

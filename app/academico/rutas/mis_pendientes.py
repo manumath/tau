@@ -5,6 +5,7 @@ from fasthtml.common import A, APIRouter, Div, Li, P, Response, Span, Ul
 from monsterui.all import H2, H3, Card, TextPresets, UkIcon
 
 from app.academico import docente
+from app.calidad.rutas.actividades_mejora import mi_parte
 from app.estudiantil import calendario
 from app.comun import formato
 from app.comun.componentes.layout import pagina
@@ -14,7 +15,7 @@ rt = APIRouter()
 PENDIENTES = "/docencia/pendientes"
 CALENDARIO = "/docencia/calendario"
 TONOS = {"grado": "verde", "auxiliatura": "ambar", "tutoria": "gris", "tema": "azul", "vinculo": "ambar", "preferencias": "azul", "programa": "azul", "gestion": "gris",
-         "evento": "azul"}
+         "evento": "azul", "mejora": "azul"}
 SITUACIONES = {"vencido": ("Vencido", "rojo"), "proximo": ("Próximo", "ambar")}
 PLAZOS = {"30": 30, "90": 90, "180": 180}
 MESES = ("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre",
@@ -40,6 +41,7 @@ def get(auth):
         H2("Mis pendientes"),
         P("Lo que espera de usted: informes y notas de tribunales, vistos buenos como tutor(a), solicitudes de reunión y de "
           "tema, y su periodo de vínculo. Solo usted ve esta lista; no se guarda.", cls=(TextPresets.muted_sm, "mb-4 max-w-3xl")),
+        mi_parte(auth, PENDIENTES),
         Card(Ul(*[_fila(p, hoy) for p in lista], cls="divide-y divide-border")) if lista
         else Card(P(UkIcon("circle-check", height=16, width=16, cls="inline mr-1"), "No tiene nada pendiente.", cls="text-sm")),
         P(A("Ver mi calendario", href=CALENDARIO, cls="text-sm text-primary hover:underline"), cls="mt-4"),

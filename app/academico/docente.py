@@ -9,7 +9,8 @@ from app.comun import vinculos
 from app.comun.db import get_db
 
 TIPOS = {"grado": "Grado", "auxiliatura": "Auxiliaturas", "tutoria": "Tutoría", "tema": "Temas de grado",
-         "vinculo": "Vínculo", "preferencias": "Oferta", "programa": "Programa", "gestion": "Semestre", "evento": "Evento"}
+         "vinculo": "Vínculo", "preferencias": "Oferta", "programa": "Programa", "gestion": "Semestre", "evento": "Evento",
+         "mejora": "Plan de mejora"}
 DIAS_VINCULO = 60       # avisa cuando el periodo del vínculo termina en menos de estos días
 
 
@@ -165,6 +166,7 @@ def eventos(uid: int, desde: date | None = None, hasta: date | None = None) -> l
     desde = desde or date.today()
     hasta = hasta or desde + timedelta(days=120)
     d, h = desde.isoformat(), hasta.isoformat()
+    from app.calidad import cortes_mejora      # diferida: el plan de mejora (PLAN §72) no es de Docencia
     todos = [e for fuente in (_eventos_gestiones(), _eventos_grado(uid), _eventos_tutoria(uid), eventos_comunicados(uid),
-                              _eventos_vinculo(uid)) for e in fuente if e]
+                              _eventos_vinculo(uid), cortes_mejora.eventos(uid, desde, hasta)) for e in fuente if e]
     return sorted((e for e in todos if d <= e["fecha"] <= h), key=lambda e: (e["fecha"], e["hora"], e["titulo"]))
