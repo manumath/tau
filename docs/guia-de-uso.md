@@ -1233,6 +1233,17 @@ En **Calidad → Plan de mejora**:
    la ve en el tablero («Reprogramaciones por resolver») y la **aprueba** o la **rechaza** con su motivo; quien la pidió
    recibe un aviso. La Dirección puede reprogramar directamente. El historial muestra el plazo anterior tachado.
 
+7. **Cargar el plan completo.** **Cargar CSV** recibe un archivo con una fila por actividad y las columnas de su acción
+   repetidas (descargue la plantilla). El plan 2026–2030 de la Carrera (15 acciones y 57 actividades) ya está preparado en
+   `datos/calidad/plan-de-mejora-2026-2030.csv`. La vista previa muestra cada acción con sus actividades y:
+   - a **quién propone como responsable**: la persona que hoy ocupa el cargo que nombra el archivo (Dirección de
+     Carrera, Dirección del Instituto, Coordinación académica o Comisión de calidad); si no la encuentra, la acción queda a
+     su cargo hasta que la asigne a otra persona;
+   - las actividades que el sistema **ya mide con un indicador** («Ligar al indicador Titulación oportuna»): desmarque las
+     que no correspondan. La línea base del archivo queda como texto;
+   - las filas con errores, que se omiten. Las acciones cuyo código ya está en el plan también se omiten: cargar dos
+     veces el mismo archivo no duplica nada. La columna `criterio` usa los códigos del marco de calidad del sistema.
+
 El sistema avisa al responsable
 **30 días antes** del plazo y, si vence sin cumplirse, a él y a la Dirección de Carrera. Un responsable sin acceso al plan completo ve en el tablero solo las acciones en que tiene algo a su cargo. El
 plan se descarga en **XLSX**. El indicador «Acciones de mejora cumplidas en plazo» del marco se calcula solo.

@@ -4029,7 +4029,25 @@ informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se gu
   avances de lo suyo y **pide** una reprogramación, que la Dirección aprueba o rechaza (ver las preguntas); la Comisión
   ve todo y comenta en los cortes.
 
-### Etapa 4: carga de las 15 acciones y 57 actividades
+### Etapa 4 (hecha, 14-nov-2026): carga de las 15 acciones y 57 actividades
+- **`datos/calidad/plan-de-mejora-2026-2030.csv`**: el apéndice del informe convertido (una fila por actividad, columnas de
+  la acción repetidas). Sin nombres de agencias ni de sus instrumentos: «Guía de Antecedentes» se cambió por «ficha
+  estadística» (lo que TAU llama así). La columna `criterio` va **vacía**: los números del informe son los del
+  instrumento de la agencia y su correspondencia con el marco es privada (PLAN §57); se completa con códigos del marco
+  de TAU si se quiere.
+- **`app/calidad/importar_mejora.py`** y `/calidad/mejora/importar` (plantilla, vista previa, confirmación; solo
+  `gestionar_plan_mejora`). Recursos humanos y otros van al final de la descripción; el mecanismo de evaluación y el
+  indicador del informe, al medio de verificación; RP y TGN se escriben completos. Inicio y fin «MM/AAAA» → primer y
+  último día del mes.
+- **Responsables propuestos** (`CARGOS`): la primera unidad del texto («Dirección de Carrera / HCC») se busca entre quienes
+  hoy tienen el rol; si nadie lo tiene, la acción queda a cargo de quien carga. Las actividades guardan además la unidad
+  en texto.
+- **Indicadores propuestos** (`PISTAS`): palabras del indicador o de la línea base → un indicador del marco por su nombre
+  (13 de 57 en el plan de la Carrera); se ligan solo las que quedan marcadas, sin valores numéricos (el avance sigue
+  siendo el porcentaje registrado; la ficha muestra la cifra del indicador).
+- Se omite toda acción cuyo código ya está en el plan (idempotente). Pruebas: `tests/test_importar_mejora.py`.
+
+**Lo planificado:**
 - `/calidad/mejora/importar`: un CSV (una fila por actividad, con las columnas de la acción repetidas) con vista previa,
   avisos y confirmación, como las demás cargas. Descarga de una plantilla vacía.
 - Los responsables se asignan después en TAU: el archivo trae la unidad en texto y la pantalla propone a la persona que

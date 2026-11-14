@@ -146,6 +146,8 @@ def get(auth, ver: str = "", prioridad: str = "", responsable: str = "", anio: s
                 A(UkIcon("list-checks", height=14, width=14), "Debilidades de la autoevaluación",
                   href=f"{BASE}/debilidades", cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1")
                 if ve and aev else "",
+                Button(UkIcon("upload", height=14, width=14), "Cargar CSV", cls=(ButtonT.default, ButtonT.sm),
+                       hx_get=f"{BASE}/importar", hx_target=f"#{ID_MODAL}") if gestiona else "",
                 Button(UkIcon("plus", height=14, width=14), "Nueva acción", cls=(ButtonT.primary, ButtonT.sm),
                        hx_get=f"{BASE}/acciones/nueva", hx_target=f"#{ID_MODAL}") if gestiona else "",
                 descarga("XLSX", f"{BASE}/xlsx") if ve else "", cls="flex flex-wrap gap-2"),
@@ -172,7 +174,7 @@ def get(auth, ver: str = "", prioridad: str = "", responsable: str = "", anio: s
         P(f"{len(lista)} de {len(todas)} acciones", cls=(TextPresets.muted_sm, "mb-2")) if len(lista) != len(todas) else "",
         Div(*[_tarjeta_accion(a) for a in lista], cls="grid grid-cols-1 lg:grid-cols-2 gap-3") if lista else
         P("No hay acciones con ese filtro." if todas else
-          "El plan aún no tiene acciones: cree la primera." if gestiona else
+          "El plan aún no tiene acciones: cree la primera o cárguelo completo desde un CSV." if gestiona else
           "El plan aún no tiene acciones.", cls=TextPresets.muted_sm),
         usuario=auth)
 
