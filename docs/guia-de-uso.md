@@ -1061,6 +1061,18 @@ el ítem.
 **Generar la segunda convocatoria**: arma un borrador con solo esas plazas, los mismos requisitos, lugar de recepción y tribunales. Hay que darle fechas y el número de la
 resolución del Consejo de Carrera. Los arts. 13 y 14 piden publicarla hasta 72 horas después de los resultados de la primera; el sistema lo avisa en la página.
 
+**Resultado y designación** (convocatorias del reglamento de 2023; botón en la convocatoria cuando algún ítem concluyó). Desde allí:
+- **Informe final y resoluciones (art. 22):** la fecha en que la comisión entregó su informe (el sistema avisa si pasaron más de 10 días de concluido el proceso), la
+  resolución del Consejo de Carrera que aprueba los resultados y la homologación del Consejo Facultativo.
+- **Designados:** un auxiliar titular por plaza ganada. Por cada uno se anota la fecha en que se recibieron los tres documentos que se piden a los ganadores **en 72 horas**
+  (certificación de no tener deudas con la Carrera y la Facultad, certificado de la sala de procesos y registro en el SIGEP) y su **memorándum** (número, fecha y vigencia;
+  rige desde el 1 o el 15 de un mes, art. 25). El estudiante ve en su postulación y en «Mis designaciones» qué documentos le faltan.
+- **Invitaciones (arts. 6 y 13):** si tras la **segunda convocatoria** una plaza sigue sin cubrir, **Invitar** avisa, por puntaje, a quienes obtuvieron de **51 a 55 puntos**;
+  cada uno acepta o no desde su portal (o la Dirección lo registra). Si ninguno acepta, se registra la invitación a un **mejor estudiante** de la materia con su registro
+  universitario y de dónde sale su nombre (el promedio lo certifica Kardex; TAU no guarda notas). Quien acepta queda como **auxiliar invitado**.
+- **Documentación para Bienestar Social (art. 27):** la fecha en que se entregó cada uno de los seis documentos (resoluciones, memorándums, formularios de evaluación y
+  requisitos de admisión), que se entregan hasta 15 días después del último memorándum.
+
 ### Proyectos de grado (Dirección de Carrera y Coordinación académica; tutores y tribunales)
 
 **El estudiante** abre **Grado → Nuevo perfil**, con el título, la modalidad (proyecto de grado o tesis) y su tutor. El

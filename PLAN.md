@@ -3817,8 +3817,7 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
 4. **Calificación según los formularios.** Méritos estructurados (formularios 2-1, 2-2 y 2-3, con topes y escala de la nota de la materia), habilitación como lista de
    verificación del formulario 1, escrito con mínimo 18, oral con **cinco temas**, sorteo, orden de participación y rúbrica de cinco criterios; plazos de 24 h y 48 h.
 5. **Resultado y designación.** Categorías titular e invitado, invitación y aceptación, invitación a los mejores estudiantes, informe final en 10 días con la resolución
-   del Consejo de Carrera y la homologación de la Facultad, documentos de los ganadores en 72 h, memorándum y los seis documentos para Bienestar Social. Migración: se
-   recrea `postulacion_auxiliatura` para admitir el estado «invitado» y se agregan las tablas de designación.
+   del Consejo de Carrera y la homologación de la Facultad, documentos de los ganadores en 72 h, memorándum y los seis documentos para Bienestar Social. Migración: tablas de invitaciones y designaciones (sin recrear `postulacion_auxiliatura`).
 6. **Formularios imprimibles:** 1, 2-x, 3, 4 y 5 en HTML para imprimir, con el encabezado «Aprobado con Res. HCU 424/2023».
 7. **Pruebas de navegador, manual y documentación** (guía, manual capítulo 8, CLAUDE.md, mantenimiento) y la advertencia de las convocatorias hechas con la norma anterior.
 
@@ -3873,4 +3872,19 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
   **48 horas** para el desempate (art. 20). La habilitación sigue siendo un sí o no por miembro; el formulario 1 se arma en la etapa 6 con los requisitos de cada postulante.
 - **Decisión mía por confirmar:** las unidades de las líneas («curso», «año», «semestre», «vez») y los textos de las secciones siguen los formularios del PDF; la línea 2 de investigación tiene siete
   renglones (en el PDF dos llevan la misma letra «d»: se numeraron de la a a la g).
+
+### Etapa 5 (hecha, 14-nov-2026): resultado y designación
+- **Migración 0090:** `invitacion_auxiliatura` (a quién se invitó, de qué origen —postulante con 51 a 55 puntos o mejor estudiante—, orden, respuesta), `designacion_auxiliatura`
+  (un titular o invitado por plaza, con las fechas de los tres documentos de los ganadores y el memorándum), `documentacion_auxiliatura` (los seis documentos para Bienestar Social)
+  y, en la convocatoria, `informe_final_en`, `resolucion_resultados` y `resolucion_resultados_hcf`. No se recrea `postulacion_auxiliatura`: el invitado no es un estado de la
+  postulación sino una invitación aparte, que además cubre a quienes nunca postularon.
+- `app/servicios/designaciones.py` y `rutas/designaciones.py` (`/servicios/auxiliaturas/{cid}/designacion`, solo convocatorias del reglamento de 2023 y de quien las gestiona).
+  **Invitaciones:** solo en una **segunda convocatoria** concluida con plazas sin cubrir (dos convocatorias consecutivas, art. 6); primero los postulantes de **51 a 55** por puntaje y,
+  cuando ninguno acepta ni queda pendiente, los mejores estudiantes por registro universitario (nunca un miembro de la comisión); aceptar crea la designación de **invitado** y ocupa la plaza.
+  **Designaciones:** se crean al abrir la pantalla, una por cada titular; documentos en 72 horas desde que concluyó el proceso y memorándum que rige desde el 1 o el 15 (error si no).
+  **Informe final** con aviso de los 10 días y resoluciones; **documentación** con la fecha de entrega de cada documento y aviso de los 15 días desde el último memorándum. Todo se audita.
+- El estudiante responde sus invitaciones en `/estudiante/auxiliaturas` (solo las suyas) y ve sus designaciones y los documentos que le faltan, también en su postulación.
+- **Decisiones mías por confirmar:** (a) el invitado solo aparece tras la **segunda** convocatoria y entre quienes postularon a ese ítem en ella (el art. 6 dice que la invitación procede cuando
+  la materia no se cubrió tras dos convocatorias consecutivas y que primero se invita a los que «se presentaron en la convocatoria»); (b) los plazos del art. 22 (10 días corridos), del
+  art. 23 (72 horas) y del art. 27 (15 días desde el último memorándum) solo advierten; (c) no se registra aún la baja o el cese del auxiliar (art. 28): va con el seguimiento del §71.
 

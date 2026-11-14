@@ -12,6 +12,7 @@ from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
 from app.investigacion import adjuntos
 from app.servicios import auxiliaturas as aux
+from app.servicios import designaciones as des
 from app.servicios import rubricas
 from app.servicios.rutas.comun import (area, boton_post, descargar, enlace_adjunto, enviar, falta, fecha, formulario,
                                        leer_archivo, no_autorizado, no_encontrado, seleccion, subir, tarjeta)
@@ -352,6 +353,9 @@ def get(auth, cid: int, editar: int = 0):
                            disabled=bool(falta_pub) or None) if borrador else "",
                 boton_post("Eliminar", f"{url}/eliminar", "trash-2", cls=(ButtonT.ghost, ButtonT.sm),
                            confirmar="¿Eliminar el borrador de la convocatoria?") if borrador else "",
+                A(UkIcon("badge-check", height=14, width=14), "Resultado y designación", href=f"{url}/designacion",
+                  cls="uk-btn uk-btn-default uk-btn-sm gap-1")
+                if des.aplica(c) and any(i["fase"] == "concluido" for i in its) else "",
                 boton_post("Generar la segunda convocatoria", f"{url}/segunda", "copy-plus", cls=(ButtonT.primary, ButtonT.sm),
                            confirmar="Se arma un borrador con las plazas que esta convocatoria no cubrió, los mismos requisitos y "
                                      "tribunales. ¿Generarlo?") if aux.puede_generar_segunda(c) else "",
@@ -836,9 +840,26 @@ def get(auth):
     ya = {p["item_id"]: p for p in mias}
     tribunales = aux.items_de_miembro(auth["id"])
     abiertas = aux.abiertas()
+    invitaciones = des.invitaciones_de(externo)
+    designadas = des.de_estudiante(externo)
     return pagina(
         "Auxiliaturas",
         H2("Auxiliaturas"),
+        Div(*[tarjeta(f"Invitación: {v['item_titulo']}",
+                      P(v["convocatoria"] + f" · {v['horas']} h/mes", cls=(TextPresets.muted_sm, "mb-2")),
+                      P("La Carrera lo invita a ser auxiliar invitado de esta materia (art. 6 del reglamento). Puede aceptar o no.",
+                        cls="text-sm"),
+                      Div(boton_post("Acepto", f"{EST}/invitaciones/{v['id']}/responder?acepta=1", "check", cls=(ButtonT.primary, ButtonT.sm),
+                                     confirmar="¿Aceptar la invitación?"),
+                          boton_post("No acepto", f"{EST}/invitaciones/{v['id']}/responder?acepta=0", cls=(ButtonT.ghost, ButtonT.sm),
+                                     confirmar="¿Rechazar la invitación?"), cls="flex gap-2 mt-3")) for v in invitaciones],
+            cls="space-y-4 mb-6") if invitaciones else "",
+        tarjeta("Mis designaciones", Ul(*[Li(Div(Div(d["item_titulo"], cls="font-medium"),
+                                                  Div(f"{des.CATEGORIAS[d['categoria']]} · {d['convocatoria']}"
+                                                      + (f" · memorándum {d['memorandum']}" if d["memorandum"] else ""), cls=TextPresets.muted_sm),
+                                                  Div("Falta: " + "; ".join(d["faltan"]) + ".", cls="text-xs text-amber-700 dark:text-amber-300")
+                                                  if d["faltan"] else Div("Entregó los documentos que se piden.", cls="text-xs text-green-700 dark:text-green-300")),
+                                              cls="py-2") for d in designadas], cls="divide-y divide-border"), cls="mb-6") if designadas else "",
         P("Postule desde aquí: cada materia o proyecto es una postulación. Suba los documentos que se piden y envíe antes del "
           "cierre.", cls=(TextPresets.muted_sm, "mb-4")),
         Div(*[tarjeta(f"Tribunal: {i['titulo']}", P(i["convocatoria"], " · ", aux.NOMBRE_FASE[i["fase"]], cls=TextPresets.muted_sm),
@@ -938,6 +959,7 @@ def get(auth, pid: int):
         return Li(cab, acciones, cls="py-3")
 
     resultados = [(f, aux.nota(p["id"], f)) for f in aux.FASES if aux.cierre_de(p["item_id"], f)]
+    propia = next((d for d in des.de_estudiante(externo) if d["postulacion_id"] == pid), None)
     return pagina(
         "Mi postulación",
         A("← Auxiliaturas", href=EST, cls="text-sm text-primary"),
@@ -969,6 +991,12 @@ def get(auth, pid: int):
                                        confirmar="¿Descartar esta postulación y sus documentos?") if borrador else "",
                             cls="flex flex-wrap gap-2 mt-3"),
                         P("Puede postular a varias materias; cada una es una postulación.", cls=(TextPresets.muted_sm, "mt-2"))),
+                tarjeta("Su designación",
+                        P(f"{des.CATEGORIAS[propia['categoria']]}" + (f" · memorándum {propia['memorandum']}" if propia["memorandum"] else ""),
+                          cls="text-sm font-medium mb-1"),
+                        P("Debe entregar, en 72 horas de concluido el proceso (art. 23):", cls=TextPresets.muted_sm),
+                        Ul(*[Li(t, cls="text-sm") for t in propia["faltan"]], cls="list-disc pl-5") if propia["faltan"] else
+                        P("Ya entregó los documentos que se piden.", cls="text-sm text-green-700 dark:text-green-300")) if propia else "",
                 tarjeta("Sus resultados",
                         Ul(*[Li(Span(aux.NOMBRE_FASE[f]), Span(("habilitado" if v and v > 0.5 else "no habilitado")
                                                                if f == "habilitacion" else f"{_num(v)} de {aux.MAXIMO[f]}",
@@ -979,8 +1007,11 @@ def get(auth, pid: int):
                         P("Después de cada fase tiene 24 horas para impugnar por escrito ante la Dirección de Carrera.",
                           cls=(TextPresets.muted_sm, "mt-2"))) if resultados else
                 tarjeta("Después de enviar", P("Verá aquí su resultado al cerrar cada fase y tendrá 24 horas para impugnar. "
-                                               "Si gana, se le pedirán el certificado de no tener deudas, el de la Comisión de "
-                                               "Procesos y el formulario SIGEP.", cls="text-sm")),
+                                               + ("Si gana, en 72 horas se le pedirán la certificación de no tener deudas con la Carrera y la Facultad, "
+                                                  "el certificado de la sala de procesos de no tener proceso ejecutoriado y su registro en el SIGEP."
+                                                  if aux.usa_formularios(aux.obtener(p["convocatoria_id"])) else
+                                                  "Si gana, se le pedirán el certificado de no tener deudas, el de la Comisión de "
+                                                  "Procesos y el formulario SIGEP."), cls="text-sm")),
                 cls="space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"),
         usuario=auth)
