@@ -6,7 +6,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelCheckboxX, LabelInput, TextPresets, UkIcon
 
 from app.comun import estudiantes, permisos, vinculos
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
+from app.comun.componentes.layout import ID_MODAL, aviso_privacidad, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.egresados import directorio
 
@@ -133,6 +133,7 @@ def _form_perfil(externo, d, errores=()):
         Div(LabelCheckboxX("Quiero figurar en el directorio de egresados", id="visible", checked=bool(d.get("visible"))),
             LabelCheckboxX("Acepto que estos datos los vean los estudiantes y el personal de la Carrera dentro del sistema (mi correo solo "
                            "se comparte con quien yo acepte ayudar)", id="acepto", checked=bool(d.get("consentimiento_en"))), cls="space-y-1"),
+        aviso_privacidad("directorio"),
         Button("Guardar mi perfil", type="submit", cls=ButtonT.primary), method="post", action=f"{BASE}/perfil-egresado", cls="space-y-4")
 
 

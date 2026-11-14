@@ -5,7 +5,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Form, FormLabel, LabelInput, TextPresets, UkIcon
 
 from app.comun import permisos, vinculos
-from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
+from app.comun.componentes.layout import ID_MODAL, aviso_privacidad, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
 from app.egresados import empleadores
@@ -75,6 +75,7 @@ def _form(d, url, metodo, errores=()):
              Div(LabelInput("Correo", id="email", type="email", value=v("email"), required=True),
                  LabelInput("Cargo (opcional)", id="cargo", value=v("cargo"), maxlength=200),
                  cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
+             aviso_privacidad("empleadores"),
              Div(Button("Cancelar", type="button", cls=ButtonT.ghost, data_accion="cerrar-modal"),
                  Button("Guardar", type="submit", cls=ButtonT.primary), cls="flex justify-end gap-2"),
              **{f"hx_{metodo}": url}, hx_target=f"#{ID_MODAL}", cls="space-y-4"))

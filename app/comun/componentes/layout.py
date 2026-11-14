@@ -3,10 +3,11 @@ import itertools
 import unicodedata
 
 import fasthtml.common as fh
-from fasthtml.common import A, Div, Form, Img, Input, Li, Main, Span, Title, Ul
+from fasthtml.common import A, Div, Form, Img, Input, Li, Main, P, Span, Title, Ul
 from monsterui.all import H3, Button, ButtonT, Container, ContainerT, FormLabel, TextPresets, UkIcon
 
 from app.comun import config
+from app.comun.privacidad import TRATAMIENTOS
 from app.comun.componentes import recursos
 
 ID_MODAL = "modal"
@@ -306,6 +307,16 @@ def campo(texto, *hijos, **kw):
     cid = control.attrs.get("id") or f"{control.attrs.get('name') or 'campo'}-{next(_ids_campo)}"
     control.attrs["id"] = cid
     return Div(FormLabel(texto, fr=cid), *hijos, **kw)
+
+
+def aviso_privacidad(clave: str):
+    """Franja breve sobre el botón de enviar de un formulario con datos personales (PLAN §72, etapa 8): quién ve los datos
+    y para qué, desde la misma tabla que la página pública `/publico/privacidad` (`app.comun.privacidad.TRATAMIENTOS`)."""
+    t = TRATAMIENTOS[clave]
+    return Div(UkIcon("shield-check", height=16, width=16, cls="shrink-0 mt-0.5"),
+               P(t.aviso, " ", A("Más sobre sus datos", href=f"/publico/privacidad#{clave}", target="_blank",
+                                 cls="text-primary underline whitespace-nowrap")),
+               data_aviso="privacidad", cls="flex items-start gap-2 rounded-md bg-muted px-3 py-2 text-xs text-foreground")
 
 
 def mensaje_error(*errores):

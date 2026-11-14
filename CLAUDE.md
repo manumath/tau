@@ -160,6 +160,9 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   se consolida lo que existe (plan de mejora, rendimiento, brechas del plan de mejora, privacidad). Una pantalla nueva
   solo entra si la pide un usuario del piloto y tiene un responsable de sus datos. Si el usuario pide un módulo nuevo,
   recuérdeselo antes de planificarlo.
+- **Privacidad (PLAN §72, etapa 8):** un formulario nuevo que pida datos personales lleva `layout.aviso_privacidad(clave)` sobre
+  el botón de enviar y su módulo va en `privacidad.FORMULARIOS`. Si cambia quién ve un dato o cuánto se conserva, cambie el
+  texto en `app/comun/privacidad.py` en el mismo commit: de ahí salen el aviso y la página `/publico/privacidad`.
 - **Ningún GET escribe** (salvo el registro que la regla pide) y las listas largas van de 50 en 50 (`registros.cargar_mas`);
   `scripts/medir.py --escrituras` y `--inflar` lo revisan (`docs/mantenimiento.md` §5.11).
 

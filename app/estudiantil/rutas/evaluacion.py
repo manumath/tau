@@ -9,7 +9,7 @@ from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 from app.academico import evaluacion, gestiones
 from app.academico.rutas.evaluacion import instrumento, reglas
 from app.comun import formato
-from app.comun.componentes.layout import mensaje_error, pagina
+from app.comun.componentes.layout import aviso_privacidad, mensaje_error, pagina
 from app.comun.componentes.registros import insignia
 from app.estudiantil.rutas.estudiante import _requiere
 
@@ -55,6 +55,7 @@ def _form(o, errores=()):
                               title=t, cls="inline-flex items-center gap-1 mr-4") for v, t in evaluacion.ESCALA], cls="mt-2"),
                cls="mb-3") for n, (clave, texto) in enumerate(o["criterios"], start=1)],
         P("1 = totalmente en desacuerdo · 5 = totalmente de acuerdo.", cls=(TextPresets.muted_sm, "mb-3")),
+        aviso_privacidad("evaluacion_docente"),
         Button(UkIcon("send", height=14, width=14), "Enviar mi evaluación", type="submit", cls=ButtonT.primary,
                hx_confirm="Su evaluación es anónima y no se puede cambiar. ¿Enviarla?"),
         method="post", cls="space-y-2")

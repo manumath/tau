@@ -8,7 +8,7 @@ from fasthtml.common import A, APIRouter, Div, FileResponse, Li, Option, P, Redi
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon
 
 from app.comun import estudiantes
-from app.comun.componentes.layout import ID_MODAL, cerrar_modal, mensaje_error, modal, pagina, campo
+from app.comun.componentes.layout import ID_MODAL, aviso_privacidad, cerrar_modal, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
 from app.estudiantil import actividad, cohortes
@@ -122,6 +122,7 @@ def _pagina_consentimiento(auth):
         "Mi seguimiento",
         Div(Card(H2("Antes de empezar"),
                  P(CONSENTIMIENTO, cls="text-sm"),
+                 aviso_privacidad("estudiantes"),
                  Form(Button("Acepto el uso de mis datos", type="submit", cls=ButtonT.primary), method="post",
                       action=f"{BASE}/consentimiento", hx_post=f"{BASE}/consentimiento", hx_target="body",
                       cls="mt-4"),

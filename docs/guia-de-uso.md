@@ -40,6 +40,15 @@ la asignación docente y la carga horaria.
 - **Tema claro u oscuro:** menú con su nombre → «Tema»: *Claro*, *Oscuro* o *Sistema* (sigue la
   configuración de su computadora o teléfono). La elección se guarda en ese navegador.
 
+## Sus datos y su privacidad
+
+Cada formulario que pide datos personales (el consentimiento del estudiante, las encuestas, la evaluación docente, el
+buzón, las postulaciones a auxiliaturas y a becas o pasantías, el perfil de egresado, el registro de empleadores y su
+perfil) muestra, junto al botón de enviar, un recuadro breve con un escudo: quién verá esos datos y para qué. Su enlace
+**Más sobre sus datos** abre la página pública **Privacidad** (también en la cabecera de las páginas públicas), que explica
+por módulo qué datos se guardan, para qué, quién los ve y cuánto se conservan. Para ver, corregir o pedir que se eliminen
+sus datos, diríjase a la Dirección de Carrera.
+
 ## Avisos
 
 La **campana** de la barra superior muestra cuántos avisos tiene sin leer y los últimos: propuestas

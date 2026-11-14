@@ -7,7 +7,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.comun import formato
-from app.comun.componentes.layout import campo, pagina
+from app.comun.componentes.layout import aviso_privacidad, campo, pagina
 from app.comun.componentes.registros import insignia
 from app.estudiantil import orientacion as ori
 from app.estudiantil.rutas.estudiante import _requiere
@@ -69,6 +69,7 @@ def get(auth):
                 campo("Asunto", Input(name="asunto", required=True, maxlength="150", cls="uk-input")),
                 cls="grid grid-cols-1 sm:grid-cols-2 gap-3"),
             campo("Mensaje", fh.Textarea("", name="texto", rows=6, required=True, minlength="10", maxlength="4000", cls="uk-textarea")),
+            aviso_privacidad("buzon"),
             Div(Button("Enviar con mi nombre", type="submit", cls=ButtonT.primary),
                 Button("Enviar como anónimo", type="submit", formaction=f"{EST}/buzon/anonima", cls=ButtonT.default),
                 cls="flex flex-wrap gap-2"), method="post", action=f"{EST}/buzon", cls="space-y-3")),

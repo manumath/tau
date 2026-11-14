@@ -127,7 +127,7 @@ def test_pantallas_del_estudiante_sin_problemas_de_accesibilidad(estudiante):
 
 def test_paginas_publicas_sin_problemas_de_accesibilidad(page):
     hallados = {}
-    for ruta in ["/login", "/acceso", "/recuperar", "/publico", "/publico/indicadores"]:
+    for ruta in ["/login", "/acceso", "/recuperar", "/publico", "/publico/indicadores", "/publico/privacidad"]:
         page.goto(ruta)
         page.wait_for_load_state("networkidle")
         if (p := page.evaluate(REVISAR)):

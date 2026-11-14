@@ -6,7 +6,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, TextPresets, UkIcon
 
 from app.comun import formato, permisos
-from app.comun.componentes.layout import campo, mensaje_error, pagina
+from app.comun.componentes.layout import aviso_privacidad, campo, mensaje_error, pagina
 from app.comun.componentes.registros import insignia
 from app.egresados import empleadores
 from app.estudiantil.rutas.estudiante import _requiere
@@ -241,6 +241,7 @@ def get(auth, oid: int):
              if activa else (fh.Form(
                  campo("Mensaje (por qué le interesa, opcional)",
                        fh.Textarea("", name="mensaje", rows=4, maxlength="1000", cls="uk-textarea")),
+                 aviso_privacidad("oportunidades"),
                  Button("Postular", type="submit", cls=ButtonT.primary), method="post", action=f"{EST}/{oid}/postular",
                  cls="space-y-2") if op.abierta(o) else P("La convocatoria ya cerró.", cls="text-sm")), cls="mt-4"),
         usuario=auth)

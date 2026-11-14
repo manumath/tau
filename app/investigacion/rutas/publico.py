@@ -7,10 +7,10 @@ productos en curso.
 """
 from fasthtml.common import (A, APIRouter, Div, FileResponse, Footer, Form, Header, Input, JSONResponse,
                              Li, Main, P, Redirect, Response, Span, Title, Ul)
-from monsterui.all import H2, Card, Container, ContainerT, Grid, TextPresets, UkIcon
+from monsterui.all import H2, H3, Card, Container, ContainerT, Grid, TextPresets, UkIcon
 
 from app.ia.rutas.panel import marca_si
-from app.comun import config, fotos
+from app.comun import config, fotos, privacidad
 from app.comun.componentes.layout import con_h1, isotipo
 from app.investigacion import acceso_abierto, lineas, perfiles, productos
 from app.investigacion.componentes.lineas import insignias_lineas
@@ -62,6 +62,7 @@ def pagina_publica(titulo, *contenido, pie: str | None = None):
           cls="min-w-0"),
         Div(A("Investigadores", href="/publico/investigadores", cls="text-sm hover:underline"),
             A("Indicadores", href="/publico/indicadores", cls="text-sm hover:underline"),
+            A("Privacidad", href="/publico/privacidad", cls="text-sm hover:underline"),
             A("Ingresar", href="/login", cls="uk-btn uk-btn-default uk-btn-sm"),
             cls="flex items-center gap-4"),
         cls="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3"), cls=ContainerT.xl),
@@ -235,3 +236,23 @@ def get(anio: str = ""):
             {filtro} ORDER BY p.anio DESC, p.id DESC""", [*publicos, *params])
     lista = acceso_abierto.con_acceso(productos.sin_preprints_publicados(productos.obtener_varios(f["id"] for f in filas)))
     return _json([_producto_json(p, publicos) for p in lista])
+
+
+
+# --- Privacidad (PLAN §72, etapa 8) --------------------------------------------------------------------------------------------
+
+@rt("/publico/privacidad")
+def get():
+    def fila(titulo, texto):
+        return Div(Div(titulo, cls="text-sm font-semibold"), P(texto, cls="text-sm"), cls="space-y-0.5")
+    return pagina_publica(
+        "Privacidad",
+        H2("Sus datos en el sistema"),
+        P(f"Qué datos personales guarda {config.NOMBRE_SISTEMA}, para qué, quién los ve y cuánto se conservan. Cada formulario "
+          "que pide datos lleva un resumen de esto junto al botón de enviar.", cls="text-sm max-w-3xl my-4"),
+        P(privacidad.CONTACTO, cls="text-sm max-w-3xl mb-6"),
+        Div(*[Card(H3(t.titulo, cls="text-base font-semibold mb-3"),
+                   Div(fila("Qué datos", t.datos), fila("Para qué", t.finalidad), fila("Quién los ve", t.quien_ve),
+                       fila("Cuánto se conservan", t.conservacion), cls="space-y-3"), id=clave, cls="scroll-mt-4")
+              for clave, t in privacidad.TRATAMIENTOS.items()], cls="space-y-4 max-w-3xl"),
+        pie=f"{config.NOMBRE_CARRERA} · Política de datos del sistema {config.NOMBRE_SISTEMA}.")

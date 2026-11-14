@@ -19,7 +19,7 @@ from app.comun import academicos, fotos, vinculos
 from app.investigacion import lineas, msc, perfiles
 from app.comun.componentes import datos_personales
 from app.comun.componentes import grados as grados_ui
-from app.comun.componentes.layout import mensaje_error, pagina
+from app.comun.componentes.layout import aviso_privacidad, mensaje_error, pagina
 from app.investigacion.componentes.lineas import casillas_lineas, insignias_lineas
 from app.investigacion.componentes.msc import resultados as resultados_msc
 from app.investigacion.componentes.perfil import avatar, chip_msc, lista_identificadores, seccion, texto_con_parrafos
@@ -106,6 +106,7 @@ def form_datos(d, errores=()):
         P(f"Correo: {d['email']} · Categoría: {perfiles.categoria_texto(d['categoria'])} "
           "(la define la Dirección de Carrera). El cargo y la unidad o grupo se calculan solos.",
           cls=TextPresets.muted_sm),
+        aviso_privacidad("perfil"),
     ))
 
 

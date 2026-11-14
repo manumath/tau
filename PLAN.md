@@ -4135,7 +4135,18 @@ los muestra como a todo indicador del marco con año cerrado. Decisiones tomadas
   asignatura y por línea formativa; una celda con menos de 5 inscritos se muestra como «menos de 5» y no entra en un
   desglose que permita restarla.
 
-### Etapa 8: aviso de privacidad (A15.2)
+### Etapa 8 (hecha, 14-nov-2026): aviso de privacidad (A15.2)
+`app/comun/privacidad.py` (tabla `TRATAMIENTOS`, lista `FORMULARIOS`, `CONTACTO`), `layout.aviso_privacidad(clave)` en nueve
+formularios (consentimiento del estudiante, encuesta por enlace, evaluación docente, buzón, auxiliaturas, oportunidades,
+perfil de egresado, empleadores y datos del perfil) y la página pública `/publico/privacidad` con diez tratamientos (los
+nueve más apoyo estudiantil y tutoría, que no tienen formulario del estudiante). `tests/test_privacidad.py` exige el aviso
+en cada módulo de `FORMULARIOS` y comprueba la página sin sesión. Decisiones tomadas al implementarla (por confirmar):
+- La página va en **`/publico/privacidad`** y no en `/privacidad`: ya es pública por el patrón `/publico/.*` y sale en la
+  cabecera de las páginas públicas junto a Investigadores e Indicadores.
+- El aviso tiene una frase propia por tratamiento (`aviso`), escrita a partir de las reglas vigentes; la conservación dice lo
+  que el sistema hace hoy (no hay borrado automático salvo los casos de apoyo, los enlaces de encuesta y las listas de curso).
+  **Los textos debe revisarlos la Dirección de Carrera** antes del piloto: son el compromiso público del sistema.
+
 - `layout.aviso_privacidad(finalidad, quien_ve, conservacion)`: una franja breve sobre el botón de enviar de cada
   formulario que pide datos personales (consentimiento del estudiante, postulaciones, encuestas, egresados, directorio,
   empleadores, buzón, perfil), con enlace a `/privacidad`.

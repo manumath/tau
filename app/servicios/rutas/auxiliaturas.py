@@ -7,7 +7,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, ButtonT, LabelInput, TextPresets, UkIcon
 
 from app.comun.componentes.etapas import etapas
-from app.comun.componentes.layout import pagina
+from app.comun.componentes.layout import aviso_privacidad, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
 from app.investigacion import adjuntos
@@ -886,7 +886,7 @@ def get(auth):
                               if i["id"] in ya else
                               boton_post("Postular", f"{EST}/item/{i['id']}/postular", cls=(ButtonT.primary, ButtonT.sm)),
                               cls="flex items-center justify-between gap-3 py-2") for i in c["items"]],
-                         cls="divide-y divide-border")) for c in abiertas], cls="space-y-4")
+                         cls="divide-y divide-border")) for c in abiertas], aviso_privacidad("auxiliaturas"), cls="space-y-4")
         if abiertas else P("No hay convocatorias abiertas por ahora.", cls=TextPresets.muted_sm),
         usuario=auth)
 

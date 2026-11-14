@@ -5,7 +5,7 @@ from fasthtml.common import APIRouter, Div, P, Span
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, TextPresets
 
 from app.comun import config
-from app.comun.componentes.layout import logotipo, mensaje_error, pagina
+from app.comun.componentes.layout import aviso_privacidad, logotipo, mensaje_error, pagina
 from app.estudiantil import encuestas
 
 rt = APIRouter()
@@ -56,6 +56,7 @@ def _formulario(token, e, errores=(), previas=None):
         P(aviso, cls=(TextPresets.muted_sm, "text-center")),
         Form(mensaje_error(*errores), *[_campo(q, previas.get(q["id"], [])) for q in qs],
              P("* Respuesta obligatoria.", cls=TextPresets.muted_sm),
+             aviso_privacidad("encuestas"),
              Button("Enviar respuestas", type="submit", cls=(ButtonT.primary, "w-full")),
              method="post", action=f"/encuesta/{token}", cls="space-y-6"))
 
