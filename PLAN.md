@@ -4111,7 +4111,22 @@ informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se gu
   cargo de la persona, con plazo, semáforo y un botón que abre «Registrar avance» en un modal sin salir de la pantalla.
 - En el calendario personal (y su `.ics`): los plazos de esas actividades y las fechas de los cortes.
 
-### Etapa 7: brechas baratas del plan (A4.4 y A4.5)
+### Etapa 7 (hecha, 14-nov-2026): brechas baratas del plan (A4.4 y A4.5)
+Migración 0093 (`vacante_admision`, `rendimiento_asignatura`); lógica en `app/estudiantil/rendimiento.py`, pantallas en
+`app/estudiantil/rutas/rendimiento.py` (`/docencia/cohortes/vacantes` y `/docencia/cohortes/rendimiento`, enlazadas desde la
+cabecera de Cohortes estudiantiles). Ven quienes tienen `ver_seguimiento_estudiantil`; registran y cargan quienes tienen
+`gestionar_cohortes` (Dirección de Carrera y Gestión de datos). Cálculos `auto:cobertura_vacantes` y
+`auto:postulantes_por_vacante` (indicadores D3.1.c y D3.1.d del borrador del marco; en un marco ya creado se agregan a mano
+eligiendo esa fuente) y filas de vacantes, postulantes y cobertura en la admisión de la ficha estadística. La página pública
+los muestra como a todo indicador del marco con año cerrado. Decisiones tomadas al implementarla (por confirmar):
+- **Sin programa:** las vacantes se registran por admisión (año y semestre I o II), no por programa, porque hoy la Carrera
+  admite a un solo programa de pregrado; si eso cambia, se agrega la columna.
+- **Rendimiento sin indicador del marco:** aprobación y abandono por asignatura y por línea formativa se muestran en su
+  pantalla y se exportan en CSV, pero no se agregaron como indicadores del marco (el plan de mejora no fija cuál de ellos
+  seguir). La regla del mínimo es la de la etapa: «menos de 5» y fuera de los totales, también en el CSV.
+- La sigla del CSV debe estar en el catálogo de asignaturas (común a los planes); una asignatura y gestión ya cargadas se
+  reemplazan.
+
 - **Vacantes de admisión (A4.4):** la Dirección de Carrera registra por gestión y programa las vacantes ofertadas y los
   postulantes; los admitidos salen de las cohortes cargadas (no se escriben dos veces). Indicadores: cobertura de
   vacantes y relación postulantes/vacantes, en la ficha estadística y en la página pública.

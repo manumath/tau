@@ -78,7 +78,11 @@ def get(auth):
         Div(Div(H2("Cohortes estudiantiles"),
                 P("Ingreso, egreso, titulación y deserción de la licenciatura por cohorte (semestre de ingreso).",
                   cls=(TextPresets.muted_sm, "max-w-3xl"))),
-            Div(A(UkIcon("badge-check", height=16, width=16), f"Actividades por verificar ({actividad.n_pendientes()})",
+            Div(A(UkIcon("door-open", height=16, width=16), "Vacantes", href=f"{BASE}/vacantes",
+                  cls="uk-btn uk-btn-default inline-flex items-center gap-1"),
+                A(UkIcon("bar-chart-3", height=16, width=16), "Rendimiento por asignatura", href=f"{BASE}/rendimiento",
+                  cls="uk-btn uk-btn-default inline-flex items-center gap-1"),
+                A(UkIcon("badge-check", height=16, width=16), f"Actividades por verificar ({actividad.n_pendientes()})",
                   href=f"{BASE}/actividades", cls="uk-btn uk-btn-default inline-flex items-center gap-1")
                 if _puede_verificar(auth) else "",
                 Button(UkIcon("key-round", height=16, width=16), "Dar acceso a estudiantes", cls=ButtonT.default,

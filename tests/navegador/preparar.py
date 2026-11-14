@@ -190,6 +190,7 @@ def preparar(ruta: str):
     periodo = institucionales.periodo_objetivo()
     institucionales.guardar_plazo(periodo, hoy.isoformat(), (hoy + timedelta(days=30)).isoformat(), 1)
     _plan_de_mejora(emmy, direccion["id"])
+    _vacantes_y_rendimiento(direccion["id"])
 
 
 def _plan_de_mejora(emmy, direccion_id):
@@ -213,6 +214,18 @@ def _plan_de_mejora(emmy, direccion_id):
     assert cortes_mejora.abrir(m["id"], "trimestral", hoy.isoformat(), direccion_id)[0] == 1   # corte 1, abierto
 
 
+
+def _vacantes_y_rendimiento(direccion_id):
+    """Vacantes de una admisión y el rendimiento de tres asignaturas, una con menos de 5 inscritos (PLAN §72, etapa 7)."""
+    from app.estudiantil import rendimiento as rd
+    anio = date.today().year - 1
+    assert rd.guardar_vacantes({"anio": anio, "ciclo": "I", "vacantes": 40, "postulantes": 95}, direccion_id)[1] == []
+    siglas = [f["sigla"] for f in get_db().q("SELECT sigla FROM asignatura ORDER BY sigla LIMIT 3")]
+    csv = "sigla,gestion,inscritos,aprobados,reprobados,abandonos\n" + "".join(
+        f"{s},I-{anio},{n},{n // 2},{n // 4},{n // 8}\n" for s, n in zip(siglas, (60, 32, 4)))
+    filas, errores = rd.leer(csv.encode())
+    assert not errores and all(f["estado"] != "error" for f in filas), filas
+    rd.aplicar(filas, direccion_id)
 
 
 if __name__ == "__main__":

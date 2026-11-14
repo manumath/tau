@@ -21,9 +21,10 @@ from app.calidad import cuerpo_academico, indicadores, listados
 from app.calidad import marco as marco_calidad
 from app.comun import exportar
 from app.comun.xlsx_plantilla import Plantilla
-from app.estudiantil import cohortes
+from app.estudiantil import cohortes, rendimiento
 
-CAMPOS_ADMISION = {"ingresantes": "Ingresantes", "ordinaria": "Admisión ordinaria", "especial": "Admisión especial",
+CAMPOS_ADMISION = {"vacantes": "Vacantes ofertadas", "postulantes": "Postulantes", "ingresantes": "Ingresantes",
+                   "cobertura": "Cobertura de las vacantes (%)", "ordinaria": "Admisión ordinaria", "especial": "Admisión especial",
                    "hombres": "Hombres", "mujeres": "Mujeres", "otra_ciudad": "De otra ciudad",
                    "extranjeros": "Extranjeros", "publico": "De colegio público", "privado": "De colegio privado"}
 CAMPOS_COHORTE = {"ingresantes": "Ingresantes", "matriculados_al_anio": "Matriculados al año de ingresar",
@@ -63,12 +64,15 @@ def datos(marco: dict, hasta: int | None = None) -> dict:
         oferta.append({"semestre": f"{t}-{a}", "paralelos": ins["paralelos"] if ins else None,
                        "inscripciones": ins["inscritos"] if ins else None})
     admision, trayectoria = [], []
+    vac = {(f["anio"], f["ciclo"]): f for f in rendimiento.vacantes()}
     for a, t in sems:
         o = cohortes.ordinal(a, t)
         grupo = [e for e in todos if e["ingreso"] == o]
         ad = cohortes.admision(o, todos)
-        admision.append({"semestre": f"{t}-{a}", "ingresantes": len(grupo),
-                         **{k: ad[k] for k in CAMPOS_ADMISION if k != "ingresantes"},
+        v = vac.get((a, t)) or {}
+        admision.append({"semestre": f"{t}-{a}", "ingresantes": len(grupo), "vacantes": v.get("vacantes"),
+                         "postulantes": v.get("postulantes"), "cobertura": v.get("cobertura"),
+                         **{k: ad[k] for k in CAMPOS_ADMISION if k in ad},
                          "tramos": dict(zip([n for _, n in cohortes.TRAMOS_EDAD], ad["tramos"]))})
         r = cohortes.resumen([o, o + 2], todos)[0] if o + 2 <= actual else None
         trayectoria.append({

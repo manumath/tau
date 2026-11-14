@@ -76,7 +76,7 @@ PANTALLAS = {
                   "/docencia/preparacion", f"/docencia/preparacion?semestre=I-{date.today().year + 5}",
                   f"/docencia/preparacion?semestre=II-{date.today().year - 4}", "/docencia/oferta?gestion=5",
                   "/docencia/oferta?gestion=6", "/docencia/oferta/5/cambios",
-                  "/docencia/carga", "/docencia/preferencias/todas", "/docencia/programas/cobertura", "/docencia/listas/cargar", "/docencia/evaluacion/gestion", "/docencia/certificados/verificar", "/docencia/gestiones", "/docencia/preparacion", "/docencia/cohortes",
+                  "/docencia/carga", "/docencia/preferencias/todas", "/docencia/programas/cobertura", "/docencia/listas/cargar", "/docencia/evaluacion/gestion", "/docencia/certificados/verificar", "/docencia/gestiones", "/docencia/preparacion", "/docencia/cohortes", "/docencia/cohortes/vacantes", "/docencia/cohortes/rendimiento",
                   "/docencia/encuestas", "/docencia/tutoria", "/docencia/egresados", "/estudiantes",
                   "/servicios/comunicados", "/servicios/auxiliaturas",
                   # Auxiliaturas según el reglamento de 2023 (PLAN §70): convocatoria, ítem, resultado y los cinco formularios.

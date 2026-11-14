@@ -768,6 +768,19 @@ Para un estudiante de otro programa, escriba el programa delante: «Licenciatura
 2017». Descargue la plantilla desde la misma ventana. Antes de guardar verá una vista previa con
 lo que se crea, lo que se actualiza y los errores (las filas con errores se omiten).
 
+**Vacantes y rendimiento por asignatura.** Desde la cabecera de Cohortes estudiantiles:
+
+- **Vacantes:** la Dirección de Carrera y Gestión de datos registran, por admisión (año y semestre), las vacantes ofertadas y,
+  si los conocen, los postulantes. Los admitidos no se escriben: son los ingresantes de esa cohorte en la carga del CSV. La
+  tabla muestra la cobertura (admitidos / vacantes) y los postulantes por vacante; volver a registrar la misma admisión la
+  corrige. Estas cifras aparecen también en la ficha estadística y alimentan los indicadores «Cobertura de las vacantes» y
+  «Postulantes por vacante» del marco de calidad.
+- **Rendimiento por asignatura:** con **Cargar CSV** se sube el archivo agregado del Sistema de Seguimiento Académico, con
+  una fila por asignatura y gestión: `sigla`, `gestion` (I-2025, II-2025, INV-2025 o VER-2025), `inscritos`, `aprobados`,
+  `reprobados` y `abandonos`. Solo cifras: no incluya RU, nombres ni notas. La pantalla muestra la aprobación y el abandono
+  por línea formativa y por asignatura. Una asignatura con menos de 5 inscritos aparece como «menos de 5» y no entra en los
+  totales, para que nadie pueda deducir su cifra por resta. Se descarga en CSV con la misma regla.
+
 **Dar acceso a estudiantes.** Con **Dar acceso a estudiantes** (Dirección de Carrera y Gestión de datos) el
 sistema crea una cuenta para cada estudiante que cursa, tiene correo y aún no tiene acceso. No hay
 contraseñas: el estudiante entra a **Ingreso de estudiantes** (enlace «¿Es estudiante?» de la pantalla de

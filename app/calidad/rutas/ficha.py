@@ -82,7 +82,8 @@ def get(auth, hasta: str = ""):
                    [*[(t, [x[k] for x in d["admision"]]) for k, t in ficha.CAMPOS_ADMISION.items()],
                     *[(f"Edad al ingresar: {t}", [x["tramos"][t] for x in d["admision"]])
                       for t in (d["admision"][0]["tramos"] if d["admision"] else [])]],
-                   "Según la carga del CSV de Seguimiento Académico; sin dato de vía de ingreso cuenta como ordinaria."),
+                   "Según la carga del CSV de Seguimiento Académico; sin dato de vía de ingreso cuenta como ordinaria. Vacantes y "
+                   "postulantes: los que registra la Dirección de Carrera en Cohortes estudiantiles."),
             _tabla("Trayectoria de cada cohorte (a hoy)", sems,
                    [(t, [x[k] for x in d["trayectoria"]]) for k, t in ficha.CAMPOS_COHORTE.items()],
                    "«Matriculados al año» queda vacío hasta que la cohorte cumple un año."),

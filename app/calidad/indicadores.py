@@ -22,7 +22,7 @@ from app.calidad import estudiantes as ind_estudiantes
 from app.comun import vinculos
 from app.comun.db import get_db, transaccion
 from app.egresados import egresados
-from app.estudiantil import actividad, cohortes, encuestas, tutoria
+from app.estudiantil import actividad, cohortes, encuestas, rendimiento, tutoria
 
 DURACION_CICLOS, MARGEN_CICLOS = 10, 2   # licenciatura de 10 semestres; «oportuna» = hasta 2 ciclos más
 PLAZO_DESERCION = 6   # deserción de la cohorte en sus primeros 3 años (decisión del 7-nov-2026)
@@ -165,6 +165,22 @@ def _observaciones_plan(c, a):
 def _ingresantes(c, a):
     g = [e for e in c.alumnos if e["cohorte_anio"] == a]
     return Resultado(len(g), len(g), "Cohortes I y II del año.")
+
+
+def _cobertura_vacantes(c, a):
+    v = rendimiento.indicadores_vacantes(a)
+    if not v or not v["vacantes"]:
+        return Resultado(None, 0, "No hay vacantes registradas para las admisiones del año.")
+    return Resultado(_pct(v["admitidos"], v["vacantes"]), v["vacantes"],
+                     f"{v['admitidos']} admitidos para {v['vacantes']} vacantes.")
+
+
+def _postulantes_por_vacante(c, a):
+    v = rendimiento.indicadores_vacantes(a)
+    if not v or v["postulantes"] is None or not v["vacantes_con_postulantes"]:
+        return Resultado(None, 0, "No hay postulantes registrados para las admisiones del año.")
+    return Resultado(round(v["postulantes"] / v["vacantes_con_postulantes"], 2), v["postulantes"],
+                     f"{v['postulantes']} postulantes para {v['vacantes_con_postulantes']} vacantes.")
 
 
 def _ingresantes_mujeres(c, a):
@@ -488,6 +504,8 @@ CALCULOS = {
     "inscritos_por_paralelo": Calculo(_inscritos_por_paralelo),
     "ingresantes": Calculo(_ingresantes),
     "ingresantes_mujeres": Calculo(_ingresantes_mujeres),
+    "cobertura_vacantes": Calculo(_cobertura_vacantes),
+    "postulantes_por_vacante": Calculo(_postulantes_por_vacante),
     "retencion_primer_anio": Calculo(_retencion),
     "desercion": Calculo(_desercion),
     "cobertura_tutoria": Calculo(_cobertura_tutoria, solo_actual=True),

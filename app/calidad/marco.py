@@ -25,6 +25,8 @@ FUENTES_AUTOMATICAS = {
     "inscritos_por_paralelo": "Inscripciones por paralelo dictado",
     "ingresantes": "Ingresantes de la cohorte (tablero de cohortes)",
     "ingresantes_mujeres": "Porcentaje de mujeres entre los ingresantes",
+    "cobertura_vacantes": "Admitidos / vacantes ofertadas (vacantes registradas en Cohortes)",
+    "postulantes_por_vacante": "Postulantes por vacante (vacantes registradas en Cohortes)",
     "retencion_primer_anio": "Retención al primer año de la cohorte",
     "desercion": "Deserción de la cohorte",
     "cobertura_tutoria": "Estudiantes cursando con tutor asignado",
