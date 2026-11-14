@@ -3849,3 +3849,13 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
   arma el borrador con esas plazas, los requisitos, el lugar de recepción y los tribunales (`primera_id`); `chequeo_segunda` advierte si no sale dentro de las 72 horas de los resultados.
   La invitación a los mejores estudiantes cuando la segunda también queda vacía es de la etapa 5.
 
+### Etapa 3 (hecha, 14-nov-2026): la comisión (art. 15)
+- **Migración 0088:** `convocatoria_auxiliatura.comision_resolucion` (Consejo de Carrera) y `comision_resolucion_hcf` (aprobación del Consejo Facultativo).
+- `revisar_comision` (solo convocatorias con el reglamento de 2023): los dos docentes deben ser **titulares**; en docencia, uno es el **titular de la materia en la gestión** (según
+  `oferta_docente`); en investigación y Beca Tesis, **investigadores**; en interacción social, uno es el **responsable del proyecto**. Lo que aún no se puede comprobar (la materia sin
+  titular asignado, un ítem de interacción social sin proyecto) no bloquea: queda como aviso en la página del ítem (`avisos_comision`). Las convocatorias de 2021 conservan su regla.
+- **Sin el número de la resolución que designa la comisión no se cierra la recepción** (`faltantes_cierre` de la fase de postulación); `/servicios/auxiliaturas/{cid}/comision` la guarda y
+  se audita. Siguen vigentes las exclusiones de que un postulante de la convocatoria no integre la comisión y el quórum de tres calificaciones.
+- **Decisiones mías por confirmar:** (a) la falta de titular asignado a la materia es un aviso y no un error, porque la convocatoria suele salir antes de que se asignen los docentes del
+  semestre; (b) el requisito de que los estudiantes sean de cogobierno y de los mejores promedios no se puede verificar y lo declara la Dirección con la resolución.
+

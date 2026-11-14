@@ -366,12 +366,75 @@ def _postulantes_de_conv(cid: int) -> set[int]:
            WHERE i.convocatoria_id = ? AND p.estado <> 'borrador'""", [cid])}
 
 
+COMISION_TEXTO = {
+    "docencia": "Un docente titular responsable de la materia y otro docente titular del área, y dos estudiantes que aprobaron la materia con "
+                "los mejores promedios, designados en instancias de cogobierno (art. 15, a).",
+    "investigacion": "Dos docentes investigadores titulares y dos estudiantes que aprobaron la materia afín con los mejores promedios, "
+                     "designados en instancias de cogobierno (art. 15, b).",
+    "interaccion_social": "El responsable del proyecto (o jefe de prácticas o laboratorio) y un docente titular relacionado con su "
+                          "especialidad, y dos estudiantes que aprobaron la materia afín con los mejores promedios (art. 15, c).",
+}
+COMISION_TEXTO["beca_tesis"] = COMISION_TEXTO["investigacion"]
+
+
+def _titulares_de_la_materia(c: dict, it: dict) -> set[int]:
+    """Docentes titulares de la materia del ítem en la gestión (los de sus paralelos, con la asignación vigente)."""
+    if not it.get("asignatura_id"):
+        return set()
+    return {f["usuario_id"] for f in get_db().q(
+        """SELECT DISTINCT d.usuario_id FROM oferta_docente d JOIN oferta o ON o.id = d.oferta_id
+           WHERE o.gestion_id = ? AND o.asignatura_id = ? AND d.rol = 'titular' AND d.hasta IS NULL AND o.retirada_en IS NULL""",
+        [c["gestion_id"], it["asignatura_id"]])}
+
+
+def revisar_comision(c: dict, it: dict, docentes: list[int]) -> tuple[list[str], list[str]]:
+    """Reglas del art. 15 (reglamento de 2023) para los dos docentes de la comisión: (errores, avisos). Un aviso es algo que todavía no se
+    puede comprobar (la materia aún no tiene titular asignado, el ítem no tiene proyecto)."""
+    if (c.get("reglamento") or REGLAMENTO_VIGENTE) != REGLAMENTO_VIGENTE:
+        return [], []
+    errores, avisos = [], []
+    perfiles = [usuarios.con_perfil(u) for u in docentes]
+    if any(not x or x["categoria"] != "titular" for x in perfiles):
+        errores.append("Los dos docentes de la comisión deben ser titulares (art. 15).")
+    if c["modalidad"] == "docencia":
+        titulares = _titulares_de_la_materia(c, it)
+        if not titulares:
+            avisos.append("La materia aún no tiene un docente titular asignado en la gestión: no se pudo comprobar que la comisión "
+                          "incluya a su responsable (art. 15, a).")
+        elif not set(docentes) & titulares:
+            errores.append("Uno de los dos docentes debe ser el titular responsable de la materia en la gestión (art. 15, a).")
+    elif c["modalidad"] in ("investigacion", "beca_tesis"):
+        if any(not x or not x["es_investigador"] for x in perfiles):
+            errores.append("Los dos docentes deben ser investigadores titulares (art. 15, b).")
+    elif c["modalidad"] == "interaccion_social":
+        if not it.get("proyecto_id"):
+            avisos.append("El ítem no tiene proyecto: no se pudo comprobar que la comisión incluya a su responsable (art. 15, c).")
+        else:
+            from app.investigacion import proyectos
+            if not any(proyectos.rol_de(it["proyecto_id"], u) in proyectos.ROLES_RESPONSABLES for u in docentes):
+                errores.append("Uno de los dos docentes debe ser el responsable del proyecto (art. 15, c).")
+    return errores, avisos
+
+
+def avisos_comision(it: dict) -> list[str]:
+    """Lo que aún no se puede comprobar de la comisión ya designada."""
+    docentes = [m["usuario_id"] for m in it["tribunal"] if m["tipo"] == "docente"]
+    return revisar_comision(obtener(it["convocatoria_id"]), it, docentes)[1] if len(docentes) == 2 else []
+
+
+def guardar_resolucion_comision(cid: int, hcc: str, hcf: str):
+    get_db().execute("UPDATE convocatoria_auxiliatura SET comision_resolucion = ?, comision_resolucion_hcf = ? WHERE id = ?",
+                     [(hcc or "").strip()[:120] or None, (hcf or "").strip()[:120] or None, cid])
+
+
 def fijar_tribunal(it: dict, docentes: list[int], estudiantes_: list[int]) -> list[str]:
     docentes, estudiantes_ = [d for d in docentes if d], [e for e in estudiantes_ if e]
     if len(set(docentes)) != 2 or len(set(estudiantes_)) != 2:
         return ["El tribunal es de dos docentes y dos estudiantes distintos."]
     if not set(docentes) <= {d["id"] for d in docentes_elegibles()}:
         return ["Los docentes deben tener vínculo vigente con la Carrera."]
+    if (errores := revisar_comision(obtener(it["convocatoria_id"]), it, docentes)[0]):
+        return errores
     if not set(estudiantes_) <= {e["id"] for e in estudiantes_elegibles()}:
         return ["Los estudiantes deben tener cuenta en el sistema."]
     if set(estudiantes_) & _postulantes_de_conv(it["convocatoria_id"]):
@@ -647,7 +710,10 @@ def faltantes_cierre(it: dict, ahora: datetime | None = None) -> list[str]:
     fase = it["fase"]
     if fase == "postulacion":
         c = obtener(it["convocatoria_id"])
-        return [] if (c["cierre"] or "9999") <= _ahora() else [f"La recepción cierra el {formato.momento(c['cierre'])}."]
+        f = [] if (c["cierre"] or "9999") <= _ahora() else [f"La recepción cierra el {formato.momento(c['cierre'])}."]
+        if c["reglamento"] == REGLAMENTO_VIGENTE and not c["comision_resolucion"]:
+            f.append("falta el número de la resolución del Consejo de Carrera que designa la comisión (art. 15)")
+        return f
     if fase not in FASES:
         return ["El concurso de este ítem ya concluyó."]
     f = []

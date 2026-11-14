@@ -392,3 +392,123 @@ def test_el_estudiante_ve_los_requisitos_opcionales_y_el_plan_de_trabajo(app, ge
     pagina = s.get(r.headers["location"]).text
     assert "Solo si corresponde" in pagina and "Plan de trabajo de la materia, proyecto o programa que postula" in pagina
     assert "Requisitos · 2 de 12" in pagina
+
+
+# --- Etapa 3: la comisión (art. 15) -------------------------------------------------------------------------------------------
+
+from app.comun import usuarios  # noqa: E402
+
+
+def _titular_de_la_materia(convocatoria, uid):
+    oferta = get_db().q("SELECT id FROM oferta WHERE gestion_id = ? AND asignatura_id = ?",
+                        [_gestion_conv(convocatoria), convocatoria["asignatura"]])[0]["id"]
+    get_db().t.oferta_docente.insert(oferta_id=oferta, usuario_id=uid, rol="titular")
+
+
+def _contratado():
+    from app.comun import vinculos
+    uid = usuarios.crear("contratado@test.cl", "Cora", "Contratada", "Clave-servicios-1", debe_cambiar_pass=False)["id"]
+    vinculos.agregar(uid, "contratado", "2020-01-01", "2099-12-31")
+    return uid
+
+
+def _est(gente):
+    return [gente["Ana"]["uid"], gente["Pedro"]["uid"]]
+
+
+def test_los_docentes_de_la_comision_deben_ser_titulares(app, gente, convocatoria):
+    contratado = _contratado()
+    it = aux.item(convocatoria["iid"])
+    errores = aux.fijar_tribunal(it, [gente["doc1"]["id"], contratado], _est(gente))
+    assert errores == ["Los dos docentes de la comisión deben ser titulares (art. 15)."]
+    assert aux.tribunal(it["id"]) == []
+    # Una convocatoria hecha con el reglamento de 2021 no tiene esa regla.
+    _antigua(convocatoria["cid"])
+    assert aux.fijar_tribunal(aux.item(convocatoria["iid"]), [gente["doc1"]["id"], contratado], _est(gente)) == []
+
+
+def test_uno_de_los_docentes_es_el_titular_de_la_materia(app, gente, convocatoria):
+    it = aux.item(convocatoria["iid"])
+    # Sin titular asignado a la materia aún no se puede comprobar: se designa y se avisa.
+    assert aux.fijar_tribunal(it, [gente["doc2"]["id"], gente["doc3"]["id"]], _est(gente)) == []
+    assert "aún no tiene un docente titular asignado" in aux.avisos_comision(aux.item(convocatoria["iid"]))[0]
+    _titular_de_la_materia(convocatoria, gente["doc1"]["id"])
+    errores = aux.fijar_tribunal(it, [gente["doc2"]["id"], gente["doc3"]["id"]], _est(gente))
+    assert errores == ["Uno de los dos docentes debe ser el titular responsable de la materia en la gestión (art. 15, a)."]
+    assert aux.fijar_tribunal(it, [gente["doc1"]["id"], gente["doc3"]["id"]], _est(gente)) == []
+    assert aux.avisos_comision(aux.item(convocatoria["iid"])) == []
+
+
+def test_comision_de_investigacion_con_investigadores_titulares(app, gente, convocatoria):
+    cid = _nueva(gente, convocatoria, "investigacion")
+    c = _conv(cid)
+    assert aux.agregar_item(c, {"titulo": "Apoyo al proyecto de álgebra", "plazas": "1", "horas": "20"}) == []
+    it = aux.items(cid)[0]
+    no_inv = usuarios.crear("noinv@test.cl", "Nora", "NoInvestigadora", "Clave-servicios-1", es_investigador=False,
+                            debe_cambiar_pass=False, categoria="titular", fecha_ingreso="2020-01-01")["id"]
+    assert aux.fijar_tribunal(it, [gente["doc1"]["id"], no_inv], _est(gente)) == ["Los dos docentes deben ser investigadores titulares (art. 15, b)."]
+    assert aux.fijar_tribunal(it, [gente["doc1"]["id"], gente["doc2"]["id"]], _est(gente)) == []
+    beca = _conv(_nueva(gente, convocatoria, "beca_tesis"))
+    assert aux.agregar_item(beca, {"titulo": "Tesis en teoría de anillos", "plazas": "1", "horas": "20"}) == []
+    assert aux.fijar_tribunal(aux.items(beca["id"])[0], [gente["doc1"]["id"], no_inv], _est(gente))[0].startswith("Los dos docentes deben ser investigadores")
+
+
+def test_comision_de_interaccion_social_con_el_responsable_del_proyecto(app, gente, convocatoria):
+    from app.investigacion import proyectos
+    resp = gente["doc1"]["id"]
+    soc = proyectos.crear({"nombre": "Matemática en el barrio", "estado": "vigente"}, resp, resp, tipo="institucional",
+                          clase="interaccion_social")
+    c = _conv(_nueva(gente, convocatoria, "interaccion_social"))
+    assert aux.agregar_item(c, {"proyecto_id": str(soc), "plazas": "1", "horas": "20"}) == []
+    assert aux.agregar_item(c, {"titulo": "Taller sin proyecto", "plazas": "1", "horas": "20"}) == []
+    con, sin = sorted(aux.items(c["id"]), key=lambda i: i["proyecto_id"] is None)
+    assert aux.fijar_tribunal(con, [gente["doc2"]["id"], gente["doc3"]["id"]], _est(gente)) == \
+        ["Uno de los dos docentes debe ser el responsable del proyecto (art. 15, c)."]
+    assert aux.fijar_tribunal(con, [resp, gente["doc3"]["id"]], _est(gente)) == [] and aux.avisos_comision(aux.item(con["id"])) == []
+    assert aux.fijar_tribunal(sin, [gente["doc2"]["id"], gente["doc3"]["id"]], _est(gente)) == []        # sin proyecto no se puede comprobar
+    assert "no tiene proyecto" in aux.avisos_comision(aux.item(sin["id"]))[0]
+
+
+def test_sin_la_resolucion_de_la_comision_no_se_cierra_la_recepcion(app, gente, convocatoria):
+    _publicar(gente, convocatoria)
+    aux.guardar_resolucion_comision(convocatoria["cid"], "", "")
+    get_db().execute("UPDATE convocatoria_auxiliatura SET cierre = '2020-01-01T00:00' WHERE id = ?", [convocatoria["cid"]])
+    r = aux.cerrar_fase(aux.item(convocatoria["iid"]), gente["dir"]["id"])
+    assert r == ["No se puede cerrar: falta el número de la resolución del Consejo de Carrera que designa la comisión (art. 15)."]
+    aux.guardar_resolucion_comision(convocatoria["cid"], " Res. CC 130/2026 ", "Res. CF 52/2026")
+    c = _conv(convocatoria["cid"])
+    assert (c["comision_resolucion"], c["comision_resolucion_hcf"]) == ("Res. CC 130/2026", "Res. CF 52/2026")
+    assert aux.cerrar_fase(aux.item(convocatoria["iid"]), gente["dir"]["id"]) == []
+    # La convocatoria de 2021 nunca pidió esa resolución.
+    otra = _nueva(gente, convocatoria, "docencia", "Antigua")
+    _antigua(otra)
+    assert not any("comisión" in x for x in aux.faltantes_cierre({"convocatoria_id": otra, "fase": "postulacion", "id": 0}))
+
+
+def test_pantallas_de_la_comision(app, gente, convocatoria):
+    d = _como(app, "dir@test.cl")
+    pagina = d.get(f"/servicios/auxiliaturas/{convocatoria['cid']}").text
+    assert "falta la resolución del Consejo de Carrera que la designa" in pagina and "Resolución de la comisión (art. 15)" in pagina
+    r = d.post(f"/servicios/auxiliaturas/{convocatoria['cid']}/comision", data={"comision_resolucion": "Res. CC 130/2026",
+                                                                                "comision_resolucion_hcf": "Res. CF 52/2026"},
+               follow_redirects=False)
+    assert r.status_code == 303 and _conv(convocatoria["cid"])["comision_resolucion"] == "Res. CC 130/2026"
+    pagina = d.get(f"/servicios/auxiliaturas/{convocatoria['cid']}").text
+    assert "designada por Res. CC 130/2026" in pagina and "aprobada por Res. CF 52/2026" in pagina
+    assert get_db().q("SELECT accion FROM auditoria ORDER BY id DESC LIMIT 1")[0]["accion"] == "resolucion_comision_auxiliatura"
+    assert _como(app, "doc3@test.cl").post(f"/servicios/auxiliaturas/{convocatoria['cid']}/comision",
+                                           data={"comision_resolucion": "x"}).status_code == 403
+    item = d.get(f"/servicios/auxiliaturas/item/{convocatoria['iid']}").text
+    assert "docente titular responsable de la materia" in item and "art. 15, a" in item
+    _antigua(convocatoria["cid"])
+    assert d.post(f"/servicios/auxiliaturas/{convocatoria['cid']}/comision", data={"comision_resolucion": "y"}).status_code == 403
+    assert "Resolución de la comisión" not in d.get(f"/servicios/auxiliaturas/{convocatoria['cid']}").text
+
+
+def test_el_formulario_del_tribunal_muestra_el_error_de_la_regla(app, gente, convocatoria):
+    contratado = _contratado()
+    d = _como(app, "dir@test.cl")
+    r = d.post(f"/servicios/auxiliaturas/item/{convocatoria['iid']}/tribunal",
+               data={"docente1": str(gente["doc1"]["id"]), "docente2": str(contratado),
+                     "estudiante1": str(gente["Ana"]["uid"]), "estudiante2": str(gente["Pedro"]["uid"])}, follow_redirects=False)
+    assert r.status_code == 303 and aux.tribunal(convocatoria["iid"]) == []

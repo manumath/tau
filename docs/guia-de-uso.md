@@ -1028,7 +1028,11 @@ una) y no se recalculan.
    Carrera y homologado por la Facultad); puede agregar los propios de la Carrera, que el reglamento pide para investigación e interacción social, o quitar.
 2. **Ítems:** una materia de la oferta de la gestión (en docencia) o un proyecto (en investigación y Beca Tesis, los de investigación o individuales; en interacción social, los de
    interacción social), plazas y horas (20 o 40 h/mes).
-3. **Tribunal de cada ítem:** dos docentes y dos estudiantes; un postulante no puede integrarlo.
+3. **Comisión de cada ítem** (art. 15): dos docentes y dos estudiantes; un postulante no puede integrarla. En **docencia**, los dos docentes son titulares y uno es el titular
+   responsable de la materia en la gestión (si la materia aún no tiene titular asignado, el sistema lo avisa y lo comprobará después); en **investigación** y **Beca Tesis**,
+   dos investigadores titulares; en **interacción social**, el responsable del proyecto y un docente titular. Los estudiantes de cogobierno que aprobaron la materia con
+   los mejores promedios los declara la Dirección al designarlos (el sistema no guarda notas). La comisión la designa el Consejo de Carrera y la aprueba el Consejo
+   Facultativo: en la convocatoria se registra el número de su resolución (**Resolución de la comisión**) y **sin ella no se cierra la recepción** para empezar a evaluar.
 4. **Publicar:** se avisa a todos los estudiantes y a los miembros de los tribunales.
 
 **El estudiante** entra en **Auxiliaturas**, elige una materia y **Postula**. En la página de su postulación sube un

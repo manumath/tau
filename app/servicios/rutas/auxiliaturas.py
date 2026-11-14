@@ -287,6 +287,11 @@ def get(auth, cid: int, editar: int = 0):
             ", con las plazas que esa no cubrió (arts. 13 y 14).", cls="text-sm") if primera else "",
         Div("Segunda convocatoria: ", A(siguiente["titulo"], href=f"{BASE}/{siguiente['id']}", cls="text-primary hover:underline"),
             cls="text-sm") if siguiente else "",
+        Div(Span("Comisión: ", cls="font-medium"),
+            f"designada por {c['comision_resolucion']}" if c["comision_resolucion"] else
+            Span("falta la resolución del Consejo de Carrera que la designa", cls="text-amber-700 dark:text-amber-300"),
+            f" · aprobada por {c['comision_resolucion_hcf']}" if c["comision_resolucion_hcf"] else ""
+            ) if c["reglamento"] == aux.REGLAMENTO_VIGENTE else "",
         P(f"Según el {aux.reglamento_texto(c)}.", cls=TextPresets.muted_sm),
         A(UkIcon("pencil", height=14, width=14), "Editar datos", href=f"{url}?editar=1", cls="uk-btn uk-btn-default uk-btn-sm gap-1")
         if borrador else "",
@@ -346,6 +351,16 @@ def get(auth, cid: int, editar: int = 0):
                                    seleccion("Se acredita con", "acredita", [("documento", "Documento"), ("declaracion", "Declaración jurada")]),
                                    Div(enviar("Agregar", cls=(ButtonT.default, ButtonT.sm)), cls="flex justify-end"),
                                    cls="space-y-2 mt-3") if borrador else ""),
+                tarjeta("Resolución de la comisión (art. 15)",
+                        formulario(f"{url}/comision",
+                                   LabelInput("Consejo de Carrera (número y fecha)", id="comision_resolucion",
+                                              value=c["comision_resolucion"] or "", maxlength="120", placeholder="Res. CC 130/2026"),
+                                   LabelInput("Aprobación del Consejo Facultativo (opcional)", id="comision_resolucion_hcf",
+                                              value=c["comision_resolucion_hcf"] or "", maxlength="120", placeholder="Res. CF 52/2026"),
+                                   P("Sin la resolución del Consejo de Carrera no se cierra la recepción para empezar a evaluar.",
+                                     cls=TextPresets.muted_sm),
+                                   Div(enviar("Guardar", cls=(ButtonT.default, ButtonT.sm)), cls="flex justify-end"), cls="space-y-2"))
+                if c["reglamento"] == aux.REGLAMENTO_VIGENTE and c["estado"] != "concluida" else "",
                 tarjeta("Resolución (PDF, opcional)", Div(*[enlace_adjunto(a, f"{BASE}/{cid}/resolucion/{a['id']}") for a in pdfs],
                                                          cls="flex flex-col gap-1 mb-2"),
                         subir(f"{url}/resolucion", "Adjuntar PDF")),
@@ -443,6 +458,17 @@ def post(auth, sess, cid: int):
     return Redirect(f"{BASE}/{cid}")
 
 
+@rt(f"{BASE}/{{cid}}/comision")
+def post(auth, sess, cid: int, comision_resolucion: str = "", comision_resolucion_hcf: str = ""):
+    c = _gestionable(auth, cid)
+    if not c or c["reglamento"] != aux.REGLAMENTO_VIGENTE or c["estado"] == "concluida":
+        return no_autorizado()
+    aux.guardar_resolucion_comision(cid, comision_resolucion, comision_resolucion_hcf)
+    auditar(auth["id"], "resolucion_comision_auxiliatura", "convocatoria_auxiliatura", cid, comision_resolucion[:120])
+    add_toast(sess, "Resolución de la comisión guardada.", "success")
+    return Redirect(f"{BASE}/{cid}")
+
+
 @rt(f"{BASE}/{{cid}}/segunda")
 def post(auth, sess, cid: int):
     c = _gestionable(auth, cid)
@@ -498,12 +524,17 @@ def get(auth, iid: int):
         "Tribunal",
         Ul(*[Li(f"{m['nombres']} {m['apellidos']}", Span(f" · {m['tipo']}", cls=TextPresets.muted_sm), cls="text-sm")
              for m in it["tribunal"]], cls="space-y-1 mb-3") if it["tribunal"] else P("Sin designar.", cls=TextPresets.muted_sm),
+        *[P(UkIcon("triangle-alert", height=12, width=12, cls="inline mr-1"), a,
+            cls="text-xs text-amber-700 dark:text-amber-300 mb-2") for a in aux.avisos_comision(it)],
         formulario(f"{url}/tribunal",
                    Div(seleccion("Docente 1", "docente1", d_ops, d_sel[0], "—"), seleccion("Docente 2", "docente2", d_ops, d_sel[1], "—"),
                        seleccion("Estudiante 1", "estudiante1", e_ops, e_sel[0], "—"),
                        seleccion("Estudiante 2", "estudiante2", e_ops, e_sel[1], "—"), cls="grid grid-cols-1 sm:grid-cols-2 gap-3"),
-                   P("El docente responsable de la materia, un docente de una materia afín y dos estudiantes que la aprobaron con "
-                     "notas sobresalientes. Los estudiantes necesitan cuenta en el sistema.", cls=TextPresets.muted_sm),
+                   P((aux.COMISION_TEXTO[c["modalidad"]] + " " if c["reglamento"] == aux.REGLAMENTO_VIGENTE else
+                      "El docente responsable de la materia, un docente de una materia afín y dos estudiantes que la aprobaron con "
+                      "notas sobresalientes. ") + "Los estudiantes necesitan cuenta en el sistema. La comisión la designa el Consejo "
+                     "de Carrera y la aprueba el Consejo Facultativo: registre sus resoluciones en la convocatoria.",
+                     cls=TextPresets.muted_sm),
                    Div(enviar("Guardar tribunal", cls=(ButtonT.default, ButtonT.sm)), cls="flex justify-end"))
         if gestor and it["fase"] in ("postulacion", "habilitacion") else "")
     fase = it["fase"]

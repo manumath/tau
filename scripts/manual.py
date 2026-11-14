@@ -120,6 +120,7 @@ def datos(ruta: str):
     cid = aux.crear(x, ada)
     assert aux.agregar_item(aux.obtener(cid), {"asignatura_id": of["asignatura_id"], "plazas": "2", "horas": "40"}) == []
     assert aux.fijar_tribunal(aux.items(cid)[0], [emmy, sofia], [cuentas["Mateo"]["uid"], cuentas["Sofía"]["uid"]]) == []
+    aux.guardar_resolucion_comision(cid, "Res. CC 130/2026", "Res. CF 52/2026")
     assert aux.publicar(cid) == [], aux.publicar(cid)
 
     # Proyecto de grado: el perfil de Andrea, con visto bueno de su tutora y tribunal designado.

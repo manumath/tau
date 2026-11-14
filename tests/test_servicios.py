@@ -158,6 +158,7 @@ def _publicar(gente, conv):
     assert aux.publicar(conv["cid"]) == ["Falta el número de la resolución del Consejo de Carrera."]
     get_db().execute("UPDATE convocatoria_auxiliatura SET resolucion = 'Res. CC 12/2026' WHERE id = ?", [conv["cid"]])
     assert aux.publicar(conv["cid"]) == []
+    aux.guardar_resolucion_comision(conv["cid"], "Res. CC 130/2026", "")      # sin ella no se empieza a evaluar (art. 15)
 
 
 def _completar(p, gente):

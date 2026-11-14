@@ -62,6 +62,7 @@ def _convocatoria(gestion, asignatura_id, docentes, tribunal_estudiantes):
     cid = aux.crear(x, docentes[0])
     assert aux.agregar_item(aux.obtener(cid), {"asignatura_id": asignatura_id, "plazas": "1", "horas": "40"}) == []
     assert aux.fijar_tribunal(aux.items(cid)[0], docentes, tribunal_estudiantes) == []
+    aux.guardar_resolucion_comision(cid, "Res. CC 130/2026", "Res. CF 52/2026")
     assert aux.publicar(cid) == [], aux.publicar(cid)
 
 
