@@ -8,6 +8,8 @@
 // data-valor con el valor para ordenar (p. ej., una fecha ISO si muestra otra cosa).
 // Se aplica también al contenido que llega por htmx (evento htmx:load) y se actualiza si htmx
 // reemplaza las filas (p. ej., un buscador del servidor que cambia el <tbody>).
+// data-tabla-paginada: el servidor entrega las filas de 50 en 50 («Cargar más»); ordenar, contar o descargar solo lo
+// cargado engañaría, así que esa tabla gana solo las tarjetas del teléfono y el nombre accesible (PLAN §72).
 (function () {
   const normal = (t) => (t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const NUMERO = /^[-+]?\d+(?:[.,]\d+)?(?:\s*(?:%|h\/mes))?$/;
@@ -63,6 +65,11 @@
         if (!titulo.id) titulo.id = "titulo-" + (tabla.dataset.tabla || "tabla").replace(/[^\w-]/g, "-");
         tabla.setAttribute("aria-labelledby", titulo.id);
       }
+    }
+
+    if (tabla.dataset.tablaPaginada !== undefined) {
+      tabla._tablaRefrescar = rotular;
+      return;
     }
 
     // Barra: filtro, conteo y descarga (no se imprime).

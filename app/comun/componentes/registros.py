@@ -70,15 +70,26 @@ def fecha_local(iso_utc: str | None) -> str:
 POR_PAGINA = 50
 
 
+def _boton_mas(url: str, desde: int, restantes: int, incluir: str, destino: str):
+    return fh.Button(f"Cargar {min(restantes, POR_PAGINA)} más", Span(f" · quedan {restantes}", cls="text-muted-foreground"),
+                     type="button", cls="uk-btn uk-btn-default uk-btn-sm", hx_get=url, hx_vals=f'{{"desde": {desde}}}',
+                     hx_include=incluir, hx_target=destino, hx_swap="outerHTML", hx_disabled_elt="this")
+
+
 def cargar_mas(url: str, desde: int, total: int, incluir: str):
     """Botón «Cargar más» al final de una lista: pide a `url` los siguientes (`desde`, con los filtros de
     `incluir`) y se reemplaza por ellos y, si quedan, por otro botón igual."""
     restantes = total - desde
     if restantes <= 0:
         return ""
-    return Div(fh.Button(f"Cargar {min(restantes, POR_PAGINA)} más", Span(f" · quedan {restantes}",
-                                                                         cls="text-muted-foreground"),
-                         type="button", cls="uk-btn uk-btn-default uk-btn-sm", hx_get=url,
-                         hx_vals=f'{{"desde": {desde}}}', hx_include=incluir, hx_target="closest div",
-                         hx_swap="outerHTML", hx_disabled_elt="this"),
-               cls="py-3 text-center")
+    return Div(_boton_mas(url, desde, restantes, incluir, "closest div"), cls="py-3 text-center")
+
+
+def cargar_mas_filas(url: str, desde: int, total: int, incluir: str, columnas: int):
+    """Lo mismo que `cargar_mas` para una tabla: una última fila con el botón, que se reemplaza por las filas
+    siguientes (y otra fila con el botón, si quedan)."""
+    restantes = total - desde
+    if restantes <= 0:
+        return ""
+    return fh.Tr(fh.Td(_boton_mas(url, desde, restantes, incluir, "closest tr"), colspan=columnas,
+                       cls="py-3 text-center"), data_fila_mas=True)

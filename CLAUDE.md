@@ -30,6 +30,7 @@ uv run pytest -q --navegador          # + flujos en Chrome (Playwright)
 uvx ruff check app scripts tests main.py   # reglas en pyproject.toml; debe quedar sin avisos
 scripts/estilos.sh                    # recompilar Tailwind tras usar una clase nueva
 PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
+uv run python scripts/medir.py [--inflar] [--escrituras]   # rendimiento y escrituras en las lecturas (unos minutos)
 ```
 
 GitHub Actions (`.github/workflows/pruebas.yml`) corre ruff y `pytest --navegador` en cada push a `main`: una prueba
@@ -151,6 +152,13 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   ve solo quien tiene `ver_seguimiento_estudiantil`.
 
 ## Cuidados al trabajar aquí
+
+- **Módulos congelados (PLAN §72, 14-nov-2026):** hasta concluir el piloto con usuarios reales no se agrega ningún módulo;
+  se consolida lo que existe (plan de mejora, rendimiento, brechas del plan de mejora, privacidad). Una pantalla nueva
+  solo entra si la pide un usuario del piloto y tiene un responsable de sus datos. Si el usuario pide un módulo nuevo,
+  recuérdeselo antes de planificarlo.
+- **Ningún GET escribe** (salvo el registro que la regla pide) y las listas largas van de 50 en 50 (`registros.cargar_mas`);
+  `scripts/medir.py --escrituras` y `--inflar` lo revisan (`docs/mantenimiento.md` §5.11).
 
 - **`data/portal.db` es la base del servidor de desarrollo del usuario**, que aplica solas las
   migraciones al recargar. No la modifique ni pruebe contra ella: trabaje sobre copias

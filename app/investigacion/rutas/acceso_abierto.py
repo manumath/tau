@@ -7,6 +7,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, Button, ButtonT, Card, Form, TextPresets
 
 from app.comun import formato
+from app.comun.componentes.registros import POR_PAGINA, cargar_mas
 from app.comun.componentes.layout import ID_MODAL, campo, cerrar_modal, mensaje_error, modal, pagina
 from app.investigacion import acceso_abierto as aa, productos
 from app.investigacion.componentes.acceso import boton_declarar, insignias_acceso
@@ -15,6 +16,7 @@ from app.investigacion.rutas.productos.lista import EVENTO
 rt = APIRouter()
 PAGINA = "/investigacion/acceso-abierto"
 ID_LISTA = "lista-acceso"
+ID_FILTROS = "filtros-acceso"
 
 
 # --- Formulario -----------------------------------------------------------------------------------------------------------
@@ -125,6 +127,19 @@ def _fila(f: dict):
         cls="flex items-start gap-3 py-2")
 
 
+def _filas(lista: list[dict], desde: int):
+    """Una página de la lista y, si quedan, el botón «Cargar más» con los mismos filtros."""
+    return [*[_fila(f) for f in lista[desde:desde + POR_PAGINA]],
+            cargar_mas(f"{PAGINA}/mas", desde + POR_PAGINA, len(lista), f"#{ID_FILTROS}")]
+
+
+@rt(f"{PAGINA}/mas")
+def get(auth, desde: int = 0, estado: str = "", anio: str = ""):
+    if not auth.get("es_investigador"):
+        return Response("No autorizado", status_code=403)
+    return tuple(_filas(aa.de_investigador(auth["id"], estado if estado in aa.FILTROS else "", anio), max(desde, 0)))
+
+
 @rt(PAGINA)
 def get(auth, estado: str = "", anio: str = ""):
     if not auth.get("es_investigador"):
@@ -132,16 +147,16 @@ def get(auth, estado: str = "", anio: str = ""):
     estado = estado if estado in aa.FILTROS else ""
     todos = aa.de_investigador(auth["id"])
     r = aa.resumen(todos)
-    lista = aa.de_investigador(auth["id"], estado, anio)
+    lista = aa.filtrar(todos, estado, anio)
     url = f"{PAGINA}?{urlencode({k: v for k, v in (('estado', estado), ('anio', anio)) if v})}"
     filtros = Form(
         Div(campo("Situación", Select(*[Option(t, value=k, selected=k == estado) for k, t in aa.FILTROS.items()],
                                      name="estado", cls="uk-select h-9 text-sm")),
             campo("Año", Select(Option("Todos", value=""), *[Option(str(y), value=str(y), selected=str(y) == anio)
-                                                             for y in aa.anios_de(auth["id"])],
+                                                             for y in aa.anios_de(auth["id"], todos)],
                                 name="anio", cls="uk-select h-9 text-sm")),
             Button("Filtrar", type="submit", cls=(ButtonT.default, ButtonT.sm, "self-end")), cls="flex flex-wrap gap-3"),
-        action=PAGINA, method="get", cls="mb-4")
+        action=PAGINA, method="get", id=ID_FILTROS, cls="mb-4")
     porcentaje = f"{round(100 * r['en_abierto'] / r['total'])} %" if r["total"] else "—"
     return pagina(
         "Acceso abierto y datos",
@@ -156,7 +171,7 @@ def get(auth, estado: str = "", anio: str = ""):
             _tarjeta(r["datos_publicados"], "con datos o código publicados"),
             cls="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"),
         filtros,
-        Div(Card(*[_fila(f) for f in lista], cls="divide-y divide-border") if lista
+        Div(Card(*_filas(lista, 0), cls="divide-y divide-border") if lista
             else Card(P("No hay productos con esta selección.", cls="text-sm")),
             id=ID_LISTA, hx_get=url, hx_select=f"#{ID_LISTA}", hx_trigger=f"{EVENTO} from:body", hx_swap="outerHTML"),
         usuario=auth, seccion="investigacion")

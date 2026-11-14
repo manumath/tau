@@ -292,7 +292,8 @@ En **Investigadores → Estudiantes y tesistas** registre a los estudiantes que 
 investigación: tesistas, coautores, participantes de proyectos o actividades. Para cada uno indique
 sus estudios (nivel, programa, año de ingreso y, si ya egresó, año de egreso y si se tituló). Así los
 informes de calidad cuentan su participación, y el sistema sabe si alguien era estudiante o ya
-graduado en la fecha de cada producto.
+graduado en la fecha de cada producto. La lista muestra cuántos estudiantes coinciden con la búsqueda y los trae de 50 en
+50: use **Cargar más** al final de la tabla o, mejor, escriba parte del nombre.
 
 Registre las **tesis que dirige** como producto «Tesis dirigida»: primero el tesista y luego quienes
 la dirigen; «En preparación» si está en curso y «Publicado» cuando se defendió.

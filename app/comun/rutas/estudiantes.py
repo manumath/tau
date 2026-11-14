@@ -11,11 +11,12 @@ from monsterui.all import (H2, Button, ButtonT, Card, Form, LabelInput, Table, T
 
 from app.comun import estudiantes, permisos, personas
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
-from app.comun.componentes.registros import insignia, url_filtrada
+from app.comun.componentes.registros import POR_PAGINA, cargar_mas_filas, insignia, url_filtrada
 from app.comun.db import auditar, get_db, sin_tildes
 
 rt = APIRouter()
 ID_LISTA = "lista-estudiantes"
+ID_FILTROS = "filtros-estudiantes"
 
 
 def _permitido(auth):
@@ -33,22 +34,32 @@ def _con_seguimiento(auth) -> bool:
     return permisos.puede(auth, "ver_seguimiento_estudiantil")
 
 
+def _fila(e):
+    part = e["participacion"]
+    return Tr(
+        Td(A(f"{e['apellidos']}, {e['nombres']}", href=f"/estudiantes/{e['id']}", cls="font-medium hover:underline"),
+           Div(e["institucion"] or "", cls=TextPresets.muted_sm)),
+        Td(Div(*[Div(_periodo_texto(p), cls="text-sm") for p in e["periodos"]])),
+        Td(insignia("Cursando", "azul") if e["cursando"] else insignia("Egresado(a)", "gris")),
+        Td(f"{part['tesis']} tesis · {part['productos']} productos · {part['proyectos']} proyectos · "
+           f"{part['actividades']} actividades", cls="text-sm"))
+
+
+def _filas(todos, desde):
+    """Una página de filas (desde `desde`) y, si quedan, la fila con «Cargar más»."""
+    return [*[_fila(e) for e in todos[desde:desde + POR_PAGINA]],
+            cargar_mas_filas("/estudiantes/mas", desde + POR_PAGINA, len(todos), f"#{ID_FILTROS}", 4)]
+
+
 def lista(auth, q="", nivel="", estado=""):
-    filas = []
-    for e in estudiantes.listar(q, nivel, estado, _con_seguimiento(auth)):
-        part = e["participacion"]
-        filas.append(Tr(
-            Td(A(f"{e['apellidos']}, {e['nombres']}", href=f"/estudiantes/{e['id']}", cls="font-medium hover:underline"),
-               Div(e["institucion"] or "", cls=TextPresets.muted_sm)),
-            Td(Div(*[Div(_periodo_texto(p), cls="text-sm") for p in e["periodos"]])),
-            Td(insignia("Cursando", "azul") if e["cursando"] else insignia("Egresado(a)", "gris")),
-            Td(f"{part['tesis']} tesis · {part['productos']} productos · {part['proyectos']} proyectos · "
-               f"{part['actividades']} actividades", cls="text-sm")))
-    return Div(Table(Thead(Tr(Th("Estudiante"), Th("Estudios"), Th("Estado"), Th("Participación"))),
-                     Tbody(*filas) if filas else Tbody(Tr(Td("No hay estudiantes registrados que coincidan.", colspan=4,
-                                                             cls=(TextPresets.muted_sm, "text-center py-6")))),
+    todos = estudiantes.listar(q, nivel, estado, _con_seguimiento(auth))
+    total = P(f"{len(todos)} estudiante{'s' if len(todos) != 1 else ''}", cls=(TextPresets.muted_sm, "mb-2")) if todos else ""
+    return Div(total,
+               Table(Thead(Tr(Th("Estudiante"), Th("Estudios"), Th("Estado"), Th("Participación"))),
+                     Tbody(*_filas(todos, 0)) if todos else Tbody(Tr(Td("No hay estudiantes registrados que coincidan.", colspan=4,
+                                                                     cls=(TextPresets.muted_sm, "text-center py-6")))),
                      cls="uk-table-divider uk-table-middle uk-table-hover", data_tabla="estudiantes",
-                     data_tabla_filtro="no"),
+                     data_tabla_paginada=True),
                id=ID_LISTA, cls="overflow-x-auto")
 
 
@@ -74,7 +85,8 @@ def get(auth, q: str = "", nivel: str = "", estado: str = ""):
                        Option("Egresados", value="egresado", selected=estado == "egresado"),
                        name="estado", cls="uk-select w-52", aria_label="Estado"),
                 hx_get="/estudiantes/lista", hx_target=f"#{ID_LISTA}", hx_swap="outerHTML",
-                hx_trigger="input delay:300ms, change, search", data_sin_envio=True, cls="flex flex-wrap gap-3 mb-4"),
+                hx_trigger="input delay:300ms, change, search", data_sin_envio=True, id=ID_FILTROS,
+                cls="flex flex-wrap gap-3 mb-4"),
         Card(lista(auth, q, nivel, estado)),
         usuario=auth, seccion="investigadores")
 
@@ -85,6 +97,14 @@ def get(auth, q: str = "", nivel: str = "", estado: str = ""):
         return Response("No autorizado", status_code=403)
     return lista(auth, q, nivel, estado), HtmxResponseHeaders(replace_url=url_filtrada("/estudiantes", q=q, nivel=nivel,
                                                                                     estado=estado))
+
+
+@rt("/estudiantes/mas")
+def get(auth, desde: int = 0, q: str = "", nivel: str = "", estado: str = ""):
+    """Siguientes filas de la lista (botón «Cargar más»), con los mismos filtros."""
+    if not _permitido(auth):
+        return Response("No autorizado", status_code=403)
+    return tuple(_filas(estudiantes.listar(q, nivel, estado, _con_seguimiento(auth)), max(desde, 0)))
 
 
 # --- Alta ----------------------------------------------------------------------------------------------------

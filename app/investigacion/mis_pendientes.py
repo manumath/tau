@@ -91,11 +91,10 @@ def _productos(uid: int, hoy: date):
         yield _pendiente("producto", f"¿Ya se publicó «{p['titulo']}»?",
                          f"Sigue como «{productos.ESTADOS[p['estado_publicacion']].lower()}» desde el {p['ultimo'][:10]}", None,
                          f"/productos/{p['id']}")
-    for pre, pub in productos.preprints_sin_enlazar():
-        if productos.es_autor(pre["id"], uid):
-            yield _pendiente("producto", f"¿«{pre['titulo']}» ya salió publicado?",
-                             f"Se parece a «{pub['titulo']}» ({pub['anio']}): enlácelo como su versión publicada", None,
-                             f"/productos/{pre['id']}")
+    for pre, pub in productos.preprints_sin_enlazar(uid=uid):
+        yield _pendiente("producto", f"¿«{pre['titulo']}» ya salió publicado?",
+                         f"Se parece a «{pub['titulo']}» ({pub['anio']}): enlácelo como su versión publicada", None,
+                         f"/productos/{pre['id']}")
 
 
 def _acceso(uid: int, hoy: date):

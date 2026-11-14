@@ -16,7 +16,7 @@ from app.calidad import autoevaluacion as ae
 from app.calidad import evidencias, marco, mejora
 from app.calidad.rutas.indicadores import numero
 from app.calidad.rutas.informes import XLSX, _archivo, descarga
-from app.comun import unidades
+from app.comun import formato, unidades
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
@@ -40,7 +40,7 @@ def _marco():
 
 
 def _fecha(iso):
-    return f"{iso[8:10]}/{iso[5:7]}/{iso[:4]}" if iso else "—"
+    return formato.fecha(iso) if iso else "—"
 
 
 def _gestiona(auth, m):

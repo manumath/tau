@@ -165,7 +165,7 @@ def _completar(p, gente):
     for r in aux.requisitos_de(p):
         if r["acredita"] == "documento":
             from app.investigacion import adjuntos
-            adjuntos.guardar("requisito_postulacion", r["fila"], "doc.pdf", PDF, gente["dir"]["id"])
+            adjuntos.guardar("requisito_postulacion", aux.fila_requisito(p["id"], r["id"])["id"], "doc.pdf", PDF, gente["dir"]["id"])
         elif r["acredita"] == "declaracion":
             aux.declarar(p["id"], r["id"], True)
     aux.guardar_propuesta(p["id"], "Prácticas semanales")
@@ -257,6 +257,8 @@ def test_fases_quorum_impugnacion_y_resultado(app, gente, convocatoria):
     assert aux.item(iid)["fase"] == "concluido" and aux.total(sofia) == 83
     assert aux.postulacion(sofia)["estado"] == "titular"
     assert aux.obtener(convocatoria["cid"])["estado"] == "concluida"
+    # La designación nace al cerrar la fase oral, no al abrir la pantalla (PLAN §72: ningún GET escribe).
+    assert [d["externo_id"] for d in get_db().q("SELECT externo_id FROM designacion_auxiliatura")] == [gente["Sofía"]["externo"]]
     assert any(n["asunto"].startswith("Resultado: Examen oral") for n in notificaciones.todas(gente["Sofía"]["uid"]))
     # La próxima vez cuenta como una gestión de auxiliar en la materia (art. 8).
     assert aux.veces_auxiliar(gente["Sofía"]["externo"], convocatoria["asignatura"]) == 1
@@ -283,6 +285,7 @@ def test_empate_en_el_corte(app, gente, convocatoria):
     assert aux.resolver_empate(aux.item(iid), [pids[1]]) == []
     assert [aux.postulacion(p)["estado"] for p in pids] == ["no_seleccionada", "titular"]
     assert aux.obtener(convocatoria["cid"])["estado"] == "concluida"
+    assert [d["externo_id"] for d in get_db().q("SELECT externo_id FROM designacion_auxiliatura")] == [gente["Luis"]["externo"]]
 
 
 def test_permisos_de_auxiliaturas(app, gente, convocatoria, buzon):

@@ -113,16 +113,51 @@ def listar(texto: str = "", nivel: str = "", estado: str = "", con_seguimiento: 
                   OR sin_tildes(pe.apellidos || ' ' || pe.nombres) LIKE :p)
              AND (:n = '' OR e.nivel = :n)
            ORDER BY sin_tildes(pe.apellidos), sin_tildes(pe.nombres)""", {"t": texto.strip(), "p": patron, "n": nivel})
+    if not filas:
+        return []
+    ids = [f["id"] for f in filas]
+    por_persona: dict[int, list[dict]] = {}
+    for p in _en_bloques("SELECT * FROM estudiante WHERE externo_id IN ({}) ORDER BY desde, id", ids):
+        por_persona.setdefault(p["externo_id"], []).append(p)
+    participaciones = _participaciones(ids)
     res = []
     for f in filas:
-        ps = periodos(f["id"])
+        ps = por_persona.get(f["id"], [])
         cursando = any(p["desde"] <= hoy and (p["hasta"] is None or hoy <= p["hasta"]) for p in ps)
         if estado == "cursando" and not cursando or estado == "egresado" and cursando:
             continue
-        part = resumen_participacion(f["id"])
+        part = participaciones[f["id"]]
         if not con_seguimiento and _solo_seguimiento(ps, part):
             continue
         res.append({**f, "periodos": ps, "cursando": cursando, "participacion": part})
+    return res
+
+
+_BLOQUE = 900   # SQLite admite hasta 999 parámetros por consulta en versiones antiguas
+
+
+def _en_bloques(sql: str, ids: list[int]) -> list[dict]:
+    """Ejecuta `sql` (con un `IN ({})`) por bloques de ids: una consulta por bloque en vez de una por persona."""
+    res = []
+    for i in range(0, len(ids), _BLOQUE):
+        trozo = ids[i:i + _BLOQUE]
+        res += get_db().q(sql.format(",".join("?" * len(trozo))), trozo)
+    return res
+
+
+def _participaciones(ids: list[int]) -> dict[int, dict]:
+    """`resumen_participacion` de varias personas a la vez (cuatro consultas agrupadas)."""
+    res = {i: {"tesis": 0, "productos": 0, "proyectos": 0, "actividades": 0} for i in ids}
+    for f in _en_bloques(f"""SELECT pa.externo_id AS id, SUM(t.nombre = '{TIPO_TESIS}') AS tesis,
+                                    SUM(t.nombre != '{TIPO_TESIS}') AS productos
+                             FROM producto_autor pa JOIN producto p ON p.id = pa.producto_id
+                             JOIN tipo_producto t ON t.id = p.tipo_id
+                             WHERE pa.externo_id IN ({{}}) GROUP BY pa.externo_id""", ids):
+        res[f["id"]]["tesis"], res[f["id"]]["productos"] = f["tesis"], f["productos"]
+    for tabla, clave in (("proyecto_participante", "proyectos"), ("actividad_participante", "actividades")):
+        for f in _en_bloques(f"SELECT externo_id AS id, COUNT(*) AS n FROM {tabla} WHERE externo_id IN ({{}}) "
+                             "GROUP BY externo_id", ids):
+            res[f["id"]][clave] = f["n"]
     return res
 
 

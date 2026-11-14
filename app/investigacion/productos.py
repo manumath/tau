@@ -344,22 +344,30 @@ def candidatos_version(pre: dict, uid: int, limite: int = 30) -> list[dict]:
     return candidatos[:limite]
 
 
-def preprints_sin_enlazar(umbral: float = 0.85) -> list[tuple[dict, dict]]:
+def preprints_sin_enlazar(umbral: float = 0.85, uid: int | None = None) -> list[tuple[dict, dict]]:
     """(preprint, posible versión publicada) que comparten un autor del instituto y tienen títulos muy
-    parecidos, sin enlazar: para Calidad de datos."""
+    parecidos, sin enlazar: para Calidad de datos. Con `uid`, solo los preprints de esa persona («Mis pendientes»)."""
     pares = get_db().q(
-        """SELECT DISTINCT pre.id AS pre, pub.id AS pub, pre.titulo AS t1, pub.titulo AS t2
+        f"""SELECT DISTINCT pre.id AS pre, pub.id AS pub, pre.titulo AS t1, pub.titulo AS t2
            FROM producto pre JOIN tipo_producto tp ON tp.id = pre.tipo_id AND tp.nombre = ?
            JOIN producto_autor a1 ON a1.producto_id = pre.id AND a1.investigador_id IS NOT NULL
+                {'AND a1.investigador_id = ?' if uid else ''}
            JOIN producto_autor a2 ON a2.investigador_id = a1.investigador_id AND a2.producto_id != pre.id
            JOIN producto pub ON pub.id = a2.producto_id
            JOIN tipo_producto tq ON tq.id = pub.tipo_id AND tq.nombre NOT IN (?, ?, ?, ?)
            WHERE pre.publicado_como_id IS NULL AND pub.anio >= pre.anio - 1
              AND NOT EXISTS (SELECT 1 FROM producto x WHERE x.publicado_como_id = pub.id)""",
-        [TIPO_PREPRINT, *NO_SON_VERSION])
+        [TIPO_PREPRINT, *([uid] if uid else []), *NO_SON_VERSION])
+    puntuados = []
+    for f in pares:
+        a, b = _normalizar_titulo(f["t1"]), _normalizar_titulo(f["t2"])
+        m = SequenceMatcher(None, a, b)
+        # real_quick_ratio y quick_ratio son cotas superiores baratas: descartan casi todos los pares sin el cálculo completo.
+        if m.real_quick_ratio() >= umbral and m.quick_ratio() >= umbral and (r := m.ratio()) >= umbral:
+            puntuados.append((r, f))
     res, vistos = [], set()
-    for f in sorted(pares, key=lambda f: -parecido(f["t1"], f["t2"])):
-        if f["pre"] not in vistos and parecido(f["t1"], f["t2"]) >= umbral:
+    for _r, f in sorted(puntuados, key=lambda x: -x[0]):
+        if f["pre"] not in vistos:
             vistos.add(f["pre"])
             res.append((_resumen(f["pre"]), _resumen(f["pub"])))
     return res

@@ -48,3 +48,29 @@ def test_actividades_por_paginas(inv):
     pagina = inv.get("/actividades").text
     assert _n_items(pagina, "actividad") == POR_PAGINA and "Cargar 3 más" in pagina
     assert _n_items(inv.get("/actividades/mas", params={"desde": POR_PAGINA}, headers=HX).text, "actividad") == 3
+
+
+def test_estudiantes_por_paginas(inv):
+    """PLAN §72, etapa 1: la lista de estudiantes llega de 50 en 50 y los filtros siguen en la página siguiente."""
+    from app.comun import estudiantes
+    db = get_db()
+    for i in range(POR_PAGINA + 7):
+        xid = db.t.persona_externa.insert(nombres=f"Est{i:03d}", apellidos=f"Apellido{i:03d}")["id"]
+        assert estudiantes.agregar(xid, {"nivel": "licenciatura", "desde": "2020"}, inv.uid) == []
+    pagina = inv.get("/estudiantes").text
+    assert len(re.findall(r'href="/estudiantes/\d+"', pagina)) == POR_PAGINA
+    assert "57 estudiantes" in pagina and "Cargar 7 más" in pagina
+    resto = inv.get("/estudiantes/mas", params={"desde": POR_PAGINA}, headers=HX).text
+    assert len(re.findall(r'href="/estudiantes/\d+"', resto)) == 7 and "Cargar" not in resto and resto.lstrip().startswith("<tr")
+    filtrada = inv.get("/estudiantes/mas", params={"desde": 0, "q": "Apellido05"}, headers=HX).text
+    assert len(re.findall(r'href="/estudiantes/\d+"', filtrada)) == 7          # 050 a 056
+
+
+def test_acceso_abierto_por_paginas(inv):
+    _muchos_productos(inv.uid, POR_PAGINA + 4)
+    pagina = inv.get("/investigacion/acceso-abierto").text
+    lista = pagina[pagina.index('id="lista-acceso"'):]
+    assert len(re.findall(r'href="/productos/\d+"', lista)) == POR_PAGINA and "Cargar 4 más" in lista
+    assert "de 54)" in pagina                                       # las cifras de arriba son del total
+    resto = inv.get("/investigacion/acceso-abierto/mas", params={"desde": POR_PAGINA}, headers=HX).text
+    assert len(re.findall(r'href="/productos/\d+"', resto)) == 4 and "Cargar" not in resto

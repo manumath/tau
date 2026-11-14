@@ -14,7 +14,7 @@ NOTAS = {"Sofía": ("no_seleccionada", 12, 20, 20),       # 52: de 51 a 55
          "Rosa": ("no_seleccionada", 10, 20, 20)}        # 50: no llega
 
 
-def _segunda_concluida(gente, convocatoria, plazas=2, resultados=None):
+def _segunda_concluida(gente, convocatoria, plazas=2, resultados=None, antigua=False):
     """La segunda convocatoria concluida, con los postulantes de `resultados` (nombre → estado y notas de méritos, escrito y oral)."""
     db = get_db()
     primera = _primera_concluida(gente, convocatoria, cubiertas=0, plazas=plazas)
@@ -30,6 +30,9 @@ def _segunda_concluida(gente, convocatoria, plazas=2, resultados=None):
     db.execute("UPDATE item_auxiliatura SET fase = 'concluido' WHERE id = ?", [item["id"]])
     db.execute("UPDATE convocatoria_auxiliatura SET estado = 'concluida' WHERE id = ?", [nuevo])
     db.execute("INSERT INTO fase_auxiliatura (item_id, fase) VALUES (?, 'oral')", [item["id"]])
+    if antigua:
+        _antigua(nuevo)
+    des.asegurar_designaciones(nuevo)      # lo que hace el cierre de la fase oral
     return nuevo, aux.item(item["id"]), pids
 
 
@@ -111,8 +114,7 @@ def test_cada_titular_tiene_su_designacion_con_los_documentos_por_recibir(app, g
 
 
 def test_una_convocatoria_antigua_no_genera_designaciones(app, gente, convocatoria):
-    nuevo, it, _ = _segunda_concluida(gente, convocatoria, plazas=1, resultados={"Sofía": ("titular", 20, 25, 25)})
-    _antigua(nuevo)
+    nuevo, it, _ = _segunda_concluida(gente, convocatoria, plazas=1, resultados={"Sofía": ("titular", 20, 25, 25)}, antigua=True)
     assert des.designaciones(nuevo) == [] and get_db().q("SELECT * FROM designacion_auxiliatura") == []
 
 

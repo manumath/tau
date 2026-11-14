@@ -172,7 +172,7 @@ def datos(ruta: str):
                 for clave_, cant_ in rubrica_.items():
                     db.t.calificacion_detalle.insert(postulacion_id=pid_e, fase="oral", miembro_id=miembro_, clave=clave_, cantidad=cant_)
                 db.t.calificacion_auxiliatura.insert(postulacion_id=pid_e, fase="oral", miembro_id=miembro_, valor=rubricas.calcular_oral(rubrica_))
-    des.designaciones(segunda)
+    des.asegurar_designaciones(segunda)      # lo que hace el cierre de la fase oral
     des.guardar_designacion(db.q("SELECT id FROM designacion_auxiliatura ORDER BY id LIMIT 1")[0]["id"],
                             {"cert_deudas": date.today().isoformat(), "cert_procesos": date.today().isoformat(), "sigep": date.today().isoformat(),
                              "memorandum": "MEM 218/2026", "memorandum_fecha": date.today().isoformat(),

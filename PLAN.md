@@ -3929,7 +3929,27 @@ teléfono.
   único que depende de la petición es que alguien entre. Con la máquina de Fly.io que se apaga sola eso es razonable y no
   se cambia.
 
-### Etapa 1: rendimiento y lecturas sin efectos
+### Etapa 1 (hecha, 14-nov-2026): rendimiento y lecturas sin efectos
+**Resultado** (base del manual con `--inflar`): `/estudiantes` pasó de 867 ms y 2,3 MB a 34 ms y 71 KB; acceso abierto, de
+1,2 MB a 75 KB; «Mis pendientes» del investigador, de 334 a 31 ms. Indicadores (159 ms), ficha estadística (194 ms) e
+informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se guarda el cálculo** de los indicadores.
+- `estudiantes.listar` hacía cinco consultas por estudiante: ahora cinco en total (`_en_bloques`, `_participaciones`).
+  La lista llega de 50 en 50 (`registros.cargar_mas_filas`, `/estudiantes/mas`) con el total arriba. La tabla lleva
+  `data-tabla-paginada` (`tablas.js`): conserva las tarjetas del teléfono, pero no ofrece conteo, orden ni CSV, que solo
+  verían las filas cargadas.
+- Acceso abierto consulta una vez (`acceso_abierto.filtrar`) y llega de 50 en 50 (`/investigacion/acceso-abierto/mas`).
+- `productos.preprints_sin_enlazar(uid=…)` para «Mis pendientes»; la comparación global usa las cotas baratas de
+  `SequenceMatcher` antes del cálculo completo.
+- **Lecturas sin escrituras:** las designaciones de los titulares nacen al cerrar la fase o resolver el empate
+  (`auxiliaturas._concluir_si_corresponde` → `designaciones.asegurar_designaciones`, en la misma transacción); la fila de
+  cada requisito de una postulación nace al declarar o subir algo (`auxiliaturas.fila_requisito`), no al abrir la postulación.
+- `scripts/medir.py` (tiempo y tamaño, `--inflar`, `--escrituras` con un *update hook* de apsw sobre dirección, docente y
+  estudiante: 232 pantallas cada una, ninguna escribe). Reemplaza a «una prueba que lo busque»: recorrer todas las
+  pantallas con datos tarda minutos y no cabe en las pruebas rápidas; quedan pruebas directas de los dos casos corregidos.
+- El plan de mejora muestra las fechas con `formato.fecha`.
+- **Corrección:** el mantenimiento periódico ya corría en un hilo aparte; no se toca (ver los principios).
+
+**Lo planificado:**
 - **Listas largas por partes:** `/estudiantes` y `/investigacion/acceso-abierto` cargan 50 filas y un «Ver más» (el
   patrón de `productos/lista.pagina_de_items`), con la búsqueda y los filtros en el servidor y en la dirección (se puede
   volver atrás o compartir el enlace). Los contadores de arriba siguen siendo del total. Meta: menos de 150 KB y 150 ms

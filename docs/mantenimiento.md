@@ -122,6 +122,10 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
   `pyproject.toml`: errores de Python, estilo básico y errores frecuentes de bugbear).
 - **Cada cambio con su prueba.** Una regla nueva, una prueba en `tests/`; un flujo nuevo de
   pantallas críticas, considere una en `tests/navegador/`.
+- **Ninguna pantalla escribe al abrirse** (PLAN §72): un GET solo lee; lo que se crea «cuando hace falta» se crea en la
+  acción que lo provoca (un POST, el cierre de una fase). Se exceptúa el registro que la regla pide (auditoría, consultas
+  de la lista de curso o de la evaluación docente). Una lista que puede pasar de un centenar de filas llega de 50 en 50
+  con `registros.cargar_mas` (o `cargar_mas_filas` en una tabla) y sus cifras de resumen siguen siendo del total.
 
 ## 4. Recetas
 
@@ -413,6 +417,26 @@ uv run python scripts/manual.py --solo-pdf   # tras corregir un capítulo: solo 
 - Cuando cambie una pantalla que sale en el manual, vuelva a tomar las capturas. Si cambian los permisos
   (`permisos.ACCIONES`), revise la matriz de privilegios del capítulo 3, que está escrita a mano.
 - El índice lleva números de página si está `pdftotext` (poppler); sin él, sale sin números.
+
+### 5.11 Medir el rendimiento y buscar escrituras en las lecturas
+
+`scripts/medir.py` arma la base del manual (o copia la que se indique) y recorre las pantallas con un cliente de pruebas,
+sin servidor. Córralo antes de un piloto o de una versión que toque listas, indicadores o informes; tarda unos minutos
+y no va en GitHub Actions.
+
+```sh
+uv run python scripts/medir.py                 # tiempo y tamaño de las pantallas principales (base del manual)
+uv run python scripts/medir.py --inflar        # con +5.000 productos, +3.000 estudiantes, +60.000 avisos, +80.000 auditorías
+uv run python scripts/medir.py --escrituras    # abre todas las pantallas (dirección, docente, estudiante) y lista las que escriben
+```
+
+- `--base copia.db` parte de una copia; nunca de `data/portal.db` directamente (el script se niega).
+- Referencia del 14-nov-2026 con `--inflar`: todas las pantallas bajo 200 ms y 180 KB (indicadores 159 ms, ficha
+  estadística 194 ms). Si una pasa de 300 ms con la escala real, primero busque consultas por fila (una por persona o por
+  producto) antes de pensar en guardar resultados.
+- `--escrituras` acepta solo las tablas de registro (`REGISTRO` en el script) y sale con código 1 si otra pantalla escribe.
+- No abra la base con el `sqlite3` de Python mientras la aplicación la tiene abierta en el mismo proceso: son dos copias
+  de SQLite y al cerrar una se pierden los bloqueos de la otra («disk I/O error» en apsw).
 
 ## 6. Problemas frecuentes
 

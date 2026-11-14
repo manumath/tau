@@ -1045,7 +1045,7 @@ async def post(auth, sess, pid: int, rid: int, archivo: UploadFile = None):
     contenido, err = await leer_archivo(archivo)
     if not err:
         try:
-            adjuntos.guardar("requisito_postulacion", r["fila"], archivo.filename, contenido, auth["id"])
+            adjuntos.guardar("requisito_postulacion", aux.fila_requisito(pid, rid)["id"], archivo.filename, contenido, auth["id"])
         except ValueError as e:
             err = str(e)
     add_toast(sess, err or "Documento subido.", "error" if err else "success")

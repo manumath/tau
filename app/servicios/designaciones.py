@@ -179,21 +179,19 @@ def _crear_designacion(iid: int, externo_id: int, categoria: str, postulacion_id
 
 
 def asegurar_designaciones(cid: int):
-    """Crea la designación de cada titular de la convocatoria (y de los invitados que aceptaron) que aún no la tenga."""
-    c = aux.obtener(cid)
-    if not aplica(c):
+    """Crea la designación de cada titular de la convocatoria que aún no la tenga (las de los invitados nacen al aceptar). La
+    llama `auxiliaturas` al cerrar una fase o resolver un empate, dentro de su transacción: ninguna pantalla escribe al abrirse."""
+    if not aplica(aux.obtener(cid)):
         return
-    with transaccion():
-        for it in aux.items(cid):
-            if it["fase"] != "concluido":
-                continue
-            for p in aux.en_concurso(it["id"]):
-                if p["estado"] == "titular":
-                    _crear_designacion(it["id"], p["externo_id"], "titular", postulacion_id=p["id"])
+    for it in aux.items(cid):
+        if it["fase"] != "concluido":
+            continue
+        for p in aux.en_concurso(it["id"]):
+            if p["estado"] == "titular":
+                _crear_designacion(it["id"], p["externo_id"], "titular", postulacion_id=p["id"])
 
 
 def designaciones(cid: int) -> list[dict]:
-    asegurar_designaciones(cid)
     filas = get_db().q("""SELECT d.*, pe.nombres, pe.apellidos, i.titulo AS item_titulo, i.horas FROM designacion_auxiliatura d
                           JOIN persona_externa pe ON pe.id = d.externo_id JOIN item_auxiliatura i ON i.id = d.item_id
                           WHERE i.convocatoria_id = ? ORDER BY i.titulo, d.categoria, pe.apellidos, pe.nombres""", [cid])

@@ -152,6 +152,15 @@ def test_calidad_sugiere_enlazar(par):
     assert {c["clave"]: c for c in calidad.revisar()}["preprints"]["n"] == 0
 
 
+def test_mis_pendientes_compara_solo_los_preprints_propios(par):
+    """PLAN §72: «Mis pendientes» no recorre los preprints de toda la base."""
+    inv, pre, art = par
+    otro = usuarios.por_email("admin@test.cl")["id"]
+    assert [(a["id"], b["id"]) for a, b in productos.preprints_sin_enlazar(uid=inv.uid)] == [(pre, art)]
+    assert productos.preprints_sin_enlazar(uid=otro) == []
+    assert [(a["id"], b["id"]) for a, b in productos.preprints_sin_enlazar()] == [(pre, art)]
+
+
 def test_cv_perfil_y_bibtex_listan_solo_la_publicada(par):
     inv, pre, art = par
     productos.enlazar_version(pre, art)

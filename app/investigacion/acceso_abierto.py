@@ -150,6 +150,11 @@ def de_investigador(uid: int, estado: str = "", anio: str = "") -> list[dict]:
             LEFT JOIN producto_acceso a ON a.producto_id = p.id
             WHERE p.estado_publicacion IN ('aceptado', 'publicado') AND t.nombre NOT IN ({marcas})
             ORDER BY p.anio DESC, a.texto IS NOT NULL, p.titulo""", [uid, *TIPOS_SIN_TEXTO])
+    return filtrar(filas, estado, anio)
+
+
+def filtrar(filas: list[dict], estado: str = "", anio: str = "") -> list[dict]:
+    """Las filas de `de_investigador` con la situación y el año pedidos (sin volver a consultar)."""
     if estado == "sin_declarar":
         filas = [f for f in filas if f["texto"] is None]
     elif estado in TEXTOS:
@@ -159,8 +164,8 @@ def de_investigador(uid: int, estado: str = "", anio: str = "") -> list[dict]:
     return filas
 
 
-def anios_de(uid: int) -> list[int]:
-    return sorted({f["anio"] for f in de_investigador(uid)}, reverse=True)
+def anios_de(uid: int, filas: list[dict] | None = None) -> list[int]:
+    return sorted({f["anio"] for f in (de_investigador(uid) if filas is None else filas)}, reverse=True)
 
 
 def sin_declarar(uid: int, hoy: date | None = None) -> list[dict]:

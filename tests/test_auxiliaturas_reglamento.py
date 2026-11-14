@@ -288,13 +288,26 @@ def test_no_mas_de_dos_materias_por_convocatoria(app, gente, convocatoria):
     assert aux.enviar(ps[2]) == []
 
 
+def test_ver_los_requisitos_no_escribe(app, gente, convocatoria):
+    """La fila de cada requisito nace al declarar o subir algo, no al abrir la postulación (PLAN §72)."""
+    _publicar(gente, convocatoria)
+    pid, _ = aux.postular(convocatoria["iid"], gente["Sofía"]["externo"])
+    antes = get_db().q("SELECT COUNT(*) n FROM postulacion_requisito")[0]["n"]
+    reqs = aux.requisitos_de(aux.postulacion(pid))
+    assert get_db().q("SELECT COUNT(*) n FROM postulacion_requisito")[0]["n"] == antes
+    assert all(not r["cumplido"] for r in reqs if r["acredita"] in ("documento", "declaracion") and not r["opcional"])
+    r = next(r for r in reqs if r["acredita"] == "declaracion")
+    aux.declarar(pid, r["id"], True)
+    assert next(x for x in aux.requisitos_de(aux.postulacion(pid)) if x["id"] == r["id"])["cumplido"]
+
+
 def test_un_requisito_opcional_no_impide_enviar(app, gente, convocatoria):
     from app.investigacion import adjuntos
     _publicar(gente, convocatoria)
     pid, _ = aux.postular(convocatoria["iid"], gente["Sofía"]["externo"])
     for r in aux.requisitos_de(aux.postulacion(pid)):
         if r["acredita"] == "documento" and not r["opcional"]:
-            adjuntos.guardar("requisito_postulacion", r["fila"], "doc.pdf", b"%PDF-1.4\n" + b"0" * 64, gente["dir"]["id"])
+            adjuntos.guardar("requisito_postulacion", aux.fila_requisito(pid, r["id"])["id"], "doc.pdf", b"%PDF-1.4\n" + b"0" * 64, gente["dir"]["id"])
         elif r["acredita"] == "declaracion":
             aux.declarar(pid, r["id"], True)
     aux.guardar_propuesta(pid, "Prácticas semanales")

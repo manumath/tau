@@ -568,7 +568,8 @@ def otras_postulaciones(externo_id: int, convocatoria_id: int, excluir_pid: int)
                       [externo_id, convocatoria_id, excluir_pid])[0]["n"]
 
 
-def _fila_requisito(pid: int, rid: int) -> dict:
+def fila_requisito(pid: int, rid: int) -> dict:
+    """La fila de la postulación para el requisito; la crea si falta (solo desde un POST)."""
     filas = get_db().q("SELECT * FROM postulacion_requisito WHERE postulacion_id = ? AND requisito_id = ?", [pid, rid])
     if filas:
         return filas[0]
@@ -576,12 +577,14 @@ def _fila_requisito(pid: int, rid: int) -> dict:
 
 
 def requisitos_de(p: dict) -> list[dict]:
-    """Requisitos de la convocatoria con su estado para la postulación: cumplido, documentos y detalle."""
+    """Requisitos de la convocatoria con su estado para la postulación: cumplido, documentos y detalle. Solo lee: la fila de
+    `postulacion_requisito` nace cuando el estudiante declara o sube algo (`fila` es None mientras tanto)."""
     from app.investigacion import adjuntos
+    filas = {f["requisito_id"]: f for f in get_db().q("SELECT * FROM postulacion_requisito WHERE postulacion_id = ?", [p["id"]])}
     res = []
     for r in requisitos(p["convocatoria_id"]):
-        fila = _fila_requisito(p["id"], r["id"])
-        docs = adjuntos.listar("requisito_postulacion", fila["id"])
+        fila = filas.get(r["id"]) or {"id": None, "declarado": 0}
+        docs = adjuntos.listar("requisito_postulacion", fila["id"]) if fila["id"] else []
         if r["acredita"] == "documento":
             cumplido, detalle = bool(docs), (", ".join(d["nombre"] for d in docs) or "falta el documento")
         elif r["acredita"] == "declaracion":
@@ -597,7 +600,7 @@ def requisitos_de(p: dict) -> list[dict]:
 
 
 def declarar(pid: int, rid: int, valor: bool):
-    fila = _fila_requisito(pid, rid)
+    fila = fila_requisito(pid, rid)
     get_db().execute("UPDATE postulacion_requisito SET declarado = ? WHERE id = ?", [int(valor), fila["id"]])
 
 
@@ -848,6 +851,8 @@ def resolver_empate(it: dict, ganadores: list[int]) -> list[str]:
 
 
 def _concluir_si_corresponde(cid: int):
+    from app.servicios import designaciones     # importación diferida: designaciones importa este módulo
+    designaciones.asegurar_designaciones(cid)    # los titulares de cada ítem concluido (en la misma transacción)
     its = items(cid)
     if its and all(i["fase"] == "concluido" for i in its) and not any(
             p["estado"] == "empate" for i in its for p in en_concurso(i["id"])):
