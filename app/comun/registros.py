@@ -54,7 +54,7 @@ def ruta_registrable(ruta: str) -> str:
 
 
 # Rutas de envío anónimo (PLAN §67 y §68): su registro no lleva el usuario, para que el registro no desanonimice al estudiante.
-RUTAS_ANONIMAS = ("/estudiante/buzon/anonima", "/estudiante/evaluacion")
+RUTAS_ANONIMAS = ("/estudiante/buzon/anonima", "/estudiante/evaluacion", "/piloto/comentar")
 
 
 def _usuario(scope) -> str:

@@ -80,6 +80,8 @@ SMTP_STARTTLS = os.environ.get("PORTAL_SMTP_STARTTLS", "1") == "1"
 
 # Modo solo lectura (mudanzas y mantenimiento): se puede consultar, pero ningún cambio se guarda.
 SOLO_LECTURA = os.environ.get("PORTAL_SOLO_LECTURA", "0") == "1"
+# Piloto con usuarios reales (PLAN §72, etapa 9): cada pantalla lleva «Comentar esta pantalla».
+PILOTO = os.environ.get("PORTAL_PILOTO", "0") == "1"
 # Informes que se envían solos a las direcciones (app.calidad.programados). Las pruebas los apagan.
 INFORMES_PROGRAMADOS = os.environ.get("PORTAL_INFORMES_PROGRAMADOS", "1") == "1"
 # Registros (app/comun/registros.py): «archivo» (consola y data/registros/portal.log) o «consola».

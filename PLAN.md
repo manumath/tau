@@ -4155,7 +4155,22 @@ en cada módulo de `FORMULARIOS` y comprueba la página sin sesión. Decisiones 
   contradigan.
 - Una prueba recorre la lista de formularios con datos personales y exige el aviso.
 
-### Etapa 9: piloto con usuarios reales
+### Etapa 9 (hecha, 14-nov-2026): piloto con usuarios reales
+Migración 0094 (`comentario_piloto`: ruta, rol, texto y día; sin cuenta ni hora). `app/comun/piloto.py` y
+`app/comun/rutas/piloto.py`: con `PORTAL_PILOTO=1`, el pie de cada pantalla lleva **Comentar esta pantalla**
+(`/piloto/comentar`, abierta también a las cuentas de estudiante y anónima en los registros de peticiones); la
+Administración del sistema (`ver_auditoria`) ve en `/admin/piloto` los comentarios, los marca como atendidos con una nota y
+ve la **adopción** por rol y semana (personas que entraron / que registraron algo, de la auditoría; consultar no cuenta como
+registrar). `docs/piloto.md` (grupos escalonados según la decisión del usuario, datos previos y su responsable, cinco
+tareas por rol, encuesta SUS de cierre con el módulo de encuestas), `docs/gobernanza.md` (DTIC, titularidad, alojamiento,
+respaldo, privacidad) y `scripts/restaurar_prueba.sh` (simulacro sobre una base temporal; los dos primeros ensayos, con
+una copia y un paquete, quedan en mantenimiento §5.3; falta el de la réplica del servidor). Decisiones tomadas al
+implementarla (por confirmar):
+- El comentario **no guarda la cuenta** (ni en la tabla ni en los registros de peticiones): así nadie duda en criticar.
+  El costo es que no se puede preguntar a quién comentó; si hace falta, la persona puede escribir su correo en el texto.
+- Los números y los enlaces largos de la dirección se reemplazan por «:id», para que la ruta no identifique un registro.
+- La adopción cuenta a una persona en cada uno de sus roles; sin rol, como «Estudiantes» o «Docentes e investigadores».
+
 - **Comentarios en el sistema:** un enlace «Comentar esta pantalla» en el pie (solo durante el piloto, con
   `PORTAL_PILOTO=1`) guarda el texto, la ruta sin parámetros y el rol, no los datos de la pantalla; la Administración los
   ve en una lista y los marca como atendidos.

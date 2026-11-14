@@ -40,6 +40,13 @@ la asignación docente y la carga horaria.
 - **Tema claro u oscuro:** menú con su nombre → «Tema»: *Claro*, *Oscuro* o *Sistema* (sigue la
   configuración de su computadora o teléfono). La elección se guarda en ese navegador.
 
+## Comentar una pantalla (durante el piloto)
+
+Mientras dure el piloto, al pie de cada pantalla aparece **Comentar esta pantalla**. Escriba qué le costó, qué no
+entendió o qué le faltó: se guarda su comentario con la pantalla y su rol, **sin su nombre**. La Administración del
+sistema los lee en **Administración → Piloto y adopción**, junto con cuántas personas de cada rol entraron y cuántas
+registraron algo cada semana (sin nombres), y marca cada comentario como atendido con una nota de lo que se hizo.
+
 ## Sus datos y su privacidad
 
 Cada formulario que pide datos personales (el consentimiento del estudiante, las encuestas, la evaluación docente, el

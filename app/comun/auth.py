@@ -20,7 +20,7 @@ RUTAS_PUBLICAS = [r"/login", r"/favicon\.ico", r"/salud",
 # Rutas permitidas mientras la contraseña es temporal.
 RUTAS_CAMBIO_PASS = {"/cambiar-password", "/logout"}
 # Lo único que ve una cuenta solo de estudiante: su seguimiento, sus avisos y salir (PLAN §49).
-RUTAS_ESTUDIANTE = r"/(estudiante|avisos|logout)(/.*)?"
+RUTAS_ESTUDIANTE = r"/(estudiante|avisos|logout|piloto)(/.*)?"   # /piloto: comentarios del piloto (PLAN §72)
 
 
 # Rutas /admin: la primera regla cuyo patrón coincide con la ruta completa decide qué acción se
@@ -35,6 +35,7 @@ REGLAS_ADMIN = [
     (r"/admin/usuarios(/lista|/filas)?", ("administrar_cuentas", "gestionar_vinculos", "gestionar_fichas")),
     (r"/admin/usuarios/.+", ("administrar_cuentas",)),
     (r"/admin/auditoria(/.+)?", ("ver_auditoria",)),
+    (r"/admin/piloto(/.+)?", ("ver_auditoria",)),
     (r"/admin/(revistas|lineas|catalogos)(/.+)?", ("gestionar_catalogos",)),
     (r"/admin/propuestas/\d+/plazo(/.+)?", ("gestionar_convocatoria",)),
     (r"/admin/propuestas(/.+)?", ("decidir_propuestas",)),

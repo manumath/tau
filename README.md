@@ -19,6 +19,8 @@ el servicio `portal` y la aplicación de Fly.io).
 | [Importaciones](docs/importaciones.md) | Todas las cargas de datos (CSV, DOI, arXiv, BibTeX, OpenAlex): campos, claves de unión y orden de carga |
 | [Despliegue](docs/despliegue.md) | Instalación en un servidor propio, correo, respaldos, mudanzas y actualizaciones |
 | [Despliegue en Fly.io](docs/despliegue-fly.md) | Alternativa sin servidor propio, y cómo mudarse después a uno |
+| [Guía del piloto](docs/piloto.md) | Piloto con usuarios reales: grupos escalonados, datos previos y su responsable, tareas por rol y opiniones |
+| [Gobernanza](docs/gobernanza.md) | Lo que se acuerda fuera del código: exportaciones de la DTIC, titularidad, alojamiento de datos, respaldo |
 | [PLAN.md](PLAN.md) | Diseño, reglas de negocio, modelo de datos, estado, decisiones y pendientes |
 
 ## Qué hace
@@ -240,6 +242,7 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_SMTP_HOST` / `_PUERTO` / `_USUARIO` / `_CLAVE` | `localhost` / `587` / — / — | Servidor SMTP |
 | `PORTAL_SMTP_STARTTLS` | `1` | `0` para desactivar STARTTLS |
 | `PORTAL_SOLO_LECTURA` | `0` | `1` durante mudanzas o mantenimiento: se consulta, pero no se guardan cambios |
+| `PORTAL_PILOTO` | `0` | `1` durante el piloto con usuarios reales: cada pantalla lleva «Comentar esta pantalla» (`docs/piloto.md`) |
 | `PORTAL_INFORMES_PROGRAMADOS` | `1` | `0` desactiva los informes que se envían solos (las pruebas lo usan) |
 | `PORTAL_REGISTROS` | `archivo` | `archivo`: consola y `data/registros/portal.log` (con rotación); `consola`: solo consola |
 | `PORTAL_AVISO_ERRORES` | (vacío) | Correo que recibe un aviso de cada error del servidor (a lo más uno cada 15 min) |

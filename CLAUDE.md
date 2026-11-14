@@ -9,7 +9,7 @@ técnicos (`PORTAL_*`, `portal.db`, servicio `portal`, app de Fly.io) conservan 
 Léase con: [README.md](README.md) (estructura, configuración, convenciones HTMX y seguridad),
 [PLAN.md](PLAN.md) (diseño, reglas de negocio y **todas las decisiones del instituto con fecha**;
 §22–25 son la ampliación actual), [docs/guia-de-uso.md](docs/guia-de-uso.md),
-[docs/mantenimiento.md](docs/mantenimiento.md).
+[docs/mantenimiento.md](docs/mantenimiento.md), [docs/piloto.md](docs/piloto.md) y [docs/gobernanza.md](docs/gobernanza.md).
 
 ## Idioma y tono
 
@@ -136,7 +136,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   participa, detalle de extensión y de gestión del vínculo, o «Carrera de Matemática».
 - Fecha de nacimiento: la ve la administración y la propia persona; los informes usan tramos.
 - **Cuentas de estudiante (PLAN §49):** sin contraseña, ingresan por enlace al correo (`/acceso`) y solo llegan a
-  `/estudiante`, `/avisos` y `/logout` (`auth.RUTAS_ESTUDIANTE`): una ruta nueva del personal queda cerrada para ellos
+  `/estudiante`, `/avisos`, `/logout` y `/piloto` (comentarios del piloto) (`auth.RUTAS_ESTUDIANTE`): una ruta nueva del personal queda cerrada para ellos
   sin tocar nada, pero toda ruta nueva de `/estudiante` debe sacar la ficha de `estudiantes.cuenta_de(auth["id"])`, nunca de
   un id en la dirección. Si la dirección lleva el id de un trámite, una postulación o un ítem (PLAN §58), compruebe que es de
   esa ficha o que el estudiante integra ese tribunal. Se unen a la ficha por `cuenta_estudiante`, no por `persona_externa.usuario_id`.

@@ -129,6 +129,7 @@ def menu(auth: dict) -> list[tuple[str | None, list[dict]]]:
         administracion.append(_item("usuarios", "Usuarios", "/admin/usuarios", "users"))
     if puede("ver_auditoria"):
         administracion.append(_item("auditoria", "Auditoría", "/admin/auditoria", "scroll-text"))
+        administracion.append(_item("piloto", "Piloto y adopción", "/admin/piloto", "message-square-text"))
     if puede("gestionar_catalogos"):
         administracion += [_item("revistas", "Catálogo de revistas", "/admin/revistas", "library"),
                            _item("lineas", "Líneas de investigación", "/admin/lineas", "route"),

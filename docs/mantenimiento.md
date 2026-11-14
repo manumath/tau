@@ -131,7 +131,7 @@ Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
 
 ### 4.1 Agregar una migración
 
-1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0093). Un
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy la última es la 0094). Un
    comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
 2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
    que SQLite no admite, cree la tabla nueva, copie y renombre.
@@ -313,6 +313,18 @@ Dos mecanismos, que se complementan:
 **Repita el ensayo cada semestre** (y después de cambiar el procedimiento de respaldo) sobre una
 copia, nunca sobre la base en uso. Un respaldo que nunca se restauró no es un respaldo. Anote aquí
 la fecha y el resultado.
+
+**Simulacro automático** (PLAN §72, etapa 9): `scripts/restaurar_prueba.sh` restaura la última copia en una base temporal,
+comprueba la integridad (`PRAGMA integrity_check`), las claves foráneas y la versión del esquema, y cuenta las filas de cada
+tabla. Sin argumentos usa la réplica de Litestream (`LITESTREAM_REPLICA_URL` o `BUCKET_NAME`, con `litestream` instalado);
+también acepta un paquete (`.tar.gz`) o una copia (`.db`). Se niega a usar `data/portal.db`. Termina con código 0 solo si
+todo está bien.
+
+| Fecha | Origen | Resultado |
+|---|---|---|
+| 14-nov-2026 | Copia de la base de desarrollo (`.db`, esquema 92) | Integridad ok, 0 claves rotas; filas contadas |
+| 14-nov-2026 | Paquete exportado de esa copia (`.tar.gz`) | Importado con las migraciones hasta la 94; integridad ok |
+| — | Réplica de Litestream del servidor | Pendiente: hacerlo antes del piloto |
 
 ### 5.4 Modo solo lectura
 

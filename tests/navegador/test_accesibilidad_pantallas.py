@@ -88,7 +88,7 @@ PANTALLAS = {
                   "/calidad/mejora/acciones/1", "/calidad/mejora/actividades/1",
                   "/calidad/mejora/cortes", "/calidad/mejora/cortes/1", "/admin/revistas", "/admin/lineas", "/admin/catalogos",
                   "/personas/externos"],
-    "admin": ["/admin/usuarios", "/admin/auditoria", "/informes/calidad"],
+    "admin": ["/admin/usuarios", "/admin/auditoria", "/admin/piloto", "/informes/calidad"],
 }
 
 
