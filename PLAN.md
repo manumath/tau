@@ -3908,3 +3908,154 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
 - **Fuera de este plan** (decisión del usuario del 14-nov-2026): el seguimiento posterior a la designación —ficha de asistencia mensual (formulario 6), informes de actividades, evaluación,
   remoción, cese y pagos (arts. 29 a 47)—, que será el §71.
 
+
+## 72. Consolidación: plan de mejora completo, rendimiento, brechas del plan y piloto (propuesta, 14-nov-2026)
+
+Tras la evaluación global del 14-nov-2026 (TAU frente al informe de autoevaluación y su plan de mejora 2026–2030), el
+usuario aceptó **dejar de agregar módulos** y consolidar lo que existe. Este plan ordena ese trabajo pensando en quien
+usa el sistema: cada etapa debe dejar menos clics, menos datos escritos dos veces y pantallas que cargan rápido en el
+teléfono.
+
+### Principios de este plan
+- **Congelamiento de módulos:** hasta concluir el piloto (etapa 9) no se agrega ningún módulo. Una pantalla nueva solo
+  entra si la pide un usuario del piloto y tiene un responsable de sus datos. Se anota en CLAUDE.md.
+- **Lo que TAU puede calcular no se escribe a mano:** si una actividad del plan se mide con un indicador del SIAC, su
+  línea base y su valor actual salen del indicador.
+- **Cada persona ve primero lo suyo:** el responsable de una actividad la encuentra en «Mis pendientes», no buscándola
+  en el plan completo.
+- **Una sola fuente por dato:** TAU lee de SIA y de los sistemas centrales por archivo (con el RU como clave) y no los
+  duplica; la correspondencia es de AYNI BPM.
+- **Corrección de la evaluación:** el mantenimiento periódico **ya corre en un hilo aparte** (`main._mantenimiento`); lo
+  único que depende de la petición es que alguien entre. Con la máquina de Fly.io que se apaga sola eso es razonable y no
+  se cambia.
+
+### Etapa 1: rendimiento y lecturas sin efectos
+- **Listas largas por partes:** `/estudiantes` y `/investigacion/acceso-abierto` cargan 50 filas y un «Ver más» (el
+  patrón de `productos/lista.pagina_de_items`), con la búsqueda y los filtros en el servidor y en la dirección (se puede
+  volver atrás o compartir el enlace). Los contadores de arriba siguen siendo del total. Meta: menos de 150 KB y 150 ms
+  con 3.000 estudiantes.
+- **Preprints:** «Mis pendientes» del investigador compara solo los productos de esa persona
+  (`productos.preprints_sin_enlazar(uid=…)`), y la comparación global de Calidad de datos descarta antes los pares de
+  largo de título muy distinto. Meta: «Mis pendientes» bajo 50 ms en la base inflada.
+- **Ningún GET escribe:** `designaciones.asegurar_designaciones` pasa al momento en que se publican los resultados o se
+  acepta una invitación (idempotente, con la misma prueba); se revisa `requisitos_de` y cualquier otro GET con
+  `insert`/`update` (una prueba lo busca en las funciones que llaman las rutas GET).
+- **Indicadores:** se miden de nuevo tras lo anterior; solo si siguen sobre 300 ms con la escala real se guarda el
+  cálculo por marco con hora («Calculado a las 10:42 · Recalcular»).
+- **Guardia:** `scripts/inflar.py` arma la base inflada sobre una copia y `scripts/medir.py` mide las pantallas
+  principales; `docs/mantenimiento.md` dice cuándo correrlos. No va en GitHub Actions (tarda).
+- Arreglo de paso: `rutas/mejora._fecha` usa `formato.fecha`, no «dd/mm/aaaa».
+
+### Etapa 2: plan de mejora con actividades (modelo)
+Retoma lo postergado en el §61. Migración nueva:
+- **`accion_mejora`** gana `codigo` («A4»), `objetivo` y `eje` (opcional). La prioridad se muestra como P1, P2 y P3
+  (alta, media y baja; los valores guardados no cambian).
+- **`actividad_mejora`**: acción, `codigo` («4.2»), descripción, línea base, meta (texto y, si es numérica, valor),
+  indicador del SIAC opcional, responsable en TAU y unidad responsable en texto (DEAGEC, DTIC… cuando no es una persona
+  del sistema), inicio, plazo, presupuesto en Bs y fuente, medio de verificación, medio de difusión, estado (los mismos
+  que la acción) y fecha de cumplimiento o motivo de cancelación.
+- **`reprogramacion_mejora`**: actividad, plazo anterior y nuevo, causa (obligatoria), evidencia opcional, quién y cuándo.
+- **`avance_accion`** gana `actividad_id`: el avance se registra en la actividad; la acción suma lo de sus actividades.
+- **Plan aprobado:** el marco guarda la resolución y la fecha de aprobación del plan. Antes de aprobarlo, los plazos se
+  editan libremente; después, **solo por reprogramación** (como las gestiones activas del §66).
+- **Avance calculado, no guardado:** el de la actividad es el último porcentaje o, si tiene indicador, la distancia de la
+  línea base a la meta; el de la acción, el promedio de sus actividades vigentes. **Semáforo:** cumplida, al día, en
+  riesgo (pasó más de la mitad del plazo con menos de la mitad del avance, o vence en 30 días) y vencida.
+- Las acciones existentes quedan como acciones sin actividades y siguen funcionando.
+
+### Etapa 3: pantallas del plan
+- **Tablero** (`/calidad/mejora`): una tarjeta por acción con código, prioridad, barra de avance, semáforo y cuántas
+  actividades hay en cada estado; filtros por prioridad, estado, responsable y año, en la dirección. Arriba, cuatro
+  cifras que filtran (al día, en riesgo, vencidas, cumplidas), como el tablero de indicadores.
+- **Cronograma:** una tabla por año (2026–2030) con las actividades que vencen en cada trimestre. Sin gráfico de Gantt
+  ni JavaScript nuevo: se lee en el teléfono como tarjetas.
+- **Ficha de la acción:** sus actividades en una tabla plegable por estado; cada fila abre su ficha en un modal.
+- **Ficha de la actividad:** datos, avances con evidencia, historial de reprogramaciones y botones «Registrar avance»,
+  «Reprogramar», «Dar por cumplida» y «Cancelar». Reprogramar pide la causa y muestra el plazo anterior tachado.
+- **Quién hace qué:** la Dirección de Carrera gestiona el plan (`gestionar_plan_mejora`); el responsable registra los
+  avances de lo suyo y **pide** una reprogramación, que la Dirección aprueba o rechaza (ver las preguntas); la Comisión
+  ve todo y comenta en los cortes.
+
+### Etapa 4: carga de las 15 acciones y 57 actividades
+- `/calidad/mejora/importar`: un CSV (una fila por actividad, con las columnas de la acción repetidas) con vista previa,
+  avisos y confirmación, como las demás cargas. Descarga de una plantilla vacía.
+- Los responsables se asignan después en TAU: el archivo trae la unidad en texto y la pantalla propone a la persona que
+  hoy ocupa ese cargo (Dirección de Carrera, Dirección del Instituto, Coordinación) cuando lo encuentra.
+- Las cifras de línea base que ya calcula un indicador del SIAC se enlazan a él en la vista previa («Ligar al
+  indicador Tasa de titulación oportuna»), y la cifra del archivo queda solo como referencia.
+- El archivo del plan de la Carrera se arma del apéndice del informe sin nombres de agencias (ver las preguntas).
+
+### Etapa 5: cortes de seguimiento e informe
+- **Corte** (`corte_mejora` y `corte_actividad`): trimestral (Comisión), anual (Dirección de Carrera) o bienal
+  (preparado en TAU para la DEAGEC). Abrir un corte **congela** el estado, el avance y el semáforo de cada actividad en ese
+  momento: el informe se puede volver a imprimir igual años después.
+- **Flujo en tres pasos:** (1) abrir el corte con su fecha; (2) TAU muestra primero lo que pide atención (vencidas, en
+  riesgo, sin avance desde el corte anterior) y la Comisión comenta solo eso; lo demás va con su último avance; (3)
+  cerrar el corte genera el informe en PDF y lo guarda como **evidencia** del criterio de gestión de la calidad.
+- **Informe del corte:** resumen (cifras por semáforo y por prioridad, comparadas con el corte anterior), tabla por
+  acción y actividad, reprogramaciones del periodo con su causa y comentarios de la Comisión.
+- **Avisos:** al responsable, 30 y 7 días antes del plazo (como hoy en las acciones, ahora por actividad) y 15 días
+  antes de cada corte trimestral si su actividad no tiene avance desde el último.
+- El XLSX del plan se amplía con las actividades y las reprogramaciones.
+
+### Etapa 6: «Mi parte del plan» en los pendientes
+- En «Mis pendientes» del docente y del investigador (y en el inicio de quien no los tiene): las actividades del plan a
+  cargo de la persona, con plazo, semáforo y un botón que abre «Registrar avance» en un modal sin salir de la pantalla.
+- En el calendario personal (y su `.ics`): los plazos de esas actividades y las fechas de los cortes.
+
+### Etapa 7: brechas baratas del plan (A4.4 y A4.5)
+- **Vacantes de admisión (A4.4):** la Dirección de Carrera registra por gestión y programa las vacantes ofertadas y los
+  postulantes; los admitidos salen de las cohortes cargadas (no se escriben dos veces). Indicadores: cobertura de
+  vacantes y relación postulantes/vacantes, en la ficha estadística y en la página pública.
+- **Rendimiento por asignatura (A4.5), solo agregados:** carga del CSV agregado del SSA por asignatura y gestión
+  (inscritos, aprobados, reprobados, abandonos), sin RU, nombres ni notas. Indicadores de aprobación y abandono por
+  asignatura y por línea formativa; una celda con menos de 5 inscritos se muestra como «menos de 5» y no entra en un
+  desglose que permita restarla.
+
+### Etapa 8: aviso de privacidad (A15.2)
+- `layout.aviso_privacidad(finalidad, quien_ve, conservacion)`: una franja breve sobre el botón de enviar de cada
+  formulario que pide datos personales (consentimiento del estudiante, postulaciones, encuestas, egresados, directorio,
+  empleadores, buzón, perfil), con enlace a `/privacidad`.
+- `/privacidad` (pública): qué datos guarda TAU por módulo, para qué, quién los ve, cuánto se conservan y a quién
+  dirigirse, en lenguaje llano. Se arma de una tabla en el código, la misma que usa el aviso, para que no se
+  contradigan.
+- Una prueba recorre la lista de formularios con datos personales y exige el aviso.
+
+### Etapa 9: piloto con usuarios reales
+- **Comentarios en el sistema:** un enlace «Comentar esta pantalla» en el pie (solo durante el piloto, con
+  `PORTAL_PILOTO=1`) guarda el texto, la ruta sin parámetros y el rol, no los datos de la pantalla; la Administración los
+  ve en una lista y los marca como atendidos.
+- **Encuesta de cierre:** con el módulo de encuestas que ya existe (anónima, escala SUS de 10 preguntas y dos abiertas):
+  no hace falta código nuevo.
+- **Adopción:** una tabla en `/admin` con, por rol y por semana, cuántas personas entraron y cuántas registraron algo,
+  sacada de la auditoría existente (sin nombres).
+- **Guía del piloto** (`docs/piloto.md`): 3 a 5 personas por rol, cinco tareas por rol con lo que se espera, cuatro
+  semanas, qué datos reales se cargan antes (personas, plan de estudios, plan de mejora) y quién es responsable de cada
+  dato.
+- **Respaldo probado:** `scripts/restaurar_prueba.sh` baja la última copia, la restaura en una base temporal, corre las
+  comprobaciones de integridad y cuenta filas por tabla; el procedimiento y el último simulacro quedan en mantenimiento.
+- **Gobernanza** (`docs/gobernanza.md`, documento, no código): acuerdo con la DTIC sobre las exportaciones de SIA que
+  TAU consume; titularidad del software (consulta a la Dirección); dónde se alojan los datos de los estudiantes frente a
+  la Política TIC de la UMSA (por verificar; alternativa: un servidor de la DTIC).
+
+### Etapa 10: navegador, manual y documentación
+- Pantallas nuevas en `test_accesibilidad_pantallas` (claro y oscuro); flujos en Chrome: cargar el plan, registrar un
+  avance desde «Mis pendientes», reprogramar y cerrar un corte.
+- Manual: capítulo del plan de mejora reescrito con capturas sobre el plan de ejemplo de `scripts/manual.py`; guía de
+  uso, CLAUDE.md (congelamiento y reglas del plan) y mantenimiento.
+
+### Orden y commits
+Un commit por etapa. Las etapas 1 y 2 no dependen entre sí; 3 a 6 van en orden; 7 y 8 son independientes del plan; 9
+necesita las anteriores; 10 cierra. Estimación honesta: 1, 7 y 8 son cortas; 2 a 6 son el grueso.
+
+### Decisiones del usuario (14-nov-2026)
+1. El archivo del plan de la Carrera (15 acciones, 57 actividades) **se versiona** en `datos/calidad/`, sin nombres de
+   agencias ni datos personales.
+2. **Reprogramación:** el responsable la pide con la causa y la Dirección de Carrera la aprueba o la rechaza; queda el
+   historial de ambas cosas.
+3. **Rendimiento por asignatura:** se guardan solo los agregados del SSA por asignatura y gestión, sin RU ni notas, con
+   el mínimo de 5.
+4. **Piloto:** entran todos los roles (direcciones y Comisión, docentes e investigadores, estudiantes y Coordinación
+   académica). Como son muchos a la vez, la guía del piloto los escalona: primero direcciones y Comisión con el plan de
+   mejora (semana 1), luego Coordinación y docentes e investigadores (semana 2) y al final estudiantes (semana 3), con
+   las cuatro semanas de uso contadas desde que entra cada grupo.
