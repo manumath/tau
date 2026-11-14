@@ -209,6 +209,8 @@ def _plan_de_mejora(emmy, direccion_id):
     t = am.obtener(am.crear(aid, x, direccion_id))
     am.registrar_avance(t, {"texto": "Primer taller dictado.", "fecha": hoy.isoformat(), "porcentaje": 30,
                             "evidencia_id": None}, emmy)
+    from app.calidad import cortes_mejora
+    assert cortes_mejora.abrir(m["id"], "trimestral", hoy.isoformat(), direccion_id)[0] == 1   # corte 1, abierto
 
 
 

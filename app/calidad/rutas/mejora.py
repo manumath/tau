@@ -141,6 +141,8 @@ def get(auth, ver: str = "", prioridad: str = "", responsable: str = "", anio: s
         Div(Div(H2("Plan de mejora"), P(m["nombre"], " · versión ", m["version"], cls=TextPresets.muted_sm)),
             Div(A(UkIcon("calendar-range", height=14, width=14), "Cronograma", href=f"{BASE}/cronograma",
                   cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1"),
+                A(UkIcon("flag", height=14, width=14), "Cortes", href=f"{BASE}/cortes",
+                  cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1") if ve else "",
                 A(UkIcon("award", height=14, width=14), "Evaluaciones externas", href=f"{BASE}/externas",
                   cls="uk-btn uk-btn-default uk-btn-sm inline-flex items-center gap-1") if ve else "",
                 A(UkIcon("list-checks", height=14, width=14), "Debilidades de la autoevaluación",

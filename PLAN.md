@@ -4056,7 +4056,29 @@ informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se gu
   indicador Tasa de titulación oportuna»), y la cifra del archivo queda solo como referencia.
 - El archivo del plan de la Carrera se arma del apéndice del informe sin nombres de agencias (ver las preguntas).
 
-### Etapa 5: cortes de seguimiento e informe
+### Etapa 5 (hecha, 14-nov-2026): cortes de seguimiento e informe
+- **Migración 0092** (`cortes-del-plan-de-mejora`): `corte_mejora` y `corte_actividad` (copia de los textos, estado,
+  avance, semáforo, último avance, por qué pide atención y comentario). No cambia datos existentes; probada sobre una
+  copia de la base de desarrollo (91 → 92).
+- **`app/calidad/cortes_mejora.py`** y `/calidad/mejora/cortes`: abrir (tipo y fecha, no futura; uno abierto a la vez),
+  comentar lo que pide atención (vencidas, en riesgo, sin avance desde el corte cerrado anterior), cerrar (conclusión y
+  criterio del marco; por omisión, el del indicador «Acciones del plan de mejora cumplidas en plazo») y descartar uno
+  abierto. Abren, comentan y cierran quienes tienen `registrar_juicios_calidad` (Dirección de Carrera y Comisión de
+  calidad); lo ven quienes tienen `ver_plan_mejora`. El tipo (trimestral, anual, bienal) es una etiqueta: no limita quién.
+- **Informe del corte:** página imprimible con membrete (resumen por semáforo y prioridad con la diferencia respecto del
+  corte anterior, lo que pide atención con su comentario, las demás actividades, reprogramaciones del periodo y
+  conclusión) y XLSX. **Diferencia con lo planificado:** al cerrar se guarda como evidencia el **XLSX**, no un PDF: TAU no
+  genera PDF en el servidor (los informes se imprimen desde el navegador, PLAN §55); el PDF se obtiene con «Imprimir /
+  Guardar PDF» de la misma página, que no cambia porque el corte está congelado.
+- **Avisos** (`cortes_mejora.avisar`, en el mantenimiento diario): al responsable de cada actividad 30 y 7 días antes del
+  plazo, y 15 días antes del fin de cada trimestre si no tiene avance desde el último corte cerrado. Una acción con
+  actividades ya no avisa por su cuenta (avisan sus actividades).
+- El XLSX del plan suma las hojas «Actividades» y «Reprogramaciones».
+- La descripción de una actividad cargada del plan lleva los recursos en un párrafo aparte: listas y títulos muestran solo
+  el primero (`am.titulo`) y la ficha muestra el resto como «Recursos».
+- Pruebas: `tests/test_cortes_mejora.py`.
+
+**Lo planificado:**
 - **Corte** (`corte_mejora` y `corte_actividad`): trimestral (Comisión), anual (Dirección de Carrera) o bienal
   (preparado en TAU para la DEAGEC). Abrir un corte **congela** el estado, el avance y el semáforo de cada actividad en ese
   momento: el informe se puede volver a imprimir igual años después.
@@ -4068,6 +4090,9 @@ informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se gu
 - **Avisos:** al responsable, 30 y 7 días antes del plazo (como hoy en las acciones, ahora por actividad) y 15 días
   antes de cada corte trimestral si su actividad no tiene avance desde el último.
 - El XLSX del plan se amplía con las actividades y las reprogramaciones.
+- La hoja imprimible (`.hoja`) usa siempre los colores del tema claro, también en modo oscuro (es papel blanco):
+  `scripts/tema_marca.py` redefine las variables del tema dentro de ella. Lo detectó la prueba de accesibilidad con la
+  hoja del corte, la primera que lleva formularios e insignias.
 
 ### Etapa 6: «Mi parte del plan» en los pendientes
 - En «Mis pendientes» del docente y del investigador (y en el inicio de quien no los tiene): las actividades del plan a

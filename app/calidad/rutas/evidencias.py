@@ -20,6 +20,8 @@ from app.investigacion import adjuntos
 
 rt = APIRouter()
 BASE = "/calidad/evidencias"
+# Informes que el sistema guarda solo (no se eligen en «Guardar informe»): el del cierre de un corte (PLAN §72).
+OTROS_INFORMES = {"corte_mejora": "Corte del plan de mejora"}
 INFORMES = {"indicadores": "Tablero de indicadores de calidad", "marco": "Marco de calidad",
             "informe_idi": "Informe de I+D+i", "cuerpo_academico": "Indicadores del cuerpo académico"}
 TONO = {"documento": ("gris", "file-text"), "enlace": ("azul", "link"), "informe": ("verde", "file-spreadsheet")}
@@ -342,7 +344,7 @@ def get(auth, eid: int, criterio: str = ""):
                      cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
                  _dato("Enlace", A(e["url"], href=e["url"], target="_blank", rel="noopener noreferrer",
                                    cls="text-primary hover:underline")) if e["url"] else "",
-                 _dato("Informe", f"{INFORMES.get(e['informe'], e['informe'])} ({e['parametros']})")
+                 _dato("Informe", f"{INFORMES.get(e['informe']) or OTROS_INFORMES.get(e['informe'], e['informe'])} ({e['parametros']})")
                  if e["informe"] else "",
                  Div(_dato("Archivo", descarga(f"{e['nombre_archivo']} ({adjuntos.tamano_texto(e['tamano'])})",
                                                f"{BASE}/{eid}/archivo")),

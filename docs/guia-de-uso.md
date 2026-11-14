@@ -1244,7 +1244,16 @@ En **Calidad → Plan de mejora**:
    - las filas con errores, que se omiten. Las acciones cuyo código ya está en el plan también se omiten: cargar dos
      veces el mismo archivo no duplica nada. La columna `criterio` usa los códigos del marco de calidad del sistema.
 
-El sistema avisa al responsable
+8. **Cortes de seguimiento** (Dirección de Carrera y Comisión de calidad). En **Cortes**, **Abrir un corte** (trimestral,
+   anual o bienal) copia el estado de cada actividad a esa fecha: las cifras del corte ya no cambian aunque después se
+   registren avances. Arriba aparece lo que **pide atención** (vencidas, en riesgo y sin avance desde el corte anterior)
+   con un espacio para el comentario de la Comisión; abajo, las demás actividades. El resumen compara cada cifra con el
+   corte anterior. **Cerrar el corte** pide una conclusión y el criterio del marco: el informe en XLSX queda en
+   **Evidencias**. El informe se imprime o se guarda en PDF con **Imprimir / Guardar PDF**. Un corte abierto se puede
+   descartar; uno cerrado, no.
+
+El sistema avisa al responsable de cada actividad **30 y 7 días antes** de su plazo, y 15 días antes del fin de cada
+trimestre si su actividad no tiene avance desde el último corte. Una acción sin actividades avisa a su responsable
 **30 días antes** del plazo y, si vence sin cumplirse, a él y a la Dirección de Carrera. Un responsable sin acceso al plan completo ve en el tablero solo las acciones en que tiene algo a su cargo. El
 plan se descarga en **XLSX**. El indicador «Acciones de mejora cumplidas en plazo» del marco se calcula solo.
 

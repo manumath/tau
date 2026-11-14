@@ -23,7 +23,7 @@ if config.ZONA_HORARIA not in ("UTC", "Etc/UTC") and time.timezone == 0 and not 
 
 from app.investigacion import institucionales  # noqa: E402
 from app.calidad import indicadores as indicadores_calidad  # noqa: E402
-from app.calidad import mejora  # noqa: E402
+from app.calidad import cortes_mejora, mejora  # noqa: E402
 from app.calidad import programados  # noqa: E402
 from app.egresados import egresados as seguimiento_egresados  # noqa: E402
 from app.comun.auth import beforeware, beforeware_origen, beforeware_solo_lectura
@@ -65,6 +65,7 @@ def _correr_mantenimiento():
         seguimiento_egresados.mantenimiento()  # invitaciones del seguimiento de egresados
         indicadores_calidad.mantenimiento()  # cifras «a hoy» de los indicadores de calidad, una vez al día
         mejora.avisar_vencimientos()  # acciones del plan de mejora por vencer o vencidas (una vez por acción y plazo)
+        cortes_mejora.avisar()  # actividades del plan por vencer y sin avance antes del corte trimestral (PLAN §72)
         tramites_grado.recordar()  # informes de tribunales de grado por vencer o vencidos (una vez por ronda y persona)
     except Exception:
         registros.log.exception("Falló el mantenimiento periódico")

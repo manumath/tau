@@ -44,7 +44,9 @@ def generar() -> str:
               ".uk-theme-cmat {", *[f"  --{k}: {v};" for k, v in c.items()],
               *_imagenes(css, ".uk-theme-blue", claro), "}",
               ".dark.uk-theme-cmat {", *[f"  --{k}: {v};" for k, v in o.items()],
-              *_imagenes(css, ".dark.uk-theme-blue", oscuro), "}", ""]
+              *_imagenes(css, ".dark.uk-theme-blue", oscuro), "}",
+              "/* La hoja imprimible es papel blanco: dentro de ella rigen los colores claros también en modo oscuro. */",
+              ".uk-theme-cmat .hoja {", *[f"  --{k}: {v};" for k, v in c.items()], "}", ""]
     return "\n".join(lineas)
 
 

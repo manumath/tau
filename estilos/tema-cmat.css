@@ -61,3 +61,29 @@
   --uk-divider-icon-image: url(data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%20%20%20%20%3Ccircle%20fill%3D%22none%22%20stroke%3D%22%232c3244%22%20stroke-width%3D%222%22%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%227%22%20%2F%3E%0A%3C%2Fsvg%3E%0A);
   --uk-list-bullet-image: url(data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%226%22%20height%3D%226%22%20viewBox%3D%220%200%206%206%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%20%20%20%20%3Ccircle%20fill%3D%22%23f3f4f7%22%20cx%3D%223%22%20cy%3D%223%22%20r%3D%223%22%20%2F%3E%0A%3C%2Fsvg%3E);
 }
+/* La hoja imprimible es papel blanco: dentro de ella rigen los colores claros también en modo oscuro. */
+.uk-theme-cmat .hoja {
+  --background: 0 0% 100%;
+  --foreground: 224 30% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 30% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 30% 12%;
+  --muted: 224 20% 96%;
+  --muted-foreground: 0 0% 38%;
+  --border: 224 18% 88%;
+  --input: 224 18% 88%;
+  --primary: 224 36% 24%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 224 20% 95%;
+  --secondary-foreground: 224 36% 24%;
+  --accent: 224 20% 95%;
+  --accent-foreground: 224 36% 24%;
+  --destructive: 358 81% 41%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 188 100% 28%;
+  --lateral: 224 36% 24%;
+  --lateral-fin: 200 60% 22%;
+  --lateral-foreground: 0 0% 100%;
+  --acento: 358 81% 41%;
+}

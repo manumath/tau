@@ -371,7 +371,8 @@ def avisar_vencimientos(hoy: date | None = None) -> int:
     hoy = hoy or date.today()
     db, n = get_db(), 0
     filas = db.q("""SELECT a.*, m.unidad_id FROM accion_mejora a JOIN marco_calidad m ON m.id = a.marco_id
-                     WHERE a.estado IN ('pendiente', 'en_curso') AND a.plazo <= ?""",
+                     WHERE a.estado IN ('pendiente', 'en_curso') AND a.plazo <= ?
+                       AND NOT EXISTS (SELECT 1 FROM actividad_mejora t WHERE t.accion_id = a.id)""",
                  [(hoy + timedelta(days=DIAS_AVISO)).isoformat()])
     for a in filas:
         vencida = a["plazo"] < hoy.isoformat()
