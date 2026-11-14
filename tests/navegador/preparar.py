@@ -189,6 +189,28 @@ def preparar(ruta: str):
     hoy = date.today()
     periodo = institucionales.periodo_objetivo()
     institucionales.guardar_plazo(periodo, hoy.isoformat(), (hoy + timedelta(days=30)).isoformat(), 1)
+    _plan_de_mejora(emmy, direccion["id"])
+
+
+def _plan_de_mejora(emmy, direccion_id):
+    """Plan de mejora (PLAN §72): la acción 1 con la actividad 1 a cargo de Emmy, con un avance."""
+    from app.calidad import actividades_mejora as am
+    from app.calidad import marco, mejora
+    m = marco.de_unidad(unidades.id_de("CMAT"))
+    hoy = date.today()
+    x, err = mejora.validar({"codigo": "A4", "titulo": "Fortalecer la retención estudiantil", "plazo": f"{hoy.year + 1}-12-31",
+                             "responsable_id": str(direccion_id), "prioridad": "alta"}, m["id"])
+    assert not err, err
+    aid = mejora.crear(m["id"], x, direccion_id)
+    x, err = am.validar({"codigo": "4.1", "descripcion": "Taller de inducción para el primer semestre",
+                         "responsable_id": str(emmy), "inicio": f"{hoy.year}-01-01", "plazo": f"{hoy.year + 1}-06-30",
+                         "presupuesto": "2.500", "fuente": "Recursos propios"}, m["id"])
+    assert not err, err
+    t = am.obtener(am.crear(aid, x, direccion_id))
+    am.registrar_avance(t, {"texto": "Primer taller dictado.", "fecha": hoy.isoformat(), "porcentaje": 30,
+                            "evidencia_id": None}, emmy)
+
+
 
 
 if __name__ == "__main__":

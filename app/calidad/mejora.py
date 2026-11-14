@@ -46,7 +46,9 @@ def responsables() -> list[dict]:
 
 
 def tiene_acciones(uid: int) -> bool:
-    return bool(get_db().q("SELECT 1 FROM accion_mejora WHERE responsable_id = ? LIMIT 1", [uid]))
+    """¿Es responsable de alguna acción o de alguna actividad del plan? (Así ve el plan sin tener rol.)"""
+    return bool(get_db().q("""SELECT 1 FROM accion_mejora WHERE responsable_id = :u
+                              UNION SELECT 1 FROM actividad_mejora WHERE responsable_id = :u LIMIT 1""", {"u": uid}))
 
 
 # --- Acciones ---------------------------------------------------------------------------------------------------
@@ -114,6 +116,7 @@ def resumen(mid: int) -> dict:
 def validar(d: dict, mid: int) -> tuple[dict, list[str]]:
     errores: list[str] = []
     x = {"titulo": _texto(d.get("titulo"), 200), "descripcion": _texto(d.get("descripcion")),
+         "codigo": _texto(d.get("codigo"), 20), "objetivo": _texto(d.get("objetivo"), 1000), "eje": _texto(d.get("eje"), 200),
          "origen": d.get("origen") or "otro", "debilidad": _texto(d.get("debilidad")),
          "prioridad": d.get("prioridad") or "media"}
     if not x["titulo"]:
@@ -154,7 +157,7 @@ def validar(d: dict, mid: int) -> tuple[dict, list[str]]:
     return x, errores
 
 
-CAMPOS = ("titulo", "descripcion", "origen", "debilidad", "prioridad", "plazo", "criterio_id", "responsable_id",
+CAMPOS = ("codigo", "objetivo", "eje", "titulo", "descripcion", "origen", "debilidad", "prioridad", "plazo", "criterio_id", "responsable_id",
           "indicador_id", "meta", "autoevaluacion_id", "recomendacion_id")
 
 
@@ -413,4 +416,19 @@ def a_xlsx(mid: int) -> bytes:
                 "vigente hasta": x["vigente_hasta"] or ""}
         for r in x["lista_recomendaciones"] or [{"texto": "", "criterio_codigo": ""}]:
             ext.append({**base, "recomendación": r["texto"], "criterio": r["criterio_codigo"] or ""})
-    return exportar.a_xlsx({"Acciones": filas, "Avances": avances, "Evaluaciones externas": ext})
+    from app.calidad import actividades_mejora as am       # importación diferida: actividades_mejora importa este módulo
+    acts = am.de_marco(mid)
+    actividades = [{"acción": t["accion_codigo"] or "", "actividad": t["codigo"] or "", "descripción": t["descripcion"],
+                    "responsable": t["responsable"] or "", "unidad responsable": t["unidad_responsable"] or "",
+                    "inicio": t["inicio"] or "", "plazo": t["plazo"], "estado": am.ESTADOS[t["estado"]],
+                    "avance (%)": "" if t["avance"] is None else t["avance"], "semáforo": am.SEMAFOROS[t["semaforo"]],
+                    "línea base": t["linea_base"] or "", "meta": t["meta"] or "",
+                    "indicador": t["indicador_codigo"] or "", "presupuesto (Bs)": "" if t["presupuesto"] is None else t["presupuesto"],
+                    "fuente": t["fuente"] or "", "medio de verificación": t["verificacion"] or "",
+                    "medio de difusión": t["difusion"] or ""} for t in acts]
+    reps = [{"acción": t["accion_codigo"] or "", "actividad": t["codigo"] or "", "plazo anterior": r["plazo_anterior"],
+             "plazo nuevo": r["plazo_nuevo"], "causa": r["causa"], "estado": am.ESTADOS_REPROGRAMACION[r["estado"]],
+             "pedida por": r["solicitante"] or "", "pedida el": r["solicitada_en"][:10], "respuesta": r["respuesta"] or ""}
+            for t in acts for r in am.reprogramaciones(t["id"])]
+    return exportar.a_xlsx({"Acciones": filas, "Actividades": actividades, "Avances": avances,
+                            "Reprogramaciones": reps, "Evaluaciones externas": ext})

@@ -1217,9 +1217,25 @@ En **Calidad → Plan de mejora**:
 3. **Estado.** La Dirección marca la acción **Cumplida** (con la fecha en que se cumplió) o la **cancela** con su motivo; puede
    reabrirla. Solo se elimina una acción sin avances; las demás se cancelan, para que quede su historia.
 
-El sistema avisa al responsable **30 días antes** del plazo y, si la acción vence sin cumplirse, a él y a la Dirección de
-Carrera. La lista filtra por estado (abiertas, vencidas, cumplidas, canceladas) y por criterio, resume cuántas se cumplieron
-en plazo y se descarga en **XLSX**. El indicador «Acciones de mejora cumplidas en plazo» del marco se calcula solo.
+4. **Actividades.** Una acción grande se divide en actividades (**Nueva actividad** en la ficha de la acción): código
+   («4.2»), qué se hará, responsable (una persona del sistema o, si no la hay, la unidad en texto: DEAGEC, DTIC…),
+   inicio y plazo, línea base y meta, presupuesto en Bs con su fuente y los medios de verificación y de difusión. Si la
+   actividad se mide con un **indicador** del sistema, indíquelo con la línea base y la meta en números: el avance se
+   calcula solo con la última cifra del indicador. Una acción con actividades toma como plazo el último de ellas y su
+   avance es el promedio; los avances se registran en cada actividad.
+5. **Semáforo.** Cada actividad y cada acción muestran **Al día**, **En riesgo** (vence en 30 días o menos, o pasó más
+   de la mitad del plazo con menos de la mitad del avance), **Vencida** o **Cumplida**. El tablero tiene arriba cuatro
+   cifras que filtran por semáforo y filtros por prioridad (P1 alta, P2 media, P3 baja), responsable y año.
+   **Cronograma** muestra las actividades de cada año por el trimestre en que vencen.
+6. **Aprobación y reprogramación.** Cuando el plan se aprueba, la Dirección registra la resolución y la fecha
+   (**Registrar la aprobación**). Desde entonces el plazo de una actividad ya no se edita: el responsable **pide una
+   reprogramación** en la ficha de la actividad, con el plazo nuevo, la causa y, si la hay, una evidencia. La Dirección
+   la ve en el tablero («Reprogramaciones por resolver») y la **aprueba** o la **rechaza** con su motivo; quien la pidió
+   recibe un aviso. La Dirección puede reprogramar directamente. El historial muestra el plazo anterior tachado.
+
+El sistema avisa al responsable
+**30 días antes** del plazo y, si vence sin cumplirse, a él y a la Dirección de Carrera. Un responsable sin acceso al plan completo ve en el tablero solo las acciones en que tiene algo a su cargo. El
+plan se descarga en **XLSX**. El indicador «Acciones de mejora cumplidas en plazo» del marco se calcula solo.
 
 **Evaluaciones externas** (evaluación por pares o acreditación): registre el organismo, las fechas de la visita y del
 dictamen, el resultado, la vigencia y el informe del organismo (como evidencia). Escriba las **recomendaciones** una por

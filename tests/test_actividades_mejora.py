@@ -5,6 +5,7 @@ from app.calidad import actividades_mejora as am
 from app.calidad import indicadores, marco, mejora
 from app.comun import notificaciones, permisos, unidades, usuarios
 from app.comun.db import get_db
+from tests.conftest import PASS_ADMIN, login
 
 HOY = date(2027, 6, 1)
 
@@ -46,6 +47,10 @@ def test_validaciones(app):
     assert "El presupuesto no puede ser negativo." in err
     x, err = am.validar({"descripcion": "x", "plazo": "2027-01-01", "inicio": "2027-02-01", "unidad_responsable": "DTIC"}, mid)
     assert err == ["El inicio no puede ser posterior al plazo."]
+    x, err = am.validar({"descripcion": "x", "plazo": "2027-01-01", "unidad_responsable": "DEAGEC", "presupuesto": "2.300,50"}, mid)
+    assert not err and x["presupuesto"] == 2300.5
+    x, err = am.validar({"descripcion": "x", "plazo": "2027-01-01", "unidad_responsable": "DTIC", "presupuesto": "2.500"}, mid)
+    assert not err and x["presupuesto"] == 2500
     x, err = am.validar({"descripcion": "x", "plazo": "2027-01-01", "unidad_responsable": "DEAGEC", "presupuesto": "2.300,50"}, mid)
     assert not err and x["presupuesto"] == 2300.5 and x["responsable_id"] is None
     ind = mejora.indicadores_del_marco(mid)[0]
@@ -152,3 +157,77 @@ def test_puede_avanzar(app):
     assert not am.puede_avanzar({"id": otro["id"]}, t)
     assert am.tiene_actividades(r["id"]) and not am.tiene_actividades(otro["id"])
     assert get_db().q("SELECT COUNT(*) n FROM actividad_mejora")[0]["n"] == 1
+
+
+# --- Pantallas (PLAN §72, etapa 3) ----------------------------------------------------------------------------------------
+
+def test_pantallas_de_la_direccion(carrera):
+    from tests.conftest import HX
+    d = usuarios.por_email("admin@test.cl")
+    r = usuarios.por_email("inv@test.cl")
+    a = _accion(d["id"], codigo="A4")
+    url_a = f"/calidad/mejora/acciones/{a['id']}"
+    assert carrera.get(f"{url_a}/actividades/nueva", headers=HX).status_code == 200
+    carrera.post(f"{url_a}/actividades", headers=HX, data={"codigo": "4.1", "descripcion": "Taller de inducción",
+                                                           "responsable_id": str(r["id"]), "plazo": "2027-12-31"})
+    t = am.de_accion(a["id"])[0]
+    url = f"/calidad/mejora/actividades/{t['id']}"
+    for p in ("/calidad/mejora", "/calidad/mejora?ver=en_riesgo&prioridad=alta", "/calidad/mejora/cronograma?anio=2027",
+              url_a, url, f"{url}/editar", f"{url}/cumplir", f"{url}/cancelar", "/calidad/mejora/aprobacion"):
+        resp = carrera.get(p, headers=HX if "editar" in p or p.endswith(("cumplir", "cancelar", "aprobacion")) else {})
+        assert resp.status_code == 200, p
+    assert "Taller de inducción" in carrera.get("/calidad/mejora/cronograma?anio=2027").text
+    carrera.post(f"{url}/avances", headers=HX, data={"texto": "Primer taller.", "porcentaje": "40"})
+    assert am.obtener(t["id"])["avance"] == 40
+    carrera.post("/calidad/mejora/aprobacion", headers=HX, data={"resolucion": "Res. HCC 1/2026", "fecha": "2026-11-01"})
+    assert am.aprobado(marco.obtener(a["marco_id"]))
+    # Aprobado el plan, la Dirección reprograma directamente.
+    carrera.post(f"{url}/reprogramar", headers=HX, data={"plazo_nuevo": "2028-03-31", "causa": "Paro"})
+    assert am.obtener(t["id"])["plazo"] == "2028-03-31"
+    assert "line-through" in carrera.get(url).text
+    carrera.post(f"{url}/cumplir", headers=HX, data={"fecha": "2026-11-10"})
+    assert am.obtener(t["id"])["estado"] == "cumplida"
+    acciones = {x["accion"] for x in get_db().q("SELECT accion FROM auditoria")}
+    assert {"crear_actividad_mejora", "avance_actividad_mejora", "aprobar_plan_mejora", "reprogramar_actividad_mejora",
+            "cumplir_actividad_mejora"} <= acciones
+
+
+def test_responsable_pide_y_la_direccion_resuelve(carrera):
+    client = carrera
+    from tests.conftest import HX
+    d, r = _gente()
+    a = _accion(d["id"])
+    t = _actividad(a, r["id"])
+    am.aprobar_plan(a["marco_id"], "Res. HCC 1/2026", "2026-11-01")
+    url = f"/calidad/mejora/actividades/{t['id']}"
+    clave = "Clave-resp-12345"
+    usuarios.cambiar_password(r["id"], clave, temporal=False)
+    carrera.post("/logout", headers=HX)
+    login(client, "inv@test.cl", clave)
+    assert client.get(url).status_code == 200
+    assert client.get("/calidad/mejora").status_code == 200           # ve solo su acción
+    assert client.get(f"{url}/editar", headers=HX).status_code == 403  # editar es de la Dirección
+    client.post(f"{url}/avances", headers=HX, data={"texto": "Avance propio.", "porcentaje": "20"})
+    assert am.obtener(t["id"])["avance"] == 20
+    client.post(f"{url}/reprogramar", headers=HX, data={"plazo_nuevo": "2028-03-31", "causa": "Falta de aula"})
+    rep = am.obtener(t["id"])["reprogramaciones"][0]
+    assert rep["estado"] == "pendiente" and am.obtener(t["id"])["plazo"] == "2027-12-31"
+    assert client.post(f"/calidad/mejora/reprogramaciones/{rep['id']}/aprobar", headers=HX).status_code == 403
+    client.post("/logout", headers=HX)
+    login(client, "admin@test.cl", PASS_ADMIN)
+    assert "Falta de aula" in client.get("/calidad/mejora").text            # bandeja de la Dirección
+    client.post(f"/calidad/mejora/reprogramaciones/{rep['id']}/rechazar", headers=HX, data={"respuesta": "Hay aulas."})
+    assert am.reprogramacion(rep["id"])["estado"] == "rechazada"
+
+
+def test_otra_persona_no_ve_la_actividad(app, client):
+    from tests.conftest import HX
+    d, r = _gente()
+    t = _actividad(_accion(d["id"]), r["id"])
+    usuarios.crear("otro@test.cl", "Otro", "Docente", "Clave-otro-12345", debe_cambiar_pass=False)
+    login(client, "otro@test.cl", "Clave-otro-12345")
+    url = f"/calidad/mejora/actividades/{t['id']}"
+    assert client.get(url).status_code == 403
+    assert client.post(f"{url}/avances", headers=HX, data={"texto": "x"}).status_code == 403
+    assert client.get(f"{url}/reprogramar", headers=HX).status_code == 403
+    assert client.get("/calidad/mejora/actividades/9999").status_code == 404

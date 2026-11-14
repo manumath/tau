@@ -68,7 +68,7 @@ REVISAR = r"""
 PANTALLAS = {
     "investigadora": ["/", "/productos", "/actividades", "/proyectos", "/perfil", "/informes",
                       "/docencia", "/docencia/pendientes", "/docencia/calendario", "/docencia/preferencias", "/docencia/programas", "/docencia/listas", "/docencia/evaluacion", "/docencia/historial", "/docencia/certificados", "/investigacion/pendientes", "/investigacion/calendario",
-                      "/investigacion/acceso-abierto", "/investigacion/coautores", "/avisos", "/buscar?q=noether"],
+                      "/investigacion/acceso-abierto", "/investigacion/coautores", "/calidad/mejora/actividades/1", "/avisos", "/buscar?q=noether"],
     "direccion": ["/", "/admin/usuarios", "/admin/propuestas", "/docencia/planes", "/docencia/planes?estado=elaboracion",
                   "/docencia/planes/reforma/nueva", "/docencia/planes/reforma/2", "/docencia/planes/5",
                   "/docencia/planes/5/malla", "/docencia/planes/5/equivalencias", "/docencia/oferta",
@@ -84,7 +84,9 @@ PANTALLAS = {
                   *[f"/servicios/auxiliaturas/item/1/formulario/{n}" for n in range(1, 6)],
                   "/servicios/grado", "/informes",
                   "/calidad/marco", "/calidad/indicadores", "/calidad/evidencias", "/calidad/autoevaluaciones",
-                  "/calidad/ficha", "/calidad/mejora", "/admin/revistas", "/admin/lineas", "/admin/catalogos",
+                  "/calidad/ficha", "/calidad/mejora", "/calidad/mejora/cronograma",
+                  "/calidad/mejora/acciones/1", "/calidad/mejora/actividades/1",
+                  "/calidad/mejora/cortes", "/calidad/mejora/cortes/1", "/admin/revistas", "/admin/lineas", "/admin/catalogos",
                   "/personas/externos"],
     "admin": ["/admin/usuarios", "/admin/auditoria", "/informes/calidad"],
 }

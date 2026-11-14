@@ -3980,7 +3980,7 @@ informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se gu
 - El avance con indicador usa la cifra del año en curso o, si aún no la hay, la del anterior (no más años: haría lenta la
   lista). Los códigos se ordenan como números («4.10» después de «4.9»).
 - Pruebas: `tests/test_actividades_mejora.py`. Las pantallas son la etapa 3.
-- **Decisiones mías por confirmar:** (a) sin fecha de inicio, el plazo corre desde la aprobación del plan o, si no está
+- **Decisiones del agente, confirmadas por el usuario el 14-nov-2026:** (a) sin fecha de inicio, el plazo corre desde la aprobación del plan o, si no está
   aprobado, desde que se registró la actividad; (b) quien gestiona el plan (Dirección de Carrera) registra una
   reprogramación ya aprobada, sin pedírsela a sí misma; (c) una actividad agregada después de aprobar el plan entra con
   su plazo, sin reprogramación.
@@ -4001,7 +4001,22 @@ informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se gu
   riesgo (pasó más de la mitad del plazo con menos de la mitad del avance, o vence en 30 días) y vencida.
 - Las acciones existentes quedan como acciones sin actividades y siguen funcionando.
 
-### Etapa 3: pantallas del plan
+### Etapa 3 (hecha, 14-nov-2026): pantallas del plan
+- **Tablero** (`/calidad/mejora`): tarjetas por acción (código, P1–P3, semáforo, barra de avance, actividades por
+  semáforo), cuatro cifras que filtran (`?ver=`), filtros por prioridad, responsable y año en la dirección, aviso de
+  aprobación del plan y bandeja de reprogramaciones por resolver (solo para quien gestiona). Quien no ve el plan completo
+  ve solo las acciones en que es responsable (de la acción o de una actividad).
+- **Cronograma** (`/calidad/mejora/cronograma?anio=`): una tabla por trimestre; en el teléfono, tarjetas.
+- **Ficha de la acción:** sus actividades en una tabla; los avances sueltos solo se registran en acciones sin actividades.
+- **Ficha de la actividad** (`app/calidad/rutas/actividades_mejora.py`): datos, cifra del indicador, avances con
+  evidencia, historial de reprogramaciones (plazo anterior tachado) y los botones de cada rol. Todo cambio se audita.
+- **Aprobación del plan** (`/calidad/mejora/aprobacion`): resolución y fecha.
+- Arreglo: el presupuesto «2.500» se lee como 2.500 Bs (punto de miles), no 2,5.
+- La diferencia con lo planificado: las actividades se abren en su página, no en un modal (tienen avances, historial y
+  formularios propios; en el teléfono un modal tan largo se recorre mal). La «tabla plegable por estado» quedó como una
+  sola tabla con el semáforo en una columna: con 3 a 6 actividades por acción no hace falta plegar.
+
+**Lo planificado:**
 - **Tablero** (`/calidad/mejora`): una tarjeta por acción con código, prioridad, barra de avance, semáforo y cuántas
   actividades hay en cada estado; filtros por prioridad, estado, responsable y año, en la dirección. Arriba, cuatro
   cifras que filtran (al día, en riesgo, vencidas, cumplidas), como el tablero de indicadores.

@@ -11,6 +11,7 @@
   reprogramación: el responsable la pide con su causa y la Dirección de Carrera la aprueba o la rechaza (decisión del
   usuario del 14-nov-2026); quien gestiona el plan puede registrarla ya aprobada.
 """
+import re
 from datetime import date
 
 from app.calidad import evidencias, marco, mejora
@@ -65,6 +66,18 @@ _SELECT = """SELECT t.*, a.marco_id, a.codigo AS accion_codigo, a.titulo AS acci
              FROM actividad_mejora t JOIN accion_mejora a ON a.id = t.accion_id
              LEFT JOIN usuario u ON u.id = t.responsable_id LEFT JOIN indicador_calidad i ON i.id = t.indicador_id"""
 _ORDEN = " ORDER BY a.codigo IS NULL, a.codigo, a.id, t.codigo IS NULL, t.codigo, t.plazo, t.id"
+
+
+def titulo(texto: str) -> str:
+    """Primer párrafo de la descripción: lo que se muestra en listas y títulos. La carga del plan agrega los recursos en un
+    párrafo aparte (PLAN §72, etapa 4), que la ficha muestra como «Recursos»."""
+    return (texto or "").split("\n\n")[0]
+
+
+def detalle(texto: str) -> str:
+    """Lo que sigue al primer párrafo de la descripción (vacío si no hay más)."""
+    partes = (texto or "").split("\n\n", 1)
+    return partes[1] if len(partes) > 1 else ""
 
 
 def _clave_codigo(codigo: str | None) -> tuple:
@@ -180,12 +193,39 @@ def resumen_accion(actividades: list[dict]) -> dict:
     return {"avance": round(sum(avances) / len(avances)), "semaforo": peor, "conteo": conteo}
 
 
+def tablero(mid: int, hoy: date | None = None) -> list[dict]:
+    """Todas las acciones del plan con sus actividades, avance, semáforo y cuántas actividades hay en cada semáforo. Una
+    acción sin actividades usa su último porcentaje y su propio plazo; una cumplida o cancelada conserva su estado."""
+    hoy = hoy or date.today()
+    m = marco.obtener(mid)
+    por_accion: dict[int, list[dict]] = {}
+    for t in de_marco(mid, hoy):
+        por_accion.setdefault(t["accion_id"], []).append(t)
+    res = []
+    for a in mejora.acciones(mid):
+        ts = por_accion.get(a["id"], [])
+        r = resumen_accion(ts) if ts else {"avance": a["porcentaje"], "semaforo": None, "conteo": {}}
+        if a["estado"] in ("cumplida", "cancelada"):
+            sem = a["estado"]
+        else:
+            sem = r["semaforo"] or semaforo({**a, "inicio": None}, r["avance"], hoy, m)
+        if a["estado"] == "cumplida":
+            r["avance"] = 100
+        res.append({**a, "actividades": ts, "avance": r["avance"], "semaforo": sem, "conteo": r["conteo"],
+                    "prioridad_p": PRIORIDAD_P[a["prioridad"]],
+                    "responsables": {a["responsable_id"]} | {t["responsable_id"] for t in ts} - {None},
+                    "anios": {a["plazo"][:4]} | {t["plazo"][:4] for t in ts}})
+    return sorted(res, key=lambda a: (a["estado"] in ("cumplida", "cancelada"), _clave_codigo(a["codigo"]), a["plazo"]))
+
+
 def _numero(texto, campo: str, errores: list) -> float | None:
     texto = str(texto or "").strip().replace(" ", "")
     if not texto:
         return None
     if "," in texto:
         texto = texto.replace(".", "").replace(",", ".")       # «1.500,50» → 1500.50
+    elif re.fullmatch(r"-?\d{1,3}(\.\d{3})+", texto):
+        texto = texto.replace(".", "")                        # «2.500» y «1.250.000» son miles, como se escriben aquí
     try:
         return float(texto)
     except ValueError:
