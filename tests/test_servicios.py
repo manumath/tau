@@ -141,6 +141,7 @@ def convocatoria(gente):
     cierre = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%dT%H:%M")
     x, errores = aux.validar({"modalidad": "docencia", "gestion_id": g["id"], "numero": "1", "titulo": "Auxiliaturas I-2027",
                               "publicacion": date.today().isoformat(), "cierre": cierre,
+                              "recepcion_lugar": "Secretaría de la Carrera", "recepcion_horario": "Lunes a viernes, de 9 a 12",
                               "examen": (datetime.now() + timedelta(days=20)).strftime("%Y-%m-%dT%H:%M")}, ["docencia"])
     assert errores == []
     cid = aux.crear(x, gente["dir"]["id"])

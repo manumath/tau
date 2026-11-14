@@ -3771,7 +3771,7 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
 | Mínimo del examen escrito | 17,5 de 35 | **18 de 35** para pasar al oral (art. 18) |
 | Categorías | solo «titular» (≥ 56); el resto, «no seleccionada» | **Titular ≥ 56** e **invitado de 51 a 55** (art. 6, redacción 2025); si el invitado no acepta, o si tras dos convocatorias consecutivas la materia sigue vacía, se invita a los mejores estudiantes de la materia (últimas dos gestiones, verificado con Kardex) |
 | Modalidades | docencia e investigación | **Docencia, investigación (con Beca Tesis) e interacción social** (art. 7) |
-| Carga horaria del ítem | 20 o 40 h/mes | **Máximo 40 h/mes** (art. 8, redacción 2025), según el presupuesto de cada unidad; el Consejo de Carrera la distribuye por resolución al inicio de cada gestión (art. 9) |
+| Carga horaria del ítem | 20 o 40 h/mes | **Máximo 40 h/mes** (art. 8, redacción 2025) y el Consejo de Carrera la distribuye en ítems de 20 y 40 horas por resolución al inicio de cada gestión (art. 9): **no cambia** |
 | Plazo de presentación | «10 días hábiles entre la publicación y el examen escrito» (art. 10 de la norma anterior) | **10 días hábiles desde la publicación en la primera convocatoria y 5 en la segunda** para presentar los requisitos (art. 24) |
 | Calendario de publicación | sin control | Semestral (el único que aplica en TAU): 1.er semestre, 1.ª convocatoria 2.ª semana de noviembre y 2.ª la 1.ª de diciembre; 2.º semestre, 2.ª semana de mayo y 2.ª de junio; una sola convocatoria para ambos: 1.ª semana de noviembre (art. 12) |
 | Contenido de la convocatoria | título, fechas, lugar, resolución | Además: **permanencia** (en TAU, siempre semestral), **lugar y horario de recepción**, fecha, hora y lugar de los exámenes (art. 11); la aprueba una resolución del Consejo de Carrera con visto bueno del Vicedecano y la Facultad la homologa (arts. 11, 22, 27) |
@@ -3799,14 +3799,14 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
 3. **«Estudiantes de cogobierno con los mejores promedios»:** TAU no guarda notas ni sabe quién es delegado; la Dirección lo declara al designar la comisión
    (número de resolución). El sistema exige que tengan cuenta, que no sean postulantes de la convocatoria y que no se hayan declarado delegados que postulan.
 4. **Invitación a los mejores estudiantes (arts. 6 y 13):** TAU solo registra a quién se invitó y si aceptó; la lista de mejores promedios la da Kardex.
-5. **Carga horaria:** de 1 a 40 h/mes (antes solo 20 o 40).
+5. **Carga horaria:** se mantiene en **20 o 40 h/mes**. El art. 8 (2025) fija el máximo en 40 y el art. 9, que no se modificó, distribuye por ítems de 20 y 40 horas; cambiar la restricción de la base no aporta nada.
 6. **Calendario del art. 12:** advierte, no bloquea la publicación.
 7. **El invitado ocupa las plazas que no cubrieron los titulares** y su nota va de 51 a 55; por debajo de 51, «no seleccionado».
 8. **Fuera de este plan:** el seguimiento posterior a la designación (**§71**, decisión del usuario) y los beneficios de Odontología, Internado Rotatorio y Trabajo Dirigido (arts. 7, 9, 40, 45 y 46), que no son de la Carrera de Matemática.
 
 ### Etapas (un commit cada una; la migración se prueba primero sobre una copia)
 1. **Normativa y plazos.** Migración: `reglamento`, `recepcion` (lugar y horario), `lugar_examenes`, `resolucion_hcf` en la convocatoria (sin `permanencia`: es semestral); **solo se puede convocar sobre gestiones I y II** (se rechaza INV y VER; se revisan en una copia las convocatorias existentes); tabla de
-   reglas por versión (mínimos 5 y 18, titular 56, invitado 51–55, plazos de 10 y 5 días hábiles, 72 h, 48 h, 10 y 15 días); horas de 1 a 40; control del calendario semestral
+   reglas por versión (mínimos 5 y 18, titular 56, invitado 51–55, plazos de 10 y 5 días hábiles, 72 h, 48 h, 10 y 15 días); control del calendario semestral
    del art. 12 y del plazo del art. 24 (reemplaza el de «publicación a examen escrito»); la guía y los textos de pantalla citan Res. HCU 424/2023 y 364/2025.
 2. **Modalidades y requisitos.** Modalidad **interacción social** y subtipo **Beca Tesis** (opcionales: se usan solo en las gestiones en que la Carrera los convoca); requisitos del art. 23 precargados (ocho documentos) y las condiciones del
    art. 10 (declaraciones y verificaciones del sistema: máximo 2 gestiones en la misma materia o proyecto, máximo 2 materias por convocatoria, egresado dentro de los
@@ -3821,4 +3821,16 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
    recrea `postulacion_auxiliatura` para admitir el estado «invitado» y se agregan las tablas de designación.
 6. **Formularios imprimibles:** 1, 2-x, 3, 4 y 5 en HTML para imprimir, con el encabezado «Aprobado con Res. HCU 424/2023».
 7. **Pruebas de navegador, manual y documentación** (guía, manual capítulo 8, CLAUDE.md, mantenimiento) y la advertencia de las convocatorias hechas con la norma anterior.
+
+### Etapa 1 (hecha, 14-nov-2026): normativa y plazos
+- **Migración 0086:** `convocatoria_auxiliatura.reglamento` (`hcu_251_2021` por omisión, así que la convocatoria que ya había en la base de desarrollo, de un
+  semestre II, conserva sus reglas; `hcu_424_2023` para las nuevas), `recepcion_lugar`, `recepcion_horario` y `resolucion_hcf`. No se recalcula ningún resultado.
+- `auxiliaturas.REGLAS` por reglamento: mínimos de méritos (10 → **5**) y del escrito (17,5 → **18**) y el plazo de presentación (`reglas`, `minimo`,
+  `reglamento_texto`). `cerrar_fase` usa el mínimo de la convocatoria; `MINIMO` global desapareció.
+- `gestiones()` y `validar` solo admiten gestiones **I y II**. `chequeo_fechas` cuenta, con el reglamento de 2023, los **días hábiles de la publicación al cierre**
+  (art. 24: 10 y 5); con el de 2021 sigue contando hasta el examen. `chequeo_calendario` avisa si la publicación no cae en la semana del art. 12 (semana = días 1–7
+  u 8–14 del mes; una sola convocatoria para ambos semestres: 1.ª semana de noviembre). Solo advierten.
+- Para **publicar**, una convocatoria de 2023 exige también el lugar y el horario de recepción de los documentos (art. 11). Las pantallas dicen con qué reglamento se
+  hizo cada convocatoria y muestran sus mínimos; se quitaron los números de artículo del reglamento anterior.
+- La preparación de datos del navegador y la del manual toman un semestre cuando `gestiones.actual()` cae en una temporada.
 

@@ -1,17 +1,18 @@
-"""Convocatorias a auxiliaturas (PLAN §58, servicio 3), según el Reglamento General de Auxiliares Académicos de la UMSA
-(Res. HCU 251/2021, mod. 437/2021 y 623/2021).
+"""Convocatorias a auxiliaturas (PLAN §58, servicio 3; adecuadas en el §70), según el Reglamento Específico de Auxiliares
+Académicos del Pregrado de la UMSA (Res. HCU 424/2023, modificada por la 364/2025). Dejó sin efecto el Reglamento General (Res. HCU
+251/2021, mod. 437/2021 y 623/2021) con que se hicieron las primeras convocatorias: cada una guarda su `reglamento` y conserva sus reglas.
 
-- La Dirección de Carrera o la Coordinación académica arma la convocatoria de una gestión: de **docencia** (materias de
-  la oferta) o de **investigación** (proyectos; también la Dirección del Instituto). Requisitos (art. 8 y 12, más los de
-  la Carrera), cada uno con cómo se acredita: documento, declaración o lo verifica el sistema.
+- La Dirección de Carrera o la Coordinación académica arma la convocatoria de un **semestre regular** (gestión I o II; no hay
+  auxiliaturas de temporada) de **docencia** (materias de la oferta) o de **investigación** (proyectos; también la Dirección del
+  Instituto). Requisitos, cada uno con cómo se acredita: documento, declaración o lo verifica el sistema.
 - Cada ítem tiene un **tribunal de dos docentes y dos estudiantes** (decisión 1 del 7-nov-2026). Un postulante de la
-  convocatoria no puede integrar un tribunal de ella (art. 8).
+  convocatoria no puede integrar un tribunal de ella.
 - Se publica solo con el **número de la resolución** del Consejo de Carrera (el PDF es opcional; decisión 5).
-- Fases: postulación → habilitación → méritos (30, mín. 10) → escrito (35, mín. 17,5) → oral (35). Cada miembro
-  califica; la nota es el promedio y hacen falta **al menos tres miembros** (decisión 4). Titular con 56 o más, por
-  puntaje hasta cubrir las plazas; un empate en el corte queda «empate» hasta el examen de desempate (art. 19).
-- Al cerrar una fase cada postulante ve su resultado y corren 24 horas para impugnar (art. 21). Las impugnaciones se
-  presentan por escrito: TAU solo las registra (decisión 8), y no se cierra otra fase mientras haya alguna sin resolver.
+- Fases: postulación → habilitación → méritos (30) → escrito (35) → oral (35). Los mínimos dependen del reglamento (ver `REGLAS`).
+  Cada miembro califica; la nota es el promedio y hacen falta **al menos tres miembros** (decisión 4). Titular con 56 o más, por
+  puntaje hasta cubrir las plazas; un empate en el corte queda «empate» hasta el examen de desempate.
+- Al cerrar una fase cada postulante ve su resultado y corren 24 horas para impugnar. Las impugnaciones se presentan por escrito:
+  TAU solo las registra (decisión 8), y no se cierra otra fase mientras haya alguna sin resolver.
 """
 import random
 from datetime import date, datetime, timedelta, timezone
@@ -26,11 +27,21 @@ FASES = ("habilitacion", "meritos", "escrito", "oral")
 NOMBRE_FASE = {"postulacion": "Postulación", "habilitacion": "Habilitación", "meritos": "Méritos",
                "escrito": "Examen escrito", "oral": "Examen oral", "concluido": "Resultado"}
 MAXIMO = {"habilitacion": 1, "meritos": 30, "escrito": 35, "oral": 35}
-MINIMO = {"meritos": 10, "escrito": 17.5}
 PUNTAJE_TITULAR = 56
 QUORUM = 3                 # miembros que deben calificar cada fase (decisión 4 del 7-nov-2026)
-HORAS_IMPUGNACION = 24     # art. 21
-MAX_GESTIONES = 2          # art. 8: no más de dos gestiones en la misma materia
+HORAS_IMPUGNACION = 24     # impugnar al cierre de cada fase (art. 21 del reglamento de 2023)
+MAX_GESTIONES = 2          # art. 10, f): no más de dos gestiones en la misma materia, proyecto o programa
+GESTIONES_CONVOCABLES = ("I", "II")     # las auxiliaturas son de los semestres regulares, no de INV ni VER (decisión del 14-nov-2026)
+
+REGLAMENTO_ANTERIOR = "hcu_251_2021"
+REGLAMENTO_VIGENTE = "hcu_424_2023"
+REGLAMENTOS = {REGLAMENTO_ANTERIOR: "Reglamento General de Auxiliares Académicos (Res. HCU 251/2021, mod. 437/2021 y 623/2021)",
+               REGLAMENTO_VIGENTE: "Reglamento Específico de Auxiliares Académicos del Pregrado (Res. HCU 424/2023, mod. 364/2025)"}
+# Reglas que cambian de un reglamento a otro. Una convocatoria usa siempre las del reglamento con que se hizo.
+REGLAS = {
+    REGLAMENTO_ANTERIOR: {"minimo": {"meritos": 10, "escrito": 17.5}, "plazo": "publicacion_examen", "dias_primera": 10, "dias_segunda": 5},
+    REGLAMENTO_VIGENTE: {"minimo": {"meritos": 5, "escrito": 18}, "plazo": "publicacion_cierre", "dias_primera": 10, "dias_segunda": 5},
+}
 ESTADOS_POST = {"borrador": "Sin enviar", "enviada": "En concurso", "no_habilitada": "No habilitada",
                 "eliminada": "No alcanzó el mínimo", "titular": "Auxiliar titular", "no_seleccionada": "No seleccionada",
                 "empate": "Empate: examen de desempate"}
@@ -86,7 +97,28 @@ def sumar_habiles(desde: date, n: int) -> date:
 # --- Convocatorias -----------------------------------------------------------------------------------------------------
 
 def gestiones() -> list[dict]:
-    return get_db().q("SELECT * FROM gestion_academica ORDER BY anio DESC, fecha_inicio DESC")
+    """Gestiones en que se puede convocar: los semestres regulares (I y II), no las temporadas."""
+    marcas = ",".join("?" * len(GESTIONES_CONVOCABLES))
+    return get_db().q(f"SELECT * FROM gestion_academica WHERE tipo IN ({marcas}) ORDER BY anio DESC, fecha_inicio DESC",
+                      list(GESTIONES_CONVOCABLES))
+
+
+def reglas(c: dict | None) -> dict:
+    """Las reglas del reglamento con que se hizo la convocatoria (las nuevas, el de 2023)."""
+    return REGLAS[(c or {}).get("reglamento") or REGLAMENTO_VIGENTE]
+
+
+def reglas_de_item(it: dict) -> dict:
+    return reglas(obtener(it["convocatoria_id"]))
+
+
+def minimo(it: dict, fase: str) -> float | None:
+    """Nota mínima de la fase para seguir en el concurso (None si la fase no tiene)."""
+    return reglas_de_item(it)["minimo"].get(fase)
+
+
+def reglamento_texto(c: dict) -> str:
+    return REGLAMENTOS[c.get("reglamento") or REGLAMENTO_VIGENTE]
 
 
 def texto_gestion(g: dict | None) -> str:
@@ -117,14 +149,20 @@ def validar(d: dict, modalidades: list[str]) -> tuple[dict, list[str]]:
         gid = int(d.get("gestion_id") or 0)
     except ValueError:
         gid = 0
-    if not get_db().q("SELECT 1 FROM gestion_academica WHERE id = ?", [gid]):
+    gestion = get_db().q("SELECT tipo FROM gestion_academica WHERE id = ?", [gid])
+    if not gestion:
         errores.append("Elija la gestión.")
+    elif gestion[0]["tipo"] not in GESTIONES_CONVOCABLES:
+        errores.append("Las auxiliaturas se convocan para los semestres I y II, no para los periodos de temporada.")
     numero = 2 if str(d.get("numero")) == "2" else 1
     x = {"modalidad": d.get("modalidad"), "gestion_id": gid, "numero": numero,
          "titulo": (d.get("titulo") or "").strip()[:200],
          "publicacion": (d.get("publicacion") or "").strip() or None,
          "cierre": (d.get("cierre") or "").strip() or None, "examen": (d.get("examen") or "").strip() or None,
-         "lugar": (d.get("lugar") or "").strip()[:200] or None, "resolucion": (d.get("resolucion") or "").strip()[:120] or None}
+         "lugar": (d.get("lugar") or "").strip()[:200] or None, "resolucion": (d.get("resolucion") or "").strip()[:120] or None,
+         "resolucion_hcf": (d.get("resolucion_hcf") or "").strip()[:120] or None,
+         "recepcion_lugar": (d.get("recepcion_lugar") or "").strip()[:200] or None,
+         "recepcion_horario": (d.get("recepcion_horario") or "").strip()[:120] or None}
     if not x["titulo"]:
         errores.append("Escriba el título.")
     for campo, nombre in (("publicacion", "la publicación"), ("cierre", "el cierre"), ("examen", "el examen escrito")):
@@ -142,7 +180,7 @@ def validar(d: dict, modalidades: list[str]) -> tuple[dict, list[str]]:
 
 def crear(x: dict, uid: int) -> int:
     with transaccion():
-        cid = get_db().t.convocatoria_auxiliatura.insert(creado_por=uid, **x)["id"]
+        cid = get_db().t.convocatoria_auxiliatura.insert(creado_por=uid, reglamento=REGLAMENTO_VIGENTE, **x)["id"]
         for i, (texto, acredita) in enumerate(REQUISITOS_REGLAMENTO):
             get_db().t.requisito_auxiliatura.insert(convocatoria_id=cid, texto=texto, acredita=acredita, orden=i)
     return cid
@@ -157,14 +195,44 @@ def eliminar(cid: int):
 
 
 def chequeo_fechas(c: dict) -> tuple[bool, str] | None:
-    """Art. 10: 10 días hábiles entre la publicación y el examen escrito en la primera convocatoria; 5 en la segunda."""
-    if not c["publicacion"] or not c["examen"]:
+    """Plazo mínimo para presentar los documentos. Reglamento de 2023 (art. 24): 10 días hábiles desde la publicación en la primera
+    convocatoria y 5 en la segunda, hasta el cierre de la recepción. El de 2021 lo contaba hasta el examen escrito."""
+    r = reglas(c)
+    destino = "examen" if r["plazo"] == "publicacion_examen" else "cierre"
+    if not c["publicacion"] or not c[destino]:
         return None
-    pedidos = 10 if c["numero"] == 1 else 5
-    n = habiles_entre(date.fromisoformat(c["publicacion"][:10]), date.fromisoformat(c["examen"][:10]))
+    pedidos = r["dias_primera"] if c["numero"] == 1 else r["dias_segunda"]
+    n = habiles_entre(date.fromisoformat(c["publicacion"][:10]), date.fromisoformat(c[destino][:10]))
+    hasta, art = ("el examen escrito", "10") if destino == "examen" else ("el cierre de la recepción", "24")
     if n >= pedidos:
-        return True, f"Hay {n} días hábiles entre la publicación y el examen escrito (el art. 10 pide {pedidos})."
-    return False, f"Solo hay {n} días hábiles entre la publicación y el examen escrito; el art. 10 pide {pedidos}."
+        return True, f"Hay {n} días hábiles entre la publicación y {hasta} (el art. {art} pide {pedidos})."
+    return False, f"Solo hay {n} días hábiles entre la publicación y {hasta}; el art. {art} pide {pedidos}."
+
+
+def _semana(d: date, desde: int, hasta: int, mes: int, anio: int) -> bool:
+    return d.year == anio and d.month == mes and desde <= d.day <= hasta
+
+
+def chequeo_calendario(c: dict) -> tuple[bool, str] | None:
+    """Calendario de publicación del art. 12 del reglamento de 2023 (régimen semestral). Solo advierte; «semana» se cuenta por
+    días del mes (1.ª: del 1 al 7; 2.ª: del 8 al 14). Una carrera que emite una sola convocatoria para los dos semestres publica
+    la primera semana de noviembre."""
+    if (c.get("reglamento") or REGLAMENTO_VIGENTE) != REGLAMENTO_VIGENTE or not c["publicacion"]:
+        return None
+    g = get_db().q("SELECT anio, tipo FROM gestion_academica WHERE id = ?", [c["gestion_id"]])
+    if not g or g[0]["tipo"] not in GESTIONES_CONVOCABLES:
+        return None
+    anio, tipo, d = g[0]["anio"], g[0]["tipo"], date.fromisoformat(c["publicacion"][:10])
+    if tipo == "I":
+        previstas = {1: ("la 2.ª semana de noviembre", (8, 14, 11, anio - 1)), 2: ("la 1.ª semana de diciembre", (1, 7, 12, anio - 1))}
+    else:
+        previstas = {1: ("la 2.ª semana de mayo", (8, 14, 5, anio)), 2: ("la 2.ª semana de junio", (8, 14, 6, anio))}
+    texto, ventana = previstas[c["numero"]]
+    unica = c["numero"] == 1 and _semana(d, 1, 7, 11, anio - 1)
+    if _semana(d, *ventana) or unica:
+        return True, f"La publicación cae en la fecha que pide el art. 12 ({texto}{', o la 1.ª de noviembre si es una sola convocatoria' if unica else ''})."
+    return False, (f"El art. 12 pide publicar la {'primera' if c['numero'] == 1 else 'segunda'} convocatoria en {texto} "
+                   "(o, si es una sola para los dos semestres, en la 1.ª semana de noviembre).")
 
 
 # --- Requisitos ---------------------------------------------------------------------------------------------------------
@@ -257,7 +325,7 @@ def docentes_elegibles() -> list[dict]:
 
 
 def estudiantes_elegibles() -> list[dict]:
-    """Estudiantes con cuenta activa (pueden integrar un tribunal: art. 16)."""
+    """Estudiantes con cuenta activa (pueden integrar un tribunal)."""
     return get_db().q("""SELECT u.id, u.nombres, u.apellidos, u.email FROM cuenta_estudiante c JOIN usuario u ON u.id = c.usuario_id
                          WHERE u.activo = 1 ORDER BY u.apellidos, u.nombres""")
 
@@ -279,7 +347,7 @@ def fijar_tribunal(it: dict, docentes: list[int], estudiantes_: list[int]) -> li
     if not set(estudiantes_) <= {e["id"] for e in estudiantes_elegibles()}:
         return ["Los estudiantes deben tener cuenta en el sistema."]
     if set(estudiantes_) & _postulantes_de_conv(it["convocatoria_id"]):
-        return ["Un postulante de esta convocatoria no puede integrar su tribunal (art. 8)."]
+        return ["Un postulante de esta convocatoria no puede integrar su tribunal."]
     with transaccion():
         get_db().execute("DELETE FROM tribunal_auxiliatura WHERE item_id = ?", [it["id"]])
         for u in docentes:
@@ -310,6 +378,8 @@ def faltantes_publicar(c: dict) -> list[str]:
         f.append("el número de la resolución del Consejo de Carrera")
     if not (c["publicacion"] and c["cierre"] and c["examen"]):
         f.append("las fechas de publicación, cierre y examen escrito")
+    if (c.get("reglamento") or REGLAMENTO_VIGENTE) == REGLAMENTO_VIGENTE and not (c["recepcion_lugar"] and c["recepcion_horario"]):
+        f.append("el lugar y el horario de recepción de los documentos (art. 11)")
     its = items(c["id"])
     if not its:
         f.append("al menos un ítem")
@@ -375,7 +445,7 @@ def postular(iid: int, externo_id: int) -> tuple[int | None, list[str]]:
         return None, ["La recepción de postulaciones de este ítem no está abierta."]
     u = estudiantes.usuario_de(externo_id)
     if u and any(es_miembro(i["id"], u["id"]) for i in items(c["id"])):
-        return None, ["Usted integra un tribunal de esta convocatoria: no puede postular a ella (art. 8)."]
+        return None, ["Usted integra un tribunal de esta convocatoria: no puede postular a ella."]
     ya = get_db().q("SELECT id FROM postulacion_auxiliatura WHERE item_id = ? AND externo_id = ?", [iid, externo_id])
     if ya:
         return ya[0]["id"], []
@@ -567,9 +637,9 @@ def cerrar_fase(it: dict, uid: int) -> list[str]:
                 if (nota(p["id"], fase) or 0) <= 0.5:   # mayoría de «sí»; un empate no habilita
                     get_db().execute("UPDATE postulacion_auxiliatura SET estado = 'no_habilitada', fase_fin = ? WHERE id = ?",
                                      [fase, p["id"]])
-        elif fase in MINIMO:
+        elif minimo(it, fase) is not None:
             for p in activos(it["id"]):
-                if (nota(p["id"], fase) or 0) < MINIMO[fase]:
+                if (nota(p["id"], fase) or 0) < minimo(it, fase):
                     get_db().execute("UPDATE postulacion_auxiliatura SET estado = 'eliminada', fase_fin = ? WHERE id = ?",
                                      [fase, p["id"]])
         elif fase == "oral":

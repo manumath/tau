@@ -1012,12 +1012,18 @@ Quien lo recibe lo ve en **Comunicados** y, si se pide, responde **Asistiré** o
 
 ### Auxiliaturas (Dirección de Carrera y Coordinación académica; las de investigación, también la Dirección del Instituto)
 
-Siguen el Reglamento General de Auxiliares Académicos de la UMSA.
+Siguen el **Reglamento Específico de Auxiliares Académicos del Pregrado de la UMSA** (Res. HCU 424/2023, modificada por la 364/2025), que dejó
+sin efecto el Reglamento General de 2021. Las auxiliaturas son **solo de los semestres regulares (I y II)**: no se convocan en las
+temporadas de invierno y verano. Las convocatorias que se hicieron con el reglamento anterior conservan sus reglas (se indica en cada
+una) y no se recalculan.
 
-1. **Nueva convocatoria:** gestión, modalidad (docencia o investigación), primera o segunda convocatoria, fechas de
-   publicación, cierre de la recepción y examen escrito, lugar y número de resolución (el PDF es opcional). El sistema
-   avisa si entre la publicación y el examen hay menos de 10 días hábiles (5 en una segunda convocatoria). Los
-   requisitos del reglamento se cargan solos; puede agregar o quitar.
+1. **Nueva convocatoria:** gestión (I o II), modalidad (docencia o investigación), primera o segunda convocatoria, fechas de
+   publicación, cierre de la recepción y examen escrito, lugar de los exámenes, **lugar y horario de recepción de los documentos**
+   (obligatorios para publicar, art. 11) y número de la resolución del Consejo de Carrera (el de la resolución del Consejo
+   Facultativo y el PDF son opcionales). El sistema avisa si entre la publicación y el cierre de la recepción hay menos de 10 días
+   hábiles (5 en una segunda convocatoria; art. 24) y si la publicación no cae en la fecha del calendario del art. 12 (2.ª semana de
+   noviembre y 1.ª de diciembre para el primer semestre; 2.ª semana de mayo y de junio para el segundo; la 1.ª de noviembre si es
+   una sola convocatoria para ambos). Son avisos: no impiden publicar. Los requisitos del reglamento se cargan solos; puede agregar o quitar.
 2. **Ítems:** una materia de la oferta de la gestión (o un proyecto, en investigación), plazas y horas (20 o 40 h/mes).
 3. **Tribunal de cada ítem:** dos docentes y dos estudiantes; un postulante no puede integrarlo.
 4. **Publicar:** se avisa a todos los estudiantes y a los miembros de los tribunales.
@@ -1027,8 +1033,9 @@ PDF o una foto por cada documento, marca **Declaro que es así** en las declarac
 trabajo. El sistema verifica solo que no haya sido auxiliar de esa materia en dos gestiones. Cuando no falta nada,
 **Enviar postulación**; puede retirarla mientras la recepción está abierta.
 
-**El tribunal** califica cada fase por su cuenta: habilitación (cumple o no), méritos (0 a 30, mínimo 10), examen
-escrito (0 a 35, mínimo 17,5) y examen oral (0 a 35). Los estudiantes del tribunal lo hacen desde **Le toca a usted**.
+**El tribunal** califica cada fase por su cuenta: habilitación (cumple o no), méritos (0 a 30, **mínimo 5**), examen
+escrito (0 a 35, **mínimo 18**) y examen oral (0 a 35). Los estudiantes del tribunal lo hacen desde **Le toca a usted**.
+(En una convocatoria hecha con el reglamento de 2021, los mínimos son 10 y 17,5.)
 La nota de cada fase es el promedio de al menos tres miembros. Quien gestiona la convocatoria, o un docente del tribunal,
 **cierra la fase y publica las notas**: cada postulante ve su resultado y tiene 24 horas para impugnar por escrito ante
 la Dirección; las impugnaciones se registran en la página del ítem y la fase siguiente no se cierra mientras haya alguna

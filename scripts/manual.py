@@ -103,13 +103,19 @@ def datos(ruta: str):
     g = gestiones.actual()
     of = db.q("""SELECT o.asignatura_id FROM oferta o JOIN asignatura a ON a.id = o.asignatura_id
                  WHERE o.gestion_id = ? ORDER BY a.sigla LIMIT 1""", [g["id"]])[0]
+    if g["tipo"] not in aux.GESTIONES_CONVOCABLES:        # las auxiliaturas son de los semestres regulares (PLAN §70)
+        g = db.q("SELECT * FROM gestion_academica WHERE tipo IN ('I', 'II') ORDER BY fecha_inicio DESC LIMIT 1")[0]
+        if not db.q("SELECT 1 FROM oferta WHERE gestion_id = ? AND asignatura_id = ?", [g["id"], of["asignatura_id"]]):
+            db.t.oferta.insert(gestion_id=g["id"], asignatura_id=of["asignatura_id"])
     ahora = datetime.now()
     x, err = aux.validar({"modalidad": "docencia", "gestion_id": g["id"], "numero": "1",
                           "titulo": f"Auxiliaturas de docencia {gestiones.codigo(g)}",
                           "publicacion": date.today().isoformat(),
                           "cierre": (ahora + timedelta(days=12)).strftime("%Y-%m-%dT18:00"),
                           "examen": (ahora + timedelta(days=20)).strftime("%Y-%m-%dT09:00"),
-                          "lugar": "Aula 4 de la Carrera", "resolucion": "Res. HCC 045/2026"}, ["docencia"])
+                          "lugar": "Aula 4 de la Carrera", "recepcion_lugar": "Secretaría de la Carrera",
+                          "recepcion_horario": "Lunes a viernes, de 9:00 a 12:00 y de 15:00 a 17:00",
+                          "resolucion": "Res. HCC 045/2026"}, ["docencia"])
     assert not err, err
     cid = aux.crear(x, ada)
     assert aux.agregar_item(aux.obtener(cid), {"asignatura_id": of["asignatura_id"], "plazas": "2", "horas": "40"}) == []

@@ -82,7 +82,8 @@ def panel_calificar(auth, it, post_url, base_doc):
                              maxlength="1000"), cls="space-y-1"),
                 cls="grid gap-2 sm:grid-cols-[12rem_1fr] mt-2"),
             role="group", aria_label=nombre, cls="py-3"))
-    maximo = "" if fase == "habilitacion" else f" (0 a {aux.MAXIMO[fase]}" + (f", mínimo {_num(aux.MINIMO[fase])})" if fase in aux.MINIMO else ")")
+    minimo = aux.minimo(it, fase)
+    maximo = "" if fase == "habilitacion" else f" (0 a {aux.MAXIMO[fase]}" + (f", mínimo {_num(minimo)})" if minimo is not None else ")")
     return tarjeta(
         f"Su calificación · {aux.NOMBRE_FASE[fase]}{maximo}",
         P("Cada miembro califica por su cuenta; la nota de la fase es el promedio de al menos tres miembros. Puede corregir "
@@ -151,8 +152,9 @@ def get(auth):
         Div(H2("Auxiliaturas"), A(UkIcon("plus", height=14, width=14), "Nueva convocatoria", href=f"{BASE}/nueva",
                                   cls="uk-btn uk-btn-primary uk-btn-sm gap-1") if gestor else "",
             cls="flex flex-wrap items-end justify-between gap-4 mb-2"),
-        P("Convocatorias a auxiliaturas de docencia y de investigación según el Reglamento General de Auxiliares Académicos "
-          "de la UMSA: requisitos, tribunal por ítem, calificación por fases y resultado.", cls="text-sm max-w-3xl mb-4"),
+        P("Convocatorias a auxiliaturas de los semestres regulares (I y II), de docencia y de investigación, según el Reglamento "
+          "Específico de Auxiliares Académicos del Pregrado de la UMSA (Res. HCU 424/2023, modificada por la 364/2025): requisitos, "
+          "tribunal por ítem, calificación por fases y resultado.", cls="text-sm max-w-3xl mb-4"),
         tarjeta("Tribunales que integra", Ul(*[Li(A(Div(i["titulo"], cls="font-medium"),
                                                      Div(i["convocatoria"], " · ", aux.NOMBRE_FASE[i["fase"]], cls=TextPresets.muted_sm),
                                                      href=f"{BASE}/item/{i['id']}", cls="hover:underline"),
@@ -186,19 +188,28 @@ def _form_conv(auth, c=None):
         Div(LabelInput("Publicación", id="publicacion", type="date", value=c.get("publicacion") or ""),
             LabelInput("Cierre de la recepción", id="cierre", type="datetime-local", value=c.get("cierre") or ""),
             LabelInput("Examen escrito", id="examen", type="datetime-local", value=c.get("examen") or ""),
-            LabelInput("Lugar", id="lugar", value=c.get("lugar") or "", maxlength="200"),
+            LabelInput("Lugar de los exámenes", id="lugar", value=c.get("lugar") or "", maxlength="200"),
             cls="grid grid-cols-1 sm:grid-cols-4 gap-4"),
-        LabelInput("Resolución del Consejo de Carrera (número y fecha)", id="resolucion", value=c.get("resolucion") or "",
-                   maxlength="120", placeholder="Res. CC 123/2026, 30/09/2026"),
-        P("Sin el número de la resolución no se puede publicar (art. 9). El PDF se adjunta aparte y es opcional.",
-          cls=TextPresets.muted_sm),
+        Div(LabelInput("Lugar de recepción de los documentos", id="recepcion_lugar", value=c.get("recepcion_lugar") or "",
+                       maxlength="200", placeholder="Secretaría de la Carrera"),
+            LabelInput("Horario de atención", id="recepcion_horario", value=c.get("recepcion_horario") or "", maxlength="120",
+                       placeholder="Lunes a viernes, de 9:00 a 12:00 y de 15:00 a 17:00"),
+            cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
+        Div(LabelInput("Resolución del Consejo de Carrera (número y fecha)", id="resolucion", value=c.get("resolucion") or "",
+                       maxlength="120", placeholder="Res. CC 123/2026, 30/09/2026"),
+            LabelInput("Resolución del Consejo Facultativo (opcional)", id="resolucion_hcf", value=c.get("resolucion_hcf") or "",
+                       maxlength="120", placeholder="Res. CF 45/2026"),
+            cls="grid grid-cols-1 sm:grid-cols-2 gap-4"),
+        P("La convocatoria la aprueba el Consejo de Carrera con visto bueno del Vicedecano (art. 11): sin el número de su resolución "
+          "no se puede publicar. El PDF se adjunta aparte y es opcional. La recepción de documentos dura 10 días hábiles desde la "
+          "publicación en la primera convocatoria y 5 en la segunda (art. 24).", cls=TextPresets.muted_sm),
         Div(A("Cancelar", href=url if c.get("id") else BASE, cls="uk-btn uk-btn-ghost"), enviar(), cls="flex justify-end gap-2"))
 
 
 async def _datos_conv(req):
     f = await req.form()
     return {k: f.get(k, "") for k in ("modalidad", "gestion_id", "numero", "titulo", "publicacion", "cierre", "examen", "lugar",
-                                      "resolucion")}
+                                      "resolucion", "resolucion_hcf", "recepcion_lugar", "recepcion_horario")}
 
 
 @rt(f"{BASE}/nueva")
@@ -209,8 +220,8 @@ def get(auth):
         return pagina("Nueva convocatoria", P("Primero registre la gestión en Docencia › Gestiones."), usuario=auth)
     return pagina("Nueva convocatoria", A("← Auxiliaturas", href=BASE, cls="text-sm text-primary"),
                   H2("Nueva convocatoria a auxiliaturas"),
-                  P("Se crea con los requisitos del reglamento (art. 8 y 12); después agrega los ítems, sus tribunales y los "
-                    "requisitos propios de la Carrera.", cls=(TextPresets.muted_sm, "mb-4")),
+                  P("Solo de los semestres I y II. Se crea con los requisitos del reglamento; después agrega los ítems, sus tribunales y "
+                    "los requisitos propios de la Carrera.", cls=(TextPresets.muted_sm, "mb-4")),
                   Div(_form_conv(auth), cls="max-w-4xl"), usuario=auth)
 
 
@@ -243,6 +254,7 @@ def get(auth, cid: int, editar: int = 0):
     its = aux.items(cid)
     reqs = aux.requisitos(cid)
     chequeo = aux.chequeo_fechas(c)
+    calendario = aux.chequeo_calendario(c) if borrador else None
     falta_pub = aux.faltantes_publicar(c) if borrador else []
     pdfs = adjuntos.listar("convocatoria_auxiliatura", cid)
     if borrador and c["modalidad"] == "docencia":
@@ -258,11 +270,16 @@ def get(auth, cid: int, editar: int = 0):
             f"{'primera' if c['numero'] == 1 else 'segunda'} convocatoria"),
         Div(Span("Publicación: ", cls="font-medium"), fecha(c["publicacion"]), Span(" · Cierre: ", cls="font-medium"),
             fecha(c["cierre"]), Span(" · Examen escrito: ", cls="font-medium"), fecha(c["examen"]),
-            f" · {c['lugar']}" if c["lugar"] else ""),
+            f" · Exámenes en {c['lugar']}" if c["lugar"] else ""),
+        Div(Span("Recepción de documentos: ", cls="font-medium"),
+            " · ".join(x for x in (c["recepcion_lugar"], c["recepcion_horario"]) if x) or Span("falta", cls="text-amber-700 dark:text-amber-300")
+            ) if c["reglamento"] == aux.REGLAMENTO_VIGENTE else "",
         Div(Span("Resolución: ", cls="font-medium"), c["resolucion"] or Span("falta", cls="text-amber-700 dark:text-amber-300"),
-            *[Span(" · ", enlace_adjunto(a, f"{BASE}/{cid}/resolucion/{a['id']}")) for a in pdfs]),
-        P(chequeo[1], cls="text-sm " + ("text-green-700 dark:text-green-300" if chequeo[0] else "text-amber-700 dark:text-amber-300"))
-        if chequeo else "",
+            *[Span(" · ", enlace_adjunto(a, f"{BASE}/{cid}/resolucion/{a['id']}")) for a in pdfs],
+            Span(" · Consejo Facultativo: ", cls="font-medium") if c["resolucion_hcf"] else "", c["resolucion_hcf"] or ""),
+        *[P(x[1], cls="text-sm " + ("text-green-700 dark:text-green-300" if x[0] else "text-amber-700 dark:text-amber-300"))
+          for x in (chequeo, calendario) if x],
+        P(f"Según el {aux.reglamento_texto(c)}.", cls=TextPresets.muted_sm),
         A(UkIcon("pencil", height=14, width=14), "Editar datos", href=f"{url}?editar=1", cls="uk-btn uk-btn-default uk-btn-sm gap-1")
         if borrador else "",
         cls="space-y-2 text-sm")
@@ -298,13 +315,14 @@ def get(auth, cid: int, editar: int = 0):
                                                    cls="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end"),
                                Div(enviar("Agregar ítem", cls=(ButtonT.default, ButtonT.sm)), cls="flex justify-end"),
                                cls="space-y-2 mt-4 border-t border-border pt-4") if borrador else "",
-                    P("Tribunal por ítem: dos docentes y dos estudiantes (art. 16). Lo designa la Dirección de Carrera o la "
+                    P("Tribunal por ítem: dos docentes y dos estudiantes. Lo designa la Dirección de Carrera o la "
                       "Coordinación académica.", cls=(TextPresets.muted_sm, "mt-2"))),
                 cls="space-y-6 lg:col-span-2"),
-            Div(tarjeta("Calificación (fija, art. 13 a 17)",
+            Div(tarjeta("Calificación (fija)",
                         *[Div(Span(n), Span(t, cls="font-semibold"), cls="flex justify-between text-sm")
-                          for n, t in (("Habilitación", "requisitos"), ("Méritos", "30 · mín. 10"), ("Examen escrito", "35 · mín. 17,5"),
-                                       ("Examen oral", "35"), ("Para ser titular", "56 de 100"))],
+                          for n, t in (("Habilitación", "requisitos"), ("Méritos", f"30 · mín. {_num(aux.reglas(c)['minimo']['meritos'])}"),
+                                       ("Examen escrito", f"35 · mín. {_num(aux.reglas(c)['minimo']['escrito'])}"),
+                                       ("Examen oral", "35"), ("Para ser titular", f"{aux.PUNTAJE_TITULAR} de 100"))],
                         P(f"Cada fase la califican al menos {aux.QUORUM} miembros del tribunal; la nota es el promedio.",
                           cls=(TextPresets.muted_sm, "mt-2"))),
                 tarjeta("Requisitos", Ul(*[Li(Div(Span(r["texto"], cls="text-sm"),
@@ -459,7 +477,7 @@ def get(auth, iid: int):
                        seleccion("Estudiante 1", "estudiante1", e_ops, e_sel[0], "—"),
                        seleccion("Estudiante 2", "estudiante2", e_ops, e_sel[1], "—"), cls="grid grid-cols-1 sm:grid-cols-2 gap-3"),
                    P("El docente responsable de la materia, un docente de una materia afín y dos estudiantes que la aprobaron con "
-                     "notas sobresalientes (art. 16). Los estudiantes necesitan cuenta en el sistema.", cls=TextPresets.muted_sm),
+                     "notas sobresalientes. Los estudiantes necesitan cuenta en el sistema.", cls=TextPresets.muted_sm),
                    Div(enviar("Guardar tribunal", cls=(ButtonT.default, ButtonT.sm)), cls="flex justify-end"))
         if gestor and it["fase"] in ("postulacion", "habilitacion") else "")
     fase = it["fase"]
@@ -507,7 +525,7 @@ def get(auth, iid: int):
                    cls="space-y-2 mt-3 border-t border-border pt-3") if cerradas and postul else "") if conduce else ""
     empatados = [p for p in postul if p["estado"] == "empate"]
     empate = tarjeta(
-        "Empate: examen de desempate (art. 19)",
+        "Empate: examen de desempate",
         formulario(f"{url}/desempate",
                    *[fh.Label(fh.Input(type="checkbox", name="ganadores", value=str(p["id"]), cls="uk-checkbox"),
                               f" {p['nombres']} {p['apellidos']}", cls="flex items-center gap-2 text-sm") for p in empatados],
@@ -639,7 +657,8 @@ def get(auth, iid: int):
         H3("Tribunal", cls="mt-8 text-base font-semibold"),
         Div(*[Div(Div(cls="h-12 border-b border-foreground"), P(f"{m['nombres']} {m['apellidos']} ({m['tipo']})", cls="text-sm text-center"))
               for m in it["tribunal"]], cls="grid grid-cols-2 gap-8 mt-4"),
-        P("Mínimos: méritos 10 de 30, escrito 17,5 de 35. Titular con 56 de 100 (Reglamento General de Auxiliares Académicos).",
+        P(f"Mínimos: méritos {_num(aux.minimo(it, 'meritos'))} de 30, escrito {_num(aux.minimo(it, 'escrito'))} de 35. "
+          f"Titular con {aux.PUNTAJE_TITULAR} de 100 ({aux.reglamento_texto(c)}).",
           cls=(TextPresets.muted_sm, "mt-6")),
         usuario=auth)
 
@@ -962,7 +981,7 @@ def get(auth, iid: int):
         f"Tribunal · {it['titulo']}",
         A("← Auxiliaturas", href=EST, cls="text-sm text-primary"),
         H2(f"Tribunal: {it['titulo']}", cls="mt-2"),
-        P(f"{c['titulo']} · Usted integra el tribunal como estudiante (art. 16).", cls=(TextPresets.muted_sm, "mb-4")),
+        P(f"{c['titulo']} · Usted integra el tribunal como estudiante.", cls=(TextPresets.muted_sm, "mb-4")),
         Div(_pasos_item(it), cls="mb-6 overflow-x-auto"),
         panel_calificar(auth, it, f"{TRIB}/{iid}/calificar", f"{TRIB}/documento"),
         Div(tarjeta("Postulantes y notas", tabla_resultados(it, f"{TRIB}/documento")), cls="mt-6"),

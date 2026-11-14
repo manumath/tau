@@ -99,6 +99,10 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   embargo, las notas ni los datos, y ningún indicador o informe lo usa sin una decisión nueva (PLAN §69). Las **colaboraciones** se derivan
   de `producto_autor` y `proyecto_participante` sin guardar nada y muestran solo nombre, institución y país: cada quien ve únicamente las
   suyas, nunca correo, ORCID ni documento.
+- **Auxiliaturas (PLAN §58 y §70):** rige el **Reglamento Específico de Auxiliares Académicos del Pregrado** (Res. HCU 424/2023, mod. 364/2025); el
+  de 2021 (251/2021) quedó sin efecto. Cada convocatoria guarda su `reglamento` y conserva sus reglas (`auxiliaturas.REGLAS`: mínimos, plazos): nunca
+  recalcule una convocatoria con las reglas de otro. Solo se convoca sobre los semestres I y II, nunca INV ni VER. Los PDF del reglamento no se
+  versionan; el resumen artículo por artículo está en PLAN §70.
 - **Gestiones (PLAN §66):** cada gestión (I, II, INV, VER) está *en planificación* (oferta y docentes se editan libremente y se
   puede borrar), *activa* (todo cambio pide fecha de efecto y motivo, queda en `gestion_cambio` y se avisa al docente; no se
   borra nada: `oferta.retirada_en`, `oferta_docente.desde/hasta`) o *concluida* (historial de solo lectura; solo la Dirección de

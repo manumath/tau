@@ -48,10 +48,15 @@ def _estudiante(nombre, email, ru, consentimiento=True):
 def _convocatoria(gestion, asignatura_id, docentes, tribunal_estudiantes):
     """Convocatoria a auxiliaturas publicada, con la recepción abierta 3 días."""
     ahora = datetime.now()
+    if gestion["tipo"] not in aux.GESTIONES_CONVOCABLES:     # las auxiliaturas son de los semestres, no de las temporadas (PLAN §70)
+        gestion = get_db().q("SELECT * FROM gestion_academica WHERE tipo IN ('I', 'II') ORDER BY fecha_inicio DESC LIMIT 1")[0]
+    if not get_db().q("SELECT 1 FROM oferta WHERE gestion_id = ? AND asignatura_id = ?", [gestion["id"], asignatura_id]):
+        get_db().t.oferta.insert(gestion_id=gestion["id"], asignatura_id=asignatura_id)
     x, errores = aux.validar({"modalidad": "docencia", "gestion_id": gestion["id"], "numero": "1",
                               "titulo": "Auxiliaturas de prueba", "publicacion": date.today().isoformat(),
                               "cierre": (ahora + timedelta(days=3)).strftime("%Y-%m-%dT%H:%M"),
                               "examen": (ahora + timedelta(days=20)).strftime("%Y-%m-%dT%H:%M"),
+                              "recepcion_lugar": "Secretaría de la Carrera", "recepcion_horario": "Lunes a viernes, de 9 a 12",
                               "resolucion": "Res. CC 1/2026"}, ["docencia"])
     assert not errores, errores
     cid = aux.crear(x, docentes[0])
