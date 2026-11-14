@@ -1061,6 +1061,11 @@ el ítem.
 **Generar la segunda convocatoria**: arma un borrador con solo esas plazas, los mismos requisitos, lugar de recepción y tribunales. Hay que darle fechas y el número de la
 resolución del Consejo de Carrera. Los arts. 13 y 14 piden publicarla hasta 72 horas después de los resultados de la primera; el sistema lo avisa en la página.
 
+**Formularios para imprimir.** En la página de cada ítem, «Formularios del reglamento» abre, listos para imprimir y firmar, los formularios de la Res. HCU 424/2023: **1** (habilitación, con los
+requisitos de cada postulante), **2-1, 2-2 o 2-3** (calificación de méritos según la modalidad, un acta por postulante con el promedio de los miembros del tribunal línea por línea),
+**3** (sorteo del tema y orden de participación), **4** (examen oral, con el promedio de cada criterio) y **5** (acta final con méritos, escrito, oral y total). Los ven quien gestiona la
+convocatoria y los docentes de la comisión; no existen para las convocatorias hechas con el reglamento de 2021, que conservan su acta de calificaciones.
+
 **Resultado y designación** (convocatorias del reglamento de 2023; botón en la convocatoria cuando algún ítem concluyó). Desde allí:
 - **Informe final y resoluciones (art. 22):** la fecha en que la comisión entregó su informe (el sistema avisa si pasaron más de 10 días de concluido el proceso), la
   resolución del Consejo de Carrera que aprueba los resultados y la homologación del Consejo Facultativo.

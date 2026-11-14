@@ -3888,3 +3888,13 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
   la materia no se cubrió tras dos convocatorias consecutivas y que primero se invita a los que «se presentaron en la convocatoria»); (b) los plazos del art. 22 (10 días corridos), del
   art. 23 (72 horas) y del art. 27 (15 días desde el último memorándum) solo advierten; (c) no se registra aún la baja o el cese del auxiliar (art. 28): va con el seguimiento del §71.
 
+### Etapa 6 (hecha, 14-nov-2026): formularios imprimibles
+- `app/servicios/formularios.py` (datos) y `rutas/formularios.py`: `/servicios/auxiliaturas/item/{iid}/formulario/{1..5}`, en HTML para imprimir (botón «Imprimir») con el encabezado
+  «Aprobado con Res. HCU N.º 424/2023 …». **1** habilitación (requisitos verificados por postulante y resultado), **2-1/2-2/2-3** méritos (una hoja por postulante: líneas con la cantidad media,
+  puntaje por sección y total), **3** sorteo (postulantes, tribunal, cinco temas, tema sorteado y orden con hora), **4** oral (promedio de cada criterio) y **5** acta final.
+- Como cada miembro califica por su cuenta, el acta muestra el **promedio** de los miembros (coincide con la nota que entra al resultado) y las firmas de la comisión se ponen en el papel;
+  la «calificación en consenso» del formulario 5 queda así como el cierre firmado del promedio (decisión 2 de este plan, por confirmar).
+- Los ven quienes ven el ítem (gestor y docentes de la comisión; los estudiantes del tribunal no entran a `/servicios`), y solo existen con el reglamento de 2023: para las anteriores sigue el
+  «Acta de calificaciones». Enlaces desde la página del ítem. Sin migración.
+- Los formularios 6 (ficha de asistencia) y la seguimiento posterior son del §71.
+

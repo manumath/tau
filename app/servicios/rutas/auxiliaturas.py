@@ -630,6 +630,11 @@ def get(auth, iid: int):
                    if nuevo and sorteado and fase in ("escrito", "oral") and orden_activos else "") \
         if conduce and fase not in ("postulacion", "concluido") else ""
     avisos = aux.avisos_plazos(it)
+    formularios_card = tarjeta("Formularios del reglamento (para imprimir)", Ul(*[
+        Li(A(UkIcon("printer", height=12, width=12, cls="inline mr-1"), texto, href=f"{url}/formulario/{n}", cls="text-sm text-primary hover:underline"))
+        for n, texto in (("1", "Formulario 1 · Habilitación"), ("2", f"Formulario {rubricas.formulario_de(c['modalidad'])} · Calificación de méritos"),
+                         ("3", "Formulario 3 · Sorteo del tema y orden de participación"), ("4", "Formulario 4 · Examen oral"),
+                         ("5", "Formulario 5 · Acta final"))], cls="space-y-1")) if nuevo else ""
     imps = aux.impugnaciones(iid)
     postul = aux.en_concurso(iid)
     cerradas = [f for f in aux.FASES if aux.cierre_de(iid, f)]
@@ -671,7 +676,7 @@ def get(auth, iid: int):
           for a in avisos],
         panel_calificar(auth, it, f"{url}/calificar", f"{BASE}/documento") if miembro else "",
         Div(tarjeta("Postulantes y notas", tabla_resultados(it, f"{BASE}/documento")), cls="my-6"),
-        Div(Div(control, tema, empate, cls="space-y-6"), Div(tribunal, impug, cls="space-y-6"),
+        Div(Div(control, tema, empate, cls="space-y-6"), Div(formularios_card, tribunal, impug, cls="space-y-6"),
             cls="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"),
         usuario=auth)
 

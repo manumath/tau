@@ -5,7 +5,7 @@ se agrega a MODULOS. La importación es diferida para no crear ciclos al importa
 """
 from importlib import import_module
 
-MODULOS = ("comunicados", "auxiliaturas", "designaciones", "grado", "oportunidades", "temas", "recursos",)
+MODULOS = ("comunicados", "auxiliaturas", "designaciones", "formularios", "grado", "oportunidades", "temas", "recursos",)
 
 
 def routers() -> list:

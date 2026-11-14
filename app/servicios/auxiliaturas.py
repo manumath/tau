@@ -150,6 +150,11 @@ def texto_gestion(g: dict | None) -> str:
     return f"{g['tipo']}-{g['anio']}" if g else ""
 
 
+def gestiones_texto(c: dict) -> str:
+    """La gestión de una convocatoria como «I-2027»."""
+    return f"{c['gestion_tipo']}-{c['anio']}" if c.get("gestion_tipo") else ""
+
+
 def obtener(cid: int) -> dict | None:
     filas = get_db().q("""SELECT c.*, g.anio, g.tipo AS gestion_tipo FROM convocatoria_auxiliatura c
                           JOIN gestion_academica g ON g.id = c.gestion_id WHERE c.id = ?""", [cid])
