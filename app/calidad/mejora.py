@@ -194,8 +194,8 @@ def reabrir(a: dict):
 
 
 def eliminar(a: dict) -> bool:
-    """Solo una acción sin avances (las demás se cancelan, con su motivo)."""
-    if a["avances"]:
+    """Solo una acción sin avances ni actividades (las demás se cancelan, con su motivo)."""
+    if a["avances"] or get_db().q("SELECT 1 FROM actividad_mejora WHERE accion_id = ? LIMIT 1", [a["id"]]):
         return False
     get_db().execute("DELETE FROM accion_mejora WHERE id = ?", [a["id"]])
     return True

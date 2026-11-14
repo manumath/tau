@@ -3966,8 +3966,26 @@ informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se gu
   principales; `docs/mantenimiento.md` dice cuándo correrlos. No va en GitHub Actions (tarda).
 - Arreglo de paso: `rutas/mejora._fecha` usa `formato.fecha`, no «dd/mm/aaaa».
 
-### Etapa 2: plan de mejora con actividades (modelo)
-Retoma lo postergado en el §61. Migración nueva:
+### Etapa 2 (hecha, 14-nov-2026): plan de mejora con actividades (modelo)
+- **Migración 0091** (`plan-de-mejora-con-actividades`): `accion_mejora.codigo/objetivo/eje`,
+  `marco_calidad.plan_resolucion/plan_aprobado_en`, tablas `actividad_mejora` y `reprogramacion_mejora`,
+  `avance_accion.actividad_id`. No cambia ningún dato existente; probada sobre una copia de la base de desarrollo (90 → 91).
+- **`app/calidad/actividades_mejora.py`:** validación (persona del sistema o unidad en texto; con indicador, línea base y meta
+  numéricas las dos o ninguna; presupuesto «2.300,50»), alta, edición, cancelación, cumplimiento y avances; avance y semáforo
+  calculados; `resumen_accion`; `de_responsable` (para «Mis pendientes», etapa 6); aprobación del plan; reprogramaciones
+  (pedir, aprobar, rechazar, con avisos a la Dirección de Carrera y al solicitante).
+- El **plazo de una acción con actividades** es el último de sus actividades no canceladas (se mantiene solo): así el
+  indicador de acciones cumplidas a tiempo y los avisos de la acción siguen funcionando sin cambios.
+- Una acción con actividades, o una actividad con avances o reprogramaciones, **no se borra**: se cancela con su motivo.
+- El avance con indicador usa la cifra del año en curso o, si aún no la hay, la del anterior (no más años: haría lenta la
+  lista). Los códigos se ordenan como números («4.10» después de «4.9»).
+- Pruebas: `tests/test_actividades_mejora.py`. Las pantallas son la etapa 3.
+- **Decisiones mías por confirmar:** (a) sin fecha de inicio, el plazo corre desde la aprobación del plan o, si no está
+  aprobado, desde que se registró la actividad; (b) quien gestiona el plan (Dirección de Carrera) registra una
+  reprogramación ya aprobada, sin pedírsela a sí misma; (c) una actividad agregada después de aprobar el plan entra con
+  su plazo, sin reprogramación.
+
+**Lo planificado:** retoma lo postergado en el §61. Migración nueva:
 - **`accion_mejora`** gana `codigo` («A4»), `objetivo` y `eje` (opcional). La prioridad se muestra como P1, P2 y P3
   (alta, media y baja; los valores guardados no cambian).
 - **`actividad_mejora`**: acción, `codigo` («4.2»), descripción, línea base, meta (texto y, si es numérica, valor),

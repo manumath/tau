@@ -73,6 +73,9 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   auditoría. La Comisión de calidad ve todo y solo registra evidencias y juicios de la autoevaluación (PLAN §57).
 - **Vínculo por periodos:** contratados, interinos e invitados con fecha de término obligatoria;
   titular permanente (se termina a mano con motivo: retiro, renuncia, despido, fallecimiento).
+- **Plan de mejora (PLAN §72):** acciones con actividades (`app/calidad/actividades_mejora.py`). El avance y el semáforo se
+  calculan, no se guardan. Aprobado el plan (`marco_calidad.plan_aprobado_en`), el plazo de una actividad cambia solo por
+  reprogramación (`reprogramacion_mejora`: el responsable pide y la Dirección de Carrera aprueba); nunca lo edite directo.
 - **Planes de estudio (PLAN §65):** un plan está *en elaboración*, *vigente*, *en proceso de cierre* o *cerrado*, y los
   planes se agrupan en una **reforma curricular** (la que se revisa cada 10 años; puede traer 1, 2 o 3 programas). Programa =
   titulación (títulos distintos); mención = énfasis dentro de un mismo título. Un programa tiene a lo sumo un plan vigente.

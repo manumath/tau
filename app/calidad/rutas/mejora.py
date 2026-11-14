@@ -457,7 +457,7 @@ def delete(auth, sess, aid: int):
     if error:
         return error
     if not mejora.eliminar(a):
-        add_toast(sess, "La acción tiene avances: cancélela, con su motivo, en lugar de eliminarla.", "error")
+        add_toast(sess, "La acción tiene avances o actividades: cancélela, con su motivo, en lugar de eliminarla.", "error")
         return Redirect(f"{BASE}/acciones/{aid}")
     auditar(auth["id"], "eliminar_accion_mejora", "accion_mejora", aid, a["titulo"])
     add_toast(sess, "Acción eliminada.", "success")
