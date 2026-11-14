@@ -247,8 +247,11 @@ def test_fases_quorum_impugnacion_y_resultado(app, gente, convocatoria):
     assert aux.cerrar_fase(aux.item(iid), gente["dir"]["id"]) == []
     assert aux.postulacion(luis)["estado"] == "eliminada" and aux.postulacion(luis)["fase_fin"] == "escrito"
     _pasar_24h(iid)
-    assert aux.sortear_tema(aux.item(iid), "Integrales dobles\nSeries de potencias") == []
-    assert aux.item(iid)["tema_oral"] in ("Integrales dobles", "Series de potencias")
+    assert aux.sortear_tema(aux.item(iid), "Integrales dobles\nSeries de potencias")[0].startswith("La comisión debe proponer cinco temas")
+    cinco = ["Integrales dobles", "Series de potencias", "Límites", "Derivadas parciales", "Sucesiones"]
+    assert aux.sortear_tema(aux.item(iid), "\n".join(cinco)) == []
+    assert aux.item(iid)["tema_oral"] in cinco and aux.item(iid)["temas_oral"].splitlines() == cinco and aux.item(iid)["tema_oral_en"]
+    assert aux.sortear_tema(aux.item(iid), "\n".join(cinco)) == ["El tema del examen oral ya se sorteó."]
     _calificar(iid, gente, {sofia: 28})
     assert aux.cerrar_fase(aux.item(iid), gente["dir"]["id"]) == []
     assert aux.item(iid)["fase"] == "concluido" and aux.total(sofia) == 83

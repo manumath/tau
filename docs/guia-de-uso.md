@@ -1043,11 +1043,17 @@ gestiones y que no postule a más de dos materias en la misma convocatoria. Los 
 
 **El tribunal** califica cada fase por su cuenta: habilitación (cumple o no), méritos (0 a 30, **mínimo 5**), examen
 escrito (0 a 35, **mínimo 18**) y examen oral (0 a 35). Los estudiantes del tribunal lo hacen desde **Le toca a usted**.
-(En una convocatoria hecha con el reglamento de 2021, los mínimos son 10 y 17,5.)
+Los **méritos** se anotan con el formulario del reglamento según la modalidad (2-1 docencia, 2-2 investigación y Beca Tesis, 2-3 interacción social): seis
+secciones —formación pedagógica, cursos relacionados, experiencia académica, nota de la materia, vida universitaria y delegación del tribunal estudiantil—; usted
+escribe cuántas veces se acredita cada línea y el sistema suma con el tope de cada sección. El **examen oral** se califica con la rúbrica del formulario 4:
+conocimiento del tema (7), preparación (8), didáctica (10), metodología (5) y respuestas a las preguntas (5), con 20 minutos de exposición y 10 de preguntas.
+(En una convocatoria hecha con el reglamento de 2021, los mínimos son 10 y 17,5 y cada fase lleva una sola nota.)
 La nota de cada fase es el promedio de al menos tres miembros. Quien gestiona la convocatoria, o un docente del tribunal,
 **cierra la fase y publica las notas**: cada postulante ve su resultado y tiene 24 horas para impugnar por escrito ante
 la Dirección; las impugnaciones se registran en la página del ítem y la fase siguiente no se cierra mientras haya alguna
-sin resolver. Antes del examen oral se **sortea el tema**. Al cerrar el oral, gana la plaza quien suma al menos 56 de 100
+sin resolver. Antes del examen oral la comisión propone **cinco temas** y se **sortea** uno, que disertan todos los postulantes dentro de las 24 horas siguientes; luego se registra el
+**orden y la hora** de cada uno (formulario 3). El sistema avisa si un plazo del art. 18 se pasó (méritos antes del examen escrito, notas del escrito a las 24 horas, oral
+dentro de las 24 horas del sorteo) y da hasta 48 horas para el desempate (art. 20). Al cerrar el oral, gana la plaza quien suma al menos 56 de 100
 con el mayor total; un empate lo resuelve la Dirección en la misma página. El **acta de calificaciones** se imprime desde
 el ítem.
 

@@ -512,3 +512,157 @@ def test_el_formulario_del_tribunal_muestra_el_error_de_la_regla(app, gente, con
                data={"docente1": str(gente["doc1"]["id"]), "docente2": str(contratado),
                      "estudiante1": str(gente["Ana"]["uid"]), "estudiante2": str(gente["Pedro"]["uid"])}, follow_redirects=False)
     assert r.status_code == 303 and aux.tribunal(convocatoria["iid"]) == []
+
+
+# --- Etapa 4: calificación con los formularios ------------------------------------------------------------------------------
+
+def _hasta_meritos(gente, conv):
+    """Una postulante enviada, la recepción cerrada y la habilitación concluida: el ítem queda en méritos."""
+    _publicar(gente, conv)
+    pid, _ = aux.postular(conv["iid"], gente["Sofía"]["externo"])
+    _completar(aux.postulacion(pid), gente)
+    assert aux.enviar(pid) == []
+    get_db().execute("UPDATE convocatoria_auxiliatura SET cierre = '2020-01-01T00:00' WHERE id = ?", [conv["cid"]])
+    assert aux.cerrar_fase(aux.item(conv["iid"]), gente["dir"]["id"]) == []
+    _calificar(conv["iid"], gente, {pid: 1})
+    assert aux.cerrar_fase(aux.item(conv["iid"]), gente["dir"]["id"]) == []
+    assert aux.item(conv["iid"])["fase"] == "meritos"
+    return pid
+
+
+MERITOS = {"1a": "2", "1b": "3", "2a": "2", "2b": "1", "3a": "2", "3b": "3", "4": "85", "5a": "1", "5b": "1", "6a": "1", "6b": "1"}
+
+
+def test_los_meritos_se_califican_con_el_formulario(app, gente, convocatoria):
+    pid = _hasta_meritos(gente, convocatoria)
+    it = aux.item(convocatoria["iid"])
+    assert aux.calificar_detalle(it, gente["doc1"]["id"], pid, MERITOS, "Buen currículum") == []
+    assert aux.nota(pid, "meritos") == 24.5 and aux.detalle(pid, "meritos", gente["doc1"]["id"])["4"] == 85
+    # Corregir reemplaza el detalle y la nota del miembro; los otros miembros no cambian.
+    assert aux.calificar_detalle(it, gente["doc1"]["id"], pid, {**MERITOS, "4": "95"}) == []
+    assert aux.nota(pid, "meritos") == 26.5 and len(aux.calificaciones(pid, "meritos")) == 1
+    assert aux.calificar_detalle(it, gente["doc2"]["id"], pid, {"4": "60"}) == []
+    assert aux.nota(pid, "meritos") == (26.5 + 4) / 2
+    # Lo que no se puede: no ser del tribunal, un valor inválido (nada se guarda) o un postulante ajeno a la fase.
+    assert aux.calificar_detalle(it, gente["doc3"]["id"], pid, MERITOS) == ["Solo califican los miembros del tribunal."]
+    errores = aux.calificar_detalle(it, gente["doc2"]["id"], pid, {"1a": "mucho"})
+    assert errores == ["«1a»: escriba un número."] and aux.detalle(pid, "meritos", gente["doc2"]["id"])["4"] == 60
+    assert aux.calificar_detalle(it, gente["doc1"]["id"], 999, MERITOS) == ["Ese postulante no está en esta fase."]
+
+
+def test_con_el_reglamento_antiguo_no_hay_formulario(app, gente, convocatoria):
+    _antigua(convocatoria["cid"])
+    pid = _hasta_meritos(gente, convocatoria)
+    it = aux.item(convocatoria["iid"])
+    assert aux.calificar_detalle(it, gente["doc1"]["id"], pid, MERITOS) == ["Esta fase no se califica con un formulario."]
+    assert aux.calificar(it, gente["doc1"]["id"], pid, 20) == []           # la nota única de siempre
+
+
+def test_pantalla_del_formulario_de_meritos(app, gente, convocatoria):
+    pid = _hasta_meritos(gente, convocatoria)
+    c = _como(app, "doc1@test.cl")
+    pagina = c.get(f"/servicios/auxiliaturas/item/{convocatoria['iid']}").text
+    assert "Formulario de méritos" in pagina and "Calificación obtenida en la materia que postula" in pagina
+    assert "Curso aprobado" in pagina and "(0 a 30, mínimo 5)" in pagina and f"d_{pid}_1a" in pagina and f"d_{pid}_4" in pagina
+    datos = {f"d_{pid}_{k}": v for k, v in MERITOS.items()} | {f"o_{pid}": "Buen currículum"}
+    r = c.post(f"/servicios/auxiliaturas/item/{convocatoria['iid']}/calificar", data=datos, follow_redirects=False)
+    assert r.status_code == 303 and aux.nota(pid, "meritos") == 24.5
+    assert "su puntaje: 24,5 de 30" in c.get(f"/servicios/auxiliaturas/item/{convocatoria['iid']}").text
+    # Un formulario en blanco no toca lo ya guardado; un valor inválido tampoco.
+    c.post(f"/servicios/auxiliaturas/item/{convocatoria['iid']}/calificar", data={f"d_{pid}_1a": ""})
+    c.post(f"/servicios/auxiliaturas/item/{convocatoria['iid']}/calificar", data={f"d_{pid}_1a": "x"})
+    assert aux.nota(pid, "meritos") == 24.5
+    # Los estudiantes del tribunal usan la misma ficha desde su portal.
+    assert aux.calificar_detalle(aux.item(convocatoria["iid"]), gente["Ana"]["uid"], pid, {"4": "70"}) == []
+
+
+def _en_oral(gente, convocatoria, n=2):
+    """El ítem en el examen oral con `n` postulantes que siguen en concurso."""
+    db = get_db()
+    pids = [db.t.postulacion_auxiliatura.insert(item_id=convocatoria["iid"], externo_id=gente[nombre]["externo"], estado="enviada")["id"]
+            for nombre in ("Sofía", "Luis", "Rosa")[:n]]
+    db.execute("UPDATE item_auxiliatura SET fase = 'oral' WHERE id = ?", [convocatoria["iid"]])
+    return pids
+
+
+def test_el_examen_oral_se_califica_con_la_rubrica(app, gente, convocatoria):
+    pid, _ = _en_oral(gente, convocatoria)
+    it = aux.item(convocatoria["iid"])
+    assert aux.fijar_tribunal(it, [gente["doc1"]["id"], gente["doc2"]["id"]], [gente["Ana"]["uid"], gente["Pedro"]["uid"]]) == []
+    rubrica = {"conocimiento": "6", "preparacion": "7", "didactica": "9", "metodologia": "4", "respuestas": "4,5"}
+    assert aux.calificar_detalle(it, gente["doc1"]["id"], pid, rubrica) == [] and aux.nota(pid, "oral") == 30.5
+    errores = aux.calificar_detalle(it, gente["doc2"]["id"], pid, {"conocimiento": "8", "didactica": "11"})
+    assert errores == ["Conocimiento del tema: va de 0 a 7.", "Didáctica: va de 0 a 10."]
+    assert aux.nota(pid, "oral") == 30.5
+    c = _como(app, "doc2@test.cl")
+    pagina = c.get(f"/servicios/auxiliaturas/item/{convocatoria['iid']}").text
+    assert "Formulario de examen oral" in pagina and "20 minutos de exposición y 10 de preguntas" in pagina and "Conocimiento del tema (0 a 7)" in pagina
+
+
+def test_orden_de_participacion_en_el_oral(app, gente, convocatoria):
+    a, b = _en_oral(gente, convocatoria)
+    it = aux.item(convocatoria["iid"])
+    assert aux.fijar_orden_oral(it, [(a, "2", "09:30"), (b, "1", "09:00")]) == []
+    assert {p["id"]: (p["orden_oral"], p["hora_oral"]) for p in aux.activos(convocatoria["iid"])} == {a: (2, "09:30"), b: (1, "09:00")}
+    assert aux.fijar_orden_oral(it, [(a, "1", ""), (b, "1", "")]) == ["Dos postulantes no pueden tener el mismo orden."]
+    assert aux.fijar_orden_oral(it, [(a, "1", "25:00")]) == ["La hora va como HH:MM."]
+    assert aux.fijar_orden_oral(it, [(a, "x", "")]) == ["Indique un orden (1, 2, 3…) para cada postulante que participa."]
+    assert aux.fijar_orden_oral(it, [(999, "1", "")]) != []
+    assert aux.fijar_orden_oral(it, [(a, "", ""), (b, "", "")]) == []                         # en blanco: se borra
+    assert {p["orden_oral"] for p in aux.activos(convocatoria["iid"])} == {None}
+
+
+def test_pantalla_del_sorteo_y_del_orden(app, gente, convocatoria):
+    pids = _en_oral(gente, convocatoria)
+    it = aux.item(convocatoria["iid"])
+    assert aux.fijar_tribunal(it, [gente["doc1"]["id"], gente["doc2"]["id"]], [gente["Ana"]["uid"], gente["Pedro"]["uid"]]) == []
+    d = _como(app, "dir@test.cl")
+    pagina = d.get(f"/servicios/auxiliaturas/item/{convocatoria['iid']}").text
+    assert "Cinco temas propuestos por la comisión" in pagina and "formulario 3" not in pagina       # el orden aparece tras el sorteo
+    d.post(f"/servicios/auxiliaturas/item/{convocatoria['iid']}/tema", data={"temas": "Uno\nDos\nTres"})
+    assert aux.item(convocatoria["iid"])["tema_oral"] is None
+    d.post(f"/servicios/auxiliaturas/item/{convocatoria['iid']}/tema", data={"temas": "Uno\nDos\nTres\nCuatro\nCinco"})
+    pagina = d.get(f"/servicios/auxiliaturas/item/{convocatoria['iid']}").text
+    assert "Tema sorteado:" in pagina and "Cinco temas propuestos" not in pagina and "formulario 3" in pagina
+    d.post(f"/servicios/auxiliaturas/item/{convocatoria['iid']}/orden",
+           data={f"orden_{pids[0]}": "2", f"hora_{pids[0]}": "10:00", f"orden_{pids[1]}": "1", f"hora_{pids[1]}": "09:00"})
+    assert {p["id"]: p["orden_oral"] for p in aux.activos(convocatoria["iid"])} == {pids[0]: 2, pids[1]: 1}
+    assert _como(app, "doc3@test.cl").post(f"/servicios/auxiliaturas/item/{convocatoria['iid']}/orden", data={}).status_code == 403
+
+
+def test_con_el_reglamento_antiguo_el_sorteo_acepta_dos_temas_y_se_puede_repetir(app, gente, convocatoria):
+    _antigua(convocatoria["cid"])
+    _en_oral(gente, convocatoria)
+    it = aux.item(convocatoria["iid"])
+    assert aux.sortear_tema(it, "Uno\nDos") == [] and aux.sortear_tema(aux.item(convocatoria["iid"]), "Uno\nDos") == []
+    assert aux.sortear_tema(it, "Uno") == ["Escriba al menos dos temas, uno por línea."]
+
+
+def _cierre(iid, fase, cuando):
+    get_db().execute("INSERT OR REPLACE INTO fase_auxiliatura (item_id, fase, cerrada_en) VALUES (?, ?, ?)", [iid, fase, cuando.strftime("%Y-%m-%d %H:%M:%S")])
+
+
+def test_avisos_de_los_plazos_del_reglamento(app, gente, convocatoria):
+    iid = convocatoria["iid"]
+    assert aux.avisos_plazos(aux.item(iid)) == []
+    examen = datetime(2027, 1, 20, 9, 0)
+    get_db().execute("UPDATE convocatoria_auxiliatura SET examen = ? WHERE id = ?", [examen.strftime("%Y-%m-%dT%H:%M"), convocatoria["cid"]])
+    utc = lambda local: local.astimezone().astimezone(timezone.utc).replace(tzinfo=None)  # noqa: E731
+    # Todo a tiempo: méritos antes del examen, escrito a las 10 horas, oral a las 5 horas del sorteo.
+    _cierre(iid, "meritos", utc(examen - timedelta(hours=2)))
+    _cierre(iid, "escrito", utc(examen + timedelta(hours=10)))
+    get_db().execute("UPDATE item_auxiliatura SET tema_oral_en = ? WHERE id = ?", [utc(examen + timedelta(hours=30)).strftime("%Y-%m-%d %H:%M:%S"), iid])
+    _cierre(iid, "oral", utc(examen + timedelta(hours=35)))
+    assert aux.avisos_plazos(aux.item(iid)) == []
+    # Fuera de plazo.
+    _cierre(iid, "meritos", utc(examen + timedelta(hours=1)))
+    _cierre(iid, "escrito", utc(examen + timedelta(hours=30)))
+    _cierre(iid, "oral", utc(examen + timedelta(hours=80)))
+    avisos = aux.avisos_plazos(aux.item(iid))
+    assert len(avisos) == 3 and "méritos debían publicarse antes del examen escrito" in avisos[0]
+    assert "dentro de las 24 horas siguientes al examen" in avisos[1] and "24 horas posteriores al sorteo" in avisos[2]
+    # El desempate tiene 48 horas desde los resultados del oral.
+    get_db().t.postulacion_auxiliatura.insert(item_id=iid, externo_id=gente["Sofía"]["externo"], estado="empate")
+    assert any("desempate debe rendirse dentro de las 48 horas" in a and "art. 20" in a for a in aux.avisos_plazos(aux.item(iid)))
+    _antigua(convocatoria["cid"])
+    assert aux.avisos_plazos(aux.item(iid)) == []

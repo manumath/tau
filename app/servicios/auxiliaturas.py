@@ -19,6 +19,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from app.comun import estudiantes, formato, notificaciones, permisos, usuarios
 from app.comun.db import AHORA, get_db, transaccion
+from app.servicios import rubricas
 
 MODALIDADES = {"docencia": "Docencia", "investigacion": "Investigación", "interaccion_social": "Interacción social",
                "beca_tesis": "Beca Tesis (investigación)"}
@@ -675,10 +676,50 @@ def calificar(it: dict, uid: int, pid: int, valor, observacion: str = "") -> lis
         return ["Escriba un número."]
     if not 0 <= v <= MAXIMO[fase]:
         return [f"La nota va de 0 a {MAXIMO[fase]}."]
+    _guardar_nota(pid, fase, uid, v, observacion)
+    return []
+
+
+def _guardar_nota(pid: int, fase: str, uid: int, valor: float, observacion: str = ""):
     get_db().execute(f"""INSERT INTO calificacion_auxiliatura (postulacion_id, fase, miembro_id, valor, observacion)
                          VALUES (?, ?, ?, ?, ?) ON CONFLICT (postulacion_id, fase, miembro_id)
                          DO UPDATE SET valor = excluded.valor, observacion = excluded.observacion, registrado_en = {AHORA}""",
-                     [pid, fase, uid, v, (observacion or "").strip()[:1000] or None])
+                     [pid, fase, uid, valor, (observacion or "").strip()[:1000] or None])
+
+
+def usa_formularios(c: dict | None) -> bool:
+    """¿Los méritos y el examen oral se califican con los formularios del reglamento de 2023 (detalle por línea o criterio)?"""
+    return (c or {}).get("reglamento") == REGLAMENTO_VIGENTE
+
+
+def detalle(pid: int, fase: str, uid: int) -> dict[str, float]:
+    """Lo que un miembro anotó en el formulario de méritos o en la rúbrica del oral de un postulante: clave → cantidad."""
+    return {f["clave"]: f["cantidad"] for f in get_db().q(
+        "SELECT clave, cantidad FROM calificacion_detalle WHERE postulacion_id = ? AND fase = ? AND miembro_id = ?", [pid, fase, uid])}
+
+
+def puntaje_detalle(c: dict, fase: str, entradas: dict[str, float]) -> float:
+    return rubricas.calcular_meritos(c["modalidad"], entradas)["total"] if fase == "meritos" else rubricas.calcular_oral(entradas)
+
+
+def calificar_detalle(it: dict, uid: int, pid: int, crudo: dict, observacion: str = "") -> list[str]:
+    """Califica un postulante en méritos (formularios 2-1, 2-2 o 2-3) o en el examen oral (formulario 4) con el detalle por línea o criterio;
+    la calificación del miembro es la suma (con los topes del formulario) y entra al promedio de la fase como cualquier otra."""
+    c, fase = obtener(it["convocatoria_id"]), it["fase"]
+    if not usa_formularios(c) or fase not in ("meritos", "oral"):
+        return ["Esta fase no se califica con un formulario."]
+    if not es_miembro(it["id"], uid):
+        return ["Solo califican los miembros del tribunal."]
+    if pid not in {p["id"] for p in activos(it["id"])}:
+        return ["Ese postulante no está en esta fase."]
+    cantidades, errores = (rubricas.validar_meritos(c["modalidad"], crudo) if fase == "meritos" else rubricas.validar_oral(crudo))
+    if errores:
+        return errores
+    with transaccion():
+        get_db().execute("DELETE FROM calificacion_detalle WHERE postulacion_id = ? AND fase = ? AND miembro_id = ?", [pid, fase, uid])
+        for clave, cantidad in cantidades.items():
+            get_db().t.calificacion_detalle.insert(postulacion_id=pid, fase=fase, miembro_id=uid, clave=clave, cantidad=cantidad)
+        _guardar_nota(pid, fase, uid, puntaje_detalle(c, fase, cantidades), observacion)
     return []
 
 
@@ -876,12 +917,73 @@ def generar_segunda(cid: int, uid: int) -> tuple[int | None, list[str]]:
     return nuevo, []
 
 
+TEMAS_ORAL = 5      # art. 18, b): la comisión propone cinco temas y se sortea uno
+
+
 def sortear_tema(it: dict, temas: str) -> list[str]:
+    """Sortea el tema del examen oral, que disertan todos los postulantes. Con el reglamento de 2023 la comisión propone cinco temas y
+    el sorteo no se repite; con el de 2021, al menos dos."""
     lista = [t.strip() for t in (temas or "").splitlines() if t.strip()]
+    nuevo = usa_formularios(obtener(it["convocatoria_id"]))
+    if nuevo and it["tema_oral"]:
+        return ["El tema del examen oral ya se sorteó."]
+    if nuevo and len(lista) != TEMAS_ORAL:
+        return [f"La comisión debe proponer cinco temas, uno por línea (art. 18, b); escribió {len(lista)}."]
     if len(lista) < 2:
         return ["Escriba al menos dos temas, uno por línea."]
-    get_db().execute("UPDATE item_auxiliatura SET tema_oral = ? WHERE id = ?", [random.choice(lista)[:300], it["id"]])
+    get_db().execute(f"UPDATE item_auxiliatura SET tema_oral = ?, temas_oral = ?, tema_oral_en = {AHORA} WHERE id = ?",
+                     [random.choice(lista)[:300], "\n".join(lista), it["id"]])
     return []
+
+
+def fijar_orden_oral(it: dict, filas: list[tuple[int, str, str]]) -> list[str]:
+    """Orden y hora en que cada postulante diserta el tema sorteado (formulario 3). `filas`: (postulación, orden, hora 'HH:MM')."""
+    activos_ = {p["id"] for p in activos(it["id"])}
+    ordenes, valores = [], []
+    for pid, orden, hora in filas:
+        if str(orden).strip() == "" and not str(hora).strip():
+            continue
+        if pid not in activos_ or not str(orden).strip().isdigit() or int(orden) < 1:
+            return ["Indique un orden (1, 2, 3…) para cada postulante que participa."]
+        hora = str(hora or "").strip()
+        if hora and not (len(hora) == 5 and hora[2] == ":" and hora[:2].isdigit() and hora[3:].isdigit()
+                         and int(hora[:2]) < 24 and int(hora[3:]) < 60):
+            return ["La hora va como HH:MM."]
+        ordenes.append(int(orden))
+        valores.append((pid, int(orden), hora or None))
+    if len(set(ordenes)) != len(ordenes):
+        return ["Dos postulantes no pueden tener el mismo orden."]
+    with transaccion():
+        get_db().execute("UPDATE postulacion_auxiliatura SET orden_oral = NULL, hora_oral = NULL WHERE item_id = ?", [it["id"]])
+        for pid, orden, hora in valores:
+            get_db().execute("UPDATE postulacion_auxiliatura SET orden_oral = ?, hora_oral = ? WHERE id = ?", [orden, hora, pid])
+    return []
+
+
+def _local(utc: str) -> datetime:
+    """Marca de tiempo de SQLite en UTC → hora local (la de los exámenes, que se escriben en hora local)."""
+    return datetime.fromisoformat(str(utc)).replace(tzinfo=timezone.utc).astimezone().replace(tzinfo=None)
+
+
+def avisos_plazos(it: dict) -> list[str]:
+    """Plazos del reglamento de 2023 que ya se pasaron en este ítem (solo advierten; nada se bloquea)."""
+    c = obtener(it["convocatoria_id"])
+    if not usa_formularios(c):
+        return []
+    avisos = []
+    examen = datetime.fromisoformat(c["examen"]) if c["examen"] else None
+    meritos, escrito, oral = (cierre_de(it["id"], f) for f in ("meritos", "escrito", "oral"))
+    if examen and meritos and _local(meritos["cerrada_en"]) > examen:
+        avisos.append("Los resultados de méritos debían publicarse antes del examen escrito (art. 18).")
+    if examen and escrito and _local(escrito["cerrada_en"]) > examen + timedelta(hours=24):
+        avisos.append("Los resultados del examen escrito debían publicarse dentro de las 24 horas siguientes al examen (art. 18, a).")
+    if it["tema_oral_en"] and oral and _local(oral["cerrada_en"]) > _local(it["tema_oral_en"]) + timedelta(hours=24):
+        avisos.append("El examen oral debía rendirse dentro de las 24 horas posteriores al sorteo del tema (art. 18, b).")
+    if oral and any(p["estado"] == "empate" for p in en_concurso(it["id"])):
+        limite = _local(oral["cerrada_en"]) + timedelta(hours=48)
+        avisos.append(f"El examen de desempate debe rendirse dentro de las 48 horas de publicados los resultados: hasta el "
+                      f"{formato.fecha(limite.date().isoformat())}, {limite:%H:%M} (art. 20).")
+    return avisos
 
 
 def registrar_impugnacion(it: dict, pid: int, fase: str, presentada_en: str, texto: str, uid: int) -> list[str]:

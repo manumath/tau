@@ -12,6 +12,7 @@ from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
 from app.investigacion import adjuntos
 from app.servicios import auxiliaturas as aux
+from app.servicios import rubricas
 from app.servicios.rutas.comun import (area, boton_post, descargar, enlace_adjunto, enviar, falta, fecha, formulario,
                                        leer_archivo, no_autorizado, no_encontrado, seleccion, subir, tarjeta)
 
@@ -49,6 +50,34 @@ def _docs_postulante(p, base_doc):
     return Ul(*filas, cls="space-y-1 mt-1") if filas else ""
 
 
+def _numero(nombre, valor, maximo, paso="1"):
+    return fh.Input(type="number", id=nombre, name=nombre, min="0", max=str(maximo), step=paso, inputmode="decimal",
+                    value=_num(valor).replace(",", ".") if valor else "", cls="uk-input h-9 w-24")
+
+
+def _campos_detalle(p, c, fase, mio):
+    """Formulario de méritos (2-1, 2-2 o 2-3) o rúbrica del examen oral (formulario 4) de un postulante: una fila por línea o criterio.
+    `mio`: lo que este miembro ya anotó (clave → cantidad)."""
+    pid = p["id"]
+    if fase == "oral":
+        filas = [Div(fh.Label(f"{texto} (0 a {maximo})", fr=f"d_{pid}_{clave}", cls="text-xs"), _numero(f"d_{pid}_{clave}", mio.get(clave), maximo, "0.5"),
+                     cls="flex items-center justify-between gap-3") for clave, texto, maximo in rubricas.ORAL]
+        return Div(P(f"Exposición del tema sorteado: {rubricas.ORAL_TIEMPOS}.", cls=TextPresets.muted_sm), *filas, cls="space-y-1 mt-2")
+    bloques = []
+    for sec in rubricas.secciones(c["modalidad"]):
+        if sec["numero"] == rubricas.SECCION_MATERIA:
+            filas = [Div(fh.Label("Nota obtenida en la materia (0 a 100)", fr=f"d_{pid}_4", cls="text-xs"),
+                         _numero(f"d_{pid}_4", mio.get("4"), 100, "0.5"), cls="flex items-center justify-between gap-3"),
+                     P("51–59: 2 · 60–69: 4 · 70–79: 6 · 80–89: 8 · 90–100: 10 puntos.", cls=TextPresets.muted_sm)]
+        else:
+            filas = [Div(fh.Label(f"{texto} · {_num(pts)} p por {unidad}", fr=f"d_{pid}_{clave}", cls="text-xs"),
+                         _numero(f"d_{pid}_{clave}", mio.get(clave), rubricas.LIMITE_CANTIDAD), cls="flex items-center justify-between gap-3")
+                     for clave, texto, pts, unidad in sec["lineas"]]
+        bloques.append(Div(P(f"{sec['numero']}. {sec['titulo']} (máximo {sec['maximo']})", cls="text-xs font-semibold"), *filas, cls="space-y-1"))
+    return Div(P("Anote cuántas veces se acredita cada línea (cursos, años…); el sistema suma con los topes del formulario.",
+                 cls=TextPresets.muted_sm), *bloques, cls="space-y-3 mt-2")
+
+
 def panel_calificar(auth, it, post_url, base_doc):
     """Formulario del miembro: su calificación de la fase en curso para cada postulante (una ficha por postulante, que
     se lee igual en el teléfono)."""
@@ -60,10 +89,17 @@ def panel_calificar(auth, it, post_url, base_doc):
         return tarjeta(f"Su calificación · {aux.NOMBRE_FASE[fase]}", P("No hay postulantes en esta fase.", cls=TextPresets.muted_sm))
     propias = {c["postulacion_id"]: c for c in get_db().q(
         "SELECT * FROM calificacion_auxiliatura WHERE fase = ? AND miembro_id = ?", [fase, auth["id"]])}
+    conv = aux.obtener(it["convocatoria_id"])
+    estructurada = aux.usa_formularios(conv) and fase in ("meritos", "oral")
     fichas = []
     for p in activos:
         mia, nombre = propias.get(p["id"]), f"{p['nombres']} {p['apellidos']}"
-        if fase == "habilitacion":
+        if estructurada:
+            campo = Div(fh.Details(
+                fh.Summary(f"Formulario de {'méritos' if fase == 'meritos' else 'examen oral'}"
+                           + (f" · su puntaje: {_num(mia['valor'])} de {aux.MAXIMO[fase]}" if mia else ""), cls="text-sm font-medium cursor-pointer"),
+                _campos_detalle(p, conv, fase, aux.detalle(p["id"], fase, auth["id"]))), cls="sm:col-span-2")
+        elif fase == "habilitacion":
             campo = fh.Select(fh.Option("—", value=""), fh.Option("Cumple: habilitado", value="1", selected=mia and mia["valor"] == 1),
                               fh.Option("No cumple", value="0", selected=mia and mia["valor"] == 0),
                               id=f"v_{p['id']}", name=f"v_{p['id']}", cls="uk-select")
@@ -76,18 +112,19 @@ def panel_calificar(auth, it, post_url, base_doc):
                 cls="flex flex-wrap items-baseline justify-between gap-x-3"),
             _docs_postulante(p, base_doc) if fase in ("habilitacion", "meritos") else "",
             P((p["propuesta"] or "")[:400], cls=(TextPresets.muted_sm, "mt-1")) if fase == "meritos" and p["propuesta"] else "",
-            Div(Div(fh.Label("Calificación", fr=f"v_{p['id']}", cls="text-xs font-medium"), campo, cls="space-y-1"),
+            Div(campo if estructurada else Div(fh.Label("Calificación", fr=f"v_{p['id']}", cls="text-xs font-medium"), campo, cls="space-y-1"),
                 Div(fh.Label("Observación (opcional)", fr=f"o_{p['id']}", cls="text-xs font-medium"),
                     fh.Input(id=f"o_{p['id']}", name=f"o_{p['id']}", value=(mia or {}).get("observacion") or "", cls="uk-input",
                              maxlength="1000"), cls="space-y-1"),
-                cls="grid gap-2 sm:grid-cols-[12rem_1fr] mt-2"),
+                cls=("grid gap-2 mt-2" if estructurada else "grid gap-2 sm:grid-cols-[12rem_1fr] mt-2")),
             role="group", aria_label=nombre, cls="py-3"))
     minimo = aux.minimo(it, fase)
     maximo = "" if fase == "habilitacion" else f" (0 a {aux.MAXIMO[fase]}" + (f", mínimo {_num(minimo)})" if minimo is not None else ")")
     return tarjeta(
         f"Su calificación · {aux.NOMBRE_FASE[fase]}{maximo}",
         P("Cada miembro califica por su cuenta; la nota de la fase es el promedio de al menos tres miembros. Puede corregir "
-          "su calificación hasta que se cierre la fase.", cls=(TextPresets.muted_sm, "mb-1")),
+          "su calificación hasta que se cierre la fase." + (" Los méritos y el examen oral se califican con el formulario del reglamento."
+                                                            if estructurada else ""), cls=(TextPresets.muted_sm, "mb-1")),
         P(f"Tema sorteado para el examen oral: {it['tema_oral']}", cls="text-sm font-medium mb-2") if fase == "oral" and it["tema_oral"] else "",
         formulario(post_url, Div(*fichas, cls="divide-y divide-border"),
                    Div(enviar("Guardar mi calificación"), cls="flex justify-end")))
@@ -96,7 +133,17 @@ def panel_calificar(auth, it, post_url, base_doc):
 async def _guardar_calificacion(auth, sess, req, it):
     f = await req.form()
     errores, n = [], 0
+    estructurada = aux.usa_formularios(aux.obtener(it["convocatoria_id"])) and it["fase"] in ("meritos", "oral")
     for p in aux.activos(it["id"]):
+        if estructurada:
+            prefijo = f"d_{p['id']}_"
+            crudo = {k[len(prefijo):]: str(v) for k, v in f.items() if k.startswith(prefijo)}
+            if not any(v.strip() for v in crudo.values()):
+                continue       # no anotó nada de este postulante: no se toca su calificación
+            e = aux.calificar_detalle(it, auth["id"], p["id"], crudo, f.get(f"o_{p['id']}", ""))
+            errores += [f"{p['nombres']} {p['apellidos']}: {x}" for x in e]
+            n += not e
+            continue
         v = str(f.get(f"v_{p['id']}", "")).strip()
         if v == "":
             continue
@@ -552,12 +599,33 @@ def get(auth, iid: int):
             A(UkIcon("printer", height=14, width=14), "Acta de calificaciones", href=f"{url}/acta",
               cls="uk-btn uk-btn-default uk-btn-sm gap-1"),
             cls="flex flex-wrap gap-2 mt-3")) if conduce else ""
+    nuevo = aux.usa_formularios(c)
+    sorteado = bool(it["tema_oral"])
+    orden_activos = sorted(aux.activos(iid), key=lambda p: (p["orden_oral"] is None, p["orden_oral"] or 0, p["apellidos"]))
     tema = tarjeta("Sorteo del tema del examen oral",
-                   P(f"Tema sorteado: {it['tema_oral']}", cls="text-sm font-medium") if it["tema_oral"] else "",
-                   formulario(f"{url}/tema", area("Temas (uno por línea)", "temas", "", 4),
+                   Ul(*[Li(t, cls="text-sm") for t in (it["temas_oral"] or "").splitlines()], cls="list-disc pl-5 mb-2")
+                   if it["temas_oral"] else "",
+                   P(f"Tema sorteado: {it['tema_oral']}", cls="text-sm font-medium") if sorteado else "",
+                   P("Lo diserta cada postulante dentro de las 24 horas siguientes al sorteo, con " + rubricas.ORAL_TIEMPOS + " (art. 18, b).",
+                     cls=(TextPresets.muted_sm, "mb-2")) if nuevo else "",
+                   formulario(f"{url}/tema", area("Cinco temas propuestos por la comisión (uno por línea)" if nuevo else "Temas (uno por línea)",
+                                                  "temas", "", 5 if nuevo else 4),
                               Div(enviar("Sortear", cls=(ButtonT.default, ButtonT.sm)), cls="flex justify-end"))
-                   if fase in ("escrito", "oral") else P("Se sortea antes del examen oral.", cls=TextPresets.muted_sm)) \
+                   if fase in ("escrito", "oral") and not (nuevo and sorteado) else
+                   (P("Se sortea antes del examen oral.", cls=TextPresets.muted_sm) if not sorteado else ""),
+                   formulario(f"{url}/orden",
+                              P("Orden y hora en que cada postulante diserta el tema (formulario 3).", cls=(TextPresets.muted_sm, "mt-3 border-t "
+                                                                                                          "border-border pt-3")),
+                              *[Div(Span(f"{p['nombres']} {p['apellidos']}", cls="text-sm flex-1"),
+                                    fh.Input(type="number", name=f"orden_{p['id']}", min="1", value=str(p["orden_oral"] or ""), cls="uk-input h-9 w-16",
+                                             aria_label=f"Orden de {p['nombres']} {p['apellidos']}"),
+                                    fh.Input(type="time", name=f"hora_{p['id']}", value=p["hora_oral"] or "", cls="uk-input h-9 w-28",
+                                             aria_label=f"Hora de {p['nombres']} {p['apellidos']}"), cls="flex items-center gap-2")
+                                for p in orden_activos],
+                              Div(enviar("Guardar el orden", cls=(ButtonT.default, ButtonT.sm)), cls="flex justify-end"), cls="space-y-2")
+                   if nuevo and sorteado and fase in ("escrito", "oral") and orden_activos else "") \
         if conduce and fase not in ("postulacion", "concluido") else ""
+    avisos = aux.avisos_plazos(it)
     imps = aux.impugnaciones(iid)
     postul = aux.en_concurso(iid)
     cerradas = [f for f in aux.FASES if aux.cierre_de(iid, f)]
@@ -595,6 +663,8 @@ def get(auth, iid: int):
         H2(it["titulo"], cls="mt-2"),
         P(f"{it['plazas']} plaza(s) · {it['horas']} h/mes · {c['titulo']}", cls=(TextPresets.muted_sm, "mb-4")),
         Div(_pasos_item(it), cls="mb-6"),
+        *[P(UkIcon("triangle-alert", height=14, width=14, cls="inline mr-1"), a, cls="text-sm text-amber-700 dark:text-amber-300 mb-2")
+          for a in avisos],
         panel_calificar(auth, it, f"{url}/calificar", f"{BASE}/documento") if miembro else "",
         Div(tarjeta("Postulantes y notas", tabla_resultados(it, f"{BASE}/documento")), cls="my-6"),
         Div(Div(control, tema, empate, cls="space-y-6"), Div(tribunal, impug, cls="space-y-6"),
@@ -656,6 +726,22 @@ def post(auth, sess, iid: int, temas: str = ""):
         return no_autorizado()
     for e in aux.sortear_tema(it, temas):
         add_toast(sess, e, "error")
+    return Redirect(f"{BASE}/item/{iid}")
+
+
+@rt(f"{BASE}/item/{{iid}}/orden")
+async def post(auth, sess, req, iid: int):
+    it = _conducible(auth, iid)
+    if not it:
+        return no_autorizado()
+    f = await req.form()
+    filas = [(p["id"], f.get(f"orden_{p['id']}", ""), f.get(f"hora_{p['id']}", "")) for p in aux.activos(iid)]
+    errores = aux.fijar_orden_oral(it, filas)
+    for e in errores:
+        add_toast(sess, e, "error")
+    if not errores:
+        auditar(auth["id"], "orden_examen_oral_auxiliatura", "item_auxiliatura", iid)
+        add_toast(sess, "Orden de participación guardado.", "success")
     return Redirect(f"{BASE}/item/{iid}")
 
 

@@ -3859,3 +3859,18 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
 - **Decisiones mías por confirmar:** (a) la falta de titular asignado a la materia es un aviso y no un error, porque la convocatoria suele salir antes de que se asignen los docentes del
   semestre; (b) el requisito de que los estudiantes sean de cogobierno y de los mejores promedios no se puede verificar y lo declara la Dirección con la resolución.
 
+### Etapa 4 (hecha, 14-nov-2026): calificación según los formularios
+- **Migración 0089:** `calificacion_detalle` (por postulante, fase —méritos u oral—, miembro y línea: cantidad), `item_auxiliatura.temas_oral` y `tema_oral_en`,
+  `postulacion_auxiliatura.orden_oral` y `hora_oral`.
+- `app/servicios/rubricas.py` (cálculo puro): **formularios 2-1, 2-2 y 2-3** (docencia; investigación y Beca Tesis; interacción social) con sus seis secciones y topes
+  —5+5+5+10+2+3, 3+9+3+10+2+3 y 5+7+3+10+2+3, siempre 30— y la nota de la materia convertida en puntos (51–59 = 2 … 90–100 = 10); **rúbrica del oral** (formulario 4): 7+8+10+5+5 = 35.
+- `calificar_detalle`: cada miembro anota las cantidades de cada línea o los puntos de cada criterio y el sistema calcula **su** calificación de la fase, que entra al promedio de
+  siempre (decisión 4 se mantiene). Solo con el reglamento de 2023; la pantalla del tribunal (del personal y de los estudiantes) muestra el formulario, y un formulario en blanco no
+  toca lo guardado. `calificar` con un valor único queda para las convocatorias de 2021 y como función interna.
+- **Oral:** la comisión propone **cinco temas** y se sortea uno una sola vez (con el reglamento de 2021 bastaban dos y se podía repetir); se guarda la hora del sorteo; el orden y la hora de
+  participación de cada postulante (formulario 3) se registran con `fijar_orden_oral`.
+- `avisos_plazos` (solo advierten): méritos publicados antes del examen escrito, notas del escrito dentro de las 24 horas, oral dentro de las 24 horas del sorteo y, si hay empate, el límite de
+  **48 horas** para el desempate (art. 20). La habilitación sigue siendo un sí o no por miembro; el formulario 1 se arma en la etapa 6 con los requisitos de cada postulante.
+- **Decisión mía por confirmar:** las unidades de las líneas («curso», «año», «semestre», «vez») y los textos de las secciones siguen los formularios del PDF; la línea 2 de investigación tiene siete
+  renglones (en el PDF dos llevan la misma letra «d»: se numeraron de la a a la g).
+
