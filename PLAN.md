@@ -3750,3 +3750,75 @@ proyectos (7) fuera **mientras los proyectos no manejen fondos que TAU deba regi
 - **Fuera de este plan** (decisión del 13-nov-2026): convocatorias y plazos externos, citas e indicadores propios con OpenAlex, estudiantes
   en proyectos y presupuesto de proyectos. Ningún indicador ni informe institucional usa todavía el acceso abierto.
 
+## 70. Adecuación de las auxiliaturas al Reglamento Específico de Auxiliares Académicos del Pregrado (propuesta, 14-nov-2026)
+
+Pedido del usuario: el módulo de convocatorias (§58) se diseñó sobre el Reglamento General de Auxiliares Académicos (Res. HCU 251/2021,
+mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que entregó el usuario.
+
+### Normativa vigente (fuente: los dos PDF del usuario, leídos completos el 14-nov-2026)
+- **Res. HCU 424/2023 (18-oct-2023):** «Reglamento Específico de Auxiliares Académicos del Pregrado de la UMSA», 15 capítulos y 51 artículos,
+  con los formularios 1 (habilitación), 2-1/2-2/2-3 (méritos de docencia, investigación e interacción social), 3 (sorteo de tema),
+  4 (examen oral), 5 (acta final) y 6 (ficha de asistencia). Su art. 2.º **deja sin efecto** lo anterior, incluidas las resoluciones 251/2021,
+  437/2021 y 623/2021 que cita el código de TAU.
+- **Res. HCU 364/2025 (13-ago-2025):** modifica los arts. **6, 8, 10, 15, 23, 28, 38 y 40**. Es la redacción que rige para esos artículos.
+- Los PDF llevan la marca «NO VÁLIDO PARA TRÁMITES»: se usan como fuente del texto, no como documento oficial. Antes de cerrar la etapa 1, el
+  usuario confirma que no hubo otra modificación posterior.
+
+### Qué cambia en las reglas (norma vigente frente a lo que hoy hace TAU)
+| Tema | Hoy en TAU (§58) | Norma vigente |
+|---|---|---|
+| Mínimo de méritos | 10 de 30 | **5 de 30** para habilitarse (art. 18) |
+| Mínimo del examen escrito | 17,5 de 35 | **18 de 35** para pasar al oral (art. 18) |
+| Categorías | solo «titular» (≥ 56); el resto, «no seleccionada» | **Titular ≥ 56** e **invitado de 51 a 55** (art. 6, redacción 2025); si el invitado no acepta, o si tras dos convocatorias consecutivas la materia sigue vacía, se invita a los mejores estudiantes de la materia (últimas dos gestiones, verificado con Kardex) |
+| Modalidades | docencia e investigación | **Docencia, investigación (con Beca Tesis) e interacción social** (art. 7) |
+| Carga horaria del ítem | 20 o 40 h/mes | **Máximo 40 h/mes** (art. 8, redacción 2025), según el presupuesto de cada unidad; el Consejo de Carrera la distribuye por resolución al inicio de cada gestión (art. 9) |
+| Plazo de presentación | «10 días hábiles entre la publicación y el examen escrito» (art. 10 de la norma anterior) | **10 días hábiles desde la publicación en la primera convocatoria y 5 en la segunda** para presentar los requisitos (art. 24) |
+| Calendario de publicación | sin control | Semestral (el único que aplica en TAU): 1.er semestre, 1.ª convocatoria 2.ª semana de noviembre y 2.ª la 1.ª de diciembre; 2.º semestre, 2.ª semana de mayo y 2.ª de junio; una sola convocatoria para ambos: 1.ª semana de noviembre (art. 12) |
+| Contenido de la convocatoria | título, fechas, lugar, resolución | Además: **permanencia** (en TAU, siempre semestral), **lugar y horario de recepción**, fecha, hora y lugar de los exámenes (art. 11); la aprueba una resolución del Consejo de Carrera con visto bueno del Vicedecano y la Facultad la homologa (arts. 11, 22, 27) |
+| Segunda convocatoria | independiente, sin relación | Si la primera es **desierta**, se publica la segunda en hasta 72 h; si se declara desierta la segunda, se invita a los mejores estudiantes; si solo hubo postulantes bajo la nota mínima, el Consejo emite la segunda para las plazas no cubiertas en 72 h (arts. 13 y 14) |
+| Comisión | 2 docentes (cualquier categoría con vínculo) y 2 estudiantes con cuenta | **Docencia:** un docente titular responsable de la materia y un docente titular del área; **investigación:** dos docentes investigadores titulares; **interacción social:** el responsable del proyecto y un docente titular relacionado. Siempre 2 estudiantes de cogobierno que aprobaron la materia con los mejores promedios; sesiona con mínimo 3. La designa el Consejo de Carrera y la aprueba el Consejo Facultativo (art. 15, redacción 2025) |
+| Condiciones del postulante | 6 requisitos (norma anterior) | Art. 10 (redacción 2025): regular; aprobó una materia el periodo anterior y **todas las del periodo de la materia**; egresados **solo dentro de los dos años consecutivos**, con certificado de Kardex; **máximo 2 gestiones en la misma materia, proyecto o programa** (y 2 gestiones o 4 semestres si presta servicio en otras carreras); **máximo 2 materias por convocatoria**; sin título profesional; delegados estudiantiles con licencia y que no integran la comisión; Beca Tesis con proyecto aprobado por el Consejo de Carrera y homologado; requisitos específicos de investigación e interacción social por Carrera |
+| Documentos de admisión | requisitos libres con documento o declaración | Art. 23 (redacción 2025): nota a la Dirección, fotocopia del carnet, récord con sello de Kardex o de la Dirección, certificado de conclusión (egresados), **plan de trabajo de la materia, proyecto o programa**, carta de compromiso de carga horaria y funciones, currículum documentado y todo foliado en sobre cerrado. De los ganadores, en 72 h: certificado de no tener deudas con la Carrera y la Facultad y de no tener proceso ejecutoriado; registro en SIGEP |
+| Méritos (30) | una nota 0–30 por miembro | **Formularios 2-1, 2-2 y 2-3**: seis secciones con tope (docencia 5+5+5+10+2+3; investigación 3+9+3+10+2+3; interacción social 5+7+3+10+2+3) y la nota de la materia convertida en puntos (51–59 = 2, 60–69 = 4, 70–79 = 6, 80–89 = 8, 90–100 = 10) |
+| Examen oral (35) | una nota 0–35 por miembro; sorteo entre al menos 2 temas | **Cinco temas** propuestos por la comisión y un sorteo; el tema sorteado lo diserta cada postulante dentro de las 24 h; 20 min de exposición y 10 de preguntas; rúbrica de **cinco criterios: conocimiento 7, preparación 8, didáctica 10, metodología 5, respuestas 5** (formularios 3 y 4) |
+| Plazos del proceso | 24 h para impugnar | 24 h para publicar los méritos antes del escrito y para publicar el escrito; oral dentro de 24 h del sorteo; **desempate en 48 h**; impugnaciones en 24 h; **informe final en 10 días** al Consejo de Carrera, que emite la resolución y la envía a la Facultad para homologar (arts. 18 a 22) |
+| Después del concurso | nada | Resolución de designación, **memorándum** (fecha, categoría, materia, carga, gestión) emitido en hasta 15 días (arts. 25 y 26) y entrega de 6 documentos a Bienestar Social en 15 días (art. 27); permanencia hasta el fin del periodo y **cesante al iniciar el trámite de titulación** (art. 28) |
+
+### Decisiones del usuario (14-nov-2026)
+1. **Seguimiento posterior a la designación** (ficha de asistencia mensual, informes, evaluación, remoción, pagos; arts. 29 a 47): se hará **después, en el §71**.
+2. **Interacción social y Beca Tesis entran:** no se convocan siempre, pero la Carrera los convoca cuando corresponde; el módulo debe admitirlos, sin exigirlos en cada gestión.
+3. **Las auxiliaturas son solo de los periodos regulares del semestre** (gestiones I y II), **no de los periodos de temporada** (INV y VER). Por eso rige solo el
+   calendario **semestral** del art. 12 y la permanencia es siempre semestral (no hace falta elegirla).
+
+### Decisiones del agente, por confirmar
+1. **Convocatorias ya cargadas:** conservan las reglas con que se hicieron. Se agrega `convocatoria_auxiliatura.reglamento` (`hcu_251_2021` para las existentes y
+   `hcu_424_2023` para las nuevas) y los mínimos, las categorías y los plazos salen de una tabla de reglas por versión. No se recalcula ningún resultado.
+2. **Calificación por miembro con promedio y al menos tres (decisión 4 del 7-nov-2026) se mantiene.** La norma habla de una comisión que califica y firma un acta
+   «en consenso»; TAU promedia lo que cada miembro registra y el acta imprimible lleva las firmas. Si se prefiere una calificación única por consenso, es un cambio
+   mayor (una sola fila por postulante y fase).
+3. **«Estudiantes de cogobierno con los mejores promedios»:** TAU no guarda notas ni sabe quién es delegado; la Dirección lo declara al designar la comisión
+   (número de resolución). El sistema exige que tengan cuenta, que no sean postulantes de la convocatoria y que no se hayan declarado delegados que postulan.
+4. **Invitación a los mejores estudiantes (arts. 6 y 13):** TAU solo registra a quién se invitó y si aceptó; la lista de mejores promedios la da Kardex.
+5. **Carga horaria:** de 1 a 40 h/mes (antes solo 20 o 40).
+6. **Calendario del art. 12:** advierte, no bloquea la publicación.
+7. **El invitado ocupa las plazas que no cubrieron los titulares** y su nota va de 51 a 55; por debajo de 51, «no seleccionado».
+8. **Fuera de este plan:** el seguimiento posterior a la designación (**§71**, decisión del usuario) y los beneficios de Odontología, Internado Rotatorio y Trabajo Dirigido (arts. 7, 9, 40, 45 y 46), que no son de la Carrera de Matemática.
+
+### Etapas (un commit cada una; la migración se prueba primero sobre una copia)
+1. **Normativa y plazos.** Migración: `reglamento`, `recepcion` (lugar y horario), `lugar_examenes`, `resolucion_hcf` en la convocatoria (sin `permanencia`: es semestral); **solo se puede convocar sobre gestiones I y II** (se rechaza INV y VER; se revisan en una copia las convocatorias existentes); tabla de
+   reglas por versión (mínimos 5 y 18, titular 56, invitado 51–55, plazos de 10 y 5 días hábiles, 72 h, 48 h, 10 y 15 días); horas de 1 a 40; control del calendario semestral
+   del art. 12 y del plazo del art. 24 (reemplaza el de «publicación a examen escrito»); la guía y los textos de pantalla citan Res. HCU 424/2023 y 364/2025.
+2. **Modalidades y requisitos.** Modalidad **interacción social** y subtipo **Beca Tesis** (opcionales: se usan solo en las gestiones en que la Carrera los convoca); requisitos del art. 23 precargados (ocho documentos) y las condiciones del
+   art. 10 (declaraciones y verificaciones del sistema: máximo 2 gestiones en la misma materia o proyecto, máximo 2 materias por convocatoria, egresado dentro de los
+   dos años); «propuesta de trabajo» pasa a «plan de trabajo»; **segunda convocatoria** generada desde la primera con las plazas no cubiertas (arts. 13 y 14) y su
+   control de 72 h.
+3. **Comisión.** Reglas del art. 15 por modalidad (titulares, responsable de la materia verificado con la oferta, responsable del proyecto), resolución de designación
+   (Consejo de Carrera y Facultad) y las exclusiones del art. 10 (delegados). Migración si hace falta una columna de resolución por ítem.
+4. **Calificación según los formularios.** Méritos estructurados (formularios 2-1, 2-2 y 2-3, con topes y escala de la nota de la materia), habilitación como lista de
+   verificación del formulario 1, escrito con mínimo 18, oral con **cinco temas**, sorteo, orden de participación y rúbrica de cinco criterios; plazos de 24 h y 48 h.
+5. **Resultado y designación.** Categorías titular e invitado, invitación y aceptación, invitación a los mejores estudiantes, informe final en 10 días con la resolución
+   del Consejo de Carrera y la homologación de la Facultad, documentos de los ganadores en 72 h, memorándum y los seis documentos para Bienestar Social. Migración: se
+   recrea `postulacion_auxiliatura` para admitir el estado «invitado» y se agregan las tablas de designación.
+6. **Formularios imprimibles:** 1, 2-x, 3, 4 y 5 en HTML para imprimir, con el encabezado «Aprobado con Res. HCU 424/2023».
+7. **Pruebas de navegador, manual y documentación** (guía, manual capítulo 8, CLAUDE.md, mantenimiento) y la advertencia de las convocatorias hechas con la norma anterior.
+
