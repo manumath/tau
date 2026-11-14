@@ -166,3 +166,229 @@ def test_no_se_crea_una_convocatoria_de_temporada_desde_la_pantalla(app, gente, 
     assert r.headers["location"] == "/servicios/auxiliaturas/nueva"
     assert get_db().q("SELECT COUNT(*) n FROM convocatoria_auxiliatura")[0]["n"] == antes
     assert "INV-2027" not in c.get("/servicios/auxiliaturas/nueva").text
+
+
+# --- Etapa 2: modalidades, requisitos y segunda convocatoria ---------------------------------------------------------------
+
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+from app.servicios.rutas.auxiliaturas import BASE  # noqa: E402,F401
+
+
+def _gestion_conv(convocatoria):
+    return _conv(convocatoria["cid"])["gestion_id"]
+
+
+def _nueva(gente, convocatoria, modalidad, titulo="Otra"):
+    x, errores = aux.validar({"modalidad": modalidad, "gestion_id": _gestion_conv(convocatoria), "titulo": titulo},
+                             list(aux.MODALIDADES))
+    assert errores == []
+    return aux.crear(x, gente["dir"]["id"])
+
+
+def test_cuatro_modalidades_y_quien_las_gestiona(app, gente, convocatoria):
+    assert list(aux.MODALIDADES) == ["docencia", "investigacion", "interaccion_social", "beca_tesis"]
+    assert aux.modalidades_de(gente["dir"]) == list(aux.MODALIDADES)
+    assert aux.modalidades_de(gente["iimat"]) == ["investigacion", "interaccion_social", "beca_tesis"]
+    assert aux.modalidades_de(gente["doc3"]) == []
+    for m in ("interaccion_social", "beca_tesis"):
+        cid = _nueva(gente, convocatoria, m)
+        assert _como(app, "iimat@test.cl").get(f"/servicios/auxiliaturas/{cid}").status_code == 200
+        assert _como(app, "coord@test.cl").get(f"/servicios/auxiliaturas/{cid}").status_code == 200
+        assert _como(app, "doc3@test.cl").get(f"/servicios/auxiliaturas/{cid}").status_code == 403
+    assert "Beca Tesis" in _como(app, "dir@test.cl").get("/servicios/auxiliaturas/nueva").text
+
+
+def test_requisitos_precargados_del_art_23_y_el_art_10(app, gente, convocatoria):
+    rs = aux.requisitos(convocatoria["cid"])
+    assert len(rs) == 13 and rs[0]["texto"] == "Nota dirigida a la Dirección de Carrera"
+    assert [r["texto"][:25] for r in rs if r["opcional"]] == ["Certificado de Kardex con"]       # solo egresados
+    assert {r["clave"] for r in rs if r["acredita"] == "sistema"} == {"gestiones", "materias"}
+    assert sum(r["acredita"] == "documento" for r in rs) == 6 and sum(r["acredita"] == "declaracion" for r in rs) == 5
+    textos = " ".join(r["texto"] for r in rs)
+    assert "carnet de identidad" in textos and "Carta de compromiso" in textos and "foliados" in textos and "título profesional" in textos
+    # La Beca Tesis exige haber concluido los estudios y el proyecto aprobado; ya no es una declaración de «estudiante regular».
+    beca = aux.requisitos(_nueva(gente, convocatoria, "beca_tesis"))
+    assert not any(r["opcional"] for r in beca)
+    assert any("homologado por el Consejo Facultativo" in r["texto"] for r in beca)
+    assert not any("estudiante regular" in r["texto"] for r in beca)
+
+
+def test_proyectos_por_modalidad(app, gente):
+    from app.investigacion import proyectos
+    uid = gente["doc1"]["id"]
+    inv = proyectos.crear({"nombre": "Anillos", "estado": "vigente"}, uid, uid, tipo="institucional", clase="investigacion")
+    soc = proyectos.crear({"nombre": "Matemática en el barrio", "estado": "vigente"}, uid, uid, tipo="institucional",
+                          clase="interaccion_social")
+    indiv = proyectos.crear({"nombre": "Individual", "estado": "vigente"}, uid, uid)
+    assert {p["id"] for p in aux.proyectos_vigentes("interaccion_social")} == {soc}
+    for m in ("investigacion", "beca_tesis"):
+        assert {p["id"] for p in aux.proyectos_vigentes(m)} == {inv, indiv}
+
+
+def test_item_de_interaccion_social_con_su_proyecto(app, gente, convocatoria):
+    from app.investigacion import proyectos
+    uid = gente["doc1"]["id"]
+    soc = proyectos.crear({"nombre": "Matemática en el barrio", "estado": "vigente"}, uid, uid, tipo="institucional",
+                          clase="interaccion_social")
+    inv = proyectos.crear({"nombre": "Anillos", "estado": "vigente"}, uid, uid, tipo="institucional", clase="investigacion")
+    c = _conv(_nueva(gente, convocatoria, "interaccion_social"))
+    # Un proyecto de investigación no sirve en una convocatoria de interacción social (y sin título propio no hay ítem).
+    assert aux.agregar_item(c, {"proyecto_id": str(inv), "plazas": "1", "horas": "20"}) == ["Elija el proyecto o escriba el nombre de la auxiliatura."]
+    assert aux.items(c["id"]) == []
+    assert aux.agregar_item(c, {"proyecto_id": str(soc), "plazas": "2", "horas": "20"}) == []
+    assert [(i["titulo"], i["proyecto_id"], i["plazas"]) for i in aux.items(c["id"])] == [("Matemática en el barrio", soc, 2)]
+
+
+def test_no_mas_de_dos_gestiones_en_el_mismo_proyecto(app, gente, convocatoria):
+    from app.investigacion import proyectos
+    uid = gente["doc1"]["id"]
+    soc = proyectos.crear({"nombre": "Matemática en el barrio", "estado": "vigente"}, uid, uid, tipo="institucional",
+                          clase="interaccion_social")
+    db = get_db()
+    ext = gente["Sofía"]["externo"]
+    assert aux.veces_auxiliar(ext, None, None, soc) == 0
+    for anio, tipo in ((2024, "I"), (2024, "II"), (2025, "I")):
+        g = db.t.gestion_academica.insert(anio=anio, tipo=tipo, fecha_inicio=f"{anio}-03-01", fecha_fin=f"{anio}-07-31")["id"]
+        c = db.t.convocatoria_auxiliatura.insert(gestion_id=g, modalidad="interaccion_social", titulo=f"Conv {anio}{tipo}",
+                                                 creado_por=uid, estado="concluida")["id"]
+        i = db.t.item_auxiliatura.insert(convocatoria_id=c, proyecto_id=soc, titulo="Matemática en el barrio", fase="concluido")["id"]
+        db.t.postulacion_auxiliatura.insert(item_id=i, externo_id=ext, estado="titular")
+    assert aux.veces_auxiliar(ext, None, None, soc) == 3 and aux.veces_auxiliar(ext, None, None, None) == 0
+
+
+def _tres_items(convocatoria):
+    db = get_db()
+    ids = [convocatoria["iid"]]
+    for sigla in ("MAT-103", "MAT-104"):
+        a = db.t.asignatura.insert(sigla=sigla, nombre=f"Materia {sigla}", departamento="MAT")["id"]
+        db.t.oferta.insert(gestion_id=_gestion_conv(convocatoria), asignatura_id=a)
+        assert aux.agregar_item(_conv(convocatoria["cid"]), {"asignatura_id": a, "plazas": "1", "horas": "20"}) == []
+        ids.append(max(i["id"] for i in aux.items(convocatoria["cid"])))
+    return ids
+
+
+def test_no_mas_de_dos_materias_por_convocatoria(app, gente, convocatoria):
+    ids = _tres_items(convocatoria)
+    for i in ids:
+        assert aux.fijar_tribunal(aux.item(i), [gente["doc1"]["id"], gente["doc2"]["id"]],
+                                  [gente["Ana"]["uid"], gente["Pedro"]["uid"]]) == []
+    get_db().execute("UPDATE convocatoria_auxiliatura SET resolucion = 'Res. 1' WHERE id = ?", [convocatoria["cid"]])
+    assert aux.publicar(convocatoria["cid"]) == []
+    ps = []
+    for i in ids:
+        pid, errores = aux.postular(i, gente["Sofía"]["externo"])
+        assert errores == []
+        _completar(aux.postulacion(pid), gente)
+        ps.append(pid)
+    assert aux.enviar(ps[0]) == [] and aux.enviar(ps[1]) == []
+    r = aux.enviar(ps[2])
+    assert r and "No postular a más de dos materias en esta convocatoria" in r[0]
+    assert aux.retirar(ps[1]) == []                              # al retirar una, la tercera ya puede enviarse
+    assert aux.enviar(ps[2]) == []
+
+
+def test_un_requisito_opcional_no_impide_enviar(app, gente, convocatoria):
+    from app.investigacion import adjuntos
+    _publicar(gente, convocatoria)
+    pid, _ = aux.postular(convocatoria["iid"], gente["Sofía"]["externo"])
+    for r in aux.requisitos_de(aux.postulacion(pid)):
+        if r["acredita"] == "documento" and not r["opcional"]:
+            adjuntos.guardar("requisito_postulacion", r["fila"], "doc.pdf", b"%PDF-1.4\n" + b"0" * 64, gente["dir"]["id"])
+        elif r["acredita"] == "declaracion":
+            aux.declarar(pid, r["id"], True)
+    aux.guardar_propuesta(pid, "Prácticas semanales")
+    assert [r["cumplido"] for r in aux.requisitos_de(aux.postulacion(pid)) if r["opcional"]] == [False]    # no es egresada
+    assert aux.faltantes_envio(aux.postulacion(pid)) == [] and aux.enviar(pid) == []
+
+
+# --- Segunda convocatoria ---------------------------------------------------------------------------------------------------
+
+def _primera_concluida(gente, convocatoria, cubiertas=0, plazas=2):
+    """La primera convocatoria concluida con `cubiertas` de `plazas` plazas ocupadas por un titular."""
+    db = get_db()
+    db.execute("UPDATE item_auxiliatura SET plazas = ?, fase = 'concluido' WHERE id = ?", [plazas, convocatoria["iid"]])
+    nombres = ("Sofía", "Luis", "Rosa")
+    for n in nombres[:cubiertas]:
+        db.t.postulacion_auxiliatura.insert(item_id=convocatoria["iid"], externo_id=gente[n]["externo"], estado="titular")
+    db.t.postulacion_auxiliatura.insert(item_id=convocatoria["iid"], externo_id=gente["Rosa"]["externo"], estado="no_seleccionada") \
+        if cubiertas < 3 else None
+    db.execute("UPDATE convocatoria_auxiliatura SET estado = 'concluida' WHERE id = ?", [convocatoria["cid"]])
+    it = aux.item(convocatoria["iid"])
+    assert aux.fijar_tribunal(it, [gente["doc1"]["id"], gente["doc2"]["id"]], [gente["Ana"]["uid"], gente["Pedro"]["uid"]]) == []
+    db.execute("INSERT INTO fase_auxiliatura (item_id, fase) VALUES (?, 'oral')", [convocatoria["iid"]])
+    return _conv(convocatoria["cid"])
+
+
+def test_un_item_sin_postulantes_queda_desierto_al_cerrar_la_recepcion(app, gente, convocatoria):
+    _publicar(gente, convocatoria)
+    get_db().execute("UPDATE convocatoria_auxiliatura SET cierre = '2020-01-01T00:00' WHERE id = ?", [convocatoria["cid"]])
+    assert aux.cerrar_fase(aux.item(convocatoria["iid"]), gente["dir"]["id"]) == []
+    assert aux.item(convocatoria["iid"])["fase"] == "concluido"
+    assert aux.obtener(convocatoria["cid"])["estado"] == "concluida"
+    assert aux.sin_cubrir(aux.item(convocatoria["iid"])) == 1 and aux.puede_generar_segunda(_conv(convocatoria["cid"]))
+
+
+def test_segunda_convocatoria_con_las_plazas_sin_cubrir(app, gente, convocatoria):
+    c = _primera_concluida(gente, convocatoria, cubiertas=1, plazas=2)
+    assert aux.puede_generar_segunda(c)
+    nuevo, errores = aux.generar_segunda(c["id"], gente["dir"]["id"])
+    assert errores == []
+    s = _conv(nuevo)
+    assert (s["numero"], s["estado"], s["primera_id"], s["reglamento"], s["modalidad"]) == (2, "borrador", c["id"], c["reglamento"], "docencia")
+    assert s["titulo"].endswith(", segunda convocatoria") and s["publicacion"] is None and s["resolucion"] is None
+    assert (s["recepcion_lugar"], s["recepcion_horario"]) == (c["recepcion_lugar"], c["recepcion_horario"])
+    assert [(r["texto"], r["acredita"], r["opcional"], r["clave"]) for r in aux.requisitos(nuevo)] == \
+        [(r["texto"], r["acredita"], r["opcional"], r["clave"]) for r in aux.requisitos(c["id"])]
+    [item] = aux.items(nuevo)
+    assert (item["plazas"], item["asignatura_id"], item["horas"], item["fase"]) == (1, convocatoria["asignatura"], 40, "postulacion")
+    assert {(m["usuario_id"], m["tipo"]) for m in item["tribunal"]} == {(m["usuario_id"], m["tipo"]) for m in aux.items(c["id"])[0]["tribunal"]}
+    # Solo una segunda por primera, y la segunda no genera otra.
+    assert aux.segunda_de(c["id"])["id"] == nuevo and not aux.puede_generar_segunda(_conv(c["id"]))
+    assert aux.generar_segunda(c["id"], gente["dir"]["id"])[0] is None
+    assert aux.generar_segunda(nuevo, gente["dir"]["id"])[0] is None
+
+
+def test_no_hay_segunda_si_la_primera_cubrio_todo_o_no_ha_concluido(app, gente, convocatoria):
+    assert aux.generar_segunda(convocatoria["cid"], gente["dir"]["id"])[0] is None            # borrador
+    c = _primera_concluida(gente, convocatoria, cubiertas=2, plazas=2)
+    assert not aux.puede_generar_segunda(c) and aux.generar_segunda(c["id"], gente["dir"]["id"])[0] is None
+
+
+def test_plazo_de_72_horas_de_la_segunda(app, gente, convocatoria):
+    c = _primera_concluida(gente, convocatoria, cubiertas=0, plazas=1)
+    nuevo, _ = aux.generar_segunda(c["id"], gente["dir"]["id"])
+    ok, texto = aux.chequeo_segunda(_conv(nuevo))
+    assert ok is False and "debe publicarse hasta el" in texto and "72 horas" in texto
+    get_db().execute("UPDATE convocatoria_auxiliatura SET publicacion = ? WHERE id = ?", [date.today().isoformat(), nuevo])
+    assert aux.chequeo_segunda(_conv(nuevo))[0] is True
+    get_db().execute("UPDATE fase_auxiliatura SET cerrada_en = ?", [(datetime.now(timezone.utc) - timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")])
+    ok, texto = aux.chequeo_segunda(_conv(nuevo))
+    assert ok is False and "Pasaron más de 72 horas" in texto
+    assert aux.chequeo_segunda(_conv(c["id"])) is None                                          # la primera no tiene plazo
+
+
+def test_pantallas_de_la_segunda_convocatoria(app, gente, convocatoria):
+    c = _primera_concluida(gente, convocatoria, cubiertas=0, plazas=1)
+    d = _como(app, "dir@test.cl")
+    pagina = d.get(f"/servicios/auxiliaturas/{c['id']}").text
+    assert "Generar la segunda convocatoria" in pagina
+    assert _como(app, "doc3@test.cl").post(f"/servicios/auxiliaturas/{c['id']}/segunda").status_code == 403
+    r = d.post(f"/servicios/auxiliaturas/{c['id']}/segunda", follow_redirects=False)
+    nuevo = int(r.headers["location"].rsplit("/", 1)[1])
+    assert nuevo == aux.segunda_de(c["id"])["id"]
+    segunda = d.get(f"/servicios/auxiliaturas/{nuevo}").text
+    assert "Es la segunda convocatoria de" in segunda and "arts. 13 y 14" in segunda and "debe publicarse hasta el" in segunda
+    primera = d.get(f"/servicios/auxiliaturas/{c['id']}").text
+    assert "Generar la segunda convocatoria" not in primera and "Segunda convocatoria:" in primera
+    assert get_db().q("SELECT accion FROM auditoria ORDER BY id DESC LIMIT 1")[0]["accion"] == "generar_segunda_convocatoria_auxiliatura"
+
+
+def test_el_estudiante_ve_los_requisitos_opcionales_y_el_plan_de_trabajo(app, gente, convocatoria, buzon):
+    from tests.test_servicios import _como_estudiante
+    _publicar(gente, convocatoria)
+    s = _como_estudiante(app, "sofia@correo.bo", buzon)
+    r = s.post(f"/estudiante/auxiliaturas/item/{convocatoria['iid']}/postular", follow_redirects=False)
+    pagina = s.get(r.headers["location"]).text
+    assert "Solo si corresponde" in pagina and "Plan de trabajo de la materia, proyecto o programa que postula" in pagina
+    assert "Requisitos · 2 de 12" in pagina

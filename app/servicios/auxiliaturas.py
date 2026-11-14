@@ -20,7 +20,9 @@ from datetime import date, datetime, timedelta, timezone
 from app.comun import estudiantes, formato, notificaciones, permisos, usuarios
 from app.comun.db import AHORA, get_db, transaccion
 
-MODALIDADES = {"docencia": "Docencia", "investigacion": "Investigación"}
+MODALIDADES = {"docencia": "Docencia", "investigacion": "Investigación", "interaccion_social": "Interacción social",
+               "beca_tesis": "Beca Tesis (investigación)"}
+CON_PROYECTO = ("investigacion", "interaccion_social", "beca_tesis")    # sus ítems son proyectos, no materias de la oferta
 ACREDITA = {"documento": "Documento", "declaracion": "Declaración jurada", "sistema": "Lo verifica el sistema"}
 ESTADOS_CONV = {"borrador": "Borrador", "publicada": "Publicada", "concluida": "Concluida"}
 FASES = ("habilitacion", "meritos", "escrito", "oral")
@@ -31,6 +33,8 @@ PUNTAJE_TITULAR = 56
 QUORUM = 3                 # miembros que deben calificar cada fase (decisión 4 del 7-nov-2026)
 HORAS_IMPUGNACION = 24     # impugnar al cierre de cada fase (art. 21 del reglamento de 2023)
 MAX_GESTIONES = 2          # art. 10, f): no más de dos gestiones en la misma materia, proyecto o programa
+MAX_MATERIAS = 2           # art. 10, g): como máximo dos materias por convocatoria
+HORAS_SEGUNDA = 72         # arts. 13 y 14: la segunda convocatoria sale hasta 72 horas después de los resultados de la primera
 GESTIONES_CONVOCABLES = ("I", "II")     # las auxiliaturas son de los semestres regulares, no de INV ni VER (decisión del 14-nov-2026)
 
 REGLAMENTO_ANTERIOR = "hcu_251_2021"
@@ -45,16 +49,36 @@ REGLAS = {
 ESTADOS_POST = {"borrador": "Sin enviar", "enviada": "En concurso", "no_habilitada": "No habilitada",
                 "eliminada": "No alcanzó el mínimo", "titular": "Auxiliar titular", "no_seleccionada": "No seleccionada",
                 "empate": "Empate: examen de desempate"}
-# Del reglamento (art. 8 y 12). La Carrera puede agregar los suyos.
-REQUISITOS_REGLAMENTO = (
-    ("Ser estudiante regular (matrícula vigente)", "documento"),
-    ("Récord académico sellado: aprobó todas las materias del semestre de la materia y al menos una el periodo anterior",
-     "documento"),
-    ("Currículum documentado, con respaldos", "documento"),
-    ("No haber sido auxiliar de la misma materia en dos gestiones", "sistema"),
-    ("No tener título profesional", "declaracion"),
-    ("Si es delegado al Consejo, tiene licencia durante el proceso", "declaracion"),
-)
+def requisitos_reglamento(modalidad: str) -> list[tuple[str, str, int, str | None]]:
+    """Requisitos que una convocatoria nueva trae precargados (reglamento de 2023: art. 23, documentos, y art. 10, condiciones):
+    (texto, cómo se acredita, opcional, clave de lo que verifica el sistema). La Carrera puede agregar los suyos (art. 10, p)."""
+    beca = modalidad == "beca_tesis"
+    pedidos = [
+        ("Nota dirigida a la Dirección de Carrera", "documento", 0, None),
+        ("Fotocopia del carnet de identidad", "documento", 0, None),
+        ("Récord académico impreso, con sello de Kardex o de la Dirección de Carrera", "documento", 0, None),
+        ("Certificado de Kardex con la fecha y la gestión de conclusión de estudios" +
+         ("" if beca else " (solo egresados, que pueden postular durante los dos años siguientes)"), "documento", 0 if beca else 1, None),
+        ("Currículum vitae documentado, con respaldos", "documento", 0, None),
+        ("Carta de compromiso de cumplimiento de la carga horaria y las funciones asignadas", "documento", 0, None),
+    ]
+    if beca:
+        pedidos.append(("Proyecto de investigación aprobado por el Consejo de Carrera y homologado por el Consejo Facultativo",
+                        "documento", 0, None))
+    else:
+        pedidos.append(("Declaro ser estudiante regular de la Universidad, haber aprobado al menos una asignatura el periodo anterior "
+                        "y la totalidad de las del periodo de la materia a la que postulo (según el plan de mi Carrera de origen)",
+                        "declaracion", 0, None))
+    pedidos += [
+        ("Declaro no tener título profesional de ningún nivel (las auxiliaturas son solo para estudiantes de pregrado)", "declaracion", 0, None),
+        ("Declaro no haber sido auxiliar más de dos gestiones en la misma materia, proyecto o programa (ni más de dos gestiones o cuatro "
+         "semestres si lo fui en otras carreras)", "declaracion", 0, None),
+        ("Si soy delegado estudiantil ante un Consejo, tengo licencia mientras dura el proceso y no integro la comisión", "declaracion", 0, None),
+        ("Presento mis documentos foliados y en el orden establecido, en sobre cerrado", "declaracion", 0, None),
+        ("No haber sido auxiliar de esta materia o proyecto en dos gestiones (lo verifica el sistema con sus registros)", "sistema", 0, "gestiones"),
+        ("No postular a más de dos materias en esta convocatoria (lo verifica el sistema)", "sistema", 0, "materias"),
+    ]
+    return pedidos
 
 
 def _ahora() -> str:
@@ -64,7 +88,7 @@ def _ahora() -> str:
 # --- Permisos -------------------------------------------------------------------------------------------------------
 
 def puede_gestionar(auth: dict, modalidad: str | None = None) -> bool:
-    if modalidad == "investigacion":
+    if modalidad in CON_PROYECTO:      # también las de interacción social y Beca Tesis las gestiona la Dirección del Instituto
         return permisos.puede(auth, "gestionar_auxiliaturas_investigacion")
     if modalidad == "docencia":
         return permisos.puede(auth, "gestionar_auxiliaturas")
@@ -181,8 +205,9 @@ def validar(d: dict, modalidades: list[str]) -> tuple[dict, list[str]]:
 def crear(x: dict, uid: int) -> int:
     with transaccion():
         cid = get_db().t.convocatoria_auxiliatura.insert(creado_por=uid, reglamento=REGLAMENTO_VIGENTE, **x)["id"]
-        for i, (texto, acredita) in enumerate(REQUISITOS_REGLAMENTO):
-            get_db().t.requisito_auxiliatura.insert(convocatoria_id=cid, texto=texto, acredita=acredita, orden=i)
+        for i, (texto, acredita, opcional, clave) in enumerate(requisitos_reglamento(x["modalidad"])):
+            get_db().t.requisito_auxiliatura.insert(convocatoria_id=cid, texto=texto, acredita=acredita, opcional=opcional,
+                                                    clave=clave, orden=i)
     return cid
 
 
@@ -279,8 +304,11 @@ def asignaturas_de_la_oferta(gestion_id: int) -> list[dict]:
                          WHERE o.gestion_id = ? AND o.retirada_en IS NULL ORDER BY a.sigla""", [gestion_id])
 
 
-def proyectos_vigentes() -> list[dict]:
-    return get_db().q("SELECT id, nombre FROM proyecto WHERE estado <> 'finalizado' ORDER BY nombre")
+def proyectos_vigentes(modalidad: str = "investigacion") -> list[dict]:
+    """Proyectos en que se puede convocar: los de interacción social para esa modalidad y los de investigación (o individuales,
+    sin clase) para las demás."""
+    filtro = "clase = 'interaccion_social'" if modalidad == "interaccion_social" else "(clase IS NULL OR clase <> 'interaccion_social')"
+    return get_db().q(f"SELECT id, nombre FROM proyecto WHERE estado <> 'finalizado' AND {filtro} ORDER BY nombre")
 
 
 def agregar_item(c: dict, d: dict) -> list[str]:
@@ -298,7 +326,7 @@ def agregar_item(c: dict, d: dict) -> list[str]:
             return ["Elija una materia de la oferta de la gestión."]
         asignatura, titulo = filas[0]["id"], f"{filas[0]['sigla']} {filas[0]['nombre']}"
     else:
-        filas = [p for p in proyectos_vigentes() if str(p["id"]) == str(d.get("proyecto_id"))]
+        filas = [p for p in proyectos_vigentes(c["modalidad"]) if str(p["id"]) == str(d.get("proyecto_id"))]
         titulo = (d.get("titulo") or "").strip()
         if filas:
             proyecto, titulo = filas[0]["id"], titulo or filas[0]["nombre"]
@@ -423,7 +451,7 @@ def abiertas() -> list[dict]:
 # --- Postulaciones --------------------------------------------------------------------------------------------------------
 
 def postulacion(pid: int) -> dict | None:
-    filas = get_db().q("""SELECT p.*, i.titulo AS item_titulo, i.fase, i.asignatura_id, i.convocatoria_id, i.plazas, i.horas,
+    filas = get_db().q("""SELECT p.*, i.titulo AS item_titulo, i.fase, i.asignatura_id, i.proyecto_id, i.convocatoria_id, i.plazas, i.horas,
                                  c.titulo AS convocatoria, c.cierre, c.examen, c.lugar, c.estado AS estado_conv,
                                  pe.nombres, pe.apellidos
                           FROM postulacion_auxiliatura p JOIN item_auxiliatura i ON i.id = p.item_id
@@ -453,13 +481,22 @@ def postular(iid: int, externo_id: int) -> tuple[int | None, list[str]]:
     return pid, []
 
 
-def veces_auxiliar(externo_id: int, asignatura_id: int | None, excluir_conv: int | None = None) -> int:
-    if not asignatura_id:
+def veces_auxiliar(externo_id: int, asignatura_id: int | None, excluir_conv: int | None = None, proyecto_id: int | None = None) -> int:
+    """Gestiones en que fue auxiliar titular de la misma materia o del mismo proyecto (art. 10, f)."""
+    if not asignatura_id and not proyecto_id:
         return 0
     return get_db().q("""SELECT COUNT(DISTINCT c.gestion_id) n FROM postulacion_auxiliatura p
                          JOIN item_auxiliatura i ON i.id = p.item_id JOIN convocatoria_auxiliatura c ON c.id = i.convocatoria_id
-                         WHERE p.externo_id = ? AND i.asignatura_id = ? AND p.estado = 'titular' AND c.id IS NOT ?""",
-                      [externo_id, asignatura_id, excluir_conv])[0]["n"]
+                         WHERE p.externo_id = ? AND p.estado = 'titular' AND c.id IS NOT ?
+                           AND (i.asignatura_id = ? OR i.proyecto_id = ?)""",
+                      [externo_id, excluir_conv, asignatura_id, proyecto_id])[0]["n"]
+
+
+def otras_postulaciones(externo_id: int, convocatoria_id: int, excluir_pid: int) -> int:
+    """Postulaciones ya enviadas por la persona a otros ítems de la misma convocatoria (art. 10, g: como máximo dos materias)."""
+    return get_db().q("""SELECT COUNT(*) n FROM postulacion_auxiliatura p JOIN item_auxiliatura i ON i.id = p.item_id
+                         WHERE p.externo_id = ? AND i.convocatoria_id = ? AND p.id <> ? AND p.estado <> 'borrador'""",
+                      [externo_id, convocatoria_id, excluir_pid])[0]["n"]
 
 
 def _fila_requisito(pid: int, rid: int) -> dict:
@@ -480,8 +517,11 @@ def requisitos_de(p: dict) -> list[dict]:
             cumplido, detalle = bool(docs), (", ".join(d["nombre"] for d in docs) or "falta el documento")
         elif r["acredita"] == "declaracion":
             cumplido, detalle = bool(fila["declarado"]), ("declarado" if fila["declarado"] else "falta declarar")
+        elif r.get("clave") == "materias":
+            n = otras_postulaciones(p["externo_id"], p["convocatoria_id"], p["id"]) + 1
+            cumplido, detalle = n <= MAX_MATERIAS, f"verificado por el sistema ({n} materia(s) en esta convocatoria)"
         else:
-            n = veces_auxiliar(p["externo_id"], p["asignatura_id"], p["convocatoria_id"])
+            n = veces_auxiliar(p["externo_id"], p["asignatura_id"], p["convocatoria_id"], p["proyecto_id"])
             cumplido, detalle = n < MAX_GESTIONES, f"verificado por el sistema ({n} gestiones como auxiliar)"
         res.append({**r, "fila": fila["id"], "cumplido": cumplido, "detalle": detalle, "documentos": docs})
     return res
@@ -498,9 +538,9 @@ def guardar_propuesta(pid: int, texto: str):
 
 
 def faltantes_envio(p: dict) -> list[str]:
-    f = [r["texto"] for r in requisitos_de(p) if not r["cumplido"]]
+    f = [r["texto"] for r in requisitos_de(p) if not r["cumplido"] and not r["opcional"]]
     if not (p["propuesta"] or "").strip():
-        f.append("Propuesta de trabajo")
+        f.append("Plan de trabajo")
     return f
 
 
@@ -630,6 +670,8 @@ def cerrar_fase(it: dict, uid: int) -> list[str]:
     fase = it["fase"]
     orden = ("postulacion", *FASES, "concluido")
     siguiente = orden[orden.index(fase) + 1]
+    if fase == "postulacion" and not activos(it["id"]):
+        siguiente = "concluido"         # ítem desierto: sin postulantes no hay fases que calificar (art. 13)
     with transaccion():
         get_db().t.fase_auxiliatura.insert(item_id=it["id"], fase=fase, cerrada_por=uid)
         if fase == "habilitacion":
@@ -698,6 +740,74 @@ def _concluir_si_corresponde(cid: int):
     if its and all(i["fase"] == "concluido" for i in its) and not any(
             p["estado"] == "empate" for i in its for p in en_concurso(i["id"])):
         get_db().execute("UPDATE convocatoria_auxiliatura SET estado = 'concluida' WHERE id = ?", [cid])
+
+
+# --- Segunda convocatoria (arts. 13 y 14) ------------------------------------------------------------------------------------
+
+def sin_cubrir(it: dict) -> int:
+    """Plazas del ítem que ningún titular ocupó: las que pasan a la segunda convocatoria."""
+    return max(it["plazas"] - sum(p["estado"] == "titular" for p in en_concurso(it["id"])), 0)
+
+
+def segunda_de(cid: int) -> dict | None:
+    filas = get_db().q("SELECT * FROM convocatoria_auxiliatura WHERE primera_id = ?", [cid])
+    return filas[0] if filas else None
+
+
+def puede_generar_segunda(c: dict) -> bool:
+    """Una primera convocatoria concluida con plazas sin cubrir (ítems desiertos o sin postulantes que alcanzaran la nota) y sin
+    segunda todavía."""
+    return (c["numero"] == 1 and c["estado"] == "concluida" and not segunda_de(c["id"])
+            and any(sin_cubrir(i) for i in items(c["id"])))
+
+
+def resultados_publicados_en(cid: int) -> datetime | None:
+    """Cuándo se cerró la última fase de la convocatoria (UTC): desde ahí corren las 72 horas de la segunda."""
+    fila = get_db().q("""SELECT MAX(f.cerrada_en) cuando FROM fase_auxiliatura f JOIN item_auxiliatura i ON i.id = f.item_id
+                         WHERE i.convocatoria_id = ?""", [cid])
+    return datetime.fromisoformat(fila[0]["cuando"]) if fila and fila[0]["cuando"] else None
+
+
+def chequeo_segunda(c: dict) -> tuple[bool, str] | None:
+    """Arts. 13 y 14: la segunda convocatoria se publica hasta 72 horas después de los resultados de la primera. Solo advierte."""
+    if not c.get("primera_id"):
+        return None
+    desde = resultados_publicados_en(c["primera_id"])
+    if not desde:
+        return None
+    limite = (desde + timedelta(hours=HORAS_SEGUNDA)).date()
+    if not c["publicacion"]:
+        return False, f"La segunda convocatoria debe publicarse hasta el {formato.fecha(limite.isoformat())} (72 horas después de los resultados de la primera)."
+    if date.fromisoformat(c["publicacion"][:10]) <= limite:
+        return True, f"Se publica dentro de las 72 horas que dan los arts. 13 y 14 (hasta el {formato.fecha(limite.isoformat())})."
+    return False, (f"Pasaron más de 72 horas desde los resultados de la primera convocatoria (hasta el {formato.fecha(limite.isoformat())}): "
+                   "los arts. 13 y 14 piden publicar la segunda dentro de ese plazo.")
+
+
+def generar_segunda(cid: int, uid: int) -> tuple[int | None, list[str]]:
+    """Arma, como borrador, la segunda convocatoria con las plazas que la primera no cubrió: mismos requisitos, lugar de recepción y
+    tribunal. Hay que darle fechas y la resolución del Consejo de Carrera antes de publicarla."""
+    c = obtener(cid)
+    if not c or not puede_generar_segunda(c):
+        return None, ["Solo se genera la segunda convocatoria de una primera ya concluida que dejó plazas sin cubrir."]
+    db = get_db()
+    with transaccion():
+        nuevo = db.t.convocatoria_auxiliatura.insert(
+            gestion_id=c["gestion_id"], modalidad=c["modalidad"], numero=2, titulo=f"{c['titulo']}, segunda convocatoria"[:200],
+            lugar=c["lugar"], recepcion_lugar=c["recepcion_lugar"], recepcion_horario=c["recepcion_horario"], reglamento=c["reglamento"],
+            primera_id=cid, creado_por=uid)["id"]
+        for r in requisitos(cid):
+            db.t.requisito_auxiliatura.insert(convocatoria_id=nuevo, texto=r["texto"], acredita=r["acredita"], orden=r["orden"],
+                                              opcional=r["opcional"], clave=r["clave"])
+        for it in items(cid):
+            faltan = sin_cubrir(it)
+            if not faltan:
+                continue
+            iid = db.t.item_auxiliatura.insert(convocatoria_id=nuevo, asignatura_id=it["asignatura_id"], proyecto_id=it["proyecto_id"],
+                                               titulo=it["titulo"], plazas=faltan, horas=it["horas"])["id"]
+            for m in it["tribunal"]:
+                db.t.tribunal_auxiliatura.insert(item_id=iid, usuario_id=m["usuario_id"], tipo=m["tipo"])
+    return nuevo, []
 
 
 def sortear_tema(it: dict, temas: str) -> list[str]:

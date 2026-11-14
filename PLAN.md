@@ -3834,3 +3834,18 @@ mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que 
   hizo cada convocatoria y muestran sus mínimos; se quitaron los números de artículo del reglamento anterior.
 - La preparación de datos del navegador y la del manual toman un semestre cuando `gestiones.actual()` cae en una temporada.
 
+### Etapa 2 (hecha, 14-nov-2026): modalidades, requisitos y segunda convocatoria
+- **Migración 0087:** `convocatoria_auxiliatura` se recrea (el CHECK de `modalidad` admite `interaccion_social` y `beca_tesis`; las filas, los ítems y los requisitos se conservan,
+  probado sobre una copia con datos) y gana `primera_id`; `requisito_auxiliatura` gana `opcional` y `clave` (de lo que verifica el sistema).
+- **Modalidades:** docencia, investigación, interacción social y **Beca Tesis** (subtipo de investigación, con su propia modalidad). Las tres que no son de docencia las gestiona
+  `gestionar_auxiliaturas_investigacion` (Carrera, Coordinación y Dirección del Instituto) y sus ítems son proyectos: los de interacción social solo con proyectos de esa clase; las
+  demás, con los de investigación o individuales. *Decisión mía por confirmar:* quién gestiona interacción social y Beca Tesis.
+- **Requisitos precargados** (`requisitos_reglamento`): los ocho documentos del art. 23 (el plan de trabajo es el texto de la postulación; los foliados, una declaración) y las
+  condiciones del art. 10 (regular y aprobó el periodo, sin título profesional, máximo dos gestiones, delegados, certificado de conclusión **opcional** para egresados). La Beca Tesis exige
+  el certificado de conclusión y el proyecto aprobado y homologado, y no la declaración de estudiante regular. Un requisito opcional no impide enviar.
+- **Verifica el sistema:** máximo **dos gestiones** como auxiliar de la misma materia **o proyecto** (`veces_auxiliar`) y máximo **dos materias por convocatoria** (`otras_postulaciones`;
+  cuenta las postulaciones enviadas, así que retirar una libera el cupo).
+- **Segunda convocatoria** (arts. 13 y 14): un ítem sin postulantes queda **desierto** al cerrar la recepción y concluye. De una primera concluida con plazas sin cubrir, `generar_segunda`
+  arma el borrador con esas plazas, los requisitos, el lugar de recepción y los tribunales (`primera_id`); `chequeo_segunda` advierte si no sale dentro de las 72 horas de los resultados.
+  La invitación a los mejores estudiantes cuando la segunda también queda vacía es de la etapa 5.
+

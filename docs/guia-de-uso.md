@@ -1017,20 +1017,24 @@ sin efecto el Reglamento General de 2021. Las auxiliaturas son **solo de los sem
 temporadas de invierno y verano. Las convocatorias que se hicieron con el reglamento anterior conservan sus reglas (se indica en cada
 una) y no se recalculan.
 
-1. **Nueva convocatoria:** gestión (I o II), modalidad (docencia o investigación), primera o segunda convocatoria, fechas de
+1. **Nueva convocatoria:** gestión (I o II), modalidad (**docencia, investigación, interacción social o Beca Tesis**; las tres últimas las gestiona también la Dirección del Instituto), primera o segunda convocatoria, fechas de
    publicación, cierre de la recepción y examen escrito, lugar de los exámenes, **lugar y horario de recepción de los documentos**
    (obligatorios para publicar, art. 11) y número de la resolución del Consejo de Carrera (el de la resolución del Consejo
    Facultativo y el PDF son opcionales). El sistema avisa si entre la publicación y el cierre de la recepción hay menos de 10 días
    hábiles (5 en una segunda convocatoria; art. 24) y si la publicación no cae en la fecha del calendario del art. 12 (2.ª semana de
    noviembre y 1.ª de diciembre para el primer semestre; 2.ª semana de mayo y de junio para el segundo; la 1.ª de noviembre si es
-   una sola convocatoria para ambos). Son avisos: no impiden publicar. Los requisitos del reglamento se cargan solos; puede agregar o quitar.
-2. **Ítems:** una materia de la oferta de la gestión (o un proyecto, en investigación), plazas y horas (20 o 40 h/mes).
+   una sola convocatoria para ambos). Son avisos: no impiden publicar. Los requisitos del reglamento se cargan solos (los documentos del art. 23 y las condiciones del
+   art. 10; el certificado de conclusión de estudios es opcional, solo para egresados, salvo en la Beca Tesis, donde se pide también el proyecto aprobado por el Consejo de
+   Carrera y homologado por la Facultad); puede agregar los propios de la Carrera, que el reglamento pide para investigación e interacción social, o quitar.
+2. **Ítems:** una materia de la oferta de la gestión (en docencia) o un proyecto (en investigación y Beca Tesis, los de investigación o individuales; en interacción social, los de
+   interacción social), plazas y horas (20 o 40 h/mes).
 3. **Tribunal de cada ítem:** dos docentes y dos estudiantes; un postulante no puede integrarlo.
 4. **Publicar:** se avisa a todos los estudiantes y a los miembros de los tribunales.
 
 **El estudiante** entra en **Auxiliaturas**, elige una materia y **Postula**. En la página de su postulación sube un
 PDF o una foto por cada documento, marca **Declaro que es así** en las declaraciones juradas y escribe su propuesta de
-trabajo. El sistema verifica solo que no haya sido auxiliar de esa materia en dos gestiones. Cuando no falta nada,
+trabajo (el **plan de trabajo** de la materia, proyecto o programa que postula). El sistema verifica por su cuenta que no haya sido auxiliar de esa materia o proyecto en dos
+gestiones y que no postule a más de dos materias en la misma convocatoria. Los requisitos marcados «solo si corresponde» no impiden enviar. Cuando no falta nada,
 **Enviar postulación**; puede retirarla mientras la recepción está abierta.
 
 **El tribunal** califica cada fase por su cuenta: habilitación (cumple o no), méritos (0 a 30, **mínimo 5**), examen
@@ -1042,6 +1046,10 @@ la Dirección; las impugnaciones se registran en la página del ítem y la fase 
 sin resolver. Antes del examen oral se **sortea el tema**. Al cerrar el oral, gana la plaza quien suma al menos 56 de 100
 con el mayor total; un empate lo resuelve la Dirección en la misma página. El **acta de calificaciones** se imprime desde
 el ítem.
+
+**Segunda convocatoria.** Si al concluir la primera quedaron plazas sin cubrir (ítems sin postulantes o sin nadie que llegara a 56), en la convocatoria aparece
+**Generar la segunda convocatoria**: arma un borrador con solo esas plazas, los mismos requisitos, lugar de recepción y tribunales. Hay que darle fechas y el número de la
+resolución del Consejo de Carrera. Los arts. 13 y 14 piden publicarla hasta 72 horas después de los resultados de la primera; el sistema lo avisa en la página.
 
 ### Proyectos de grado (Dirección de Carrera y Coordinación académica; tutores y tribunales)
 

@@ -255,6 +255,9 @@ def get(auth, cid: int, editar: int = 0):
     reqs = aux.requisitos(cid)
     chequeo = aux.chequeo_fechas(c)
     calendario = aux.chequeo_calendario(c) if borrador else None
+    segunda_plazo = aux.chequeo_segunda(c) if borrador else None
+    primera = aux.obtener(c["primera_id"]) if c.get("primera_id") else None
+    siguiente = aux.segunda_de(cid)
     falta_pub = aux.faltantes_publicar(c) if borrador else []
     pdfs = adjuntos.listar("convocatoria_auxiliatura", cid)
     if borrador and c["modalidad"] == "docencia":
@@ -262,7 +265,8 @@ def get(auth, cid: int, editar: int = 0):
                                   [(a["id"], f"{a['sigla']} {a['nombre']}") for a in aux.asignaturas_de_la_oferta(c["gestion_id"])],
                                   vacio="— Elija —")
     else:
-        opciones_item = Div(seleccion("Proyecto (opcional)", "proyecto_id", [(p["id"], p["nombre"]) for p in aux.proyectos_vigentes()],
+        opciones_item = Div(seleccion("Proyecto (opcional)", "proyecto_id",
+                                      [(p["id"], p["nombre"]) for p in aux.proyectos_vigentes(c["modalidad"])],
                                       vacio="— Sin proyecto —"),
                             LabelInput("Nombre de la auxiliatura", id="titulo", maxlength="200"), cls="space-y-2")
     datos = Div(_form_conv(auth, c), cls="max-w-4xl") if borrador and editar else Div(
@@ -278,7 +282,11 @@ def get(auth, cid: int, editar: int = 0):
             *[Span(" · ", enlace_adjunto(a, f"{BASE}/{cid}/resolucion/{a['id']}")) for a in pdfs],
             Span(" · Consejo Facultativo: ", cls="font-medium") if c["resolucion_hcf"] else "", c["resolucion_hcf"] or ""),
         *[P(x[1], cls="text-sm " + ("text-green-700 dark:text-green-300" if x[0] else "text-amber-700 dark:text-amber-300"))
-          for x in (chequeo, calendario) if x],
+          for x in (chequeo, calendario, segunda_plazo) if x],
+        Div("Es la segunda convocatoria de ", A(primera["titulo"], href=f"{BASE}/{primera['id']}", cls="text-primary hover:underline"),
+            ", con las plazas que esa no cubrió (arts. 13 y 14).", cls="text-sm") if primera else "",
+        Div("Segunda convocatoria: ", A(siguiente["titulo"], href=f"{BASE}/{siguiente['id']}", cls="text-primary hover:underline"),
+            cls="text-sm") if siguiente else "",
         P(f"Según el {aux.reglamento_texto(c)}.", cls=TextPresets.muted_sm),
         A(UkIcon("pencil", height=14, width=14), "Editar datos", href=f"{url}?editar=1", cls="uk-btn uk-btn-default uk-btn-sm gap-1")
         if borrador else "",
@@ -292,6 +300,9 @@ def get(auth, cid: int, editar: int = 0):
                            disabled=bool(falta_pub) or None) if borrador else "",
                 boton_post("Eliminar", f"{url}/eliminar", "trash-2", cls=(ButtonT.ghost, ButtonT.sm),
                            confirmar="¿Eliminar el borrador de la convocatoria?") if borrador else "",
+                boton_post("Generar la segunda convocatoria", f"{url}/segunda", "copy-plus", cls=(ButtonT.primary, ButtonT.sm),
+                           confirmar="Se arma un borrador con las plazas que esta convocatoria no cubrió, los mismos requisitos y "
+                                     "tribunales. ¿Generarlo?") if aux.puede_generar_segunda(c) else "",
                 cls="flex flex-wrap gap-2"),
             cls="flex flex-wrap items-start justify-between gap-4 my-4"),
         falta(["Falta " + x for x in falta_pub]) if falta_pub else "",
@@ -326,7 +337,7 @@ def get(auth, cid: int, editar: int = 0):
                         P(f"Cada fase la califican al menos {aux.QUORUM} miembros del tribunal; la nota es el promedio.",
                           cls=(TextPresets.muted_sm, "mt-2"))),
                 tarjeta("Requisitos", Ul(*[Li(Div(Span(r["texto"], cls="text-sm"),
-                                                  Div(aux.ACREDITA[r["acredita"]], cls=TextPresets.muted_sm)),
+                                                  Div(aux.ACREDITA[r["acredita"]] + (" · solo si corresponde" if r["opcional"] else ""), cls=TextPresets.muted_sm)),
                                               boton_post("", f"{url}/requisitos/{r['id']}/quitar", "x", cls=(ButtonT.ghost, ButtonT.xs),
                                                          aria_label="Quitar requisito") if borrador else "",
                                               cls="flex items-start justify-between gap-2 py-2") for r in reqs],
@@ -429,6 +440,21 @@ def post(auth, sess, cid: int):
     if not errores:
         auditar(auth["id"], "publicar_convocatoria_auxiliatura", "convocatoria_auxiliatura", cid, c["titulo"])
         add_toast(sess, "Convocatoria publicada: se avisó a los estudiantes y a los tribunales.", "success")
+    return Redirect(f"{BASE}/{cid}")
+
+
+@rt(f"{BASE}/{{cid}}/segunda")
+def post(auth, sess, cid: int):
+    c = _gestionable(auth, cid)
+    if not c:
+        return no_autorizado()
+    nuevo, errores = aux.generar_segunda(cid, auth["id"])
+    for e in errores:
+        add_toast(sess, e, "error")
+    if nuevo:
+        auditar(auth["id"], "generar_segunda_convocatoria_auxiliatura", "convocatoria_auxiliatura", nuevo, f"de la convocatoria {cid}")
+        add_toast(sess, "Borrador de la segunda convocatoria: póngale fechas y la resolución del Consejo de Carrera.", "success")
+        return Redirect(f"{BASE}/{nuevo}")
     return Redirect(f"{BASE}/{cid}")
 
 
@@ -770,13 +796,15 @@ def get(auth, pid: int):
     borrador = p["estado"] == "borrador"
     abierta = aux.abierta(p)
     reqs = aux.requisitos_de(p)
-    cumplidos = sum(r["cumplido"] for r in reqs)
+    exigidos = [r for r in reqs if not r["opcional"]]
+    cumplidos = sum(r["cumplido"] for r in exigidos)
     faltan = aux.faltantes_envio(p) if borrador else []
 
     def requisito(r):
         cab = Div(UkIcon("circle-check" if r["cumplido"] else "circle", height=16, width=16,
                          cls="shrink-0 " + ("text-primary" if r["cumplido"] else "text-muted-foreground")),
-                  Div(Div(r["texto"], cls="text-sm font-medium"), Div(r["detalle"], cls=TextPresets.muted_sm)),
+                  Div(Div(r["texto"], cls="text-sm font-medium"),
+                      Div(("Solo si corresponde · " if r["opcional"] else "") + r["detalle"], cls=TextPresets.muted_sm)),
                   cls="flex items-start gap-2")
         acciones = ""
         if borrador and abierta and r["acredita"] == "documento":
@@ -802,11 +830,11 @@ def get(auth, pid: int):
             insignia(aux.ESTADOS_POST[p["estado"]], TONO_POST[p["estado"]]), cls="space-y-1 my-4"),
         Div(_pasos_postulacion(p), cls="mb-6 overflow-x-auto"),
         Div(Div(
-            tarjeta(f"Requisitos · {cumplidos} de {len(reqs)}",
-                    fh.Progress(value=str(cumplidos), max=str(max(1, len(reqs))), cls="uk-progress",
-                                aria_label=f"{cumplidos} de {len(reqs)} requisitos"),
+            tarjeta(f"Requisitos · {cumplidos} de {len(exigidos)}",
+                    fh.Progress(value=str(cumplidos), max=str(max(1, len(exigidos))), cls="uk-progress",
+                                aria_label=f"{cumplidos} de {len(exigidos)} requisitos"),
                     Ul(*[requisito(r) for r in reqs], cls="divide-y divide-border")),
-            tarjeta("Propuesta de trabajo en la auxiliatura",
+            tarjeta("Plan de trabajo de la materia, proyecto o programa que postula",
                     formulario(f"{url}/propuesta", area("Qué haría en las prácticas y cómo apoyaría al docente", "propuesta",
                                                         p["propuesta"], 5, maxlength="4000"),
                                Div(enviar("Guardar", cls=(ButtonT.default, ButtonT.sm)), cls="flex justify-end"))
@@ -918,7 +946,7 @@ def post(auth, sess, pid: int, propuesta: str = ""):
     if error:
         return error
     aux.guardar_propuesta(pid, propuesta)
-    add_toast(sess, "Propuesta guardada.", "success")
+    add_toast(sess, "Plan de trabajo guardado.", "success")
     return Redirect(f"{EST}/{pid}")
 
 

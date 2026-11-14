@@ -171,7 +171,7 @@ def _completar(p, gente):
 
 
 def test_convocatoria_y_postulacion_desde_el_telefono(app, gente, convocatoria, buzon):
-    assert aux.requisitos(convocatoria["cid"])[0]["texto"].startswith("Ser estudiante regular")
+    assert aux.requisitos(convocatoria["cid"])[0]["texto"].startswith("Nota dirigida a la Dirección de Carrera")
     _publicar(gente, convocatoria)
     assert any("Convocatoria: Auxiliaturas I-2027" == n["asunto"] for n in notificaciones.todas(gente["Sofía"]["uid"]))
     s = _como_estudiante(app, "sofia@correo.bo", buzon)
@@ -179,8 +179,8 @@ def test_convocatoria_y_postulacion_desde_el_telefono(app, gente, convocatoria, 
     r = s.post(f"/estudiante/auxiliaturas/item/{convocatoria['iid']}/postular", follow_redirects=False)
     pid = int(r.headers["location"].rsplit("/", 1)[1])
     pagina = s.get(f"/estudiante/auxiliaturas/{pid}").text
-    assert "Requisitos · 1 de 6" in pagina and "Enviar postulación" in pagina     # el del sistema ya está cumplido
-    assert aux.enviar(pid)[0].startswith("Falta: Ser estudiante regular")
+    assert "Requisitos · 2 de 12" in pagina and "Enviar postulación" in pagina     # los dos que verifica el sistema ya están cumplidos
+    assert aux.enviar(pid)[0].startswith("Falta: Nota dirigida a la Dirección de Carrera")
     req = next(x for x in aux.requisitos_de(aux.postulacion(pid)) if x["acredita"] == "documento")
     s.post(f"/estudiante/auxiliaturas/{pid}/requisitos/{req['id']}/archivo", files={"archivo": ("matricula.pdf", PDF, "application/pdf")})
     assert next(x for x in aux.requisitos_de(aux.postulacion(pid)) if x["id"] == req["id"])["cumplido"]
