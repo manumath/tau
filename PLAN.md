@@ -4204,6 +4204,47 @@ implementarla (por confirmar):
   plan, cumplir, reprogramar, aprobar una reprogramación, abrir un corte): ahora se guardan con `formato.fecha`.
 - CLAUDE.md: cortes congelados, carga del plan, hojas imprimibles en colores claros.
 
+### Etapa 11 (hecha, 15-nov-2026): ensayo sintético del piloto y sus correcciones
+**Ensayo.** Antes del piloto real, cinco agentes (Dirección de Carrera, Comisión de calidad, Coordinación académica, docente
+investigadora y estudiante) intentaron las cinco tareas de su rol de `docs/piloto.md`, cada uno con su base de demostración
+(seed + datos del manual) y su servidor, con `PORTAL_PILOTO=1`; comentaron con «Comentar esta pantalla» y probaron 35 accesos
+indebidos (ninguno pasó). De 52 hallazgos, cerca de un tercio era ruido de la base o pedidos de pantallas nuevas (anotados,
+no hechos: módulos congelados). **No cuenta como piloto**: no mide adopción ni utilidad, y sus pedidos no son pedidos de
+usuarios del piloto. Lo verificado y corregido:
+- **Cohortes:** «Cursan» sumaba los congelados que ya eran desertores (un estudiante en dos columnas); ahora
+  `cohortes.resumen` da `cursan` (cursando + congelados que aún pueden volver), también en el informe de seguimiento.
+- **Vacantes:** una admisión sin su cohorte cargada mostraba 0 admitidos y 0 % de cobertura; ahora dice «sin cohorte» y
+  no entra en el indicador (que avisa «Faltan las cohortes cargadas»). Las admisiones se escriben como las cohortes (2025-I).
+- **Encuestas anónimas:** el mínimo de 5 se comprobaba por encuesta, no por pregunta: una pregunta opcional respondida por
+  pocos se mostraba. Ahora sale `oculta` (sin conteos) en `resultados`, en la pantalla, el CSV y el retorno; el retorno
+  muestra el n también en las preguntas de opciones.
+- **Privacidad:** el pie de cada pantalla con sesión enlaza «Sus datos y su privacidad» (`/publico/privacidad`); antes no
+  había cómo volver a leerla dentro del sistema.
+- **Fechas ISO** en avisos (evaluación docente, informe de grado, continuidad de proyectos), tutoría, actividades
+  estudiantiles, periodos de proyectos en informes y anexo, y el inicio: ahora con `formato`. La prueba de accesibilidad no
+  las veía porque su base no tenía esos datos: `preparar.py` suma una reunión de tutoría y una actividad estudiantil, y la
+  lista suma `/tutoria` y `/docencia/cohortes/actividades`.
+- **Teléfono:** las tablas del corte se desplazan dentro de su recuadro, y el membrete de las hojas imprimibles pasa a dos
+  filas en vez de salirse (al imprimir en A4 sigue en una). Con un corte abierto, la lista explica por qué no
+  se puede abrir otro.
+- **Textos:** rendimiento vacío ya no pide cargar el CSV a quien no puede; la diferencia de carga que no es un número entero
+  de materias se dice en h/mes («falta asignar 25,5 h/mes de docencia», no «0,8 materias»: cambia la expectativa de
+  `test_gestiones`); el buzón enlaza las preguntas frecuentes y ya no habla de «marcar Anónimo»; la introducción de Avisos
+  del estudiante habla de lo suyo; el formulario de producto ya no tutea.
+
+**Evidencias del responsable (decisión del usuario, 15-nov-2026, opción B):** el responsable de una actividad no tenía cómo
+adjuntar su evidencia (el repositorio le daba 403 y el avance le ofrecía documentos ajenos). Ahora sube la evidencia de su
+actividad desde el avance (**Subir una evidencia**), que queda en el repositorio ligada a la actividad (migración
+**0095**, `evidencia_calidad.actividad_id`), con el criterio de la acción si lo tiene (si no, sin criterios: los marca
+después la Comisión o la Dirección). Él ve y descarga solo las de su actividad y las elige en avances y reprogramaciones
+(`actividades_mejora.evidencias_elegibles`); quien gestiona el plan elige del repositorio entero. Se descartó (a), adjuntar
+el archivo en el mismo avance sin pasar por el repositorio.
+
+Queda anotado para después del piloto (pedidos del ensayo, sin hacer): reasignar responsables del plan en bloque; avisar
+al asignar un docente que excede su carga; que «Mis preferencias» abra en la gestión siguiente y no en verano; el inicio de
+la Dirección con las reprogramaciones por resolver; la n de los indicadores visible sin el ratón; confirmación al registrar
+una actividad estudiantil; la barra del teléfono del estudiante.
+
 ### Orden y commits
 Un commit por etapa. Las etapas 1 y 2 no dependen entre sí; 3 a 6 van en orden; 7 y 8 son independientes del plan; 9
 necesita las anteriores; 10 cierra. Estimación honesta: 1, 7 y 8 son cortas; 2 a 6 son el grueso.

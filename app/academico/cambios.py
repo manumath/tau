@@ -32,7 +32,7 @@ def _fecha(g: dict, f: dict, errores: list) -> str | None:
         return None
     if not g["fecha_inicio"] <= d.isoformat() <= g["fecha_fin"]:
         errores.append(f"La fecha de efecto debe estar entre el inicio y el término de {gestiones.codigo(g)} "
-                       f"({g['fecha_inicio']} a {g['fecha_fin']}).")
+                       f"({formato.periodo(g['fecha_inicio'], g['fecha_fin'])}).")
         return None
     return d.isoformat()
 

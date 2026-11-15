@@ -90,8 +90,10 @@ def get(auth):
                 method="post", action="/avisos/preferencia", cls="space-y-2"))
     return pagina(
         "Avisos",
-        Div(Div(H2("Avisos"), P("Lo que el sistema le avisó: propuestas por revisar, decisiones, carga en proyectos, "
-                                "plazos. Abra uno para ir a atenderlo.", cls=TextPresets.muted_sm)),
+        Div(Div(H2("Avisos"), P("Lo que el sistema le avisó: " + ("respuestas, convocatorias, plazos y novedades de sus trámites."
+                                                     if auth.get("solo_estudiante") else
+                                                     "propuestas por revisar, decisiones, carga en proyectos, plazos.")
+                                + " Abra uno para ir a atenderlo.", cls=TextPresets.muted_sm)),
             fh.Form(Button(UkIcon("check-check", height=14, width=14), "Marcar todo como leído", type="submit",
                            cls=(ButtonT.default, ButtonT.sm)), method="post", action="/avisos/leidas")
             if notificaciones.no_leidas(uid) else "",

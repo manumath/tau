@@ -97,6 +97,9 @@ def resumen(ciclos: list[int], alumnos_: list[dict] | None = None) -> list[dict]
             "desercion_academica": sum(e["motivo_retiro"] == "academico" for e in desertores),
             "desercion_no_academica": sum(e["motivo_retiro"] != "academico" for e in desertores),
             "estados": {k: sum(e["estado"] == k for e in grupo) for k in ESTADOS},
+            # Siguen en la Carrera: cursando o congelados que todavía pueden volver (los demás ya son desertores).
+            "cursan": sum(e["estado"] == "cursando" or (e["estado"] == "congelado" and not desertor(e, actual))
+                          for e in grupo),
         })
     return res
 

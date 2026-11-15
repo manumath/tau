@@ -148,7 +148,7 @@ def _para_instituto(auth):
     if terminan:
         items.append(_item(f"{_plural(len(terminan), 'proyecto')} institucional{'es' if len(terminan) != 1 else ''} "
                            "termina en los próximos 60 días", "/proyectos", tono="info",
-                           detalle="; ".join(f"{p['nombre']} ({p['fecha_fin']})" for p in terminan[:3])))
+                           detalle="; ".join(f"{p['nombre']} ({formato.fecha(p['fecha_fin'])})" for p in terminan[:3])))
     sin_vinculo = get_db().q("""SELECT COUNT(*) n FROM aviso_carga WHERE tipo = 'desvinculado'
                                 AND atendido_en IS NULL""")[0]["n"]
     if sin_vinculo:

@@ -32,8 +32,9 @@ def vacantes() -> list[dict]:
     filas = get_db().q("SELECT * FROM vacante_admision ORDER BY anio DESC, ciclo DESC")
     for f in filas:
         o = cohortes.ordinal(f["anio"], f["ciclo"])
-        f["admitidos"] = sum(e["ingreso"] == o for e in alumnos)
-        f["cobertura"] = round(100 * f["admitidos"] / f["vacantes"], 1) if f["vacantes"] else None
+        # Sin estudiantes de esa cohorte, la cohorte no está cargada: no es «0 admitidos» (ensayo del piloto, etapa 11).
+        f["admitidos"] = sum(e["ingreso"] == o for e in alumnos) or None
+        f["cobertura"] = round(100 * f["admitidos"] / f["vacantes"], 1) if f["vacantes"] and f["admitidos"] else None
         f["postulantes_por_vacante"] = round(f["postulantes"] / f["vacantes"], 2) \
             if f["vacantes"] and f["postulantes"] is not None else None
     return filas
@@ -92,7 +93,9 @@ def indicadores_vacantes(anio: int) -> dict | None:
         return None
     v = sum(f["vacantes"] for f in filas)
     con_post = [f for f in filas if f["postulantes"] is not None]
-    return {"vacantes": v, "admitidos": sum(f["admitidos"] for f in filas),
+    con_cohorte = [f for f in filas if f["admitidos"] is not None]     # la cobertura, solo con la cohorte cargada
+    return {"vacantes": sum(f["vacantes"] for f in con_cohorte), "admitidos": sum(f["admitidos"] for f in con_cohorte),
+            "vacantes_registradas": v,
             "postulantes": sum(f["postulantes"] for f in con_post) if con_post else None,
             "vacantes_con_postulantes": sum(f["vacantes"] for f in con_post)}
 

@@ -249,17 +249,21 @@ def pagina(titulo: str, *contenido, usuario: dict | None = None, seccion: str = 
             Div(data_accion="cerrar-menu", cls="fondo-menu no-imprimir", aria_hidden="true"),
             Div(aviso, barra_superior(usuario),
                 Main(cuerpo, id="contenido", tabindex="-1", cls="outline-none"),
-                _comentar_pantalla() if config.PILOTO else "",
+                _pie(),
                 cls="columna-contenido min-h-screen pb-16 lg:pb-0"),
             pestanas_movil(usuario),
             Div(id=ID_MODAL))
 
 
-def _comentar_pantalla():
-    """Pie del piloto (PLAN §72, etapa 9): abre el formulario de comentario; la ruta la toma el servidor de HX-Current-URL."""
-    return Div(Button(UkIcon("message-square-text", height=14, width=14), "Comentar esta pantalla", type="button",
-                      hx_get="/piloto/comentar", hx_target=f"#{ID_MODAL}", cls=(ButtonT.ghost, ButtonT.sm)),
-               cls="no-imprimir flex justify-end px-4 pb-4")
+def _pie():
+    """Pie de cada página con sesión: la página de privacidad (PLAN §72, etapa 11: no había cómo volver a leerla dentro del
+    sistema) y, durante el piloto, «Comentar esta pantalla» (etapa 9; la ruta la toma el servidor de HX-Current-URL)."""
+    return Div(A("Sus datos y su privacidad", href="/publico/privacidad", target="_blank", rel="noopener",
+                 cls="text-xs text-muted-foreground hover:underline"),
+               Button(UkIcon("message-square-text", height=14, width=14), "Comentar esta pantalla", type="button",
+                      hx_get="/piloto/comentar", hx_target=f"#{ID_MODAL}", cls=(ButtonT.ghost, ButtonT.sm))
+               if config.PILOTO else "",
+               cls="no-imprimir flex flex-wrap items-center justify-end gap-3 px-4 pb-4")
 
 
 # --- Modal ligero: el servidor lo inserta en #modal y cerrarlo es vaciar ese contenedor. Los botones

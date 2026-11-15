@@ -76,7 +76,7 @@ def test_pantallas(carrera):
     r = carrera.post("/docencia/cohortes/vacantes", headers=HX, data={"anio": "2025", "ciclo": "I", "vacantes": "x"})
     assert "número entero" in r.text
     r = carrera.get("/docencia/cohortes/vacantes")
-    assert "I-2025" in r.text and "Registrar una admisión" in r.text
+    assert "2025-I" in r.text and "Registrar una admisión" in r.text     # como las cohortes (PLAN §72, etapa 11)
     assert carrera.get("/docencia/cohortes/rendimiento").text.count("Aún no hay datos de rendimiento") == 1
     r = carrera.post("/docencia/cohortes/rendimiento/revisar", headers=HX,
                      files={"archivo": ("r.csv", CSV.encode(), "text/csv")})

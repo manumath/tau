@@ -79,6 +79,16 @@ def _servicios_del_estudiante(emmy, direccion_id):
     cuentas = db.q("SELECT externo_id, usuario_id FROM cuenta_estudiante")
     for c in cuentas:
         assert tutoria.asignar(c["externo_id"], emmy, None) == []
+    # Una reunión de tutoría y una actividad estudiantil con fechas: las pantallas que las muestran no deben dejar fechas
+    # ISO a la vista (ensayo del piloto, PLAN §72, etapa 11).
+    from app.estudiantil import actividad
+    primero = cuentas[0]["externo_id"]
+    assert tutoria.registrar(primero, emmy, {"fecha": (date.today() - timedelta(days=12)).isoformat(),
+                                             "tema": "academico", "modalidad": "presencial"}) == []
+    _, errores = actividad.crear(primero, {"tipo": "congreso", "titulo": "Congreso de estudiantes de matemática",
+                                           "fecha_inicio": (date.today() - timedelta(days=40)).isoformat(),
+                                           "fecha_fin": (date.today() - timedelta(days=38)).isoformat()})
+    assert not errores, errores
     direccion = usuarios.por_id(direccion_id)
     doc = usuarios.por_id(emmy)
     oid, errores = oportunidades.crear({"tipo": "beca", "titulo": "Beca de excelencia académica", "para": "estudiantes",

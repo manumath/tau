@@ -7,7 +7,7 @@ import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, FileResponse, Li, Option, P, Redirect, Response, Select, Span, Ul, UploadFile
 from monsterui.all import H2, H3, Button, ButtonT, Card, Form, LabelInput, TextPresets, UkIcon
 
-from app.comun import estudiantes
+from app.comun import estudiantes, formato
 from app.comun.componentes.layout import ID_MODAL, aviso_privacidad, cerrar_modal, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
@@ -49,7 +49,7 @@ def _ficha(externo_id: int) -> dict:
 # --- Página principal ----------------------------------------------------------------------------------------
 
 def _fechas(a):
-    return a["fecha_inicio"] + (f" a {a['fecha_fin']}" if a["fecha_fin"] else "")
+    return formato.periodo(a["fecha_inicio"], a["fecha_fin"]) if a["fecha_fin"] else formato.fecha(a["fecha_inicio"])
 
 
 def _fila_actividad(a):

@@ -53,7 +53,8 @@ Cada formulario que pide datos personales (el consentimiento del estudiante, las
 buzón, las postulaciones a auxiliaturas y a becas o pasantías, el perfil de egresado, el registro de empleadores y su
 perfil) muestra, junto al botón de enviar, un recuadro breve con un escudo: quién verá esos datos y para qué. Su enlace
 **Más sobre sus datos** abre la página pública **Privacidad** (también en la cabecera de las páginas públicas), que explica
-por módulo qué datos se guardan, para qué, quién los ve y cuánto se conservan. Para ver, corregir o pedir que se eliminen
+por módulo qué datos se guardan, para qué, quién los ve y cuánto se conservan. Dentro del sistema, el enlace **Sus datos y
+su privacidad** del pie de cada pantalla lleva a la misma página. Para ver, corregir o pedir que se eliminen
 sus datos, diríjase a la Dirección de Carrera.
 
 ## Avisos
@@ -789,7 +790,8 @@ lo que se crea, lo que se actualiza y los errores (las filas con errores se omit
 - **Vacantes:** la Dirección de Carrera y Gestión de datos registran, por admisión (año y semestre), las vacantes ofertadas y,
   si los conocen, los postulantes. Los admitidos no se escriben: son los ingresantes de esa cohorte en la carga del CSV. La
   tabla muestra la cobertura (admitidos / vacantes) y los postulantes por vacante; volver a registrar la misma admisión la
-  corrige. Estas cifras aparecen también en la ficha estadística y alimentan los indicadores «Cobertura de las vacantes» y
+  corrige. Mientras no se cargue la cohorte de una admisión, la tabla dice «sin cohorte» y esa admisión no entra en la
+  cobertura. Estas cifras aparecen también en la ficha estadística y alimentan los indicadores «Cobertura de las vacantes» y
   «Postulantes por vacante» del marco de calidad.
 - **Rendimiento por asignatura:** con **Cargar CSV** se sube el archivo agregado del Sistema de Seguimiento Académico, con
   una fila por asignatura y gestión: `sigla`, `gestion` (I-2025, II-2025, INV-2025 o VER-2025), `inscritos`, `aprobados`,
@@ -1241,7 +1243,8 @@ En **Calidad → Plan de mejora**:
    - **Evaluaciones externas:** en la ficha de una evaluación, **Crear acción** junto a cada recomendación.
    - **Nueva acción**, para cualquier otra mejora.
 2. **Avances.** En la ficha de la acción, el responsable (o la Dirección) registra cada avance: qué se hizo, la fecha, el
-   porcentaje logrado si se puede estimar y una evidencia del repositorio (súbala antes en **Evidencias**). El primer avance
+   porcentaje logrado si se puede estimar y una evidencia del repositorio (súbala antes en **Evidencias**; en una actividad,
+   su responsable la sube desde el mismo avance). El primer avance
    pasa la acción a «En curso».
 3. **Estado.** La Dirección marca la acción **Cumplida** (con la fecha en que se cumplió) o la **cancela** con su motivo; puede
    reabrirla. Solo se elimina una acción sin avances; las demás se cancelan, para que quede su historia.
@@ -1284,6 +1287,12 @@ En **Calidad → Plan de mejora**:
 **Si una actividad está a su cargo:** la encuentra en **Mis pendientes** (docencia o investigación), en «Mi parte del
 plan de mejora», con su semáforo y su plazo. **Registrar avance** abre el formulario sin salir de la pantalla. El inicio le
 recuerda cuántas tiene y su calendario muestra sus plazos y el fin de cada trimestre, cuando suele hacerse el corte.
+
+**La evidencia de su actividad.** En el formulario del avance, **Subir una evidencia** le pide un título y el archivo (PDF,
+imagen u hoja de cálculo, hasta 20 MB) o un enlace. La evidencia queda en el repositorio de la Carrera, ligada a su actividad
+(la ven la Comisión de calidad y la Dirección), y usted vuelve al avance con lo que había escrito y la evidencia ya elegida.
+En la lista de evidencias del avance usted ve solo las de su actividad; quien gestiona el plan elige del repositorio entero.
+La Comisión o la Dirección marcan después los criterios que respalda.
 
 El sistema avisa al responsable de cada actividad **30 y 7 días antes** de su plazo, y 15 días antes del fin de cada
 trimestre si su actividad no tiene avance desde el último corte. Una acción sin actividades avisa a su responsable

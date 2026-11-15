@@ -23,7 +23,7 @@ def _cohortes(desde: int, hasta: int) -> dict:
             continue
         e = c["estados"]
         egresaron = e["egresado"] + e["titulado"]
-        filas.append({"cohorte": c["texto"], "ingresaron": c["n"], "cursan": e["cursando"] + e["congelado"], "egresaron": egresaron,
+        filas.append({"cohorte": c["texto"], "ingresaron": c["n"], "cursan": c["cursan"], "egresaron": egresaron,
                       "titulados": e["titulado"], "desertores": c["desertores"],
                       "tasa_egreso": cohortes.tasa(egresaron, c["n"]), "tasa_titulacion": cohortes.tasa(e["titulado"], c["n"]),
                       "tasa_desercion": cohortes.tasa(c["desertores"], c["n"])})

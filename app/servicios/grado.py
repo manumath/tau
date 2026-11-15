@@ -13,7 +13,7 @@ Graduación (CEUB): perfil y documento final.
 import json
 from datetime import date, timedelta
 
-from app.comun import estudiantes, notificaciones, permisos, usuarios
+from app.comun import estudiantes, formato, notificaciones, permisos, usuarios
 from app.comun.db import AHORA, get_db, transaccion
 from app.servicios.auxiliaturas import habiles_entre, sumar_habiles
 
@@ -259,7 +259,7 @@ def _nueva_ronda(t: dict, ronda: int):
                          WHERE id = ?""", [ronda, plazo, t["id"]])
     for m in tribunal(t["id"]):
         notificaciones.avisar(usuarios.por_id(m["usuario_id"]), f"Revisión: {TIPOS[t['tipo']].lower()} de {t['nombres']} {t['apellidos']}",
-                              f"«{t['titulo']}». Su informe vence el {plazo} ({DIAS_REVISION} días hábiles).", url_staff(t))
+                              f"«{t['titulo']}». Su informe vence el {formato.fecha(plazo)} ({DIAS_REVISION} días hábiles).", url_staff(t))
     return plazo
 
 
@@ -469,7 +469,7 @@ def recordar(hoy: date | None = None) -> int:
                 continue
             get_db().t.recordatorio_grado.insert(tramite_id=t["id"], ronda=t["ronda"], usuario_id=m["usuario_id"], tipo=tipo)
             asunto = ("Venció el plazo de su informe" if tipo == "vencido" else "Su informe vence pronto") + f": {t['nombres']} {t['apellidos']}"
-            notificaciones.avisar(usuarios.por_id(m["usuario_id"]), asunto, f"«{t['titulo']}» · plazo {t['plazo']}.", url_staff(t))
+            notificaciones.avisar(usuarios.por_id(m["usuario_id"]), asunto, f"«{t['titulo']}» · plazo {formato.fecha(t['plazo'])}.", url_staff(t))
             n += 1
             if tipo == "vencido":
                 _avisar_gestores(f"Informe vencido: {m['nombres']} {m['apellidos']}",

@@ -14,6 +14,10 @@ BASE = "/estudiante/encuestas"
 
 def _pregunta(p):
     q = p["pregunta"]
+    if p.get("oculta"):
+        return Div(Span(q["texto"], cls="text-sm font-medium"),
+                   Div(f"Menos de {encuestas.MIN_ANONIMO} respuestas: no se muestra, para proteger a quienes respondieron.",
+                       cls=TextPresets.muted_sm), cls="space-y-1")
     if q["tipo"] == "escala":
         return Div(Span(q["texto"], cls="text-sm font-medium"),
                    Div(f"Promedio {formato.numero(p['promedio'], 1)} de 5 · {p['n']} respuesta(s)", cls=TextPresets.muted_sm)
@@ -21,7 +25,7 @@ def _pregunta(p):
                    Progress(value=p["promedio"], max=5, aria_label=q["texto"]) if p.get("promedio") is not None else "",
                    cls="space-y-1")
     total = sum(p["conteo"].values()) or 1
-    return Div(Span(q["texto"], cls="text-sm font-medium"),
+    return Div(Span(q["texto"], cls="text-sm font-medium"), Div(f"{p['n']} respuesta(s)", cls=TextPresets.muted_sm),
                Ul(*[Li(f"{encuestas.texto_valor(q, k)}: {round(100 * v / total)} %", cls="text-sm") for k, v in p["conteo"].items()]),
                cls="space-y-1")
 

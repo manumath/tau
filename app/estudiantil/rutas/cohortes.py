@@ -48,7 +48,7 @@ def _tablero(auth):
         e = c["estados"]
         egresaron = e["egresado"] + e["titulado"]
         filas.append(Tr(
-            Td(c["texto"], cls="font-medium"), Td(c["n"]), Td(e["cursando"] + e["congelado"]),
+            Td(c["texto"], cls="font-medium"), Td(c["n"]), Td(c["cursan"]),
             Td(egresaron), Td(e["titulado"]), Td(c["desertores"]),
             Td(_pct(cohortes.tasa(egresaron, c["n"]))), Td(_pct(cohortes.tasa(e["titulado"], c["n"]))),
             Td(_pct(cohortes.tasa(c["desertores"], c["n"])))))

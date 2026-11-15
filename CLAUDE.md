@@ -76,6 +76,9 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - **Plan de mejora (PLAN §72):** acciones con actividades (`app/calidad/actividades_mejora.py`). El avance y el semáforo se
   calculan, no se guardan. Aprobado el plan (`marco_calidad.plan_aprobado_en`), el plazo de una actividad cambia solo por
   reprogramación (`reprogramacion_mejora`: el responsable pide y la Dirección de Carrera aprueba); nunca lo edite directo.
+  El responsable de una actividad sube su evidencia desde el avance (`evidencia_calidad.actividad_id`), ve solo esas y
+  no el repositorio: elija las evidencias de un avance con `actividades_mejora.evidencias_elegibles`, nunca con
+  `evidencias.listar` (PLAN §72, etapa 11).
   Un **corte** (`cortes_mejora.py`) congela el estado de cada actividad: sus cifras no se recalculan después; solo los
   comentarios de un corte abierto cambian. El plan de la Carrera se carga de `datos/calidad/plan-de-mejora-2026-2030.csv`
   (`importar_mejora.py`), sin nombres de agencias ni columna de criterio de agencia. Las hojas imprimibles (`.hoja`) usan
@@ -145,8 +148,8 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
   un id en la dirección. Si la dirección lleva el id de un trámite, una postulación o un ítem (PLAN §58), compruebe que es de
   esa ficha o que el estudiante integra ese tribunal. Se unen a la ficha por `cuenta_estudiante`, no por `persona_externa.usuario_id`.
 - **Encuestas (PLAN §49 y §50):** las anónimas no enlazan la respuesta con la invitación ni guardan la hora, y no
-  muestran resultados con menos de 5 respuestas (`encuestas.MIN_ANONIMO`): cualquier vista o exportación nueva debe
-  respetarlo. El enlace de `/encuesta/<enlace>` es público y personal; se borra al responder o cerrar.
+  muestran resultados con menos de 5 respuestas (`encuestas.MIN_ANONIMO`), tampoco por pregunta (una opcional respondida
+  por pocos sale `oculta` en `resultados`): cualquier vista o exportación nueva debe respetarlo. El enlace de `/encuesta/<enlace>` es público y personal; se borra al responder o cerrar.
 - **Tutoría (PLAN §49):** las notas de las reuniones son confidenciales: las ve el tutor autor y la Dirección de Carrera
   (con auditoría); nunca van a informes, exportaciones ni a la pantalla de la Comisión de calidad. **Directorio de egresados (PLAN §50):** opcional y
   solo dentro del sistema; el correo de un estudiante y el de un egresado solo se comparten cuando el egresado acepta una solicitud.

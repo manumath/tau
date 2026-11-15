@@ -439,6 +439,9 @@ def resultados(eid: int) -> dict:
             r.update(n=quienes, conteo={o: sum(1 for i in items if i["valor"] == o) for o in opciones})
         else:
             r.update(n=len(items), textos=sorted((i["valor"] for i in items), key=str.casefold))   # sin el orden de llegada
+        if e["anonima"] and r["n"] < MIN_ANONIMO:
+            # Una pregunta opcional puede tener menos respuestas que la encuesta: tampoco se muestra (ensayo del piloto).
+            r.update(oculta=True, conteo={}, textos=[], promedio=None, por_grupo={})
         base["preguntas"].append(r)
     return base
 
@@ -489,7 +492,7 @@ def csv_resultados(eid: int) -> str | None:
     w.writerow(["pregunta", "tipo", "respuesta", "n"])
     for p in r["preguntas"]:
         q = p["pregunta"]
-        if q["tipo"] == "texto":
+        if q["tipo"] == "texto" or p.get("oculta"):
             continue
         for k, n in p["conteo"].items():
             w.writerow([q["texto"], TIPOS_PREGUNTA[q["tipo"]], texto_valor(q, str(k)), n])

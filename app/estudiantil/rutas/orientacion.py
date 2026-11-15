@@ -62,8 +62,10 @@ def get(auth):
     return pagina(
         "Buzón", H2("Buzón de consultas, reclamos y sugerencias"),
         P("Lo atienden la Dirección de Carrera y la Coordinación académica. Si lo envía con su nombre, la respuesta le llega aquí y en "
-          "sus avisos. Si marca «Anónimo», nadie sabrá quién lo envió (no se guarda su cuenta ni la hora), pero tampoco podrán "
-          "responderle personalmente: la respuesta se publica en las preguntas frecuentes.", cls=(TextPresets.muted_sm, "mb-4 max-w-3xl")),
+          "sus avisos. Si lo envía como anónimo, nadie sabrá quién lo envió (no se guarda su cuenta ni la hora), pero tampoco podrán "
+          "responderle personalmente: la respuesta se publica en las ", A("preguntas frecuentes", href=f"{EST}/orientacion",
+                                                                          cls="text-primary hover:underline"), ".",
+          cls=(TextPresets.muted_sm, "mb-4 max-w-3xl")),
         Card(fh.Form(
             Div(campo("Tipo", Select(*[Option(t, value=k) for k, t in ori.TIPOS.items()], name="tipo", cls="uk-select")),
                 campo("Asunto", Input(name="asunto", required=True, maxlength="150", cls="uk-input")),

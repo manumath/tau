@@ -382,7 +382,8 @@ def test_la_carga_se_cuenta_por_meses_dictados(app):
     assert (t["sigla"], t["parcial"], t["inicio"], t["fin"]) == ("MAT-111", True, "2031-08-01", "2031-08-31")
     assert round(t["fraccion"], 3) == 0.203
     aviso = carga.resumen(emmy, g)["avisos"][0]
-    assert "Falta asignar 0,8 materias" in aviso and "asignada: 6,5 h/mes" in aviso
+    # Parte de una materia se dice en horas, no en «0,8 materias» (ensayo del piloto, PLAN §72, etapa 11).
+    assert "Falta asignar 25,5 h/mes de docencia" in aviso and "asignada: 6,5 h/mes" in aviso
     assert "por los meses dictados" in aviso
     # Los dos juntos suman la materia entera.
     assert oferta.horas_de_docencia(emmy, g["id"]) + oferta.horas_de_docencia(grace, g["id"]) == 32

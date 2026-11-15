@@ -14,7 +14,7 @@ import json
 from datetime import date, timedelta
 
 from app.academico import gestiones, listas, oferta
-from app.comun import notificaciones
+from app.comun import formato, notificaciones
 from app.comun.db import auditar, get_db, transaccion
 
 MIN_RESPUESTAS = 5          # = app.estudiantil.encuestas.MIN_ANONIMO (lo vigila una prueba)
@@ -114,7 +114,7 @@ def anunciar(eid: int, uid: int) -> list[str]:
         auditar(uid, "anunciar_evaluacion_docente", "evaluacion_docente", eid, gestiones.codigo(g))
     for d in _docentes_de(g["id"]):
         notificaciones.avisar(d, f"Evaluación docente de {gestiones.codigo(g)}",
-                              f"Se abrirá del {e['abre_el']} al {e['cierra_el']}. Vea el instrumento y cómo se usan los resultados.",
+                              f"Estará abierta del {formato.fecha(e['abre_el'])} al {formato.fecha(e['cierra_el'])}. Vea el instrumento y cómo se usan los resultados.",
                               "/docencia/evaluacion")
     return []
 

@@ -57,11 +57,12 @@ def get(auth):
                 P("Cada corte congela el estado del plan a su fecha; la Comisión comenta lo que pide atención y, al "
                   "cerrarlo, el informe queda como evidencia.", cls=TextPresets.muted_sm)),
             Button(UkIcon("flag", height=14, width=14), "Abrir un corte", cls=(ButtonT.primary, ButtonT.sm),
-                   hx_get=f"{URL}/nuevo", hx_target=f"#{ID_MODAL}") if registra and not cm.abierto(m["id"]) else "",
+                   hx_get=f"{URL}/nuevo", hx_target=f"#{ID_MODAL}") if registra and not cm.abierto(m["id"]) else
+            P("Hay un corte abierto: ciérrelo antes de abrir otro.", cls=TextPresets.muted_sm) if registra else "",
             cls="flex flex-wrap items-end justify-between gap-4 mb-6"),
-        Card(Table(Thead(Tr(Th("Corte"), Th("Estado"), Th("Actividades", cls="text-right"), Th("Piden atención"))),
+        Card(Div(Table(Thead(Tr(Th("Corte"), Th("Estado"), Th("Actividades", cls="text-right"), Th("Piden atención"))),
                    Tbody(*filas), cls="uk-table uk-table-divider uk-table-small text-sm", data_tabla="cortes",
-                   aria_label="Cortes de seguimiento")) if filas else
+                   aria_label="Cortes de seguimiento"), cls="overflow-x-auto")) if filas else
         P("Aún no hay cortes.", cls=TextPresets.muted_sm),
         usuario=auth)
 
@@ -146,13 +147,14 @@ def _item_atencion(c, x, comenta):
 
 
 def _tabla_resto(resto):
-    return Table(Thead(Tr(Th("Actividad"), Th("Responsable"), Th("Plazo"), Th("Avance", cls="text-right"), Th("Semáforo"))),
+    return Div(Table(Thead(Tr(Th("Actividad"), Th("Responsable"), Th("Plazo"), Th("Avance", cls="text-right"), Th("Semáforo"))),
                  Tbody(*[Tr(Td(Span(f"{x['accion_codigo'] or ''} {x['codigo'] or ''}".strip(), cls="font-mono mr-1"),
                                am.titulo(x["descripcion"])),
                             Td(x["responsable"] or "—"), Td(formato.fecha(x["plazo"]), cls="whitespace-nowrap"),
                             Td("—" if x["avance"] is None else f"{round(x['avance'])} %", cls="text-right tabular-nums"),
                             Td(insignia_semaforo(x["semaforo"]))) for x in resto]),
-                 cls="uk-table uk-table-divider uk-table-small text-sm", aria_label="Las demás actividades")
+                 cls="uk-table uk-table-divider uk-table-small text-sm", aria_label="Las demás actividades"),
+               cls="overflow-x-auto")
 
 
 def documento(c, comenta=False):

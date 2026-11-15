@@ -43,7 +43,7 @@ def caja_importar(valor="", error=None, contenido=None, preprint=None):
         Span(UkIcon("loader-circle", height=14, width=14, cls="animate-spin"),
              " Consultando Crossref / arXiv…", id="importando", cls="htmx-indicator text-sm"),
         mensaje_error(error) if error else "",
-        contenido or P("Completa el formulario con los datos publicados: título, autores (reconoce a "
+        contenido or P("Complete el formulario con los datos publicados: título, autores (reconoce a "
                        "los del instituto), revista, año, páginas y resumen. Luego puede revisarlos.",
                        cls=TextPresets.muted_sm),
         id="caja-importar", cls="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 space-y-2")

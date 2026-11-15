@@ -88,6 +88,14 @@ def listar(mid: int, criterio: int | None = None, estado: str = "") -> list[dict
     return filas
 
 
+def de_actividad(tid: int) -> list[dict]:
+    """Las evidencias ligadas a una actividad del plan de mejora (las sube su responsable; PLAN §72, etapa 11)."""
+    return _con_criterios(get_db().q(
+        """SELECT e.*, u.nombres || ' ' || u.apellidos AS por FROM evidencia_calidad e
+           LEFT JOIN usuario u ON u.id = e.registrado_por WHERE e.actividad_id = ?
+           ORDER BY COALESCE(e.fecha, substr(e.registrado_en, 1, 10)) DESC, e.id DESC""", [tid]))
+
+
 def obtener(eid: int) -> dict | None:
     filas = get_db().q("""SELECT e.*, u.nombres || ' ' || u.apellidos AS por FROM evidencia_calidad e
                           LEFT JOIN usuario u ON u.id = e.registrado_por WHERE e.id = ?""", [eid])
@@ -123,8 +131,9 @@ def _fecha(texto: str) -> str | None:
     return texto
 
 
-def validar(d: dict, mid: int, tipo: str) -> tuple[dict, list[str]]:
-    """Datos comunes de una evidencia (título, descripción, fechas, criterios y, en un enlace, la dirección)."""
+def validar(d: dict, mid: int, tipo: str, criterios_opcionales: bool = False) -> tuple[dict, list[str]]:
+    """Datos comunes de una evidencia (título, descripción, fechas, criterios y, en un enlace, la dirección). La de una
+    actividad del plan de mejora puede ir sin criterios: la liga la actividad y la Comisión los marca después."""
     errores = []
     x = {"titulo": (d.get("titulo") or "").strip(), "descripcion": (d.get("descripcion") or "").strip() or None,
          "url": (d.get("url") or "").strip() or None}
@@ -140,7 +149,7 @@ def validar(d: dict, mid: int, tipo: str) -> tuple[dict, list[str]]:
         errores.append("La vigencia termina antes de la fecha del documento.")
     validos = {c["id"] for c in criterios_del_marco(mid)}
     x["criterios"] = sorted({int(c) for c in d.get("criterios") or [] if str(c).isdigit() and int(c) in validos})
-    if not x["criterios"]:
+    if not x["criterios"] and not criterios_opcionales:
         errores.append("Marque al menos un criterio que la evidencia respalde.")
     if tipo == "enlace":
         if not x["url"]:
@@ -171,7 +180,7 @@ def _criterios(eid: int, ids: list[int]):
 
 
 def crear(mid: int, tipo: str, x: dict, uid: int, nombre: str = "", contenido: bytes = b"", informe: str | None = None,
-          parametros: str | None = None) -> int:
+          parametros: str | None = None, actividad_id: int | None = None) -> int:
     """Registra la evidencia; los documentos e informes guardan su archivo y su huella."""
     datos = {k: x[k] for k in ("titulo", "descripcion", "fecha", "vigente_hasta", "url")}
     archivo = None
@@ -184,7 +193,7 @@ def crear(mid: int, tipo: str, x: dict, uid: int, nombre: str = "", contenido: b
     try:
         with transaccion():
             eid = get_db().t.evidencia_calidad.insert(marco_id=mid, tipo=tipo, informe=informe, parametros=parametros,
-                                                      registrado_por=uid, **datos)["id"]
+                                                      registrado_por=uid, actividad_id=actividad_id, **datos)["id"]
             _criterios(eid, x["criterios"])
     except Exception:
         if archivo:

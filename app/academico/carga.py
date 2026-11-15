@@ -44,7 +44,10 @@ def resumen(usuario_id: int, gestion: dict) -> dict:
     elif abs(asignada - prevista) >= 0.05:
         parcial = any(m["parcial"] for m in materias)
         n = abs(prevista - asignada) / oferta.HORAS_POR_MATERIA
-        materias_txt = "1 materia" if n == 1 else f"{formato.numero(round(n, 1)) if parcial else int(n)} materias"
+        # Con materias dictadas parte del semestre la diferencia no es un número entero de materias: se dice en h/mes
+        # («falta asignar 0,3 materias» no se entendía; ensayo del piloto, etapa 11).
+        materias_txt = ("1 materia" if n == 1 else f"{int(n)} materias") if float(n).is_integer() else \
+            f"{formato.numero(float(abs(prevista - asignada)))} h/mes de docencia"
         cifras = (f"(docencia prevista: {formato.numero(prevista)} h/mes; asignada: {formato.numero(asignada)} h/mes"
                   + (", promedio del semestre por los meses dictados" if parcial else "") + ").")
         avisos.append((f"Falta asignar {materias_txt}" if asignada < prevista else f"Tiene {materias_txt} más de lo previsto")

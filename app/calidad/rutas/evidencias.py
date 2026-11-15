@@ -9,6 +9,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import H2, H3, Button, ButtonT, Card, CheckboxX, Form, FormLabel, LabelInput, LabelTextArea, \
     TextPresets, UkIcon
 
+from app.calidad import actividades_mejora as am
 from app.calidad import cuerpo_academico, evidencias, indicadores, marco
 from app.calidad.rutas.anexo import contenido_xlsx as xlsx_informe_idi
 from app.calidad.rutas.informes import descarga
@@ -311,7 +312,15 @@ def _visible(auth, eid, accion="ver_evidencias_calidad"):
     e = evidencias.obtener(eid)
     if e is None:
         return None, _no_encontrado()
-    return e, (None if marco.puede(auth, accion, marco.obtener(e["marco_id"])) else _no_autorizado())
+    if marco.puede(auth, accion, marco.obtener(e["marco_id"])) or (accion == "ver_evidencias_calidad" and _de_su_actividad(auth, e)):
+        return e, None
+    return e, _no_autorizado()
+
+
+def _de_su_actividad(auth, e) -> bool:
+    """El responsable de una actividad del plan de mejora ve (no edita) las evidencias ligadas a ella (PLAN §72, etapa 11)."""
+    t = am.obtener(e["actividad_id"]) if e["actividad_id"] else None
+    return bool(t) and am.puede_avanzar(auth, t)
 
 
 def _dato(titulo, *valor):
@@ -323,12 +332,20 @@ def get(auth, eid: int, criterio: str = ""):
     e, error = _visible(auth, eid)
     if error:
         return error
-    registra = marco.puede(auth, "registrar_evidencias_calidad", marco.obtener(e["marco_id"]))
-    volver = f"{BASE}?criterio={criterio}" if criterio.isdigit() else BASE
+    m = marco.obtener(e["marco_id"])
+    registra = marco.puede(auth, "registrar_evidencias_calidad", m)
+    t = am.obtener(e["actividad_id"]) if e["actividad_id"] else None
+    url_t = f"/calidad/mejora/actividades/{t['id']}" if t else None
+    if marco.puede(auth, "ver_evidencias_calidad", m):
+        volver = A(UkIcon("arrow-left", height=14, width=14), "Evidencias",
+                   href=f"{BASE}?criterio={criterio}" if criterio.isdigit() else BASE,
+                   cls="inline-flex items-center gap-1 text-sm text-primary mb-4")
+    else:   # el responsable de la actividad: no tiene el repositorio
+        volver = A(UkIcon("arrow-left", height=14, width=14), "La actividad", href=url_t,
+                   cls="inline-flex items-center gap-1 text-sm text-primary mb-4")
     return pagina(
         e["titulo"],
-        A(UkIcon("arrow-left", height=14, width=14), "Evidencias", href=volver,
-          cls="inline-flex items-center gap-1 text-sm text-primary mb-4"),
+        volver,
         Div(Div(H2(e["titulo"]), Div(_tipo(e), _vigencia(e), cls="flex flex-wrap items-center gap-2 mt-2")),
             Div(Button(UkIcon("pencil", height=14, width=14), "Editar", cls=(ButtonT.default, ButtonT.sm),
                        hx_get=f"{BASE}/{eid}/editar", hx_target=f"#{ID_MODAL}"),
@@ -338,6 +355,9 @@ def get(auth, eid: int, criterio: str = ""):
                 cls="flex shrink-0 gap-2") if registra else "",
             cls="flex flex-wrap items-start justify-between gap-4 mb-6"),
         Card(Div(_dato("Descripción", e["descripcion"] or "—"),
+                 _dato("Actividad del plan de mejora", A(f"{t['accion_codigo'] or ''} {t['codigo'] or ''} "
+                                                         f"{am.titulo(t['descripcion'])}".strip(), href=url_t,
+                                                         cls="text-primary hover:underline")) if t else "",
                  Div(_dato("Fecha del documento", _fecha(e["fecha"])),
                      _dato("Vigente hasta", _fecha(e["vigente_hasta"]) if e["vigente_hasta"] else "Sin vencimiento"),
                      _dato("Registrada", fecha_local(e["registrado_en"]), f" por {e['por']}" if e["por"] else ""),
@@ -353,7 +373,9 @@ def get(auth, eid: int, criterio: str = ""):
                  _dato("Criterios que respalda",
                        Div(*[Div(A(Span(c["codigo"], cls="font-mono mr-2"), c["nombre"],
                                    href=f"/calidad/marco#criterio-{c['id']}", cls="hover:underline"))
-                             for c in e["criterios"]], cls="space-y-1")),
+                             for c in e["criterios"]], cls="space-y-1") if e["criterios"] else
+                       P("Ninguno todavía: la subió el responsable de la actividad; la Comisión de calidad o la Dirección los "
+                         "marca al editarla.", cls=TextPresets.muted_sm)),
                  cls="space-y-4")),
         usuario=auth)
 

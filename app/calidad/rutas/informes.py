@@ -122,7 +122,7 @@ def membrete(instituto: bool = False):
                    fh.Img(src=recursos.url("img/membrete/iimat.png"), alt=f"Logo del {config.NOMBRE_INSTITUTO}",
                           cls="membrete-logo") if instituto else "",
                    cls="flex items-center gap-4"),
-               cls="membrete flex items-center justify-between gap-6 pb-3 mb-6 border-b-2")
+               cls="membrete flex flex-wrap items-center justify-between gap-x-6 gap-y-2 pb-3 mb-6 border-b-2")   # en el teléfono, en dos filas
 
 
 def hoja(*contenido, titulo: str = "", instituto: bool = False):
@@ -374,7 +374,7 @@ def documento_proyecto(datos, desde, hasta):
         P(f"Informe de avance · {desde}–{hasta}", cls="apagado text-sm uppercase tracking-wide"),
         H1(p["nombre"]),
         P(" · ".join(x for x in (f"Proyecto {proyectos.tipo_texto(p).lower()}", p["codigo"], p["fuente_financiamiento"],
-                                 f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}") if x), cls="apagado"),
+                                 formato.periodo(p['fecha_inicio'], p['fecha_fin'])) if x), cls="apagado"),
         P(Strong("Responsable: "), resp, cls="text-sm mt-1") if resp else "",
         Div(_cifra(len(datos["productos_informe"]), "productos que cuentan"),
             _cifra(datos["n_cumplen"], "con filiación y agradecimiento"),

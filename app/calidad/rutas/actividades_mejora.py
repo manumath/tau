@@ -157,10 +157,10 @@ def _volver_seguro(volver: str) -> str | None:
     return volver if volver.startswith("/") and not volver.startswith("//") else None
 
 
-def form_avance(t, m, d=None, errores=(), volver=None):
+def form_avance(auth, t, m, d=None, errores=(), volver=None):
     """Con `volver`, es el formulario del modal de «Mi parte del plan»: al guardar vuelve a esa pantalla."""
     d = d or {}
-    evs = [(e["id"], e["titulo"]) for e in evidencias.listar(m["id"])]
+    evs = [(e["id"], e["titulo"]) for e in am.evidencias_elegibles(auth, t)]
     con_indicador = t["indicador_id"] and t["linea_base_valor"] is not None and t["meta_valor"] is not None
     return Form(mensaje_error(*errores),
                 LabelTextArea("¿Qué se hizo?", id="texto", value=d.get("texto") or "", rows=3, required=True),
@@ -170,9 +170,13 @@ def form_avance(t, m, d=None, errores=(), volver=None):
                     if not con_indicador else "",
                     _select("Evidencia (opcional)", "evidencia_id", evs, d.get("evidencia_id"), "—"),
                     cls="grid grid-cols-1 sm:grid-cols-3 gap-4"),
-                P("El avance de esta actividad lo calcula el indicador; describa lo hecho y adjunte la evidencia."
-                  if con_indicador else "La evidencia se elige del repositorio de evidencias; súbala allí primero.",
-                  cls=TextPresets.muted_sm),
+                Div(P("El avance de esta actividad lo calcula el indicador; describa lo hecho y adjunte la evidencia."
+                      if con_indicador else "Si la evidencia no está en la lista, súbala aquí: queda ligada a esta actividad.",
+                      cls=TextPresets.muted_sm),
+                    Button(UkIcon("upload", height=14, width=14), "Subir una evidencia", type="button",
+                           cls=(ButtonT.default, ButtonT.xs), hx_get=f"{_url(t['id'])}/evidencia",
+                           hx_include="closest form", hx_target=f"#{ID_MODAL}"),
+                    cls="flex flex-wrap items-center justify-between gap-2"),
                 fh.Input(type="hidden", name="volver", value=volver) if volver else "",
                 (_botones_modal("Registrar avance") if volver else
                  Div(Button("Registrar avance", type="submit", cls=(ButtonT.primary, ButtonT.sm)), cls="flex justify-end")),
@@ -182,11 +186,11 @@ def form_avance(t, m, d=None, errores=(), volver=None):
                 cls="space-y-3 mt-4")
 
 
-def _modal_avance(t, m, volver, d=None, errores=()):
+def _modal_avance(auth, t, m, volver, d=None, errores=()):
     return modal(f"Registrar avance: {t['codigo'] + ' ' if t['codigo'] else ''}{am.titulo(t['descripcion'])[:70]}",
                  P(f"Plazo: {formato.fecha(t['plazo'])} · avance actual: "
                    f"{'—' if t['avance'] is None else str(round(t['avance'])) + ' %'}", cls=TextPresets.muted_sm),
-                 form_avance(t, m, d, errores, volver=volver), ancho="max-w-2xl")
+                 form_avance(auth, t, m, d, errores, volver=volver), ancho="max-w-2xl")
 
 
 @rt(f"{BASE}/actividades/{{tid}}/avance")
@@ -196,7 +200,88 @@ def get(auth, tid: int, volver: str = ""):
         return error
     if t["estado"] not in am.ABIERTAS or not am.puede_avanzar(auth, t):
         return _no_autorizado()
-    return _modal_avance(t, m, _volver_seguro(volver) or _url(tid))
+    return _modal_avance(auth, t, m, _volver_seguro(volver) or _url(tid))
+
+
+# --- Evidencia de la actividad (PLAN §72, etapa 11): la sube su responsable, sin acceso al repositorio ------------------
+
+def _corto(texto, n):
+    return texto if len(texto) <= n else texto[:n].rsplit(" ", 1)[0] + "…"
+
+
+def _form_evidencia(t, d, errores=()):
+    """Modal para subir la evidencia de la actividad. Lleva lo que se había escrito en el avance (av_*) para devolverlo
+    al formulario de avance cuando la evidencia queda guardada."""
+    d = d or {}
+    tipo = d.get("tipo") if d.get("tipo") in ("documento", "enlace") else "documento"
+    return modal(
+        f"Subir una evidencia: {t['codigo'] + ' ' if t['codigo'] else ''}{_corto(am.titulo(t['descripcion']), 60)}",
+        Form(mensaje_error(*errores),
+             P("La evidencia queda en el repositorio de evidencias de la Carrera, ligada a esta actividad: la ven la "
+               "Comisión de calidad, la Dirección y usted.", cls=TextPresets.muted_sm),
+             LabelInput("Título", id="titulo", value=d.get("titulo") or "", required=True, maxlength=200),
+             LabelTextArea("Descripción (opcional)", id="descripcion", value=d.get("descripcion") or "", rows=2),
+             Div(*[fh.Label(fh.Input(type="radio", name="tipo", value=v, checked=tipo == v, cls="uk-radio"), Span(txt),
+                            cls="flex items-center gap-2 text-sm") for v, txt in (("documento", "Un archivo"),
+                                                                                    ("enlace", "Un enlace"))],
+                 role="radiogroup", aria_label="Tipo de evidencia", cls="flex gap-6"),
+             Div(fh.Label("Archivo (si eligió un archivo)", fr="archivo", cls="uk-form-label"),
+                 fh.Input(type="file", id="archivo", name="archivo", accept=".pdf,.png,.jpg,.jpeg,.xlsx,.docx,.pptx",
+                          cls="uk-input"),
+                 P(f"{evidencias.FORMATOS}, hasta 20 MB.", cls=TextPresets.muted_sm), cls="space-y-1"),
+             LabelInput("Dirección (si eligió un enlace)", id="url", type="url", value=d.get("url") or ""),
+             LabelInput("Fecha del documento (opcional)", id="fecha", type="date", value=d.get("fecha") or ""),
+             *[fh.Input(type="hidden", name=f"av_{k}", value=d.get(f"av_{k}") or "") for k in ("texto", "fecha", "porcentaje")],
+             fh.Input(type="hidden", name="volver", value=d.get("volver") or _url(t["id"])),
+             _botones_modal("Guardar la evidencia"),
+             hx_post=f"{_url(t['id'])}/evidencia", hx_target=f"#{ID_MODAL}", hx_encoding="multipart/form-data",
+             cls="space-y-3"),
+        ancho="max-w-2xl")
+
+
+def _puede_subir(auth, tid):
+    t, m, error = _visible(auth, tid)
+    if not error and (t["estado"] not in am.ABIERTAS or not am.puede_avanzar(auth, t)):
+        error = _no_autorizado()
+    return t, m, error
+
+
+@rt(f"{BASE}/actividades/{{tid}}/evidencia")
+def get(auth, tid: int, texto: str = "", fecha: str = "", porcentaje: str = "", volver: str = ""):
+    t, m, error = _puede_subir(auth, tid)
+    if error:
+        return error
+    return _form_evidencia(t, {"av_texto": texto, "av_fecha": fecha, "av_porcentaje": porcentaje,
+                               "volver": _volver_seguro(volver) or _url(tid)})
+
+
+@rt(f"{BASE}/actividades/{{tid}}/evidencia")
+async def post(auth, tid: int, req):
+    t, m, error = _puede_subir(auth, tid)
+    if error:
+        return error
+    f = await req.form()
+    d = {k: f.get(k) or "" for k in ("titulo", "descripcion", "tipo", "url", "fecha", "av_texto", "av_fecha",
+                                      "av_porcentaje", "volver")}
+    d["volver"] = _volver_seguro(d["volver"]) or _url(tid)
+    tipo = d["tipo"] if d["tipo"] in ("documento", "enlace") else "documento"
+    criterio = mejora.obtener(t["accion_id"])["criterio_id"]
+    x, errores = evidencias.validar({**d, "criterios": [criterio] if criterio else []}, m["id"], tipo,
+                                    criterios_opcionales=True)
+    nombre, contenido = "", b""
+    if tipo == "documento":
+        archivo = f.get("archivo")
+        if hasattr(archivo, "filename") and archivo.filename:
+            nombre, contenido = archivo.filename, await archivo.read(evidencias.MAX_BYTES + 1)
+        errores += evidencias.validar_archivo(nombre, contenido)
+    if errores:
+        return _form_evidencia(t, d, errores)
+    eid = evidencias.crear(m["id"], tipo, x, auth["id"], nombre, contenido, actividad_id=tid)
+    auditar(auth["id"], "subir_evidencia_actividad_mejora", "evidencia_calidad", eid, x["titulo"])
+    # Vuelve al avance con lo escrito y la evidencia elegida.
+    return _modal_avance(auth, am.obtener(tid), m, d["volver"],
+                         {"texto": d["av_texto"], "fecha": d["av_fecha"], "porcentaje": d["av_porcentaje"],
+                          "evidencia_id": eid})
 
 
 def mi_parte(auth, volver: str):
@@ -328,7 +413,7 @@ def get(auth, tid: int):
                        href=f"/calidad/evidencias/{v['evidencia_id']}", cls="text-xs text-primary hover:underline")
                      if v["evidencia_id"] else "", cls="space-y-1 py-2") for v in t["lista_avances"]],
                 cls="divide-y divide-border") if t["lista_avances"] else P("Aún sin avances.", cls=TextPresets.muted_sm),
-             form_avance(t, m) if abierta and am.puede_avanzar(auth, t) else "", cls="mt-6"),
+             form_avance(auth, t, m) if abierta and am.puede_avanzar(auth, t) else "", cls="mt-6"),
         usuario=auth)
 
 
@@ -351,10 +436,11 @@ def post(auth, sess, tid: int, texto: str = "", fecha: str = "", porcentaje: str
     if t["estado"] not in am.ABIERTAS or not am.puede_avanzar(auth, t):
         return _no_autorizado()
     volver = _volver_seguro(volver)
-    x, errores = mejora.validar_avance({"texto": texto, "fecha": fecha, "porcentaje": porcentaje,
-                                        "evidencia_id": evidencia_id}, m["id"])
+    x, errores = mejora.validar_avance({"texto": texto, "fecha": fecha, "porcentaje": porcentaje}, m["id"])
+    x["evidencia_id"], err = am.evidencia_valida(auth, t, evidencia_id)
+    errores += err
     if errores:
-        return _modal_avance(t, m, volver, x, errores) if volver else form_avance(t, m, x, errores)
+        return _modal_avance(auth, t, m, volver, x, errores) if volver else form_avance(auth, t, m, x, errores)
     am.registrar_avance(t, x, auth["id"])
     auditar(auth["id"], "avance_actividad_mejora", "actividad_mejora", tid, x["texto"][:80])
     add_toast(sess, "Avance registrado.", "success")
@@ -456,7 +542,7 @@ def delete(auth, sess, tid: int):
 
 def _form_reprogramar(auth, t, m, d=None, errores=()):
     d = d or {}
-    evs = [(e["id"], e["titulo"]) for e in evidencias.listar(m["id"])]
+    evs = [(e["id"], e["titulo"]) for e in am.evidencias_elegibles(auth, t)]
     directo = _gestiona(auth, m)
     return modal(
         "Reprogramar la actividad" if directo else "Pedir una reprogramación",

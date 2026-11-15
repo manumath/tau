@@ -170,7 +170,8 @@ def _ingresantes(c, a):
 def _cobertura_vacantes(c, a):
     v = rendimiento.indicadores_vacantes(a)
     if not v or not v["vacantes"]:
-        return Resultado(None, 0, "No hay vacantes registradas para las admisiones del año.")
+        return Resultado(None, 0, "Faltan las cohortes cargadas de las admisiones del año." if v and v["vacantes_registradas"]
+                         else "No hay vacantes registradas para las admisiones del año.")
     return Resultado(_pct(v["admitidos"], v["vacantes"]), v["vacantes"],
                      f"{v['admitidos']} admitidos para {v['vacantes']} vacantes.")
 

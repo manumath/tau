@@ -1,7 +1,7 @@
 """Avisos del flujo de proyectos. Cada uno se registra en el centro de avisos de su destinatario y
 se le envía por correo según su preferencia (app.comun.notificaciones). Nunca se avisa a quien hizo
 la acción (no tiene sentido avisarse a uno mismo)."""
-from app.comun import notificaciones, permisos
+from app.comun import formato, notificaciones, permisos
 from app.comun.db import get_db, vigente_hasta
 
 
@@ -123,11 +123,11 @@ def recordatorio_continuidad(p: dict, periodo: int, cierre: str):
     concluye el 30 de septiembre."""
     for u in _responsables(p["id"]):
         notificaciones.avisar(
-            u, f"Continuidad de «{p['nombre']}»: la convocatoria cierra el {cierre}",
-            f"El proyecto termina el {p['fecha_fin']}: proponga la continuidad antes del {cierre}.",
+            u, f"Continuidad de «{p['nombre']}»: la convocatoria cierra el {formato.fecha(cierre)}",
+            f"El proyecto termina el {formato.fecha(p['fecha_fin'])}: proponga la continuidad antes del {formato.fecha(cierre)}.",
             _url_proyecto(p["id"], "resumen"),
-            f"El proyecto institucional «{p['nombre']}» termina el {p['fecha_fin']}. Si quiere continuarlo en el "
-            f"periodo {periodo}–{periodo + 1}, presente la propuesta de continuidad antes del {cierre}; si no, el "
+            f"El proyecto institucional «{p['nombre']}» termina el {formato.fecha(p['fecha_fin'])}. Si quiere continuarlo en el "
+            f"periodo {periodo}–{periodo + 1}, presente la propuesta de continuidad antes del {formato.fecha(cierre)}; si no, el "
             "proyecto concluye en esa fecha.")
 
 

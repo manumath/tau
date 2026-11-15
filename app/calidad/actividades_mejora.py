@@ -366,6 +366,22 @@ def puede_avanzar(auth, t: dict) -> bool:
     return es_responsable(auth, t) or gestiona(auth, t["marco_id"])
 
 
+def evidencias_elegibles(auth, t: dict) -> list[dict]:
+    """Las evidencias que se pueden adjuntar a un avance o a una reprogramación de la actividad: quien gestiona el plan
+    elige del repositorio entero; el responsable, solo las de su actividad (no tiene acceso al repositorio; PLAN §72,
+    etapa 11)."""
+    return evidencias.listar(t["marco_id"]) if gestiona(auth, t["marco_id"]) else evidencias.de_actividad(t["id"])
+
+
+def evidencia_valida(auth, t: dict, texto) -> tuple[int | None, list[str]]:
+    e = str(texto or "").strip()
+    if not e:
+        return None, []
+    if e.isdigit() and int(e) in {v["id"] for v in evidencias_elegibles(auth, t)}:
+        return int(e), []
+    return None, ["Elija una evidencia de la lista."]
+
+
 # --- Reprogramaciones ---------------------------------------------------------------------------------------------------
 
 def reprogramaciones(tid: int) -> list[dict]:
@@ -412,13 +428,8 @@ def solicitar_reprogramacion(auth, t: dict, d: dict) -> tuple[int | None, list[s
             errores.append("El plazo nuevo es igual al actual.")
         elif t["inicio"] and nuevo < t["inicio"]:
             errores.append("El plazo nuevo no puede ser anterior al inicio de la actividad.")
-    e = str(d.get("evidencia_id") or "").strip()
-    evidencia_id = None
-    if e:
-        if e.isdigit() and int(e) in {v["id"] for v in evidencias.listar(t["marco_id"])}:
-            evidencia_id = int(e)
-        else:
-            errores.append("Elija una evidencia del repositorio.")
+    evidencia_id, err = evidencia_valida(auth, t, d.get("evidencia_id"))
+    errores += err
     if errores:
         return None, errores
     directo = gestiona(auth, t["marco_id"])

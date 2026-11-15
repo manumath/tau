@@ -68,7 +68,9 @@ REVISAR = r"""
 PANTALLAS = {
     "investigadora": ["/", "/productos", "/actividades", "/proyectos", "/perfil", "/informes",
                       "/docencia", "/docencia/pendientes", "/docencia/calendario", "/docencia/preferencias", "/docencia/programas", "/docencia/listas", "/docencia/evaluacion", "/docencia/historial", "/docencia/certificados", "/investigacion/pendientes", "/investigacion/calendario",
-                      "/investigacion/acceso-abierto", "/investigacion/coautores", "/calidad/mejora/actividades/1", "/avisos", "/buscar?q=noether"],
+                      "/investigacion/acceso-abierto", "/investigacion/coautores", "/calidad/mejora/actividades/1", "/avisos", "/buscar?q=noether",
+                      # Con fechas a la vista (ensayo del piloto, PLAN §72, etapa 11).
+                      "/tutoria"],
     "direccion": ["/", "/admin/usuarios", "/admin/propuestas", "/docencia/planes", "/docencia/planes?estado=elaboracion",
                   "/docencia/planes/reforma/nueva", "/docencia/planes/reforma/2", "/docencia/planes/5",
                   "/docencia/planes/5/malla", "/docencia/planes/5/equivalencias", "/docencia/oferta",
@@ -77,7 +79,7 @@ PANTALLAS = {
                   f"/docencia/preparacion?semestre=II-{date.today().year - 4}", "/docencia/oferta?gestion=5",
                   "/docencia/oferta?gestion=6", "/docencia/oferta/5/cambios",
                   "/docencia/carga", "/docencia/preferencias/todas", "/docencia/programas/cobertura", "/docencia/listas/cargar", "/docencia/evaluacion/gestion", "/docencia/certificados/verificar", "/docencia/gestiones", "/docencia/preparacion", "/docencia/cohortes", "/docencia/cohortes/vacantes", "/docencia/cohortes/rendimiento",
-                  "/docencia/encuestas", "/docencia/tutoria", "/docencia/egresados", "/estudiantes",
+                  "/docencia/encuestas", "/docencia/tutoria", "/docencia/cohortes/actividades", "/docencia/egresados", "/estudiantes",
                   "/servicios/comunicados", "/servicios/auxiliaturas",
                   # Auxiliaturas según el reglamento de 2023 (PLAN §70): convocatoria, ítem, resultado y los cinco formularios.
                   "/servicios/auxiliaturas/nueva", "/servicios/auxiliaturas/1", "/servicios/auxiliaturas/1/designacion", "/servicios/auxiliaturas/item/1",

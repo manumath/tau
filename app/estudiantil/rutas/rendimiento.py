@@ -12,6 +12,7 @@ from app.comun import formato
 from app.comun.componentes.layout import ID_MODAL, campo, mensaje_error, modal, pagina
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar
+from app.estudiantil import cohortes
 from app.estudiantil import rendimiento as rd
 from app.estudiantil.rutas.cohortes import BASE, _puede_cargar, _puede_ver
 
@@ -67,20 +68,22 @@ def get(auth):
         _volver(),
         H2("Vacantes de admisión"),
         P("Vacantes ofertadas y postulantes de cada admisión; los admitidos son los ingresantes de esa cohorte. La cobertura "
-          "es admitidos / vacantes.", cls=(TextPresets.muted_sm, "mb-4 max-w-3xl")),
+          "es admitidos / vacantes; mientras no se cargue la cohorte de una admisión, dice «sin cohorte» y no entra en los "
+          "indicadores.", cls=(TextPresets.muted_sm, "mb-4 max-w-3xl")),
         Card(H3("Registrar una admisión", cls="text-base font-semibold mb-2"), _form_vacantes(), cls="mb-6") if carga else "",
         Card(Table(Thead(Tr(Th("Admisión"), Th("Vacantes", cls="text-right"), Th("Postulantes", cls="text-right"),
                             Th("Admitidos", cls="text-right"), Th("Cobertura", cls="text-right"),
                             Th("Postulantes por vacante", cls="text-right"), Th("Nota"), Th("") if carga else "")),
-                   Tbody(*[Tr(Td(f"{f['ciclo']}-{f['anio']}", cls="font-medium"),
+                   Tbody(*[Tr(Td(cohortes.texto(f["anio"], f["ciclo"]), cls="font-medium"),
                               Td(str(f["vacantes"]), cls="text-right tabular-nums"),
                               Td(_num(f["postulantes"]), cls="text-right tabular-nums"),
-                              Td(str(f["admitidos"]), cls="text-right tabular-nums"),
+                              Td(str(f["admitidos"]) if f["admitidos"] is not None else Span("sin cohorte", cls=TextPresets.muted_sm),
+                                 cls="text-right tabular-nums"),
                               Td(_num(f["cobertura"], " %"), cls="text-right tabular-nums"),
                               Td(_num(f["postulantes_por_vacante"]), cls="text-right tabular-nums"),
                               Td(f["nota"] or "", cls="text-sm"),
                               Td(Button(UkIcon("trash-2", height=14, width=14), cls=(ButtonT.ghost, ButtonT.xs),
-                                        aria_label=f"Quitar la admisión {f['ciclo']}-{f['anio']}",
+                                        aria_label=f"Quitar la admisión {cohortes.texto(f['anio'], f['ciclo'])}",
                                         hx_delete=f"{VACANTES}/{f['id']}", hx_target="body",
                                         hx_confirm="¿Quitar el registro de esta admisión?")) if carga else "")
                            for f in filas]),
@@ -168,8 +171,8 @@ def get(auth, gestion: str = ""):
                            for f in filas]),
                    cls="uk-table uk-table-divider uk-table-small text-sm", data_tabla="rendimiento",
                    aria_label="Rendimiento por asignatura")) if filas else
-        P("Aún no hay datos de rendimiento. Cargue el CSV agregado del Sistema de Seguimiento Académico.",
-          cls=TextPresets.muted_sm),
+        P("Aún no hay datos de rendimiento. " + ("Cargue el CSV agregado del Sistema de Seguimiento Académico." if _puede_cargar(auth)
+          else "Los carga quien gestiona las cohortes (Gestión de datos o la Dirección de Carrera)."), cls=TextPresets.muted_sm),
         usuario=auth, seccion="docencia")
 
 

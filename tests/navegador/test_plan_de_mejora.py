@@ -85,3 +85,28 @@ def test_4_cerrar_un_corte(page):
     expect(page.locator("main")).to_contain_text("cerrado por")
     page.goto("/calidad/evidencias")
     expect(page.locator("main")).to_contain_text("Plan de mejora: corte trimestral")
+
+
+def test_5_la_responsable_sube_su_evidencia_desde_el_avance(page):
+    """Opción B del ensayo del piloto (PLAN §72, etapa 11): sin acceso al repositorio, sube la evidencia de su actividad
+    desde el avance y vuelve a él con lo escrito y la evidencia elegida."""
+    entrar(page, "investigadora")
+    page.goto("/investigacion/pendientes")
+    page.locator("div.uk-card", has_text="Mi parte del plan de mejora").get_by_role("button", name="Registrar avance").first.click()
+    modal = page.locator("#modal")
+    modal.locator("textarea[name=texto]").fill("Tercer taller, con lista de asistencia.")
+    modal.get_by_role("button", name="Subir una evidencia").click()
+    expect(modal).to_contain_text("ligada a esta actividad")
+    modal.locator("input[name=titulo]").fill("Lista de asistencia del tercer taller")
+    modal.locator("input[name=archivo]").set_input_files(
+        {"name": "asistencia.pdf", "mimeType": "application/pdf", "buffer": b"%PDF-1.4\n% lista\n%%EOF\n"})
+    modal.get_by_role("button", name="Guardar la evidencia").click()
+    # De vuelta en el avance: lo escrito sigue y la evidencia quedó elegida.
+    expect(modal.locator("textarea[name=texto]")).to_have_value("Tercer taller, con lista de asistencia.")
+    expect(modal.locator("select[name=evidencia_id] option:checked")).to_have_text("Lista de asistencia del tercer taller")
+    modal.get_by_role("button", name="Registrar avance").click()
+    expect(page.locator("#modal textarea")).to_have_count(0)            # guardó y volvió a sus pendientes
+    page.wait_for_load_state()
+    assert page.url.endswith("/investigacion/pendientes")
+    page.goto("/calidad/mejora/actividades/1")
+    expect(page.locator("main")).to_contain_text("Lista de asistencia del tercer taller")

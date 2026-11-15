@@ -356,7 +356,10 @@ def _entidad_sintesis(eid, qid):
 def _resultado_pregunta(p, eid=None, auth=None):
     q = p["pregunta"]
     cuerpo = []
-    if q["tipo"] == "texto":
+    if p.get("oculta"):
+        cuerpo.append(P(f"Menos de {encuestas.MIN_ANONIMO} respuestas en esta pregunta: no se muestran, para proteger a quienes "
+                        "respondieron.", cls=TextPresets.muted_sm))
+    elif q["tipo"] == "texto":
         if eid:   # síntesis aprobada (PLAN §59, etapa 3a) y el botón para pedirla
             entidad = _entidad_sintesis(eid, q["id"])
             n = len(p["textos"])

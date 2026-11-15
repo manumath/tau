@@ -4,7 +4,7 @@ import fasthtml.common as fh
 from fasthtml.common import A, APIRouter, Div, P, Response, Span, Thead, Tr
 from monsterui.all import H2, Button, ButtonT, Card, Form, Table, Tbody, Td, TextPresets, Th, UkIcon
 
-from app.comun import permisos, vinculos
+from app.comun import formato, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, cerrar_modal, mensaje_error, modal, pagina, campo
 from app.estudiantil import actividad
 from app.estudiantil.rutas.estudiante import respuesta_evidencia
@@ -27,8 +27,8 @@ def _lista():
                       for e in a["evidencias"]]
         filas.append(Tr(
             Td(f"{a['apellidos']}, {a['nombres']}", cls="font-medium"),
-            Td(Div(Span(a["titulo"], cls="font-medium"), Div(f"{actividad.TIPOS[a['tipo']]} · {a['fecha_inicio']}"
-                   + (f" a {a['fecha_fin']}" if a["fecha_fin"] else "") + (f" · {a['institucion']}" if a["institucion"] else ""),
+            Td(Div(Span(a["titulo"], cls="font-medium"), Div(f"{actividad.TIPOS[a['tipo']]} · "
+                   + (formato.periodo(a["fecha_inicio"], a["fecha_fin"]) if a["fecha_fin"] else formato.fecha(a["fecha_inicio"])) + (f" · {a['institucion']}" if a["institucion"] else ""),
                                                                  cls=TextPresets.muted_sm),
                    P(a["descripcion"], cls="text-sm") if a["descripcion"] else "")),
             Td(Div(*evidencias, cls="flex flex-col gap-1") if evidencias else Span("Sin evidencia", cls=TextPresets.muted_sm)),

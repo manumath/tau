@@ -9,7 +9,7 @@ from fasthtml.toaster import add_toast
 from monsterui.all import (H2, H3, Button, ButtonT, Card, Form, LabelInput, Table, Tbody, Td, TextPresets, Th,
                            UkIcon)
 
-from app.comun import estudiantes, permisos, vinculos
+from app.comun import estudiantes, formato, permisos, vinculos
 from app.comun.componentes.layout import ID_MODAL, mensaje_error, modal, pagina, campo
 from app.comun.componentes.registros import insignia
 from app.comun.db import auditar, get_db
@@ -54,7 +54,7 @@ def get(auth):
     filas = [Tr(Td(A(f"{t['apellidos']}, {t['nombres']}", href=f"{BASE}/{t['externo_id']}", cls="font-medium hover:underline")),
                 Td(cohortes.texto(t["cohorte_anio"], t["cohorte_ciclo"]), cls="text-sm"),
                 Td(t["registro_universitario"] or "—", cls="text-sm"), Td(t["reuniones"]),
-                Td(t["ultima"] or insignia("Sin reuniones", "ambar"), cls="text-sm whitespace-nowrap"),
+                Td(formato.fecha(t["ultima"]) if t["ultima"] else insignia("Sin reuniones", "ambar"), cls="text-sm whitespace-nowrap"),
                 Td(insignia("Pidió una reunión", "azul", icono="message-circle") if t["externo_id"] in pidieron else ""))
              for t in tutoria.tutorados(auth["id"])]
     return pagina(
@@ -76,7 +76,7 @@ def _acceso(auth, externo_id):
 
 def _reunion(r, propia):
     return Li(
-        Div(Div(Span(r["fecha"], cls="font-medium text-sm"), insignia(tutoria.TEMAS[r["tema"]], "azul"),
+        Div(Div(Span(formato.fecha(r["fecha"]), cls="font-medium text-sm"), insignia(tutoria.TEMAS[r["tema"]], "azul"),
                 insignia(tutoria.MODALIDADES[r["modalidad"]], "gris"),
                 insignia(tutoria.DERIVACIONES[r["derivacion"]], "ambar") if r["derivacion"] != "ninguna" else "",
                 Span(f"{r['tutor_apellidos']}, {r['tutor_nombres']}", cls=TextPresets.muted_sm) if not propia else "",
@@ -318,7 +318,7 @@ def get(auth, cohorte: str = "", solo: str = ""):
         filas = [Tr(Td(A(f"{e['apellidos']}, {e['nombres']}", href=f"{BASE}/{e['externo_id']}", cls="font-medium hover:underline")
                        if _detalle_direccion(auth) else Span(f"{e['apellidos']}, {e['nombres']}", cls="font-medium")),
                     Td(cohortes.texto(e["cohorte_anio"], e["cohorte_ciclo"]), cls="text-sm"),
-                    Td(e["reuniones"], cls="text-sm"), Td(e["ultima"] or "—", cls="text-sm whitespace-nowrap"),
+                    Td(e["reuniones"], cls="text-sm"), Td(formato.fecha(e["ultima"]), cls="text-sm whitespace-nowrap"),
                     Td(Form(Div(Select(*opciones(e["tutor_id"]), name="tutor_id", cls="uk-select w-56", aria_label="Tutor", required=True),
                                 Button("Asignar", type="submit", cls=(ButtonT.default, ButtonT.sm)), cls="flex gap-2"),
                             hx_post=f"{DIR}/{e['externo_id']}/asignar", hx_swap="none")))

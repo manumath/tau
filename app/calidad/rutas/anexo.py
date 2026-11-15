@@ -10,7 +10,7 @@ from fasthtml.common import (A, APIRouter, Div, H1, H2, H3, Li, Ol, Option, P, R
 
 from app.calidad import anexo as idi, informes
 from app.investigacion import actividades, productos, proyectos
-from app.comun import config, estudiantes, exportar, permisos, unidades, vinculos
+from app.comun import config, estudiantes, exportar, formato, permisos, unidades, vinculos
 from app.comun.componentes.graficos import barras
 from app.comun.componentes.layout import pagina
 from monsterui.all import H2 as Titulo, Card, TextPresets, UkIcon
@@ -227,7 +227,7 @@ def documento(a):
                                           if p["contrapartes"] else ""),
                                        Td(proyectos.tipo_texto(p)),
                                        Td(proyectos.AMBITOS.get(p["ambito_efectivo"], "Sin indicar")),
-                                       Td(f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}"),
+                                       Td(formato.periodo(p['fecha_inicio'], p['fecha_fin'])),
                                        Td(p["fuente_financiamiento"] or "—"), Td(p["responsables"] or "—"), _num(p["n_internos"]))
                                     for p in a["proyectos"]]), data_tabla="proyectos-anexo"), cls="overflow-x-auto")
                   if a["proyectos"] else P("Sin proyectos vigentes en el periodo.", cls="apagado")),
@@ -392,7 +392,7 @@ def _tabla_registros(d, auth):
         cab = ("Código", "Proyecto", "Tipo", "Periodo", "Ámbito", "Financiamiento")
         filas = [(p["codigo"] or "—",
                   enlace(p["nombre"], f"/proyectos/{p['id']}" if proyectos.puede_ver(p["id"], auth) else None),
-                  proyectos.tipo_texto(p), f"{p['fecha_inicio'] or '…'} a {p['fecha_fin'] or '…'}",
+                  proyectos.tipo_texto(p), formato.periodo(p['fecha_inicio'], p['fecha_fin']),
                   proyectos.AMBITOS.get(proyectos.ambito_efectivo(p), "Sin indicar"), p["fuente_financiamiento"] or "—")
                  for p in regs]
     numericas = ("Carga (h/mes)", "Citas", "Artículos")
