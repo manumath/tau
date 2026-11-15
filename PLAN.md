@@ -4287,6 +4287,9 @@ Pedida por el usuario: revisar la documentación de todo el stack y del reposito
 - **Pendientes que no se resuelven con documentación:** `main` está 74 commits por delante de GitHub (no se publica
   desde el 7-nov) y la última corrida de GitHub Actions de ese día terminó en falla; la batería con navegador ronda los
   13 minutos frente al límite de 20 del trabajo. Falta el archivo `LICENSE` (gobernanza §3).
+- **Publicación (15-nov-2026, a pedido del usuario):** antes de enviar los commits a GitHub, el límite del trabajo de
+  integración continua sube a 45 minutos. La falla del 7-nov fue una espera agotada en
+  `test_enlazar_preprint_con_su_version_publicada`, que pasa siempre en el equipo de desarrollo.
 
 ### Orden y commits
 Un commit por etapa. Las etapas 1 y 2 no dependen entre sí; 3 a 6 van en orden; 7 y 8 son independientes del plan; 9

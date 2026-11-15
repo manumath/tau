@@ -498,6 +498,7 @@ uv run python scripts/medir.py --escrituras    # abre todas las pantallas (direc
   (940), `calidad/rutas/mejora.py` (910) e `informes.py` (800). Las rutas de usuarios, productos y proyectos ya son
   paquetes con un módulo por flujo; su `__init__` los registra en orden. Conviene dividir así los cuatro primeros
   cuando se vuelvan a tocar a fondo.
-- **Duración de la integración continua:** la batería completa con navegador ronda los 13 minutos en un equipo de
-  desarrollo y el trabajo de GitHub Actions tiene un límite de 20 (`timeout-minutes`). Si se acerca, súbalo o divida el
+- **Duración de la integración continua:** la batería completa con navegador ronda los 14 minutos en un equipo de
+  desarrollo (era de unos 3 con 675 pruebas: creció más que el número de pruebas) y el trabajo de GitHub Actions tiene
+  un límite de 45 (`timeout-minutes`). Si se acerca, súbalo o divida el
   trabajo (pruebas sin navegador y con navegador en paralelo).

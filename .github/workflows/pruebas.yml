@@ -20,7 +20,8 @@ concurrency:
 jobs:
   pruebas:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # ~1.100 pruebas: unos 14 minutos en un equipo de desarrollo y bastante más en el runner (15-nov-2026).
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:

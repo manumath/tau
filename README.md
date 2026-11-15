@@ -334,7 +334,7 @@ JavaScript, recursos que no cargan o violaciones de la CSP. Sin `--navegador` se
 
 **Integración continua** (`.github/workflows/pruebas.yml`): en cada push a `main` y en cada pull request, GitHub
 Actions instala exactamente `uv.lock`, corre `ruff` y `pytest --navegador` con el Chrome del runner (el límite del
-trabajo es de 20 minutos; con ~1.100 pruebas conviene vigilar que no se acerque).
+trabajo es de 45 minutos; con ~1.100 pruebas conviene vigilar que no se acerque).
 El resultado aparece junto al commit en GitHub. Las acciones y las versiones de uv y ruff van fijadas.
 
 ## Migraciones
