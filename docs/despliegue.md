@@ -58,8 +58,11 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 | `PORTAL_HTTPS_ONLY=1` | La cookie de sesión solo viaja por HTTPS. |
 | `PORTAL_CONTACTO` | Crossref atiende mejor las consultas que se identifican. |
 
-Las fotos, los adjuntos y (en modo `archivo`) los correos se guardan en carpetas junto a la base:
-`/var/lib/portal/fotos`, `/var/lib/portal/adjuntos` y `/var/lib/portal/correos`.
+Las fotos, los adjuntos, los archivos de las evidencias de calidad, los registros y (en modo `archivo`) los correos se
+guardan en carpetas junto a la base: `/var/lib/portal/fotos`, `adjuntos`, `evidencias`, `registros` y `correos`.
+
+Variables que conviene revisar también: `PORTAL_DIRECCION` (pie del membrete), `PORTAL_AVISO_ERRORES` (aviso por correo
+de cada error) y, durante el piloto, `PORTAL_PILOTO=1` (`docs/piloto.md`). La lista completa está en el README.
 
 ## 3. Base de datos y primer administrador
 
@@ -134,19 +137,19 @@ enlace para definir su contraseña; nadie más la conoce. Vea la [guía de uso](
 
 ## 7. Respaldos
 
-Toda la información está en la base SQLite **y** en las carpetas de fotos y adjuntos. Respalde
-ambas cosas. Por ejemplo, con `crontab -e`, una copia diaria a las 3:00:
+Toda la información está en la base SQLite **y** en las carpetas de fotos, adjuntos y evidencias. Respalde
+todo. Por ejemplo, con `crontab -e`, una copia diaria a las 3:00:
 
 ```
-0 3 * * * sqlite3 /var/lib/portal/portal.db ".backup /respaldos/portal-$(date +\%F).db" && rsync -a /var/lib/portal/fotos /var/lib/portal/adjuntos /respaldos/archivos/
+0 3 * * * sqlite3 /var/lib/portal/portal.db ".backup /respaldos/portal-$(date +\%F).db" && rsync -a /var/lib/portal/fotos /var/lib/portal/adjuntos /var/lib/portal/evidencias /respaldos/archivos/
 ```
 
 `.backup` hace una copia consistente aunque el sistema esté en uso. Guarde los respaldos fuera
-del servidor y pruebe de vez en cuando que se pueden restaurar. Para respaldo continuo, considere
-[Litestream](https://litestream.io).
+del servidor y compruebe cada semestre que se pueden restaurar con `scripts/restaurar_prueba.sh`
+(`docs/mantenimiento.md` §5.3). Para respaldo continuo, considere [Litestream](https://litestream.io).
 
-**Respaldo completo en un solo archivo:** `scripts/paquete.py` junta la base, las fotos y los
-adjuntos en un `.tar.gz` con un manifiesto verificable (se puede ejecutar con el sistema en marcha):
+**Respaldo completo en un solo archivo:** `scripts/paquete.py` junta la base, las fotos, los adjuntos y
+los archivos de las evidencias en un `.tar.gz` con un manifiesto verificable (se puede ejecutar con el sistema en marcha):
 
 ```bash
 cd /opt/portal && set -a && source /etc/portal.env && set +a
@@ -185,8 +188,8 @@ los cambios de esquema van en un archivo nuevo en `migrations/`.
 - [ ] Guardar cualquier cambio (p. ej. el perfil) funciona. Si aparece «Solicitud rechazada: no
       proviene del sistema», el proxy no está conservando el encabezado `Host` o se entra por una
       dirección distinta de `PORTAL_URL` (agréguela a `PORTAL_ORIGENES_EXTRA`).
-- [ ] La importación por DOI funciona (el servidor necesita salida a `api.crossref.org` y
-      `export.arxiv.org`).
+- [ ] La importación por DOI funciona (el servidor necesita salida a `api.crossref.org`,
+      `export.arxiv.org`, `api.zbmath.org` y, para la producción y las citas, `api.openalex.org`).
 - [ ] El respaldo nocturno se genera, y una restauración de prueba funciona.
 - [ ] `PORTAL_HTTPS_ONLY=1` y `PORTAL_SECRET_KEY` están definidos; `/etc/portal.env` tiene permisos 600.
 

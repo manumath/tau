@@ -6,8 +6,14 @@ la Carrera y la acreditación; el nombre se adoptó el 27 de septiembre de 2026.
 
 > **Contexto:** Instituto de Investigación Matemática (IIMAT) de la Carrera de Matemática (CMAT),
 > Facultad de Ciencias Puras y Naturales (FCPN), Universidad Mayor de San Andrés (UMSA), La Paz,
-> Bolivia. TAU sostiene la **acreditación de la Carrera y del Instituto ante IAC-CINDA**.
-> Zona horaria America/La_Paz; montos en bolivianos (Bs). Ver la sección 13.
+> Bolivia. TAU sostiene el **Sistema Interno de Aseguramiento de la Calidad (SIAC)** de la Carrera, con un marco
+> propio y sin nombres de agencias (sección 57, 6-nov-2026). Las secciones 13 a 17 y 36 son anteriores: se pensaron para
+> una acreditación concreta y se conservan como historia de las decisiones.
+> Zona horaria America/La_Paz; montos en bolivianos (Bs).
+
+**Cómo leer este documento:** las secciones están en orden cronológico; una decisión posterior reemplaza a una anterior.
+Las secciones 1 a 10 describen el sistema inicial (investigación del IIMAT): su modelo de datos, su estado y sus cifras
+son de entonces. El estado vigente está en la sección 72; las reglas que todo agente debe conocer, en `CLAUDE.md`.
 
 Documento de diseño del sistema: qué hace, cómo está organizado, qué se decidió y qué queda
 pendiente. Para instalarlo y trabajar en el código, vea el [README](README.md); para usarlo, la
@@ -78,6 +84,15 @@ pendiente. Para instalarlo y trabajar en el código, vea el [README](README.md);
 - [61. Plan de mejora del informe de autoevaluación y carga desde la Guía de Antecedentes (8-nov-2026)](#61-plan-de-mejora-del-informe-de-autoevaluación-y-carga-desde-la-guía-de-antecedentes-8-nov-2026)
 - [62. Mejoras de la auditoría de software (8-nov-2026)](#62-mejoras-de-la-auditoría-de-software-8-nov-2026)
 - [63. Identidad visual en la interfaz y optimización (10-nov-2026)](#63-identidad-visual-en-la-interfaz-y-optimización-10-nov-2026)
+- [64. Manual de usuario para la revisión de los usuarios (11-nov-2026)](#64-manual-de-usuario-para-la-revisión-de-los-usuarios-11-nov-2026)
+- [65. Módulo de creación y cierre de planes de estudio (propuesta, 12-nov-2026)](#65-módulo-de-creación-y-cierre-de-planes-de-estudio-propuesta-12-nov-2026)
+- [66. Ciclo de vida de las gestiones y planificación del semestre (propuesta, 13-nov-2026)](#66-ciclo-de-vida-de-las-gestiones-y-planificación-del-semestre-propuesta-13-nov-2026)
+- [67. Más servicios para el estudiante (13-nov-2026)](#67-más-servicios-para-el-estudiante-13-nov-2026)
+- [68. Servicios para el docente (13-nov-2026)](#68-servicios-para-el-docente-13-nov-2026)
+- [69. Servicios para el investigador (13-nov-2026)](#69-servicios-para-el-investigador-13-nov-2026)
+- [70. Adecuación de las auxiliaturas al Reglamento Específico de Auxiliares Académicos del Pregrado (propuesta, 14-nov-2026)](#70-adecuación-de-las-auxiliaturas-al-reglamento-específico-de-auxiliares-académicos-del-pregrado-propuesta-14-nov-2026)
+- 71. Seguimiento posterior a la designación de auxiliares (reservada; ver §70, decisión 1)
+- [72. Consolidación: plan de mejora completo, rendimiento, brechas del plan y piloto (hecha, 14-nov-2026; piloto por realizar)](#72-consolidación-plan-de-mejora-completo-rendimiento-brechas-del-plan-y-piloto-hecha-14-nov-2026-piloto-por-realizar)
 
 ## 1. Visión
 
@@ -165,7 +180,8 @@ Se validan en el servidor; ocultar un botón nunca es la única protección.
 
 ## 5. Modelo de datos
 
-Esquema vigente (migraciones `0001` a `0020` en `migrations/`):
+Esquema inicial (migraciones `0001` a `0020`). El vigente llega a la `0095`: cada migración de `migrations/` explica
+en su encabezado qué cambia y por qué, y cada sección de este documento nombra las suyas.
 
 ```
 usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
@@ -251,7 +267,8 @@ producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
 continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
 lectura permiten mudarse entre ambos sin perder información.
 
-382 pruebas automáticas. El detalle de cada entrega está en el historial de git (un commit por fase).
+382 pruebas automáticas al cerrar estas fases (hoy, ~1.060 y ~50 en navegador). El detalle de cada entrega está en el
+historial de git (un commit por fase).
 
 ## 8. Decisiones tomadas
 
@@ -4248,6 +4265,28 @@ Queda anotado para después del piloto (pedidos del ensayo, sin hacer): reasigna
 al asignar un docente que excede su carga; que «Mis preferencias» abra en la gestión siguiente y no en verano; el inicio de
 la Dirección con las reprogramaciones por resolver; la n de los indicadores visible sin el ratón; confirmación al registrar
 una actividad estudiantil; la barra del teléfono del estudiante.
+
+### Etapa 12 (hecha, 15-nov-2026): auditoría de la documentación
+
+Pedida por el usuario: revisar la documentación de todo el stack y del repositorio frente al código.
+- **Defecto encontrado y corregido:** el paquete de datos (`scripts/paquete.py`) no llevaba la carpeta `evidencias/`
+  (archivos de las evidencias del SIAC, con su huella SHA-256, y desde la etapa 11 los que adjuntan los responsables).
+  Un respaldo o una mudanza con el paquete los perdía sin aviso. Ahora `ARCHIVOS` reúne cada carpeta con su tabla, los
+  conteos del manifiesto incluyen `evidencia_calidad` y se comparan solo los que trae el paquete (los anteriores se
+  siguen importando). `tests/test_paquete.py` exige que toda carpeta bajo `dir_datos()` esté en el paquete. El
+  `--reset` del seed borra también `evidencias/`, y el ejemplo de respaldo nocturno de `docs/despliegue.md` la copia.
+- **Documentación al día:** cifras de pruebas (~1.060 y ~50 en navegador; decían 675 y 15); estructura del README
+  (faltaban unos 50 módulos de rutas y de lógica, `app/ia` y `app/servicios` en las dependencias); variables
+  `PORTAL_CARRERA`, `PORTAL_FACULTAD` y `PORTAL_OPENALEX_URL`; rutas públicas (`/acceso`, `/encuesta`, `/salud`,
+  `/publico/privacidad`); paquetes de `docs/mantenimiento.md` (decía que `app/academico` estaba vacío), tareas del
+  mantenimiento periódico, numeración de recetas y referencias cruzadas; las cargas 17 a 20 de `docs/importaciones.md`
+  (plan de mejora, rendimiento, lista de curso y malla); índice de la guía de uso y sin referencias al PLAN en ella; el
+  capítulo 9 del manual con la evidencia en el avance (opción A); `docs/autoevaluacion-usabilidad.md` sin nombre de
+  agencia y con los roles actuales; índice de este documento hasta la §72 y aviso de que las secciones 1 a 10 son del
+  estado inicial; skills `cerrar-etapa` y `nueva-ruta-o-permiso`.
+- **Pendientes que no se resuelven con documentación:** `main` está 74 commits por delante de GitHub (no se publica
+  desde el 7-nov) y la última corrida de GitHub Actions de ese día terminó en falla; la batería con navegador ronda los
+  13 minutos frente al límite de 20 del trabajo. Falta el archivo `LICENSE` (gobernanza §3).
 
 ### Orden y commits
 Un commit por etapa. Las etapas 1 y 2 no dependen entre sí; 3 a 6 van en orden; 7 y 8 son independientes del plan; 9

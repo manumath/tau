@@ -32,7 +32,8 @@ Ningún dato real entra al repositorio: se cargan solo en el servidor del piloto
 | Vacantes y rendimiento por asignatura | Cohortes → Vacantes / Rendimiento | Dirección de Carrera y Gestión de datos |
 
 Antes de cargar: haga un respaldo y un simulacro de restauración (`scripts/restaurar_prueba.sh`, ver
-`docs/mantenimiento.md` §5.3). Revise con la Dirección de Carrera los textos de la página **Privacidad**
+`docs/mantenimiento.md` §5.3); el de la réplica de Litestream del servidor sigue pendiente. Verifique también dónde
+pueden alojarse los datos de los estudiantes (`docs/gobernanza.md` §4). Revise con la Dirección de Carrera los textos de la página **Privacidad**
 (`/publico/privacidad`): son el compromiso público del sistema.
 
 ## 3. Cómo se recogen las opiniones
@@ -82,7 +83,7 @@ termine sin ayuda.
 
 **Docentes e investigadores**
 1. Revisar Mis pendientes y el calendario.
-2. Registrar el avance de su actividad del plan de mejora desde Mis pendientes, si tiene una.
+2. Registrar el avance de su actividad del plan de mejora desde Mis pendientes, con su evidencia adjunta, si tiene una.
 3. Registrar un producto (por DOI o a mano) y revisar el perfil público.
 4. Completar las preferencias de oferta.
 5. Pedir una reprogramación de una actividad, si corresponde.

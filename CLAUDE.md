@@ -8,7 +8,7 @@ técnicos (`PORTAL_*`, `portal.db`, servicio `portal`, app de Fly.io) conservan 
 
 Léase con: [README.md](README.md) (estructura, configuración, convenciones HTMX y seguridad),
 [PLAN.md](PLAN.md) (diseño, reglas de negocio y **todas las decisiones del instituto con fecha**;
-§22–25 son la ampliación actual), [docs/guia-de-uso.md](docs/guia-de-uso.md),
+las secciones van en orden cronológico y §72 es la vigente; las primeras, como §5 y §7, describen el estado inicial), [docs/guia-de-uso.md](docs/guia-de-uso.md),
 [docs/mantenimiento.md](docs/mantenimiento.md), [docs/piloto.md](docs/piloto.md) y [docs/gobernanza.md](docs/gobernanza.md).
 
 ## Idioma y tono
@@ -25,8 +25,8 @@ la fase 0): no proponga Django, PostgreSQL ni SPA salvo que el usuario lo pida.
 
 ```bash
 uv run python main.py                 # servidor de desarrollo (puerto 5001, lo suele tener abierto el usuario)
-uv run pytest -q                      # ~675 pruebas, cada una con base temporal
-uv run pytest -q --navegador          # + flujos en Chrome (Playwright)
+uv run pytest -q                      # ~1.060 pruebas (unos 10 minutos), cada una con base temporal
+uv run pytest -q --navegador          # + ~50 flujos en Chrome (Playwright, unos 3 minutos más)
 uvx ruff check app scripts tests main.py   # reglas en pyproject.toml; debe quedar sin avisos
 scripts/estilos.sh                    # recompilar Tailwind tras usar una clase nueva
 PORTAL_DB=/ruta/tmp.db uv run python scripts/seed.py   # base de ejemplo aparte
@@ -62,7 +62,7 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - Cada paquete: lógica en `<tema>.py`, pantallas en `rutas/<tema>.py` (`APIRouter`), registradas en
   `main.py`. El menú lateral se arma en `app/navegacion.py`: una pantalla nueva se agrega ahí, con el mismo
   permiso que su ruta. `migrations/` (fastmigrate), `scripts/`, `tests/` (`tests/navegador/` con Playwright),
-  `datos/planes/` (planes de estudio en CSV), `datos/calidad/` (borrador del marco de calidad), `static/` (vendor con versión fija), `estilos/`.
+  `datos/planes/` (planes de estudio en CSV), `datos/calidad/` (borrador del marco de calidad y plan de mejora 2026–2030), `static/` (vendor con versión fija), `estilos/`.
 
 ## Reglas de negocio que no se deducen del código a simple vista
 
@@ -173,6 +173,9 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - **Ningún GET escribe** (salvo el registro que la regla pide) y las listas largas van de 50 en 50 (`registros.cargar_mas`);
   `scripts/medir.py --escrituras` y `--inflar` lo revisan (`docs/mantenimiento.md` §5.11).
 
+- **Archivos junto a la base:** toda carpeta nueva bajo `db.dir_datos()` (hoy `fotos`, `adjuntos`, `evidencias`) se agrega
+  a `ARCHIVOS` de `scripts/paquete.py` con su tabla y columna, o se pierde al respaldar o mudarse (las evidencias faltaron
+  hasta el 15-nov-2026); `tests/test_paquete.py` lo vigila.
 - **`data/portal.db` es la base del servidor de desarrollo del usuario**, que aplica solas las
   migraciones al recargar. No la modifique ni pruebe contra ella: trabaje sobre copias
   (`sqlite3 data/portal.db ".backup 'copia.db'"`) y avise qué cambiará cuando su servidor migre. Como recarga al guardar,

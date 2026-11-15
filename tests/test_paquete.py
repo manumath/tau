@@ -2,6 +2,7 @@
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tarfile
@@ -9,10 +10,12 @@ from pathlib import Path
 
 from PIL import Image
 
+from app.calidad import evidencias
 from app.investigacion import adjuntos, perfiles, productos
 from app.comun import config, fotos, usuarios
 from app.comun.db import get_db
 from tests.conftest import HX, PASS_TEMP, login
+from tests.test_evidencias_calidad import PDF
 
 RAIZ = Path(__file__).resolve().parent.parent
 
@@ -34,6 +37,9 @@ def _datos_con_archivos(tmp_path):
     pid = productos.guardar(d, [f"i:{uid}"], uid)
     adjuntos.guardar("producto", pid, "notas.pdf", b"%PDF-1.4 contenido", uid)
     (adjuntos.dir_adjuntos() / "huerfano.pdf").write_bytes(b"%PDF-1.4 resto")
+    marco = get_db().q("SELECT id FROM marco_calidad LIMIT 1")[0]["id"]
+    evidencias.crear(marco, "documento", {"titulo": "Acta", "descripcion": None, "fecha": None, "vigente_hasta": None,
+                                          "url": None, "criterios": []}, uid, "acta.pdf", PDF)
     return uid
 
 
@@ -54,12 +60,45 @@ def test_exportar_e_importar_en_otra_instalacion(app, tmp_path):
     foto = get_db().q("SELECT foto FROM investigador WHERE usuario_id = ?", [uid])[0]["foto"]
     assert (destino.parent / "fotos" / foto).is_file()
     assert len(list((destino.parent / "adjuntos").iterdir())) == 1
+    archivo_ev = get_db().q("SELECT archivo FROM evidencia_calidad")[0]["archivo"]
+    assert (destino.parent / "evidencias" / archivo_ev).read_bytes() == PDF   # la huella SHA-256 sigue valiendo
 
     # Una segunda importación sin --reemplazar se niega; con --reemplazar respalda lo anterior.
     assert paquete("importar", archivo, db=destino).returncode != 0
     r = paquete("importar", archivo, "--reemplazar", db=destino)
     assert r.returncode == 0 and "respaldo-previo" in r.stdout
     assert any(p.name.startswith("respaldo-previo-") for p in destino.parent.iterdir())
+
+
+def test_toda_carpeta_de_archivos_viaja_en_el_paquete():
+    """Cada carpeta que el sistema crea junto a la base (`dir_datos() / "…"`) está en el paquete, salvo los correos de
+    desarrollo y los registros, que no son datos."""
+    sys.path.insert(0, str(RAIZ / "scripts"))
+    import paquete as pq
+    usadas = set()
+    for f in (RAIZ / "app").rglob("*.py"):
+        usadas |= set(re.findall(r'dir_datos\(\) / "([a-z_]+)"', f.read_text(encoding="utf-8")))
+    assert usadas - {"correos"} <= set(pq.CARPETAS), usadas - set(pq.CARPETAS)
+
+
+def test_importa_un_paquete_anterior_sin_evidencias(app, tmp_path):
+    """Un paquete hecho antes de que viajaran las evidencias no trae su conteo: se importa igual."""
+    origen = tmp_path / "test.db"
+    archivo = tmp_path / "viejo.tar.gz"
+    assert paquete("exportar", archivo, db=origen).returncode == 0
+    viejo = tmp_path / "viejo2.tar.gz"
+    with tarfile.open(archivo) as ok, tarfile.open(viejo, "w:gz") as tar:
+        for m in ok.getmembers():
+            if m.name == "manifiesto.json":
+                datos = json.load(ok.extractfile(m))
+                datos["conteos"].pop("evidencia_calidad")
+                crudo = json.dumps(datos).encode()
+                m.size = len(crudo)
+                tar.addfile(m, io.BytesIO(crudo))
+            else:
+                tar.addfile(m, ok.extractfile(m) if m.isfile() else None)
+    r = paquete("importar", viejo, db=tmp_path / "dest" / "portal.db")
+    assert r.returncode == 0, r.stderr + r.stdout
 
 
 def test_rechaza_paquetes_de_una_version_mas_nueva(app, tmp_path):

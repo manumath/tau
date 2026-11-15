@@ -15,13 +15,15 @@ el servicio `portal` y la aplicación de Fly.io).
 | Documento | Para qué |
 |---|---|
 | [Manual de usuario (PDF)](docs/manual/Manual-de-usuario-TAU.pdf) | Para usuarios no técnicos, con la marca de la Carrera y capturas: roles, privilegios y cada proceso paso a paso. Versión para revisión |
-| [Guía de uso](docs/guia-de-uso.md) | Cómo usar el sistema: investigadores, responsables de proyecto y administración |
+| [Guía de uso](docs/guia-de-uso.md) | Referencia completa para cada rol: docentes e investigadores, direcciones, Comisión de calidad, estudiantes y administración |
 | [Importaciones](docs/importaciones.md) | Todas las cargas de datos (CSV, DOI, arXiv, BibTeX, OpenAlex): campos, claves de unión y orden de carga |
+| [Mantenimiento](docs/mantenimiento.md) | Para TI: cómo está armado, recetas (migraciones, pantallas, estilos, dependencias), operación y problemas frecuentes |
 | [Despliegue](docs/despliegue.md) | Instalación en un servidor propio, correo, respaldos, mudanzas y actualizaciones |
 | [Despliegue en Fly.io](docs/despliegue-fly.md) | Alternativa sin servidor propio, y cómo mudarse después a uno |
 | [Guía del piloto](docs/piloto.md) | Piloto con usuarios reales: grupos escalonados, datos previos y su responsable, tareas por rol y opiniones |
 | [Gobernanza](docs/gobernanza.md) | Lo que se acuerda fuera del código: exportaciones de la DTIC, titularidad, alojamiento de datos, respaldo |
-| [PLAN.md](PLAN.md) | Diseño, reglas de negocio, modelo de datos, estado, decisiones y pendientes |
+| [Decisiones de IA](docs/ia/decisiones.md) | Diseño de la IA con criterio humano: niveles de datos, funciones vedadas, revisión y medición |
+| [PLAN.md](PLAN.md) | Diseño, reglas de negocio, estado y **todas las decisiones con fecha** (la sección 72 es la vigente) |
 
 ## Qué hace
 
@@ -43,9 +45,20 @@ el servicio `portal` y la aplicación de Fly.io).
   con ingreso por enlace al correo; actividad estudiantil con verificación; encuestas anónimas o nominales con enlace personal;
   tutoría con reuniones confidenciales; egresados con seguimiento a los 6 meses, 1, 3 y 5 años, directorio opcional y mentoría;
   y un informe de seguimiento estudiantil con solo cifras agregadas.
-- **Servicios** (PLAN §58): comunicados y eventos con convocados; convocatorias a auxiliaturas con postulación en línea y
-  tribunal que califica por fases; perfil y proyecto de grado con tutor, tribunal, observaciones y plantilla LaTeX.
-- **Administración:** cuentas, proyectos, auditoría. **API JSON** de solo lectura para perfiles públicos.
+- **Servicios** (PLAN §58, §67 y §70): comunicados y eventos con convocados; convocatorias a auxiliaturas según el reglamento
+  de auxiliares vigente (postulación en línea, comisión, calificación por formulario, designación e impresos); perfil y
+  proyecto de grado con tutor, tribunal, observaciones y plantilla LaTeX; banco de temas, oportunidades, biblioteca,
+  buzón, apoyo y orientación para estudiantes.
+- **Para cada persona** (PLAN §67–§69): «Mis pendientes» y calendario del docente y del investigador, preferencias de
+  oferta, programas analíticos, lista de curso, evaluación docente anónima, historial y certificados, acceso abierto y
+  colaboraciones; el estudiante tiene su plan de estudios, tutoría, encuestas y servicios.
+- **Aseguramiento de la Calidad (SIAC, PLAN §57 y §72):** marco de calidad propio, indicadores con su base, evidencias con
+  huella, autoevaluación, plan de mejora con actividades, reprogramaciones y cortes trimestrales, ficha estadística y
+  página pública de indicadores. Sin nombres de agencias acreditadoras.
+- **IA con criterio humano** (PLAN §59): funciones apagadas por omisión que solo proponen borradores; nada surte efecto
+  sin la aprobación de una persona.
+- **Administración:** cuentas, roles, auditoría, piloto y adopción. **API JSON** de solo lectura para perfiles públicos.
+  Página pública de privacidad (`/publico/privacidad`).
 
 ## Puesta en marcha (desarrollo)
 
@@ -55,13 +68,17 @@ Requiere [uv](https://docs.astral.sh/uv/).
 uv sync                                  # instala dependencias
 uv run python scripts/seed.py --reset    # base con datos de ejemplo (con el servidor detenido)
 uv run python main.py                    # http://127.0.0.1:5001, con recarga automática
-uv run pytest                            # ~675 pruebas (+15 en navegador con --navegador)
+uv run pytest                            # ~1.060 pruebas, unos 10 minutos (+50 en navegador con --navegador)
 ```
 
 `seed.py` sin `--reset` solo agrega lo que falte. En desarrollo los correos no se envían: quedan
 como archivos `.eml` en `data/correos/` y se abren con cualquier cliente de correo.
 
 ### Cuentas de ejemplo
+
+Son solo para la base de ejemplo. Las administradoras (admin y Sofía) tienen Administración del sistema y Dirección del
+Instituto; ninguna tiene Dirección de Carrera, Coordinación académica ni Comisión de calidad. Para probar esas pantallas,
+asígnelos en «Usuarios → Roles» o use `--rol` de la skill `captura-visual`.
 
 | Correo | Contraseña | Perfil |
 |---|---|---|
@@ -98,10 +115,16 @@ app/
     estudiantes.py             periodos de estudio de estudiantes y tesistas; indicadores de participación
     paises.py                  países normalizados: variantes, códigos ISO y deducción desde afiliaciones
     fotos.py                   recorte y limpieza de fotos (Pillow)
+    adscripcion.py             cargo y «unidad o grupo» calculados de cada persona
+    importar_grados.py         carga de grados académicos desde CSV
+    notificaciones.py          centro de avisos y resumen semanal
+    privacidad.py              qué datos se guardan, quién los ve y cuánto se conservan (aviso y /publico/privacidad)
+    piloto.py                  comentarios por pantalla y adopción por rol durante el piloto
+    xlsx_plantilla.py          llenar plantillas XLSX ajenas sin alterarlas (solo las celdas pedidas)
     componentes/               layout (página, navegación, modal), registros (insignias, filtros, datos, fechas),
                                grados, recursos (static), errores
-    rutas/                     admin_usuarios/ (paquete: cuentas, importar_cuentas, roles, ficha, vinculo,
-                               historial), admin_auditoria, estudiantes, mis_datos
+    rutas/                     admin_usuarios/ (paquete: cuentas, importar_cuentas, importar_grados, roles, ficha,
+                               vinculo, historial), admin_auditoria, avisos, estudiantes, mis_datos, piloto
   investigacion/               producción y proyectos de investigación
     perfiles.py                perfil, áreas MSC, completitud y directorio
     identificadores.py         ORCID, MathSciNet, zbMATH, arXiv, Scholar: validación y enlaces
@@ -121,11 +144,15 @@ app/
     openalex.py                consulta a OpenAlex: obras por ORCID y citas
     cosecha.py                 carga de la producción desde OpenAlex y actualización de citas
     bibtex.py                  importar y exportar BibTeX
+    carga_proyectos.py         carga horaria de los participantes en proyectos institucionales
+    mis_pendientes.py          «Mis pendientes» y calendario del investigador (no guardan nada)
+    acceso_abierto.py          declaración propia de acceso abierto y datos de cada producto
+    coautores.py               colaboraciones derivadas de productos y proyectos (no guardan nada)
     componentes/               perfil, selector de autores y participantes, líneas, registros (adjuntos y
                                vinculación a proyectos)
     rutas/                     perfil, investigadores, actividades, bibtex, adjuntos, propuestas, publico (+ API),
-                               personas (coautores externos), admin_revistas, admin_lineas,
-                               admin_catalogos
+                               personas (coautores externos), coautores, mis_pendientes, acceso_abierto,
+                               admin_revistas, admin_lineas, admin_catalogos
       proyectos/               un módulo por pestaña: lista, datos, resumen, participantes, registros,
                                pendientes, plan, reasignar y ficha (registrada al final)
       productos/               lista, formulario, carga_openalex y ficha (registrada al final)
@@ -137,7 +164,14 @@ app/
     indicadores.py             cifras de los indicadores: cálculos automáticos, manuales, cierres (/calidad/indicadores)
     evidencias.py              evidencias por criterio con huella SHA-256 (/calidad/evidencias; archivos en <datos>/evidencias)
     autoevaluacion.py          autoevaluación: juicios por criterio, síntesis, informe (/calidad/autoevaluaciones)
-    mejora.py                  plan de mejora: acciones, avances, avisos de plazo, evaluaciones externas (/calidad/mejora)
+    mejora.py                  plan de mejora: acciones, avisos de plazo, evaluaciones externas (/calidad/mejora)
+    actividades_mejora.py      actividades de cada acción: avances con evidencia, cumplimiento, reprogramaciones y aprobación del plan
+    cortes_mejora.py           cortes trimestrales de seguimiento (congelan el estado) e informe del corte
+    importar_mejora.py         carga del plan de mejora desde CSV (datos/calidad/plan-de-mejora-2026-2030.csv)
+    importar_capacitacion.py   carga de capacitaciones desde CSV
+    listados.py                listados de la ficha estadística (una fila por persona, asignatura, producto…)
+    programados.py             informes que se envían solos en fechas fijas
+    publico.py                 página pública de indicadores (/publico/indicadores)
     ficha.py                   ficha estadística y llenado de plantillas XLSX por correspondencia (/calidad/ficha)
     capacitacion.py            capacitación del personal (/calidad/capacitacion)
     convenios.py               convenios y sus actividades (/calidad/convenios)
@@ -146,14 +180,28 @@ app/
     cuerpo_academico.py        carga docente e indicadores del cuerpo académico
     calidad_datos.py           calidad de los datos: lo que falta completar y a quién avisar
     seguimiento_estudiantil.py anexo de seguimiento estudiantil: cohortes, actividad, encuestas, tutoría y egresados (agregados)
-    rutas/                     informes, anexo, marco, cuerpo_academico, calidad_datos, seguimiento_estudiantil
-  academico/                   docencia y currículo (fase 3)
+    rutas/                     un módulo por pantalla: informes, anexo, marco, indicadores, evidencias, autoevaluacion,
+                               mejora, actividades_mejora, cortes_mejora, importar_mejora, ficha, capacitacion,
+                               convenios, impacto, cuerpo_academico, calidad_datos, seguimiento_estudiantil, publico
+  academico/                   docencia y currículo
     planes.py                  programas, planes de estudio, asignaturas, electivas, requisitos, observaciones
+    reformas.py, malla.py,     ciclo de vida de los planes (PLAN §65): reforma curricular, malla editable (o por CSV),
+    menciones.py,              menciones, equivalencias con los planes que reemplaza y puesta en vigencia y cierre
+    equivalencias.py, vigencia.py
     importar_planes.py         carga de planes desde datos/planes/ (la usa la migración 0028)
     gestiones.py               gestiones académicas: I, INV, II y VER de cada año
+    semestre.py, cambios.py    ciclo de vida de la gestión (PLAN §66): activar, concluir, reabrir; cambios con fecha y motivo
     oferta.py                  oferta por gestión y paralelo, asignación docente y horas
+    carga.py                   carga horaria por semestre
+    preparacion.py             preparación del semestre: qué falta para empezarlo
     importar_oferta.py         carga de la oferta de gestiones pasadas desde CSV
-    rutas/                     planes, oferta y gestiones (/docencia/…)
+    docente.py, historial.py   «Mis pendientes», calendario, historial y certificados del docente (PLAN §68)
+    preferencias.py            preferencias del docente para la oferta
+    programas.py               programa analítico por asignatura y gestión
+    listas.py                  lista de estudiantes por paralelo (copia temporal o API de Kardex)
+    evaluacion.py              evaluación docente anónima
+    rutas/                     planes, malla, equivalencias, programas, vigencia, oferta, carga, preparacion, renovaciones, listas,
+                               evaluacion, preferencias, mi_docencia, mis_pendientes, historial (/docencia/…)
   estudiantil/                 seguimiento estudiantil (PLAN §49 y §50)
     cohortes.py                cohortes de ingreso, egreso, titulación y deserción (ciclos I y II)
     importar.py                carga del CSV de Seguimiento Académico (vista previa y aplicar)
@@ -161,9 +209,13 @@ app/
     tutoria.py                 tutoría: asignación de tutores, reuniones confidenciales y cifras agregadas
     encuestas.py               motor de encuestas: armado, invitaciones por correo, respuesta con enlace y resultados
     plantillas_encuesta.py     encuestas de partida (satisfacción, bienestar, abandono, egresados, perfil de egreso)
-    rutas/                     cohortes (/docencia/cohortes: tablero y carga), actividades (verificación),
-                               estudiante (/estudiante: portal del estudiante), tutoria (/tutoria y /docencia/tutoria),
-                               encuestas (/docencia/encuestas),
+    rendimiento.py             vacantes de admisión y rendimiento agregado por asignatura (sin RU ni notas)
+    mi_plan.py, calendario.py  «Mi plan de estudios» (marcas privadas) y calendario del estudiante (PLAN §67)
+    apoyo.py, orientacion.py   apoyo estudiantil (señales calculadas y casos) y bienestar y orientación
+    rutas/                     cohortes (/docencia/cohortes: tablero y carga), rendimiento (vacantes y rendimiento),
+                               actividades (verificación), estudiante (/estudiante: portal del estudiante), mi_plan,
+                               calendario, mi_tutoria, mi_apoyo, mis_encuestas, evaluacion, orientacion, apoyo,
+                               tutoria (/tutoria y /docencia/tutoria), encuestas (/docencia/encuestas),
                                responder (/encuesta/<enlace>, pública)
   egresados/                   egresados (PLAN §50)
     egresados.py               titulación, hitos de seguimiento (6 meses, 1, 3 y 5 años), invitaciones programadas e indicadores
@@ -174,7 +226,8 @@ app/
     servicio.py                única puerta a los modelos: vedados, niveles de datos, seudonimización, proveedores, revisión
     funciones.py               catálogo de funciones activables y módulos vedados
     clasificacion.py           nivel (0 a 3) de cada dato que puede alimentar a la IA
-    catalogo.py                las 7 funciones y los datos que recibe cada una (memoria, informe, líneas, perfil, encuestas, autoevaluación)
+    catalogo.py                las 7 funciones y los datos que recibe cada una (memoria, informe de proyecto, resumen del CV,
+                               clasificar un producto, síntesis de encuesta, autoevaluación, sugerir evidencias)
     textos.py                  cifras desde la base ({{marcadores}}) y sin citas textuales de las respuestas
     medicion.py                resultados del piloto, decisiones de cierre y reporte de sesgos
     instrucciones/             instrucciones versionadas por función (<clave>/v<n>.md)
@@ -184,29 +237,42 @@ app/
     auxiliaturas.py            convocatorias a auxiliaturas: requisitos, ítems, tribunal 2 + 2, postulación, fases y resultado
     grado.py                   perfil y documento final: tutor, tribunal, revisiones de 15 días hábiles, resolución y defensa
     latex.py                   ZIP en LaTeX del perfil (clase perfil-cmat) y nota de presentación
-    rutas/                     comunicados, auxiliaturas y grado (/servicios/… y /estudiante/…)
+    rubricas.py, designaciones.py,  auxiliaturas según el reglamento vigente (PLAN §70): formularios de calificación,
+    formularios.py                  resultado, designación e impresos
+    temas.py, oportunidades.py,     banco de temas de grado, oportunidades, biblioteca y recursos (PLAN §67)
+    recursos.py
+    rutas/                     comunicados, auxiliaturas, designaciones, formularios, grado, temas, oportunidades,
+                               recursos (/servicios/… y /estudiante/…)
   inicio.py                    página de inicio: reúne tarjetas de todos los módulos
+  busqueda.py                  búsqueda global (un grupo por tipo de registro, filtrado por permisos)
   navegacion.py                menú lateral y pestañas del teléfono: qué secciones ve cada rol (PLAN §53)
-
-Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `calidad`,
-`academico`, `estudiantil`, `egresados` y `servicios` pueden usar `comun` (`calidad` usa `estudiantil` para el seguimiento estudiantil y
-`egresados` usa `estudiantil` para el motor de encuestas; `servicios` usa `investigacion` para los adjuntos y `estudiantil` para la cuenta del estudiante). `app/inicio.py` y `main.py` reúnen todo.
 static/css/tailwind.css        estilos de Tailwind compilados (scripts/estilos.sh a partir de estilos/)
 static/vendor/                 htmx, fasthtml.js, Franken UI y KaTeX con versión fija (sin CDN)
 datos/planes/                  planes de estudio en CSV (formato en su README)
 datos/calidad/marco-carrera/   borrador del marco de calidad de la Carrera en CSV (formato en su README)
+datos/calidad/plan-de-mejora-2026-2030.csv  plan de mejora de la Carrera, sin nombres de agencias (docs/importaciones.md §3.17)
 catalogos/MSC2020.tsv          catálogo MSC2020 (CC BY-NC-SA 4.0; ver catalogos/README.md)
 migrations/NNNN-*.sql|.py      migraciones versionadas; se aplican al arrancar
 scripts/seed.py                datos de ejemplo
 scripts/crear_admin.py         primer administrador en producción
 scripts/manual.py              manual de usuario: capturas sobre una base de demostración y PDF (docs/manual/)
-scripts/paquete.py             exportar e importar todos los datos (base, fotos, adjuntos): respaldos y mudanzas
-scripts/iniciar.sh             arranque en contenedor (con Litestream si hay réplica configurada)
+scripts/paquete.py             exportar e importar todos los datos (base, fotos, adjuntos, evidencias): respaldos y mudanzas
+scripts/restaurar_prueba.sh    simulacro de restauración sobre una base temporal (docs/mantenimiento.md §5.3)
+scripts/medir.py               rendimiento de las pantallas y GET que escriben (docs/mantenimiento.md §5.11)
+scripts/estilos.sh             recompilar Tailwind; scripts/tema_marca.py: tema de colores desde app/comun/marca.py
+scripts/iniciar.sh             arranque en contenedor (con Litestream si hay réplica configurada); como-tau.sh: ejecutar
+                               un script como el usuario del contenedor
 Dockerfile, fly.toml,
 litestream.yml                 imagen de contenedor y configuración para Fly.io
 docs/                          manual de usuario (docs/manual/), guía de uso, guía de mantenimiento y guías de despliegue (servidor propio y Fly.io)
-tests/                         pytest con el TestClient de Starlette
+tests/                         pytest con el TestClient de Starlette; tests/navegador/ con Playwright
 ```
+
+Dependencias: `comun` no importa nada de los demás paquetes; `investigacion`, `calidad`, `academico`, `estudiantil`,
+`egresados`, `servicios` e `ia` pueden usar `comun` (`calidad` usa `estudiantil` para el seguimiento estudiantil y
+`egresados` usa `estudiantil` para el motor de encuestas; `servicios` usa `investigacion` para los adjuntos y `estudiantil`
+para la cuenta del estudiante). Los módulos vedados para la IA (auxiliaturas, grado, oferta, carga y tutoría) no importan
+`app.ia`. `app/inicio.py`, `app/navegacion.py` y `main.py` reúnen todo.
 
 ## Configuración
 
@@ -223,12 +289,15 @@ Variables de entorno (en producción, ver [despliegue](docs/despliegue.md)):
 | `PORTAL_SISTEMA` | `TAU` | Nombre corto del sistema (encabezado, título de las páginas, correos, exportaciones) |
 | `PORTAL_SISTEMA_DESCRIPCION` | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática | Descripción (ingreso, correos) |
 | `PORTAL_INSTITUTO` | Instituto de Investigación Matemática | Nombre del instituto en informes y memoria |
+| `PORTAL_CARRERA` | Carrera de Matemática | Nombre de la Carrera (membrete, informes, correos) |
+| `PORTAL_FACULTAD` | Facultad de Ciencias Puras y Naturales | Facultad a la que pertenece la Carrera (membrete) |
 | `PORTAL_UNIVERSIDAD` | Universidad Mayor de San Andrés | Universidad a la que pertenece el instituto |
 | `PORTAL_DIRECCION` | (vacío) | Dirección, teléfonos y sitio de la Carrera para el pie del membrete de los informes, en una línea |
 | `PORTAL_ZONA_HORARIA` | `America/La_Paz` | Zona horaria de plazos, vigencias y horas mostradas (la base guarda UTC) |
 | `PORTAL_MONEDA` | `BOB` | Moneda de los montos de proyectos (se muestra como «Bs») |
 | `PORTAL_PAIS` | `Bolivia` | Las revistas de este país son «nacionales» en los informes |
 | `PORTAL_OPENALEX_CLAVE` | — | Clave de OpenAlex (opcional; OpenAlex contabiliza el uso y la clave permite superar el cupo gratuito) |
+| `PORTAL_OPENALEX_URL` | `https://api.openalex.org` | Dirección de la API de OpenAlex (solo para pruebas o un espejo) |
 | `PORTAL_IA_LOCAL_URL`, `PORTAL_IA_LOCAL_MODELO` | — | Modelo de IA local con API compatible con OpenAI (p. ej., Ollama en `http://127.0.0.1:11434/v1`); PLAN §59 |
 | `PORTAL_LISTAS_URL`, `PORTAL_LISTAS_CLAVE`, `PORTAL_LISTAS_TIEMPO_S` | — | API del sistema de notas (Kardex) para la lista de estudiantes por paralelo; sin ella se usa la copia temporal que carga la Dirección; PLAN §68 |
 | `PORTAL_IA_EXT_URL`, `PORTAL_IA_EXT_MODELO`, `PORTAL_IA_EXT_CLAVE` | — | Proveedor de IA externo (opcional) |
@@ -264,13 +333,14 @@ JavaScript, recursos que no cargan o violaciones de la CSP. Sin `--navegador` se
 - Para ver el navegador: `--headed --slowmo 300`.
 
 **Integración continua** (`.github/workflows/pruebas.yml`): en cada push a `main` y en cada pull request, GitHub
-Actions instala exactamente `uv.lock`, corre `ruff` y `pytest --navegador` con el Chrome del runner (unos 5 minutos).
+Actions instala exactamente `uv.lock`, corre `ruff` y `pytest --navegador` con el Chrome del runner (el límite del
+trabajo es de 20 minutos; con ~1.100 pruebas conviene vigilar que no se acerque).
 El resultado aparece junto al commit en GitHub. Las acciones y las versiones de uv y ruff van fijadas.
 
 ## Migraciones
 
-Para cambiar el esquema, agregue `migrations/000N-descripcion.sql` (o `.py` para cargar datos,
-como `0004-msc2020.py`). Nunca edite una migración ya aplicada: fastmigrate registra en la base
+Para cambiar el esquema, agregue `migrations/NNNN-descripcion.sql` con el número siguiente (`.py` para cargar datos,
+como `0004-msc2020.py`; receta en `docs/mantenimiento.md` §4.1). Nunca edite una migración ya aplicada: fastmigrate registra en la base
 la versión aplicada y ejecuta solo las nuevas al arrancar.
 
 ## Convenciones
@@ -328,8 +398,11 @@ la versión aplicada y ejecuta solo las nuevas al arrancar.
 
 **Seguridad**
 - La autorización se verifica en el servidor en cada ruta; ocultar un botón no basta.
-- Sin sesión solo se accede a `/login`, `/recuperar…`, `/publico/…` y `/api/v1/…` (reglas exactas
-  en `app/comun/auth.py`).
+- Sin sesión solo se accede a `/login`, `/recuperar…`, `/acceso…` (enlace de ingreso del estudiante),
+  `/encuesta/<enlace>`, `/publico/…`, `/api/v1/…` y `/salud` (`RUTAS_PUBLICAS` en `app/comun/auth.py`). Una cuenta de
+  estudiante solo llega a `/estudiante`, `/avisos`, `/logout` y `/piloto` (`RUTAS_ESTUDIANTE`).
+- Toda ruta comprueba algo (un permiso, la cuenta, la ficha del estudiante): `tests/test_rutas_declaradas.py` falla con
+  una ruta sin control reconocible; las que son para todo el personal van en su lista, con el motivo.
 - **Roles y permisos** (`app/comun/permisos.py`): cada acción la permiten ciertos roles, en su unidad
   (`puede(usuario, accion, unidad)`); las rutas `/admin` se autorizan con `REGLAS_ADMIN` en
   `app/comun/auth.py`, y lo que no está ahí se deniega.
@@ -354,6 +427,7 @@ marcó como públicos en el marco de calidad (solo años cerrados, sin cifras co
 | `/publico/investigadores` | Directorio público (búsqueda por nombre, unidad o área) |
 | `/publico/investigadores/{id}` | Perfil: cargo, áreas MSC, resumen, publicaciones, identificadores |
 | `/publico/indicadores` | Indicadores de calidad de la Carrera: valor, base, meta y fórmula de los años cerrados |
+| `/publico/privacidad` | Qué datos guarda el sistema, para qué, quién los ve y cuánto se conservan |
 | `GET /api/v1/investigadores` | Lista JSON de perfiles públicos (`?q=` para buscar) |
 | `GET /api/v1/investigadores/{id}` | Perfil público con sus productos |
 | `GET /api/v1/productos` | Productos aceptados o publicados con algún autor de perfil público (`?anio=`) |

@@ -1,8 +1,9 @@
 # Planes de estudio
 
-Datos de los planes de estudio que carga el portal (`app/academico/importar_planes.py`). La
-migración 0028 cargó los planes 2017; un plan nuevo se agrega con una fila en `planes.csv` y su
-propio CSV (luego se cargará desde la interfaz).
+Datos de los planes de estudio que carga el sistema (`app/academico/importar_planes.py`). La
+migración 0028 cargó los planes 2017. Un plan nuevo ya no se agrega aquí: se crea en pantalla dentro de una reforma
+curricular (PLAN §65) y su malla se arma a mano o subiendo un CSV con el formato de abajo (Docencia → Planes → Malla →
+Importar, que ofrece la plantilla).
 
 ## planes.csv — un plan por fila
 
@@ -32,7 +33,7 @@ informe de autoevaluación (PLAN §61).
 
 Inconsistencias que solo se ven leyendo el documento. Las demás (totales que no cuadran,
 requisitos inexistentes, asignaturas repetidas, nombres distintos para una sigla) las detecta la
-carga. Todas quedan en el portal para que la Dirección Académica las revise.
+carga. Todas quedan en el sistema para que la Dirección Académica las revise.
 
 ## Origen de los planes 2017
 

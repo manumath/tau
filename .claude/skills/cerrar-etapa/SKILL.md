@@ -22,7 +22,7 @@ Si se usó una clase de Tailwind que antes no existía: `scripts/estilos.sh` y c
 ## 3. Pruebas
 
 ```bash
-uv run pytest -q                 # rápido (~1,5 min)
+uv run pytest -q                 # ~1.060 pruebas, unos 10 minutos (córralo en segundo plano)
 uv run pytest -q --navegador     # antes del commit: flujos en Chrome, errores de JS y CSP
 ```
 No encadene `pytest … | tail` con `&& git commit`: la tubería oculta el código de salida y se

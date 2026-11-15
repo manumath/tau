@@ -7,10 +7,12 @@ implementación. Supone que conoce Python y HTML; no supone que conozca FastHTML
 Otros documentos:
 
 - `README.md`: qué hace el sistema, estructura de archivos, configuración (`PORTAL_*`) y convenciones.
-- `PLAN.md`: las decisiones y el porqué de cada regla, por sección (p. ej., sección 12 filiación,
-  14 revistas, 21 líneas de investigación, 22 plan de ampliación).
+- `PLAN.md`: las decisiones y el porqué de cada regla, por sección y en orden cronológico (p. ej., 12 filiación,
+  14 revistas, 57 aseguramiento de la calidad, 65 planes de estudio, 66 gestiones, 72 consolidación y piloto, la vigente).
 - `docs/despliegue.md` y `docs/despliegue-fly.md`: instalación en un servidor propio o en Fly.io.
-- `docs/guia-de-uso.md`: el sistema visto por investigadores y administración.
+- `docs/importaciones.md`: todas las cargas de datos, sus claves de unión y el orden de carga.
+- `docs/guia-de-uso.md`: el sistema visto por cada rol; `docs/manual/`: la versión ilustrada (5.10).
+- `docs/piloto.md` y `docs/gobernanza.md`: el piloto con usuarios reales y lo que se acuerda fuera del código.
 - `CLAUDE.md` y `.claude/skills/`: lo que debe saber un asistente de IA (Claude Code) que trabaje en
   el código, y sus procedimientos: cerrar una etapa, nueva migración, nueva ruta o permiso, capturas
   de pantalla (`.claude/skills/captura-visual/capturar.py` también sirve sin asistente).
@@ -24,8 +26,8 @@ Google Chrome (solo para las pruebas en navegador).
 uv sync                                   # dependencias, incluidas las de desarrollo
 uv run python scripts/seed.py             # base de ejemplo en data/portal.db, con cuentas de demostración
 uv run python main.py                     # http://127.0.0.1:5001
-uv run pytest                             # ~675 pruebas, unos tres minutos
-uv run pytest --navegador                 # además, los flujos en Chrome (tests/navegador)
+uv run pytest                             # ~1.060 pruebas, unos 10 minutos
+uv run pytest --navegador                 # además, ~50 flujos en Chrome (tests/navegador), unos 3 minutos más
 ```
 
 `scripts/seed.py` imprime las cuentas de demostración y su contraseña temporal. Es idempotente:
@@ -59,8 +61,9 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
 
 - **Una petición = una función.** Cada ruta (`@rt("/productos/{pid}")` con `get`, `post`, `put` o
   `delete`) devuelve HTML hecho con componentes de Python (`Div`, `Form`…, y los de MonsterUI).
-  htmx lo inserta en la página según `hx-target` y `hx-swap`. No hay API interna ni JavaScript
-  propio salvo lo mínimo (avisos, KaTeX).
+  htmx lo inserta en la página según `hx-target` y `hx-swap`. No hay API interna. El JavaScript propio es poco y
+  está en archivos (`static/js/`: `acciones.js` para los comportamientos declarados con `data-accion`, `tablas.js`,
+  el tema y KaTeX): la CSP no admite scripts en el HTML.
 - **Las reglas no van en las rutas.** Validaciones, permisos de negocio y cálculos están en los
   módulos (`productos.py`, `institucionales.py`, `vinculos.py`…), que no importan nada de la
   interfaz y se prueban sin navegador. Las rutas leen el formulario, llaman al módulo y arman la
@@ -69,12 +72,14 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
 
   | Paquete | Contiene |
   |---|---|
-  | `app/comun` | Configuración, base de datos, cuentas, seguridad, correo, personas, vínculos, estudiantes, países, componentes de interfaz y recursos estáticos |
-  | `app/investigacion` | Perfiles, producción, actividades, proyectos, propuestas institucionales, revistas, OpenAlex, líneas |
-  | `app/calidad` | Aseguramiento de la Calidad: memoria, CV, informes, informe de I+D+i, calidad de datos |
-  | `app/academico` | Vacío: docencia y currículo (fase 3 del plan de ampliación) |
-  | `app/egresados` | Egresados (PLAN §50): titulación, seguimiento a los 6 meses, 1, 3 y 5 años e indicadores |
-  | `app/estudiantil` | Seguimiento estudiantil (PLAN §49 y §50): cohortes, carga del CSV de Seguimiento Académico y, en etapas siguientes, actividad estudiantil, encuestas y egresados |
+  | `app/comun` | Configuración, base de datos, cuentas, seguridad, roles y permisos, correo, avisos, personas, vínculos, privacidad, piloto, componentes de interfaz y recursos estáticos |
+  | `app/investigacion` | Perfiles, producción, actividades, proyectos, propuestas institucionales, revistas, OpenAlex, líneas, servicios del investigador (PLAN §69) |
+  | `app/calidad` | Aseguramiento de la Calidad (PLAN §57 y §72): memoria, CV e informes, informe de I+D+i, marco, indicadores, evidencias, autoevaluación, plan de mejora con actividades y cortes, ficha estadística, calidad de datos |
+  | `app/academico` | Docencia y currículo: planes y su ciclo de vida (PLAN §65), gestiones y su ciclo de vida (§66), oferta, asignación, carga horaria y servicios del docente (§68) |
+  | `app/estudiantil` | Seguimiento estudiantil (PLAN §49 y §67): cohortes, rendimiento, actividad estudiantil, encuestas, tutoría, portal y servicios del estudiante |
+  | `app/egresados` | Egresados (PLAN §50): titulación, seguimiento a los 6 meses, 1, 3 y 5 años, directorio, empleadores e indicadores |
+  | `app/servicios` | Servicios (PLAN §58, §67 y §70): comunicados y eventos, auxiliaturas, proyectos de grado, temas, oportunidades y recursos |
+  | `app/ia` | IA con criterio humano (PLAN §59): la única puerta a los modelos, clasificación de datos y funciones (5.8) |
 
   `comun` no importa de los demás paquetes (desde la fase 2); `app/inicio.py` reúne las tarjetas de
   todos los módulos en la página de inicio.
@@ -93,9 +98,12 @@ navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvic
 
 - **Tareas periódicas:** no hay programador de tareas. Cada 5 minutos, a lo más, una petición lanza
   el mantenimiento (`_mantenimiento` en `main.py`) **en un hilo aparte**, que no demora esa petición.
-  Un candado impide que corran dos a la vez, y cada tarea lleva su propio plazo de una hora: vigencias
-  y recordatorios de los proyectos institucionales, informes programados, invitaciones del seguimiento
-  de egresados y resumen semanal. Un error se registra en `portal.log` y no corta la petición.
+  Un candado impide que corran dos a la vez, y cada tarea decide si le toca (`_correr_mantenimiento` en `main.py`):
+  reintentos de la cola de correo, vigencias y recordatorios de los proyectos institucionales, informes programados,
+  invitaciones del seguimiento de egresados, cifras «a hoy» de los indicadores (una vez al día), avisos de plazo del
+  plan de mejora y de sus cortes, y recordatorios a los tribunales de grado. El resumen semanal de avisos lo envía el
+  mantenimiento de los proyectos (`notificaciones.resumen_semanal`). Un error se registra en `portal.log` y no corta la
+  petición.
 - **Una conexión a SQLite por hilo** (`get_db()` en `app/comun/db.py`). Las rutas síncronas corren en
   un pool de hilos: con una conexión compartida, la transacción de una petición incluía las escrituras
   de otra, que se perdían si la primera se revertía (PLAN §56). En WAL las lecturas no esperan y las
@@ -147,7 +155,7 @@ solas al arrancar el sistema.
 
 ### 4.2 Agregar una pantalla o una ruta
 
-1. Elija el paquete (`comun`, `investigacion`, `calidad`, `academico`, `estudiantil` o `egresados`) y el archivo de
+1. Elija el paquete (`comun`, `investigacion`, `calidad`, `academico`, `estudiantil`, `egresados`, `servicios` o `ia`) y el archivo de
    `rutas/`; si es un área nueva, un archivo nuevo con `rt = APIRouter()`, y regístrelo en la tupla
    de routers de `create_app` en `main.py`.
 2. **Orden:** una ruta literal que choca con una variable (`/productos/nuevo` frente a
@@ -157,8 +165,14 @@ solas al arrancar el sistema.
    errores (`mensaje_error`) o redirija (`Redirect`) y avise (`add_toast`).
 4. Si la página es pública, agregue su patrón exacto a `RUTAS_PUBLICAS`. Si es de administración,
    agregue su regla a `REGLAS_ADMIN` y, si hace falta, una acción nueva a `permisos.ACCIONES` (con
-   una fila en la matriz de `tests/test_permisos_rutas.py`).
-5. Pruebe con `TestClient` (fixtures `app`, `client`, `login`, `HX` y `buzon` de `tests/conftest.py`).
+   una fila en la matriz de `tests/test_permisos_rutas.py`). Cualquier otra ruta comprueba algo dentro (`puede`, la
+   cuenta, la ficha del estudiante); `tests/test_rutas_declaradas.py` lo revisa.
+5. Si debe aparecer en el menú, agréguela en `app/navegacion.py` con la misma condición que la ruta, y agregue la
+   pantalla a `tests/navegador/test_accesibilidad_pantallas.py`. Un formulario con datos personales lleva
+   `layout.aviso_privacidad(clave)` y su módulo va en `privacidad.FORMULARIOS`.
+6. Pruebe con `TestClient` (fixtures `app`, `client`, `login`, `HX` y `buzon` de `tests/conftest.py`).
+
+Mientras dure el piloto no se agregan módulos (PLAN §72): una pantalla nueva entra solo si la pide un usuario del piloto.
 
 ### 4.3 Agregar un campo a un registro
 
@@ -220,7 +234,7 @@ latino en woff2, de `@fontsource/…`, con su licencia OFL al lado) tienen versi
 Las URL llevan una huella del contenido (`?v=…`): los navegadores toman la versión nueva sin
 vaciar caché.
 
-### 4.5 ter Actualizar Litestream (imagen Docker)
+### 4.6 Actualizar Litestream (imagen Docker)
 
 El `Dockerfile` descarga Litestream y verifica su SHA-256: si no coincide, la construcción falla. Para una versión
 nueva, cambie las tres líneas `ARG LITESTREAM_*` con los valores de su `checksums.txt`:
@@ -232,7 +246,7 @@ gh release download vX.Y.Z --repo benbjohnson/litestream --pattern checksums.txt
 
 Lea antes las notas de la versión.
 
-### 4.6 Actualizar dependencias de Python
+### 4.7 Actualizar dependencias de Python
 
 FastHTML y MonsterUI están en versiones 0.x/1.0: pueden cambiar su API entre versiones menores.
 `uv.lock` fija las versiones exactas; hoy: python-fasthtml 0.14.13, monsterui 1.0.47, fastlite
@@ -289,7 +303,10 @@ Dos mecanismos, que se complementan:
 
 - **Copia de la base** (`sqlite3 … ".backup …"` cada noche, o réplica continua con Litestream):
   ver `docs/despliegue.md`, sección 7.
-- **Paquete completo** (base, fotos y adjuntos en un `.tar.gz`), para restaurar o mudarse:
+- **Paquete completo** (base, fotos, adjuntos y archivos de las evidencias en un `.tar.gz`), para restaurar o mudarse.
+  Hasta el 15-nov-2026 el paquete no llevaba la carpeta `evidencias/`: un paquete anterior a esa fecha se restaura, pero
+  sin esos archivos (cópielos aparte desde la instalación de origen). Una carpeta de archivos nueva se agrega a
+  `ARCHIVOS` en el script (`tests/test_paquete.py` lo exige):
 
   ```sh
   # Se puede ejecutar con el sistema en marcha.
@@ -458,10 +475,10 @@ uv run python scripts/medir.py --escrituras    # abre todas las pantallas (direc
 | Una clase de Tailwind no se aplica | CSS sin recompilar | `scripts/estilos.sh` (4.4); `tests/test_estilos.py` lo señala |
 | Nadie puede guardar nada | Modo solo lectura activo | Revise `PORTAL_SOLO_LECTURA` |
 | Una cuenta no puede ingresar aunque la contraseña es correcta | Bloqueo por intentos fallidos (15 minutos) | «Usuarios» → desbloquear |
-| El sistema no arranca tras actualizar | Falló una migración | Lea el error; restaure el respaldo previo (5.2) y corrija la migración en una nueva |
+| El sistema no arranca tras actualizar | Falló una migración | Lea el error; restaure el respaldo previo (5.3) y corrija la migración en una nueva |
 | Una página de administración responde 403 | A la cuenta le falta el rol | «Usuarios» → «Roles» (lo hace Administración del sistema) |
 | Los correos no llegan | `PORTAL_CORREO_MODO` no es `smtp`, o credenciales SMTP | Revise `data/correos/` y la configuración SMTP |
-| Alguien ve «Error del sistema» con un código de referencia | Error no controlado | Busque el código en `data/registros/portal.log*` (5.5): la traza dice dónde falló |
+| Alguien ve «Error del sistema» con un código de referencia | Error no controlado | Busque el código en `data/registros/portal.log*` (5.6): la traza dice dónde falló |
 | Una prueba en navegador falla solo en su equipo | Chrome no instalado o muy antiguo | `uv run playwright install chromium` y `PLAYWRIGHT_CANAL=` |
 
 ## 7. Deuda conocida
@@ -477,6 +494,10 @@ uv run python scripts/medir.py --escrituras    # abre todas las pantallas (direc
 - **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se
   usa (`q`, `execute`, `t.<tabla>.insert/update`); el resto de lo propio de SQLite está en
   `app/comun/db.py` (ver su docstring).
-- Los mayores archivos de rutas son `calidad/rutas/informes.py` (unas 700 líneas) e
-  `investigacion/rutas/propuestas.py` (620). Las rutas de usuarios, productos y proyectos ya son
-  paquetes con un módulo por flujo; su `__init__` los registra en orden.
+- Los mayores archivos de rutas son `servicios/rutas/auxiliaturas.py` (unas 1.200 líneas), `academico/rutas/oferta.py`
+  (940), `calidad/rutas/mejora.py` (910) e `informes.py` (800). Las rutas de usuarios, productos y proyectos ya son
+  paquetes con un módulo por flujo; su `__init__` los registra en orden. Conviene dividir así los cuatro primeros
+  cuando se vuelvan a tocar a fondo.
+- **Duración de la integración continua:** la batería completa con navegador ronda los 13 minutos en un equipo de
+  desarrollo y el trabajo de GitHub Actions tiene un límite de 20 (`timeout-minutes`). Si se acerca, súbalo o divida el
+  trabajo (pruebas sin navegador y con navegador en paralelo).

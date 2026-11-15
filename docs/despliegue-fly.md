@@ -10,7 +10,7 @@ Archivos del proyecto que usa: `Dockerfile`, `fly.toml`, `litestream.yml` y `scr
 ## Cómo queda armado
 
 ```
-Usuarios ──HTTPS──▶ Fly.io ──▶ Máquina (1)  ── volumen /data: portal.db, fotos/, adjuntos/
+Usuarios ──HTTPS──▶ Fly.io ──▶ Máquina (1)  ── volumen /data: portal.db, fotos/, adjuntos/, evidencias/
                                    │
                                    └─ Litestream ──▶ Tigris (almacenamiento de objetos de Fly):
                                                      copia continua de portal.db
@@ -19,7 +19,7 @@ Usuarios ──HTTPS──▶ Fly.io ──▶ Máquina (1)  ── volumen /dat
 - **Una sola máquina**, siempre encendida (`fly.toml`). SQLite y el volumen no se comparten entre
   máquinas; para un instituto sobra.
 - **Litestream** copia cada cambio de la base a Tigris. Si el volumen se perdiera, al arrancar se
-  restaura sola desde ahí. Las **fotos y adjuntos no** van en esa copia: los cubren las
+  restaura sola desde ahí. Las **fotos, adjuntos y evidencias no** van en esa copia: los cubren las
   instantáneas diarias del volumen que hace Fly y el [paquete de datos](#respaldos) que
   conviene descargar periódicamente.
 - El correo sale por un **SMTP externo** (el del instituto u otro servicio): Fly no envía correo.
@@ -107,9 +107,9 @@ CSRF). Si además se entra por `NOMBRE.fly.dev`, agréguela con
 ## Respaldos
 
 - **Automático:** la base se replica continuamente en Tigris, y Fly toma instantáneas diarias
-  del volumen (base, fotos y adjuntos).
-- **Paquete de datos (recomendado, p. ej. semanal):** un archivo con *todo* (base, fotos y
-  adjuntos) guardado fuera de Fly:
+  del volumen (base, fotos, adjuntos y evidencias).
+- **Paquete de datos (recomendado, p. ej. semanal):** un archivo con *todo* (base, fotos, adjuntos y
+  evidencias) guardado fuera de Fly:
   ```bash
   fly ssh console -C "/app/scripts/como-tau.sh python /app/scripts/paquete.py exportar /data/paquete.tar.gz"
   fly ssh sftp get /data/paquete.tar.gz ./portal-$(date +%F).tar.gz
@@ -118,11 +118,11 @@ CSRF). Si además se entra por `NOMBRE.fly.dev`, agréguela con
 
 ## Mudarse a un servidor propio sin perder nada
 
-Todo lo que el sistema sabe está en tres lugares del volumen: `portal.db`, `fotos/` y `adjuntos/`.
+Todo lo que el sistema sabe está en cuatro lugares del volumen: `portal.db`, `fotos/`, `adjuntos/` y `evidencias/`.
 El **paquete de datos** (`scripts/paquete.py`) los lleva juntos en un archivo, con un manifiesto
 que se verifica al importar. Se conservan cuentas (con sus contraseñas, que viajan como hash),
-perfiles, productos, actividades, proyectos con sus propuestas y estados, adjuntos, fotos y
-auditoría.
+perfiles, productos, actividades, proyectos con sus propuestas y estados, adjuntos, fotos, evidencias
+y auditoría.
 
 1. **Prepare el servidor** según la [guía de despliegue](despliegue.md), pasos 1, 2, 4 y 5 (sin
    crear administrador: vendrá en el paquete). Use la misma `PORTAL_SECRET_KEY` que en Fly si
@@ -154,7 +154,7 @@ auditoría.
 
 Si algo falla antes del paso 6, `fly secrets unset PORTAL_SOLO_LECTURA` devuelve el sistema en Fly
 a la normalidad, tal como estaba. No use `fly scale count 0` para detenerlo: destruye la máquina,
-y al volver a crearla Fly puede asignarle un volumen nuevo y vacío (se perderían fotos y adjuntos).
+y al volver a crearla Fly puede asignarle un volumen nuevo y vacío (se perderían fotos, adjuntos y evidencias).
 
 **El camino inverso** (de un servidor propio a Fly) también es posible con el mismo paquete, pero
 requiere un paso extra: importar con la réplica de Litestream detenida y reiniciarla desde cero,

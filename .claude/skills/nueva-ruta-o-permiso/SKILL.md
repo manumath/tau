@@ -8,7 +8,9 @@ description: Agregar una pantalla, ruta HTMX o acción con permisos en TAU (Fast
 ## Dónde va
 
 - Paquetes: `app/comun` (personas, cuentas, vínculos, roles; **no importa de los demás**),
-  `app/investigacion`, `app/academico`, `app/calidad`. Lógica en el módulo
+  `app/investigacion`, `app/academico`, `app/calidad`, `app/estudiantil`, `app/egresados`, `app/servicios` y `app/ia`.
+  Mientras dure el piloto no se agregan módulos (PLAN §72): una pantalla nueva entra solo si la pide un usuario del piloto
+  y tiene responsable de sus datos. Lógica en el módulo
   (`app/<paquete>/<tema>.py`), pantallas en `app/<paquete>/rutas/<tema>.py` con `rt = APIRouter()`.
 - Registre el router en `main.py`. Las rutas con segmento literal que choca con `{id}`
   (`/productos/bibtex` frente a `/productos/{pid}`) van **antes**.
@@ -45,8 +47,11 @@ description: Agregar una pantalla, ruta HTMX o acción con permisos en TAU (Fast
 - Modales: `modal(...)` de `app/comun/componentes/layout.py` con `hx_target=f"#{ID_MODAL}"`;
   cerrar con `**CERRAR`. Filas o fragmentos fuera de banda: `Template(x(hx_swap_oob="true"))`.
 - **Menú:** una pantalla que deba aparecer en el menú lateral se agrega en `app/navegacion.py` (en su grupo:
-  Investigación, Docencia, Estudiantes, Aseguramiento de la Calidad o Administración) con **la misma condición de permiso**
-  que su ruta; las de Docencia y Estudiantes, en `PESTANAS` de `app/academico/componentes.py`. El enlace activo lo
+  Investigación, Docencia, Estudiantes, Servicios, Calidad o Administración; las del estudiante, en «Mi carrera» o
+  «Servicios» de `navegacion.menu`, y en el teléfono según `PRIORIDAD_MOVIL_ESTUDIANTE`) con **la misma condición de
+  permiso** que su ruta; las de Docencia y Estudiantes, en `PESTANAS` de `app/academico/componentes.py`. Una pantalla
+  nueva va también en `tests/navegador/test_accesibilidad_pantallas.py`; si pide datos personales, lleva
+  `layout.aviso_privacidad(clave)` y su módulo va en `privacidad.FORMULARIOS`. El enlace activo lo
   marca `acciones.js` por la dirección: no hace falta `seccion=`. Un **grupo nuevo** necesita además su regla de plegado en
   `estilos/entrada.css` (`html[data-grupos~=clave]`, la clave es el título sin tildes, en minúsculas y con guiones en vez de espacios).
 - Tras crear algo con página propia: `return Redirect(url)` (HTMX recibe `HX-Redirect`).

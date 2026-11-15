@@ -10,7 +10,7 @@ set -e
 DATOS="$(dirname "$PORTAL_DB")"
 mkdir -p "$DATOS"
 
-# Arranca como root solo para esto: el volumen (base, fotos, adjuntos, registros, clave de sesión) debe ser del
+# Arranca como root solo para esto: el volumen (base, fotos, adjuntos, evidencias, registros, clave de sesión) debe ser del
 # usuario «tau» (Dockerfile). Los volúmenes de antes eran de root, y un script ejecutado por «fly ssh» como root
 # puede dejar archivos suyos; se corrige solo si hace falta. Luego se vuelve a ejecutar este script como «tau».
 if [ "$(id -u)" = 0 ] && id tau >/dev/null 2>&1; then

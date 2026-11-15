@@ -1,8 +1,8 @@
 """Paquete de datos portable: toda la información del portal en un solo archivo .tar.gz.
 
 Sirve para mudar el portal entre instalaciones (p. ej. de Fly.io a un servidor propio, o al
-revés) y como respaldo completo. Contiene la base SQLite, las fotos, los adjuntos y un
-manifiesto con la versión del esquema y algunos conteos para verificar.
+revés) y como respaldo completo. Contiene la base SQLite, las fotos, los adjuntos, los archivos de
+las evidencias de calidad y un manifiesto con la versión del esquema y algunos conteos para verificar.
 
     uv run python scripts/paquete.py exportar [archivo.tar.gz]
     uv run python scripts/paquete.py importar archivo.tar.gz [--reemplazar]
@@ -32,14 +32,23 @@ from fastmigrate.core import get_db_version, get_migration_scripts  # noqa: E402
 
 from app.comun import config  # noqa: E402
 
-CARPETAS = ("fotos", "adjuntos")
-TABLAS_CONTEO = ("usuario", "investigador", "producto", "actividad", "proyecto", "adjunto")
+# Carpetas de archivos junto a la base y la consulta que dice cuáles se usan (tabla, columna). Toda carpeta nueva bajo
+# `db.dir_datos()` debe agregarse aquí, o se pierde al mudarse (las evidencias faltaron hasta el 15-nov-2026).
+ARCHIVOS = {"fotos": ("investigador", "foto"), "adjuntos": ("adjunto", "archivo"),
+            "evidencias": ("evidencia_calidad", "archivo")}
+CARPETAS = tuple(ARCHIVOS)
+TABLAS_CONTEO = ("usuario", "investigador", "producto", "actividad", "proyecto", "adjunto", "evidencia_calidad")
+
+
+def _tablas(con) -> set[str]:
+    return {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
 
 
 def _conteos(ruta_db: Path) -> dict:
     con = sqlite3.connect(ruta_db)
     try:
-        return {t: con.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in TABLAS_CONTEO}
+        hay = _tablas(con)
+        return {t: con.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in TABLAS_CONTEO if t in hay}
     finally:
         con.close()
 
@@ -83,7 +92,8 @@ def exportar(destino: Path | None) -> Path:
     c = manifiesto["conteos"]
     print(f"Paquete creado: {destino} ({destino.stat().st_size / 1024 / 1024:.1f} MB)")
     print(f"  esquema v{manifiesto['version_esquema']} · {c['usuario']} cuentas · {c['producto']} productos · "
-          f"{c['actividad']} actividades · {c['proyecto']} proyectos · {c['adjunto']} adjuntos")
+          f"{c['actividad']} actividades · {c['proyecto']} proyectos · {c['adjunto']} adjuntos · "
+          f"{c.get('evidencia_calidad', 0)} evidencias")
     if faltantes:
         print(f"  ATENCIÓN: {len(faltantes)} archivo(s) referenciado(s) no existen en disco: {', '.join(faltantes[:5])}")
     if huerfanos:
@@ -94,8 +104,9 @@ def exportar(destino: Path | None) -> Path:
 def _archivos_referenciados(ruta_db: Path) -> dict[str, set[str]]:
     con = sqlite3.connect(ruta_db)
     try:
-        return {"fotos": {r[0] for r in con.execute("SELECT foto FROM investigador WHERE foto IS NOT NULL")},
-                "adjuntos": {r[0] for r in con.execute("SELECT archivo FROM adjunto")}}
+        hay = _tablas(con)
+        return {carpeta: {r[0] for r in con.execute(f"SELECT {col} FROM {tabla} WHERE {col} IS NOT NULL")}
+                if tabla in hay else set() for carpeta, (tabla, col) in ARCHIVOS.items()}
     finally:
         con.close()
 
@@ -148,8 +159,8 @@ def importar(archivo: Path, reemplazar: bool):
     from app.comun.db import init_db  # aplica migraciones pendientes si el código es más nuevo
     init_db(db)
     conteos = _conteos(db)
-    diferencias = {t: (manifiesto["conteos"][t], conteos[t]) for t in TABLAS_CONTEO
-                   if manifiesto["conteos"].get(t) != conteos[t]}
+    # Un paquete anterior no trae todos los conteos: se comparan los que trae.
+    diferencias = {t: (n, conteos.get(t)) for t, n in manifiesto["conteos"].items() if conteos.get(t) != n}
     if diferencias:
         sys.exit(f"Los conteos no coinciden con el manifiesto: {diferencias}")
     print(f"Paquete importado en {db} (esquema v{get_db_version(db)}): {conteos['usuario']} cuentas, "
@@ -160,7 +171,7 @@ def importar(archivo: Path, reemplazar: bool):
 def main():
     p = argparse.ArgumentParser(description="Exportar o importar todos los datos del portal.")
     sub = p.add_subparsers(dest="accion", required=True)
-    e = sub.add_parser("exportar", help="crea un paquete .tar.gz con base, fotos y adjuntos")
+    e = sub.add_parser("exportar", help="crea un paquete .tar.gz con base, fotos, adjuntos y evidencias")
     e.add_argument("archivo", nargs="?", type=Path)
     i = sub.add_parser("importar", help="restaura un paquete en esta instalación (con el portal detenido)")
     i.add_argument("archivo", type=Path)

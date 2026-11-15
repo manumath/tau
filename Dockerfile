@@ -1,5 +1,5 @@
 # Imagen de TAU, Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática (Fly.io u otro servicio de contenedores).
-# Los datos (base SQLite, fotos, adjuntos) viven en un volumen montado en /data.
+# Los datos (base SQLite, fotos, adjuntos, evidencias) viven en un volumen montado en /data.
 FROM python:3.13-slim
 
 # uv, para instalar exactamente las versiones de uv.lock.

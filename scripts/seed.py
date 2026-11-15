@@ -499,10 +499,10 @@ def main():
         for ruta in (config.DB_PATH, *(config.DB_PATH.with_name(config.DB_PATH.name + s)
                                        for s in ("-wal", "-shm", "-journal"))):
             ruta.unlink(missing_ok=True)
-        # Fotos, adjuntos y correos pertenecen a la base borrada: sin esto quedarían huérfanos.
-        for carpeta in ("fotos", "adjuntos", "correos"):
+        # Fotos, adjuntos, evidencias y correos pertenecen a la base borrada: sin esto quedarían huérfanos.
+        for carpeta in ("fotos", "adjuntos", "evidencias", "correos"):
             shutil.rmtree(config.DB_PATH.parent / carpeta, ignore_errors=True)
-        print(f"Base de datos eliminada: {config.DB_PATH}, con sus fotos, adjuntos y correos "
+        print(f"Base de datos eliminada: {config.DB_PATH}, con sus fotos, adjuntos, evidencias y correos "
               "(detenga el servidor antes de --reset)")
     init_db(config.DB_PATH)
 

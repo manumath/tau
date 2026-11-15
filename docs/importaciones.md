@@ -1,6 +1,6 @@
 # Procesos de importación de datos de TAU
 
-Informe del 9-nov-2026. Reúne todas las vías por las que entran datos en bloque al sistema: archivos que sube el
+Informe del 9-nov-2026, al día al 15-nov-2026 (cargas 17 a 20). Reúne todas las vías por las que entran datos en bloque al sistema: archivos que sube el
 personal, consultas a servicios bibliográficos externos y cargas iniciales que hacen las migraciones. Para cada una se
 indica qué hace, qué campos lee, dónde guarda y con qué clave se une a lo que ya existe. Al final hay un mapa de
 dependencias y el orden de carga recomendado.
@@ -27,11 +27,19 @@ un solo registro ni el seed de ejemplo (`scripts/seed.py`).
 | 13 | Producción desde OpenAlex | OpenAlex (por ORCID) | Cada investigador | `/productos/openalex` | Crea las obras elegidas | `producto`, `producto_autor`, `persona_externa`, `revista`, `cosecha_descartada` |
 | 14 | Citas desde OpenAlex | OpenAlex (por DOI) | Dirección del Instituto (`actualizar_citas`) | `/informes/citas/actualizar` | Actualiza | `producto` (`citas`, `openalex_id`) |
 | 15 | Correspondencia de la ficha estadística | XLSX ajeno + CSV | Quien ve el marco (`ver_marco_calidad`) | `/calidad/ficha/plantilla` | No guarda: devuelve el XLSX lleno | (ninguna) |
-| 16 | Paquete completo | `.tar.gz` | TI, por consola, con el sistema detenido | `scripts/paquete.py importar` | Reemplaza toda la instalación | Toda la base, fotos y adjuntos |
+| 16 | Paquete completo | `.tar.gz` | TI, por consola, con el sistema detenido | `scripts/paquete.py importar` | Reemplaza toda la instalación | Toda la base, fotos, adjuntos y evidencias |
+| 17 | Plan de mejora | CSV (`datos/calidad/plan-de-mejora-2026-2030.csv`) | Dirección de Carrera (`gestionar_plan_mejora`) | `/calidad/mejora/importar` | Agrega las acciones cuyo código no existe | `accion_mejora`, `actividad_mejora` |
+| 18 | Rendimiento por asignatura | CSV agregado de Seguimiento Académico | Dirección de Carrera, Gestión de datos (`gestionar_cohortes`) | `/docencia/cohortes/rendimiento/importar` | Crea o **reemplaza** por asignatura y gestión | `rendimiento_asignatura` |
+| 19 | Lista de curso | CSV de Kardex | Dirección de Carrera, Coordinación (`gestionar_oferta`) | `/docencia/listas` | **Reemplaza** la copia de cada paralelo del archivo; se borra al concluir la gestión | `lista_curso` |
+| 20 | Malla de un plan en elaboración | CSV (mismo formato que `datos/planes/`) | Dirección de Carrera, Coordinación (`elaborar_planes`) | `/docencia/planes/{id}/malla/importar` | **Reemplaza** la malla del plan | `plan_asignatura`, `asignatura`, `requisito` |
+
+Las vacantes de admisión (`/docencia/cohortes/vacantes`) se registran a mano, una por admisión, y no son una carga: los
+admitidos salen de las cohortes (proceso 7).
 
 ## 2. Lo que comparten las cargas CSV
 
-Las cargas por pantalla (1–3, 6–8 y 10) siguen el mismo patrón, definido en `app/comun/importar_usuarios.py`:
+Las cargas por pantalla (1–3, 6–8, 10 y 17–19) siguen el mismo patrón, definido en `app/comun/importar_usuarios.py`
+(`leer_tabla`); la lista de curso (19) se aplica en un solo paso y la malla (20) usa el lector de los planes:
 
 - **Dos pasos.** `leer(contenido)` valida y clasifica sin escribir nada, y la pantalla muestra la vista previa con
   errores por fila. Después `aplicar` (o `crear`) guarda solo lo que no tiene errores. Entre los dos pasos el archivo
@@ -40,11 +48,12 @@ Las cargas por pantalla (1–3, 6–8 y 10) siguen el mismo patrón, definido en
   tabulador). Reconoce los encabezados por alias, sin tildes ni mayúsculas: «Correo», «E-mail» y «correo institucional»
   valen como `email`. Las filas vacías se omiten.
 - **Fechas:** `AAAA-MM-DD` o `DD/MM/AAAA`. **Sí/no:** sí, s, x, 1, true, verdadero, yes; no, n, 0, false, falso.
-- **Límites:** 1 MB por archivo (BibTeX, 2 MB) y un máximo de filas que depende de la carga (de 500 a 5000).
+- **Límites:** 1 MB por archivo (BibTeX, 2 MB) y un máximo de filas que depende de la carga (de 500 a 20 000).
 - **Plantilla descargable** con datos ficticios en cada pantalla (`…/plantilla`).
 - **Auditoría:** cada carga deja un registro con el número de filas (`importar_usuarios`, `importar_vinculos`,
-  `importar_oferta`, `importar_cohortes`, `importar_capacitacion`, `importar_revistas`, `cargar_openalex`). Los grados se
-  auditan uno por uno (`agregar_grado`).
+  `importar_oferta`, `importar_cohortes`, `importar_capacitacion`, `importar_revistas`, `cargar_openalex`,
+  `cargar_plan_mejora`, `cargar_rendimiento`, `cargar_listas`, `importar_malla_plan`). Los grados se auditan uno por uno
+  (`agregar_grado`).
 
 Las cargas que hacen las migraciones (4, 5 y 9) usan solo la conexión que reciben (`execute`/`fetchall`), porque
 fastmigrate las corre en un proceso aparte, sin la aplicación.
@@ -112,8 +121,9 @@ Completa las fichas académicas que se usan en el cuerpo académico y en los ind
 ### 3.4 Planes de estudio (`app/academico/importar_planes.py`, migración 0028)
 
 Carga los planes 2017, transcritos de los PDF oficiales, sin corregir nada. Lo que no cuadra queda registrado en
-`observacion_plan` para que la Dirección Académica lo revise. El formato está en `datos/planes/README.md`. Por ahora no
-hay pantalla: un plan nuevo se agrega a `planes.csv`, con su propio CSV.
+`observacion_plan` para que la Dirección Académica lo revise. El formato está en `datos/planes/README.md`. Un plan
+nuevo ya no necesita una migración: se crea en pantalla dentro de una reforma curricular y su malla se arma a mano o
+con el mismo CSV (proceso 20).
 
 **`planes.csv`** (un plan por fila) → `programa` y `plan_estudios`:
 - `archivo`, `programa`, `nivel`, `plan`, `resolucion` y `vigente_desde`.
@@ -351,11 +361,50 @@ correspondencia es privada y no se versiona (PLAN §57).
 
 ### 3.16 Paquete completo (`scripts/paquete.py importar`)
 
-Restaura la base SQLite, las fotos y los adjuntos desde un `.tar.gz` exportado por el mismo script, para mudar el
-sistema o restaurar un respaldo.
+Restaura la base SQLite, las fotos, los adjuntos y los archivos de las evidencias desde un `.tar.gz` exportado por el
+mismo script, para mudar el sistema o restaurar un respaldo.
 - Se ejecuta con el sistema detenido.
 - Si ya hay datos, exige `--reemplazar` y antes los mueve a `respaldo-previo-<fecha>`.
-- Si el paquete es de un esquema anterior, aplica las migraciones pendientes.
+- Si el paquete es de un esquema anterior, aplica las migraciones pendientes. Compara solo los conteos que trae el
+  manifiesto. Un paquete anterior al 15-nov-2026 no trae la carpeta `evidencias/`: esos archivos se copian aparte.
+
+### 3.17 Plan de mejora (`app/calidad/importar_mejora.py`)
+
+Una fila por actividad, con las columnas de su acción repetidas: `accion`, `accion_titulo`, `objetivo`,
+`accion_responsable`, `prioridad`, `criterio`, `actividad`, `descripcion`, `responsable`, `presupuesto`, `fuente`,
+`recursos_humanos`, `otros_recursos`, `verificacion`, `indicador`, `linea_base`, `meta`, `difusion`, `inicio` y `fin`
+(obligatorias: `accion`, `accion_titulo`, `descripcion` y `fin`).
+- **Responsables:** el archivo trae unidades en texto. La vista previa **propone** a la persona que hoy ocupa ese cargo
+  (Dirección de Carrera, Dirección del Instituto, Coordinación académica, Comisión de calidad) y, si no la encuentra,
+  deja la acción a cargo de quien carga el archivo.
+- **Indicadores:** una actividad cuyo indicador ya calcula el sistema se propone ligada a él («Ligar al indicador…»).
+  La cifra del archivo queda como línea base en texto.
+- **Repetidos:** se omite toda acción cuyo código ya está en el plan; cargar dos veces el mismo archivo no duplica nada.
+  Hasta 500 filas.
+
+### 3.18 Rendimiento por asignatura (`app/estudiantil/rendimiento.py`)
+
+Agregados del Sistema de Seguimiento Académico: `sigla`, `gestion` (`I-2025`, `2025-I` o `II/2025`), `inscritos`,
+`aprobados`, `reprobados` y `abandonos`. **Sin RU, nombres ni notas.**
+- La sigla debe estar en el catálogo de asignaturas. Aprobados, reprobados y abandonos no pueden sumar más que los
+  inscritos.
+- Una asignatura y gestión que ya existe se **reemplaza**.
+- Una asignatura con menos de 5 inscritos se muestra como «menos de 5» y no entra en los totales, para que no se
+  deduzca por resta. Hasta 3000 filas.
+
+### 3.19 Lista de curso (`app/academico/listas.py`)
+
+CSV de Kardex con `sigla`, `paralelo`, `ru`, `apellidos`, `nombres` y `correo`, para una gestión que no haya concluido.
+- Reemplaza la copia de cada paralelo que trae. Los paralelos que no están en la oferta se informan y se omiten.
+- Es una **copia temporal**: se borra al concluir la gestión (`listas.purgar`). La ven solo los docentes de ese
+  paralelo, y cada consulta se audita.
+- Con `PORTAL_LISTAS_URL` no hay carga: la lista se consulta a la API de Kardex en el momento y no se guarda.
+- Hasta 20 000 filas.
+
+### 3.20 Malla de un plan en elaboración (`app/academico/malla.py`)
+
+El mismo CSV por plan de §3.4, con plantilla descargable. Solo para un plan **en elaboración**, cuya malla reemplaza
+entera. Después, la lista de verificación del plan señala requisitos circulares o que faltan.
 
 ## 4. Cómo se vinculan
 
@@ -415,6 +464,9 @@ Las migraciones ya cargan los planes, las líneas formativas y el marco (proceso
 6. **Revistas** (10), antes de que los investigadores importen productos, para que sus artículos se reconozcan como
    verificados.
 7. **Producción** (11–13), que carga cada investigador; después, **citas** (14).
+8. **Plan de mejora** (17), después de asignar los roles de las direcciones, la Coordinación y la Comisión: con ellos
+   la vista previa propone a cada responsable.
+9. **Rendimiento** (18), después de los planes; la **lista de curso** (19), cuando la gestión ya tiene su oferta.
 
 ## 5. Diferencias de comportamiento entre las cargas
 
@@ -435,7 +487,7 @@ Las migraciones ya cargan los planes, las líneas formativas y el marco (proceso
    devuelven nada en ese caso. Es inofensivo, porque la pantalla muestra el error, pero es una inconsistencia.
 3. **Revistas, conteo de filas:** cuenta líneas del archivo en vez de filas con datos, así que las líneas vacías
    intermedias acercan el límite. Es menor.
-4. **Sin pantalla para planes ni marco:** un plan nuevo, o una nueva versión del marco, requiere hoy editar los CSV y
-   escribir una migración (`datos/planes/README.md` lo anota como pendiente).
+4. **Sin pantalla para el marco:** una versión nueva del marco requiere editar los CSV y escribir una migración. Los
+   planes ya tienen la suya desde el 12-nov-2026 (PLAN §65; proceso 20).
 5. **MSC solo por DOI:** los productos que entran por BibTeX u OpenAlex quedan sin clasificación MSC. Es una decisión
    documentada (PLAN §45); se puede compensar con la sugerencia por área del perfil.

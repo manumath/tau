@@ -7,6 +7,12 @@ la memoria anual y los informes de aseguramiento de la calidad; la Dirección de
 la asignación docente y la carga horaria.
 
 - [Ingreso y contraseña](#ingreso-y-contraseña)
+- [Comentar una pantalla (durante el piloto)](#comentar-una-pantalla-durante-el-piloto)
+- [Sus datos y su privacidad](#sus-datos-y-su-privacidad)
+- [Avisos](#avisos), [Tablas](#tablas), [Menú](#menú), [Buscar](#buscar), [Confirmar y deshacer](#confirmar-y-deshacer)
+- [Inicio](#inicio)
+- [Mi docencia](#mi-docencia)
+- [Mi investigación](#mi-investigación)
 - [Mi perfil](#mi-perfil)
 - [Productos](#productos)
 - [Coautores externos: duplicados y cuentas](#coautores-externos-duplicados-y-cuentas)
@@ -14,8 +20,11 @@ la asignación docente y la carga horaria.
 - [Proyectos](#proyectos)
 - [Docencia](#docencia)
 - [Estudiantes y egresados](#estudiantes-y-egresados)
+- [Servicios](#servicios)
+- [Aseguramiento de la Calidad](#aseguramiento-de-la-calidad)
 - [Informes](#informes)
 - [Administración](#administración)
+- [Inteligencia artificial con criterio humano](#inteligencia-artificial-con-criterio-humano)
 - [Preguntas frecuentes](#preguntas-frecuentes)
 
 ## Ingreso y contraseña
@@ -685,7 +694,7 @@ quita la troncal que se cierre (por ejemplo, por falta de inscritos). En semestr
 «Agregar las troncales» completa las que falten. La editan la Dirección de Carrera
 y la Coordinación académica; todos la consultan.
 
-**Con el semestre activo** (PLAN §66), la oferta y los docentes ya no se editan libremente: los botones de
+**Con el semestre activo**, la oferta y los docentes ya no se editan libremente: los botones de
 «Agregar las troncales», «Copiar», «Asignar en grilla» e «Importar CSV» desaparecen y cada cambio pide **fecha de efecto**
 (el primer día en que rige), **motivo** (renuncia, fallecimiento, licencia o baja, reasignación, falta de inscritos, error
 de planificación, necesidad académica u otro, que pide explicación) y un detalle opcional. Se puede:
@@ -822,7 +831,7 @@ puede ser «Por verificar», «Verificada» o «Con observaciones»; si el estud
 su evidencia, vuelve a quedar por verificar. Puede eliminar lo que registró. El sistema no muestra ni guarda
 materias ni notas.
 
-### Más servicios del estudiante (PLAN §67)
+### Más servicios del estudiante
 
 El menú del estudiante se agrupa en **Mi carrera** y **Servicios**. Cada servicio nuevo aparece en su grupo.
 

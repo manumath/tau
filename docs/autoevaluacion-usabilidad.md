@@ -1,7 +1,7 @@
 # Usabilidad por tipo de usuario y aporte del stack
 
-Material de apoyo para el **Informe de Autoevaluación** con miras a la acreditación ante IAC-CINDA.
-Explica cómo el diseño y el *stack* tecnológico de TAU se traducen en usabilidad para cada perfil de
+Material de apoyo para el **Informe de Autoevaluación** de la Carrera (al día al 15-nov-2026). Como el resto del
+sistema, no nombra a ninguna agencia acreditadora (PLAN §57). Explica cómo el diseño y el *stack* tecnológico de TAU se traducen en usabilidad para cada perfil de
 usuario y en evidencia confiable y trazable para el proceso de acreditación.
 
 TAU se organiza en **perfiles con permisos acotados por rol, unidad y vigencia**
@@ -20,8 +20,10 @@ aprender una herramienta técnica: se usa desde el navegador con el correo insti
 | **Dirección del Instituto** | Ciclo de vida de proyectos institucionales, catálogos, memoria y anexo. | Propuesta con barra de requisitos y etapas fechadas; continuidad precargada; decisiones con registro. |
 | **Coordinación académica / Gestión de datos** | Planes, oferta, asignación; fichas académicas y estudiantes. | Misma lógica de rol acotado; avisos «Avisar a N personas» para completar datos pendientes. |
 | **Administración del sistema** | Cuentas, roles, auditoría, alta masiva por CSV. | Vista previa antes de crear, asignación de roles con fecha y unidad, auditoría exportable. |
-| **Comisión de calidad** | Consulta todo, sin modificar. | Modo de solo consulta por diseño; acceso directo a memoria, anexo y Guía de Antecedentes. |
-| **Persona externa / estudiante / tesista** | Figura como coautor o participante (no accede). | Su rastro queda trazado sin abrir cuentas; unifica duplicados y conserva periodos de estudiante para los indicadores. |
+| **Comisión de calidad** | Ve todo; registra evidencias y los juicios de la autoevaluación, y comenta los cortes del plan de mejora. | Indicadores con su base (n) y su fórmula, evidencias con huella, ficha estadística, memoria e informe de I+D+i al alcance, sin poder alterar los datos de origen. |
+| **Responsable de una actividad del plan de mejora** | Registra el avance y adjunta su evidencia desde «Mis pendientes»; pide reprogramaciones. | No necesita un rol ni conocer el repositorio de evidencias: el sistema liga el archivo a su actividad. |
+| **Estudiante** | Ingresa con un enlace al correo: su seguimiento, plan de estudios, tutoría, encuestas, auxiliaturas, grado y servicios. | Sin contraseña que recordar; ve solo lo suyo, y sus marcas y señales de apoyo son privadas. |
+| **Persona externa / tesista** | Figura como coautor o participante (no accede). | Su rastro queda trazado sin abrir cuentas; unifica duplicados y conserva periodos de estudiante para los indicadores. |
 | **Público externo** | Perfil público opcional, directorio y API JSON de solo lectura. | Difusión de la producción sin exponer datos sensibles (sin correo, fechas de nacimiento ni adjuntos). |
 
 ## Por qué el stack produce esa usabilidad
@@ -75,7 +77,8 @@ autoevaluación y acreditación.
 ## Notas internas (no forman parte del informe)
 
 - No se verificó conformidad formal con WCAG; la accesibilidad se describe como características
-  concretas, no como certificación.
+  concretas, no como certificación. Una prueba en Chrome revisa en cada cambio las pantallas principales (contraste,
+  etiquetas, un solo encabezado principal; PLAN §62).
 - Ante un par evaluador técnico, conviene añadir una línea con las versiones exactas (FastHTML 0.14,
-  HTMX, Tailwind 3.4, SQLite) y el dato de la batería de pruebas (~500 pruebas y flujos en Chrome con
+  HTMX, Tailwind 3.4, SQLite) y el dato de la batería de pruebas (~1.060 pruebas y ~50 flujos en Chrome con
   Playwright) como evidencia de calidad de ingeniería.
