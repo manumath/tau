@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -151,14 +151,14 @@ wheels = [
 
 [[package]]
 name = "bibtexparser"
-version = "2.0.1"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pylatexenc" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8b/78/0096d455f90f4c1f38f0115b74f2ce3fa32814e58a1549f4af1a46bc6d8f/bibtexparser-2.0.1.tar.gz", hash = "sha256:672a59f4ba431c4e9a6647cc7c42a267b22e257bcd2cfdb661863f3756c9ab14", size = 88449, upload-time = "2026-09-10T20:32:34.09Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/40/bb/38f8b2ee3e3da9161fb4a845fb04b4ccb0b8d5a5f5e25aaea39154073532/bibtexparser-2.1.0.tar.gz", hash = "sha256:9f48851eef4693cb7ef6897f7628966c5d0ef49b6403b13a862679a4c313d176", size = 88630, upload-time = "2026-10-02T16:11:35.234Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/97/fc/d37bc247b999fdddd0f0f0478689ee531e2b694b9a3994b1d55b0f9007f5/bibtexparser-2.0.1-py3-none-any.whl", hash = "sha256:aa263e252f4340c0fc50f9f7e5d63a9799b31b01a5aa460a261db3f2a01c6c38", size = 50013, upload-time = "2026-09-10T20:32:33.12Z" },
+    { url = "https://files.pythonhosted.org/packages/86/df/b0898588ad7c1a1c1cb50dcf1afbac1b656ad1ce5373c895b49138b00894/bibtexparser-2.1.0-py3-none-any.whl", hash = "sha256:3b4b1de50ce45ee9091ccca72e1efc8732ab3ef615b70bcecc537c17cd84753e", size = 50128, upload-time = "2026-10-02T16:11:34.111Z" },
 ]
 
 [[package]]
