@@ -4232,13 +4232,15 @@ usuarios del piloto. Lo verificado y corregido:
   `test_gestiones`); el buzón enlaza las preguntas frecuentes y ya no habla de «marcar Anónimo»; la introducción de Avisos
   del estudiante habla de lo suyo; el formulario de producto ya no tutea.
 
-**Evidencias del responsable (decisión del usuario, 15-nov-2026, opción B):** el responsable de una actividad no tenía cómo
-adjuntar su evidencia (el repositorio le daba 403 y el avance le ofrecía documentos ajenos). Ahora sube la evidencia de su
-actividad desde el avance (**Subir una evidencia**), que queda en el repositorio ligada a la actividad (migración
-**0095**, `evidencia_calidad.actividad_id`), con el criterio de la acción si lo tiene (si no, sin criterios: los marca
-después la Comisión o la Dirección). Él ve y descarga solo las de su actividad y las elige en avances y reprogramaciones
-(`actividades_mejora.evidencias_elegibles`); quien gestiona el plan elige del repositorio entero. Se descartó (a), adjuntar
-el archivo en el mismo avance sin pasar por el repositorio.
+**Evidencias del responsable (decisión del usuario, 15-nov-2026, opción A; corrige la B que se había hecho primero
+por un malentendido):** el responsable de una actividad no tenía cómo adjuntar su evidencia (el repositorio le daba 403 y
+el avance le ofrecía documentos ajenos). Ahora el formulario del avance (también el modal de «Mi parte del plan») lleva
+**Adjuntar la evidencia**: el archivo se registra en el repositorio como evidencia ligada a la actividad (migración
+**0095**, `evidencia_calidad.actividad_id`; `actividades_mejora.registrar_evidencia`), con un título que dice de qué
+actividad y avance es y el criterio de la acción si lo tiene (si no, sin criterios: los marca después la Comisión o la
+Dirección). El responsable ve y descarga solo las evidencias de su actividad y puede volver a elegirlas en otro avance o en
+una reprogramación (`actividades_mejora.evidencias_elegibles`); quien gestiona el plan elige además del repositorio entero.
+Se descartó la B (subir la evidencia en un paso aparte y volver al avance).
 
 Queda anotado para después del piloto (pedidos del ensayo, sin hacer): reasignar responsables del plan en bloque; avisar
 al asignar un docente que excede su carga; que «Mis preferencias» abra en la gestión siguiente y no en verano; el inicio de

@@ -1244,7 +1244,7 @@ En **Calidad → Plan de mejora**:
    - **Nueva acción**, para cualquier otra mejora.
 2. **Avances.** En la ficha de la acción, el responsable (o la Dirección) registra cada avance: qué se hizo, la fecha, el
    porcentaje logrado si se puede estimar y una evidencia del repositorio (súbala antes en **Evidencias**; en una actividad,
-   su responsable la sube desde el mismo avance). El primer avance
+   su responsable la adjunta en el mismo avance). El primer avance
    pasa la acción a «En curso».
 3. **Estado.** La Dirección marca la acción **Cumplida** (con la fecha en que se cumplió) o la **cancela** con su motivo; puede
    reabrirla. Solo se elimina una acción sin avances; las demás se cancelan, para que quede su historia.
@@ -1288,11 +1288,11 @@ En **Calidad → Plan de mejora**:
 plan de mejora», con su semáforo y su plazo. **Registrar avance** abre el formulario sin salir de la pantalla. El inicio le
 recuerda cuántas tiene y su calendario muestra sus plazos y el fin de cada trimestre, cuando suele hacerse el corte.
 
-**La evidencia de su actividad.** En el formulario del avance, **Subir una evidencia** le pide un título y el archivo (PDF,
-imagen u hoja de cálculo, hasta 20 MB) o un enlace. La evidencia queda en el repositorio de la Carrera, ligada a su actividad
-(la ven la Comisión de calidad y la Dirección), y usted vuelve al avance con lo que había escrito y la evidencia ya elegida.
-En la lista de evidencias del avance usted ve solo las de su actividad; quien gestiona el plan elige del repositorio entero.
-La Comisión o la Dirección marcan después los criterios que respalda.
+**La evidencia de su actividad.** En el formulario del avance, **Adjuntar la evidencia** le permite elegir el archivo (PDF,
+imagen, hoja de cálculo o documento, hasta 20 MB) junto con lo que hizo. Al registrar el avance, el archivo queda en el
+repositorio de evidencias de la Carrera, ligado a su actividad (lo ven la Comisión de calidad y la Dirección), y el avance
+lo muestra. En avances siguientes puede volver a elegir una evidencia de su actividad ya registrada. La Comisión o la
+Dirección marcan después los criterios que respalda.
 
 El sistema avisa al responsable de cada actividad **30 y 7 días antes** de su plazo, y 15 días antes del fin de cada
 trimestre si su actividad no tiene avance desde el último corte. Una acción sin actividades avisa a su responsable

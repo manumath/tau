@@ -373,6 +373,19 @@ def evidencias_elegibles(auth, t: dict) -> list[dict]:
     return evidencias.listar(t["marco_id"]) if gestiona(auth, t["marco_id"]) else evidencias.de_actividad(t["id"])
 
 
+def registrar_evidencia(t: dict, avance: dict, nombre: str, contenido: bytes, uid: int) -> int:
+    """El archivo que el responsable adjunta a su avance (opción A, 15-nov-2026) queda en el repositorio como evidencia
+    ligada a la actividad, con el criterio de la acción si lo tiene (si no, sin criterios: los marca después la Comisión
+    de calidad o la Dirección). El título dice de qué actividad y avance es."""
+    criterio = mejora.obtener(t["accion_id"])["criterio_id"]
+    codigo = " ".join(c for c in (t["accion_codigo"], t["codigo"]) if c)
+    x = {"titulo": f"Avance {codigo + ' ' if codigo else ''}del {formato.fecha(avance.get('fecha') or date.today())}: "
+                   f"{avance['texto'][:120]}",
+         "descripcion": None, "fecha": avance.get("fecha") or date.today().isoformat(), "vigente_hasta": None, "url": None,
+         "criterios": [criterio] if criterio else []}
+    return evidencias.crear(t["marco_id"], "documento", x, uid, nombre, contenido, actividad_id=t["id"])
+
+
 def evidencia_valida(auth, t: dict, texto) -> tuple[int | None, list[str]]:
     e = str(texto or "").strip()
     if not e:

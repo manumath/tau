@@ -68,7 +68,7 @@ def test_pregunta_anonima_con_pocas_respuestas_no_se_muestra(datos):  # noqa: F8
     assert not otra.get("oculta") and otra["n"] == 6
 
 
-# --- Evidencias del responsable de una actividad (decisión del 15-nov-2026, opción B) ---------------------------------------
+# --- Evidencias del responsable de una actividad (decisión del 15-nov-2026, opción A) ---------------------------------------
 
 def _responsable_con_sesion(client):
     d, r = _gente()
@@ -83,47 +83,46 @@ def _responsable_con_sesion(client):
     return t, otra
 
 
-def test_el_responsable_sube_la_evidencia_de_su_actividad(client):
+def test_el_responsable_adjunta_la_evidencia_en_su_avance(client):
+    """Opción A (decisión del 15-nov-2026): el archivo va en el mismo formulario del avance y el sistema lo registra en el
+    repositorio, ligado a la actividad."""
     t, otra = _responsable_con_sesion(client)
     url = f"/calidad/mejora/actividades/{t['id']}"
     assert client.get("/calidad/evidencias").status_code == 403          # el repositorio sigue cerrado para él
-    # El avance no le ofrece evidencias ajenas.
-    assert "Reglamento ajeno" not in client.get(url).text
-    form = client.get(f"{url}/evidencia", headers=HX, params={"texto": "Segundo taller", "porcentaje": "50"})
-    assert form.status_code == 200 and 'name="av_texto" value="Segundo taller"' in form.text
-    # Sin archivo: error y vuelve el formulario con lo escrito.
-    r = client.post(f"{url}/evidencia", headers=HX, data={"titulo": "Lista de asistencia", "tipo": "documento"})
-    assert "Seleccione un archivo." in r.text
-    r = client.post(f"{url}/evidencia", headers=HX,
-                    data={"titulo": "Lista de asistencia", "tipo": "documento", "av_texto": "Segundo taller",
-                          "av_porcentaje": "50", "volver": "/docencia/pendientes"},
-                    files={"archivo": ("asistencia.pdf", PDF, "application/pdf")})
-    e = evidencias.de_actividad(t["id"])
-    assert len(e) == 1 and e[0]["actividad_id"] == t["id"] and e[0]["criterios"] == []
-    # Vuelve al avance con lo escrito y la evidencia ya elegida.
-    assert "Segundo taller" in r.text and f'value="{e[0]["id"]}" selected' in r.text
-    assert 'name="volver" value="/docencia/pendientes"' in r.text
+    pagina = client.get(url).text
+    assert 'name="archivo"' in pagina and 'hx-encoding="multipart/form-data"' in pagina
+    assert "Reglamento ajeno" not in pagina                              # no le ofrece evidencias ajenas
+    # Un archivo que no es de los formatos admitidos: error, y no se registra nada.
+    r = client.post(f"{url}/avances", headers=HX, data={"texto": "Segundo taller", "porcentaje": "50"},
+                    files={"archivo": ("notas.txt", b"hola", "text/plain")})
+    assert "Evidencia: Solo se admiten archivos" in r.text and evidencias.de_actividad(t["id"]) == []
+    client.post(f"{url}/avances", headers=HX, data={"texto": "Segundo taller con 40 estudiantes", "porcentaje": "50",
+                                                    "volver": "/docencia/pendientes"},
+                files={"archivo": ("asistencia.pdf", PDF, "application/pdf")})
+    [e] = evidencias.de_actividad(t["id"])
+    assert e["actividad_id"] == t["id"] and e["criterios"] == [] and e["nombre_archivo"] == "asistencia.pdf"
+    assert "Segundo taller con 40 estudiantes" in e["titulo"] and "4.1" in e["titulo"]
+    av = am.obtener(t["id"])["lista_avances"][0]
+    assert av["evidencia_id"] == e["id"] and av["porcentaje"] == 50
     # Ve su evidencia y la descarga, pero no la ajena ni puede editarla.
-    assert client.get(f"/calidad/evidencias/{e[0]['id']}").status_code == 200
-    assert client.get(f"/calidad/evidencias/{e[0]['id']}/archivo").status_code == 200
+    assert client.get(f"/calidad/evidencias/{e['id']}").status_code == 200
+    assert client.get(f"/calidad/evidencias/{e['id']}/archivo").status_code == 200
     assert client.get(f"/calidad/evidencias/{otra}").status_code == 403
-    assert client.get(f"/calidad/evidencias/{e[0]['id']}/editar", headers=HX).status_code == 403
-    # No puede adjuntar una evidencia ajena escribiendo su número.
+    assert client.get(f"/calidad/evidencias/{e['id']}/editar", headers=HX).status_code == 403
+    # En el avance siguiente puede volver a elegir la suya, nunca una ajena escribiendo su número.
+    assert "Segundo taller con 40 estudiantes" in client.get(url).text
     r = client.post(f"{url}/avances", headers=HX, data={"texto": "x", "evidencia_id": str(otra)})
     assert "Elija una evidencia de la lista." in r.text
-    client.post(f"{url}/avances", headers=HX, data={"texto": "Segundo taller", "evidencia_id": str(e[0]["id"])})
-    assert am.obtener(t["id"])["lista_avances"][0]["evidencia_id"] == e[0]["id"]
 
 
-def test_otra_persona_no_sube_evidencias_a_una_actividad_ajena(app, client):
+def test_otra_persona_no_adjunta_evidencias_a_una_actividad_ajena(app, client):
     d, r = _gente()
     t = _actividad(_accion(d["id"]), r["id"])
     usuarios.crear("otro@test.cl", "Otro", "Docente", "Clave-otro-12345", debe_cambiar_pass=False)
     login(client, "otro@test.cl", "Clave-otro-12345")
-    url = f"/calidad/mejora/actividades/{t['id']}/evidencia"
-    assert client.get(url, headers=HX).status_code == 403
-    assert client.post(url, headers=HX, data={"titulo": "x", "tipo": "enlace", "url": "https://a.test/x"}).status_code == 403
-    assert evidencias.de_actividad(t["id"]) == []
+    r = client.post(f"/calidad/mejora/actividades/{t['id']}/avances", headers=HX, data={"texto": "x"},
+                    files={"archivo": ("a.pdf", PDF, "application/pdf")})
+    assert r.status_code == 403 and evidencias.de_actividad(t["id"]) == []
 
 
 def test_la_direccion_elige_del_repositorio_entero(carrera):

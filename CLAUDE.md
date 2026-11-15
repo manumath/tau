@@ -76,8 +76,8 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - **Plan de mejora (PLAN §72):** acciones con actividades (`app/calidad/actividades_mejora.py`). El avance y el semáforo se
   calculan, no se guardan. Aprobado el plan (`marco_calidad.plan_aprobado_en`), el plazo de una actividad cambia solo por
   reprogramación (`reprogramacion_mejora`: el responsable pide y la Dirección de Carrera aprueba); nunca lo edite directo.
-  El responsable de una actividad sube su evidencia desde el avance (`evidencia_calidad.actividad_id`), ve solo esas y
-  no el repositorio: elija las evidencias de un avance con `actividades_mejora.evidencias_elegibles`, nunca con
+  El responsable de una actividad adjunta su evidencia en el mismo avance (`registrar_evidencia`, que la liga con
+  `evidencia_calidad.actividad_id`), ve solo esas y no el repositorio: elija las evidencias de un avance con `actividades_mejora.evidencias_elegibles`, nunca con
   `evidencias.listar` (PLAN §72, etapa 11).
   Un **corte** (`cortes_mejora.py`) congela el estado de cada actividad: sus cifras no se recalculan después; solo los
   comentarios de un corte abierto cambian. El plan de la Carrera se carga de `datos/calidad/plan-de-mejora-2026-2030.csv`
