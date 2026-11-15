@@ -4240,7 +4240,9 @@ el avance le ofrecía documentos ajenos). Ahora el formulario del avance (tambi�
 actividad y avance es y el criterio de la acción si lo tiene (si no, sin criterios: los marca después la Comisión o la
 Dirección). El responsable ve y descarga solo las evidencias de su actividad y puede volver a elegirlas en otro avance o en
 una reprogramación (`actividades_mejora.evidencias_elegibles`); quien gestiona el plan elige además del repositorio entero.
-Se descartó la B (subir la evidencia en un paso aparte y volver al avance).
+Se descartó la B (subir la evidencia en un paso aparte y volver al avance). Confirmado por el usuario el 15-nov-2026: el
+archivo se adjunta solo en el avance; al pedir una reprogramación, el responsable elige una evidencia ya registrada de su
+actividad, sin subir un archivo nuevo ahí.
 
 Queda anotado para después del piloto (pedidos del ensayo, sin hacer): reasignar responsables del plan en bloque; avisar
 al asignar un docente que excede su carga; que «Mis preferencias» abra en la gestión siguiente y no en verano; el inicio de
