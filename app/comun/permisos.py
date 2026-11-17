@@ -1,0 +1,259 @@
+"""Roles con alcance y vigencia, y el punto único de decisión `puede()` (PLAN.md, sección 23).
+
+- Un rol se asigna a una persona para una unidad, desde una fecha y, si corresponde, hasta otra.
+  Solo Administración del sistema asigna roles, a pedido de las direcciones. Un rol que termina no
+  se borra: se le pone fecha de término.
+- `puede(usuario, accion, unidad)`: ¿alguno de sus roles vigentes permite la acción en esa unidad?
+  Los roles de toda la universidad (Administración del sistema, Comisión de calidad) cubren
+  todas las unidades; los demás, solo la suya. Aunque el instituto está dentro de la carrera en la
+  jerarquía, la Dirección de Carrera no decide sobre el Instituto ni al revés.
+- Los roles derivados (investigador, docente, responsable de un proyecto) no se asignan: se
+  deducen de los datos, como antes.
+
+Las rutas /admin se autorizan con REGLAS_ADMIN (app/comun/auth.py); el resto, con `puede()` en cada
+ruta o regla de negocio. No hay otra marca de administración.
+"""
+from datetime import date, timedelta
+
+from app.comun import modulos, unidades
+from app.comun.db import HOY, get_db
+
+# rol → (nombre, tipos de unidad en que se puede asignar). Por tipo y no por sigla: otra carrera que instala el sistema
+# tiene sus propias siglas (PLAN §73, etapa 6).
+ROLES = {
+    "administracion_sistema": ("Administración del sistema", ("universidad",)),
+    "direccion_instituto": ("Dirección del Instituto", ("instituto",)),
+    "direccion_carrera": ("Dirección de Carrera", ("carrera",)),
+    "coordinacion_academica": ("Coordinación académica", ("carrera",)),
+    "comision_calidad": ("Comisión de calidad", ("universidad",)),
+    "gestion_datos": ("Gestión de datos", ("instituto", "carrera")),
+}
+# Roles que cubren todas las unidades (se asignan en la universidad); el resto vale solo en su unidad.
+ROLES_DE_TODA_LA_UNIVERSIDAD = ("administracion_sistema", "comision_calidad")
+DESCRIPCIONES = {
+    "administracion_sistema": "Cuentas y roles, auditoría y configuración. No decide sobre contenido académico.",
+    "direccion_instituto": "Propuestas y convocatoria, catálogos de revistas y líneas, coautores externos, "
+                           "memoria e informe de I+D+i. No define vínculos.",
+    "direccion_carrera": "Categoría, vínculo y carga horaria de cada persona; plan de estudios, oferta y asignación "
+                         "docente; informes de la Carrera; marco de calidad.",
+    "coordinacion_academica": "Prepara asignaciones y revisa programas, sin aprobarlos; convocatorias a auxiliaturas, "
+                              "tribunales de grado y comunicados.",
+    "comision_calidad": "Ve todos los informes y exportaciones del sistema de calidad; registra evidencias y juicios de la autoevaluación.",
+    "gestion_datos": ("Fichas académicas (grados, fecha de nacimiento), estudiantes y coautores externos de su unidad, "
+                      "y cifras manuales de los indicadores de calidad."),
+}
+
+# acción → roles que la permiten. Las acciones con unidad se consultan con ella (p. ej., vínculos
+# de la Carrera: puede(u, "gestionar_vinculos", CMAT)).
+ACCIONES = {
+    # Cuentas y sistema
+    "asignar_roles": {"administracion_sistema"},
+    "gestionar_modulos": {"administracion_sistema"},   # activar y apagar módulos del sistema (PLAN §73)
+    "configurar_unidades": {"administracion_sistema"},   # siglas y nombres de las unidades de la instalación (PLAN §73)
+    "administrar_cuentas": {"administracion_sistema"},
+    "ver_auditoria": {"administracion_sistema"},
+    "ver_datos_personales": {"administracion_sistema"},
+    "ver_usuarios": {"administracion_sistema", "direccion_instituto", "direccion_carrera", "gestion_datos"},
+    # Datos de personas (por unidad)
+    "gestionar_vinculos": {"direccion_carrera"},  # categoría y vínculo: solo la Dirección de Carrera
+    "gestionar_estudiantes": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
+    # Cohortes de la licenciatura (PLAN §49): cargar el CSV de Seguimiento Académico; ver el tablero (agregados).
+    "gestionar_cohortes": {"direccion_carrera", "gestion_datos"},
+    "gestionar_tutorias": {"direccion_carrera", "coordinacion_academica"},   # asignar tutores y ver cifras de tutoría
+    "ver_tutorias_detalle": {"direccion_carrera"},    # las reuniones de cualquier estudiante (queda en la auditoría)
+    "gestionar_egresados": {"direccion_carrera", "coordinacion_academica"},   # titulación y seguimiento de egresados
+    "gestionar_encuestas": {"direccion_carrera", "coordinacion_academica"},   # armar, abrir, enviar y cerrar
+    "verificar_actividad": {"direccion_carrera", "coordinacion_academica"},   # actividad estudiantil declarada
+    "ver_seguimiento_estudiantil": {"direccion_carrera", "coordinacion_academica", "gestion_datos", "comision_calidad"},
+    "gestionar_personas_externas": {"direccion_instituto", "gestion_datos"},
+    "gestionar_fichas": {"direccion_instituto", "direccion_carrera", "gestion_datos"},
+    # Investigación (Instituto)
+    "decidir_propuestas": {"direccion_instituto"},
+    "gestionar_convocatoria": {"direccion_instituto"},
+    "gestionar_catalogos": {"direccion_instituto"},
+    "reasignar_responsable": {"direccion_instituto"},
+    "actualizar_citas": {"direccion_instituto"},
+    # Docencia (Carrera)
+    "revisar_planes": {"direccion_carrera", "coordinacion_academica"},
+    "elaborar_planes": {"direccion_carrera", "coordinacion_academica"},   # reformas y borradores de planes (PLAN §65)
+    "decidir_planes": {"direccion_carrera"},          # poner en vigencia un plan y cerrarlo (PLAN §65)
+    "gestionar_oferta": {"direccion_carrera", "coordinacion_academica"},
+    "gestionar_oportunidades": {"direccion_carrera", "coordinacion_academica"},   # becas, movilidad, pasantías, empleo (PLAN §67)
+    "gestionar_apoyo": {"direccion_carrera"},         # ver y atender todos los casos de apoyo estudiantil (PLAN §67)
+    "gestionar_buzon": {"direccion_carrera", "coordinacion_academica"},   # buzón, preguntas frecuentes y servicios de apoyo (PLAN §67)
+    "gestionar_recursos": {"direccion_carrera", "coordinacion_academica"},   # retirar cualquier recurso de la biblioteca (PLAN §67)
+    "gestionar_evaluacion_docente": {"direccion_carrera"},   # crear, anunciar, abrir y cerrar la evaluación docente; ver resultados por docente (PLAN §68)
+    "decidir_gestion": {"direccion_carrera"},         # activar, concluir y reabrir un semestre (PLAN §66)
+    "ver_carga": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
+    # Lectura
+    "ver_todos_los_proyectos": {"direccion_instituto", "comision_calidad"},
+    "ver_propuestas": {"direccion_instituto", "comision_calidad"},
+    "ver_evidencias": {"direccion_instituto", "comision_calidad"},
+    "ver_cv_ajeno": {"direccion_instituto", "direccion_carrera", "comision_calidad"},
+    "ver_informes_institucionales": {"direccion_instituto", "direccion_carrera", "comision_calidad"},
+    "ver_calidad_datos": {"direccion_instituto", "direccion_carrera", "coordinacion_academica", "comision_calidad",
+                          "administracion_sistema"},
+    # Aseguramiento de la Calidad (PLAN §57): la Dirección de Carrera gestiona el marco de su unidad; lo ven también la
+    # Coordinación académica, la Dirección del Instituto (sus indicadores de investigación) y la Comisión de calidad.
+    "gestionar_marco_calidad": {"direccion_carrera"},
+    "registrar_indicadores_calidad": {"direccion_carrera", "gestion_datos"},
+    "ver_marco_calidad": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad",
+                          "gestion_datos"},
+    # Evidencias (PLAN §57, etapa 4): las registran la Dirección de Carrera y la Comisión de calidad (decisión 2); las ven
+    # quienes ven el marco, salvo Gestión de datos (actas y convenios no son de su tarea).
+    "registrar_evidencias_calidad": {"direccion_carrera", "comision_calidad"},
+    "ver_evidencias_calidad": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
+    # Autoevaluación (PLAN §57, etapa 5): la Dirección de Carrera la abre, la concluye y la reabre; los juicios y las
+    # síntesis los registran la Comisión de calidad y la Dirección (decisión 2); la ven quienes ven las evidencias.
+    "gestionar_autoevaluacion": {"direccion_carrera"},
+    "registrar_juicios_calidad": {"direccion_carrera", "comision_calidad"},
+    "ver_autoevaluacion": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
+    # Plan de mejora y evaluación externa (PLAN §57, etapa 6): los gestiona la Dirección de Carrera (decisión 2); el
+    # responsable de una acción registra sus avances aunque no tenga rol (lo decide la ruta).
+    "gestionar_plan_mejora": {"direccion_carrera"},
+    "ver_plan_mejora": {"direccion_carrera", "coordinacion_academica", "direccion_instituto", "comision_calidad"},
+    # Datos que faltaban (PLAN §57, etapa 8): capacitación del personal (Dirección de Carrera y Gestión de datos), convenios
+    # (Dirección de Carrera) e impacto de los proyectos de interacción social (las dos direcciones; también el responsable
+    # del proyecto, lo decide la ruta). Los ven quienes ven el marco de calidad.
+    "registrar_capacitacion": {"direccion_carrera", "gestion_datos"},
+    "registrar_convenios": {"direccion_carrera"},
+    "registrar_impacto_proyectos": {"direccion_carrera", "direccion_instituto"},
+    # IA con criterio humano (PLAN §59): la Dirección de Carrera aprueba la política, activa las funciones y designa a sus
+    # responsables; las dos direcciones y la Comisión de calidad ven el registro de usos y los resultados del piloto.
+    "gestionar_ia": {"direccion_carrera"},
+    "ver_uso_ia": {"direccion_carrera", "direccion_instituto", "comision_calidad"},
+    # Servicios para estudiantes (PLAN §58): comunicados (las dos direcciones y la Coordinación académica; también el
+    # responsable de un proyecto, lo decide la ruta), auxiliaturas de docencia (Carrera) y de investigación (también el
+    # Instituto), y trámites de grado: designar tribunales y registrar resoluciones (decisión 1 del 7-nov-2026).
+    "publicar_comunicados": {"direccion_carrera", "direccion_instituto", "coordinacion_academica"},
+    "gestionar_auxiliaturas": {"direccion_carrera", "coordinacion_academica"},
+    "gestionar_auxiliaturas_investigacion": {"direccion_carrera", "coordinacion_academica", "direccion_instituto"},
+    "gestionar_grado": {"direccion_carrera", "coordinacion_academica"},
+    # «Avisar a los responsables» desde Calidad de datos (la Comisión de calidad solo mira; Administración no decide contenido).
+    "avisar_calidad": {"direccion_instituto", "direccion_carrera", "coordinacion_academica"},
+}
+
+
+def nombre(rol: str) -> str:
+    return ROLES[rol][0]
+
+
+def unidades_de(rol: str) -> list[dict]:
+    """Las unidades de esta instalación en que se puede asignar el rol."""
+    return unidades.de_tipos(ROLES[rol][1])
+
+
+# --- Consultas ---------------------------------------------------------------------------------------
+
+def roles_vigentes(uid: int, fecha: str | None = None) -> list[dict]:
+    f = fecha or date.today().isoformat()
+    return get_db().q("""SELECT r.*, u.sigla FROM rol_asignado r JOIN unidad u ON u.id = r.unidad_id
+                         WHERE r.usuario_id = ? AND r.desde <= ? AND (r.hasta IS NULL OR r.hasta >= ?)
+                         ORDER BY r.rol""", [uid, f, f])
+
+
+def historial(uid: int) -> list[dict]:
+    return get_db().q("""SELECT r.*, u.sigla, a.nombres || ' ' || a.apellidos AS asignado_por_nombre
+                         FROM rol_asignado r JOIN unidad u ON u.id = r.unidad_id
+                         LEFT JOIN usuario a ON a.id = r.asignado_por
+                         WHERE r.usuario_id = ? ORDER BY r.hasta IS NOT NULL, r.desde DESC, r.id DESC""", [uid])
+
+
+def obtener(aid: int) -> dict | None:
+    filas = get_db().q("SELECT * FROM rol_asignado WHERE id = ?", [aid])
+    return filas[0] if filas else None
+
+
+def con_rol(rol: str, unidad: int | None = None) -> list[dict]:
+    """Personas activas con el rol vigente (en la unidad o en una que la contiene)."""
+    filas = get_db().q(
+        f"""SELECT DISTINCT u.*, r.unidad_id AS rol_unidad FROM rol_asignado r JOIN usuario u ON u.id = r.usuario_id
+            WHERE r.rol = ? AND u.activo = 1 AND r.desde <= {HOY} AND (r.hasta IS NULL OR r.hasta >= {HOY})
+            ORDER BY u.apellidos, u.nombres""", [rol])
+    if unidad is None:
+        return filas
+    return [f for f in filas if _cubre(rol, f["rol_unidad"], unidad)]
+
+
+# --- Decisión ------------------------------------------------------------------------------------------
+
+def _cubre(rol: str, unidad_del_rol: int, unidad: int) -> bool:
+    return rol in ROLES_DE_TODA_LA_UNIVERSIDAD or unidad == unidad_del_rol
+
+
+def tiene_rol(usuario: dict, rol: str) -> bool:
+    return any(r["rol"] == rol for r in _roles(usuario))
+
+
+def puede(usuario: dict | None, accion: str, unidad: int | None = None) -> bool:
+    """¿Alguno de los roles vigentes del usuario permite la acción en la unidad (o en alguna, sin
+    unidad)? Una acción desconocida es un error de programación. Las acciones de un módulo apagado no las tiene
+    nadie (PLAN §73)."""
+    if accion not in ACCIONES:
+        raise ValueError(f"Acción desconocida: {accion}")
+    if not usuario or not modulos.accion_activa(accion):
+        return False
+    for r in _roles(usuario):
+        if r["rol"] in ACCIONES[accion] and (unidad is None or _cubre(r["rol"], r["unidad_id"], unidad)):
+            return True
+    return False
+
+
+def _roles(usuario: dict) -> list[dict]:
+    """Los roles cargados en la sesión (auth) o, si no vienen, los de la base."""
+    if "roles" not in usuario:
+        usuario["roles"] = roles_vigentes(usuario["id"])
+    return usuario["roles"]
+
+
+# --- Asignación ------------------------------------------------------------------------------------------
+
+def _fecha(valor) -> str | None:
+    return date.fromisoformat(str(valor)).isoformat() if valor else None
+
+
+def asignar(uid: int, rol: str, unidad_id: int, desde=None, hasta=None, nota: str | None = None,
+            asignado_por: int | None = None) -> list[str]:
+    if rol not in ROLES:
+        return ["Rol no válido."]
+    permitidas = unidades_de(rol)
+    if unidad_id not in [u["id"] for u in permitidas]:
+        return [f"{nombre(rol)} se asigna en: {', '.join(u['sigla'] for u in permitidas)}."]
+    try:
+        d, h = _fecha(desde) or date.today().isoformat(), _fecha(hasta)
+    except ValueError:
+        return ["Fechas no válidas."]
+    if h and h < d:
+        return ["La fecha de término no puede ser anterior a la de inicio."]
+    otros = get_db().q("""SELECT 1 FROM rol_asignado WHERE usuario_id = ? AND rol = ? AND unidad_id = ?
+                          AND desde <= ? AND (hasta IS NULL OR hasta >= ?)""", [uid, rol, unidad_id, h or "9999-12-31", d])
+    if otros:
+        return ["Ya tiene ese rol en esa unidad durante parte de ese periodo."]
+    get_db().t.rol_asignado.insert(usuario_id=uid, rol=rol, unidad_id=unidad_id, desde=d, hasta=h,
+                                   nota=(nota or "").strip() or None, asignado_por=asignado_por)
+    return []
+
+
+def terminar(aid: int, fecha=None) -> list[str]:
+    """Pone el último día de una asignación. Sin fecha, el rol deja de regir hoy: último día, ayer;
+    si empezó hoy o aún no empieza, la asignación se anula (la auditoría conserva ambos pasos).
+    No deja el sistema sin Administración del sistema."""
+    a = obtener(aid)
+    if not a:
+        return ["Asignación no encontrada."]
+    try:
+        f = _fecha(fecha) or (date.today() - timedelta(days=1)).isoformat()
+    except ValueError:
+        return ["Fecha no válida."]
+    anular = fecha is None and f < a["desde"]
+    if f < a["desde"] and not anular:
+        return ["La fecha de término no puede ser anterior al inicio."]
+    if a["rol"] == "administracion_sistema":
+        quedan = [x for x in con_rol("administracion_sistema") if x["id"] != a["usuario_id"]]
+        if not quedan:
+            return ["Es la única persona con Administración del sistema: asígnela a otra antes de terminarla."]
+    if anular:
+        get_db().execute("DELETE FROM rol_asignado WHERE id = ?", [aid])
+    else:
+        get_db().execute("UPDATE rol_asignado SET hasta = ? WHERE id = ?", [f, aid])
+    return []

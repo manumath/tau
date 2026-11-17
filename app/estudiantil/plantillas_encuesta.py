@@ -1,0 +1,126 @@
+"""Encuestas de partida (PLAN §49 y §50). Son borradores: la Dirección las ajusta antes de abrirlas.
+Las preguntas de escala se redactan como afirmaciones (1 = totalmente en desacuerdo, 5 = totalmente de acuerdo)."""
+
+E, S, OP, M, T = "escala", "si_no", "opcion", "multiple", "texto"
+
+PLANTILLAS = {
+    "satisfaccion": {
+        "titulo": "Satisfacción estudiantil", "tipo": "satisfaccion", "anonima": True, "publico": "estudiantes",
+        "descripcion": "Queremos conocer cómo valora su formación en la Carrera para mejorarla. Es anónima.",
+        "preguntas": [
+            ("Las clases de los docentes de la Carrera son claras y están bien organizadas.", E, None),
+            ("El plan de estudios es coherente y las materias se articulan entre sí.", E, None),
+            ("Puedo consultar a mis docentes fuera de clase cuando lo necesito.", E, None),
+            ("Los laboratorios, la biblioteca y los espacios de estudio son adecuados.", E, None),
+            ("Recibo orientación académica suficiente (tutoría, información sobre trámites y opciones).", E, None),
+            ("Tengo oportunidades de participar en investigación, ayudantías o actividades científicas.", E, None),
+            ("La gestión administrativa de la Carrera responde con rapidez a mis solicitudes.", E, None),
+            ("En general, estoy satisfecho(a) con mi formación en la Carrera.", E, None),
+            ("¿Recomendaría la Carrera a otra persona interesada en la matemática?", S, None),
+            ("¿Qué es lo que más debería mejorar la Carrera?", T, None),
+        ]},
+    "bienestar": {
+        "titulo": "Clima y bienestar estudiantil", "tipo": "bienestar", "anonima": True, "publico": "estudiantes",
+        "descripcion": "Nos interesa saber cómo se siente en la Carrera y qué dificulta sus estudios. Es anónima.",
+        "preguntas": [
+            ("Siento que pertenezco a la comunidad de la Carrera.", E, None),
+            ("El trato entre estudiantes, docentes y administrativos es respetuoso.", E, None),
+            ("Mi carga de trabajo académico es manejable.", E, None),
+            ("Sé a quién acudir si tengo un problema personal o académico.", E, None),
+            ("Este semestre, ¿presenció o sufrió algún trato discriminatorio o acoso en la Carrera?", S, None),
+            ("¿Qué dificultades afectan sus estudios?", M, ["Económicas", "Laborales", "De salud", "Familiares",
+                                                           "De transporte o distancia", "Académicas", "Ninguna"]),
+            ("¿Cuánto tiempo semanal dedica a trabajar fuera de la universidad?", OP,
+             ["No trabajo", "Hasta 10 horas", "De 11 a 20 horas", "De 21 a 30 horas", "Más de 30 horas"]),
+            ("¿Qué apoyo le ayudaría más?", T, None),
+        ]},
+    "abandono": {
+        "titulo": "Permanencia y causas de abandono", "tipo": "abandono", "anonima": True, "publico": "estudiantes",
+        "descripcion": "Para apoyar la permanencia en la Carrera, queremos entender qué la dificulta. Es anónima.",
+        "preguntas": [
+            ("¿Ha pensado en dejar la Carrera?", OP, ["No", "Alguna vez", "Con frecuencia", "Estoy por hacerlo"]),
+            ("Si lo ha pensado, ¿por qué motivos?", M, ["Dificultad académica", "Falta de dinero", "Trabajo",
+                                                       "Motivos familiares o de salud", "La Carrera no es lo que esperaba",
+                                                       "Prefiero otra carrera", "Falta de apoyo o de orientación",
+                                                       "Otro"]),
+            ("Me siento acompañado(a) por la Carrera en mis dificultades.", E, None),
+            ("¿Qué cambio le ayudaría a seguir estudiando?", T, None),
+        ]},
+    "egresados": {
+        "titulo": "Seguimiento de egresados", "tipo": "egresados", "anonima": False, "publico": "egresados",
+        "descripcion": "Queremos saber cómo le va después de la Carrera y qué tanto le sirvió su formación.",
+        "preguntas": [
+            ("Situación actual", OP, ["Trabajo en mi área", "Trabajo en otra área", "Estudio un posgrado",
+                                    "Trabajo y estudio", "Busco trabajo", "Otra"], "situacion"),
+            ("Sector donde trabaja", OP, ["Docencia", "Investigación", "Sector público", "Sector privado o empresa",
+                                        "Independiente", "No trabajo"], "sector"),
+            ("¿Cuánto tardó en conseguir su primer empleo después de egresar?", OP,
+             ["Ya trabajaba", "Menos de 6 meses", "De 6 meses a 1 año", "Más de 1 año", "Aún no lo consigo"], "primer_empleo"),
+            ("Lo que aprendí en la Carrera me sirve en mi trabajo o estudios actuales.", E, None, "utilidad"),
+            ("¿Cursó o cursa un posgrado?", OP, ["No", "Sí, en Bolivia", "Sí, en el extranjero"], "posgrado"),
+            ("Ciudad y país donde vive", T, None, "ubicacion"),
+            ("En general, estoy satisfecho(a) con la formación que recibí.", E, None, "satisfaccion"),
+            ("¿Qué debería cambiar la Carrera para formar mejor?", T, None),
+        ]},
+    "perfil_egreso": {
+        "titulo": "Logro del perfil de egreso", "tipo": "perfil_egreso", "anonima": False, "publico": "egresados",
+        "descripcion": "Valore en qué medida la Carrera le permitió desarrollar cada competencia. "
+                       "Ajuste esta lista al perfil de egreso vigente antes de abrir la encuesta.",
+        "preguntas": [
+            ("La Carrera me permitió razonar con rigor y demostrar resultados matemáticos.", E, None),
+            ("Puedo modelar y resolver problemas de otras áreas con herramientas matemáticas.", E, None),
+            ("Puedo programar y usar herramientas computacionales para hacer matemática.", E, None),
+            ("Puedo comunicar ideas matemáticas por escrito y oralmente.", E, None),
+            ("Puedo aprender por mi cuenta temas nuevos y leer literatura científica.", E, None),
+            ("Puedo trabajar en equipos con personas de otras disciplinas.", E, None),
+            ("Actúo con ética profesional y responsabilidad social.", E, None),
+        ]},
+    "empleadores": {
+        "titulo": "Encuesta a empleadores", "tipo": "empleadores", "anonima": False, "publico": "empleadores",
+        "descripcion": "Su opinión sobre los titulados de la Carrera que trabajan o trabajaron con usted nos "
+                       "ayuda a mejorar la formación. Ajuste las competencias al perfil de egreso vigente antes de abrirla.",
+        "preguntas": [
+            ("Los titulados de la Carrera razonan con rigor y resuelven problemas complejos.", E, None, "perfil"),
+            ("Modelan problemas de su organización con herramientas matemáticas.", E, None, "perfil"),
+            ("Usan herramientas computacionales y de programación con solvencia.", E, None, "perfil"),
+            ("Comunican sus ideas con claridad, por escrito y oralmente.", E, None, "perfil"),
+            ("Aprenden por su cuenta y se adaptan a temas nuevos.", E, None, "perfil"),
+            ("Trabajan bien en equipo y con personas de otras disciplinas.", E, None, "perfil"),
+            ("Actúan con ética profesional y responsabilidad.", E, None, "perfil"),
+            ("En general, estoy satisfecho(a) con el desempeño de los titulados de la Carrera.", E, None, "satisfaccion"),
+            ("¿Volvería a contratar a un titulado de la Carrera?", S, None),
+            ("¿Qué conocimientos o habilidades deberían fortalecer?", T, None),
+        ]},
+    "docentes": {
+        "titulo": "Opinión de los académicos", "tipo": "docentes", "anonima": True, "publico": "docentes",
+        "descripcion": "Queremos conocer su opinión sobre las condiciones de trabajo y la gestión de la Carrera. Es anónima.",
+        "preguntas": [
+            ("El plan de estudios es pertinente y está actualizado.", E, None),
+            ("Los estudiantes llegan a mis materias con la preparación necesaria.", E, None),
+            ("Cuento con los recursos (aulas, laboratorios, bibliografía, equipos) que necesito para enseñar.", E, None),
+            ("Tengo tiempo y apoyo para investigar.", E, None),
+            ("La Carrera me ofrece oportunidades de capacitación y actualización.", E, None),
+            ("La gestión de la Carrera es transparente y toma en cuenta la opinión de los académicos.", E, None),
+            ("El clima de trabajo entre colegas es bueno.", E, None),
+            ("En general, estoy satisfecho(a) con mi trabajo en la Carrera.", E, None, "satisfaccion"),
+            ("¿Qué debería mejorar la Carrera?", T, None),
+        ]},
+    # PLAN §59, etapa 4: percepción del uso de la IA en TAU, una vez por gestión. Tipo «otra»: no entra en los
+    # indicadores de satisfacción de los académicos.
+    "percepcion_ia": {
+        "titulo": "Percepción del uso de la IA en TAU", "tipo": "otra", "anonima": True, "publico": "docentes",
+        "descripcion": ("Queremos saber cómo le resultan las funciones de IA del sistema (borradores y sugerencias que "
+                        "usted revisa). Es anónima y no influye en ninguna evaluación."),
+        "preguntas": [
+            ("¿Usó alguna función de IA de TAU en esta gestión?", S, None),
+            ("¿Cuáles usó?", M, ["Memoria o informe de proyecto", "Resumen del perfil", "Líneas de un producto",
+                                 "Síntesis de encuestas", "Autoevaluación (evidencias o narrativa)", "Ninguna"]),
+            ("Los borradores de la IA me ahorran tiempo.", E, None),
+            ("Reviso con cuidado lo que propone la IA antes de aprobarlo.", E, None),
+            ("Encontré errores o datos inventados en lo que propuso la IA.", E, None),
+            ("Sé qué datos usa la IA y cuáles no salen del sistema.", E, None),
+            ("Me siento con la preparación necesaria para usar la IA de forma crítica.", E, None),
+            ("¿Qué capacitación en IA o competencias digitales le serviría?", T, None),
+            ("¿Qué cambiaría del uso de la IA en TAU?", T, None),
+        ]},
+}

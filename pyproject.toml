@@ -1,0 +1,54 @@
+[project]
+name = "tau"
+version = "0.1.0"
+description = "TAU: sistema integrado de gestión académica y científica de una carrera universitaria y su instituto (FastHTML + HTMX)"
+authors = [
+    { name = "Charlie" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "bibtexparser>=2.0.1",
+    "fastlite>=0.2.4",
+    "fastmigrate>=0.5.3",
+    "httpx2>=2.13.1",
+    "lxml>=6.1.3",
+    "monsterui>=1.0.47",
+    "openpyxl>=3.1.5",
+    "pillow>=12.3.0",
+    "python-fasthtml>=0.14.13",
+]
+
+[dependency-groups]
+dev = [
+    "playwright==1.65.1",
+    "pytest>=9.1.1",
+    "pytest-playwright==0.10.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+# Revisión de código: `uvx ruff check app scripts tests main.py` (reemplaza a pyflakes; PLAN.md §48, paso 6).
+# Reglas: pyflakes (F), pycodestyle (E, W) y bugbear (B, errores frecuentes). Sin el largo de línea (E501),
+# que es solo estilo. F811 se omite en las rutas: FastHTML define varias funciones `get`/`post` a propósito.
+[tool.ruff]
+line-length = 120
+extend-exclude = [".herramientas", "data", "static"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "B"]
+# E501: largo de línea (estilo). B905: zip() sin strict=; varias listas paralelas se completan a propósito.
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/rutas/**" = ["F811"]
+"app/comun/auth.py" = ["F811"]
+"main.py" = ["E402"]   # la zona horaria se fija antes de importar la aplicación
+"app/inicio.py" = ["F811"]
+"app/busqueda.py" = ["F811"]
+"tests/**" = ["F811", "F401"]   # los fixtures se importan de otras pruebas (pytest los usa por nombre)

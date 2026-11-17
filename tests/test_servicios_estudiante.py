@@ -1,0 +1,828 @@
+"""PLAN §67: servicios nuevos del estudiante. Reutiliza las cuentas y el ingreso de test_portal_estudiante."""
+from app.academico import planes
+from app.comun import permisos, unidades, usuarios
+from app.comun.db import get_db
+from app.estudiantil import mi_plan, tutoria
+from tests.conftest import HX, PASS_TEMP, login
+from tests.test_portal_estudiante import (_aceptar, _externo, _ingresar, estudiantes_cargados, sofia)  # noqa: F401
+
+
+def _con_plan(ru="1111111", programa="Licenciatura en Matemática"):
+    plan = next(p for p in planes.listar() if p["programa"] == programa)
+    get_db().execute("UPDATE estudiante SET plan_id = ? WHERE registro_universitario = ?", [plan["id"], ru])
+    return plan
+
+
+def _aid(sigla):
+    return get_db().q("SELECT id FROM asignatura WHERE sigla = ?", [sigla])[0]["id"]
+
+
+# --- Etapa 1: Mi plan de estudios -----------------------------------------------------------------------------------
+
+def test_mi_plan_marca_y_avance(sofia):
+    plan = _con_plan()
+    ext = _externo("1111111")
+    assert mi_plan.plan_de(ext)["id"] == plan["id"]
+    av = mi_plan.avance(ext, plan)
+    assert (av["hechas"], av["pct"]) == (0, 0) and av["obligatorias"] > 20
+    disponibles = {f["sigla"] for f in av["disponibles"]}
+    assert "MAT-111" in disponibles and "MAT-131" not in disponibles            # MAT-131 pide MAT-111
+    assert mi_plan.marcar(ext, _aid("MAT-111"), plan["id"]) is True
+    av = mi_plan.avance(ext, plan)
+    assert av["hechas"] == 1 and "MAT-131" in {f["sigla"] for f in av["disponibles"]}
+    assert mi_plan.marcar(ext, _aid("MAT-111"), plan["id"]) is False             # alterna
+    assert mi_plan.marcar(ext, 99999, plan["id"]) is None   # no es del plan
+    # «Egresado»: el trabajo final no está disponible hasta tener todas las demás obligatorias.
+    final = next(f for s in av["semestres"] for f in s["filas"] if f["tipo"] == "trabajo_final")
+    assert final["estado"] == "bloqueada"
+
+
+def test_mi_plan_pantalla_y_privacidad(client, sofia):
+    plan = _con_plan()
+    r = client.get("/estudiante/plan")
+    assert "Mi plan de estudios" in r.text and "obligatorias aprobadas" in r.text and plan["nombre"] in r.text
+    assert "Es una ayuda personal" in r.text and "Kardex" in r.text
+    aid = _aid("MAT-111")
+    r = client.post(f"/estudiante/plan/marca/{aid}", headers=HX)
+    assert 'id="mi-plan"' in r.text and "1 de" in r.text
+    assert client.post("/estudiante/plan/marca/99999", headers=HX).status_code == 404
+    assert not mi_plan.comparte(_externo("1111111"))
+    client.post("/estudiante/plan/compartir", headers=HX, data={"comparte": "1"})
+    assert mi_plan.comparte(_externo("1111111"))
+    client.post("/estudiante/plan/compartir", headers=HX, data={})
+    assert not mi_plan.comparte(_externo("1111111"))
+    # Sin plan registrado: lo dice.
+    get_db().execute("UPDATE estudiante SET plan_id = NULL")
+    assert "todavía no está registrado" in client.get("/estudiante/plan").text
+
+
+def test_el_tutor_ve_el_avance_solo_si_el_estudiante_lo_comparte(client, sofia, estudiantes_cargados):
+    _con_plan()
+    ext = _externo("1111111")
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    from app.comun import vinculos
+    vinculos.agregar(emmy, "titular", "2020-01-01")
+    assert tutoria.asignar(ext, emmy, None) == []
+    mi_plan.marcar(ext, _aid("MAT-111"), mi_plan.plan_de(ext)["id"])
+    assert mi_plan.para_tutor(emmy, ext) is None                                  # no lo comparte
+    client.post("/estudiante/plan/compartir", headers=HX, data={"comparte": "1"})
+    av = mi_plan.para_tutor(emmy, ext)
+    assert av and av["hechas"] == 1
+    assert mi_plan.para_tutor(usuarios.por_email("admin@test.cl")["id"], ext) is None   # ni la administración
+    client.post("/logout")
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    login(client, "inv@test.cl", PASS_TEMP)
+    r = client.get(f"/tutoria/{ext}")
+    assert "Avance en su plan" in r.text and "1 de" in r.text
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert "Avance en su plan" not in client.get(f"/tutoria/{ext}").text            # la Dirección no lo ve
+
+
+def test_el_menu_del_estudiante_esta_agrupado(client, sofia):
+    r = client.get("/estudiante")
+    for texto in ("Mi carrera", "Mi plan de estudios", "Servicios", "Comunicados", "Auxiliaturas"):
+        assert texto in r.text
+    assert "Más" in r.text                                                          # la barra del teléfono
+
+
+# --- Etapa 2: calendario académico ---------------------------------------------------------------------------------------
+
+def test_el_calendario_reune_las_fechas_del_estudiante(sofia):
+    from datetime import date, timedelta
+    from app.academico import gestiones
+    from app.estudiantil import calendario
+    ext = _externo("1111111")
+    hoy = date.today()
+    g = gestiones.crear_anio(hoy.year + 1)[0]                 # I-(año+1): sus fechas caen a menos de 120 días solo a veces
+    get_db().execute("UPDATE gestion_academica SET fecha_inicio = ? WHERE id = ?", [(hoy + timedelta(days=10)).isoformat(), g["id"]])
+    # Un evento al que lo convocan, otro para todos, uno de otra persona y uno en borrador.
+    u = estudiantes_uid(ext)
+    def ev(**k):
+        return get_db().t.comunicado.insert(tipo="evento", titulo=k["t"], publica_como="direccion_carrera",
+                                            para_todos=k.get("todos", 0), inicio=k.get("inicio"), lugar="Aula 1",
+                                            estado=k.get("estado", "publicado"), creado_por=1)["id"]
+    manana = (hoy + timedelta(days=1)).strftime("%Y-%m-%dT15:00")
+    mio = ev(t="Seminario", inicio=manana)
+    ev(t="Feria", inicio=manana, todos=1)
+    ev(t="Ajeno", inicio=manana)
+    ev(t="Borrador", inicio=manana, estado="borrador")
+    get_db().t.comunicado_destinatario.insert(comunicado_id=mio, usuario_id=u)
+    get_db().t.convocatoria_auxiliatura.insert(gestion_id=g["id"], modalidad="docencia", numero=1, titulo="Auxiliaturas I",
+                                               estado="publicada", cierre=(hoy + timedelta(days=5)).strftime("%Y-%m-%dT18:00"),
+                                               examen=(hoy + timedelta(days=9)).strftime("%Y-%m-%dT09:00"), creado_por=1)
+    titulos = [e["titulo"] for e in calendario.eventos(ext)]
+    assert "Seminario" in titulos and "Feria" in titulos and "Ajeno" not in titulos and "Borrador" not in titulos
+    assert any(t.startswith("Cierra la recepción") for t in titulos) and "Inicia I-%d" % (hoy.year + 1) in titulos
+    assert titulos == [e["titulo"] for e in sorted(calendario.eventos(ext), key=lambda e: (e["fecha"], e["hora"], e["titulo"]))]
+    assert all(e["fecha"] >= hoy.isoformat() for e in calendario.eventos(ext))
+    assert calendario.eventos(ext, hoy, hoy) == []
+
+
+def estudiantes_uid(ext):
+    return get_db().q("SELECT usuario_id FROM cuenta_estudiante WHERE externo_id = ?", [ext])[0]["usuario_id"]
+
+
+def test_pantalla_del_calendario_y_archivo_ics(client, sofia):
+    from datetime import date, timedelta
+    hoy = date.today()
+    inicio = (hoy + timedelta(days=2)).strftime("%Y-%m-%dT15:30")
+    get_db().t.comunicado.insert(tipo="evento", titulo="Charla de, prueba; con signos", publica_como="direccion_carrera", para_todos=1,
+                                 inicio=inicio, lugar="Auditorio", estado="publicado", creado_por=1)
+    r = client.get("/estudiante/calendario")
+    assert "Calendario académico" in r.text and "Charla de, prueba; con signos" in r.text and "15:30" in r.text
+    assert "30 días" in r.text and "Llevar a mi calendario" in r.text
+    r = client.get("/estudiante/calendario.ics")
+    assert r.headers["content-type"].startswith("text/calendar") and "attachment" in r.headers["content-disposition"]
+    assert "BEGIN:VCALENDAR" in r.text and "SUMMARY:Charla de\\, prueba\\; con signos" in r.text
+    assert f"DTSTART:{(hoy + timedelta(days=2)):%Y%m%d}T153000" in r.text and r.text.endswith("END:VCALENDAR\r\n")
+    assert "Calendario" in client.get("/estudiante").text
+
+
+# --- Etapa 3: tutoría desde el estudiante ------------------------------------------------------------------------------
+
+def _con_tutor(ext):
+    from app.comun import vinculos
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    vinculos.agregar(emmy, "titular", "2020-01-01")
+    assert tutoria.asignar(ext, emmy, None) == []
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    return emmy
+
+
+def test_solicitar_programar_y_atender_una_reunion(sofia, buzon):
+    from datetime import datetime, timedelta
+    ext = _externo("1111111")
+    assert tutoria.solicitar(ext, "academico", "")[0].startswith("Aún no tiene tutor")
+    emmy = _con_tutor(ext)
+    assert tutoria.solicitar(ext, "x", "")[0].startswith("Elija")
+    assert tutoria.solicitar(ext, "academico", "x" * 1001)[0].startswith("El mensaje")
+    assert tutoria.solicitar(ext, "academico", "Quisiera hablar de mis materias") == []
+    assert "ya tiene una solicitud abierta" in tutoria.solicitar(ext, "otro", "")[0].lower()
+    [s] = tutoria.solicitudes_abiertas_de_tutor(emmy)
+    assert (s["estado"], s["tema"], s["nombres"]) == ("pendiente", "academico", "Sofía")
+    from app.comun import notificaciones
+    assert any("Reunión pedida" in n["asunto"] for n in notificaciones.recientes(emmy))
+    assert tutoria.programar(s["id"], emmy, "", "")[0].startswith("Indique la fecha")
+    assert tutoria.programar(s["id"], emmy, "2020-01-01T10:00", "")[0].startswith("La reunión debe ser en el futuro")
+    otro = usuarios.por_email("admin@test.cl")["id"]
+    assert tutoria.programar(s["id"], otro, "2099-01-01T10:00", "")[0].startswith("Esa solicitud no está abierta")
+    cuando = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%dT10:00")
+    assert tutoria.programar(s["id"], emmy, cuando, "Aula 3") == []
+    assert tutoria.solicitudes_de(ext)[0]["estado"] == "programada"
+    from app.estudiantil import calendario
+    assert any(e["tipo"] == "tutoria" and e["detalle"] == "Aula 3" for e in calendario.eventos(ext))
+    assert tutoria.atender(s["id"], emmy) == [] and tutoria.solicitudes_abiertas_de_tutor(emmy) == []
+    assert tutoria.solicitar(ext, "otro", "") == [] and tutoria.cancelar(tutoria.solicitudes_de(ext)[0]["id"], ext) == []
+    assert tutoria.cancelar(s["id"], ext)[0].startswith("Esa solicitud no está abierta")      # ya atendida
+
+
+def test_pantallas_de_tutoria_del_estudiante_y_del_tutor(client, sofia):
+    from datetime import datetime, timedelta
+    ext = _externo("1111111")
+    r = client.get("/estudiante/tutoria")
+    assert "Todavía no tiene tutor" in r.text
+    emmy = _con_tutor(ext)
+    tutoria.registrar(ext, emmy, {"fecha": "2026-10-01", "modalidad": "presencial", "tema": "otro",
+                                  "resumen": "Texto reservado del tutor", "acuerdos": "", "derivacion": "ninguna"})
+    r = client.get("/estudiante/tutoria")
+    assert "Mi tutor(a)" in r.text and "1: 1 oct 2026" in r.text and "Texto reservado del tutor" not in r.text
+    assert "confidencial" in r.text and "Pedir una reunión" in r.text
+    r = client.post("/estudiante/tutoria/solicitud", data={"tema": "economico", "mensaje": "Necesito orientación"},
+                    follow_redirects=False)
+    assert r.headers["location"] == "/estudiante/tutoria"
+    r = client.get("/estudiante/tutoria")
+    assert "Económico" in r.text and "Pendiente" in r.text and "Ya tiene una solicitud abierta" in r.text
+    sid = tutoria.solicitudes_de(ext)[0]["id"]
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "Pidió una reunión" in client.get("/tutoria").text
+    r = client.get(f"/tutoria/{ext}")
+    assert "Reunión pedida por el estudiante" in r.text and "Necesito orientación" in r.text
+    cuando = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%dT09:30")
+    r = client.post(f"/tutoria/{ext}/solicitudes/{sid}/programar", data={"fecha_reunion": cuando, "respuesta": "Oficina 5"},
+                    follow_redirects=False)
+    assert r.status_code == 303 and tutoria.solicitudes_de(ext)[0]["estado"] == "programada"
+    # Otro docente no toca la solicitud.
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    assert client.post(f"/tutoria/{ext}/solicitudes/{sid}/atender", follow_redirects=False).status_code == 403
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    r = client.get("/estudiante/tutoria")
+    assert "Programada" in r.text and "Oficina 5" in r.text
+    client.post(f"/estudiante/tutoria/solicitud/{sid}/cancelar", follow_redirects=False)
+    assert tutoria.solicitudes_de(ext)[0]["estado"] == "cancelada"
+    assert client.post("/estudiante/tutoria/solicitud/99999/cancelar", follow_redirects=False).status_code == 404
+
+
+# --- Etapa 4: oportunidades -------------------------------------------------------------------------------------------------
+
+def _dir(client):
+    """Entra como la administración con la Dirección de Carrera (quien publica oportunidades)."""
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    return usuarios.por_email("admin@test.cl")
+
+
+def _datos(**k):
+    return {"tipo": "beca", "titulo": "Beca de excelencia", "descripcion": "Para estudiantes destacados", "para": "estudiantes",
+            "cierre": "2099-12-31", **k}
+
+
+def test_crear_publicar_postular_y_decidir(sofia):
+    from app.servicios import oportunidades as op
+    ext = _externo("1111111")
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert op.crear(_datos(titulo=""), admin)[1][0].startswith("El título")
+    assert "enlace" in op.crear(_datos(enlace="ftp://x"), admin)[1][0].lower()
+    assert "cierre" in op.crear(_datos(cierre="mañana"), admin)[1][0].lower()
+    oid, errores = op.crear(_datos(enlace="https://ejemplo.org/beca", plazas="2"), admin)
+    assert errores == [] and op.obtener(oid)["estado"] == "borrador"
+    assert op.para_estudiante(ext) == []                                              # un borrador no se ve
+    assert op.postular(oid, ext, "")[0].startswith("Esa oportunidad no está disponible")
+    assert op.cambiar_estado(oid, "cerrada", admin)[0].startswith("Ese cambio")
+    assert op.cambiar_estado(oid, "publicada", admin) == []
+    assert [o["id"] for o in op.para_estudiante(ext)] == [oid] and op.para_estudiante(ext, "empleo") == []
+    assert op.postular(oid, ext, "x" * 1001)[0].startswith("El mensaje")
+    assert op.postular(oid, ext, "Me interesa") == []
+    assert op.postular(oid, ext, "")[0] == "Ya postuló a esta oportunidad."
+    [x] = op.postulaciones(oid)
+    assert (x["nombres"], x["estado"], x["registro_universitario"]) == ("Sofía", "postulada", "1111111")
+    assert op.decidir(x["id"], "pendiente", "", admin)[0].startswith("Elija una decisión")
+    assert op.decidir(x["id"], "seleccionada", "Felicitaciones", admin) == []
+    assert op.postulacion_de(oid, ext)["estado"] == "seleccionada"
+    from app.comun import notificaciones
+    uid = estudiantes_uid(ext)
+    assert any("Seleccionada" in n["asunto"] for n in notificaciones.recientes(uid))
+    assert op.retirar(oid, ext)[0].startswith("No hay una postulación")                # ya decidida
+    # Retirar y volver a postular, antes de la decisión.
+    oid2, _ = op.crear(_datos(titulo="Pasantía", tipo="pasantia"), admin)
+    op.cambiar_estado(oid2, "publicada", admin)
+    assert op.postular(oid2, ext, "") == [] and op.retirar(oid2, ext) == [] and op.postular(oid2, ext, "otra vez") == []
+    assert op.postulacion_de(oid2, ext)["estado"] == "postulada"
+    assert op.cambiar_estado(oid, "cerrada", admin) == []
+    assert "cerrada" in op.actualizar(oid, _datos(), admin)[0]
+
+
+def test_el_empleo_es_para_egresados_y_la_ayudantia_para_el_responsable(sofia):
+    from app.investigacion import proyectos
+    from app.servicios import oportunidades as op
+    ext = _externo("1111111")
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    oid, _ = op.crear(_datos(tipo="empleo", titulo="Analista de datos", para=""), admin)
+    assert op.obtener(oid)["para"] == "egresados"                                      # por omisión
+    op.cambiar_estado(oid, "publicada", admin)
+    assert op.para_estudiante(ext) == []                                              # quien cursa no lo ve
+    get_db().execute("UPDATE estudiante SET estado = 'titulado', fecha_titulacion = '2025-12-01' WHERE registro_universitario = '1111111'")
+    assert [o["id"] for o in op.para_estudiante(ext)] == [oid]
+    # Ayudantía: la publica el responsable del proyecto, no cualquier docente.
+    emmy = {**usuarios.por_email("inv@test.cl")}
+    pid = proyectos.crear(dict(nombre="Anillos", estado="vigente", fecha_inicio="2026-01-01"), emmy["id"], emmy["id"])
+    assert op.puede_publicar(emmy) and op.crear(_datos(tipo="beca"), emmy)[1][0].startswith("Este tipo")
+    assert "proyecto" in op.crear(_datos(tipo="ayudantia"), emmy)[1][0]
+    otro = usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP)
+    assert op.crear(_datos(tipo="ayudantia", proyecto_id=str(pid)), {**otro, "roles": []})[1][0].startswith("Solo el responsable")
+    aid, errores = op.crear(_datos(tipo="ayudantia", titulo="Ayudante en Anillos", proyecto_id=str(pid)), emmy)
+    assert errores == [] and op.puede_gestionar(emmy, op.obtener(aid)) and not op.puede_gestionar({**otro, "roles": []}, op.obtener(aid))
+    assert [o["id"] for o in op.listar(emmy)] == [aid]
+
+
+def test_pantallas_de_oportunidades(client, sofia):
+    from app.servicios import oportunidades as op
+    ext = _externo("1111111")
+    r = client.get("/estudiante/oportunidades")
+    assert "No hay oportunidades abiertas" in r.text and "Oportunidades" in r.text
+    assert client.get("/servicios/oportunidades", follow_redirects=False).status_code == 303   # no es del personal
+    admin = _dir(client)
+    assert "Oportunidades" in client.get("/").text
+    r = client.post("/servicios/oportunidades", data=_datos(titulo="Beca Ejemplo"), follow_redirects=False)
+    oid = int(r.headers["location"].rsplit("/", 1)[1])
+    assert client.get(f"/servicios/oportunidades/{oid}").status_code == 200
+    r = client.post("/servicios/oportunidades", data={"tipo": "beca", "titulo": ""})
+    assert "El título es obligatorio" in r.text
+    client.post(f"/servicios/oportunidades/{oid}/publicar", follow_redirects=False)
+    assert op.obtener(oid)["estado"] == "publicada"
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    r = client.get("/estudiante/oportunidades")
+    assert "Beca Ejemplo" in r.text and "Cierra el 31 dic 2099" in r.text
+    r = client.get(f"/estudiante/oportunidades/{oid}")
+    assert "Postular" in r.text and "Para estudiantes destacados" in r.text
+    client.post(f"/estudiante/oportunidades/{oid}/postular", data={"mensaje": "Quiero"}, follow_redirects=False)
+    assert "Mi postulación" in client.get(f"/estudiante/oportunidades/{oid}").text
+    assert "Postulada" in client.get("/estudiante/oportunidades").text
+    assert client.get("/estudiante/oportunidades/99999").status_code == 404
+    # El estudiante no entra a las pantallas de quien publica.
+    assert client.get(f"/servicios/oportunidades/{oid}", follow_redirects=False).status_code == 303
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    r = client.get(f"/servicios/oportunidades/{oid}")
+    assert "Postulaciones (1)" in r.text and "Sofía" in r.text and "Mamani" in r.text
+    pid = op.postulaciones(oid)[0]["id"]
+    client.post(f"/servicios/oportunidades/{oid}/postulaciones/{pid}/preseleccionada", data={"nota": "Entrevista"},
+                follow_redirects=False)
+    assert op.postulacion_de(oid, ext)["estado"] == "preseleccionada" and op.postulacion_de(oid, ext)["nota"] == "Entrevista"
+    assert admin
+
+
+# --- Etapa 5: banco de temas de grado -----------------------------------------------------------------------------------------
+
+def _docente():
+    from app.comun import vinculos
+    emmy = usuarios.por_email("inv@test.cl")["id"]
+    vinculos.agregar(emmy, "titular", "2020-01-01")
+    usuarios.cambiar_password(emmy, PASS_TEMP, temporal=False)
+    return {**usuarios.por_email("inv@test.cl")}
+
+
+def test_publicar_pedir_y_aceptar_un_tema(sofia):
+    from app.servicios import temas
+    ext = _externo("1111111")
+    doc = _docente()
+    assert temas.crear({"titulo": ""}, doc)[1][0].startswith("El título")
+    assert temas.crear({"titulo": "T", "cupos": "99"}, doc)[1][0].startswith("Los cupos")
+    tid, e = temas.crear({"titulo": "Coloraciones de grafos", "descripcion": "Polinomio cromático", "cupos": "1",
+                          "modalidad": "tesis"}, doc)
+    assert e == [] and temas.disponibles() == []                                       # borrador
+    assert temas.solicitar(tid, ext, "")[0] == "Ese tema no está disponible."
+    assert temas.cambiar_estado(tid, "publicado", doc) == []
+    assert [t["id"] for t in temas.disponibles()] == [tid] and temas.disponibles("grafos") != [] and temas.disponibles("zzz") == []
+    assert temas.disponibles(modalidad="proyecto_grado") == []                         # el tema es solo para tesis
+    assert temas.solicitar(tid, ext, "Me interesa") == []
+    assert temas.solicitar(tid, ext, "")[0] == "Ya pidió este tema."
+    [s] = temas.solicitudes(tid)
+    assert (s["nombres"], s["estado"], s["registro_universitario"]) == ("Sofía", "pendiente", "1111111")
+    from app.comun import notificaciones
+    assert any("Pidieron su tema" in n["asunto"] for n in notificaciones.recientes(doc["id"]))
+    otro = {**usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP), "roles": []}
+    assert temas.responder(s["id"], True, "", otro)[0].startswith("Esa solicitud no está pendiente")
+    assert temas.responder(s["id"], True, "Adelante", doc) == []
+    assert temas.aceptado_para(ext, tid)["titulo"] == "Coloraciones de grafos" and temas.disponibles() == []   # sin cupos
+    assert temas.responder(s["id"], False, "", doc)[0].startswith("Esa solicitud no está pendiente")
+    assert "Aceptaron su pedido" in notificaciones.recientes(estudiantes_uid(ext))[0]["asunto"]
+    assert temas.actualizar(tid, {"titulo": "X", "cupos": "1"}, doc) == []
+    assert temas.cambiar_estado(tid, "retirado", doc) == [] and temas.actualizar(tid, {"titulo": "Y"}, doc)[0].startswith("No puede")
+
+
+def test_pantallas_de_temas_y_perfil_con_el_tema(client, sofia):
+    from app.servicios import temas
+    ext = _externo("1111111")
+    doc = _docente()
+    tid, _ = temas.crear({"titulo": "Grafos y álgebra", "descripcion": "Un tema", "modalidad": "cualquiera", "cupos": "2"}, doc)
+    temas.cambiar_estado(tid, "publicado", doc)
+    r = client.get("/estudiante/temas")
+    assert "Grafos y álgebra" in r.text and "Temas de grado" in r.text
+    r = client.get(f"/estudiante/temas/{tid}")
+    assert "Pedirle ser mi tutor(a)" in r.text and "Un tema" in r.text
+    client.post(f"/estudiante/temas/{tid}/pedir", data={"mensaje": "Hola"}, follow_redirects=False)
+    assert "Pendiente" in client.get(f"/estudiante/temas/{tid}").text
+    assert client.get("/estudiante/temas/99999").status_code == 404
+    # El docente responde por la pantalla.
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "Grafos y álgebra" in client.get("/servicios/temas").text
+    r = client.get(f"/servicios/temas/{tid}")
+    assert "Pedidos de tutoría (1)" in r.text and "Mamani" in r.text
+    sid = temas.solicitudes(tid)[0]["id"]
+    client.post(f"/servicios/temas/{tid}/solicitudes/{sid}/aceptar", data={"respuesta": "Bienvenida"}, follow_redirects=False)
+    assert temas.solicitud_de(tid, ext)["estado"] == "aceptada"
+    # El estudiante empieza su perfil con el tema: título y tutor ya puestos.
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    assert "Empezar mi perfil con este tema" in client.get("/estudiante/temas").text
+    r = client.get(f"/estudiante/grado/nuevo?tema={tid}")
+    assert 'value="Grafos y álgebra"' in r.text and "que aceptó Emmy Noether" in r.text
+    assert f'value="{doc["id"]}" selected' in r.text or f'value="{doc["id"]}"' in r.text
+    assert "Grafos y álgebra" not in client.get("/estudiante/grado/nuevo").text         # sin el tema, el formulario va vacío
+    assert "Grafos" not in client.get("/estudiante/grado/nuevo?tema=99999").text
+    # Quien no es docente no publica.
+    assert client.get("/servicios/temas", follow_redirects=False).status_code == 303
+
+
+# --- Etapa 6: eventos con inscripción ---------------------------------------------------------------------------------------
+
+def _evento_con_inscripcion(cupos="1"):
+    from datetime import datetime, timedelta
+    from app.servicios import comunicados as com
+    inicio = (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%dT15:00")
+    opciones = [("direccion_carrera", "Dirección de Carrera")]
+    x, errores = com.validar({"tipo": "evento", "titulo": "Curso corto de LaTeX", "publica_como": "direccion_carrera",
+                              "inicio": inicio, "lugar": "Laboratorio", "inscripcion": "1", "cupos": cupos, "horas": "8",
+                              "certificado": "1"}, opciones)
+    assert errores == []
+    cid = com.crear(x, 1)
+    ext_s, ext_l = _externo("1111111"), _externo("2222222")
+    com.agregar_convocados(cid, [estudiantes_uid(ext_s), estudiantes_uid(ext_l)])
+    assert com.publicar(cid) == []
+    return cid, estudiantes_uid(ext_s), estudiantes_uid(ext_l)
+
+
+def test_validar_la_inscripcion(app):
+    from app.servicios import comunicados as com
+    base = {"tipo": "evento", "titulo": "T", "publica_como": "direccion_carrera", "inicio": "2030-01-01T10:00",
+            "inscripcion": "1"}
+    o = [("direccion_carrera", "D")]
+    assert "cupos" in com.validar({**base, "cupos": "0"}, o)[1][0].lower()
+    assert "horas" in com.validar({**base, "horas": "x"}, o)[1][0].lower()
+    x, e = com.validar({**base, "cupos": "30", "horas": "4", "certificado": "1"}, o)
+    assert e == [] and (x["inscripcion"], x["cupos"], x["horas"], x["certificado"]) == (1, 30, 4, 1)
+    x, e = com.validar({**base, "tipo": "comunicado", "cupos": "30"}, o)                 # solo un evento inscribe
+    assert (x["inscripcion"], x["cupos"], x["certificado"]) == (0, None, 0)
+    assert com.validar({**base, "cupos": "", "certificado": "1"}, o)[0]["cupos"] is None
+
+
+def test_cupos_lista_de_espera_y_certificado(estudiantes_cargados):
+    from app.servicios import comunicados as com
+    from app.comun import notificaciones
+    cid, sofia_u, luis_u = _evento_con_inscripcion()
+    assert com.inscribir(cid, sofia_u) == [] and com.inscribir(cid, luis_u) == []
+    assert com.mi_inscripcion(cid, sofia_u)["estado"] == "inscrito"
+    espera = com.mi_inscripcion(cid, luis_u)
+    assert (espera["estado"], espera["posicion"]) == ("espera", 1) and com.cupos_libres(com.obtener(cid)) == 0
+    assert com.inscribir(cid, luis_u) == ["Ya está inscrito."]
+    otro = usuarios.por_email("inv@test.cl")["id"]
+    assert com.inscribir(cid, otro)[0].startswith("La inscripción a este evento no está abierta")     # no lo recibió
+    assert [i["estado"] for i in com.inscripciones(cid)] == ["inscrito", "espera"]
+    assert com.cancelar_inscripcion(cid, sofia_u) == []                                          # entra Luis
+    assert com.mi_inscripcion(cid, luis_u)["estado"] == "inscrito" and com.mi_inscripcion(cid, sofia_u) is None
+    assert any("Tiene un cupo" in n["asunto"] for n in notificaciones.recientes(luis_u))
+    assert com.cancelar_inscripcion(cid, sofia_u) == ["No está inscrito."]
+    # Certificado: solo quien se inscribió y asistió, y cuando el organizador registró la asistencia.
+    assert com.certificado(cid, luis_u) is None
+    get_db().execute("UPDATE comunicado SET inicio = '2020-01-01T10:00' WHERE id = ?", [cid])
+    assert com.puede_registrar_asistencia(com.obtener(cid)) and com.inscribir(cid, sofia_u)[0].startswith("La inscripción")
+    com.registrar_asistencia(cid, {luis_u})
+    cert = com.certificado(cid, luis_u)
+    assert cert["horas"] == 8 and cert["codigo"].startswith("TAU-") and len(cert["codigo"]) == 14
+    assert com.certificado(cid, luis_u)["codigo"] == cert["codigo"] and com.certificado(cid, sofia_u) is None
+
+
+def test_pantallas_de_inscripcion_y_certificado(client, sofia):
+    from app.servicios import comunicados as com
+    cid, sofia_u, luis_u = _evento_con_inscripcion("1")
+    com.inscribir(cid, luis_u)                                   # Luis ocupa el único cupo
+    r = client.get(f"/estudiante/comunicados/{cid}")
+    assert "Inscripción" in r.text and "Cupos: 0 libres de 1" in r.text and "Anotarme en la lista de espera" in r.text
+    client.post(f"/estudiante/comunicados/{cid}/inscripcion", follow_redirects=False)
+    r = client.get(f"/estudiante/comunicados/{cid}")
+    assert "posición 1" in r.text and "Cancelar mi inscripción" in r.text and "certificado de participación" in r.text
+    assert client.get(f"/estudiante/comunicados/{cid}/certificado").status_code == 404
+    client.post(f"/estudiante/comunicados/{cid}/inscripcion/cancelar", follow_redirects=False)
+    assert com.mi_inscripcion(cid, sofia_u) is None
+    client.post(f"/estudiante/comunicados/{cid}/inscripcion", follow_redirects=False)
+    com.cancelar_inscripcion(cid, luis_u)                         # Sofía pasa a inscrita
+    get_db().execute("UPDATE comunicado SET inicio = '2020-01-01T10:00' WHERE id = ?", [cid])
+    com.registrar_asistencia(cid, {sofia_u})
+    r = client.get(f"/estudiante/comunicados/{cid}")
+    assert "Ver mi certificado de participación" in r.text and "La inscripción ya cerró" not in r.text
+    r = client.get(f"/estudiante/comunicados/{cid}/certificado")
+    assert "Certificado de participación" in r.text and "Curso corto de LaTeX" in r.text and "8 horas académicas" in r.text
+    assert "Código de verificación: TAU-" in r.text and "Sofía" in r.text
+
+
+# --- Etapa 7: encuestas con retorno -------------------------------------------------------------------------------------------
+
+def _encuesta_de_sofia(anonima=1, cierra=None):
+    from app.estudiantil import encuestas
+    from tests.test_encuestas import _respuestas_validas
+    eid = encuestas.crear_desde_plantilla("satisfaccion", None)
+    get_db().execute("UPDATE encuesta SET anonima = ?, cierra_el = ? WHERE id = ?", [anonima, cierra, eid])
+    ext = _externo("1111111")
+    encuestas.abrir(eid, None)
+    inv = get_db().q("SELECT token FROM invitacion_encuesta WHERE encuesta_id = ? AND externo_id = ?", [eid, ext])
+    assert inv, "Sofía debería estar invitada"
+    return eid, ext, inv[0]["token"], _respuestas_validas
+
+
+def test_por_responder_y_retorno_de_una_encuesta(sofia):
+    from datetime import date, timedelta
+    from app.estudiantil import calendario, encuestas
+    cierre = (date.today() + timedelta(days=9)).isoformat()
+    eid, ext, token, validas = _encuesta_de_sofia(anonima=1, cierra=cierre)
+    [p] = encuestas.por_responder(ext)
+    assert (p["id"], p["token"]) == (eid, token)
+    assert any(e["tipo"] == "encuesta" and e["fecha"] == cierre for e in calendario.eventos(ext))
+    assert encuestas.guardar_retorno(eid, "x", "")[0].startswith("El retorno se escribe")     # aún abierta
+    assert encuestas.responder(token, validas(eid)) == [] and encuestas.por_responder(ext) == []
+    assert encuestas.cerrar(eid, None)
+    assert encuestas.publicar_retorno(eid)[0].startswith("Escriba")
+    assert encuestas.guardar_retorno(eid, "Piden más laboratorios", "Compraremos equipos") == []
+    assert "anónima" in encuestas.publicar_retorno(eid)[0]                                   # 1 respuesta < 5
+    assert encuestas.retornos_para(ext) == []
+    get_db().execute("UPDATE encuesta SET anonima = 0 WHERE id = ?", [eid])
+    assert encuestas.publicar_retorno(eid) == []
+    [r] = encuestas.retornos_para(ext)
+    assert r["retorno"] == "Piden más laboratorios" and r["n"] == 1 and r["invitadas"] >= 1
+    assert r["preguntas"] and all(p["pregunta"]["tipo"] != "texto" for p in r["preguntas"])       # sin respuestas abiertas
+    assert not any("textos" in p for p in r["preguntas"])
+    encuestas.retirar_retorno(eid)
+    assert encuestas.retornos_para(ext) == []
+
+
+def test_pantallas_de_encuestas_del_estudiante_y_del_personal(client, sofia):
+    from app.estudiantil import encuestas
+    eid, ext, token, validas = _encuesta_de_sofia(anonima=0)
+    r = client.get("/estudiante/encuestas")
+    assert "Por responder" in r.text and f"/encuesta/{token}" in r.text and "Encuestas" in r.text
+    encuestas.responder(token, validas(eid))
+    encuestas.cerrar(eid, None)
+    assert "No tiene encuestas por responder" in client.get("/estudiante/encuestas").text
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    r = client.get(f"/docencia/encuestas/{eid}/resultados")
+    assert "Retorno a quienes participaron" in r.text
+    r = client.post(f"/docencia/encuestas/{eid}/retorno/publicar", data={"retorno": "Hallazgo", "acciones": "Acción"},
+                    follow_redirects=False)
+    assert r.status_code == 303 and encuestas.obtener(eid)["retorno_publicado_en"]
+    assert "Publicado a los participantes" in client.get(f"/docencia/encuestas/{eid}/resultados").text
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    r = client.get("/estudiante/encuestas")
+    assert "Lo que encontramos" in r.text and "Hallazgo" in r.text and "Lo que haremos" in r.text and "Acción" in r.text
+    assert "Participaron 1 de" in r.text and "Resultados" in r.text and "Más laboratorios" not in r.text
+
+
+# --- Etapa 8: apoyo estudiantil ---------------------------------------------------------------------------------------------
+
+def test_las_senales_solo_dicen_lo_que_se_observa(sofia):
+    from datetime import date, timedelta
+    from app.estudiantil import apoyo, cohortes
+    ext = _externo("1111111")
+    assert apoyo.senales(ext) == []
+    get_db().execute("UPDATE estudiante SET estado = 'congelado' WHERE registro_universitario = '1111111'")
+    assert [s["clave"] for s in apoyo.senales(ext)] == ["congelado"]
+    get_db().execute("UPDATE estudiante SET estado = 'cursando', ultimo_anio = 2020, ultimo_ciclo = 'I' WHERE registro_universitario = '1111111'")
+    assert [s["clave"] for s in apoyo.senales(ext)] == ["ciclo"] and cohortes.ciclo_actual()
+    emmy = _con_tutor(ext)
+    assert "tutoria" not in [s["clave"] for s in apoyo.senales(ext)]                  # asignado hoy: aún no pasan 6 meses
+    futuro = date.today() + timedelta(days=400)
+    assert "tutoria" in [s["clave"] for s in apoyo.senales(ext, futuro)]
+    assert tutoria.registrar(ext, emmy, {"fecha": date.today().isoformat(), "modalidad": "presencial", "tema": "otro", "resumen": "",
+                                         "acuerdos": "", "derivacion": "ninguna"}) == []
+    assert "tutoria" not in [s["clave"] for s in apoyo.senales(ext, date.today() + timedelta(days=100))]   # reunión reciente
+    assert "tutoria" in [s["clave"] for s in apoyo.senales(ext, futuro)]                                  # 400 días después, otra vez
+    _encuesta_de_sofia()
+    assert "encuestas" in [s["clave"] for s in apoyo.senales(ext)]
+
+
+def test_abrir_atender_y_vencer_un_caso(sofia):
+    from datetime import date, timedelta
+    from app.comun import notificaciones
+    from app.estudiantil import apoyo
+    ext = _externo("1111111")
+    alumno = {**usuarios.por_id(estudiantes_uid(ext)), "roles": []}
+    emmy = _con_tutor(ext)
+    tutor = {**usuarios.por_id(emmy)}
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert apoyo.abrir(ext, "x", "Necesito ayuda con mis materias", alumno, "estudiante")[1][0] == "Elija el tema."
+    assert "detalle" in apoyo.abrir(ext, "academico", "corto", alumno, "estudiante")[1][0]
+    assert "Solo su tutor" in apoyo.abrir(ext, "academico", "Un motivo largo y claro", admin, "tutor")[1][0]
+    cid, e = apoyo.abrir(ext, "economico", "No puedo pagar mis fotocopias y libros", alumno, "estudiante")
+    assert e == [] and "ya hay un caso" in apoyo.abrir(ext, "otro", "Otro motivo suficientemente largo", alumno, "estudiante")[1][0].lower()
+    assert any("Pidió apoyo" in n["asunto"] for n in notificaciones.recientes(emmy))            # el tutor
+    assert any("Pidió apoyo" in n["asunto"] for n in notificaciones.recientes(admin["id"]))      # y la Dirección
+    c = apoyo.obtener(cid)
+    assert c["estado_efectivo"] == "abierto" and c["vence_el"] == (date.today() + apoyo.VIGENCIA).isoformat()
+    # Quién lo ve: su tutor y la Dirección; otro docente, no.
+    otro = {**usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP), "roles": []}
+    assert apoyo.puede_atender(tutor, c) and apoyo.puede_atender(admin, c) and not apoyo.puede_atender(otro, c)
+    assert [x["id"] for x in apoyo.listar(tutor)] == [cid] and apoyo.listar(otro) == []
+    # Conversación y seguimiento.
+    assert apoyo.responder(cid, "", tutor, False)[0].startswith("Escriba")
+    assert apoyo.responder(cid, "Vamos a ver una beca de materiales", tutor, False) == []
+    assert any("Respuesta a su caso" in n["asunto"] for n in notificaciones.recientes(estudiantes_uid(ext)))
+    assert apoyo.responder(cid, "Gracias", alumno, True) == [] and [m["del_estudiante"] for m in apoyo.mensajes(cid)] == [0, 1]
+    assert apoyo.cambiar_estado(cid, "en_seguimiento", otro)[0].startswith("No puede atender")
+    assert apoyo.cambiar_estado(cid, "en_seguimiento", tutor, "economica") == []
+    assert apoyo.obtener(cid)["derivacion"] == "economica"
+    # Vence si nadie lo renueva; renovar lo devuelve.
+    get_db().execute("UPDATE caso_apoyo SET vence_el = '2020-01-01' WHERE id = ?", [cid])
+    assert apoyo.obtener(cid)["estado_efectivo"] == "vencido" and apoyo.abrir(ext, "otro", "Un motivo nuevo y largo", alumno, "estudiante")[0]
+    assert apoyo.renovar(cid, tutor) == [] and apoyo.obtener(cid)["estado_efectivo"] == "en_seguimiento"
+    assert apoyo.cambiar_estado(cid, "cerrado", admin) == []
+    assert apoyo.obtener(cid)["estado"] == "cerrado" and apoyo.responder(cid, "Hola", alumno, True)[0].startswith("Ese caso está cerrado")
+    assert apoyo.cambiar_estado(cid, "cerrado", admin)[0] == "Ese caso ya está cerrado."
+    assert apoyo.cerrar_por_el_estudiante(cid, ext)[0].startswith("No hay un caso")
+
+
+def test_pantallas_de_apoyo(client, sofia):
+    from app.estudiantil import apoyo
+    ext = _externo("1111111")
+    _con_tutor(ext)
+    get_db().execute("UPDATE estudiante SET estado = 'congelado' WHERE registro_universitario = '1111111'")
+    r = client.get("/estudiante/apoyo")
+    assert "Lo que TAU observa de usted" in r.text and "congelada" in r.text and "Solo usted ve esto" in r.text
+    client.post("/estudiante/apoyo", data={"tema": "salud", "motivo": "Corto"}, follow_redirects=False)
+    assert apoyo.casos_de(ext) == []
+    client.post("/estudiante/apoyo", data={"tema": "salud", "motivo": "Estoy pasando por un momento difícil"}, follow_redirects=False)
+    [c] = apoyo.casos_de(ext)
+    r = client.get("/estudiante/apoyo")
+    assert "Ya tiene un caso abierto" in r.text and "Lo pidió el estudiante" in r.text and "Salud" in r.text
+    client.post(f"/estudiante/apoyo/{c['id']}/mensaje", data={"texto": "¿Pueden llamarme?"}, follow_redirects=False)
+    assert [m["texto"] for m in apoyo.mensajes(c["id"])] == ["¿Pueden llamarme?"]
+    assert client.post("/estudiante/apoyo/99999/mensaje", data={"texto": "x"}, follow_redirects=False).status_code == 404
+    # El tutor lo atiende; otro docente no.
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "Apoyo estudiantil" in client.get("/").text
+    assert "Mamani" in client.get("/apoyo").text and "Salud" in client.get("/apoyo").text
+    r = client.get(f"/apoyo/{c['id']}")
+    assert "¿Pueden llamarme?" in r.text and "El estudiante ve todo lo que escriba aquí" in r.text
+    client.post(f"/apoyo/{c['id']}/mensaje", data={"texto": "Sí, la llamamos mañana"}, follow_redirects=False)
+    client.post(f"/apoyo/{c['id']}/estado/en_seguimiento", data={"derivacion": "psicologia"}, follow_redirects=False)
+    assert apoyo.obtener(c["id"])["estado"] == "en_seguimiento"
+    assert "Apoyo" in client.get(f"/tutoria/{ext}").text and "Salud" in client.get(f"/tutoria/{ext}").text
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    assert client.get("/apoyo", follow_redirects=False).status_code == 403                  # la administración sola no atiende
+    permisos.asignar(usuarios.por_email("admin@test.cl")["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert client.get(f"/apoyo/{c['id']}").status_code == 200
+    client.post(f"/apoyo/{c['id']}/estado/cerrado", follow_redirects=False)
+    assert apoyo.obtener(c["id"])["estado"] == "cerrado"
+    # Ofrecer apoyo desde la ficha del tutorado: el estudiante se entera.
+    r = client.post(f"/apoyo/ofrecer/{ext}", data={"tema": "academico", "motivo": "Notamos que le cuesta el primer semestre"},
+                    follow_redirects=False)
+    assert r.status_code == 303 and apoyo.casos_de(ext)[0]["origen"] == "direccion"
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    r = client.get("/estudiante/apoyo")
+    assert "Lo abrió la Dirección de Carrera" in r.text and "Notamos que le cuesta" in r.text
+    client.post(f"/estudiante/apoyo/{apoyo.casos_de(ext)[0]['id']}/cerrar", follow_redirects=False)
+    assert apoyo.casos_de(ext)[0]["estado"] == "cerrado"
+
+
+# --- Etapa 9: bienestar, orientación y buzón ----------------------------------------------------------------------------------
+
+def _gestor():
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    return {**usuarios.por_id(admin["id"])}
+
+
+def test_preguntas_frecuentes_y_servicios(app):
+    from app.estudiantil import orientacion as ori
+    g = _gestor()
+    assert ori.guardar_pregunta({"categoria": "", "pregunta": "¿Cómo?", "respuesta": "Así"}, g["id"])[0].startswith("Escriba la categoría")
+    assert ori.guardar_pregunta({"categoria": "Trámites", "pregunta": "¿Dónde pido una beca?", "respuesta": "En la Dirección"}, g["id"]) == []
+    assert ori.guardar_pregunta({"categoria": "Trámites", "pregunta": "Oculta", "respuesta": "x", "publicada": "0"}, g["id"]) == []
+    assert [q["pregunta"] for q in ori.preguntas()] == ["¿Dónde pido una beca?"]
+    assert len(ori.preguntas(solo_publicadas=False)) == 2
+    assert ori.guardar_servicio({"tipo": "x", "nombre": "A"}, g["id"])[0].startswith("Elija el tipo")
+    assert ori.guardar_servicio({"tipo": "salud", "nombre": "Posta", "enlace": "ftp://x"}, g["id"])[0].startswith("El enlace")
+    assert ori.guardar_servicio({"tipo": "psicologia", "nombre": "Apoyo psicológico", "contacto": "Of. 3", "horario": "L–V"}, g["id"]) == []
+    assert [s["nombre"] for s in ori.servicios()] == ["Apoyo psicológico"]
+
+
+def test_el_buzon_identificado_y_el_anonimo(sofia):
+    from app.estudiantil import orientacion as ori
+    from app.comun import notificaciones
+    ext = _externo("1111111")
+    g = _gestor()
+    assert ori.enviar(ext, "x", "Asunto", "Texto largo suficiente", False)[0].startswith("Elija")
+    assert ori.enviar(ext, "reclamo", "", "Texto largo suficiente", False)[0].startswith("Escriba el asunto")
+    assert ori.enviar(ext, "reclamo", "Asunto", "corto", False)[0].startswith("Cuente su consulta")
+    assert ori.enviar(ext, "reclamo", "Falta el aula", "No hay aula para la clase de Álgebra", False) == []
+    assert ori.enviar(ext, "sugerencia", "Más laboratorios", "Sería bueno tener más laboratorios abiertos", True) == []
+    ident = next(c for c in ori.listar() if not c["anonima"])
+    anon = next(c for c in ori.listar() if c["anonima"])
+    assert (ident["externo_id"], ident["anonima"]) == (ext, 0)
+    assert (anon["externo_id"], anon["anonima"], len(anon["creada_en"])) == (None, 1, 10)       # sin cuenta y solo el día
+    assert [c["asunto"] for c in ori.mias(ext)] == ["Falta el aula"]                              # la anónima no figura
+    assert any("anónima" in n["asunto"] for n in notificaciones.recientes(g["id"]))
+    assert not get_db().q("SELECT 1 FROM auditoria WHERE accion LIKE '%consulta%' AND entidad_id = ?", [anon["id"]])
+    # La identificada se responde a la persona; la anónima, solo publicándola en las preguntas frecuentes.
+    otro = {**usuarios.crear("otro@test.cl", "Otro", "Docente", PASS_TEMP), "roles": []}
+    assert ori.responder(ident["id"], "Ya hay aula", otro, False)[0].startswith("No puede")
+    assert ori.responder(anon["id"], "Se abrirán más horarios", g, False)[0].startswith("Una consulta anónima")
+    assert ori.responder(anon["id"], "Se abrirán más horarios", g, True, "Laboratorios") == []
+    assert ori.preguntas()[0]["categoria"] == "Laboratorios" and ori.obtener(anon["id"])["estado"] == "respondida"
+    assert ori.obtener(anon["id"])["respondida_por"] == g["id"]
+    assert ori.responder(ident["id"], "Ya hay aula en el edificio nuevo", g, False) == []
+    assert ori.mias(ext)[0]["respuesta"] == "Ya hay aula en el edificio nuevo"
+    assert any("Respondieron su reclamo" in n["asunto"] for n in notificaciones.recientes(estudiantes_uid(ext)))
+    assert ori.responder(ident["id"], "Otra vez", g, False)[0].startswith("Esa consulta ya se respondió")
+
+
+def test_el_registro_no_liga_el_envio_anonimo_con_la_cuenta(client, sofia, caplog):
+    import logging
+    caplog.set_level(logging.INFO, logger="tau.peticiones")
+    client.post("/estudiante/buzon/anonima", data={"tipo": "consulta", "asunto": "Anónimo", "texto": "Mensaje anónimo largo"},
+                follow_redirects=False)
+    client.post("/estudiante/buzon", data={"tipo": "consulta", "asunto": "Firmado", "texto": "Mensaje firmado largo"},
+                follow_redirects=False)
+    lineas = [r.getMessage() for r in caplog.records if "/estudiante/buzon" in r.getMessage() and "POST" in r.getMessage()]
+    assert any("/estudiante/buzon/anonima" in x and x.endswith("usuario=-") for x in lineas)
+    assert any(x.startswith("POST /estudiante/buzon ") and "usuario=" in x and not x.endswith("usuario=-") for x in lineas)
+
+
+def test_pantallas_de_orientacion_y_buzon(client, sofia):
+    from app.estudiantil import orientacion as ori
+    g = _gestor()
+    ori.guardar_pregunta({"categoria": "Becas", "pregunta": "¿Cuándo abre la beca?", "respuesta": "En marzo"}, g["id"])
+    ori.guardar_servicio({"tipo": "bienestar", "nombre": "Bienestar universitario", "contacto": "Edificio central"}, g["id"])
+    r = client.get("/estudiante/orientacion")
+    assert "Servicios de apoyo" in r.text and "Bienestar universitario" in r.text and "¿Cuándo abre la beca?" in r.text and "En marzo" in r.text
+    r = client.get("/estudiante/buzon")
+    assert "Enviar como anónimo" in r.text and "no se guarda su cuenta" in r.text
+    client.post("/estudiante/buzon", data={"tipo": "consulta", "asunto": "Horarios", "texto": "¿Dónde veo los horarios?"}, follow_redirects=False)
+    assert "Horarios" in client.get("/estudiante/buzon").text
+    assert client.get("/servicios/buzon", follow_redirects=False).status_code == 303               # no es del personal
+    client.post("/logout")
+    login(client, "admin@test.cl", "Admin-clave-123")
+    cid = next(c["id"] for c in ori.listar() if c["asunto"] == "Horarios")
+    r = client.get("/servicios/buzon")
+    assert "Horarios" in r.text and "Preguntas frecuentes y servicios de apoyo" in r.text
+    r = client.get(f"/servicios/buzon/{cid}")
+    assert "Responder" in r.text and "Sofía" in r.text
+    client.post(f"/servicios/buzon/{cid}/estado/en_atencion", follow_redirects=False)
+    assert ori.obtener(cid)["estado"] == "en_atencion"
+    client.post(f"/servicios/buzon/{cid}/responder", data={"respuesta": "En la página de la Carrera"}, follow_redirects=False)
+    assert ori.obtener(cid)["estado"] == "respondida"
+    r = client.get("/servicios/orientacion")
+    assert "¿Cuándo abre la beca?" in r.text and "Bienestar universitario" in r.text
+    client.post("/servicios/orientacion/preguntas", data={"categoria": "Grado", "pregunta": "¿Qué es un perfil?", "respuesta": "Un plan"},
+                follow_redirects=False)
+    assert "¿Qué es un perfil?" in client.get("/servicios/orientacion").text
+    qid = [q for q in ori.preguntas() if q["categoria"] == "Grado"][0]["id"]
+    client.post(f"/servicios/orientacion/preguntas/{qid}/eliminar", follow_redirects=False)
+    assert all(q["categoria"] != "Grado" for q in ori.preguntas())
+    sid = ori.servicios()[0]["id"]
+    client.post(f"/servicios/orientacion/servicios/{sid}", data={"tipo": "salud", "nombre": "Posta médica"}, follow_redirects=False)
+    assert ori.servicios() == []                                                                       # activo no marcado: se oculta
+
+
+# --- Etapa 10: biblioteca y recursos ------------------------------------------------------------------------------------------
+
+PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"
+
+
+def _asig(sigla):
+    return str(_aid(sigla))
+
+
+def test_subir_buscar_y_retirar_un_recurso(sofia):
+    from app.servicios import recursos
+    doc = _docente()
+    otro = {**usuarios.crear("otro@test.cl", "Otro", "Sin vinculo", PASS_TEMP), "roles": []}
+    assert recursos.crear({"tipo": "apunte", "titulo": "X", "enlace": "https://a.org"}, [], otro, None)[1][0].startswith("Solo los docentes")
+    assert "Elija el tipo" in recursos.crear({"tipo": "z", "titulo": "X", "enlace": "https://a.org"}, [], doc, None)[1][0]
+    assert recursos.crear({"tipo": "apunte", "titulo": ""}, [], doc, None)[1][0].startswith("El título")
+    assert "Suba un archivo" in recursos.crear({"tipo": "apunte", "titulo": "Álgebra I"}, [], doc, None)[1][-1]
+    assert "enlace" in recursos.crear({"tipo": "apunte", "titulo": "A", "enlace": "ftp://x"}, [], doc, None)[1][0].lower()
+    assert "PDF" in recursos.crear({"tipo": "apunte", "titulo": "A"}, [], doc, (b"no es un pdf", "x.pdf"))[1][0]
+    assert "no existe" in recursos.crear({"tipo": "apunte", "titulo": "A", "enlace": "https://a.org"}, ["99999"], doc, None)[1][0]
+    rid, e = recursos.crear({"tipo": "examen", "titulo": "Examen final de Álgebra I", "anio": "2025", "descripcion": "Con solución"},
+                            [_asig("MAT-111")], doc, (PDF, "examen.pdf"))
+    assert e == [] and [a["sigla"] for a in recursos.asignaturas_de(rid)] == ["MAT-111"]
+    [adj] = recursos.archivos(rid)
+    assert (adj["entidad"], adj["mime"], adj["nombre"]) == ("recurso", "application/pdf", "examen.pdf")
+    rid2, _ = recursos.crear({"tipo": "enlace", "titulo": "Videos de cálculo", "enlace": "https://videos.example.org"},
+                             [_asig("MAT-112")], doc, None)
+    assert [r["titulo"] for r in recursos.buscar()] == ["Videos de cálculo", "Examen final de Álgebra I"]
+    assert [r["id"] for r in recursos.buscar("algebra")] == [rid]                       # sin tildes ni mayúsculas
+    assert [r["id"] for r in recursos.buscar(asignatura=_asig("MAT-112"))] == [rid2]
+    assert [r["id"] for r in recursos.buscar(tipo="examen")] == [rid] and recursos.buscar("zzz") == []
+    assert recursos.retirar(rid, otro)[0].startswith("No puede retirar")
+    admin = {**usuarios.por_email("admin@test.cl")}
+    permisos.asignar(admin["id"], "direccion_carrera", unidades.id_de("CMAT"))
+    assert recursos.retirar(rid, doc) == [] and [r["id"] for r in recursos.buscar()] == [rid2]
+    assert recursos.retirar(rid, doc)[0].startswith("No puede retirar")
+    assert len(recursos.mis_recursos(doc)) == 2 and len(recursos.mis_recursos(admin)) == 2   # la Dirección ve todos
+
+
+def test_pantallas_de_biblioteca(client, sofia):
+    from io import BytesIO
+    from app.servicios import recursos
+    doc = _docente()
+    rid, _ = recursos.crear({"tipo": "guia", "titulo": "Guía de límites", "descripcion": "Ejercicios resueltos"},
+                            [_asig("MAT-112")], doc, (PDF, "guia.pdf"))
+    r = client.get("/estudiante/biblioteca")
+    assert "Guía de límites" in r.text and "MAT-112" in r.text and "guia.pdf" in r.text
+    assert "Guía de límites" in client.get("/estudiante/biblioteca?q=limites").text
+    assert "No hay recursos" in client.get("/estudiante/biblioteca?q=zzz").text
+    aid = recursos.archivos(rid)[0]["id"]
+    r = client.get(f"/estudiante/biblioteca/{rid}/archivo/{aid}")
+    assert r.status_code == 200 and r.content.startswith(b"%PDF") and "attachment" in r.headers["content-disposition"]
+    assert client.get(f"/estudiante/biblioteca/{rid}/archivo/99999").status_code == 404
+    assert client.get("/servicios/recursos", follow_redirects=False).status_code == 303          # no es del personal
+    client.post("/logout")
+    login(client, "inv@test.cl", PASS_TEMP)
+    assert "Guía de límites" in client.get("/servicios/recursos").text
+    r = client.post("/servicios/recursos", data={"tipo": "apunte", "titulo": "Apuntes de Topología", "asignaturas": _asig("MAT-111")},
+                    files={"archivo": ("apuntes.pdf", BytesIO(PDF), "application/pdf")}, follow_redirects=False)
+    assert r.status_code == 303 and any(x["titulo"] == "Apuntes de Topología" for x in recursos.buscar())
+    r = client.post("/servicios/recursos", data={"tipo": "apunte", "titulo": "Sin nada"})
+    assert "Suba un archivo" in r.text
+    assert client.get(f"/servicios/recursos/{rid}/archivo/{aid}").status_code == 200
+    client.post(f"/servicios/recursos/{rid}/retirar", follow_redirects=False)
+    assert all(x["id"] != rid for x in recursos.buscar())
+    client.post("/logout")
+    _ingresar(client, "sofia@correo.bo", __import__("app.comun.correo", fromlist=["ENVIADOS"]).ENVIADOS)
+    assert client.get(f"/estudiante/biblioteca/{rid}/archivo/{aid}").status_code == 404           # retirado

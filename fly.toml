@@ -1,0 +1,43 @@
+# Configuración de Fly.io. Guía completa: docs/despliegue-fly.md
+#
+# Antes del primer despliegue, cambie `app` por un nombre libre (fly lo sugiere con `fly launch`)
+# y elija la región (`fly platform regions`); gru = São Paulo, la más cercana en Sudamérica.
+
+app = "tau"
+primary_region = "gru"
+
+[build]
+
+[env]
+  TAU_DB = "/data/tau.db"
+  TAU_HTTPS_ONLY = "1"
+  TAU_CORREO_MODO = "smtp"
+  # TAU_URL, TAU_SECRET_KEY, credenciales SMTP y de Tigris van como secretos:
+  # `fly secrets set NOMBRE=valor` (ver la guía).
+
+# Los datos viven en este volumen. Una sola máquina: un volumen se conecta a una sola máquina
+# y SQLite no se comparte entre varias.
+[[mounts]]
+  source = "tau_datos"
+  destination = "/data"
+  initial_size = "3gb"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Siempre encendida: evita la espera del primer acceso y no corta los correos en curso.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/salud"   # responde si la base contesta (main.py)
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "512mb"

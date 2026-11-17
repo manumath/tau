@@ -1,0 +1,5 @@
+# Instancia de ejemplo: una carrera ficticia y chica, para probar el sistema o para copiarla como punto de partida.
+# Copie esta carpeta fuera del repositorio, cámbiela y apunte TAU_INSTANCIA a su copia (docs/despliegue.md).
+nombre = "Carrera de Ejemplo, Universidad de Demostración"
+perfil = "carrera_instituto"     # módulos con que arranca una base nueva (app/comun/modulos.PERFILES)
+departamento_propio = "EJE"     # prefijo de las siglas de las asignaturas que dicta la propia Carrera

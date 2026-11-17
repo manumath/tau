@@ -1,0 +1,59 @@
+#!/bin/sh
+# Arranque del portal dentro del contenedor (Dockerfile).
+#
+# - Con LITESTREAM_REPLICA_URL (o BUCKET_NAME, que Fly.io define al crear un bucket Tigris):
+#   si el volumen está vacío restaura la base desde la réplica, y luego ejecuta el portal bajo
+#   «litestream replicate», que copia cada cambio de la base al almacenamiento de objetos.
+# - Sin réplica: ejecuta el portal directamente (los datos quedan solo en el volumen).
+set -e
+
+DATOS="$(dirname "$TAU_DB")"
+mkdir -p "$DATOS"
+
+# Arranca como root solo para esto: el volumen (base, fotos, adjuntos, evidencias, registros, clave de sesión) debe ser del
+# usuario «tau» (Dockerfile). Los volúmenes de antes eran de root, y un script ejecutado por «fly ssh» como root
+# puede dejar archivos suyos; se corrige solo si hace falta. Luego se vuelve a ejecutar este script como «tau».
+if [ "$(id -u)" = 0 ] && id tau >/dev/null 2>&1; then
+  if [ -n "$(find "$DATOS" ! -user tau -print -quit)" ]; then
+    echo "Ajustando los permisos de $DATOS para el usuario tau…" >&2
+    chown -R tau:tau "$DATOS"
+  fi
+  exec setpriv --reuid=tau --regid=tau --init-groups "$0" "$@"
+fi
+
+if [ -z "$TAU_SECRET_KEY" ]; then
+  echo "AVISO: TAU_SECRET_KEY no está definida; las sesiones se cerrarán en cada despliegue." >&2
+fi
+
+# Detrás del proxy de Fly, uvicorn toma la IP y el esquema reales del cliente de las cabeceras
+# X-Forwarded-*. Se confía en cualquier origen porque el tráfico solo llega por ese proxy.
+# (Va como variable de entorno y no como opción, para que el «*» no lo expanda el shell.)
+export FORWARDED_ALLOW_IPS="*"
+# --no-access-log: el registro de peticiones lo lleva el sistema (app/comun/registros.py), sin la consulta
+# (?q=…), que puede traer nombres; el de uvicorn la incluiría y duplicaría cada línea.
+SERVIDOR="uvicorn main:app --host 0.0.0.0 --port 8080 --proxy-headers --no-access-log"
+
+if [ -z "$LITESTREAM_REPLICA_URL" ] && [ -n "$BUCKET_NAME" ]; then
+  export LITESTREAM_REPLICA_URL="s3://${BUCKET_NAME}/tau.db?endpoint=fly.storage.tigris.dev&region=auto"
+fi
+
+if [ -n "$LITESTREAM_REPLICA_URL" ]; then
+  # Litestream debe recibir el endpoint de Tigris por la URL, no por esta variable
+  # (ver https://litestream.io/guides/tigris/); el portal no la usa.
+  unset AWS_ENDPOINT_URL_S3
+  litestream restore -if-db-not-exists -if-replica-exists "$TAU_DB"
+fi
+
+# Primera vez (no hay base ni réplica que restaurar): si el despliegue indica su instancia, se crea la base con ella
+# (unidades, planes, marco de calidad, módulos de su perfil; PLAN §74). Sin TAU_INSTANCIA la base nace con el
+# esquema y las unidades genéricas, y se puede cargar después con scripts/instalar.py mientras no tenga cuentas.
+if [ ! -f "$TAU_DB" ] && [ -n "$TAU_INSTANCIA" ]; then
+  echo "Base nueva: cargando la instancia $TAU_INSTANCIA…" >&2
+  python scripts/instalar.py
+fi
+
+if [ -n "$LITESTREAM_REPLICA_URL" ]; then
+  exec litestream replicate -exec "$SERVIDOR"
+fi
+
+exec $SERVIDOR

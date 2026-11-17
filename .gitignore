@@ -1,0 +1,44 @@
+.venv/
+__pycache__/
+*.pyc
+.sesskey
+data/
+.pytest_cache/
+.DS_Store
+# Documentos de la agencia acreditadora (de terceros; se consultan en local, no se versionan).
+/iac-cinda/
+
+# Políticas de la UMSA (PDF con derechos reservados; base del SIAC, PLAN §57; se consultan en local).
+/politicas/
+
+# Herramientas locales de desarrollo (p. ej., el compilador de Tailwind).
+.herramientas/
+
+# Diagramas generados con Archify (se regeneran; no son parte del sistema).
+.archify/
+
+# Originales de los logos que entregó la Dirección (sin uso: el membrete usa la copia recortada iimat.png y la marca
+# de la Carrera de static/img/marca/). Se conservan en local; no se versionan.
+static/img/membrete/logo_*
+
+# Caches, bases de datos, registros y configuración local de editores.
+.ruff_cache/
+.env
+.env.*
+*.db
+*.db-*
+*.log
+*.tar.gz
+.idea/
+.vscode/
+
+# Instancias de unidades reales (PLAN §74): solo la de ejemplo se versiona. La de la Carrera de Matemática
+# (instancias/cmat: planes, marco de calidad, plan de mejora, MSC2020 y marca) se conserva en local, por decisión del
+# usuario del 17-nov-2026; las pruebas que dependen de ella se omiten sin ella (tests/requieren_cmat.txt).
+/instancias/*
+!/instancias/ejemplo/
+!/instancias/README.md
+
+# El manual de usuario es de cada instancia (instancias/<nombre>/manual/) y no se versiona en el repositorio (PLAN §74).
+# Si se arma en docs/manual/ con TAU_MANUAL, tampoco.
+/docs/manual/

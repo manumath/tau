@@ -1,0 +1,24 @@
+# Avisos de dependencias (PLAN §62, etapa 8). Dependabot abre pull requests; nada se fusiona solo: cada uno pasa por
+# las pruebas de .github/workflows/pruebas.yml y lo revisa quien mantiene el sistema (docs/mantenimiento.md §4.6).
+version: 2
+updates:
+  # Paquetes de Python (uv.lock). Las alertas de seguridad llegan aparte, apenas se publican.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    groups:
+      # FastHTML, MonsterUI y compañía cambian su API entre versiones menores: uno a la vez (no se agrupan).
+      menores:
+        update-types: ["patch"]
+        exclude-patterns: ["python-fasthtml", "monsterui", "fastlite", "fastmigrate", "fastcore"]
+    commit-message:
+      prefix: "Dependencias"
+  # Acciones de GitHub fijadas por hash en los workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "CI"

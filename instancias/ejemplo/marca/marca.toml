@@ -1,0 +1,62 @@
+# Marca de la instancia (PLAN §74). Esta es una PLANTILLA con los valores de la marca genérica del sistema: cámbielos por
+# los colores de su unidad y ponga junto a este archivo sus imágenes, con los nombres de static/img/marca/ (isotipo.svg,
+# isotipo-blanco.svg, logotipo.png, logotipo-blanco.png, icono-180.png, icono-192.png, icono-512.png, favicon.svg) y, si
+# quiere el logo del instituto en el membrete de los informes de investigación, instituto.png. Sin imágenes rigen las
+# genéricas. Los colores del tema son variables HSL sin «hsl()»; tests/test_marca.py exige contraste AA (4,5:1) en claro y oscuro.
+principal = "#1d4059"
+acento = "#c2630f"
+secundario = "#0f7a8c"
+neutro = "#64707a"
+graficos = ["#1d4059", "#0f7a8c", "#c2630f", "#64707a", "#6fb3c2"]
+
+[tema.claro]
+"background" = "0 0% 100%"
+"foreground" = "205 30% 12%"
+"card" = "0 0% 100%"
+"card-foreground" = "205 30% 12%"
+"popover" = "0 0% 100%"
+"popover-foreground" = "205 30% 12%"
+"muted" = "205 20% 96%"
+"muted-foreground" = "0 0% 38%"
+"border" = "205 18% 88%"
+"input" = "205 18% 88%"
+"primary" = "205 51% 23%"
+"primary-foreground" = "0 0% 100%"
+"secondary" = "205 20% 95%"
+"secondary-foreground" = "205 51% 23%"
+"accent" = "205 20% 95%"
+"accent-foreground" = "205 51% 23%"
+"destructive" = "0 72% 41%"
+"destructive-foreground" = "0 0% 100%"
+"ring" = "190 90% 28%"
+[tema.oscuro]
+"background" = "205 40% 8%"
+"foreground" = "210 20% 96%"
+"card" = "205 40% 8%"
+"card-foreground" = "210 20% 96%"
+"popover" = "205 40% 8%"
+"popover-foreground" = "210 20% 96%"
+"muted" = "205 28% 16%"
+"muted-foreground" = "210 12% 68%"
+"border" = "205 24% 21%"
+"input" = "205 24% 21%"
+"primary" = "203 60% 74%"
+"primary-foreground" = "205 45% 13%"
+"secondary" = "205 28% 16%"
+"secondary-foreground" = "210 20% 96%"
+"accent" = "205 28% 16%"
+"accent-foreground" = "210 20% 96%"
+"destructive" = "0 80% 68%"
+"destructive-foreground" = "205 40% 8%"
+"ring" = "188 70% 50%"
+[panel.claro]
+"lateral" = "205 51% 23%"
+"lateral-fin" = "190 60% 20%"
+"lateral-foreground" = "0 0% 100%"
+"acento" = "28 86% 41%"
+[panel.oscuro]
+"lateral" = "205 45% 13%"
+"lateral-fin" = "190 55% 12%"
+"lateral-foreground" = "210 20% 96%"
+"acento" = "32 90% 62%"
+

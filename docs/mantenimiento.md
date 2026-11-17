@@ -1,0 +1,510 @@
+# Guía de mantenimiento
+
+Para quien mantiene TAU (Sistema Integrado de Gestión Académica y Científica de la Carrera de
+Matemática): el personal de TI del IIMAT y la persona que acompaña la
+implementación. Supone que conoce Python y HTML; no supone que conozca FastHTML ni htmx.
+
+Otros documentos:
+
+- `README.md`: qué hace el sistema, estructura de archivos, configuración (`TAU_*`) y convenciones.
+- `PLAN.md`: las decisiones y el porqué de cada regla, por sección y en orden cronológico (p. ej., 12 filiación,
+  14 revistas, 57 aseguramiento de la calidad, 65 planes de estudio, 66 gestiones, 72 consolidación y piloto, la vigente).
+- `docs/despliegue.md` y `docs/despliegue-fly.md`: instalación en un servidor propio o en Fly.io.
+- `docs/importaciones.md`: todas las cargas de datos, sus claves de unión y el orden de carga.
+- `docs/guia-de-uso.md`: el sistema visto por cada rol; el manual ilustrado es de cada instancia, no del repositorio (5.10).
+- `docs/piloto.md` y `docs/gobernanza.md`: el piloto con usuarios reales y lo que se acuerda fuera del código.
+- `CLAUDE.md` y `.claude/skills/`: lo que debe saber un asistente de IA (Claude Code) que trabaje en
+  el código, y sus procedimientos: cerrar una etapa, nueva migración, nueva ruta o permiso, capturas
+  de pantalla (`.claude/skills/captura-visual/capturar.py` también sirve sin asistente).
+
+## 1. El primer día
+
+Requisitos: macOS o Linux, [uv](https://docs.astral.sh/uv/), Python 3.13 (uv lo instala) y
+Google Chrome (solo para las pruebas en navegador).
+
+```sh
+uv sync                                   # dependencias, incluidas las de desarrollo
+uv run python scripts/seed.py             # base de ejemplo en data/tau.db, con cuentas de demostración
+uv run python main.py                     # http://127.0.0.1:5001
+uv run pytest                             # ~1.060 pruebas, unos 10 minutos
+uv run pytest --navegador                 # además, ~50 flujos en Chrome (tests/navegador), unos 3 minutos más
+```
+
+`scripts/seed.py` imprime las cuentas de demostración y su contraseña temporal. Es idempotente:
+se puede ejecutar de nuevo sin duplicar datos; `--reset` borra la base de desarrollo y empieza de cero.
+
+Recorrido sugerido para conocer el código (una tarde):
+
+1. `main.py`: cómo se arma la aplicación (encabezados, Beforeware, routers).
+2. `app/comun/auth.py`: ingreso, sesión y la verificación de origen (CSRF).
+3. `app/investigacion/productos.py` y `app/investigacion/rutas/productos/`: un área completa, de
+   las reglas a las pantallas.
+4. `app/investigacion/institucionales.py`: el flujo de propuestas institucionales, el más complejo.
+5. `tests/test_productos.py` y `tests/navegador/test_flujos.py`: cómo se prueba.
+
+## 2. Cómo está armado
+
+```
+navegador ──HTML──▶ htmx (static/vendor) ──petición──▶ uvicorn
+                                                        │
+  CabecerasSeguridad (CSP, nosniff…) ◀──────────────────┤ middleware (app/comun/cabeceras.py)
+  /static/* ──▶ archivos de static/ (sin sesión)        │
+                                                        ▼
+  Beforeware, en orden: origen (CSRF) · solo lectura · sesión y permisos · mantenimiento
+                                                        │
+                                                        ▼
+  rutas (app/*/rutas/)  ──▶  reglas (app/*/*.py)  ──▶  app/comun/db.py  ──▶  SQLite
+  devuelven HTML            validan y guardan          dialecto SQL, una
+  (componentes FastHTML)                               conexión por hilo,
+                                                       transacciones
+```
+
+- **Una petición = una función.** Cada ruta (`@rt("/productos/{pid}")` con `get`, `post`, `put` o
+  `delete`) devuelve HTML hecho con componentes de Python (`Div`, `Form`…, y los de MonsterUI).
+  htmx lo inserta en la página según `hx-target` y `hx-swap`. No hay API interna. El JavaScript propio es poco y
+  está en archivos (`static/js/`: `acciones.js` para los comportamientos declarados con `data-accion`, `tablas.js`,
+  el tema y KaTeX): la CSP no admite scripts en el HTML.
+- **Las reglas no van en las rutas.** Validaciones, permisos de negocio y cálculos están en los
+  módulos (`productos.py`, `institucionales.py`, `vinculos.py`…), que no importan nada de la
+  interfaz y se prueban sin navegador. Las rutas leen el formulario, llaman al módulo y arman la
+  respuesta.
+- **Paquetes:**
+
+  | Paquete | Contiene |
+  |---|---|
+  | `app/comun` | Configuración, base de datos, cuentas, seguridad, roles y permisos, correo, avisos, personas, vínculos, privacidad, piloto, componentes de interfaz y recursos estáticos |
+  | `app/investigacion` | Perfiles, producción, actividades, proyectos, propuestas institucionales, revistas, OpenAlex, líneas, servicios del investigador (PLAN §69) |
+  | `app/calidad` | Aseguramiento de la Calidad (PLAN §57 y §72): memoria, CV e informes, informe de I+D+i, marco, indicadores, evidencias, autoevaluación, plan de mejora con actividades y cortes, ficha estadística, calidad de datos |
+  | `app/academico` | Docencia y currículo: planes y su ciclo de vida (PLAN §65), gestiones y su ciclo de vida (§66), oferta, asignación, carga horaria y servicios del docente (§68) |
+  | `app/estudiantil` | Seguimiento estudiantil (PLAN §49 y §67): cohortes, rendimiento, actividad estudiantil, encuestas, tutoría, portal y servicios del estudiante |
+  | `app/egresados` | Egresados (PLAN §50): titulación, seguimiento a los 6 meses, 1, 3 y 5 años, directorio, empleadores e indicadores |
+  | `app/servicios` | Servicios (PLAN §58, §67 y §70): comunicados y eventos, auxiliaturas, proyectos de grado, temas, oportunidades y recursos |
+  | `app/ia` | IA con criterio humano (PLAN §59): la única puerta a los modelos, clasificación de datos y funciones (5.8) |
+
+  `comun` no importa de los demás paquetes (desde la fase 2); `app/inicio.py` reúne las tarjetas de
+  todos los módulos en la página de inicio.
+- **Dónde buscar una regla:**
+
+  | Pregunta | Dónde |
+  |---|---|
+  | ¿Cuenta este producto para el informe? | `productos.cuenta_para_informe`, `filiacion.estado_producto`, `vinculos` |
+  | ¿Quién puede editar o aprobar en un proyecto? | `proyectos.puede_gestionar`, `proyectos.rol_de` |
+  | ¿Cuándo rige un proyecto institucional? | `institucionales.refrescar_vigencias` |
+  | ¿Cómo se clasifica un artículo por su revista? | `revistas.clasificacion` |
+  | ¿Con qué unidad está vinculada una persona? | `app/comun/vinculos.py` (siempre con `unidad`; sin ella, el IIMAT), `app/comun/unidades.py` |
+  | ¿Quién puede hacer qué? | `ROLES` y `ACCIONES` en `app/comun/permisos.py`; se decide con `puede(usuario, accion, unidad)` |
+  | ¿Qué rutas son públicas? | `RUTAS_PUBLICAS` en `app/comun/auth.py` |
+  | ¿Qué cifras lleva la memoria o el informe de I+D+i? | `app/calidad/informes.py`, `app/calidad/anexo.py` |
+
+- **Tareas periódicas:** no hay programador de tareas. Cada 5 minutos, a lo más, una petición lanza
+  el mantenimiento (`_mantenimiento` en `main.py`) **en un hilo aparte**, que no demora esa petición.
+  Un candado impide que corran dos a la vez, y cada tarea decide si le toca (`_correr_mantenimiento` en `main.py`):
+  reintentos de la cola de correo, vigencias y recordatorios de los proyectos institucionales, informes programados,
+  invitaciones del seguimiento de egresados, cifras «a hoy» de los indicadores (una vez al día), avisos de plazo del
+  plan de mejora y de sus cortes, y recordatorios a los tribunales de grado. El resumen semanal de avisos lo envía el
+  mantenimiento de los proyectos (`notificaciones.resumen_semanal`). Un error se registra en `tau.log` y no corta la
+  petición.
+- **Una conexión a SQLite por hilo** (`get_db()` en `app/comun/db.py`). Las rutas síncronas corren en
+  un pool de hilos: con una conexión compartida, la transacción de una petición incluía las escrituras
+  de otra, que se perdían si la primera se revertía (PLAN §56). En WAL las lecturas no esperan y las
+  escrituras se turnan hasta `ESPERA_MS` (5 s). **El sistema corre en un solo proceso** (un worker de
+  uvicorn): el candado del mantenimiento y la cola de correo viven en memoria. No agregue `--workers`.
+
+## 3. Convenciones que conviene no romper
+
+Las de htmx, rutas y seguridad están en el README («Convenciones»). Además:
+
+- **Idioma:** código, comentarios y mensajes en español; la interfaz trata al usuario de «usted».
+- **Fechas:** hora de La Paz (`main.py` fija `TZ`). En SQL use `HOY`, `AHORA`, `vigente_hasta()` y
+  `marca_tiempo()` de `app/comun/db.py`, nunca `date('now')` directamente.
+- **Transacciones:** varias escrituras que van juntas, dentro de `with transaccion():`.
+- **Auditoría:** toda acción que cambia datos de otros o de configuración llama a
+  `auditar(usuario_id, accion, entidad, id, detalle)`.
+- **Permisos en el servidor:** ocultar un botón no basta; la ruta verifica. Cada ruta `/admin/*`
+  necesita una regla en `REGLAS_ADMIN` (`app/comun/auth.py`), o queda cerrada para todos
+  (`tests/test_permisos_rutas.py` lo comprueba). Dentro de las rutas y reglas de negocio se usa
+  `permisos.puede(usuario, accion, unidad)`; no hay otra marca de administración.
+- **Estilos:** clases de Tailwind y de Franken UI (`uk-…`). Una clase de Tailwind nueva exige
+  recompilar (sección 4.4).
+- **Revisión del código:** `uvx ruff check app scripts tests main.py` debe quedar sin avisos (reglas en
+  `pyproject.toml`: errores de Python, estilo básico y errores frecuentes de bugbear).
+- **Cada cambio con su prueba.** Una regla nueva, una prueba en `tests/`; un flujo nuevo de
+  pantallas críticas, considere una en `tests/navegador/`.
+- **Ninguna pantalla escribe al abrirse** (PLAN §72): un GET solo lee; lo que se crea «cuando hace falta» se crea en la
+  acción que lo provoca (un POST, el cierre de una fase). Se exceptúa el registro que la regla pide (auditoría, consultas
+  de la lista de curso o de la evaluación docente). Una lista que puede pasar de un centenar de filas llega de 50 en 50
+  con `registros.cargar_mas` (o `cargar_mas_filas` en una tabla) y sus cifras de resumen siguen siendo del total.
+
+## 4. Recetas
+
+### 4.1 Agregar una migración
+
+1. Cree `migrations/NNNN-descripcion.sql` con el número siguiente (hoy solo está la `0001-esquema.sql`, el esquema base del 16-nov-2026; PLAN §74). Un
+   comentario inicial dice qué hace y por qué (con la sección de `PLAN.md`).
+2. SQL de SQLite. Para columnas nuevas, `ALTER TABLE … ADD COLUMN`; si la tabla necesita cambios
+   que SQLite no admite, cree la tabla nueva, copie y renombre.
+3. Datos iniciales (catálogos) en la misma migración, con `INSERT`. Un tipo de actividad, de producto o
+   un índice que el código reconozca por su nombre va con `del_sistema = 1`: así la Dirección no puede
+   renombrarlo ni eliminarlo desde «Tipos e índices» (PLAN.md §47). Los demás los agrega la Dirección.
+4. `uv run pytest`: `test_migraciones_aplicadas` comprueba que se aplicó.
+5. Si los datos de ejemplo deben reflejarla, agregue un paso idempotente en `scripts/seed.py`.
+
+**Nunca edite una migración ya aplicada** en algún servidor: la base guarda el número de la última
+aplicada y no vuelve a leerla. Los cambios van en una migración nueva. Las migraciones se aplican
+solas al arrancar el sistema.
+
+### 4.2 Agregar una pantalla o una ruta
+
+1. Elija el paquete (`comun`, `investigacion`, `calidad`, `academico`, `estudiantil`, `egresados`, `servicios` o `ia`) y el archivo de
+   `rutas/`; si es un área nueva, un archivo nuevo con `rt = APIRouter()`, y regístrelo en la tupla
+   de routers de `create_app` en `main.py`.
+2. **Orden:** una ruta literal que choca con una variable (`/productos/nuevo` frente a
+   `/productos/{pid}`) debe registrarse antes. En los paquetes `proyectos/` y `productos/`, la
+   ficha se registra al final (ver su `__init__.py`).
+3. La lógica en el módulo del paquete, no en la ruta. Valide y devuelva el formulario con los
+   errores (`mensaje_error`) o redirija (`Redirect`) y avise (`add_toast`).
+4. Si la página es pública, agregue su patrón exacto a `RUTAS_PUBLICAS`. Si es de administración,
+   agregue su regla a `REGLAS_ADMIN` y, si hace falta, una acción nueva a `permisos.ACCIONES` (con
+   una fila en la matriz de `tests/test_permisos_rutas.py`). Cualquier otra ruta comprueba algo dentro (`puede`, la
+   cuenta, la ficha del estudiante); `tests/test_rutas_declaradas.py` lo revisa.
+5. Si debe aparecer en el menú, agréguela en el `aportes.py` de su paquete (función `menu` de su módulo) con la misma condición que la ruta, y agregue la
+   pantalla a `tests/navegador/test_accesibilidad_pantallas.py`. Un formulario con datos personales lleva
+   `layout.aviso_privacidad(clave)` y su módulo va en `privacidad.FORMULARIOS`.
+6. Pruebe con `TestClient` (fixtures `app`, `client`, `login`, `HX` y `buzon` de `tests/conftest.py`).
+
+### 4.3 Agregar un campo a un registro
+
+Migración (4.1) → validación en el módulo (`validar`/`preparar`) → formulario y ficha en la ruta →
+exportaciones e informes que deban mostrarlo (`app/calidad/informes.py`) → prueba.
+
+### 4.4 Estilos: una clase de Tailwind nueva
+
+Los estilos están compilados en `static/css/tailwind.css`. Si usa una clase que no estaba
+(`tests/test_estilos.py` lo detecta y nombra el archivo y la línea):
+
+```sh
+scripts/estilos.sh          # la primera vez, el script explica cómo obtener la herramienta
+```
+
+y confirme el CSS en el mismo commit. Las clases que MonsterUI arma en tiempo de ejecución
+(`md:{…}`, `grid-cols-{n}`) van en `estilos/clases_dinamicas.txt`. Evite dos clases que fijan la
+misma propiedad en un elemento (p. ej., `border-border` y `border-amber-300`): gana la que aparezca
+después en el CSS, no la que usted espera.
+
+**Colores de la marca.** `app/comun/marca.py` tiene la paleta genérica (color principal, acento, variables del tema en
+claro y oscuro, series de los gráficos). La de una unidad va en `marca/marca.toml` de su instancia, con las mismas
+claves (plantilla: `instancias/ejemplo/marca/marca.toml`), y reemplaza a la genérica valor por valor. No hay nada
+que compilar: la aplicación genera el tema y lo sirve en `/tema.css`; basta reiniciar. `tests/test_marca.py` comprueba
+que cada par de texto y fondo cumple el contraste AA (4,5:1) en ambos modos, en la paleta genérica y en la de cada
+instancia del repositorio. Use
+`text-destructive` para errores y acciones de quitar, no `text-red-*`: se ajusta al modo oscuro.
+
+**Logos de la marca.** `static/img/marca/` tiene la marca genérica (el isotipo τ, el logotipo y los iconos); una instancia pone los suyos, con los mismos nombres, en su carpeta `marca/`, y `instituto.png` si quiere el logo del instituto en el membrete de los informes de investigación. `instancias/cmat/marca/` tiene derivados del PDF oficial de la marca de la Carrera de Matemática (los originales
+EPS y PDF no se versionan): `isotipo.svg` (versión plana, vectorial; también es `static/favicon.svg`),
+`logotipo.png` (horizontal, 900 px de ancho, fondo transparente) y sus versiones `-blanco` para el tema
+oscuro, como pide el manual. Se regeneran con poppler (`pdftocairo`) sobre la página 1 de «Marca de la
+Carrera de Matemática.pdf», con el recorte en puntos de cada versión:
+
+```sh
+pdftocairo -svg -r 72 -f 1 -l 1 -x 79 -y 432 -W 87 -H 87 -paperw 87 -paperh 87 marca.pdf isotipo.svg
+pdftocairo -png -transp -r 600 -f 1 -l 1 -x 658 -y 3600 -W 2741 -H 725 -singlefile marca.pdf logotipo
+```
+
+Luego se quitan del SVG `width`/`height` (queda el `viewBox`), se reduce el PNG a 900 px y, para las
+versiones blancas, se cambian a blanco el azul y el rojo (no el negro de las máscaras internas). En la
+interfaz se usan con `layout.isotipo()` y `layout.logotipo()`, que ponen las dos versiones.
+
+### 4.5 Actualizar una librería de `static/vendor/`
+
+htmx, fasthtml.js, Franken UI, KaTeX y las fuentes de la marca (Montserrat y EB Garamond, subconjunto
+latino en woff2, de `@fontsource/…`, con su licencia OFL al lado) tienen versión fija (`VERSIONES` en
+`app/comun/componentes/recursos.py`). Para actualizar una:
+
+1. Lea las notas de la versión (cambios incompatibles).
+2. Descargue los mismos archivos de la versión nueva desde `cdn.jsdelivr.net/npm/<paquete>@<versión>/…`
+   y reemplácelos (las URL de origen están en el historial de git del commit que los agregó).
+3. Actualice `VERSIONES`.
+4. `uv run pytest --navegador` y revise a ojo las páginas principales en modo claro y oscuro.
+
+Las URL llevan una huella del contenido (`?v=…`): los navegadores toman la versión nueva sin
+vaciar caché.
+
+### 4.6 Actualizar Litestream (imagen Docker)
+
+El `Dockerfile` descarga Litestream y verifica su SHA-256: si no coincide, la construcción falla. Para una versión
+nueva, cambie las tres líneas `ARG LITESTREAM_*` con los valores de su `checksums.txt`:
+
+```sh
+gh release download vX.Y.Z --repo benbjohnson/litestream --pattern checksums.txt --output - \
+  | grep -E 'linux-(x86_64|arm64)\.tar\.gz$'
+```
+
+Lea antes las notas de la versión.
+
+### 4.7 Actualizar dependencias de Python
+
+FastHTML y MonsterUI están en versiones 0.x/1.0: pueden cambiar su API entre versiones menores.
+`uv.lock` fija las versiones exactas; hoy: python-fasthtml 0.14.13, monsterui 1.0.47, fastlite
+0.2.4, fastmigrate 0.5.3, starlette 1.7.0, uvicorn 0.53.0.
+
+Política:
+
+- **Cuándo:** una vez por semestre, o antes si hay un aviso de seguridad (Starlette, uvicorn,
+  argon2-cffi, Pillow y openpyxl son las más expuestas).
+- **Avisos:** Dependabot (`.github/dependabot.yml`) revisa cada mes los paquetes de `uv.lock` y las acciones de
+  GitHub, y abre un pull request por actualización (los parches menores van juntos, salvo FastHTML, MonsterUI,
+  fastlite, fastmigrate y fastcore, que van uno a uno). Las alertas de seguridad llegan apenas se publican. Nada se
+  fusiona solo: espere las pruebas del pull request y siga los pasos de abajo si toca FastHTML o MonsterUI.
+- **Cómo:** un paquete a la vez, en una rama:
+  ```sh
+  uv lock --upgrade-package python-fasthtml
+  uv sync
+  uv run pytest --navegador
+  ```
+  Lea las notas de la versión antes. Si algo falla y no es obvio, vuelva a la versión anterior
+  (`git checkout uv.lock && uv sync`) y anótelo.
+- **FastHTML en particular:** el sistema depende de detalles suyos: la tupla `before` de
+  Beforeware, `APIRouter`, `fast_app(default_hdrs=False, …)` y la ruta estática genérica que
+  `recursos.montar` quita. Tras actualizarlo, revise esos cuatro puntos.
+- Una actualización de MonsterUI puede cambiar clases que arma en tiempo de ejecución: recompile
+  los estilos (4.4) y ejecute las pruebas en navegador. Si cambia su script de tema
+  (`headers_theme`), `tests/test_csp.py` falla: regenere `static/js/tema-inicial.js` con el código
+  nuevo de `headers_theme("cmat", …)` (la CSP no admite el script en línea que MonsterUI usaba).
+- FastHTML: los avisos emergentes no usan `setup_toasts` (que agrega código en línea), sino
+  `app/comun/componentes/avisos_emergentes.py` con el mismo `add_toast`.
+
+## 5. Operación
+
+### 5.1 Desplegar una versión nueva
+
+`docs/despliegue.md`, sección 8 (servidor propio) o `docs/despliegue-fly.md` (Fly.io). En corto:
+respaldar, actualizar el código, `uv sync --no-dev`, reiniciar. Las migraciones se aplican al arrancar.
+
+### 5.2 Integración continua
+
+`.github/workflows/pruebas.yml` corre ruff y todas las pruebas (con navegador) en cada push a `main` y en
+cada pull request. Si queda en rojo, el detalle está en la pestaña «Actions» del repositorio; corrija y vuelva a
+hacer push (no desactive la prueba). Para actualizar algo fijado en el workflow:
+
+- **Acciones** (`actions/checkout`, `astral-sh/setup-uv`): van por hash de commit, porque una etiqueta se puede
+  mover. El hash de una versión: `gh api repos/<dueño>/<acción>/commits/<etiqueta> --jq .sha`; deje la etiqueta en
+  el comentario.
+- **uv y ruff:** `version:` de setup-uv y `uvx ruff@X.Y.Z`. Use las mismas que en su equipo
+  (`uv --version`, `uvx ruff --version`), para que lo que pasa aquí pase allá.
+
+### 5.3 Respaldar y restaurar
+
+Dos mecanismos, que se complementan:
+
+- **Copia de la base** (`sqlite3 … ".backup …"` cada noche, o réplica continua con Litestream):
+  ver `docs/despliegue.md`, sección 7.
+- **Paquete completo** (base, fotos, adjuntos y archivos de las evidencias en un `.tar.gz`), para restaurar o mudarse.
+  Hasta el 15-nov-2026 el paquete no llevaba la carpeta `evidencias/`: un paquete anterior a esa fecha se restaura, pero
+  sin esos archivos (cópielos aparte desde la instalación de origen). Una carpeta de archivos nueva se agrega a
+  `ARCHIVOS` en el script (`tests/test_paquete.py` lo exige):
+
+  ```sh
+  # Se puede ejecutar con el sistema en marcha.
+  TAU_DB=/var/lib/tau/tau.db uv run python scripts/paquete.py exportar /respaldos/tau.tar.gz
+
+  # Con el sistema DETENIDO. Si ya hay datos, exige --reemplazar y los mueve a
+  # respaldo-previo-<fecha>/ junto a la base (no borra nada).
+  TAU_DB=/var/lib/tau/tau.db uv run python scripts/paquete.py importar /respaldos/tau.tar.gz --reemplazar
+  ```
+
+**Ensayo de restauración (26 de septiembre de 2026)**, con una copia de la base de desarrollo:
+
+| Paso | Resultado |
+|---|---|
+| Exportar con el sistema en marcha | Paquete de 0,3 MB; manifiesto con esquema v21 y conteos |
+| Importar en una ubicación vacía | 5 cuentas, 7 productos, 3 actividades, 4 proyectos, 6 líneas: iguales al origen |
+| Importar de nuevo sin `--reemplazar` | Se niega y explica qué hacer |
+| Importar con `--reemplazar` | Datos anteriores movidos a `respaldo-previo-…`; importación completa |
+| Importar un paquete antiguo (esquema v20) con el código actual | Aplica la migración 21 (crea las 6 líneas); el sistema arranca y responde |
+
+**Repita el ensayo cada semestre** (y después de cambiar el procedimiento de respaldo) sobre una
+copia, nunca sobre la base en uso. Un respaldo que nunca se restauró no es un respaldo. Anote aquí
+la fecha y el resultado.
+
+**Simulacro automático** (PLAN §72, etapa 9): `scripts/restaurar_prueba.sh` restaura la última copia en una base temporal,
+comprueba la integridad (`PRAGMA integrity_check`), las claves foráneas y la versión del esquema, y cuenta las filas de cada
+tabla. Sin argumentos usa la réplica de Litestream (`LITESTREAM_REPLICA_URL` o `BUCKET_NAME`, con `litestream` instalado);
+también acepta un paquete (`.tar.gz`) o una copia (`.db`). Se niega a usar `data/tau.db`. Termina con código 0 solo si
+todo está bien.
+
+| Fecha | Origen | Resultado |
+|---|---|---|
+| 14-nov-2026 | Copia de la base de desarrollo (`.db`, esquema 92) | Integridad ok, 0 claves rotas; filas contadas |
+| 14-nov-2026 | Paquete exportado de esa copia (`.tar.gz`) | Importado con las migraciones hasta la 94; integridad ok |
+| — | Réplica de Litestream del servidor | Pendiente: hacerlo antes del piloto |
+
+### 5.4 Modo solo lectura
+
+`TAU_SOLO_LECTURA=1` deja el sistema consultable y rechaza todo cambio (útil durante una mudanza
+o una restauración). No ejecuta las tareas horarias.
+
+### 5.5 Correo
+
+`TAU_CORREO_MODO`: `archivo` (por omisión, guarda cada correo como `.eml` en
+`data/correos/`, útil para revisar sin enviar), `smtp` (producción; ver `TAU_SMTP_*`) o `memoria`
+(pruebas).
+
+En modo `smtp` los correos pasan por una **cola persistente** (`correo_pendiente`, migración 0048):
+
+- Cada correo se guarda en la misma transacción que lo origina. Si esa operación se revierte, el correo no sale; si
+  se confirma, sale en un hilo aparte (`db.al_confirmar`).
+- Si el servidor SMTP falla, el mantenimiento lo reintenta a los 1, 5, 15, 60 y 240 minutos (seis intentos, unas
+  5 horas y media). Un rechazo definitivo (código 5xx, p. ej. un destinatario que no existe) se descarta enseguida.
+  Cada intento fallido queda en `tau.log` como WARNING; el descarte, como ERROR.
+- Un reinicio o un despliegue ya no pierde correos: los pendientes salen en la primera revisión.
+- Al enviarse (o descartarse), la fila se borra: no queda historial de mensajes, que llevan enlaces personales.
+- Para ver qué espera: `sqlite3 data/tau.db "SELECT id, para, asunto, intentos, proximo_intento, ultimo_error
+  FROM correo_pendiente"`. Para reenviar ya uno detenido: ponga `proximo_intento` en el pasado y espere la próxima
+  revisión (cada 5 minutos, mientras alguien use el sistema).
+
+### 5.6 Registros y errores
+
+`app/comun/registros.py` escribe en la consola y en `data/registros/tau.log` (rota a los 10 MB y guarda
+5 archivos; `TAU_REGISTROS=consola` solo usa la consola):
+
+- **Una línea por petición:** `GET /productos 200 21 ms usuario=12`. Sin la consulta (`?q=…`) ni el cuerpo,
+  y con los tokens de `/recuperar/…` ocultos. Las que tardan 1 s o más van como `WARNING … (lenta)`. No se
+  anotan `/static` ni `/salud`.
+- **Errores no controlados:** `ERROR … Error a1b2c3 en POST /productos (usuario 12)` y la traza. La persona
+  ve una página de error (o un aviso, en HTMX) con ese **código de referencia**: búsquelo con
+  `grep a1b2c3 data/registros/tau.log*`.
+- **Aviso por correo:** con `TAU_AVISO_ERRORES=sistemas@…`, cada error avisa por correo, a lo más uno
+  cada 15 minutos (los demás quedan solo en el registro).
+- **Salud:** `GET /salud` responde `ok` si la base contesta (503 si no); lo usa el chequeo de Fly.io.
+- Arranque con `uvicorn … --no-access-log` (ya en `scripts/iniciar.sh` y en el servicio de
+  `docs/despliegue.md`): el registro de uvicorn duplicaría cada línea y anotaría la consulta.
+
+### 5.7 El repositorio público
+
+- Remoto: `origin` = <https://github.com/manumath/tau>. Los commits usan el correo `noreply` de GitHub
+  (`git config user.email`): GitHub rechaza los envíos que exponen un correo privado.
+- **No se versionan** (`.gitignore`): `data/`, `.sesskey`, `.venv/`, cachés, `iac-cinda/`, `politicas/`, `.herramientas/`, `.archify/` y los
+  logos originales `static/img/membrete/logo_*`. Para cambiar el del IIMAT, reemplace el original en local y regenere la
+  copia recortada (`iimat.png`, ≈300 px de alto; ver PLAN.md §35). Los de la Carrera salen del PDF oficial de su
+  marca (`static/img/marca/`, ver 4.4).
+- Antes de publicar algo nuevo, revise que no entren datos personales ni bases de datos (`git status --ignored`) y que
+  los correos de ejemplo sean de dominios de prueba (`test.cl`, `instituto.test`, `correo.bo`).
+
+### 5.8 IA con criterio humano
+
+Todas las funciones de IA nacen apagadas (PLAN §59). Para usarlas:
+
+1. Configure al menos un proveedor con las variables `TAU_IA_*` del README: un modelo local (Ollama, llama.cpp o
+   vLLM, con la API compatible con OpenAI) o un servicio externo, que además exige `TAU_IA_EXT_ZDR=true`
+   (retención cero de datos). Sin proveedor, el sistema dice «La función de IA no está disponible; puede continuar
+   manualmente».
+2. La Dirección de Carrera aprueba la política de uso y activa cada función con su responsable.
+
+Reglas para el código: ningún módulo llama a un modelo por su cuenta; todo pasa por `app/ia/servicio.generar`. Un dato
+nuevo que alimente a la IA se clasifica en `app/ia/clasificacion.py`. Los módulos vedados (`funciones.VEDADOS` y
+`servicio.ARCHIVOS_VEDADOS`) no importan `app.ia`, y una prueba lo verifica. Las instrucciones nunca se editan: se crea
+la versión siguiente. Las decisiones de diseño van en `docs/ia/decisiones.md`.
+
+Las funciones y los datos que recibe cada una están en `app/ia/catalogo.py`: para agregar una, regístrela allí, cree
+`app/ia/instrucciones/<clave>/v1.md`, ofrézcala en su pantalla con `app/ia/rutas/panel.bloque` y agregue sus pruebas.
+Las cifras de un borrador nunca vienen del modelo: se le dan marcadores (`{{productos}}`) que `textos.cifras` reemplaza
+por los valores de la base.
+
+### 5.9 Cargar datos desde un formulario de antecedentes ya llenado
+
+El conversor de la Guía de Antecedentes llenada y la correspondencia para llenarla desde la ficha
+(`iac-cinda/guia_a_tau.py` y `iac-cinda/correspondencia-guia.csv`) son **locales y privados**: no se versionan, porque
+conocen las celdas del instrumento de la agencia y trabajan con datos reales (PLAN §57 y §61). El conversor lee la Guía
+sin escribirla y deja en `iac-cinda/carga/` los CSV que aceptan las cargas del sistema, un `productos.bib` y un
+`informe.md` con lo que falta completar. Con `--tau` toma los correos de una **copia** de la base (nunca de
+`data/tau.db`).
+
+Orden de carga, cada una con su vista previa: cuentas (Usuarios → Importar CSV), historial con la carga horaria
+(Importar historial, Dirección de Carrera), grados (Importar grados), capacitación (Calidad → Capacitación → Importar
+CSV) y productos (Productos → Importar BibTeX). La capacitación exige que la persona ya tenga vínculo.
+
+### 5.10 Manual de usuario
+
+El manual es **de la instancia**, no del repositorio (PLAN §74, decisión del 17-nov-2026): vive en `manual/` de su
+carpeta (`instancias/<nombre>/manual/`) y se arma con la marca de esa instancia. El de la Carrera de Matemática está en
+`instancias/cmat/manual/`, que no se versiona en el repositorio público. Un manual tiene un archivo HTML por capítulo en
+`capitulos/`, el estilo en `estilo.css`, las capturas en `img/` y el resultado (`manual.html`, `manual.css` y
+`Manual-de-usuario-TAU.pdf`). La [guía de uso](guia-de-uso.md) sigue siendo la referencia completa; el manual es la
+versión ilustrada y por roles. El plan para escribir el del sistema genérico, y no solo el de una Carrera, está en
+[manual-plan.md](manual-plan.md).
+
+**Sin actualizar desde el 15-nov-2026 (decisión del usuario):** el de Matemática quedó como estaba y no se regenera al
+cambiar una pantalla. Ya no coincide del todo con el sistema (menú, pendientes y calendario, módulos, instancias).
+
+```sh
+uv run python scripts/manual.py              # base de demostración, capturas y PDF (necesita instancias/cmat)
+uv run python scripts/manual.py --solo-pdf   # tras corregir un capítulo: solo vuelve a armar el PDF
+uv run python scripts/manual.py --manual /ruta/otra/carpeta     # o TAU_MANUAL: otra carpeta de manual
+```
+
+- Una captura es `<captura archivo="nombre" clase="media|chica|telefono">pie</captura>`; la lista de capturas (quién
+  ingresa, qué ruta, qué botón se pulsa antes) está en `CAPTURAS` de `scripts/manual.py`. Las figuras se numeran solas.
+- Las capturas usan una base temporal con el seed y los datos de `datos()` en el mismo script, todo ficticio y de la
+  Carrera de Matemática: por eso **solo se toman con `instancias/cmat`**. Con otra instancia, `--solo-pdf` arma el PDF con
+  las capturas que ya tenga (ver `scripts/instancia_demo.py`). Nunca `data/tau.db`.
+- Las rutas a `static/` (fuentes y logotipo) de los capítulos y del estilo se resuelven al armar el documento: no
+  dependen de dónde esté la carpeta. El logotipo de la portada es el de la marca de la instancia.
+- Cuando cambie una pantalla que sale en el manual, vuelva a tomar las capturas. Si cambian los permisos
+  (`permisos.ACCIONES`), revise la matriz de privilegios del capítulo 3, que está escrita a mano.
+- El índice lleva números de página si está `pdftotext` (poppler); sin él, sale sin números.
+
+### 5.11 Medir el rendimiento y buscar escrituras en las lecturas
+
+`scripts/medir.py` arma la base del manual (o copia la que se indique) y recorre las pantallas con un cliente de pruebas,
+sin servidor. Córralo antes de un piloto o de una versión que toque listas, indicadores o informes; tarda unos minutos
+y no va en GitHub Actions.
+
+```sh
+uv run python scripts/medir.py                 # tiempo y tamaño de las pantallas principales (base del manual)
+uv run python scripts/medir.py --inflar        # con +5.000 productos, +3.000 estudiantes, +60.000 avisos, +80.000 auditorías
+uv run python scripts/medir.py --escrituras    # abre todas las pantallas (dirección, docente, estudiante) y lista las que escriben
+```
+
+- `--base copia.db` parte de una copia; nunca de `data/tau.db` directamente (el script se niega).
+- Referencia del 14-nov-2026 con `--inflar`: todas las pantallas bajo 200 ms y 180 KB (indicadores 159 ms, ficha
+  estadística 194 ms). Si una pasa de 300 ms con la escala real, primero busque consultas por fila (una por persona o por
+  producto) antes de pensar en guardar resultados.
+- `--escrituras` acepta solo las tablas de registro (`REGISTRO` en el script) y sale con código 1 si otra pantalla escribe.
+- No abra la base con el `sqlite3` de Python mientras la aplicación la tiene abierta en el mismo proceso: son dos copias
+  de SQLite y al cerrar una se pierden los bloqueos de la otra («disk I/O error» en apsw).
+
+## 6. Problemas frecuentes
+
+| Síntoma | Causa probable | Qué hacer |
+|---|---|---|
+| «Solicitud rechazada: no proviene del sistema» (403) al guardar | El sistema se abre con una dirección distinta de `TAU_URL` (otro dominio, IP, puerto) | Agregue esa dirección a `TAU_ORIGENES_EXTRA` |
+| Una clase de Tailwind no se aplica | CSS sin recompilar | `scripts/estilos.sh` (4.4); `tests/test_estilos.py` lo señala |
+| Nadie puede guardar nada | Modo solo lectura activo | Revise `TAU_SOLO_LECTURA` |
+| Una cuenta no puede ingresar aunque la contraseña es correcta | Bloqueo por intentos fallidos (15 minutos) | «Usuarios» → desbloquear |
+| El sistema no arranca tras actualizar | Falló una migración | Lea el error; restaure el respaldo previo (5.3) y corrija la migración en una nueva |
+| Una página de administración responde 403 | A la cuenta le falta el rol | «Usuarios» → «Roles» (lo hace Administración del sistema) |
+| Los correos no llegan | `TAU_CORREO_MODO` no es `smtp`, o credenciales SMTP | Revise `data/correos/` y la configuración SMTP |
+| Alguien ve «Error del sistema» con un código de referencia | Error no controlado | Busque el código en `data/registros/tau.log*` (5.6): la traza dice dónde falló |
+| Una prueba en navegador falla solo en su equipo | Chrome no instalado o muy antiguo | `uv run playwright install chromium` y `PLAYWRIGHT_CANAL=` |
+
+## 7. Deuda conocida
+
+- **Un solo equipo:** el desarrollo, la base de desarrollo (`data/`), los logos originales y las herramientas locales
+  (`.herramientas/`) están en un solo computador, y GitHub Actions es la única otra máquina que corre las pruebas. Si ese
+  equipo falla, el código está en GitHub, pero no lo que no se versiona: respalde `data/` y los logos originales fuera
+  de él (5.3) y anote dónde. Conviene que una segunda persona haya instalado y corrido el sistema siguiendo el capítulo 1.
+- **Publicación:** falta un `LICENSE`; conviene confirmar con la Dirección que se pueden publicar los logos del membrete
+  (PLAN.md §52). La plantilla de una agencia que se versionó antes sigue en el historial de git (PLAN §57).
+- **Seguimiento estudiantil:** el consentimiento de los estudiantes y del directorio se redactó sin revisión de la Dirección; el
+  envío real de correo masivo (encuestas, seguimiento y directorio) no se probó con el proveedor de producción.
+- **fastlite** es solo para SQLite. Un cambio de motor necesitaría un adaptador para la API que se
+  usa (`q`, `execute`, `t.<tabla>.insert/update`); el resto de lo propio de SQLite está en
+  `app/comun/db.py` (ver su docstring).
+- Los mayores archivos de rutas son `servicios/rutas/auxiliaturas.py` (unas 1.200 líneas), `academico/rutas/oferta.py`
+  (940), `calidad/rutas/mejora.py` (910) e `informes.py` (800). Las rutas de usuarios, productos y proyectos ya son
+  paquetes con un módulo por flujo; su `__init__` los registra en orden. Conviene dividir así los cuatro primeros
+  cuando se vuelvan a tocar a fondo.
+- **Duración de la integración continua:** la batería completa con navegador ronda los 14 minutos en un equipo de
+  desarrollo (era de unos 3 con 675 pruebas: creció más que el número de pruebas) y el trabajo de GitHub Actions tiene
+  un límite de 45 (`timeout-minutes`). Si se acerca, súbalo o divida el
+  trabajo (pruebas sin navegador y con navegador en paralelo).

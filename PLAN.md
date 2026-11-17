@@ -1,0 +1,4681 @@
+# TAU: diseño y estado
+
+**TAU | Sistema Integrado de Gestión Académica y Científica de la Carrera de Matemática.** Nació
+como «Portal de Investigación» del IIMAT y se amplió (secciones 22 a 24) a la gestión académica de
+la Carrera y la acreditación; el nombre se adoptó el 27 de septiembre de 2026.
+
+> **Contexto:** Instituto de Investigación Matemática (IIMAT) de la Carrera de Matemática (CMAT),
+> Facultad de Ciencias Puras y Naturales (FCPN), Universidad Mayor de San Andrés (UMSA), La Paz,
+> Bolivia. TAU sostiene el **Sistema Interno de Aseguramiento de la Calidad (SIAC)** de la Carrera, con un marco
+> propio y sin nombres de agencias (sección 57, 6-nov-2026). Las secciones 13 a 17 y 36 son anteriores: se pensaron para
+> una acreditación concreta y se conservan como historia de las decisiones.
+> Zona horaria America/La_Paz; montos en bolivianos (Bs).
+
+**Cómo leer este documento:** las secciones están en orden cronológico; una decisión posterior reemplaza a una anterior.
+Las secciones 1 a 10 describen el sistema inicial (investigación del IIMAT): su modelo de datos, su estado y sus cifras
+son de entonces. El estado vigente está en la sección 72; las reglas que todo agente debe conocer, en `CLAUDE.md`.
+
+Documento de diseño del sistema: qué hace, cómo está organizado, qué se decidió y qué queda
+pendiente. Para instalarlo y trabajar en el código, vea el [README](README.md); para usarlo, la
+[guía de uso](docs/guia-de-uso.md); para ponerlo en producción, la [guía de despliegue](docs/despliegue.md).
+
+## Índice
+
+- [1. Visión](#1-visión)
+- [2. Roles](#2-roles)
+- [3. Flujo de propuesta y aprobación](#3-flujo-de-propuesta-y-aprobación)
+- [4. Reglas de negocio](#4-reglas-de-negocio)
+- [5. Modelo de datos](#5-modelo-de-datos)
+- [6. Arquitectura](#6-arquitectura)
+- [7. Estado por fase](#7-estado-por-fase)
+- [8. Decisiones tomadas](#8-decisiones-tomadas)
+- [9. Pendiente](#9-pendiente)
+- [10. Preguntas abiertas](#10-preguntas-abiertas)
+- [11. Ajustes tras las pruebas con usuarios](#11-ajustes-tras-las-pruebas-con-usuarios)
+- [12. Filiación y periodo de pertenencia](#12-filiación-y-periodo-de-pertenencia)
+- [13. Contexto boliviano y acreditación IAC-CINDA](#13-contexto-boliviano-y-acreditación-iac-cinda)
+- [14. Catálogo de revistas: indexación verificada por año](#14-catálogo-de-revistas-indexación-verificada-por-año)
+- [15. Correspondencia con IAC-CINDA](#15-correspondencia-con-iac-cinda)
+- [16. Carga automática desde OpenAlex y citas](#16-carga-automática-desde-openalex-y-citas)
+- [17. Anexo de I+D+i para la acreditación](#17-anexo-de-idi-para-la-acreditación)
+- [18. Estudiantes en la investigación](#18-estudiantes-en-la-investigación)
+- [19. Internacionalización](#19-internacionalización)
+- [20. Protección CSRF](#20-protección-csrf)
+- [21. Líneas de investigación institucionales](#21-líneas-de-investigación-institucionales)
+- [22. Ampliación a gestión curricular y docente (opción 2)](#22-ampliación-a-gestión-curricular-y-docente-opción-2)
+- [23. Diseño de la fase 2: personas, unidades y roles (propuesta, 27-sep-2026)](#23-diseño-de-la-fase-2-personas-unidades-y-roles-propuesta-27-sep-2026)
+- [24. Fase 3: módulo curricular y docente (27-sep-2026)](#24-fase-3-módulo-curricular-y-docente-27-sep-2026)
+- [25. Dependencia única, clases de proyecto institucional y proyectos individuales (28-sep-2026)](#25-dependencia-única-clases-de-proyecto-institucional-y-proyectos-individuales-28-sep-2026)
+- [26. Término del vínculo y carga horaria en proyectos (28-sep-2026)](#26-término-del-vínculo-y-carga-horaria-en-proyectos-28-sep-2026)
+- [27. Cargo y unidad o grupo calculados (28-sep-2026)](#27-cargo-y-unidad-o-grupo-calculados-28-sep-2026)
+- [28. Usabilidad e informes: evaluación y punto 1 (28-sep-2026)](#28-usabilidad-e-informes-evaluación-y-punto-1-28-sep-2026)
+- [29. Informes de docencia (punto 2 de la evaluación, 28-sep-2026)](#29-informes-de-docencia-punto-2-de-la-evaluación-28-sep-2026)
+- [30. Componente de tablas (punto 3 de la evaluación, 28-sep-2026)](#30-componente-de-tablas-punto-3-de-la-evaluación-28-sep-2026)
+- [31. Tablero de calidad de datos (punto 4 de la evaluación, 28-sep-2026)](#31-tablero-de-calidad-de-datos-punto-4-de-la-evaluación-28-sep-2026)
+- [32. Ficha de docente y acciones masivas (punto 5 de la evaluación, 28-sep-2026)](#32-ficha-de-docente-y-acciones-masivas-punto-5-de-la-evaluación-28-sep-2026)
+- [33. Centro de avisos y resumen semanal (punto 6 de la evaluación, 28-sep-2026)](#33-centro-de-avisos-y-resumen-semanal-punto-6-de-la-evaluación-28-sep-2026)
+- [34. Series con gráficos y trazabilidad (punto 7 de la evaluación, 28-sep-2026)](#34-series-con-gráficos-y-trazabilidad-punto-7-de-la-evaluación-28-sep-2026)
+- [35. PDF con membrete (punto 8 de la evaluación, primera parte, 28-sep-2026)](#35-pdf-con-membrete-punto-8-de-la-evaluación-primera-parte-28-sep-2026)
+- [36. Guía de Antecedentes de IAC-CINDA (punto 8 de la evaluación, 28-sep-2026)](#36-guía-de-antecedentes-de-iac-cinda-punto-8-de-la-evaluación-28-sep-2026)
+- [37. Etapas de propuestas, botones que esperan y barras de avance (1-oct-2026)](#37-etapas-de-propuestas-botones-que-esperan-y-barras-de-avance-1-oct-2026)
+- [38. Preparación del semestre (1-oct-2026)](#38-preparación-del-semestre-1-oct-2026)
+- [39. Informes programados (1-oct-2026)](#39-informes-programados-1-oct-2026)
+- [40. Premios, arbitraje y prestación de servicios (1-oct-2026)](#40-premios-arbitraje-y-prestación-de-servicios-1-oct-2026)
+- [41. Fusionar coautores externos duplicados (1-oct-2026)](#41-fusionar-coautores-externos-duplicados-1-oct-2026)
+- [42. Vincular una persona externa a su cuenta (1-oct-2026)](#42-vincular-una-persona-externa-a-su-cuenta-1-oct-2026)
+- [43. Política de seguridad de contenido estricta (2-oct-2026)](#43-política-de-seguridad-de-contenido-estricta-2-oct-2026)
+- [44. División de los archivos de rutas más grandes (2-oct-2026)](#44-división-de-los-archivos-de-rutas-más-grandes-2-oct-2026)
+- [45. Clasificación MSC2020 de los productos (2-oct-2026)](#45-clasificación-msc2020-de-los-productos-2-oct-2026)
+- [46. Preprint y versión publicada (2-oct-2026)](#46-preprint-y-versión-publicada-2-oct-2026)
+- [47. Catálogos desde la interfaz (2-oct-2026)](#47-catálogos-desde-la-interfaz-2-oct-2026)
+- [48. Valoración de usabilidad y buenas prácticas (3-oct-2026)](#48-valoración-de-usabilidad-y-buenas-prácticas-3-oct-2026)
+- [49. Módulo Estudiantes (21-oct-2026)](#49-módulo-estudiantes-21-oct-2026)
+- [50. Módulo Egresados o alumni (21-oct-2026)](#50-módulo-egresados-o-alumni-21-oct-2026)
+- [51. Etapas previstas de los módulos de estudiantes y egresados (21-oct-2026)](#51-etapas-previstas-de-los-módulos-de-estudiantes-y-egresados-21-oct-2026)
+- [52. Publicación del repositorio en GitHub (21-22-oct-2026)](#52-publicación-del-repositorio-en-github-21-22-oct-2026)
+- [53. Menú lateral y pestañas en el teléfono (24-oct-2026)](#53-menú-lateral-y-pestañas-en-el-teléfono-24-oct-2026)
+- [54. Valoración de la experiencia por rol y ajustes (24-oct-2026)](#54-valoración-de-la-experiencia-por-rol-y-ajustes-24-oct-2026)
+- [55. Identidad visual de la Carrera de Matemática (25-oct-2026)](#55-identidad-visual-de-la-carrera-de-matemática-25-oct-2026)
+- [56. Auditoría del stack y concurrencia en SQLite (6-nov-2026)](#56-auditoría-del-stack-y-concurrencia-en-sqlite-6-nov-2026)
+- [57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)](#57-módulo-de-aseguramiento-de-la-calidad-propuesta-6-nov-2026)
+- [58. Servicios: comunicados y eventos, auxiliaturas y proyectos de grado (7-nov-2026)](#58-servicios-comunicados-y-eventos-auxiliaturas-y-proyectos-de-grado-7-nov-2026)
+- [59. IA con criterio humano (propuesta, 8-nov-2026)](#59-ia-con-criterio-humano-propuesta-8-nov-2026)
+- [60. Áreas y catálogo oficial de líneas de investigación (8-nov-2026)](#60-áreas-y-catálogo-oficial-de-líneas-de-investigación-8-nov-2026)
+- [61. Plan de mejora del informe de autoevaluación y carga desde la Guía de Antecedentes (8-nov-2026)](#61-plan-de-mejora-del-informe-de-autoevaluación-y-carga-desde-la-guía-de-antecedentes-8-nov-2026)
+- [62. Mejoras de la auditoría de software (8-nov-2026)](#62-mejoras-de-la-auditoría-de-software-8-nov-2026)
+- [63. Identidad visual en la interfaz y optimización (10-nov-2026)](#63-identidad-visual-en-la-interfaz-y-optimización-10-nov-2026)
+- [64. Manual de usuario para la revisión de los usuarios (11-nov-2026)](#64-manual-de-usuario-para-la-revisión-de-los-usuarios-11-nov-2026)
+- [65. Módulo de creación y cierre de planes de estudio (propuesta, 12-nov-2026)](#65-módulo-de-creación-y-cierre-de-planes-de-estudio-propuesta-12-nov-2026)
+- [66. Ciclo de vida de las gestiones y planificación del semestre (propuesta, 13-nov-2026)](#66-ciclo-de-vida-de-las-gestiones-y-planificación-del-semestre-propuesta-13-nov-2026)
+- [67. Más servicios para el estudiante (13-nov-2026)](#67-más-servicios-para-el-estudiante-13-nov-2026)
+- [68. Servicios para el docente (13-nov-2026)](#68-servicios-para-el-docente-13-nov-2026)
+- [69. Servicios para el investigador (13-nov-2026)](#69-servicios-para-el-investigador-13-nov-2026)
+- [70. Adecuación de las auxiliaturas al Reglamento Específico de Auxiliares Académicos del Pregrado (propuesta, 14-nov-2026)](#70-adecuación-de-las-auxiliaturas-al-reglamento-específico-de-auxiliares-académicos-del-pregrado-propuesta-14-nov-2026)
+- 71. Seguimiento posterior a la designación de auxiliares (reservada; ver §70, decisión 1)
+- [72. Consolidación: plan de mejora completo, rendimiento, brechas del plan y piloto (hecha, 14-nov-2026; piloto por realizar)](#72-consolidación-plan-de-mejora-completo-rendimiento-brechas-del-plan-y-piloto-hecha-14-nov-2026-piloto-por-realizar)
+- [73. Modularización para otras unidades de la UMSA (hecha, 16-nov-2026)](#73-modularización-para-otras-unidades-de-la-umsa-hecha-16-nov-2026)
+- [74. Instancia y esquema base: el sistema empieza de cero (en curso, 16-nov-2026)](#74-instancia-y-esquema-base-el-sistema-empieza-de-cero-en-curso-16-nov-2026)
+
+## 1. Visión
+
+Sistema interno donde cada investigador del instituto ingresa con su cuenta y mantiene al día su
+actividad científica. Con esos mismos datos, sin volver a escribirlos, se generan el CV de cada
+investigador, el informe de cada proyecto y la memoria anual del instituto.
+
+Principio rector: **cada hecho se registra una sola vez**. Un artículo con tres autores del
+instituto es *un* producto enlazado a tres personas, no tres registros. Un seminario de un
+proyecto aparece a la vez en el proyecto y en el perfil de quien lo dictó.
+
+## 2. Roles
+
+| Rol | Cómo se obtiene | Qué puede hacer |
+|---|---|---|
+| **Administración** | Indicador `es_admin` de la cuenta | Crea cuentas (una a una, por CSV o con invitación), asigna la categoría de cada investigador(a), activa, desactiva, desbloquea y restablece; decide las propuestas institucionales y fija el plazo de cada convocatoria; ve todos los proyectos y reasigna su responsable (no los gestiona); ve la memoria anual, la auditoría y el CV de cualquier investigador |
+| **Investigador(a)** | La cuenta tiene fila en `investigador`, con una categoría: titular, contratado(a), interino(a), invitado(a) o externo(a) | Edita su perfil; registra actividades y productos; crea proyectos individuales y participa en proyectos; genera su CV |
+| **Responsable / co-responsable** | Rol dentro de un proyecto | Edita el proyecto y sus participantes; aprueba o rechaza propuestas; vincula registros directamente |
+| **Participante** | Rol dentro de un proyecto (co-investigador, postdoc, tesista, colaborador) | Ve el proyecto; propone sus actividades y productos |
+| **Persona externa** | Registro sin cuenta (`persona_externa`) | Figura como coautor, participante de actividades o de proyectos |
+
+Una misma persona puede ser investigadora y administradora (p. ej., quien dirige el instituto).
+
+## 3. Flujo de propuesta y aprobación
+
+Las actividades y productos nacen en el espacio personal de quien los registra. En el formulario,
+«Vincular a proyectos» ofrece los proyectos vigentes en que participa:
+
+```
+ Participante registra        Responsable del proyecto            Resultado
+ ─────────────────────        ────────────────────────            ─────────
+ actividad o producto ──propone──▶ bandeja «Pendientes» ──aprueba──▶ forma parte del proyecto
+ (queda en su perfil)                                   ──rechaza──▶ vuelve con el motivo;
+                                                                     sigue en su perfil
+```
+
+- Lo que vincula un **responsable** queda aprobado de inmediato.
+- Al **aprobar** una actividad se puede asignar su responsable entre los participantes del proyecto.
+- Al **rechazar**, el motivo es obligatorio. Quien propuso lo ve y, si guarda el registro con la
+  casilla marcada, lo vuelve a proponer.
+- Una propuesta **pendiente o rechazada** se retira desmarcando la casilla. Lo **aprobado** solo lo
+  desvincula un responsable.
+- Editar un registro ya aprobado no requiere nueva aprobación; el proyecto lo muestra en
+  «Editados después de aprobados».
+- Si un participante deja el proyecto, lo ya aprobado se conserva.
+- Las fichas e informes del proyecto consideran solo lo aprobado.
+- Hay avisos en la navegación (contador) y, opcionalmente, por correo.
+
+## 4. Reglas de negocio
+
+Se validan en el servidor; ocultar un botón nunca es la única protección.
+
+**Productos**
+- Nivel de revisión: `indexado`, `arbitrado` o `sin_arbitraje`. Los tipos sin revisión (reporte,
+  preprint, presentación, software, tesis dirigida) quedan siempre `sin_arbitraje`.
+- Un producto `indexado` debe figurar en al menos un índice con `cuenta_como_indexado = 1`.
+- **Cuenta para el informe del instituto** si es indexado o arbitrado *y* está aceptado o
+  publicado. En la memoria anual cada producto cuenta una vez, aunque tenga varios autores del
+  instituto.
+- DOI y arXiv son únicos: registrar uno existente ofrece «Sumarme como autor».
+- Editan el creador y los autores del instituto; elimina solo el creador.
+
+**Actividades**
+- Fecha de término ≥ inicio; al menos un participante; editan el creador y los participantes del
+  instituto; elimina el creador.
+
+**Proyectos**
+- Tipos: **individual** (lo crea cualquier investigador(a), que queda como responsable) e
+  **institucional** (nace de una propuesta que acepta la administración; ver la sección 11).
+- Siempre queda al menos un responsable vigente. El responsable no se cambia desde la pestaña
+  de participantes: lo reasigna la administración. Las personas externas no pueden serlo.
+- Gestionan el proyecto (datos, participantes, propuestas) solo sus responsables y
+  co-responsables vigentes; la administración lo ve, pero no lo gestiona.
+- Solo participantes vigentes proponen, y solo a proyectos no finalizados.
+- El responsable de una actividad debe ser participante del mismo proyecto.
+- Ven el proyecto sus participantes (actuales o anteriores) y la administración.
+- Memoria: la producción de investigadores de categoría «Externo» figura solo si está aprobada
+  en un proyecto institucional vigente en el periodo.
+
+**Cuentas y acceso**
+- Contraseñas con Argon2; mínimo 10 caracteres combinando letras con números o símbolos.
+- Contraseña temporal → cambio obligatorio en el primer ingreso.
+- 5 intentos fallidos en 15 minutos bloquean el ingreso (la administración puede desbloquear).
+- Enlaces de recuperación e invitación de un solo uso (1 hora / 3 días); se guarda solo su hash.
+
+## 5. Modelo de datos
+
+Esquema inicial (migraciones `0001` a `0020`). El vigente llega a la `0095`: cada migración de `migrations/` explica
+en su encabezado qué cambia y por qué, y cada sección de este documento nombra las suyas.
+
+```
+usuario(id, email, nombres, apellidos, pass_hash, es_admin, activo, debe_cambiar_pass,
+        creado_en, ultimo_acceso, avisos_correo)
+investigador(usuario_id, grado, cargo, unidad, orcid, mr_id, zbmath_id, arxiv_id, scholar_url,
+             pagina_web, bio, foto, perfil_publico, actualizado_en, categoria)
+investigador_msc(usuario_id, codigo, principal, orden)
+vinculo(id, usuario_id, categoria, fecha_inicio, fecha_fin, jornada_horas, nota, creado_por, creado_en)
+msc(codigo, nivel, texto, texto_plano, descripcion)              -- MSC2020, 6.603 códigos
+intento_login(id, email, ip, exito, fecha)
+token_acceso(id, usuario_id, token_hash, proposito, expira_en, usado_en, creado_en)
+auditoria(id, usuario_id, accion, entidad, entidad_id, detalle, fecha)
+
+persona_externa(id, nombres, apellidos, institucion, pais, email, orcid, usuario_id, creado_por, creado_en)
+estudiante(id, externo_id, nivel, programa, del_programa, desde, hasta, titulado, registrado_por, creado_en)
+
+tipo_actividad(id, nombre, orden, activo)
+actividad(id, tipo_id, titulo, institucion, lugar, pais, fecha_inicio, fecha_fin, modalidad,
+          ambito, url, descripcion, creado_por, creado_en, actualizado_en)
+actividad_participante(actividad_id, orden, investigador_id | externo_id, rol)
+
+tipo_producto(id, nombre, admite_revision, orden, activo)
+indice(id, nombre, cuenta_como_indexado, cuenta_como_arbitrado, orden, activo)
+revista(id, titulo, issn, eissn, pais, editorial, url, arbitrada, acceso_abierto, estado, nota,
+        propuesta_por, verificada_por, verificada_en, creado_en, actualizado_en)
+revista_indice(id, revista_id, indice_id, desde, hasta, cuartil, fuente, evidencia_url,
+               verificado_por, verificado_en)
+producto(id, tipo_id, titulo, anio, mes, revista_id, openalex_id, citas, citas_actualizadas, estado_publicacion, revision, medio, volumen, numero,
+         paginas, doi, arxiv_id, url, resumen, actividad_id, creado_por, creado_en, actualizado_en)
+producto_autor(producto_id, orden, investigador_id | externo_id, filiacion_instituto)
+producto_indice(producto_id, indice_id)
+adjunto(id, entidad, entidad_id, nombre, archivo, mime, tamano, subido_por, subido_en)
+
+proyecto(id, codigo, nombre, descripcion, objetivo_general, fuente_financiamiento, monto,
+         moneda, fecha_inicio, fecha_fin, estado, creado_por, creado_en, actualizado_en, tipo, ambito)
+proyecto_objetivo(id, proyecto_id, orden, texto)
+proyecto_contraparte(id, proyecto_id, institucion, pais, creado_en)
+convocatoria(periodo, abre, cierra, actualizado_por, actualizado_en)
+propuesta_institucional(id, proyecto_id, periodo, modalidad, nombre, descripcion, objetivo_general,
+        metodologia, resultados_esperados, bibliografia, estado, proponente_id, creada_en,
+        actualizada_en, enviada_en, envios, copia_enviada, decidida_por, decidida_en, comentario)
+propuesta_objetivo(id, propuesta_id, orden, texto)
+propuesta_actividad_prevista(id, propuesta_id, orden, descripcion, mes_previsto, actividad_id)
+propuesta_evento(id, propuesta_id, accion, comentario, usuario_id, fecha)
+aviso_enviado(clave, fecha)
+proyecto_participante(id, proyecto_id, investigador_id | externo_id, rol, fecha_desde, fecha_hasta)
+actividad_proyecto(actividad_id, proyecto_id, estado, responsable_participante_id,
+                   propuesto_por, propuesto_en, revisado_por, revisado_en, comentario)
+producto_proyecto(producto_id, proyecto_id, estado, propuesto_por, propuesto_en,
+                  revisado_por, revisado_en, comentario, agradece)
+```
+
+`investigador_id | externo_id`: exactamente uno de los dos (restricción `CHECK`).
+
+## 6. Arquitectura
+
+- **FastHTML** (Starlette + componentes en Python) con **HTMX** para la interactividad y
+  **MonsterUI** (FrankenUI + Tailwind) para los componentes.
+- **SQLite** con **fastlite** y migraciones versionadas con **fastmigrate**. Una función
+  `sin_tildes` registrada en SQLite permite buscar sin distinguir tildes ni mayúsculas.
+- **KaTeX** en el navegador para las fórmulas de títulos y resúmenes.
+- **Crossref** y **arXiv** para importar productos (`httpx2`); **bibtexparser** para BibTeX;
+  **openpyxl** para XLSX; **Pillow** para las fotos; **argon2-cffi** para las contraseñas.
+- Informes como páginas imprimibles; el PDF lo genera el navegador (ver decisiones).
+- Estructura de módulos y convenciones de HTMX: ver el [README](README.md).
+
+## 7. Estado por fase
+
+| Fase | Contenido | Estado |
+|---|---|---|
+| 0. Base | Esqueleto, migraciones, datos de ejemplo, pruebas | ✔ |
+| 1. Acceso | Login, bloqueo y desbloqueo, contraseña temporal, administración de cuentas, carga por CSV, páginas de error | ✔ |
+| 2. Perfil | Edición en línea, identificadores, áreas MSC2020, foto, directorio interno | ✔ |
+| 3. Actividades y productos | Registro con autores internos y externos, revisión e índices, duplicados, adjuntos, fichas | ✔ |
+| 4. Proyectos | Participantes, objetivos, propuesta y aprobación, bandeja y contador de pendientes | ✔ |
+| 5. Productividad | Importación desde DOI (Crossref) y arXiv; importar y exportar BibTeX | ✔ |
+| 6. Informes | CV, informe de proyecto, memoria anual; descargas XLSX, CSV y BibTeX | ✔ |
+| 7. Extras | Recuperación e invitación por correo, avisos, perfiles públicos, API JSON, auditoría | ✔ |
+
+**Ajustes tras las pruebas con usuarios** (categorías, proyectos individuales e institucionales, propuestas anuales, informes por periodo): completos, ver la [sección 11](#11-ajustes-tras-las-pruebas-con-usuarios).
+
+**Despliegue:** servidor propio (systemd + Caddy) o Fly.io (contenedor, volumen y réplica
+continua de la base con Litestream). El paquete de datos (`scripts/paquete.py`) y el modo solo
+lectura permiten mudarse entre ambos sin perder información.
+
+382 pruebas automáticas al cerrar estas fases (hoy, ~1.060 y ~50 en navegador). El detalle de cada entrega está en el
+historial de git (un commit por fase).
+
+## 8. Decisiones tomadas
+
+Las marcadas **(confirmada)** las tomó el equipo durante el desarrollo y la Dirección las confirmó
+el 1-oct-2026 sin cambios.
+
+- **Informe del instituto:** solo productos indexados o arbitrados. Si están enviados o en
+  preparación, todavía no cuentan (cuentan los aceptados y publicados) **(confirmada)**.
+- **Qué índices cuentan como «indexado»:** WoS (SCIE y ESCI), Scopus, SciELO, MathSciNet y
+  zbMATH sí; Latindex Catálogo no (cuenta como arbitrado: evalúa la calidad editorial, no indexa
+  citas) **(confirmada)**.
+- **Permisos sobre registros:** editan el creador y los coautores o participantes del instituto;
+  elimina solo el creador **(confirmada)**.
+- **Adjuntos** (certificados, etc.): solo los ven quienes pueden editar el registro y la administración.
+- **Co-responsables** tienen los mismos permisos que el responsable, incluida la aprobación y la
+  asignación de carga **(confirmada)**.
+- **Proyectos** privados: los ven sus participantes (también quienes ya salieron), la Dirección del
+  Instituto y el Comité de acreditación; no la Administración del sistema ni el perfil público
+  **(confirmada)**.
+- **Perfil público** desactivado por defecto; cada persona decide. No se publican correo,
+  actividades, proyectos, adjuntos, trabajos en curso ni presentaciones.
+- **PDF desde el navegador:** los generadores del lado del servidor (WeasyPrint, Typst) no
+  entienden el LaTeX de títulos y resúmenes, y WeasyPrint exige librerías del sistema.
+- **Importaciones:** los artículos importados de Crossref o BibTeX quedan como arbitrados (la
+  fuente no dice si la revista está indexada). Los tipos sin equivalente, como `@phdthesis`, no
+  se importan.
+- **Cuentas nuevas:** por defecto con invitación por correo (cada persona define su
+  contraseña); si no hay correo, con contraseña temporal.
+- **Validación institucional** de registros (declarado → validado): no en el piloto.
+- **Ingreso:** usuario y contraseña propios del sistema; sin SSO ni LDAP en el piloto.
+
+## 9. Pendiente
+
+**Antes de producción** (ver [despliegue](docs/despliegue.md) o [Fly.io](docs/despliegue-fly.md)):
+- *(Hecho en la fase 1.)* Tailwind compilado localmente y htmx, Franken UI y KaTeX servidos por el
+  propio sistema, sin CDN.
+- Configurar SMTP, `PORTAL_URL`, `PORTAL_SECRET_KEY`, `PORTAL_HTTPS_ONLY=1` y `PORTAL_CONTACTO`.
+- *(Hecho el 1-oct-2026.)* Revisar con el instituto las decisiones marcadas «(confirmar)».
+- Designar un suplente del responsable técnico y fijar la política de respaldos (diarios, fuera del
+  servidor, con ensayo de restauración cada semestre). Propuesta para la reunión de despliegue:
+  documento «Fundamento técnico de TAU».
+- Elegir dónde alojar el piloto (servidor del instituto o Fly.io) según su política sobre datos
+  personales en proveedores externos; usar un dominio propio desde el inicio facilita mudarse.
+- Si se usa Fly.io: probar un despliegue real. La imagen se construyó y se probó localmente con
+  Podman (arranque con Litestream, paquete de datos y restauración tras destruir el volumen);
+  falta probarla en la plataforma, con Tigris como réplica.
+
+**Funcionalidad que el plan original incluía y aún no está:**
+- *(Hecho el 2-oct-2026, §47.)* Administrar los catálogos (tipos de actividad y de producto, índices)
+  desde la interfaz.
+- *(Hecho el 1-oct-2026, §41 y §42.)* Fusionar personas externas duplicadas, y vincular una persona
+  externa a su cuenta si luego la recibe.
+- *(Hecho el 2-oct-2026, §45.)* Áreas MSC en los productos.
+- *(Hecho el 2-oct-2026, §46.)* Enlace formal entre un preprint y su versión publicada, como
+  registros separados.
+
+**Futuro, si se requiere:** validación institucional, SSO o LDAP, integración con el
+repositorio institucional, proyectos públicos, cuartiles o factor de impacto de las revistas.
+
+## 10. Preguntas abiertas
+
+1. ¿La agencia financiadora exige cuartiles (Q1–Q4) o factor de impacto de las revistas indexadas?
+2. ¿Cuántas personas participarán en el piloto? Con SQLite no cambia mucho, pero ayuda a
+   dimensionar el servidor y los respaldos.
+3. ¿El instituto quiere publicar los proyectos, además de los perfiles?
+4. ¿Hace falta registrar la tesis doctoral propia (hoy no hay un tipo de producto para eso)?
+
+## 11. Ajustes tras las pruebas con usuarios
+
+Cambios pedidos por el instituto después de las primeras pruebas (septiembre de 2026). Se
+implementan por etapas; cada una termina con pruebas, datos de ejemplo y documentación al día.
+
+### Lo que pidió el instituto
+
+1. **Dos tipos de proyecto.** Los **individuales** se registran sin aprobación. Los
+   **institucionales** se proponen y pasan por revisión; la administración los acepta, los acepta
+   con condiciones o los rechaza. Además de los datos básicos, una propuesta institucional incluye
+   metodología, resultados esperados, actividades previstas y bibliografía. Sobre los proyectos
+   institucionales, la administración solo decide su aceptación.
+2. **Periodo anual.** Un proyecto institucional rige de octubre a septiembre (p. ej. oct/2026 –
+   sept/2027). Las propuestas se presentan durante septiembre y pueden ser de **continuidad** o de
+   un **proyecto nuevo**. Si el responsable no propone continuidad (ni un proyecto nuevo), el
+   proyecto concluye en septiembre. Quien propone queda como responsable.
+3. **Categorías de investigador:** Titular, Contratado(a), Interino(a), Invitado(a) y Externo(a).
+
+### Respuestas del instituto a las preguntas del plan
+
+| Tema | Respuesta |
+|---|---|
+| Categorías | Son cinco; la cuarta es «Invitado(a)». |
+| Categoría y permisos | Solo titulares y contratados proponen proyectos institucionales o son responsables; los interinos pueden ser co-responsables. |
+| Externos en la memoria | Figuran en la memoria del instituto si están ligados a un proyecto institucional. |
+| Aceptación condicional | El proyecto **queda en espera** hasta que el responsable corrija y la administración acepte. |
+| «Administrador principal» | Es la misma administración de siempre (no hay un rol aparte). |
+| Proyectos existentes | Pasan todos a individuales. En los datos de ejemplo, el FONDECYT queda como institucional. |
+| Propuesta de continuidad | Repite todas las secciones, precargadas desde el periodo anterior y editables (nuevos objetivos, nuevo plan de actividades). |
+| Memoria | Además del año calendario, por periodo de vigencia (octubre–septiembre) y por un rango de fechas que elija quien la genera. |
+
+### Interpretaciones propias (confirmadas el 1-oct-2026)
+
+- Las restricciones por categoría se aplican a los proyectos **institucionales**. Un proyecto
+  individual lo puede registrar cualquier investigador(a) y queda como responsable.
+- «Ligado a un proyecto institucional» significa que el producto o actividad está **aprobado** en
+  un proyecto institucional (no en formulación) vigente en el periodo del informe.
+- *(Superada.)* «La categoría no guarda historial»: la reemplazaron los periodos de vínculo (§12,
+  §23 y §25). La categoría la define la Dirección de Carrera y los informes usan la de cada fecha.
+- Una continuidad enviada que aún no se decide al 1 de octubre mantiene el proyecto vigente
+  («en renovación») hasta la decisión; si se rechaza, el proyecto concluye el 30 de septiembre.
+- Los borradores se preparan en cualquier momento; solo se **envían** dentro del plazo. La
+  administración puede ampliar o reabrir el plazo de una convocatoria.
+
+### Diseño
+
+**Categorías.** Columna `investigador.categoria` (`titular`, `contratado`, `interino`,
+`invitado`, `externo`; vacía = «sin categoría», que la administración debe completar). Se asigna
+al crear la cuenta, en la carga por CSV y desde el listado de usuarios. Se ve en el perfil, el
+directorio (con filtro) y la memoria.
+
+**Tipo de proyecto.** Columna `proyecto.tipo` (`individual` | `institucional`).
+
+- *Individual:* cualquier investigador(a) lo crea desde «Proyectos» y queda como responsable.
+  Participantes, propuestas de actividades y productos y su aprobación siguen como hoy.
+- *Institucional:* nace de una propuesta. La administración deja de crear proyectos y de asignar
+  responsables en el uso normal; conserva la posibilidad de reasignar al responsable (p. ej., si
+  alguien deja el instituto).
+
+**Propuestas institucionales.**
+
+```
+propuesta_institucional(id, proyecto_id, periodo, modalidad, metodologia, resultados_esperados,
+        bibliografia, estado, proponente_id, enviada_en, copia_enviada, decidida_por, decidida_en,
+        comentario, UNIQUE (proyecto_id, periodo))
+    periodo:   año de inicio (2026 = 1-oct-2026 a 30-sep-2027)
+    modalidad: nuevo | continuidad
+    estado:    borrador | enviada | aceptada | condicional | rechazada | retirada
+propuesta_actividad_prevista(id, propuesta_id, orden, descripcion, mes_previsto)
+convocatoria(periodo, abre, cierra)          -- por omisión, del 1 al 30 de septiembre
+```
+
+```
+borrador ──enviar──▶ enviada ──▶ aceptada ─────────▶ proyecto vigente en el periodo
+  ▲                    │   └──▶ rechazada (motivo)
+  │                    └──────▶ condicional (condiciones) ──responsable corrige y reenvía──┐
+  └────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- Al enviar se congela una copia (`copia_enviada`) de lo que revisa la administración.
+- *Nuevo:* crea el proyecto en estado «En formulación». *Continuidad:* solo la presenta un
+  responsable del proyecto, con todas las secciones precargadas del periodo anterior.
+- Proponer y ser responsable: titulares y contratados. Co-responsable: también interinos.
+- Vigencia: un proyecto institucional está vigente mientras una propuesta aceptada cubra la fecha
+  (o haya una continuidad enviada sin decidir). Se calcula por fechas, sin tareas programadas.
+- Bandeja «Propuestas institucionales» para la administración, por periodo, con contador en la
+  navegación. Avisos: a la administración al recibir una propuesta, al proponente con la decisión,
+  y a los responsables en septiembre si su proyecto termina y no han propuesto continuidad.
+
+**Memoria.** Periodo elegible: año calendario, periodo oct–sep o rango libre de fechas. Cuentan
+los productos con al menos un autor del instituto de categoría distinta de «Externo», o bien
+ligados a un proyecto institucional. Desglose por categoría y columna de categoría en «Por investigador».
+
+### Etapas
+
+| Etapa | Contenido | Estado |
+|---|---|---|
+| A | Categorías: migración, cuentas (alta, CSV, cambio desde el listado), perfil, directorio con filtro, memoria | ✔ |
+| B | Tipo de proyecto: individuales creados por investigadores, ajuste de permisos de la administración, listados; regla de externos en la memoria | ✔ |
+| C | Propuestas institucionales: formulario, borrador y envío, convocatoria y plazos, bandeja de decisión, condiciones, continuidad, vigencia automática, avisos | ✔ |
+| D | Informes: memoria por periodo oct–sep y por rango; exportar las propuestas de una convocatoria (XLSX); actividades previstas frente a realizadas | ✔ |
+
+**Detalles de la etapa C:**
+
+- Una propuesta nueva crea el proyecto «En formulación» y su responsable es quien propone. Si el
+  borrador se elimina y el proyecto no tiene otra historia, se elimina también.
+- La propuesta guarda su propio contenido (nombre, descripción, objetivos, etc.). Al aceptarse,
+  los datos básicos y los objetivos pasan al proyecto; en un proyecto institucional no se editan
+  directamente (sí el código, el financiamiento y el monto).
+- Al enviar se congela una copia (`copia_enviada`): si la propuesta queda condicional y se está
+  corrigiendo, la administración sigue viendo la última versión enviada.
+- Una propuesta rechazada de un proyecto nuevo deja el proyecto en formulación (se puede volver a
+  proponer en otra convocatoria).
+- La vigencia se recalcula al arrancar, a lo más una vez por hora (Beforeware) y tras cada
+  decisión. Los recordatorios de continuidad se envían una vez por proyecto y periodo.
+- Datos de ejemplo: el FONDECYT 1260001 (Emmy) aceptado para 2025–2026 (termina el 30 de
+  septiembre) y una propuesta nueva de Sofía por decidir.
+
+**Detalles de la etapa D:**
+
+- Los productos solo tenían año. Se agregó el **mes de publicación** (opcional; se toma de
+  Crossref, arXiv y BibTeX al importar). En un periodo o rango, un producto con mes se ubica por
+  su mes; uno sin mes cuenta si todo su año cae dentro, y si cae solo en parte queda **«por
+  confirmar»** (se lista, no se cuenta). Las actividades se ubican por su fecha de inicio.
+- Plan: cada actividad prevista de una propuesta aceptada puede enlazarse con la actividad
+  registrada que la cumple (aprobada en el proyecto y del mismo periodo). Estados: pendiente,
+  atrasada, realizada. Aparece en la pestaña «Plan» y en el informe de proyecto (HTML y XLSX).
+- XLSX de una convocatoria: hojas Propuestas, Textos, Objetivos y Actividades previstas, con la
+  copia enviada de cada propuesta (sin borradores).
+
+Nota: la convocatoria de septiembre de 2026 cierra el 30; lo realista es que el piloto use la
+de septiembre de 2027, o que la administración abra un plazo extraordinario.
+
+## 12. Filiación y periodo de pertenencia
+
+Para que las cifras institucionales resistan una revisión externa, un producto o actividad cuenta
+para el instituto solo si **al menos un autor o participante del instituto**:
+
+1. tenía **vínculo vigente** con el instituto en la fecha del producto (año y mes de publicación)
+   o de la actividad (fecha de inicio), y
+2. en productos, **firmó con la filiación del instituto**.
+
+La producción anterior al ingreso se registra en el perfil y el CV, pero no cuenta en los informes
+institucionales.
+
+### Respuestas del instituto
+
+| Tema | Respuesta |
+|---|---|
+| Institución | El Instituto de Investigación Matemática (IIMAT) es parte de la Carrera de Matemática (CMAT), de la Facultad de Ciencias Puras y Naturales (FCPN) de la Universidad Mayor de San Andrés (UMSA), Bolivia. |
+| Qué filiación vale | IIMAT o cualquiera de las instancias que lo contienen, incluida la UMSA. Vale la doble filiación. |
+| Producción anterior al ingreso | Se registra en el perfil, pero no cuenta en los informes institucionales. Cuenta si hay vínculo en la fecha **y** filiación. |
+| Invitados y externos | Como ahora: los externos figuran si están ligados a un proyecto institucional. |
+| Desactivar una cuenta | El sistema pregunta si también termina el vínculo y en qué fecha. |
+| Datos históricos | Los tiene Recursos Humanos; hay varios periodos por persona (ingreso y cambios de categoría). |
+| Informes de proyecto | Los fondos exigen filiación **y** que la publicación agradezca al proyecto. |
+
+### Diseño
+
+- `vinculo(id, usuario_id, categoria, fecha_inicio, fecha_fin, jornada_horas, nota, …)`:
+  periodos sin superposición. `fecha_inicio` vacía = ingreso desconocido (se trata como «desde
+  siempre» y los informes lo advierten). `jornada_horas` queda lista para indicadores por jornada.
+  `investigador.categoria` pasa a ser la categoría del vínculo vigente (se recalcula sola).
+- Los informes usan la **categoría a la fecha** de cada producto o actividad.
+- Un producto sin mes cuyo año solo en parte cae dentro del vínculo del autor queda «por
+  confirmar», como en la memoria por periodo.
+- `producto_autor.filiacion_instituto` (sí / no / sin declarar), con detección al importar según
+  los nombres del instituto (IIMAT, CMAT, FCPN, UMSA y sus nombres completos).
+- `producto_proyecto.agradece` (sí / no / sin declarar): la publicación agradece al proyecto.
+
+**Detalles de E1:**
+
+- Las cuentas que ya tenían categoría recibieron un periodo vigente sin fecha de ingreso. La
+  memoria advierte quiénes no tienen fecha de ingreso y quiénes no tienen vínculo registrado (su
+  producción no cuenta).
+- En la memoria, el resumen por investigador incluye a quienes estuvieron vinculados en el periodo
+  aunque ya no lo estén (con «hasta …»), con su categoría al final del periodo. El desglose por
+  categoría cuenta cada registro con la categoría de sus autores a la fecha.
+- La carga de cuentas por CSV acepta además `fecha_ingreso`.
+- *(Resuelto en la fase 3.)* El cálculo por jornada: el anexo usa JCE = carga contratada / 160 (§24).
+
+### Etapas
+
+| Etapa | Contenido | Estado |
+|---|---|---|
+| E1 | Historial de vínculo: migración, ventana «Vínculo» en la administración, carga del historial por CSV (reemplaza el de cada persona del archivo), pregunta al desactivar, perfil, reglas de vínculo y categoría a la fecha en la memoria | ✔ |
+| E2 | Filiación: casilla por autor, detección al importar, filtro y confirmación masiva, «por confirmar» en la memoria | ✔ |
+| E3 | Agradecimiento al proyecto, informe de proyecto con filiación y agradecimiento, datos de ejemplo y documentación | ✔ |
+
+**Detalles de E2:**
+
+- Selector por autor del instituto en el formulario («Firmó con IIMAT/UMSA», «Sin filiación del
+  instituto», «Sin declarar»); los externos llevan un campo oculto para mantener las listas en paralelo.
+- Al importar por DOI se marca «Firmó» si la afiliación publicada menciona IIMAT, CMAT, FCPN o
+  UMSA (o sus nombres completos; `PORTAL_FILIACIONES`). BibTeX no trae afiliaciones.
+- Solo se pide declarar la filiación en productos indexados o arbitrados (los únicos que cuentan).
+  Aviso en el inicio, filtro «Sin filiación declarada», botones Sí / No y declaración masiva.
+- Memoria: cuenta si al menos un autor vinculado en la fecha firmó con la filiación. «Por
+  confirmar» indica el motivo (sin mes, vínculo parcial, filiación sin declarar). El CV admite
+  «solo con filiación IIMAT/UMSA».
+
+**Detalles de E3:**
+
+- `producto_proyecto.agradece` (sí / no / sin declarar): se indica en el formulario del producto
+  (junto a cada proyecto), al aprobar la propuesta y en la pestaña Productos (responsables).
+- Informe de proyecto: cuántos productos que cuentan cumplen filiación **y** agradecimiento, y
+  qué le falta a cada uno; columnas nuevas en el XLSX. La filiación del producto es «sí» si algún
+  autor del instituto firmó con ella.
+
+## 13. Contexto boliviano y acreditación IAC-CINDA
+
+- **Ajustes hechos:** zona horaria America/La_Paz para «hoy», plazos, vigencias y horas mostradas
+  (la base sigue guardando UTC; la imagen instala `tzdata`); montos en bolivianos (Bs); ejemplos
+  de proyectos con recursos IDH de la UMSA y del International Science Programme (ISP); dominios de
+  ejemplo en `umsa.bo`.
+- **Corrección:** el análisis de brechas anterior citaba normativa chilena (ANID, CNA, Ley 21.719)
+  por un supuesto erróneo sobre el país; no aplica. Las exigencias de protección de datos y de
+  reporte deben revisarse con la normativa boliviana y de la UMSA.
+- **IAC-CINDA:** la acreditación de la Carrera y del Instituto se hará con el Instituto
+  Internacional para el Aseguramiento de la Calidad (IAC) de CINDA. Pendiente: conseguir su guía o
+  manual de criterios vigente y hacer una tabla de correspondencia criterio → dato del sistema →
+  evidencia, para detectar lo que falta registrar y preparar un «informe para acreditación»
+  (indicadores del periodo evaluado, normalmente varios años, con sus evidencias).
+
+## 14. Catálogo de revistas: indexación verificada por año
+
+Hoy cada autor declara si su artículo es indexado y en qué índices. Eso produce inconsistencias
+(la misma revista indexada para uno y no para otro) y no resiste una revisión externa. Además, la
+indexación de una revista cambia con los años. IAC-CINDA (criterio 3.6.3) pide evidencia de los
+últimos 5 años de «publicaciones científicas en revistas indexadas tanto nacionales como
+internacionales», que el programa «exprese de manera abierta y transparente los datos, métodos y
+métricas» y que promueva la ciencia abierta.
+
+### Diseño
+
+- `revista(id, titulo, issn, eissn, pais, editorial, url, arbitrada, acceso_abierto, estado,
+  nota, propuesta_por, verificada_por, verificada_en, …)`. `estado`: `verificada` (la revisó la
+  administración) o `pendiente` (la propuso un investigador o se creó al importar).
+- `revista_indice(revista_id, indice_id, desde, hasta, cuartil, fuente, evidencia_url,
+  verificado_por, verificado_en)`: la revista figura en ese índice entre esos años (hasta vacío =
+  vigente), con la fuente consultada (p. ej., «Lista maestra de Scopus, junio 2026») y un enlace
+  de evidencia. Cuartil opcional (Q1–Q4), por si se requiere.
+- `producto.revista_id`: los artículos en revista eligen la revista del catálogo (autocompletar
+  por título o ISSN; al importar por DOI, se reconoce por el ISSN que trae Crossref).
+- **Revisión e índices derivados:** si la revista está verificada, el nivel de revisión y los
+  índices del artículo se calculan del catálogo **según el año de publicación** y no se editan a
+  mano. Sin revista verificada, rige lo declarado, marcado como «declarado, sin verificar».
+- Nacional o internacional según el país de la revista (Bolivia = nacional). Acceso abierto
+  para el indicador de ciencia abierta.
+- La administración mantiene el catálogo: alta y edición, periodos de indexación con su fuente,
+  verificación de revistas propuestas, carga por CSV (solo las revistas donde publica el
+  instituto; no hace falta cargar listas completas) y una lista de artículos sin revista del
+  catálogo, agrupados por el nombre declarado, para vincularlos.
+
+### Etapas
+
+| Etapa | Contenido | Estado |
+|---|---|---|
+| R1 | Catálogo: tablas, validación de ISSN, administración (lista, ficha, indexaciones con fuente y evidencia, verificación), carga por CSV | ✔ |
+| R2 | Productos: selector de revista, propuesta de revista nueva, reconocimiento por ISSN al importar, derivación de revisión e índices por año, vinculación de artículos existentes | ✔ |
+| R3 | Informes: origen del dato (catálogo o declarado), revistas nacionales e internacionales, acceso abierto, cuartiles; fuente y fecha de verificación en las exportaciones | ✔ |
+
+**Detalles de R2:**
+
+- Al guardar un artículo con revista verificada, la revisión y los índices se toman del catálogo
+  (año de publicación) y el medio pasa a ser el título de la revista. Cualquier cambio del catálogo
+  (verificar, editar, indexaciones, carga por CSV, vinculación) reclasifica sus artículos.
+- Propuesta de revista desde el formulario (queda pendiente, con quien la propuso); si su ISSN o
+  título ya existen, se reutiliza la revista. Crossref: reconocimiento por ISSN o título; si no
+  está, se ofrece proponerla. BibTeX: reconocimiento por ISSN o título (sin crear revistas) y el
+  ISSN se exporta.
+- Administración: «Artículos sin revista», agrupados por el nombre declarado, con sugerencia por
+  título, para vincular o crear la revista.
+- Tipos nuevos (migración 0016, IAC-CINDA 3.6.3): productos «Patente» y «Traducción»; actividades
+  «Transferencia de conocimiento», «Participación en red de investigación» y «Estancia o pasantía
+  de investigación» (renombra «Estadía de investigación»). El CV los agrupa y la memoria informa
+  patentes y traducciones aparte.
+
+### Decisiones del instituto
+
+1. Artículos en revistas **sin verificar**: cuentan durante el piloto (marcados como declarados);
+   al preparar la acreditación se exigirá revista verificada.
+2. El catálogo lo mantiene la administración durante el piloto.
+3. SciELO queda como un solo índice (sin separar SciELO Bolivia). **Latindex Catálogo cuenta como
+   arbitrado** (no como indexado): una revista que figura en él clasifica sus artículos como
+   arbitrados aunque no declare revisión por pares (`indice.cuenta_como_arbitrado`, migración 0017).
+
+**Detalles de R3:**
+
+- Memoria: sección «Revistas de los artículos» (nacionales / internacionales según el país de la
+  revista, acceso abierto, mejor cuartil del año, clasificados por el catálogo o declarados) y
+  sección final «Datos y método» con las reglas y la política de índices (IAC-CINDA 3.6.3).
+- Exportaciones de productos (memoria, informe de proyecto, CSV): mes, revista del catálogo, ISSN,
+  país, ámbito, acceso abierto, mejor cuartil, origen de la clasificación y fuente de cada
+  indexación con su fecha de verificación.
+- `PORTAL_EXIGIR_REVISTA_VERIFICADA=1` (para la acreditación): los artículos en revistas no
+  verificadas quedan «por confirmar».
+
+### Por confirmar con el instituto
+
+1. (Resuelto: ver «Decisiones del instituto».)
+2. (Resuelto: ver «Decisiones del instituto», punto 3.)
+3. (Resuelto: la administración, durante el piloto.)
+
+## 15. Correspondencia con IAC-CINDA
+
+Tabla completa (criterio → qué registra el sistema → brecha, con estado): 
+https://claude.ai/artifact/VuTd7X3jxFy3Fx4JgwH4wU (privada; compartir desde el menú de la página).
+
+- Base: criterios de pregrado de IAC-CINDA (junio 2025, v1.2), que aplican a la Carrera de
+  Matemática. **Pendiente:** confirmar con IAC-CINDA qué conjunto de criterios corresponde al
+  Instituto (el Modelo 2025 describe procesos para instituciones, carreras, maestrías y doctorados).
+- De 33 criterios revisados que tocan la investigación: 15 cubiertos, 16 parciales, 2 brechas; 12
+  más dependen de políticas o procesos fuera del sistema.
+
+**Prioridades para el sistema** (por aporte a la acreditación):
+
+1. Carga automática desde ORCID u OpenAlex, con citas (3.6.1, 3.6.3) — ✔ (ver sección 16).
+2. Anexo de I+D+i para la acreditación: informe de 5 años ordenado por criterio, con evidencias (4.3.1) — ✔ (sección 17).
+3. Estudiantes en la investigación: tesistas y estudiantes en tesis, proyectos y publicaciones (2.3.2, 3.6.1 d) — ✔ (sección 18).
+4. Internacionalización: ámbito de los proyectos e indicador de coautoría internacional (3.5.2 c, 3.6.3 h) — ✔ (sección 19).
+5. Líneas prioritarias de investigación y su asignación (3.1.1, 3.6.1 a) — ✔ (sección 21).
+6. Indicadores normalizados: jornada completa equivalente y conteo fraccionado (2.2.1, 2.2.2).
+7. Premios y distinciones, arbitraje de artículos, asesorías y prestación de servicios, impacto de
+   la vinculación (2.2.1 d, 3.4.1, 3.4.3).
+8. Datos de diversidad (género, edad), solo si el instituto lo decide y con consentimiento (2.2.1 c).
+
+## 16. Carga automática desde OpenAlex y citas
+
+- **Fuente:** OpenAlex (abierto y gratuito), consultado por el ORCID del perfil. Se eligió frente a
+  la API pública de ORCID porque trae coautores con sus afiliaciones (sirve para detectar la
+  filiación IIMAT/UMSA), revista con ISSN, acceso abierto y citas. OpenAlex contabiliza el uso por
+  consulta; `PORTAL_OPENALEX_CLAVE` permite usar una clave si el cupo gratuito no alcanzara.
+- **Flujo:** «Mis productos → Buscar en OpenAlex» (últimos 5 años por omisión, hasta 200 obras por
+  búsqueda). Cada obra se clasifica como nueva, ya registrada (por id de OpenAlex, DOI, arXiv o
+  título y año), descartada o que no se importa (tesis propia, datos, erratas…). El investigador
+  elige qué registrar; nada entra sin su confirmación.
+- **Al registrar:** tipo según OpenAlex y su fuente; autores reconocidos por ORCID o nombre (el
+  investigador, siempre por su ORCID); revista del catálogo por ISSN o título, o propuesta como
+  pendiente; filiación marcada si la afiliación publicada menciona al instituto; citas y fecha.
+- **Descartar:** oculta una obra en las búsquedas siguientes (`cosecha_descartada`).
+- **Citas:** «Actualizar citas» (administración, en la memoria) consulta todos los productos con
+  DOI. La memoria tiene una sección «Impacto»; los XLSX, las citas por producto con su fecha.
+- **Calidad de los datos:** OpenAlex atribuye a veces obras ajenas. Un ORCID de relleno (el de
+  prueba 0000-0002-1825-0097, que usa un investigador de los datos de ejemplo) devuelve más de mil
+  obras de otras personas: el sistema lo advierte cuando hay más de 40 obras por año.
+- **Pendiente:** búsqueda para quienes no tienen ORCID (por nombre y afiliación en OpenAlex, con
+  más riesgo de errores); actualización periódica de citas sin intervención.
+
+## 17. Anexo de I+D+i para la acreditación
+
+«Informes → Anexo de I+D+i para la acreditación» (administración): documento imprimible y XLSX
+para la ventana de años elegida (por omisión los últimos 5; hasta 11 años), con las reglas de la
+memoria (vínculo en la fecha, filiación, catálogo de revistas).
+
+- **Resumen por año:** investigadores y JCE, artículos indexados y arbitrados, revistas nacionales e
+  internacionales, libros y capítulos, patentes/software/traducciones, presentaciones, estancias,
+  transferencia, redes, proyectos vigentes y citas.
+- **Por criterio:** 2.2.1 cuerpo académico (categoría al 31 de diciembre; JCE = horas/40), 3.6.3 a–j,
+  2.2.1 d comités, 3.5.2 c coautoría internacional (preliminar: depende del país de los coautores
+  externos), 3.6.1 impacto; lista de lo que el sistema aún no registra; «Datos y método».
+- **Revistas:** por omisión solo cuentan artículos en revistas verificadas (lo que corresponde a la
+  acreditación); la opción «Incluir revistas sin verificar» sirve durante el piloto.
+- **Presentaciones (3.6.3 i):** eventos científicos con al menos un expositor del instituto.
+- La ventana usa años completos: un producto del año en curso sin mes cuenta; el cuerpo académico
+  del año en curso se mira a la fecha de hoy.
+
+## 18. Estudiantes en la investigación
+
+- Los estudiantes y tesistas son personas externas con **periodos de estudio** (`estudiante`):
+  nivel (licenciatura, maestría, doctorado), programa, si es del programa propio (Matemática, UMSA),
+  años de ingreso y egreso, y titulación. Una persona era estudiante un año si cae en un periodo; es
+  graduada si egresó titulada antes de ese año. Puede tener varios periodos (licenciatura y luego
+  maestría).
+- **Página «Estudiantes y tesistas»** (desde Investigadores): lista con filtros por nivel y estado,
+  alta (eligiendo una persona externa existente o creándola), ficha con periodos y participación
+  (tesis, productos, proyectos, actividades). La registran investigadores y administración.
+- **Tesis dirigidas:** producto «Tesis dirigida» con el tesista entre los autores; los autores del
+  instituto son quienes dirigen (deben estar vinculados en la fecha). En curso = «en preparación»;
+  defendida = «publicado». El CV las agrupa.
+- **Anexo de acreditación:** sección «Estudiantes en la investigación» (2.3.2 · 3.6.1 d · 2.3.4):
+  tesis por nivel y estado, productos con estudiantes coautores, productos con graduados, proyectos y
+  actividades con estudiantes; filas en el resumen por año y hojas en el XLSX.
+- El selector de autores y participantes muestra «Estudiante de …» o «Graduado(a) de …».
+
+## 19. Internacionalización
+
+- **País de las personas externas**, normalizado (`app/comun/paises.py`: «USA», «EE. UU.» → «Estados
+  Unidos»): desde OpenAlex (código de país de las instituciones del autor), deducido del texto de
+  la afiliación al importar por DOI («…, Oxford, UK» → «Reino Unido») o de la institución al crear
+  la persona. Nunca se sobrescribe un país ya registrado.
+- **Página «Coautores externos»** (desde Investigadores): lista las personas sin país primero, para
+  completar institución y país; «Completar países automáticamente» normaliza y deduce.
+- **Proyectos:** ámbito nacional o internacional (también editable en los institucionales) e
+  instituciones contraparte con país. Sin ámbito declarado, se deduce de las contrapartes.
+- **Anexo de acreditación (3.5.2 c):** artículos con coautoría internacional, cobertura (en cuántos
+  se conoce el país de todos los coautores externos, con aviso si falta), países de los coautores,
+  proyectos internacionales con sus contrapartes y estancias internacionales; filas nuevas en el
+  resumen por año y hoja de países en el XLSX. El informe de proyectos exporta ámbito y contrapartes.
+
+## 20. Protección CSRF
+
+La cookie de sesión es `SameSite=Lax`: protege de formularios de *otros sitios*, pero no de otros
+subdominios del mismo sitio (en un dominio universitario, cualquier página en `*.umsa.bo`). Desde
+el 26 de septiembre de 2026, toda petición que modifica datos debe venir del propio sistema según
+`Origin` (o `Referer`, si falta): el host de la petición, `PORTAL_URL` o `PORTAL_ORIGENES_EXTRA`.
+Es la verificación de origen que recomienda OWASP; no requiere tokens ni cambiar formularios. Sin
+`Origin` ni `Referer` se admite (no es un navegador con la sesión de otra persona).
+
+Verificado con el servidor de desarrollo: un origen del propio sistema se acepta (200) y uno de otro
+subdominio se rechaza (403).
+
+## 21. Líneas de investigación institucionales
+
+La Guía de Antecedentes de IAC-CINDA pide la línea de investigación en proyectos, desarrollo
+académico, publicaciones, libros y patentes (hojas 19–23 y 25), y su hoja 2 fija las seis líneas del
+programa: Sistemas Dinámicos, Estructuras Algebraicas Ordenadas, Teoría de Control, Modelos
+Matemáticos y Computación, Optimización Matemática y Áreas Fundamentales Complementarias (cargadas
+por la migración 0021).
+
+- **Las líneas cambian:** cada una tiene vigencia (`vigente_desde`, vacío = desde antes del sistema;
+  `vigente_hasta`, vacío = sigue vigente). Una línea que deja de regir no se borra: se le pone fecha
+  de término y quien ya la usaba la conserva en su historia. Solo se elimina una línea sin uso.
+  Corregir la redacción se hace editándola; reformularla o dividirla, cerrándola y creando las nuevas.
+- **Catálogo:** lo mantiene la administración (menú con su nombre → «Líneas de investigación»):
+  alta, edición, vigencia, orden y ficha con los proyectos e investigadores de cada línea.
+- **Propuestas institucionales:** al formularla se eligen **explícitamente** las líneas vigentes al
+  inicio del periodo (1 de octubre); al menos una para enviarla. Si una línea elegida deja de regir
+  antes del envío, queda marcada y hay que quitarla. Al aceptarse, sus líneas pasan al proyecto; en
+  un proyecto institucional con propuesta aceptada no se editan (cambian en la continuidad, que
+  las precarga si siguen vigentes). La copia enviada y el XLSX de la convocatoria las incluyen.
+- **Proyectos individuales:** adscripción opcional desde el resumen, a líneas vigentes hoy.
+- **Investigadores:** adscripción opcional desde «Mi perfil», a líneas vigentes. Se muestra en su
+  perfil interno y en el público (solo las vigentes; también en la API).
+- **Productos y actividades** (hojas 19, 22, 23 y 25) no eligen línea: la heredan de los proyectos
+  en que están **aprobados** (sin repetir; lo pendiente o rechazado no cuenta). Sin proyecto
+  aprobado no tienen línea. Se ve en su ficha y en los XLSX de la memoria (también en proyectos).
+
+
+## 22. Ampliación a gestión curricular y docente (opción 2)
+
+Evaluación y opciones: https://claude.ai/artifact/SqsBxjJsvWFUC6QyNViebV (privada). Se elige un
+solo sistema organizado en módulos (Investigación, Docencia y Currículo, Acreditación) con el
+mismo stack. **Fuera de alcance:** registro académico (inscripciones, notas, kárdex, actas); esos
+datos se importan agregados del sistema académico de la UMSA.
+
+Las estimaciones suponen una persona a medio tiempo con asistencia de IA; son orientativas.
+
+### Fase 0 — Decisiones (1–2 semanas, sin código)
+
+- ¿Quién mantiene el sistema tras el piloto? Reunión con el área de TI de la UMSA (DTIC): si exige
+  PostgreSQL o un framework estándar, se decide aquí migrar (opciones 4 o 5) y la fase 1 cambia.
+- Alcance académico con la Dirección de Carrera: qué hojas de la Guía se llenarán desde el sistema.
+- Qué entrega el sistema académico de la UMSA (formato, periodicidad, nivel de agregación).
+- «Jerarquía académica» de la hoja 10: ¿categoría del sistema o escalafón docente?
+- Fecha de nacimiento (tramos de edad, hoja 11): decisión explícita y aviso a los académicos.
+- Nombre del sistema. Una segunda persona que acompañe desde la fase 1 (continuidad).
+
+**Decidido (26 de septiembre de 2026):**
+
+- Mantienen el sistema la Dirección del IIMAT y personal de TI propio (no la DTIC, aunque
+  coordinan con ella). La DTIC no impone software: **se conserva el stack** (FastHTML + HTMX,
+  SQLite) y la fase 1 va completa.
+- La Dirección de Carrera participa en la gestión del sistema junto con la Dirección del IIMAT y
+  el personal de TI: la gobernanza es compartida (roles de ambas direcciones en la fase 2).
+- Fecha de nacimiento: se registra, con aviso a los académicos, y **solo la ve la
+  administración**. Los informes usan tramos de edad, nunca la fecha. Va en la persona académica
+  (fase 2).
+- Una segunda persona acompaña la implementación desde la fase 1.
+- Nombre (27 de septiembre de 2026): **TAU | Sistema Integrado de Gestión Académica y Científica de
+  la Carrera de Matemática**. Se configura con `PORTAL_SISTEMA` y `PORTAL_SISTEMA_DESCRIPCION`; los
+  nombres técnicos (variables `PORTAL_*`, `portal.db`, servicio `portal`, aplicación de Fly.io)
+  conservan «portal» para no romper las instalaciones existentes.
+
+**Pendiente de la fase 0:** qué datos entrega el sistema académico de la UMSA (condiciona la
+fase 4) y la «jerarquía académica» de la hoja 10. No bloquean las fases 1 a 3.
+
+### Fase 1 — Saneamiento sin cambios visibles (3–4 semanas)
+
+1. Paquetes: `app/comun` (db, auth, config, seguridad, correo, auditoría, componentes),
+   `app/investigacion`, `app/acreditacion`, `app/academico` (vacío). Un commit por paquete; las
+   pruebas pasan sin cambios de comportamiento.
+2. Partir `routes/proyectos.py` (1.094 líneas) y `routes/productos.py` (890) por pestaña o flujo.
+3. Aislar lo propio de SQLite (`date('now','localtime')`, `sin_tildes`, apsw) en `comun/db` para
+   que una migración a PostgreSQL toque un solo lugar. Sin ORM.
+4. Estilos servidos desde `/static` (Tailwind compilado y recursos de MonsterUI), sin CDN; luego
+   una Content-Security-Policy estricta.
+5. Pruebas en navegador (Playwright) de 5 flujos: ingreso, registrar producto, proponer y decidir
+   una propuesta institucional, generar el anexo.
+6. `docs/mantenimiento.md`: arquitectura, convenciones, patrones HTMX, cómo agregar una migración,
+   despliegue, respaldo y una restauración ensayada. Política de actualización de FastHTML.
+
+Criterio de término: todas las pruebas en verde y el piloto sigue sin notar cambios.
+
+**Avance:**
+- 1.1 hecho (26-sep-2026): `app/comun`, `app/investigacion`, `app/acreditacion` y `app/academico`
+  (vacío), un commit por paquete, con una herramienta que reescribe los imports desde el árbol
+  sintáctico. Dependencias de `comun` hacia `investigacion` que quedan (a resolver en la fase 2):
+  `vinculos`/`importar_usuarios` → `perfiles`; `componentes/registros.py` y `rutas/inicio.py` →
+  proyectos y productos.
+- 1.2 hecho (26-sep-2026): las rutas de proyectos (1.094 líneas) y productos (890) son paquetes
+  con un módulo por pestaña o flujo (el mayor, `productos/formulario.py`, 484). El `__init__`
+  registra los módulos en orden, con la ficha al final. Verificado: las mismas 211 rutas antes y
+  después, sin ciclos entre módulos y sin imports sobrantes en `app/` (pyflakes).
+- 1.3 hecho (26-sep-2026): lo propio de SQLite queda en `app/comun/db.py` (sección «Dialecto
+  SQL»): `HOY` (fecha local), `AHORA` (marca UTC), `DISTINTO_DE`/`IGUAL_A` (comparación con NULL),
+  `vigente_hasta(col)` (antes repetida 10 veces), `marca_tiempo(delta)` para vencimientos y
+  ventanas calculados en Python, y `transaccion()` en lugar de `with db.conn:`. `INSERT OR IGNORE`
+  pasa a `ON CONFLICT DO NOTHING`. El docstring de `db.py` enumera qué tocaría un cambio a
+  PostgreSQL (incluidos fastlite, migraciones y `LIKE`).
+- 1.4 hecho (26-sep-2026): sin CDN. htmx 2.0.7, fasthtml.js, Franken UI 2.0.0 y KaTeX 0.16.21 en
+  `static/vendor/`; Tailwind 3.4.17 compilado (28 KB) con los colores del tema de Franken, en lugar
+  del compilador en el navegador. Se quitan daisyUI (2,9 MB por página), surreal y css-scope-inline.
+  `/static` montado con StaticFiles (sin la ruta estática genérica de FastHTML). Cabeceras de
+  seguridad y CSP con solo recursos propios. Verificado en el navegador: 14 páginas, modo claro y
+  oscuro, estilo calculado de cada elemento antes y después (solo cambian clases del código que
+  antes no tenían efecto: barra translúcida, fondos tenues, divisores con el color del tema).
+  **Pendiente:** CSP estricta (sin 'unsafe-inline' ni 'unsafe-eval') requiere reemplazar unos 50
+  manejadores en el HTML (onclick, hx-on) y los scripts en línea por un script propio.
+- 1.5 hecho (26-sep-2026): `tests/navegador/` con Playwright (dependencia de desarrollo) sobre el
+  Chrome instalado: ingreso y salida, registrar producto, proponer (con envío incompleto rechazado
+  y fórmula KaTeX renderizada), decidir (con condiciones vacías rechazadas) y descargar el anexo
+  XLSX. Fallan ante errores de consola, de JavaScript o de CSP (verificado provocándolos). Servidor
+  aparte con base temporal. Opcionales: `pytest --navegador`. Se agrega un favicon (evitaba un 404
+  en cada página).
+- 1.6 hecho (26-sep-2026): `docs/mantenimiento.md` (primer día, arquitectura, convenciones,
+  recetas, política de actualización de dependencias, operación, problemas frecuentes y deuda).
+  Restauración ensayada con `scripts/paquete.py`: exportar en marcha, importar en vacío, negarse
+  sin `--reemplazar`, reemplazar moviendo lo anterior e importar un paquete de esquema v20 con el
+  código actual (aplica la migración 21). **Fase 1 completa.**
+
+### Fase 2 — Personas, unidades y permisos (3–4 semanas)
+
+1. Persona académica separada de la cuenta: `investigador` pasa a ser el perfil de investigación
+   de una persona que puede ser docente, investigadora o ambas. Migración de datos compatible.
+2. Unidades: UMSA › FCPN › CMAT › IIMAT, para acotar permisos e informes.
+3. Roles con alcance y vigencia (`rol_asignado`: usuario, rol, unidad, desde, hasta):
+   administración del sistema, dirección de carrera, dirección del instituto, coordinación
+   académica, docente, investigador, comité de acreditación (lectura). Una función central
+   `puede(usuario, accion, recurso)` reemplaza gradualmente los ~100 usos de `es_admin` y
+   `es_investigador`.
+4. Acceso con cuentas de la UMSA si la DTIC ofrece un proveedor (Google Workspace, LDAP u OIDC).
+
+Criterio: matriz de permisos cubierta por pruebas.
+
+### Fase 3 — Módulo curricular y docente mínimo (5–6 semanas)
+
+1. Plan de estudios con versiones (resolución, vigencia): asignaturas (sigla, nombre, semestre,
+   horas teóricas y prácticas, créditos, obligatoria o electiva), prerrequisitos, perfil de
+   egreso y matriz asignatura–competencia.
+2. Gestiones académicas (2026-I, 2026-II…) configurables.
+3. Asignación docente por gestión: asignatura, paralelo, docentes y horas semanales.
+4. Carga horaria por persona y gestión: docencia (de la asignación), investigación, gestión y
+   otras; aviso si supera la jornada del vínculo.
+5. Programas analíticos por asignatura y gestión, con versión y aprobación de la Dirección
+   (mismo patrón que las propuestas institucionales).
+6. Perfeccionamiento docente (hoja 13).
+7. Carga por CSV del plan y de las asignaciones de los últimos 5 años.
+
+Criterio: hojas 10 y 11 de la Guía generadas por completo.
+
+### Fase 4 — Datos de la Carrera importados (2–3 semanas; depende de la UMSA)
+
+Importador con vista previa (como usuarios y vínculos) de datos agregados por cohorte:
+ingresantes, matriculados, egresados y titulados por modalidad, con fuente y fecha de corte
+como evidencia. Indicadores de retención y titulación según las definiciones de IAC-CINDA.
+
+### Fase 5 — Guía de Antecedentes completa (3 semanas)
+
+1. Completar los datos de investigación que faltan (análisis de la Guía): ISBN y datos del libro
+   en capítulos, fechas de patentes, instituciones y productos de redes, financiamiento interno y
+   externo en USD con tipo de cambio, prestación de servicios.
+2. Exportación que llena la planilla original (openpyxl, conservando estructura y fórmulas):
+   hojas 3–11, 13, 19–23 y 25–28.
+3. Informe de cobertura: qué celdas quedan para llenado manual.
+
+### Fase 6 — Lanzamiento como sistema de la Carrera y el Instituto (2 semanas)
+
+Nombre y navegación por módulos, capacitación de la Dirección y los docentes, piloto con un
+semestre real y ajuste.
+
+**Total orientativo:** 5 a 6 meses. Las fases 1 y 2 son útiles aunque luego se decida migrar;
+si en la fase 0 se decide ir a Django, se omiten los puntos 1.1 a 1.4.
+
+## 23. Diseño de la fase 2: personas, unidades y roles (propuesta, 27-sep-2026)
+
+### Punto de partida
+
+- **La persona es la fila de `usuario`.** Autorías (`producto_autor.investigador_id`),
+  participaciones, vínculos, líneas, áreas MSC y estudiantes dirigidos apuntan a `usuario.id`.
+  Los de fuera están en `persona_externa`.
+- **El perfil de investigación** (`investigador`) guarda datos académicos (grado, ORCID…) y una
+  copia de la categoría vigente del vínculo.
+- **El vínculo** (`vinculo`) es con «el instituto»: no dice si es con el IIMAT o con la Carrera.
+- **Permisos:** dos marcas, `es_admin` (56 usos) y `es_investigador` (47), la regla «todo
+  `/admin/*` exige `es_admin`» (56 rutas) y los roles dentro de cada proyecto (responsable…).
+  La marca de administración no se puede cambiar después de crear la cuenta.
+
+### 1. Persona académica: la cuenta pasa a ser una capacidad de la persona
+
+**Opción A (recomendada): la fila de `usuario` sigue siendo la persona.** Se agrega:
+
+- `academico` (1 a 1 con `usuario`): lo que es de la persona y no de su investigación: fecha de
+  nacimiento, sexo solo si el instituto lo decide más adelante, y datos de la hoja 10 de la Guía
+  (sistema nacional de investigación, etc.).
+- `grado_academico` (1 a n): nivel, título, institución, país y año. Reemplaza el campo único
+  `investigador.grado` (se migra como primer grado).
+- **Personas sin acceso:** un docente de la Carrera que no usa el sistema existe como persona,
+  sin contraseña utilizable (`pass_hash = '!'`, que nunca coincide), y se le puede habilitar el
+  ingreso después (invitación).
+- `investigador` queda como **perfil de investigación opcional**: solo quien investiga lo tiene.
+
+Ventaja: no cambia ninguna clave foránea (autorías, participaciones, vínculos siguen igual) ni
+las ~200 consultas que usan `investigador_id`. Costo: el nombre `usuario` queda corto para lo que
+representa; se documenta («usuario = persona; la cuenta es opcional») sin renombrar.
+
+**Opción B: tabla `persona` nueva** a la que apuntan todas las relaciones, y `usuario` con
+`persona_id`. Conceptualmente más limpia, pero toca todas las tablas de autoría, participación y
+vínculo y buena parte de las consultas: el mayor riesgo de toda la ampliación, sin beneficio
+visible para los usuarios. Descartada salvo que aparezca una razón fuerte.
+
+### 2. Unidades
+
+Tabla `unidad` (nombre, sigla, tipo, unidad superior): UMSA › FCPN › CMAT › IIMAT, cargada en la
+migración. Se usa para:
+
+- el **vínculo**, que pasa a tener `unidad_id` (los actuales, IIMAT): una persona puede estar
+  vinculada a la Carrera, al Instituto o a ambos, con categoría y jornada propias en cada uno.
+  *Revisado el 28-sep-2026 (sección 25): hay una sola dependencia, la Carrera;*
+- el **alcance de los roles** (abajo) y de los informes (memoria del IIMAT, datos de la Carrera);
+- la **filiación** (hoy la lista fija `FILIACIONES` de config), que se deriva de la jerarquía.
+
+### 3. Roles con alcance y vigencia
+
+Tabla `rol_asignado`: persona, rol, unidad, desde, hasta, asignado por. Se asignan y quitan desde
+«Usuarios» (lo que hoy no se puede hacer con la administración) y quedan en la auditoría.
+
+| Rol | Alcance | Qué puede |
+|---|---|---|
+| Administración del sistema | global | cuentas y roles, auditoría, configuración, catálogos técnicos; no decide sobre contenido académico |
+| Dirección del Instituto | IIMAT | decidir propuestas y plazos de convocatoria, catálogo de revistas y de líneas, vínculos del IIMAT, reasignar responsables, memoria y anexo de I+D+i |
+| Dirección de Carrera | CMAT | plan de estudios, asignación docente y aprobación de programas (fase 3), vínculos de la Carrera, informes de la Carrera |
+| Coordinación académica | CMAT | preparar asignaciones y revisar programas, sin aprobar |
+| Comité de acreditación | UMSA (todo) | ver todos los informes, anexos y exportaciones; no modifica nada |
+| Gestión de datos | una unidad | cargar vínculos (RR. HH.), estudiantes e importaciones de su unidad |
+
+> *Nota (2-oct-2026):* esta tabla es la propuesta original. Desde la dependencia única (§25, 28-sep-2026)
+> **solo la Dirección de Carrera** define categoría, vínculo y carga; la Dirección del Instituto y Gestión
+> de datos ya no gestionan vínculos. Lo vigente está en `ACCIONES` y `DESCRIPCIONES`
+> (`app/comun/permisos.py`).
+
+Los roles **derivados** no se asignan: *investigador* (tiene perfil de investigación y vínculo
+con el IIMAT), *docente* (vínculo con la Carrera o asignaciones), *responsable de proyecto*
+(como hoy, por proyecto).
+
+**Transición sin sorpresas:** quienes hoy tienen `es_admin` reciben Administración del sistema y
+Dirección del Instituto, así nadie pierde lo que hoy puede hacer. Luego la dirección decide a
+quién le quita cuál.
+
+### 4. Un solo punto de decisión: `puede(usuario, accion, unidad=None)`
+
+- Tabla de acciones → roles en un módulo (`app/comun/permisos.py`), p. ej.
+  `"decidir_propuestas": {"direccion_instituto"}`, `"ver_informes": {"direccion_instituto",
+  "direccion_carrera", "comite_acreditacion"}`.
+- Los roles vigentes se cargan al validar la sesión (Beforeware), una consulta por petición.
+- Se reemplazan los 56 `es_admin` y la regla del prefijo `/admin` módulo por módulo, con una
+  prueba por acción y rol (matriz de permisos). Mientras dure la transición, `es_admin` se deriva
+  de los roles, para que el código aún no migrado siga funcionando igual.
+- Resuelve la deuda de la fase 1: `vinculos` e `importar_usuarios` dejan de escribir en
+  `investigador` (la categoría vigente se calcula del vínculo) y `componentes/registros.py` e
+  `inicio` se reparten según el paquete.
+
+### 5. Fecha de nacimiento
+
+En `academico`. La carga la administración (formulario o CSV de RR. HH., junto al historial de
+vínculos). Solo la ven quienes tengan el permiso `ver_datos_personales` y los informes usan solo
+tramos de edad (hoja 11). Se avisa a cada académico en su perfil que el instituto la registra
+para la acreditación.
+
+### 6. Acceso con cuentas de la UMSA (opcional)
+
+Solo si la DTIC ofrece un proveedor (Google Workspace para @umsa.bo, LDAP u OIDC). No bloquea lo
+demás: se evalúa al final de la fase.
+
+### Orden de ejecución (cada paso se puede desplegar solo)
+
+1. **Unidades** y `vinculo.unidad_id` (los existentes pasan al IIMAT).
+2. **Roles**: `rol_asignado`, `puede()`, carga en la sesión, pantalla para asignarlos y migración
+   de `es_admin`. Matriz de permisos en las pruebas.
+3. **Reemplazo de `es_admin`** por acciones, módulo por módulo.
+4. **Persona académica**: `academico`, `grado_academico`, personas sin acceso, fecha de nacimiento,
+   y fin de las dependencias de `comun` hacia `investigacion`.
+5. Acceso con cuentas de la UMSA, si corresponde.
+
+Estimación: 3 a 4 semanas (sin el paso 5).
+
+**Decidido (27-sep-2026):**
+1. La tabla de roles refleja el trabajo de ambas direcciones (incluidas Coordinación académica y
+   Gestión de datos; el Comité de acreditación ve todo, también lo de la Carrera).
+2. Los roles los asigna **solo Administración del sistema**, a pedido de las direcciones.
+3. Cada académico **ve su propia fecha de nacimiento** en su perfil, sin poder editarla.
+4. La DTIC ofrece inicio de sesión institucional: el paso 5 se hace (falta saber el proveedor).
+
+**Avance:**
+- Paso 1 hecho (27-sep-2026): tabla `unidad` (UMSA › FCPN › CMAT › IIMAT, migración 0022) y
+  `vinculo.unidad_id` obligatorio (tabla reconstruida; los vínculos existentes quedan con el IIMAT,
+  verificado sobre una copia de la base de desarrollo). `app/comun/unidades.py`. Todas las
+  funciones de `vinculos` reciben la unidad (por omisión el IIMAT, así los informes de
+  investigación no cambian); la superposición se valida por unidad. Ninguna consulta a `vinculo`
+  queda fuera del módulo (`personas_en_rango` reemplaza dos que no filtraban por unidad: una
+  docente solo de la Carrera hacía fallar la memoria). Pantalla de vínculos con selector
+  IIMAT/CMAT e importación de RR. HH. con columna `unidad`. Las categorías de la Carrera son, por
+  ahora, las mismas del Instituto: revisar cuando se defina la «jerarquía académica» de la hoja 10.
+- Paso 2 hecho (27-sep-2026): tabla `rol_asignado` (migración 0023); quienes eran administradores
+  reciben Administración del sistema (UMSA) y Dirección del Instituto (IIMAT); se elimina la
+  columna `usuario.es_admin` (verificado en la base de desarrollo, que el servidor migró solo).
+  `app/comun/permisos.py`: ROLES, ACCIONES (tabla inicial), `puede()`, asignar, quitar y el
+  resguardo de no quedarse sin Administración del sistema. Alcance: los roles de la UMSA cubren
+  todo; los demás, solo su unidad (el IIMAT está dentro de la CMAT, pero la Dirección de Carrera no
+  decide sobre el Instituto). «Quitar» = deja de regir hoy (último día, ayer; si empezó hoy, se
+  anula). Pantalla «Roles» en Usuarios, solo para Administración del sistema, con la dirección que
+  lo pidió. `es_admin` se calcula de los roles mientras el paso 3 reemplaza sus ~50 usos. Los
+  avisos de propuestas van a la Dirección del Instituto. Matriz de permisos en `tests/test_roles.py`.
+- Paso 3 hecho (27-sep-2026): ninguna comprobación usa ya `es_admin` (desaparece también el cálculo
+  transitorio). Las 64 rutas `/admin` se autorizan con `REGLAS_ADMIN` (lo no previsto se deniega;
+  una prueba verifica que cada ruta tenga regla). Dentro, `puede()` con acciones nuevas:
+  `ver_usuarios`, `gestionar_personas_externas`, `ver_propuestas`, `ver_evidencias`,
+  `ver_cv_ajeno`. Vínculos por unidad (pantalla, periodos, importación, desactivar con término).
+  Menú y botones según el rol. Memoria y anexo son informes del IIMAT: los ven la Dirección del
+  Instituto y el Comité, no la Dirección de Carrera ni Administración del sistema. Matriz por rol
+  en `tests/test_permisos_rutas.py`.
+- Paso 4a hecho (27-sep-2026): `comun` ya no importa nada de `investigacion`. La categoría vigente
+  se calcula del vínculo (`vinculos.sql_categoria_vigente`, migración 0024 elimina
+  `investigador.categoria` y su sincronización horaria); CATEGORIAS y la corrección de la
+  categoría pasan a `vinculos`. Se mueven a su paquete el componente de perfil, la parte de
+  `registros` propia de investigación (adjuntos y vinculación a proyectos), la página de coautores
+  externos y los indicadores de estudiantes (a `acreditacion`); la página de inicio pasa a
+  `app/inicio.py`.
+- Paso 4b hecho (27-sep-2026): `app/comun/academicos.py`. Varios grados por persona
+  (`grado_academico`, migración 0025; el grado único se migra como primer grado y desaparece
+  `investigador.grado`); el que se muestra es el de mayor nivel. Se editan en «Mi perfil» y en la
+  ficha académica de Usuarios (direcciones y Gestión de datos; Administración del sistema la ve).
+  Personas sin acceso (`pass_hash = '!'`): no ingresan ni se habilitan solas con «¿Olvidó su
+  contraseña?»; «Habilitar acceso» les da una contraseña temporal. Ya no se exige que una cuenta
+  sea de investigador o de administración (docentes). Vínculos para cualquier persona, con resumen
+  por unidad en el listado. De paso: la tabla que se devolvía al crear una cuenta se armaba antes
+  de crearla (la nueva no aparecía hasta recargar).
+- Paso 4c hecho (27-sep-2026): fecha de nacimiento en `datos_personales` (migración 0026, tabla
+  aparte para que ninguna consulta general la arrastre). La registra y la ve solo Administración
+  del sistema (ficha académica); la persona la ve en «Mi perfil» o en «Mis datos personales», sin
+  editarla, con el aviso. `academicos.tramo_edad` para los informes (hasta 29, 30–39, 40–49, 50–59,
+  60 o más). No aparece en perfiles públicos, API ni en el detalle de la auditoría.
+  **Pendiente:** carga masiva de fechas de nacimiento desde RR. HH., si hace falta (hoy, una por una).
+- **Fase 2: pasos 1 a 4 completos.** El paso 5 (acceso con cuentas de la UMSA) espera que la DTIC
+  confirme el proveedor.
+
+## 24. Fase 3: módulo curricular y docente (27-sep-2026)
+
+Fuente: planes de estudio 2017 (Resolución HCU 041/2017) de la Licenciatura en Matemática, la
+Licenciatura en Matemática Aplicada, la Maestría en Matemática y la Maestría en Matemática
+Aplicada (PDF de la Dirección Académica). Licenciaturas: 8 semestres, tres ciclos, horas
+semanales teóricas/prácticas/laboratorio, semestres de 20 semanas, nota mínima 51 %. Maestrías:
+4 semestres en créditos (1 crédito = 40 horas académicas), nota mínima 66 %.
+
+**Decidido:**
+1. Gestiones: I-2026 y II-2026 (semestres), INV-2026 (invierno, julio) y **VER-2026** (verano, enero;
+   «VER» y no «V» para no leerlo como el número romano 5). El verano se cuenta con la gestión
+   anterior: VER-2026 se dicta en enero de 2027. Orden de la gestión 2026: I → INV → II → VER. El
+   sistema guarda tipo, año y fechas; el código solo se muestra, y el orden sale de las fechas.
+2. El plan 2017 y el nuevo (desde 2027) coexisten mientras haya estudiantes en el antiguo, con una
+   tabla de equivalencias entre asignaturas.
+3. Las asignaturas de otras carreras (FIS, QMF, QMI, QMC, INF, BIO, ECO) figuran en el plan, sin
+   asignación docente (las dicta otra unidad).
+4. Carga horaria: docencia (se calcula de la asignación), investigación, gestión (cargos),
+   extensión y servicios, y otras.
+5. Las inconsistencias de los PDF se cargan tal como están y quedan marcadas para revisión.
+
+**Pasos:** 3.1 catálogo curricular y carga de los planes 2017 · 3.2 gestiones académicas · 3.3
+oferta y asignación docente · 3.4 carga horaria · 3.5 programas analíticos · 3.6 perfeccionamiento
+docente · equivalencias cuando llegue el plan nuevo.
+
+**Avance:**
+- 3.1 hecho (27-sep-2026): tablas programa, plan_estudios (con vigencia), asignatura (catálogo único
+  por sigla; `de_la_carrera` = 0 para FIS, QMF, QMI, QMC, INF, BIO, ECO), plan_asignatura (semestre,
+  ciclo, tipo, horas o créditos; casillas de electiva sin asignatura), requisito (sigla o
+  «egresado») y observacion_plan (migración 0027). Los cuatro planes 2017 en `datos/planes/`
+  (transcritos de los PDF por la posición de las columnas y verificados contra los totales) y
+  cargados por la migración 0028: 123 asignaturas (92 de la Carrera). Observaciones marcadas:
+  horas de laboratorio que no cuadran en ambas licenciaturas (720/680 y 1.080/1.160), MAT-241 y
+  MAT-242 inexistentes, MAT-278 repetida, requisito probable FIS-377 en FIS-387, MAT-382, erratas
+  «Cientítica» e «Intiligencia», «Algebra» sin tilde en la maestría aplicada. Pantallas
+  /docencia/planes (consulta para todos; resolver observaciones: Dirección de Carrera y Coordinación
+  académica).
+  Nota: cada base de prueba carga los planes; la suite tarda ~10 s más.
+- 3.2 y 3.3 hechos (27-sep-2026): `gestion_academica` (año, tipo, fechas; fechas por omisión que la
+  Dirección ajusta), `oferta` (asignatura de la Carrera, gestión, paralelo, inscritos) y
+  `oferta_docente` (titular o auxiliar; las horas semanales se quitaron en 3.4) — migración 0029.
+  Pantallas /docencia/oferta y /docencia/gestiones con pestañas de la sección; acción
+  `gestionar_oferta` (Dirección de Carrera y Coordinación académica). Aviso (no bloqueo) si el
+  docente no tiene vínculo con la Carrera en la gestión. `oferta.horas_de_docencia` alimentará la
+  carga horaria (3.4).
+- 3.3b hecho (27-sep-2026): `app/academico/importar_oferta.py`: CSV con una fila por docente de cada
+  paralelo; reemplaza la oferta de las gestiones incluidas (reimportar no duplica), todo o nada por
+  gestión, crea las gestiones del año si faltan, horas y rol por omisión, avisos de docentes sin
+  vínculo con la Carrera. Vista previa y confirmación en «Oferta y docentes».
+- 3.4 hecho (27-sep-2026). Reglas acordadas: la carga se cuenta en unidades de 32 h/mes; cada
+  persona tiene **una** carga contratada por semestre (I o II) de 32, 64, 96, 128 o 160 h/mes,
+  que registra y distribuye la Dirección de Carrera; cada materia como titular (grado o maestría)
+  son 32 h/mes; investigación, extensión, gestión y otras, múltiplos de 32 h/mes. Los auxiliares
+  van aparte (sin carga, por ahora). Los cursos de verano e invierno no forman parte de la carga
+  (docencia dictada) y solo los dictan titulares de la Carrera (los interinos tienen contratos por
+  semestre). Migración 0030: `carga_semestral` y `carga_actividad`; se quitan las horas semanales
+  de `oferta_docente` (y la columna `horas` del CSV de oferta). `app/academico/carga.py` (resumen
+  con avisos, copia del semestre anterior) y pestaña /docencia/carga (acciones `ver_carga` y
+  `asignar_carga`). El anexo calcula la JCE como carga contratada / 160 (sin carga registrada,
+  jornada del vínculo × 4); el formulario de vínculos ya no pide la jornada (se conserva la
+  histórica). Pendiente si hace falta: importar por CSV la carga de semestres pasados.
+- 3.4, revisión (27-sep-2026): la carga contratada se registra en el **vínculo con la Carrera**
+  (Usuarios → Vínculo, pestaña CMAT, también al agregar un periodo): total y distribución por
+  actividad (docencia, investigación, extensión, gestión, otras) en múltiplos de 32 h/mes que suman
+  el total. Un cambio de carga es un periodo nuevo. Migración 0031: columnas `horas_contratadas` y
+  `carga_*` en `vinculo`; lo registrado por semestre pasa al vínculo con la Carrera vigente al
+  inicio de ese semestre (sin ese vínculo, se pierde) y se eliminan `carga_semestral` y
+  `carga_actividad`. La pestaña «Carga horaria» queda de consulta: por semestre, según el vínculo
+  vigente al inicio, compara la docencia prevista con la asignada en la oferta. Se retira la
+  acción `asignar_carga`: registra quien gestiona los vínculos de la Carrera (`gestionar_vinculos`
+  en CMAT: Dirección de Carrera y Gestión de datos).
+- Oferta inicial de troncales (27-sep-2026): al crear las gestiones de un año, los semestres I y II
+  se ofertan con las troncales de las licenciaturas (obligatorias y trabajo final de la Carrera; 34
+  del plan 2017) en el paralelo A, sin docente. Un plan se considera mientras tenga estudiantes: del
+  primer ingreso al último ingreso + su duración. Las electivas, otros paralelos y los docentes se
+  agregan a mano; una troncal se puede quitar y volver a crear el año no la repone. Botón «Agregar
+  las troncales» para completar semestres ya creados. La importación de gestiones pasadas no agrega
+  troncales (el archivo manda).
+
+## 25. Dependencia única, clases de proyecto institucional y proyectos individuales (28-sep-2026)
+
+**Decisiones del instituto:**
+
+1. **Una sola dependencia.** El vínculo de cada persona es con la Carrera de Matemática; el
+   Instituto forma parte de ella, sin periodos diferenciados. **Solo la Dirección de Carrera**
+   define la categoría y el vínculo: altas, cambios, término y carga horaria contratada. La
+   Dirección del Instituto gestiona el ciclo de vida y los flujos de trabajo (actividades y
+   productos) de los proyectos, como unidades integradas por sus participantes, incluidos los
+   externos, tengan o no carga horaria asignada para investigación o extensión.
+2. **Dos clases de proyecto institucional:** de investigación y de interacción social
+   (extensión). Solo titulares y contratados pueden proponerlos (ya regía).
+3. Quien registra un **proyecto individual** puede eliminarlo.
+
+**Hecho (28-sep-2026):**
+
+- Migración 0032: los periodos con el Instituto pasan a la Carrera; los que se superponían con
+  uno de la Carrera se descartan (manda el de la Carrera, que lleva la carga). `vinculos` ya no
+  recibe `unidad`: todo es con la Carrera (`vinculos.carrera()`); la categoría vigente y los
+  informes usan ese único historial.
+- `gestionar_vinculos` = Dirección de Carrera (antes también Dirección del Instituto y Gestión de
+  datos). La ventana «Vínculo» ya no tiene selector de unidad. Al crear cuentas (formulario o CSV),
+  la categoría solo se toma si quien las crea tiene la Dirección de Carrera; si no, la cuenta queda
+  «Sin categoría». «Importar historial» ya no lleva columna `unidad` (si viene, se ignora).
+- Migración 0033: `proyecto.clase` (`investigacion` | `interaccion_social`; vacío en los
+  individuales; los institucionales existentes, investigación). Se elige al proponer. Las líneas
+  de investigación son obligatorias en los de investigación y opcionales en los de interacción
+  social. La clase figura en la propuesta, la bandeja y el XLSX de la convocatoria, la ficha del
+  proyecto, la memoria (institucionales separados por clase) y el anexo.
+- Proyectos individuales: botón «Eliminar» para su responsable (o quien lo registró). Se borran
+  participantes, objetivos, contrapartes y enlaces; los productos y actividades siguen en el
+  registro de sus autores. Los institucionales no se eliminan.
+
+**Confirmado (28-sep-2026):** las líneas de investigación son opcionales en los proyectos de
+interacción social, y el anexo de I+D+i (3.6.3 h) lista todos los proyectos vigentes con su clase.
+
+## 26. Término del vínculo y carga horaria en proyectos (28-sep-2026)
+
+**Decisiones del instituto:**
+
+1. Contratados, interinos e invitados se vinculan por un periodo con **fecha de término
+   obligatoria**. El titular es permanente (sin término), pero su vínculo se puede terminar a mano
+   por retiro, despido, fallecimiento o renuncia.
+2. Al agregar participantes a un proyecto **institucional**, el responsable indica su carga horaria
+   en el proyecto (puede no tener). Sale de la carga de investigación (proyectos de investigación) o
+   de extensión (interacción social) que la Dirección de Carrera asignó en su vínculo, y rige solo
+   mientras ese vínculo está vigente. Los proyectos individuales no asignan carga.
+3. Si el vínculo termina durante el proyecto, la persona puede seguir como participante, pero figura
+   sin carga desde entonces, y se avisa al responsable. En un nuevo periodo de vínculo la carga no se
+   reasigna sola: se avisa a los responsables de los proyectos donde tuvo carga, **solo mientras le
+   quede carga libre** de esa actividad (si otro proyecto ya se la asignó toda, el aviso no aparece
+   o desaparece), y el responsable decide.
+
+**Hecho (28-sep-2026):**
+
+- Migración 0034: `vinculo.motivo_termino`; `participante_carga` (participante, periodo de vínculo,
+  horas, desde; una por participante y periodo); `aviso_carga` (desvinculado | nuevo_vinculo; se
+  crea una vez y se atiende).
+- `vinculos.regla_termino`: término obligatorio para contratado, interino e invitado (salvo periodos
+  antiguos con ingreso desconocido); un titular nuevo no lleva término futuro. Se aplica al agregar
+  periodos, al cambiar de categoría (ahora con «hasta»; cierra el periodo vigente aunque tuviera
+  término posterior), al crear cuentas con categoría y al importar el historial. `terminar` guarda
+  el motivo. Al corregir un periodo, la investigación/extensión no puede bajar de lo asignado en
+  proyectos.
+- `app/investigacion/carga_proyectos.py`: disponible, asignar, historial, avisos. Los avisos se
+  revisan cuando cambia un vínculo (`vinculos.OYENTES`, para no importar desde `comun`), al asignar
+  y en el mantenimiento horario (términos que llegan con la fecha). Correos a los responsables
+  (`avisos.carga_desvinculado`, `avisos.carga_nuevo_vinculo`); los avisos cuentan en los
+  pendientes del proyecto y de la barra.
+- Pantallas: columna «Carga (h/mes)» en Participantes, carga al agregar a alguien del instituto,
+  avisos en Pendientes, motivo en «Terminar el vínculo» y al desactivar una cuenta; en Docencia →
+  Carga horaria, la carga de cada persona en proyectos.
+
+**Por hacer si hace falta:** carga en proyectos en el informe del proyecto y en el anexo.
+
+## 27. Cargo y unidad o grupo calculados (28-sep-2026)
+
+**Decisión del instituto:** en el perfil ya no se editan «Cargo» ni «Unidad o grupo».
+
+- **Cargo:** «Docente Investigador» si la persona tiene carga de investigación en su vínculo
+  vigente; «Docente» si no. Sin vínculo vigente, sin cargo (decisión del agente, por confirmar).
+- **Unidad o grupo,** en este orden: proyectos de los que es responsable (y co-responsable),
+  proyectos en que participa, el detalle de «Extensión y servicios» y el de «Gestión» del vínculo;
+  si nada aplica, «Carrera de Matemática». Solo proyectos vigentes (no en formulación ni
+  finalizados).
+
+**Hecho:** migración 0035: detalle por actividad en el vínculo (`detalle_investigacion`,
+`_extension`, `_gestion`, `_otras`; el detalle único anterior pasa a la actividad si solo una tenía
+horas, si no a la nota del periodo) y se quitan `investigador.cargo` y `.unidad`.
+`app/comun/adscripcion.py` calcula ambos (solo consulta tablas); los usan el perfil, el directorio
+(y su búsqueda), la página pública, la API, el CV y la afiliación que se muestra de cada persona en
+proyectos y autorías. El perfil completo ya no cuenta cargo ni unidad.
+
+## 28. Usabilidad e informes: evaluación y punto 1 (28-sep-2026)
+
+Evaluación publicada como página (stack adecuado; la brecha está en la experiencia por rol y los
+informes de docencia) con un orden de trabajo de 8 puntos: 1 inicio por rol y «Mi docencia»; 2
+informe de carga docente e indicadores del cuerpo académico; 3 componente de tablas; 4 tablero de
+calidad de datos; 5 ficha de docente y acciones masivas; 6 centro de avisos; 7 series con gráficos y
+trazabilidad en el anexo; 8 SSO UMSA, PDF con membrete, Guía de Antecedentes.
+
+**Punto 1, hecho:** «Para hoy» en el inicio (Lo mío, Dirección de Carrera, Dirección del Instituto,
+Acreditación) y «Mi docencia» (`/docencia/mia`; `/docencia` abre ahí para quien tiene vínculo o
+materias). Funciones en `app/academico/carga.py`: `semestre_de_referencia`, `contratos_por_vencer`,
+`vigentes_sin_carga`, `gestiones_de`, `materias_con_detalle`, `proyectos_con_carga`. Los invitados y
+externos sin materias ya no generan el aviso «Falta registrar la carga contratada».
+
+## 29. Informes de docencia (punto 2 de la evaluación, 28-sep-2026)
+
+- `app/acreditacion/cuerpo_academico.py`: `carga_docente(gestion)` (por persona, por categoría y
+  total; JCE; docencia prevista y asignada; carga en proyectos; inscripciones del semestre por
+  JCE) e `indicadores_anio(anio)` / `indicadores(desde, hasta)` (vinculados y JCE de
+  `anexo.cuerpo_academico`; % con doctorado y con posgrado según los grados obtenidos hasta ese
+  año; tramos de edad; % de la carga en investigación; % con proyecto vigente; inscripciones por
+  JCE del II semestre del año, o del I si el II aún no empezó).
+- Pantallas `/informes/carga-docente` (`ver_carga`) y `/informes/cuerpo-academico`
+  (`ver_informes_institucionales`), imprimibles y en XLSX; tarjetas en «Informes» y enlace desde
+  Docencia → Carga horaria.
+- **Límite conocido:** «inscripciones» suma inscritos por paralelo; la matrícula real (y con ella
+  la razón estudiantes/JCE que pide IAC-CINDA) depende de los datos del sistema académico de la UMSA
+  (fase 4). La carga de un periodo largo de vínculo se aplica a todos sus años: para series
+  históricas exactas, registre la carga en periodos por gestión.
+- Se corrigió el seed: los grados de ejemplo tenían años anteriores a 1940 y la validación los
+  descartaba sin avisar.
+
+## 30. Componente de tablas (punto 3 de la evaluación, 28-sep-2026)
+
+`static/js/tablas.js`: toda `<table data-tabla="…">` gana orden por columna (números, fechas y texto en
+español; los vacíos al final), filtro por texto con conteo «N de M filas» y «Descargar CSV» de lo
+visible (UTF-8 con BOM, fórmulas neutralizadas como en el servidor). Se reaplica con htmx (`htmx:load`)
+y se actualiza si htmx reemplaza las filas (`htmx:afterSettle`). Aplicado en carga horaria, oferta,
+usuarios (sin filtro: tiene buscador del servidor), propuestas, revistas, personas externas,
+estudiantes, participantes, informe de carga docente, memoria por investigador y proyectos del anexo.
+No se aplica a tablas por grupos (planes por semestre) ni a las series por año de los informes.
+
+## 31. Tablero de calidad de datos (punto 4 de la evaluación, 28-sep-2026)
+
+`app/acreditacion/calidad.py` (solo consulta) y `/informes/calidad` (acción `ver_calidad_datos`:
+direcciones, Coordinación académica, Comité y Administración del sistema). Doce revisiones, cada una
+con a qué afecta, quién la corrige y sus registros con enlace: periodos sin término, docentes sin
+carga, vínculos sin ingreso, investigadores sin vínculo, sin grado, sin fecha de nacimiento, perfiles
+sin ORCID o bajo el 50 %, publicaciones que no cuentan hasta completarse (reutiliza
+`memoria(...)["por_confirmar"]` de la ventana del anexo), paralelos sin docente o sin inscritos,
+observaciones de planes, proyectos sin ámbito y de investigación sin línea. El inicio muestra el total
+en «Para hoy». Agregar una revisión: una función que devuelva `_chequeo(...)` y sumarla a `CHEQUEOS`.
+
+## 32. Ficha de docente y acciones masivas (punto 5 de la evaluación, 28-sep-2026)
+
+- Ficha `/docencia/docentes/{uid}` (`ver_carga`; la propia persona va a «Mi docencia»): reutiliza las
+  tarjetas de «Mi docencia»; botón «Vínculo y carga» (abre la ventana de vínculo) para la Dirección de
+  Carrera. Los nombres de «Carga horaria» enlazan a la ficha.
+- Oferta: «Copiar de …» (`oferta.copiar`: paralelos del mismo semestre del año anterior que faltan,
+  sin inscritos, con docentes opcionales y las reglas de `asignar`) y «Asignar en grilla»
+  (`oferta.fijar_titular`: un titular por paralelo, reemplaza al anterior, respeta la regla de
+  temporada).
+- Renovaciones `/docencia/renovaciones` (`gestionar_vinculos` en la Carrera):
+  `carga.candidatos_renovacion` (último periodo con término, terminado en los 150 días previos al
+  semestre, sin periodo nuevo) y `carga.renovar` (misma categoría y carga; la carga en proyectos no
+  pasa: avisos a responsables). El aviso del inicio sobre vínculos que vencen enlaza aquí.
+
+## 33. Centro de avisos y resumen semanal (punto 6 de la evaluación, 28-sep-2026)
+
+- Migración 0036: tabla `notificacion` (asunto, texto, url interna, leída, resumida) y
+  `usuario.frecuencia_avisos` (`inmediato` | `semanal` | `nunca`; reemplaza `avisos_correo`: desactivado
+  = `nunca`) con `ultimo_resumen`.
+- `app/comun/notificaciones.py`: `avisar(u, asunto, texto, url, cuerpo_correo)` registra el aviso y
+  envía el correo si la preferencia es inmediata; `resumen_semanal()` (en el mantenimiento horario)
+  envía a quien lo prefiere los avisos sin leer ni resumir, a lo más uno cada 7 días. Todos los avisos
+  de `app/investigacion/avisos.py` pasan por ahí (mismos asuntos y enlaces de siempre).
+- Pantallas: campana en la barra (se carga aparte, `/avisos/campana`), `/avisos` (historial y
+  preferencia), `/avisos/{id}` (marca leído y lleva a donde se atiende). «Mi perfil» enlaza a la
+  preferencia.
+
+## 34. Series con gráficos y trazabilidad (punto 7 de la evaluación, 28-sep-2026)
+
+- `app/comun/componentes/graficos.py`: `barras()` dibuja barras apiladas en SVG en el servidor (sin
+  JavaScript ni bibliotecas externas: la CSP no las admite y así se imprimen igual). Cada barra puede
+  enlazar a sus registros; `role="img"` con los datos en `aria-label` y un `title` por barra.
+- Anexo: `anexo.INDICADORES` (nombre, clase de registro y regla de cada fila del resumen por año) y
+  `registros_del_anio()`, que devuelve los registros de cada indicador; la cifra es su cantidad (JCE y
+  citas suman). `detalle()` alimenta `/informes/acreditacion/detalle?indicador=&anio=` (con
+  `categoria` para el cuerpo académico), con la misma autorización del anexo. Una prueba verifica que
+  cada cifra de cada año coincide con sus registros. Los ceros no enlazan.
+- Anexo: sección «Tendencias» (nueve gráficos del periodo); las cifras destacadas enlazan a su
+  criterio.
+- Memoria: `informes.serie_anual()` y la sección «Evolución» (cinco años calendario que terminan en el
+  periodo elegido; cada barra abre la memoria de su año).
+
+## 35. PDF con membrete (punto 8 de la evaluación, primera parte, 28-sep-2026)
+
+- Decisión (28-sep-2026): el PDF se sigue generando con la impresión del navegador (las fórmulas
+  salen con KaTeX; sin dependencias nuevas). Un generador en el servidor (WeasyPrint) se evaluará
+  solo si hacen falta envíos automáticos de PDF.
+- Decisión (28-sep-2026): **todos los informes llevan los logos del IIMAT y de la Carrera**.
+- `hoja()` agrega el membrete (logos a los lados; universidad, facultad, Carrera e Instituto al
+  centro, desde `config`: `UNIVERSIDAD`, `FACULTAD`, `NOMBRE_CARRERA`, `NOMBRE_INSTITUTO`) y, con
+  cajas de margen de `@page`, el pie de cada página: título del informe (del primer H1) y «Página X
+  de Y». Chrome y Edge las dibujan; los demás navegadores las omiten.
+- Logos: los originales que entregó la Dirección (`logo_*.png`, también el de la UMSA, sin uso) siguen en local
+  en `static/img/membrete/` pero **no se versionan** (se quitaron del repositorio el 21-oct-2026 para publicarlo; el de la
+  FCPN, que tampoco se usaba, se retiró antes y queda en el historial de git); el membrete usa copias recortadas de 300 px de alto (`iimat.png`,
+  `cmat.png`, ≈50 KB). Para cambiar un logo, reemplace el original y regenere la copia con el mismo
+  alto.
+- Impresión: tablas anchas sin recorte (8 pt), sin flechas de ordenar, leyendas de gráficos en SVG
+  (Chrome omite los fondos por omisión). `capturar.py --pdf` guarda el PDF como lo imprime Chrome.
+- Pendiente del punto 8: inicio de sesión UMSA (según el proveedor que confirme la DTIC) y Guía de
+  Antecedentes de IAC-CINDA (falta la planilla oficial vigente).
+
+## 36. Guía de Antecedentes de IAC-CINDA (punto 8 de la evaluación, 28-sep-2026)
+
+- La Dirección entregó la planilla oficial vacía (pregrado, 2025): 33 hojas, 9 gráficos en el resumen
+  estadístico. Se versiona en `datos/iac-cinda/` (decisión del 28-sep-2026); los PDF siguen fuera.
+- `app/comun/xlsx_plantilla.py` escribe celdas en el XML de cada hoja con lxml y deja intacto lo demás
+  (openpyxl descarta gráficos e imágenes al guardar). Filas agregadas más allá de la tabla toman el
+  formato de su última fila numerada; si se sobrescribe la maestra de una fórmula compartida, las
+  dependientes pasan a fórmula explícita; se pide recalcular al abrir y se quita la cadena de cálculo.
+- `app/acreditacion/guia_antecedentes.py` llena las hojas 1, 2, 7.a, 7.b, 10, 11, 12, 19–23, 25–27;
+  `COBERTURA` dice qué queda a mano. Pantalla y descarga en `/informes/guia-antecedentes`
+  (`ver_informes_institucionales`, sin unidad: Direcciones de Carrera e Instituto y Comité).
+- Decisiones del 28-sep-2026: horas en **h/semana** (h/mes ÷ 4); jornada completa ≥ 160 h/mes, media
+  80–159, por horas < 80 (sin carga registrada cuenta como por horas y se anota); montos en USD con el
+  **tipo de cambio que indica quien genera la guía**.
+- Decisiones confirmadas por la Dirección (1-oct-2026):
+  - «Académicos del programa»: vínculo con la Carrera como titular, contratado(a), interino(a) o
+    invitado(a) (no «externo»); la hoja 10 los toma al cierre del último año (o a hoy).
+  - Hoja 20: proyectos individuales e institucionales de investigación; los de interacción social van
+    a la 27 (extensión) con las actividades de divulgación. Monto de un institucional → financiamiento
+    interno; de un individual → externo, con su fuente.
+  - Hojas 22, 23 y 25: productos enviados, aceptados o publicados en los años de los 10 ciclos con al
+    menos un autor del programa vinculado en la fecha (sin exigir revista verificada ni arbitraje).
+  - 7.a: «veces que se dicta» = gestiones del último año en que se ofertó. El **cupo por sección** y la
+    **duración del programa** (hoja 1) quedan en blanco para completarlos a mano con el dato oficial.
+- Errores de la plantilla que se corrigen en el archivo generado: tasas de egreso y titulación (hojas
+  5 y 6) apuntaban a otro libro (`[1]4.b.Cohortes semestre-ciclo`); deserción al tercer año de la
+  cohorte de la fila 18 (hoja 4) usaba la fila 17; «Costo total» de la hoja 20 sumaba AQ+AR (columnas
+  de difusión) en vez de AT+AU. Se quita el vínculo externo.
+- Pendiente del punto 8: inicio de sesión UMSA (proveedor por confirmar con la DTIC).
+
+## 37. Etapas de propuestas, botones que esperan y barras de avance (1-oct-2026)
+
+- `app/comun/componentes/etapas.py`: indicador de etapas propio (lista ordenada con Tailwind, sin
+  JavaScript, `aria-current="step"`, texto para lectores de pantalla; versión compacta para listas).
+  No se usa `Steps` de MonsterUI porque depende de daisyUI, que TAU no carga.
+- Propuestas: `institucionales.pasos(prop)` arma preparación → envío (o reenvío) → decisión → proyecto,
+  con las fechas del historial; en la ficha y, compacto, en «Mis propuestas institucionales».
+  `requisitos(prop)` da cada requisito para enviar y si se cumple (`faltantes` sale de ahí); el
+  editor muestra «Requisitos para enviar: x de n» con `Progress`.
+- `boton_espera` (layout): se deshabilita y gira durante la petición HTMX. En enviar propuesta,
+  registrar decisión, actualizar citas, buscar en OpenAlex e importar por DOI/arXiv. Reemplaza a
+  `LoaderButton` de MonsterUI, que no aplana clases en tupla.
+- «Mi docencia» (y la ficha del docente): barras de docencia asignada frente a prevista y de horas
+  asignadas en proyectos frente a la investigación o extensión del vínculo.
+- Decisión confirmada por la Dirección (1-oct-2026): en la lista de la Dirección del Instituto queda solo la
+  insignia de estado (la tabla ya tiene la fecha de envío); el indicador compacto va en «Mis
+  propuestas». La preparación del semestre queda para una etapa posterior.
+- `capturar.py --base RUTA` para capturar con una base preparada.
+
+## 38. Preparación del semestre (1-oct-2026)
+
+- `app/academico/preparacion.py`: `estado(anio, tipo)` con cinco etapas (gestión creada → oferta
+  cargada → contratos renovados → docentes asignados → carga cuadrada), cada una con su detalle, lo
+  que falta en una frase, avance (x de n) y pendientes. Reutiliza las reglas de oferta,
+  `carga.candidatos_renovacion` y `carga.personas` (avisos de carga), sin duplicarlas.
+- Pantalla `/docencia/preparacion` (pestaña «Preparación del semestre»; Dirección de Carrera y
+  Coordinación académica): indicador de etapas con enlaces, tarjetas con barra de avance, pendientes
+  y acceso a donde se resuelve cada etapa (si el rol no puede, dice quién lo hace). Inicio: «Preparación
+  de I-2027: x de 5 etapas listas · Siguiente: …».
+- Decisiones confirmadas por la Dirección (1-oct-2026): por omisión se prepara el **próximo semestre que no empezó**
+  (con las fechas de su gestión o, si no existe, las de omisión); las troncales que no se ofertan se
+  muestran como dato pero no impiden dar la oferta por cargada (la Dirección puede quitar una a
+  propósito); sin gestión, las demás etapas quedan a la espera; los cursos de verano e invierno no
+  entran.
+
+## 39. Informes programados (1-oct-2026)
+
+- Decisiones de la Dirección (1-oct-2026): se envían solos la **preparación del semestre** (4 y 1
+  semana antes del inicio, a la Dirección de Carrera y la Coordinación académica), la **carga docente**
+  (al inicio de cada semestre, a la Dirección de Carrera), la **memoria anual** (desde el 10 de enero,
+  a la Dirección del Instituto) y la **calidad de datos** (mensual, a quienes ven el tablero). Cada
+  correo lleva **cifras clave y el enlace** (sin adjuntos: los datos personales no salen del sistema),
+  en **fechas fijas** y a quienes tienen el **rol** en ese momento.
+- `app/acreditacion/programados.py`: `pendientes_de_hoy`, `revisar(hoy)` (envía como aviso con
+  `notificaciones.avisar`: campana y correo según la preferencia de cada persona), `proximos`, `suyos`.
+  Se revisa a lo más una vez por hora con el mantenimiento de `main.py`; `PORTAL_INFORMES_PROGRAMADOS=0`
+  lo apaga (las pruebas lo hacen y llaman a `revisar` con la fecha que necesitan).
+- Migración 0037: tabla `informe_programado` (informe, ocasión, fecha, destinatarios) para que cada
+  envío salga una sola vez.
+- «Informes» muestra a cada persona los informes que recibe: próximos envíos y últimos realizados.
+- Decisiones confirmadas por la Dirección (1-oct-2026):
+  - Ventanas: la memoria se envía entre el 10 de enero y el 31 de marzo; la carga, en las 3 semanas
+    siguientes al inicio; si en la ventana nadie usa el sistema, ese envío no ocurre (no hay tareas
+    programadas en el servidor).
+  - Calidad de datos: si no hay nada que corregir, no se envía (se registra para no reintentar).
+  - Sin nadie con el rol, el envío no se registra y se reintenta en la siguiente revisión.
+  - Los cursos de verano e invierno no generan informes.
+
+## 40. Premios, arbitraje y prestación de servicios (1-oct-2026)
+
+- Decisiones de la Dirección (1-oct-2026): se registran **como tipos de actividad** («Premio o
+  distinción», «Arbitraje de artículos», «Prestación de servicios»); el arbitraje, **por revista y año**
+  con la cantidad de artículos; los servicios los registran **quienes los realizan**, con **monto,
+  moneda, origen del financiamiento (interno o externo) e ingresos** para la unidad.
+- Migración 0038: los tres tipos; columnas `cantidad`, `revista_id`, `monto`, `moneda`,
+  `financiamiento` e `ingresos` en `actividad`; roles nuevos de participante (`distinguido`, `revisor`,
+  `responsable`, con la tabla reconstruida para cambiar el CHECK).
+- Formulario: el bloque de fechas, institución y campos propios se pide al servidor al cambiar el tipo
+  (`/actividades/campos`, conserva lo escrito). El arbitraje guarda del 1 de enero al 31 de diciembre
+  del año (se muestra «2026») y reconoce la revista del catálogo por su título. Cada tipo exige al
+  menos un participante con su rol.
+- Anexo: «Reconocimiento de pares» (2.2.1 d) con premios, arbitraje y comités; sección nueva 3.4.3;
+  tres indicadores con trazabilidad (los arbitrajes suman artículos: `anexo.SUMAS`); el XLSX los trae
+  con cantidad y montos. Ya no figuran en «Aún no registrado» (queda el impacto de la vinculación).
+- Guía de Antecedentes: hoja 10, columna de logros (premios en los años de la guía); hoja 28 completa
+  salvo impacto, evaluación y difusión.
+- Decisiones confirmadas por la Dirección (1-oct-2026):
+  - Un arbitraje cuenta en la memoria si el revisor estaba vinculado el 1 de enero de ese año (la regla
+    general usa la fecha de inicio de la actividad).
+  - Un servicio sin origen del financiamiento se pone como externo en la Guía (y se anota).
+
+## 41. Fusionar coautores externos duplicados (1-oct-2026)
+
+- `personas.posibles_duplicados()`: pares de externos sin cuenta con el mismo ORCID, o con el mismo
+  apellido (sin tildes ni mayúsculas) y nombres compatibles en orden (iguales, o uno es la inicial del
+  otro: «H.» y «Hermann»). Dos ORCID distintos nunca se proponen; un «H.» ambiguo se propone con
+  cada candidato y decide una persona.
+- `personas.fusionar(conservar, eliminar)`: en una transacción, pasa autorías, participaciones en
+  actividades y proyectos y periodos de estudiante (si ambas fichas estaban en el mismo registro,
+  queda una), completa institución, país, ORCID y correo faltantes y borra la otra ficha. Sin
+  migración. Se audita (`fusionar_externos`).
+- Pantalla `/personas/externos/duplicados` (acción `gestionar_personas_externas`: Dirección del
+  Instituto y Gestión de datos; las investigadoras e investigadores no fusionan, porque afecta
+  registros ajenos). Tablero de calidad: revisión «Coautores externos posiblemente duplicados».
+- Decisiones confirmadas por la Dirección (1-oct-2026):
+  - Quién fusiona: Dirección del Instituto y Gestión de datos (no cada investigador).
+  - En un proyecto en que estaban ambas fichas, se conservan el rol y las fechas de la ficha elegida.
+- El mismo punto del plan original incluía vincular una persona externa a su cuenta: ver §42.
+
+## 42. Vincular una persona externa a su cuenta (1-oct-2026)
+
+- Decisiones de la Dirección (1-oct-2026): si tiene periodos de estudiante, la ficha externa se
+  **conserva enlazada** a la cuenta (`persona_externa.usuario_id`) solo para guardarlos; vinculan la
+  **Dirección del Instituto y Gestión de datos**; el sistema **sugiere** los pares y una persona confirma.
+- `personas.sugerencias_de_cuenta()`: externos sin cuenta vinculada con el mismo ORCID, correo, o apellido
+  y nombres compatibles que una cuenta activa (nunca con ORCID distintos).
+- `personas.vincular_a_cuenta(externo, usuario)`: en una transacción, autorías y participaciones en
+  actividades y proyectos pasan a la cuenta (sin repetir en un mismo registro; la filiación de esas
+  autorías queda sin declarar); el ORCID pasa al perfil si no lo tiene; la ficha se conserva enlazada
+  si tiene periodos de estudiante y, si no, se borra. Se audita (`vincular_externo`). Sin migración.
+- `estudiantes.ficha(p)`, `estudiante_de(p, anio)`, `graduado_de(p, anio)`: la condición de estudiante de
+  cualquier persona (externa o con cuenta, por su ficha enlazada). Las usan los indicadores de
+  estudiantes (tesis, productos, proyectos y actividades con estudiantes) y la Guía, para que lo que
+  alguien hizo como estudiante siga contando tras recibir cuenta.
+- Pantalla: `/personas/externos/duplicados` («Duplicados y cuentas») con la sección «Ya tienen cuenta»;
+  vinculación manual desde la lista de externos. Tablero de calidad: «Coautores externos que ya tienen
+  cuenta».
+
+## 43. Política de seguridad de contenido estricta (2-oct-2026)
+
+- `script-src 'self'`: sin 'unsafe-inline' ni 'unsafe-eval'. Los estilos siguen admitiendo
+  'unsafe-inline' (atributos `style=` de Franken UI, htmx y los gráficos SVG; no ejecutan código).
+- Unos 60 manejadores en el HTML (`onclick`, `onchange`, `onsubmit`, `onkeydown`, `hx-on`) pasaron a
+  atributos `data-*` que atiende `static/js/acciones.js` por delegación (modal, filas, buscadores,
+  copiar, imprimir, selects que navegan, pestañas). El modal se cierra con Escape o con un clic fuera
+  del cuadro (`data-fondo-modal`); la constante `JS_CERRAR` se reemplazó por `CERRAR`.
+- Scripts en línea a archivos: tema inicial (`static/js/tema-inicial.js`, el de `headers_theme` de
+  MonsterUI), KaTeX (`static/js/katex.mjs`), errores de HTMX y avisos (`static/js/avisos.js`). Los avisos
+  de `add_toast` se sirven sin `hx-on` (`avisos_emergentes.py`, en lugar de `setup_toasts`).
+- htmx con `allowEval: false`. `tests/test_csp.py`: cabecera estricta, páginas y modales sin código en
+  línea, ninguna línea con manejadores en `app/`, tema inicial igual al de MonsterUI. Pruebas en
+  navegador del modal, las filas, los avisos y los selectores (fallan con cualquier violación).
+- De paso: «Nueva actividad» daba error 500 a una cuenta sin perfil de investigador; ahora empieza sin
+  participantes.
+
+## 44. División de los archivos de rutas más grandes (2-oct-2026)
+
+- `app/investigacion/rutas/productos/formulario.py` (484 líneas) se dividió por flujo, sin cambiar
+  comportamiento: `campos.py` (revista del catálogo, revisión, índices y actividad que dependen del
+  tipo; `/productos/campos` y `/productos/revistas`), `formulario.py` (formulario, recuadro de
+  importación, alta, edición y eliminación) e `importar.py` (DOI o arXiv, aviso de duplicado y
+  «Sumarme como autor»). La insignia de estado de la revista pasó a `ficha.py`, su único uso.
+- Verificado: las mismas 270 rutas antes y después, sin ciclos entre módulos, suite completa con
+  navegador (529).
+- Lo mismo con `app/comun/rutas/admin_usuarios.py` (1.111 líneas), ahora un paquete: `comun` (fila de
+  la tabla, `gestiona_vinculos`, `SIN_PERMISO`), `cuentas`, `importar_cuentas`, `roles`, `ficha`,
+  `vinculo` e `historial`. `fecha_local`, que usaban otros cinco módulos, pasó a
+  `app/comun/componentes/registros.py`. Mismas 270 rutas y en el mismo orden; suite completa (529).
+
+## 45. Clasificación MSC2020 de los productos (2-oct-2026)
+
+**Decisiones de la Dirección (2-oct-2026):**
+- Como en las revistas y en zbMATH: un código **principal** y hasta **4 secundarios**, de cualquier
+  nivel del catálogo (11-XX, 11Mxx, 11M06). Los informes agrupan por la sección (dos primeros
+  caracteres) del principal.
+- Sugerencia al registrar: al importar por DOI se consulta **zbMATH Open** (servicio público y
+  gratuito) y se traen sus códigos; si no los hay, el área principal del perfil de los autores. Siempre
+  editable.
+- Se usa en la ficha, el perfil público y la API; como filtro de «Mis productos»; en la memoria
+  (producción por área, con gráfico) y en Calidad de datos (aviso, sin volverla obligatoria).
+
+**Implementación:**
+- Migración 0039: tabla `producto_msc(producto_id, codigo, orden)`; el principal es el de orden 0.
+  Los productos existentes quedan sin clasificar (el seed clasifica los de ejemplo).
+- `app/investigacion/msc.py`: `de_producto`, `validar`, `guardar_de_producto`, `sugeridos_por_perfil`.
+  `productos.preparar` valida `msc` solo si viene en los datos: BibTeX, OpenAlex y otras vías que no la
+  traen no borran la que había.
+- Formulario: selector ordenable (`app/investigacion/componentes/msc.py`, compartido con el buscador
+  del perfil); la marca «Principal» la lleva por CSS el primero de la lista, así se actualiza al
+  reordenar sin ir al servidor. Rutas `/productos/msc/buscar` y `/productos/msc/fila`.
+- `importacion.msc_de_zbmath(doi)`: `api.zbmath.org/v1/document/_structured_search?DOI=…` (el primer
+  código de zbMATH es el principal). Si falla o no responde, devuelve [] sin estorbar la importación.
+  Para un preprint sin DOI se usa el DOI de su versión publicada, si arXiv lo informa.
+- Memoria: «Por área (MSC2020)» (tabla y gráfico, indexados y arbitrados, y «sin clasificar»); el XLSX
+  de productos suma la columna «MSC2020 (principal primero)». Calidad de datos: «Publicaciones
+  indexadas o arbitradas sin clasificación MSC2020» en la ventana del anexo.
+- API `/api/v1/productos`: campo `msc` (código, texto, principal). Perfil público: códigos bajo cada cita.
+
+**Decisiones confirmadas por la Dirección (2-oct-2026):**
+- El filtro por área de «Mis productos» cuenta el código principal **y** los secundarios (la memoria
+  cuenta solo el principal, para no contar un producto dos veces).
+- En un producto nuevo (sin importar) se sugiere el área principal del perfil de quien registra.
+- La cosecha desde OpenAlex y la importación BibTeX no consultan zbMATH: esos productos quedan sin
+  clasificar y aparecen en Calidad de datos.
+- El aviso de Calidad de datos abarca las publicaciones indexadas o arbitradas, aceptadas o publicadas,
+  con algún autor del instituto, en la ventana del anexo (no solo las que cuentan en la memoria).
+
+## 46. Preprint y versión publicada (2-oct-2026)
+
+**Decisiones de la Dirección (2-oct-2026):**
+- Con el preprint enlazado a su versión publicada, el CV, el perfil público y la exportación BibTeX
+  listan **solo la versión publicada**, con un enlace a su arXiv. El preprint sigue en «Mis productos»,
+  marcado «Con versión publicada».
+- Al importar la versión publicada de un preprint **ya registrado** se crea un **registro nuevo
+  enlazado**; el preprint se conserva y se preseleccionan sus proyectos.
+- Los artículos que ya guardan su arXiv en el mismo registro (importados como versión publicada de un
+  preprint no registrado) **quedan así**; ese caso sigue igual.
+
+**Implementación:**
+- Migración 0040: `producto.publicado_como_id` (en el preprint, hacia su versión publicada; ON DELETE
+  SET NULL) con índice único: una versión publicada tiene a lo sumo un preprint.
+- `productos`: `obtener` agrega `publicado_como` (en el preprint) y `preprint` (en la versión);
+  `arxiv_de(p)` da el arXiv propio o el del preprint; `enlazar_version`/`desenlazar_version`;
+  `sin_preprints_publicados(lista)` quita un preprint solo si su versión está en la misma lista (en un CV
+  de un periodo que no la incluye, el preprint sí aparece); `candidatos_version` ordena por parecido de
+  título (difflib); `preprints_sin_enlazar` para Calidad de datos (mismo autor del instituto, títulos con
+  parecido ≥ 0,85). Si un producto cambia de tipo, su enlace se quita.
+- Se aplica en el CV (y su BibTeX), «Exportar BibTeX» de «Mis productos», el perfil público y la API
+  `/api/v1/productos`. La memoria y el anexo no cambian: los preprints no cuentan.
+- Rutas `/productos/{pid}/version` (GET ventana, POST enlazar, DELETE desenlazar) en
+  `rutas/productos/version.py`; `/productos/importar` acepta `preprint` y reconoce el arXiv registrado
+  en `arxiv_asociado`. Seed: un preprint de Emmy enlazado a su artículo.
+
+**Decisiones confirmadas por la Dirección (2-oct-2026):**
+- No pueden ser versión publicada: preprints, presentaciones, tesis dirigidas ni patentes.
+- Enlazar exige poder editar ambos productos (ser autor o haberlos registrado); un preprint ajeno no se
+  enlaza al importar (se ofrece «Sumarme como autor», como hoy).
+- La API pública aplica la misma regla que el perfil público.
+- El aviso de Calidad de datos sugiere pares con un autor del instituto en común, títulos muy parecidos y
+  la versión del año anterior al preprint o posterior.
+
+## 47. Catálogos desde la interfaz (2-oct-2026)
+
+**Decisiones de la Dirección (2-oct-2026):**
+- Los tipos y los índices que ya existían son **del sistema**: se reordenan y se activan o desactivan;
+  su nombre queda fijo, porque el anexo, la Guía de Antecedentes, el CV y las importaciones los reconocen
+  por él (84 lugares del código).
+- Un tipo **nuevo** cuenta de forma genérica: formularios, listas, CV y memoria (los productos, según su
+  nivel de revisión); no entra en las categorías del anexo ni de la Guía.
+- En **cualquier índice** se puede cambiar si cuenta como «indexado» o «arbitrado», con aviso y auditoría.
+- Los administra la **Dirección del Instituto** (permiso «gestionar catálogos», como revistas y líneas).
+
+**Implementación:**
+- Migración 0041: columna `del_sistema` en `tipo_actividad`, `tipo_producto` e `indice`, en 1 para todo
+  lo existente.
+- `app/investigacion/catalogos.py` (listar con uso, validar nombre único sin distinguir tildes ni
+  mayúsculas, crear, actualizar, activar, mover, eliminar solo lo agregado y sin uso,
+  `reclasificar_indice`) y la pantalla `/admin/catalogos` («Tipos e índices» en el menú).
+- Al cambiar la política de un índice, el nivel de revisión guardado en los artículos de las revistas
+  verificadas que figuran en él se recalcula con `revistas.reclasificar`; los de revistas sin verificar
+  conservan lo declarado por sus autores. La auditoría registra el cambio y cuántos artículos cambiaron.
+- Desactivar no rompe lo registrado: al editar, el formulario ofrece el tipo o los índices que el registro
+  ya tenía (`tipos(incluir=…)`, `indices(incluir=…)`) y la validación los acepta; un registro nuevo con un
+  tipo desactivado (p. ej., uno importado) recibe «El tipo … está desactivado: elija otro». Los filtros de
+  las listas ofrecen también los inactivos.
+
+**Decisiones confirmadas por la Dirección (21-oct-2026):**
+- Un tipo o índice nuevo se agrega al final del orden y activo.
+- Un tipo de producto nuevo pregunta solo si «puede ser indexado o arbitrado»; uno de actividad, solo el
+  nombre (usa los campos generales del formulario).
+- En los tipos del sistema no se puede cambiar «puede ser indexado o arbitrado»: es parte de las reglas del
+  CV y la memoria.
+
+## 48. Valoración de usabilidad y buenas prácticas (3-oct-2026)
+
+Valoración del stack y de la experiencia de uso, con mediciones sobre una base ampliada a unos 3.000
+productos y capturas en pantalla de teléfono (sin usuarios reales ni auditoría con lector de pantalla).
+Veredicto: el stack es adecuado; los problemas son de terminación y escala. Orden acordado:
+
+1. **Hecho (3-oct-2026):** fila de autores en el teléfono y «Cargar más» en las listas largas.
+2. **Hecho (3-oct-2026):** accesibilidad del modal (foco, `aria-labelledby`, enlace «Saltar al
+   contenido»), foco en el resumen de errores y botones que se desactivan mientras se envía.
+3. **Hecho (4-oct-2026):** registros de actividad y de errores (requisito del despliegue).
+4. **Hecho (4-oct-2026):** búsqueda global y confirmaciones propias con «Deshacer» en lo reversible.
+5. **Hecho (4-oct-2026):** «Avisar a los responsables» desde Calidad de datos y exportar la auditoría en CSV.
+6. **Hecho (21-oct-2026):** deuda técnica: productos en lote (N+1), formulario compartido para alta y
+   edición, y `ruff` en lugar de pyflakes. `pyright` no se incorporó (decisión del usuario, 21-oct-2026).
+
+Además, antes de la puesta en marcha: prueba de usabilidad con cinco personas reales y cinco tareas.
+
+**Paso 1, implementación y mediciones:**
+- Fila de autores y participantes (`componentes/personas.py`): en pantallas chicas el selector de
+  filiación o de rol baja a su propia línea; antes tapaba el nombre y cortaba los botones.
+- «Cargar más» de 50 en 50 (`registros.cargar_mas`, rutas `/productos/mas` y `/actividades/mas`, con los
+  mismos filtros). `productos.buscar` devuelve solo id, año, revisión y estado; el producto completo se
+  arma solo para lo que se muestra. Lo usan también el inicio, la ficha del investigador (15 productos) y
+  el CV (que filtra por periodo antes de armar).
+- Con 3.000 productos: «Mis productos» de 1,8 s y 5,9 MB a 20 ms y 109 KB; el inicio de 196 ms a 5 ms.
+- La lista de usuarios no se pagina: con 300 cuentas responde en unos 100 ms (726 KB), y su tabla
+  ordena, filtra y exporta en el navegador, lo que con páginas abarcaría solo lo cargado.
+
+**Paso 2, implementación:**
+- `pagina()`: enlace «Saltar al contenido» (visible al recibir el foco con Tab) hacia `<main id="contenido">`.
+- `modal()`: `aria-labelledby` con su título. `acciones.js`: el foco entra en el primer campo al abrirlo,
+  Tab y Mayús+Tab recorren solo el cuadro y, al cerrarlo (botón, Escape, clic fuera o el servidor al
+  guardar), el foco vuelve al elemento que lo abrió.
+- `mensaje_error()`: `tabindex="-1"` y `data-resumen-errores`; al llegar en una respuesta recibe el foco y el
+  lector de pantalla lo anuncia (`role="alert"`). Asociar cada error a su campo (`aria-describedby`,
+  `aria-invalid`) exigiría que las validaciones devuelvan el campo además del texto: queda para después.
+- Envíos: mientras dura una petición que no es GET, su botón o los de envío del formulario quedan
+  deshabilitados. Corrección a la valoración: htmx ya encola un segundo envío del mismo formulario y lo
+  descarta si la respuesta lo reemplaza o cierra el modal, así que el riesgo de envío doble era menor de lo
+  dicho (solo en formularios que siguen en pantalla). Lo principal es la señal de que se está guardando.
+- La prueba en navegador falla sin el cambio de los envíos (comprobado quitándolo).
+
+**Paso 3, implementación (`app/comun/registros.py`):**
+- Middleware ASGI con una línea por petición (método, ruta, código, ms, id del usuario); WARNING si tarda
+  1 s o más. Sin la consulta ni el cuerpo, y con los tokens de `/recuperar/…` ocultos. Sin `/static` ni
+  `/salud`. A consola y a `data/registros/portal.log` (10 MB × 5).
+- Error no controlado: traza con un código de referencia de 6 caracteres; página «Error del sistema» con
+  el código (antes, el texto plano de Starlette) y, en HTMX, la cabecera `X-Referencia` que el aviso muestra.
+  `PORTAL_AVISO_ERRORES`: correo a la administración, a lo más uno cada 15 minutos.
+- `GET /salud` (pública, comprueba la base) para el chequeo del hosting; `fly.toml` pasa de `/login` a
+  `/salud`. uvicorn arranca con `--no-access-log`.
+
+**Decisiones confirmadas por la Dirección (21-oct-2026):**
+- No se registra la consulta de las búsquedas (`?q=…`) ni el contenido de los formularios: puede traer
+  nombres o datos personales. Se registra el id del usuario, no su correo.
+- Los registros se guardan junto a la base y rotan (unos 60 MB como máximo); no se envían a servicios
+  externos.
+- El aviso por correo de errores es opcional y se limita a uno cada 15 minutos.
+
+**Paso 4, implementación:**
+- Búsqueda global (`app/busqueda.py`, rutas `/buscar/sugerencias` y `/buscar`): campo en la barra (desde
+  1280 px; más angosto, una lupa que lleva a /buscar), tecla «/», Escape y clic fuera cierran las
+  sugerencias. Grupos: personas (directorio), cuentas que no son de investigadores (solo con
+  «ver_usuarios»), productos (título, DOI o arXiv), actividades, proyectos (solo los que `puede_ver`) y
+  asignaturas (llevan a su fila, resaltada, en el plan más reciente que la incluye).
+- Confirmaciones: `htmx:confirm` abre un `<dialog>` nativo (foco retenido, Escape cancela) en lugar de
+  `confirm()`. El botón toma el verbo de la pregunta («Eliminar», «Quitar»…; «Continuar» si no lo hay), es
+  rojo si la acción destruye algo y, entonces, el foco empieza en «Cancelar». Sin cambios en las 35
+  preguntas existentes.
+- «Deshacer» (`aviso_con_deshacer`): en lugar de confirmar, en desactivar un tipo o índice, desactivar
+  una cuenta sin terminar su vínculo y desenlazar un preprint. Las rutas aceptan el estado explícito
+  (`activo=0|1`), así que deshacer dos veces no revierte el deshacer.
+
+**Decisiones confirmadas por la Dirección (21-oct-2026):**
+- Qué se busca y quién: lo de arriba. No se buscan las revistas del catálogo, las líneas ni los avisos.
+- Solo esas tres acciones pasan a «Deshacer»; el resto sigue pidiendo confirmación (no se pueden revertir
+  con lo que hay, o revertirlas no deja todo igual, como quitar un rol o dar de baja a un participante).
+- El aviso con «Deshacer» dura 10 segundos.
+
+**Paso 5, implementación:**
+- Calidad de datos: cada ítem sabe a quién corresponde (`para`): la persona (sin grado, perfil
+  incompleto), los autores del instituto (publicaciones por confirmar, sin MSC, preprints sin enlazar) o
+  los responsables (proyectos sin ámbito o sin línea). `calidad.avisar(clave, por)` envía a cada uno, por el
+  centro de avisos, la lista de lo suyo (hasta 10, y «… y N más»), con enlace al registro si es uno solo o a
+  su página («Mi perfil», «Mis productos», «Proyectos»). No se repite a quien recibió el mismo aviso en los
+  últimos 7 días (se consulta `notificacion`; sin tabla nueva). Botón «Avisar a N personas», con
+  confirmación; queda en la auditoría.
+- Auditoría: filtros por fechas (incluyen ambos días; sobre la fecha UTC del registro) y «Descargar CSV» con
+  todo lo filtrado (UTF-8 con BOM, fórmulas neutralizadas, encabezado aunque no haya filas); la exportación
+  se audita. La exportación a CSV y XLSX pasa a `app/comun/exportar.py` (la usan los informes y la auditoría).
+
+**Decisiones confirmadas por la Dirección (21-oct-2026):**
+- Avisan las direcciones (Instituto y Carrera) y la Coordinación académica (permiso nuevo «avisar_calidad»).
+  El Comité de acreditación solo mira y Administración del sistema no decide sobre contenido.
+- Lo que corrigen las direcciones o la administración (vínculos, fecha de nacimiento, oferta, planes,
+  coautores externos) no tiene «Avisar»: lo ve quien lo corrige.
+- Un aviso por revisión y persona cada 7 días como máximo.
+
+**Paso 6, implementación:**
+- `productos.obtener_varios(ids)`: arma muchos productos con una consulta por parte (base, autores, revistas,
+  índices, MSC, enlace preprint–versión) en lugar de unas nueve por producto; `obtener(pid)` es su caso
+  particular (un solo camino, no dos que puedan divergir). `personas.por_refs` resuelve muchas personas a la
+  vez y calcula la unidad de cada investigador una sola vez; `msc.de_productos` igual. Lo usan las listas, el
+  CV, la memoria, la Guía, las tesis, el perfil público y la API. Se eliminó `productos.autores`, sin uso.
+- Con 3.000 productos: CV de 27.065 consultas y 297 ms a 53 y 108 ms; memoria de 27.170 y 284 ms a 3.188 y
+  106 ms; Calidad de datos de 27.613 y 255 ms a 7.626 y 100 ms. Lo que queda es el vínculo de cada autor en
+  cada fecha: mejorarlo rinde poco.
+- Alta y edición de productos leen el formulario con `leer_formulario` (antes, unos 20 parámetros repetidos en
+  cada ruta): un campo nuevo se agrega en un solo lugar.
+- `ruff` reemplaza a pyflakes (`uvx ruff check app scripts tests main.py`; configuración en `pyproject.toml`):
+  pyflakes (F), pycodestyle (E, W) y bugbear (B), sin el largo de línea (E501) ni `zip(strict=)` (B905); F811
+  solo se omite en las rutas. Lo que encontró: cuatro errores relanzados sin su causa (ahora `from e`, la traza
+  del registro muestra el original), funciones internas que capturan la variable del bucle en los cuatro
+  importadores CSV (falso positivo: se usan en la misma vuelta; se hizo explícito) y una prueba que pasaba por
+  casualidad: `pytest.raises(Exception)` aceptaba «no existe la columna investigador.categoria» (la categoría
+  pasó al vínculo) en lugar del rechazo del CHECK. Ahora prueba el CHECK de `vinculo`.
+
+## 49. Módulo Estudiantes (21-oct-2026)
+
+**Estado: decisiones confirmadas el 21-oct-2026 (las del texto marcadas ⚠ se aceptaron como se proponen); en construcción por etapas (§51).**
+
+**Alcance y volumen:** unos 300 usuarios esporádicos. Este módulo **no registra las materias que cursa cada
+estudiante ni sus notas** (en esta primera versión): eso es del sistema de Seguimiento Académico. TAU registra
+trayectoria, participación y percepción; complementa a ese sistema para el monitoreo interno de la actividad
+estudiantil y para la evidencia de IAC-CINDA.
+
+**Integración con Seguimiento Académico:** la unión es una clave estable (registro universitario + CI). El único
+dato académico que entra es un CSV periódico con cohorte de ingreso y estado (cursando, egresado, titulado,
+retirado, congelado), sin materias ni notas. Usa la importación CSV existente, con auditoría.
+
+**Punto de partida:** la tabla `estudiante` (migración 0019, PLAN §18) son periodos de estudio de personas
+externas; §42 ya permite que reciban cuenta sin perder la ficha. No tiene cohorte, estado, plan ni fecha de
+titulación. La Guía de Antecedentes deja en blanco las hojas 3 a 6 (admisión, cohortes, egresados, titulados).
+
+**Características, por orden de valor:**
+1. **Ficha y cohorte:** plan de estudios (2017 o nuevo), año y gestión de ingreso, estado, contacto y consentimiento.
+2. **Mi trayectoria:** vista de solo lectura de lo que TAU ya sabe (tesis, proyectos, actividades y productos, §18).
+3. **Actividad estudiantil declarada:** ayudantías, olimpiadas, congresos, pasantías, becas, movilidad, semilleros
+   y charlas, con evidencia adjunta. La persona la registra y la coordinación la **verifica** (pendiente →
+   verificada).
+4. **Encuestas** (motor común con Egresados, §50): satisfacción, clima, bienestar y causas de abandono, por
+   cohorte y periodo; anónimas o nominales; con enlace por token.
+5. **Tutoría y orientación:** el docente tutor registra reuniones y derivaciones; acceso restringido a tutor y
+   Dirección; el Comité ve solo agregados. Va después del núcleo.
+6. **Avisos** por el centro de avisos existente.
+7. **Tablero de cohortes** (Dirección y Coordinación): ingreso, permanencia, egreso, titulación, tiempo medio de
+   titulación y abandono. Alimenta las hojas 3 a 6 de la Guía y el anexo.
+
+**Fuera de la versión 1:** materias por periodo, notas, alertas predictivas, trámites, chat.
+
+**Acceso:** enlace al correo institucional (`tokens.py`, propósito nuevo), sin contraseña propia; interfaz pensada
+para el celular. El rol «estudiante» es **derivado** (ficha activa + cuenta), no se asigna.
+
+**Datos:** migración nueva (no se edita la 0019) que amplía `estudiante` con `registro_universitario`,
+`cohorte_anio`, `cohorte_gestion`, `plan_id`, `estado`, `fecha_titulacion`, `modalidad_titulacion`; tablas
+`actividad_estudiantil` (con verificación), `tutoria` y `consentimiento`. Paquete `app/estudiantil/`
+(`app/comun` no importa de él).
+
+**Permisos nuevos (`ACCIONES`):** `ver_seguimiento_estudiantil`, `verificar_actividad`, `gestionar_tutorias`,
+`ver_datos_sensibles_estudiantes`. Regla general: cada estudiante ve solo lo suyo; el Comité de acreditación ve
+agregados, no datos individuales. Pruebas por rol.
+
+### Decisiones abiertas (⚠ por confirmar)
+1. ⚠ **Acceso:** enlace al correo, sin contraseña propia (propuesto) frente a cuenta con contraseña.
+2. ⚠ **Fuente de cohortes:** CSV periódico exportado del Seguimiento Académico (propuesto) frente a digitación manual.
+3. ⚠ **Dueño de los datos:** la Dirección de Carrera. ¿Quién verifica actividades y tutorías: la Coordinación
+   académica o una unidad nueva?
+4. ⚠ **Encuestas:** anónimas por defecto en bienestar y abandono; nominales en el seguimiento de egresados.
+5. ⚠ **Datos sensibles** (tutorías, causas de abandono): registrarlos en TAU o dejarlos fuera.
+6. ⚠ **Correo masivo:** revisar el límite del proveedor de `correo.py` y enviar las encuestas por lotes.
+
+### Etapa 1: cohortes, estado, carga del CSV y tablero (implementada, 21-oct-2026)
+
+- **Migración 0042** (`estudiante`): `registro_universitario` (RU, único), `cohorte_anio/ciclo`, `plan_id`, `estado`
+  (cursando, egresado, titulado, retirado, congelado), `ultimo_anio/ciclo` (último ciclo matriculado), `fecha_egreso`,
+  `fecha_titulacion`, `modalidad_titulacion`, `motivo_retiro` y, para la hoja 3, `via_ingreso`, `sexo`, `edad_ingreso`,
+  `otra_ciudad`, `extranjero` y `colegio`. Lo que ya había se marcó: `titulado = 1` → «titulado»; con año de egreso y sin
+  titulación → «egresado». Sin cohorte no entra a los indicadores.
+- **`app/estudiantil/cohortes.py`:** ciclos I (enero a julio) y II (agosto a diciembre) con su ordinal; matrícula,
+  egreso, titulación y deserción por cohorte; admisión de primer año. **Deserción** según IAC-CINDA: retirado, o congelado
+  que no volvió en los dos ciclos siguientes.
+- **`app/estudiantil/importar.py`:** CSV de Seguimiento Académico con vista previa (`leer` / `aplicar`), clave RU; si no
+  existe se busca a la persona por correo y por nombre (se vincula con la ficha de tesista existente) y, si no, se
+  registra. Reglas por estado (retirado: último ciclo y motivo; egresado: fecha de egreso; titulado: fecha de titulación).
+  Se audita (`importar_cohortes`).
+- **Pantalla:** pestaña **Docencia → Cohortes estudiantiles** (`/docencia/cohortes`): totales, tasas de egreso, titulación y
+  deserción por cohorte, solo agregados. Carga del CSV con plantilla descargable.
+- **Permisos:** `ver_seguimiento_estudiantil` (Dirección de Carrera, Coordinación académica, Gestión de datos y Comité
+  de acreditación) y `gestionar_cohortes` (Dirección de Carrera y Gestión de datos).
+- **Guía de Antecedentes:** hojas 3 (admisión de primer año), 4 (matrícula por ciclo, deserción por motivo; tasas con
+  `IFERROR`), 5 (egresados) y 6 (titulados) se llenan desde el tablero; las cohortes sin estudiantes cargados quedan en
+  blanco y las **vacantes** (hoja 3, columnas B y D) se siguen completando a mano.
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. No se guarda el **CI** (la unión es solo el RU) ni la fecha de nacimiento: del CSV se conserva únicamente la edad al
+   ingresar (privacidad; basta para los tramos de la hoja 3).
+2. **No hay tabla de matrícula por ciclo:** un estudiante estuvo matriculado desde su cohorte hasta su último ciclo matriculado;
+   los congelamientos intermedios no se registran (es un límite conocido; si hace falta, una tabla `matricula_ciclo` sin materias).
+3. Sin dato de vía de ingreso, el estudiante cuenta como ingreso por vía **ordinaria** en la hoja 3.
+4. En **Investigadores → Estudiantes y tesistas**, los estudiantes con RU que no participan en la investigación quedan ocultos
+   para quien no tiene `ver_seguimiento_estudiantil` (su estado académico no es para todos los investigadores).
+5. Las hojas 5 y 6 siguen el diseño de la plantilla: cohortes de los 10 ciclos más antiguos de la ventana de 20, egresos y
+   titulaciones en los 10 últimos ciclos.
+6. El tablero cuenta solo licenciatura del programa propio con cohorte (`nivel = 'licenciatura'`, `del_programa = 1`).
+
+Etapa 5 (tutoría, directorio, mentoría y anexo): implementada más abajo.
+
+### Etapa 2: acceso por enlace, ficha, trayectoria y actividad estudiantil (implementada, 21-oct-2026)
+
+Decisiones de la etapa 1 confirmadas el 21-oct-2026.
+
+- **Cuentas:** `cuenta_estudiante(externo_id, usuario_id, consentimiento_en)` une la cuenta con la ficha. **No** se usa
+  `persona_externa.usuario_id` (es el paso a investigador, §42, y sacaría a la persona de los selectores de tesistas y
+  coautores). La cuenta se crea **sin contraseña** (`SIN_ACCESO`, como las personas sin acceso): no entra por `/login` ni
+  puede «recuperar» una contraseña. «Dar acceso a estudiantes» (Dirección de Carrera y Gestión de datos) la crea para quien
+  cursa o está congelado, con correo y sin cuenta; si el correo ya es de otra cuenta, **no se vincula sola** (podría estar
+  mal escrito) y se cuenta aparte.
+- **Ingreso por enlace** (`/acceso`): el estudiante escribe su correo y recibe un enlace de un solo uso, de 30 minutos
+  (`token_acceso`, propósito «acceso»; hasta 3 por hora y cuenta). La respuesta es la misma exista o no la cuenta. **Abrir el
+  enlace no lo consume** (los programas de seguridad del correo lo abren antes que la persona): se consume al pulsar «Ingresar».
+  Un token de acceso no sirve en `/recuperar/…` (`tokens.vigente` recibe los propósitos válidos; por omisión, los de definir
+  contraseña) y viceversa. El registro de peticiones oculta también `/acceso/…`.
+- **Aislamiento:** una cuenta «solo estudiante» (tiene ficha y no es investigadora, ni administradora, ni tiene vínculo vigente
+  ni roles) solo llega a `/estudiante…`, `/avisos…` y `/logout`; cualquier otra ruta la redirige a `/estudiante`
+  (`auth.RUTAS_ESTUDIANTE`, en el Beforeware). Su barra muestra solo «Mi seguimiento». Quien es personal y además estudiante
+  conserva su acceso.
+- **Portal** (`/estudiante`): consentimiento la primera vez; ficha (RU, cohorte, plan, estado), participación en la
+  investigación (solo lectura, sin enlaces) y **actividad estudiantil** (`actividad_estudiantil`): 10 tipos, fechas, institución,
+  descripción y evidencia (PDF, PNG o JPG como adjunto `actividad_estudiantil`, servida solo a su dueña y a quien verifica).
+  Estados: por verificar, verificada, con observaciones; editar o cambiar la evidencia la devuelve a «por verificar».
+- **Verificación** (`/docencia/cohortes/actividades`, permiso `verificar_actividad`: Dirección de Carrera y Coordinación
+  académica): lista de pendientes con evidencia, «Verificar» y «Observar» (con texto); el estudiante recibe un aviso del centro
+  de avisos. La pantalla de cohortes muestra cuántas hay por verificar.
+- **Migraciones 0043** (`cuenta_estudiante`, `actividad_estudiantil`; recrea `token_acceso` para admitir «acceso») **y 0044**
+  (recrea `adjunto` para admitir `actividad_estudiantil`).
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. El **consentimiento** es una aceptación por cuenta (`consentimiento_en`) del texto de uso de datos, la primera vez que ingresa.
+   El texto lo redacté yo: conviene que la Dirección lo revise.
+2. **Sin aviso a los verificadores** cuando llega una actividad nueva (solo el contador en la pantalla de cohortes), para no
+   saturar con 300 estudiantes.
+3. Las cuentas se crean **solo para quienes cursan o están congelados**; los egresados y titulados las recibirán con el módulo de
+   egresados (etapa 4).
+4. El estudiante puede **eliminar** sus actividades aunque estén verificadas (queda en la auditoría).
+5. La **fecha de inicio** de una actividad no puede ser futura.
+
+### Etapa 3: motor de encuestas (implementada, 21-oct-2026)
+
+Decisiones de la etapa 2 confirmadas el 21-oct-2026.
+
+- **Modelo (migración 0045):** `encuesta` (tipo, anónima o nominal, público, filtro por año de ingreso, fecha límite, estado
+  borrador → abierta → cerrada), `pregunta` (escala 1 a 5, sí o no, una opción, varias opciones, texto libre),
+  `invitacion_encuesta`, `respuesta` y `respuesta_item`. Es el motor común de §49 y §50: el seguimiento de egresados y el logro
+  del perfil de egreso son plantillas con público «egresados y titulados».
+- **Plantillas** (`plantillas_encuesta.py`): satisfacción estudiantil, clima y bienestar, permanencia y abandono (anónimas),
+  seguimiento de egresados y logro del perfil de egreso (nominales). Son borradores: la Dirección las ajusta antes de abrirlas.
+- **Flujo:** crear → armar → **abrir** (una invitación por persona con correo, del público elegido: «cursando» o «egresado y
+  titulado», con filtro por año de ingreso) → **enviar** (lotes de 50) y **recordar** (a quien no respondió, cada 7 días como
+  máximo) → **cerrar**. Cada persona responde en `/encuesta/<enlace>`, **sin cuenta**; abrir el enlace no lo gasta, enviar la
+  respuesta sí. Los enlaces se borran al responder y al cerrar; también dejan de servir al pasar la fecha límite. El registro
+  de peticiones oculta `/encuesta/…`.
+- **Anonimato:** la respuesta anónima no se enlaza con su invitación y las fechas van sin hora (no se puede cruzar con la
+  hora de otras tablas); solo se conoce el año de ingreso. Los resultados de una encuesta anónima se muestran desde **5
+  respuestas**, y el promedio por año de ingreso solo para los años con 5 o más. Los comentarios se listan en orden alfabético
+  (no en el de llegada). Las nominales enlazan la respuesta con la persona y la Dirección las ve una por una.
+- **Permisos:** `gestionar_encuestas` (Dirección de Carrera y Coordinación académica: armar, abrir, enviar, cerrar, ver
+  respuestas nominales) y `ver_seguimiento_estudiantil` (resultados agregados, incluido el Comité). Pestaña **Docencia →
+  Encuestas**.
+- **Resultados:** distribución y promedio por pregunta, comentarios y CSV agregado (`/docencia/encuestas/<id>/resultados`).
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. **Umbral de 5 respuestas** para mostrar resultados anónimos (y por año de ingreso). Es una regla mía de buena práctica.
+2. **Gestión de datos no arma ni envía encuestas** (solo las ve): las gestiona la Dirección de Carrera y la Coordinación académica.
+3. El enlace personal se **guarda tal cual** en la base mientras sirve (hace falta reenviarlo en los recordatorios) y se borra al
+   responder o cerrar; no se guarda su hash como el de recuperar contraseña.
+4. **Las invitaciones salen por correo, en lotes de 50 por pulsación**, sin envío automático ni programado. Con 300 estudiantes
+   son 6 pulsaciones; si el proveedor lo permite, se sube `LOTE_CORREOS`.
+5. **Los estudiantes con cuenta no ven sus encuestas pendientes en «Mi seguimiento»:** solo les llega el correo (queda para
+   una mejora si hace falta).
+6. El público «estudiantes» son los que **cursan** (no los congelados) y el de «egresados» incluye a egresados y titulados.
+7. La escala de 1 a 5 es siempre de acuerdo/desacuerdo (las preguntas se redactan como afirmaciones).
+
+### Etapa 4: egresados (implementada, 21-oct-2026)
+
+Decisiones de la etapa 3 confirmadas el 21-oct-2026.
+
+- **Transición:** quien tiene estado «titulado» con fecha de titulación **es** egresado (se deduce, sin tabla aparte). Llega por
+  el CSV de cohortes o con **Registrar titulación** (`egresados.titular`: estado, fechas de egreso y titulación, modalidad,
+  último ciclo; se audita). Los titulados históricos se cargan con el CSV de cohortes.
+- **Seguimiento programado** (migración 0046): `encuesta.hito` ('6m', '1a', '3a', '5a') marca una encuesta de seguimiento
+  continuo: se abre sin invitar a nadie y recibe una invitación por egresado al cumplirse el hito (titulación + 6, 12, 36 o 60
+  meses). Solo una abierta por hito. `seguimiento_egresado` registra a quién se invitó a qué hito. **Activar el seguimiento**
+  crea y abre las cuatro encuestas desde la plantilla de egresados; la revisión horaria de `main._mantenimiento`
+  (`egresados.mantenimiento`, apagada con `PORTAL_INFORMES_PROGRAMADOS=0`) o **Invitar ahora** (hasta 50 por vez) envían los
+  correos. Si al activar ya pasaron varios hitos de un egresado, se le invita solo al **último** y los anteriores quedan
+  «omitidos» (no se le escribe cuatro veces).
+- **Indicadores** (`egresados.indicadores`): por trienio de titulación (terminan en el año actual): titulados, años desde el
+  ingreso hasta titularse, respondieron, **con empleo** (trabajo en o fuera del área, o trabajo y estudio), **en su área**,
+  **posgrado** (cursó o cursa, en Bolivia o en el extranjero), utilidad y satisfacción (1 a 5). Se calculan con la **última
+  respuesta de cada egresado** y siempre con el n. `pregunta.clave` (situación, posgrado, utilidad, satisfacción…) permite
+  calcularlos sin depender del texto de la pregunta; las opciones de esas preguntas deben conservarse.
+- **Pantalla** (pestaña **Docencia → Egresados**): indicadores y estado del seguimiento (ven el Comité y quienes ven el
+  seguimiento estudiantil); lista de egresados con su seguimiento, registrar titulación, activar e invitar (`gestionar_egresados`:
+  Dirección de Carrera y Coordinación académica).
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. **Las invitaciones del seguimiento salen solas** (revisión horaria, hasta 50 por vez), a diferencia de las encuestas de la
+   etapa 3, que se envían a mano. Es la naturaleza del seguimiento programado; se activa una vez con «Activar el seguimiento».
+2. **Solo los titulados entran al seguimiento** (el hito cuenta desde la fecha de titulación). Los egresados que aún no se
+   titulan no se siguen.
+3. **Hito vigente más reciente:** al activar el seguimiento se invita solo al último hito cumplido y se omiten los anteriores.
+4. **Indicadores con la última respuesta de cada egresado**, en trienios que terminan en el año actual, y la **definición de
+   «con empleo»** (trabajo en el área, en otra área o trabajo y estudio) y de **posgrado** (cursó o cursa).
+5. **No hay cuenta de egresado ni acceso al portal** por este módulo: responden por enlace. La cuenta de quien fue estudiante
+   sigue funcionando (muestra «Titulado(a)»); el directorio y la mentoría llegan en la etapa 5.
+6. **Las respuestas son nominales** (la Dirección ve a cada persona con sus respuestas), como pide §50; no hay umbral mínimo.
+
+### Etapa 5: tutoría, directorio, mentoría y anexo (implementada, 21-oct-2026)
+
+Decisiones de la etapa 4 confirmadas el 21-oct-2026. Migración 0047. **Las 7 decisiones de esta etapa, confirmadas el 21-oct-2026.**
+
+- **Tutoría** (`app/estudiantil/tutoria.py`): `tutoria_asignacion` (un tutor vigente por estudiante que cursa; el tutor es un docente con
+  vínculo vigente) y `tutoria_reunion` (fecha, modalidad, tema, resumen, derivación, acuerdos). Asignan la Dirección de Carrera y la
+  Coordinación académica (`gestionar_tutorias`), por estudiante o por cohorte (solo a quien no tiene tutor; el tutor recibe un aviso).
+  El tutor ve **Tutoría → Mis tutorados** (`/tutoria`, enlace en la barra solo para tutores) y registra sus reuniones. **Confidencial:**
+  las ve su autor y la Dirección de Carrera (`ver_tutorias_detalle`; cada consulta de la Dirección queda en la auditoría,
+  `ver_tutorias`); el estudiante ve quién es su tutor pero no las notas; un tutor nuevo no ve las del anterior; el Comité ve solo cifras
+  (cobertura, reuniones por año, temas, derivaciones). Pestaña **Docencia → Tutoría**.
+- **Directorio de egresados** (`app/egresados/directorio.py`, `perfil_egresado`): opcional y solo dentro del sistema (estudiantes y
+  egresados con cuenta, y el personal que gestiona egresados). **Invitar** (por egresado o a quienes faltan, hasta 50) crea la cuenta sin
+  contraseña si falta y envía un enlace de ingreso de 7 días (`tokens.emitir(…, vigencia)`); si el correo ya es de otra cuenta, no se
+  vincula. El egresado acepta el uso de sus datos al ingresar, abre **Mi perfil de egresado** (a qué se dedica, institución, ciudad, áreas,
+  qué ofrece) y solo figura si marca «Quiero figurar» y acepta; puede retirarse (conserva la fecha de su aceptación).
+- **Mentoría** (`solicitud_mentoria`): el estudiante pide mentoría, charla, pasantía, orientación de posgrado u oferta de empleo (hasta 3
+  pendientes; una por egresado); el egresado la acepta o no desde su perfil. **El correo de cada uno se comparte solo al aceptar** (a cada
+  quien le llega el del otro, por el centro de avisos). Todo bajo `/estudiante/…`, que ya está permitido a las cuentas solo de estudiante.
+- **Anexo de seguimiento estudiantil** (`app/acreditacion/seguimiento_estudiantil.py`, `/informes/seguimiento-estudiantil` y su XLSX;
+  `ver_seguimiento_estudiantil`): solo agregados, sin nombres: cohortes, actividad estudiantil verificada, encuestas (las anónimas con
+  menos de 5 respuestas, «reservado»), tutoría (sin contenido), egresados (trienios y seguimiento) y directorio y mentoría. Es un informe
+  aparte del anexo de I+D+i (que es del Instituto); en `/informes` aparece como «Seguimiento estudiantil».
+
+**Decisiones que tomé por mi cuenta (por confirmar):**
+1. **Quién ve las notas de tutoría:** el tutor autor y solo la **Dirección de Carrera** (no la Coordinación académica, que asigna y ve cifras),
+   con registro en la auditoría. Un tutor nuevo no hereda las notas del anterior.
+2. **Quién puede ser tutor:** cualquier cuenta activa con vínculo vigente con la Carrera (no solo titulares). Solo se asigna tutor a
+   quien **cursa** (no a congelados).
+3. **El egresado entra con enlace de 7 días** (el de los estudiantes dura 30 minutos) y se le **crea la cuenta** al invitarlo, aunque
+   nunca figure en el directorio (puede ver el directorio y su perfil). La invitación no se repite sola: se reenvía con «Reenviar».
+4. **Límite de 3 solicitudes pendientes** por estudiante y una por egresado, y el estudiante no ve cuándo el egresado «no puede ayudar»
+   más que como aviso amable (sin motivo).
+5. **El anexo es un informe aparte** («Seguimiento estudiantil»), no una sección del anexo de I+D+i, porque ese anexo es del Instituto y
+   éste de la Carrera. No numera criterios de IAC-CINDA: cada sección dice de qué trata (las cohortes se corresponden con las hojas 3 a 6 de
+   la Guía). Conviene que quien lleva la acreditación diga a qué criterio va cada cifra.
+6. **Encuestas en el anexo:** solo título, modalidad, tasa de respuesta y el promedio de sus preguntas de escala (sin comentarios).
+7. **Mi seguimiento** del egresado sigue mostrando «Mi actividad estudiantil» (la que declaró siendo estudiante).
+
+## 50. Módulo Egresados o alumni (21-oct-2026)
+
+**Estado: decisiones confirmadas el 21-oct-2026, como en §49; transición, seguimiento e indicadores hechos (etapa 4, ver arriba); directorio y mentoría hechos en la etapa 5.** Volumen: unos 10 titulados por año. Con tan pocos
+casos importa el seguimiento personalizado y la tasa de respuesta, no los flujos masivos.
+
+**Características:**
+1. **Transición automática:** al marcar «titulado» (fecha y modalidad: tesis, trabajo dirigido, examen de grado,
+   excelencia) la persona pasa a egresada, con la misma identidad e historial. Se cargan los titulados históricos
+   (hoy solo `titulado = 1` en `estudiante`).
+2. **Seguimiento programado:** encuestas a los 6 meses, 1, 3 y 5 años (informes programados y avisos), con
+   situación laboral, sector, relación con la formación, posgrado y país. Responden **sin cuenta**, con enlace por
+   token enviado por correo o WhatsApp.
+3. **Perfil de egreso:** encuesta de logro de competencias frente al perfil declarado; opcionalmente, una breve
+   encuesta a empleadores.
+4. **Directorio opcional** (solo con consentimiento) y **mentoría:** egresados que ofrecen charlas, pasantías u
+   ofertas de posgrado a estudiantes.
+5. **Indicadores:** tasa y tiempo de titulación por cohorte, empleabilidad, porcentaje con posgrado y tasa de
+   respuesta, **siempre con el n**. Con 10 por año se agrupan en trienios para no inventar tendencias.
+
+**Datos:** `seguimiento_egresado` y, compartidas con §49, `encuesta`, `pregunta`, `respuesta` e
+`invitacion_encuesta`. Paquete `app/egresados/` (importa de `app/estudiantil/`, no al revés). Permiso nuevo:
+`gestionar_egresados`. El rol «egresado» es derivado.
+
+**Evidencia IAC-CINDA:** egresados y titulados por cohorte (hojas 5 y 6 de la Guía), seguimiento de egresados y
+logro del perfil de egreso, y sección nueva en el anexo.
+
+### Decisiones abiertas (⚠ por confirmar)
+1. ⚠ **Cuenta de egresado:** solo con enlace por token; cuenta únicamente si piden figurar en el directorio (propuesto).
+2. ⚠ **Canal de contacto:** correo y WhatsApp. ¿Quién envía y registra el seguimiento: Dirección o Coordinación?
+3. ⚠ **Encuesta a empleadores:** incluirla en la primera versión o dejarla para después.
+4. ⚠ **Directorio y mentoría:** ¿se publican dentro del sistema o solo se usan internamente?
+
+## 51. Etapas previstas de los módulos de estudiantes y egresados (21-oct-2026)
+
+| Etapa | Contenido | Resultado |
+|---|---|---|
+| 0 | Confirmar decisiones de §49 y §50 | Reglas fijadas ✔ (21-oct-2026) |
+| 1 | Cohortes, estado, importación CSV y tablero | Hojas 3 a 6 de la Guía ✔ (21-oct-2026) |
+| 2 | Acceso por enlace, ficha, trayectoria, actividad declarada y verificación | Portal del estudiante ✔ (21-oct-2026) |
+| 3 | Motor de encuestas (anónimas y nominales) | Base común ✔ (21-oct-2026) |
+| 4 | Egresados: transición, seguimiento programado, indicadores | Módulo alumni ✔ (21-oct-2026) |
+| 5 | Tutoría, directorio y mentoría, informe de seguimiento estudiantil | Cierre ✔ (21-oct-2026) |
+
+Un commit por etapa, con las pruebas por rol y la guía de uso al día. Las cinco etapas están hechas y sus decisiones, confirmadas.
+Estado a fin de la etapa 5: migraciones 0042 a 0047, unas 675 pruebas.
+
+## 52. Publicación del repositorio en GitHub (21-22-oct-2026)
+
+- **Dónde:** <https://github.com/manumath/tau>, rama `main`. Se creó **privado** y, por decisión del autor (22-oct-2026), se
+  pasó a **público**.
+- **Limpieza previa:** se revisaron los archivos versionados y el historial: sin secretos, bases de datos ni correos reales
+  (los correos son de dominios de ejemplo; las contraseñas del seed están documentadas en el README). Se quitaron del repositorio
+  los **logos originales** sin uso (`static/img/membrete/logo_*`, 1,6 MB; siguen en local y quedan en commits antiguos) y se completó
+  el `.gitignore` (cachés, `.env*`, `*.db`, registros, editores).
+- **Autor de los commits:** GitHub bloqueó el envío porque los commits llevaban el correo privado del autor. Se **reescribió el
+  historial** (116 commits, mismo contenido, nuevos hashes) para usar el correo `noreply` de GitHub como autor y quien confirma, y
+  el repositorio usa ese correo (`git config user.email`). Quedó una rama local de respaldo y la referencia `refs/original/` de
+  `filter-branch` (no se subieron).
+- **Pendientes antes de difundirlo (decisiones del autor y las direcciones):**
+  1. **Licencia:** no hay `LICENSE`; sin él nadie tiene permiso para reutilizar el código. Elegir una (MIT, Apache-2.0, AGPL-3.0…).
+  2. **Guía de Antecedentes de IAC-CINDA** (`datos/iac-cinda/`): documento de la agencia, versionado y en el historial. Confirmar con
+     IAC-CINDA que se puede redistribuir; si no, quitarlo (y reescribir el historial).
+  3. **Logos** de la UMSA, el IIMAT y la Carrera (membrete): pedir autorización de la Dirección para publicarlos.
+  4. El correo personal del autor sigue en `pyproject.toml` (autor del paquete).
+
+## 53. Menú lateral y pestañas en el teléfono (24-oct-2026)
+
+**Decisión del usuario (24-oct-2026):** pasar de la barra superior a un menú lateral, como el de ICMAM, «confiando en
+el buen gusto» del diseño. La barra ya estaba casi llena a 1280 px y los módulos de estudiantes y egresados no cabían.
+
+**Diseño:**
+- Pantallas grandes (≥ 1024 px): menú lateral fijo de 16 rem, agrupado en Investigación, Docencia, Estudiantes,
+  Acreditación y Administración (cada persona ve solo sus grupos). Se pliega a solo íconos (4 rem) para las tablas
+  anchas; la elección se guarda en el navegador y `static/js/disposicion-inicial.js` la aplica antes de pintar. Los
+  contadores (propuestas por revisar) quedan sobre el ícono al plegar.
+- Teléfono: barra de pestañas abajo con Inicio, las tres primeras secciones de `PRIORIDAD_MOVIL` que la persona ve
+  y «Más», que abre el mismo menú lateral como panel (se cierra con la ✕, tocando fuera o con Escape; el foco entra
+  al primer enlace y vuelve al botón).
+- Arriba, una franja con la búsqueda, la campana y el menú del usuario (perfil o datos, contraseña, tema, salir).
+  Lo administrativo (auditoría, revistas, líneas, tipos e índices) pasó del menú del usuario al grupo
+  Administración. Cada pieza con id (contadores, campana, búsqueda) existe una sola vez en la página.
+- El enlace de la página actual lo marca `acciones.js` (`aria-current="page"`, el de prefijo más largo), así que el
+  parámetro `seccion` de `pagina()` ya no decide nada. Al imprimir no aparece ninguna parte del menú.
+- Las pestañas propias de Docencia (`pestanas()`) se eliminaron: repetían el menú lateral y mezclaban Docencia con
+  Estudiantes. `PESTANAS` queda como la lista de esas secciones y sus permisos, que usa el menú.
+
+**Implementación:** `app/navegacion.py` (qué ve cada rol; vive fuera de `comun` porque necesita los permisos de
+Docencia y Estudiantes; `main.py` se lo entrega a `layout.MENU` y `layout.MENU_MOVIL`), `layout.py` (dibuja el
+lateral, la franja superior y las pestañas), estilos en `estilos/entrada.css` y comportamiento en `acciones.js`
+(`plegar-lateral`, `abrir-menu`, `cerrar-menu`, `data-nav`). Pruebas: `tests/test_navegacion.py` (grupos por rol,
+pestañas, ids únicos, impresión, cuenta de estudiante) y una en navegador (página actual, plegado que se recuerda,
+panel en el teléfono).
+
+**Decisiones confirmadas por el usuario (24-oct-2026):**
+- Grupos y orden de arriba; «Mis tutorados» (el tutor) va primero en Estudiantes.
+- En el teléfono, las tres secciones de abajo salen de este orden de prioridad: Productos, Proyectos, Mi docencia,
+  Investigadores, Informes, Usuarios, Cohortes.
+- El menú se despliega por omisión; plegarlo es una elección de cada persona en su navegador.
+
+## 54. Valoración de la experiencia por rol y ajustes (24-oct-2026)
+
+Pedido del usuario: valorar la experiencia de cada tipo de usuario, detectar lo sobrecargado y aplicar los ajustes.
+Se evaluó con una **base temporal** (no versionada: el repositorio es público) armada sobre el seed, con una cuenta
+de cada rol (docente sin investigación y tutor, Coordinación, Dirección de Carrera, Dirección del Instituto que
+además investiga, Administración del sistema, Comité, Gestión de datos), 24 estudiantes (cursando, retirados,
+congelados, egresados y titulados), cuentas de estudiante y de egresado, tutorías, actividad estudiantil por
+verificar y el seguimiento de egresados; se recorrió con capturas en escritorio y teléfono.
+
+**Hallazgos:** inicio sobrecargado en los roles combinados (hasta 4 tarjetas de pendientes y 6 de accesos que
+repetían el menú) y avisos repetidos en 4 o 5 lugares; pendientes que faltaban (tutorados sin reuniones,
+actividad estudiantil por verificar, fichas sin grado para Gestión de datos); un aviso de carga que no decía quién
+la registra; la tarjeta «Usuarios» prometía crear cuentas a quien no puede; el formulario de producto mostraba todo
+siempre; barra de «Mis productos» densa; formularios de alta siempre abiertos en fichas; textos explicativos largos;
+el egresado veía «Registrar actividad estudiantil».
+
+**Etapa 1, inicio como bandeja única:** una tarjeta «Pendientes» con un subtítulo por rol (solo los que tienen algo;
+si no, «Todo al día»), pendientes nuevos de Estudiantes y Fichas académicas, y una fila de cifras con enlace en lugar
+de las tarjetas de accesos (los da el menú). El aviso de carga sin registrar dice que la registra la Dirección de
+Carrera.
+
+**Etapa 2, formulario de producto:** el medio deja de ser un campo genérico «Revista, editorial o medio»: va en el
+bloque que depende del tipo, con su nombre (Actas o congreso, Editorial, Libro y editorial, Serie o institución,
+Repositorio, Evento, Repositorio o sitio, Programa e institución, Oficina de patentes). En los artículos ya no hay
+dos campos para la revista: con revista del catálogo el nombre lo da el catálogo; sin ella, «Nombre de la revista»
+(la propuesta al catálogo sigue aparte y no se rellena sola). Volumen, número, páginas, enlace y resumen van en
+«Más datos de la publicación», abierto si alguno tiene valor; DOI y arXiv siguen a la vista (avisan de duplicados).
+
+**Etapa 3, barras y formularios en la página:** en «Mis productos», Importar BibTeX, Buscar en OpenAlex y Exportar
+BibTeX van en un desplegable «Importar o exportar» (queda a la vista solo «Nuevo producto»), y el área MSC y las dos
+casillas en «Más filtros», que dice cuántos están activos y muestra un punto si hay filiaciones por declarar. El alta
+de grados (perfil y ficha académica) queda plegada en «+ Agregar grado» cuando ya hay alguno (abierta si no hay o si
+hubo un error), y la de contrapartes del proyecto en «+ Agregar contraparte». Los textos largos de «Calidad de datos»
+y «Cohortes» quedan en una línea con «¿Cómo funciona?» / «¿Cómo se calcula?» plegado. Los demás textos de entrada
+(Mis tutorados, actividad del estudiante) ya eran de una o dos líneas y se dejaron.
+
+**Etapa 4, perfil, menú y egresados:** en «Mi perfil», cada cosa de «Falta: …» enlaza a su sección. Los grupos del
+menú lateral se pliegan con su título y el navegador lo recuerda (`tau-grupos`, aplicado antes de pintar); el grupo de
+la página abierta se ve siempre y, con el menú en solo íconos, se ven todos. En «Mi seguimiento», el egresado empieza
+por la tarjeta «Egresados» (Mi perfil de egresado y el directorio, como botones) y su actividad estudiantil pasa a
+«Mi actividad cuando estudiaba», con «Agregar una que falte» en segundo plano. «Gestiones» sale del menú de quien no
+puede editarlas (`gestionar_oferta`): para los demás era una lista de fechas y la oferta ya elige la gestión; la ruta
+sigue abierta para todos.
+
+**Decisiones confirmadas por el usuario (24-oct-2026):** (1) el egresado conserva la posibilidad de agregar actividades de cuando
+estudiaba, en segundo plano, en vez de perderla; (2) «Gestiones» solo en el menú de la Dirección de Carrera y la
+Coordinación; (3) el formulario de grados queda abierto cuando la persona aún no tiene ninguno; (4) en artículos, sin
+revista del catálogo, el nombre publicado se escribe en «Nombre de la revista» (no se propone solo al catálogo).
+
+## 55. Identidad visual de la Carrera de Matemática (25-oct-2026)
+
+Pedido del usuario: adecuar el sistema a la marca de la Carrera (Manual de Identidad Institucional, marca
+principal y secundaria, papelería y señalética). Los originales (EPS, PDF y fuentes) no se versionan: son
+archivos de diseño y las fuentes son comerciales; solo entran derivados (SVG y PNG recortados).
+
+**Lo que fija el manual:** azul marino Pantone 2767C (`#273353`) y rojo 485C (`#be141b`) como colores
+principales; turquesa 7713C (`#007c8f`) y gris 424C (`#6c6c6c`) como secundarios. Tipografía Gotham (marca),
+Helvetica Neue (complementaria) y Garamond Pro (cuerpo de documentos formales). Marca principal horizontal
+(mínimo 100 px en pantalla) y secundaria vertical (mínimo 50 px), con un área de reserva de 1X; versión
+blanca sobre fondos oscuros.
+
+**Decisiones del usuario (25-oct-2026):**
+- Tipografía con equivalentes libres (licencia OFL): Montserrat por Gotham en títulos y marca; EB Garamond
+  para el cuerpo de los informes formales; la interfaz sigue con la fuente del sistema.
+- En la barra del sistema, el isotipo de la Carrera junto a «TAU»; la marca completa en el ingreso, el pie y
+  los informes.
+- Membrete oficial (Carrera a la izquierda, UMSA y FCPN, dirección al pie) con el logo del IIMAT a la derecha
+  en los informes de investigación (memoria, anexo); los de docencia y estudiantes, solo la Carrera.
+
+**Decisiones confirmadas por el usuario (25-oct-2026):**
+1. El color principal de la interfaz es el azul marino; el rojo queda para la marca, los acentos del
+   membrete y las acciones destructivas o los errores (botones rojos confundirían «Guardar» con «Eliminar»).
+2. Los originales de la marca no entran al repositorio; solo los derivados, como ya pasa con `cmat.png`.
+3. El sello de los 50 años y los triángulos decorativos de la hoja membretada no van en los informes en
+   pantalla (son de la papelería); se agregan si la Dirección lo pide.
+
+**Etapas:** 1 colores del tema; 2 tipografía; 3 marca en la interfaz (isotipo, ingreso, favicon); 4
+membrete, exportaciones y correo; 5 revisión por rol y documentación.
+
+**Etapa 1, colores (hecha):** `app/comun/marca.py` reúne la paleta; `scripts/tema_marca.py` genera
+`estilos/tema-cmat.css`, el tema «cmat» de Franken UI (variables en claro y oscuro, y las casillas, radios y
+viñetas, que Franken UI dibuja con el color escrito). `tema-inicial.js` aplica `uk-theme-cmat`. En oscuro, el
+principal es un azul aclarado del mismo matiz sobre un fondo azul muy oscuro, y el rojo de error se aclara
+(como texto no se leía: 2,8:1). Los gráficos usan azul, turquesa, rojo y gris; los enlaces de los informes, el
+azul marino; los `text-red-600` de errores y botones de quitar pasan a `text-destructive`.
+`tests/test_marca.py` exige contraste AA en cada par de texto y fondo, en ambos modos.
+
+**Etapa 2, tipografía (hecha):** Montserrat (400, 500, 700) y EB Garamond (400, cursiva, 600), subconjunto
+latino en woff2 de `@fontsource/…@5.2.5` (≈ 127 KB en total), con su licencia OFL, en `static/vendor/fonts/`
+(descarga autorizada por el usuario el 25-oct-2026). En la interfaz, Montserrat en los títulos de página
+(`h1`, `h2`) y la clase `font-marca`; el resto, con la fuente del sistema. En los informes (`hoja()`), cuerpo en
+EB Garamond con cifras alineadas, títulos y membrete en Montserrat, y tablas, cifras destacadas y gráficos en
+sans; Chrome incrusta las fuentes en el PDF.
+
+**Etapa 3, la marca en la interfaz (hecha):** el isotipo (versión plana, en SVG vectorial sacado del PDF
+oficial con `pdftocairo`) junto a «TAU» en el menú lateral y en la barra del teléfono; con el menú en solo
+íconos queda el isotipo. La marca horizontal (PNG transparente) encabeza el ingreso, el acceso de estudiantes y
+las encuestas públicas, con 240 px de ancho (el manual pide al menos 100). En el tema oscuro, ambas en blanco,
+como pide el manual. El favicon es el isotipo. Se eligió (confirmado el 25-oct-2026) la versión plana del isotipo y no la de volumen: sus
+degradados se empastan en tamaño chico. Ver la receta en `docs/mantenimiento.md`.
+
+**Etapa 4, membrete y exportaciones (hecha):** `membrete()` sigue la hoja membretada: la marca horizontal de la
+Carrera a la izquierda (13 mm de alto al imprimir), la universidad y la facultad a la derecha en azul marino, y
+una línea roja de la marca debajo. Con `hoja(…, instituto=True)` (memoria, anexo de I+D+i, informe de proyecto)
+se agregan el nombre y el logo del IIMAT, y el pie y la línea de pie de página nombran Carrera e Instituto; el CV,
+la carga docente, el cuerpo académico y el seguimiento estudiantil llevan solo la Carrera. La dirección de la
+Carrera va al pie si se configura `PORTAL_DIRECCION` (vacía por omisión: el repositorio es público). Los
+encabezados de las exportaciones XLSX van en azul marino con letra blanca. El correo es solo texto: su firma ya
+nombra a la Carrera y no cambia. Se retira `static/img/membrete/cmat.png` (la versión vertical de la marca), que
+ya no se usa.
+
+**Decisiones confirmadas por el usuario (25-oct-2026), etapa 4:** (4) el CV va con el membrete de la Carrera, sin el IIMAT (sirve
+al cuerpo académico, que es de la Carrera); el informe de proyecto, con el IIMAT; (5) la dirección del pie se
+configura en el despliegue y no se escribe en el código.
+
+**Etapa 5, revisión (hecha):** capturas de cada rol con las cuentas temporales (escritorio y teléfono, claro y
+oscuro), del ingreso sin sesión y de los informes impresos en PDF (memoria con IIMAT, cuerpo académico solo con la
+Carrera). La skill `captura-visual` admite `--sin-sesion` para las páginas públicas. CLAUDE.md resume lo que todo
+agente debe saber de la marca.
+
+## 56. Auditoría del stack y concurrencia en SQLite (6-nov-2026)
+
+Se auditó el stack: FastHTML + HTMX + SQLite se mantiene. La CSP, el CSRF por `Origin`, los recursos propios con
+versión y las pruebas están bien. El hallazgo grave fue de concurrencia, y esta etapa lo corrige.
+
+**Etapa 1, conexión por hilo y mantenimiento en segundo plano (hecha):**
+
+- **Problema:** `db.py` abría una sola conexión apsw para todo el proceso, y las rutas síncronas corren en un pool
+  de hilos. La transacción de una petición (`with transaccion()`) abarcaba las escrituras simultáneas de otra: si la
+  primera se revertía, **la escritura de la otra se perdía sin error**. Además, `last_insert_rowid` podía ser el de
+  otro hilo. Se reprodujo con dos hilos.
+- **Solución:** `get_db()` devuelve una conexión por hilo (`threading.local`), que se reabre cuando `init_db` cambia
+  la base (pruebas, scripts). Espera de escritura de 5 s (antes 100 ms, el valor de apsw) y `synchronous=NORMAL`
+  (seguro en WAL). La espera se fija en las buenas prácticas de apsw que aplica apswutils, porque su
+  `PRAGMA optimize` al abrir la conexión ya puede necesitar el turno de escritura.
+- **Mantenimiento periódico:** antes corría dentro de la primera petición de cada hora, que lo esperaba, y dos
+  peticiones simultáneas podían ejecutarlo a la vez (avisos duplicados). Ahora una petición lo lanza en un hilo,
+  como mucho cada 5 minutos, con un candado. Cada tarea conserva su plazo horario.
+- Pruebas en `tests/test_concurrencia.py`. Sin migraciones.
+
+**Etapa 2, filtros en la dirección (hecha):** la auditoría había dado por faltante el estado de los filtros en la URL,
+porque buscó `hx-push-url`. En realidad, seis listas ya lo hacían desde el servidor (`HtmxResponseHeaders(replace_url=
+url_filtrada(...))`): productos, actividades, investigadores, estudiantes, revistas y auditoría. Faltaban dos, que ahora
+siguen el mismo patrón: coautores externos (`q`, `todos`) y usuarios (`q`). Las páginas completas ya leían esos
+parámetros. La paginación «Cargar más» no va en la URL: al recargar se vuelve a la primera página, como antes.
+Convención para listas nuevas: el fragmento devuelve `replace_url` con la ruta de la página, y la página lee los mismos
+parámetros.
+
+**Etapa 3, integración continua (hecha):** `.github/workflows/pruebas.yml` corre en GitHub Actions, en cada push a
+`main` y en cada pull request: `uv sync --frozen`, `ruff` y `pytest --navegador` con el Chrome que trae el runner de
+Ubuntu. Permisos mínimos (`contents: read`), sin credenciales en el checkout, acciones fijadas por hash de commit y
+versiones de uv (0.13.7) y ruff (0.17.4) fijas. Antes se comprobó en un clon limpio que la suite no depende de
+archivos que solo existen en el equipo del usuario (logos originales, `.herramientas/`, `data/`): 696 pruebas y 17
+de navegador pasan.
+
+**Etapa 4, cola persistente de correo (hecha):** migración 0048, tabla `correo_pendiente`. En modo `smtp`, cada correo
+se guarda en la transacción que lo origina y sale al confirmarse (`db.al_confirmar`, que `transaccion()` ejecuta al
+confirmar la más externa y descarta si se revierte). Antes, un correo salía aunque la operación se revirtiera, y se
+perdía si la máquina se reiniciaba. Reintentos desde el mantenimiento a los 1, 5, 15, 60 y 240 minutos; un rechazo
+5xx se descarta enseguida. Antes de enviar, el correo se «reserva» (se corre su próximo intento con un UPDATE
+condicionado), para que dos hilos no lo envíen a la vez. El Message-ID se mantiene en los reintentos. La fila se borra al
+enviarse o descartarse, sin historial de mensajes (llevan enlaces de ingreso, recuperación y encuestas). Si la base no
+responde, el correo se intenta una vez sin cola (sirve para el aviso de un error del servidor). Los modos `archivo` y
+`memoria` no cambian.
+
+**Etapa 5, imagen Docker (hecha; sin construir aún, ver abajo):**
+
+- Litestream se verifica contra el SHA-256 de su `checksums.txt`. Los valores se cotejaron con el digest que calcula
+  GitHub.
+- El contenedor corre como el usuario `tau` (uid 1000), sin privilegios. El código y el entorno siguen siendo de root,
+  así que `tau` solo puede escribir en el volumen. `iniciar.sh` arranca como root solo para devolver a `tau` los archivos
+  del volumen que no sean suyos (los volúmenes anteriores eran de root) y luego se vuelve a ejecutar con `setpriv`.
+  `scripts/como-tau.sh` sirve para los scripts que se ejecutan por `fly ssh`.
+- La clave de sesión que se crea sin `PORTAL_SECRET_KEY` pasa de la raíz del código a `.sesskey` junto a la base. En
+  el contenedor, eso es el volumen, así que ya no se pierde en cada despliegue. En desarrollo queda en `data/.sesskey`
+  (la sesión se cierra una vez).
+- **Pendiente de verificar:** construir la imagen y arrancarla, tanto con un volumen vacío como con uno de root. No se
+  pudo en el equipo de desarrollo: Podman está instalado, pero sin máquina virtual.
+
+**Pendiente de la auditoría:** (e) registro de rutas sin depender del orden (`/productos/{pid:int}`).
+
+
+## 57. Módulo de Aseguramiento de la Calidad (propuesta, 6-nov-2026)
+
+**Estado: decisiones 1–5, 7 y 8 confirmadas por el usuario el 6-nov-2026 y la 6 el 7-nov-2026 (ver al final). Etapas 1 a 8 hechas y sus decisiones del agente confirmadas (7-nov-2026). Etapa 9 (página pública) hecha el mismo día.**
+
+### Propósito
+
+Convertir lo construido para una acreditación concreta (§13–§17, §29, §31, §36, anexos de §49 y §50) en el **Sistema
+Interno de Aseguramiento de la Calidad (SIAC) de la Carrera**, como lo pide la Política de Calidad de la UMSA (Res. HCU
+91/2026). El sistema no nombra a ninguna agencia ni usa sus instrumentos: trabaja con un **marco de calidad propio**,
+guardado como datos y no en el código. Un marco externo, si hiciera falta, se carga aparte y solo como correspondencia.
+
+### Fundamento: lo común a los modelos de la región
+
+Los modelos de acreditación de programas que se usan en América Latina comparten el mismo ciclo y casi los mismos ámbitos.
+Entre ellos están el que la Carrera usó hasta ahora, CNA (Chile), CONEAU (Argentina), SINAES (Costa Rica), ARCU-SUR, la
+norma andina (Decisiones 1514 y 1515 del Parlamento Andino) y la evaluación del Sistema de la Universidad Boliviana. Como
+marcos de gestión se suman ESG (ENQA) e ISO 21001.
+
+- **Ciclo:** autoevaluación con participación, evaluación externa por pares, dictamen, plan de mejora y seguimiento.
+  Es el PHVA que adopta la Política de Calidad.
+- **Ámbitos:** propósitos y gobierno; proceso formativo y currículo; estudiantes; cuerpo académico; investigación;
+  vinculación con el medio; recursos; resultados y egresados; aseguramiento interno.
+- **Evidencia:** datos verificables con su método, series de varios años, percepción de los actores (estudiantes,
+  docentes, egresados y empleadores) y juicios fundados por criterio.
+
+Un marco propio construido sobre ese núcleo sirve para cualquier proceso externo **sin depender de ninguno**.
+
+### Lo que piden las políticas de la UMSA (8 documentos, 2025–2026)
+
+| Política | Lo que entra al SIAC |
+|---|---|
+| **Calidad** (HCU 91/2026) | 9 dimensiones de evaluación; 20 criterios de calidad; indicadores de estructura, proceso, resultado, percepción y contexto (simples, contextualizados, comparables, SMART, éticos); 9 objetivos con indicador, fórmula, meta, método y frecuencia (Anexo 3); PHVA; revisión cada 5 años; rendición de cuentas |
+| **Educativa** (modelo educativo, académico, curricular) | Evaluación curricular «integral, participativa y basada en evidencias»: indicadores de resultado (competencias de los titulados, desempeño docente) y de impacto (inserción laboral, pertinencia), encuestas a titulados, empleadores y docentes, triangulación, fortalezas y debilidades del plan |
+| **Investigación** (HCU 90/2026) | 5 áreas, cada una con sus indicadores: artículos indexados y arbitrados, proyectos activos, redes, coautoría internacional, ponencias, eventos organizados, semilleros, proyectos con formación piramidal, premios y divulgación |
+| **Interacción Social** (HCU 92/2026) | Área 4, «Evaluación, aprendizaje e impacto»: proyectos con impacto comprobable (meta institucional ≥ 30 %) |
+| **Internacionalización** (HCU 467/2025) | Eje 3, «evaluación, acreditación y gestión de la calidad»; movilidad, alianzas, internacionalización en casa |
+| **Posgrado** (HCU 93/2026) | % de docentes Ph.D., retención de Ph.D. por más de 3 años, titulación, auditorías internas |
+| **Emprendimiento e innovación** (HCU 169/2026) | Transferencia, propiedad intelectual, proyectos con el sector productivo |
+| **TIC** (HCU 96/2026) | Eje 7.7, «seguridad de la información y protección de datos personales»: confidencialidad, integridad, disponibilidad y trazabilidad (TAU ya lo cumple: auditoría, CSP, agregados) |
+
+**Decisión de diseño:** las **dimensiones** dan la estructura del marco. Los **20 criterios de la UMSA** (pertinencia,
+equidad, eficacia, impacto…) no son una capa más: son **atributos** que se marcan en cada indicador y en cada juicio.
+Así se puede responder, por ejemplo, «qué evidencia hay de equidad», sin duplicar la estructura.
+
+### Marco propio propuesto para la Carrera (borrador para la Comisión)
+
+| Dimensión de la Carrera | Dimensiones de la UMSA que recoge | Ya se mide en TAU |
+|---|---|---|
+| D1 Propósitos, gobierno, gestión y recursos | 1 | Vínculos, carga horaria, calidad de datos |
+| D2 Formación y currículo centrado en el estudiante | 2, 9 | Planes, oferta, docencia asignada; falta: logro del perfil de egreso |
+| D3 Estudiantes: admisión, trayectoria, bienestar y equidad | 6 | Cohortes, deserción, tutoría, actividad estudiantil, encuestas |
+| D4 Cuerpo académico | 1, 2 | JCE, grados, categorías, edad por tramos, retención; falta: capacitación |
+| D5 Investigación, innovación y transferencia | 3, 4 | Producción, proyectos, líneas, citas, tesis, patentes, transferencia |
+| D6 Vinculación con el medio | 5 | Proyectos de interacción social, divulgación, servicios; falta: impacto y beneficiarios |
+| D7 Internacionalización e interculturalidad | 7, 8, 9 | Coautoría internacional, estancias, redes, movilidad estudiantil; falta: convenios |
+| D8 Resultados y egresados | 2, 6 | Titulación, tiempo de titulación, empleabilidad, posgrado (siempre con el n) |
+| D9 Aseguramiento interno y mejora continua | 1.6.5 | Nuevo: autoevaluación, plan de mejora, seguimiento, cumplimiento de objetivos |
+
+### Qué se reaprovecha
+
+| Hoy | En el módulo |
+|---|---|
+| `app/acreditacion/` (paquete) | Pasa a `app/calidad/`; las rutas `/informes/…` pasan a `/calidad/…`, y las anteriores redirigen |
+| `anexo.py` (I+D+i por criterio externo) | Sus cálculos pasan a ser indicadores de D5 y D7; el documento, a «Informe de investigación» por dimensión, sin códigos externos |
+| `guia_antecedentes.py` | Se divide en dos. Las cifras (ciclos, académicos, caracterización, cohortes) se reúnen en una **Ficha estadística de la Carrera** propia (pantalla y XLSX). El llenado de la plantilla externa se retira ⚠ (ver decisión 4) |
+| `xlsx_plantilla.py` | Se conserva tal cual: es genérico. Sirve de motor para exportar a **cualquier** plantilla con una tabla de correspondencias como dato |
+| `cuerpo_academico.py`, `seguimiento_estudiantil.py`, `estudiantes.py`, indicadores de egresados | Cálculos reutilizados como indicadores automáticos de D3, D4 y D8 |
+| `informes.py` (CV, informe de proyecto, memoria) | Se conservan; además pasan a ser **evidencia** del marco |
+| `calidad.py` (calidad de datos) | Se conserva como requisito de los indicadores: cada indicador declara qué revisiones afectan su cifra |
+| `programados.py` | Se conserva; se agregan el aviso de los indicadores del periodo y los plazos del plan de mejora |
+| Encuestas (`app/estudiantil/encuestas.py`) | Pasan a ser los indicadores de percepción; se agregan los públicos «docentes» y «empleadores» y una plantilla de logro del perfil de egreso |
+| Deserción «según la agencia» (`cohortes.py`) | Pasa a ser la definición de la Carrera, con sus parámetros en el marco (ciclos sin volver: 2) |
+| Ventana de evidencia de 5 años (`cosecha.py`, anexo) | Parámetro del marco |
+| Rol `comite_acreditacion` | Pasa a ser `comision_calidad` (migración de los roles asignados) ⚠ (ver decisión 2) |
+| Textos y docstrings con la agencia o sus códigos (unas 15 frases en pantalla, unos 50 códigos en el código) | Se reescriben neutros. Las **migraciones aplicadas** conservan sus comentarios: no se editan nunca |
+| `datos/iac-cinda/` (plantilla vacía) | Se retira del repositorio ⚠ (ver decisión 4) |
+
+### Qué es nuevo
+
+1. **Marco de calidad como datos:** marco (nombre, versión, vigencia, ventana de años y escala de valoración) →
+   dimensiones → criterios → indicadores. Cada indicador lleva tipo (estructura, proceso, resultado, percepción,
+   contexto), fórmula en texto, fuente (`auto:<clave>` o manual), unidad, frecuencia, responsable, atributos de la UMSA
+   y metas por periodo. Se carga desde un CSV versionado y se edita en pantalla.
+2. **Indicadores automáticos:** un registro en el código, `clave → función(periodo) → (valor, n, detalle)`, que reutiliza
+   los cálculos de hoy. Cada indicador tiene **tablero** con serie anual, meta, semáforo y n, y su exportación. Al cerrar
+   un periodo se guarda una **instantánea** de las cifras, para que un informe ya entregado no cambie si después se
+   corrigen los datos.
+3. **Repositorio de evidencias:** documentos subidos (actas, resoluciones, convenios), informes generados por TAU
+   (con fecha y huella SHA-256) y enlaces, cada uno asociado a uno o más criterios y con vigencia. Reutiliza `adjuntos`.
+4. **Autoevaluación:** un proceso con comisión y etapas. Para cada criterio se registran el nivel en la escala del
+   marco, el juicio fundado, las fortalezas y las debilidades, con la evidencia y los indicadores a la vista. La
+   participación de los actores entra por las encuestas, con resultados agregados.
+5. **Plan de mejora y seguimiento:** cada debilidad o recomendación externa genera acciones con responsable, plazo,
+   indicador y meta. Cada acción tiene su estado y avances con evidencia. Los vencimientos llegan como avisos.
+6. **Evaluación externa:** se registran la visita, el dictamen y las recomendaciones, que pasan al plan de mejora.
+7. **Objetivos de calidad de la UMSA:** los 9 objetivos del Anexo 3 de la Política de Calidad, a escala de la Carrera,
+   con el cálculo automático que se pueda: producción indexada, estudiantes en proyectos, divulgación, propiedad
+   intelectual y cumplimiento del plan.
+8. **Correspondencia con marcos externos (opcional):** un CSV *privado*, que no se versiona, enlaza los criterios
+   propios con los de una agencia y permite exportar a su plantilla con `xlsx_plantilla`. El sistema no trae ninguno.
+
+### Datos que faltan, según las políticas
+
+Capacitación docente (objetivo 4 de la Política de Calidad); convenios y alianzas (Internacionalización); impacto y
+beneficiarios de los proyectos de interacción social (objetivo 6); encuesta a empleadores y logro del perfil de egreso
+(Política Educativa); tiempos de trámite (objetivo 3; solo se pueden medir los procesos que pasan por TAU). La etapa 8
+cubrió todos salvo los tiempos de trámite, que siguen como indicador manual (D1.3.b).
+
+### Etapas (un commit por etapa)
+
+| Etapa | Contenido | Tamaño |
+|---|---|---|
+| 1 | **Neutralizar sin cambiar el comportamiento (hecha):** paquete `app/calidad`, informe de I+D+i en `/informes/investigacion` (las anteriores redirigen), menú «Aseguramiento de la Calidad», textos y docstrings neutros, rol renombrado, retiro de la Guía, guía de uso, README y CLAUDE.md | Mediana |
+| 2 | **Marco como datos (hecha):** migración (marco, dimensión, criterio, indicador, meta, atributo), CSV del marco de la Carrera, pantalla para editarlo (Dirección de Carrera) | Mediana |
+| 3 | **Indicadores automáticos y tablero (hecha):** registro de cálculos, serie, metas, instantáneas por periodo, exportación | Grande |
+| 4 | **Evidencias (hecha):** repositorio y asociación a criterios; informes generados con su huella | Mediana |
+| 5 | **Autoevaluación (hecha):** proceso, juicios por criterio, informe de autoevaluación imprimible y en XLSX | Grande |
+| 6 | **Plan de mejora y evaluación externa (hecha):** acciones, avances, avisos, recomendaciones | Mediana |
+| 7 | **Ficha estadística y exportación por correspondencia (hecha)** (la Guía ya se retiró en la etapa 1) | Mediana |
+| 8 | **Datos que faltan (hecha):** capacitación, convenios, impacto de interacción social, encuestas a empleadores y docentes | Mediana |
+
+La etapa 1 sola ya cumple el pedido de no nombrar a la agencia. Las demás construyen el SIAC.
+
+### Etapa 1: neutralización (hecha, 6-nov-2026)
+
+- **Paquete:** `app/acreditacion` → `app/calidad` (`calidad.py` → `calidad_datos.py`, para no repetir el nombre del
+  paquete). Sin cambios de lógica.
+- **Informe de I+D+i** (antes «Anexo de I+D+i para la acreditación»): en `/informes/investigacion`, `/xlsx` y `/detalle`;
+  `/informes/acreditacion…` redirige (301) con los mismos parámetros, para marcadores y correos ya enviados. Cada sección
+  dice a qué dimensiones del marco D1–D9 aporta evidencia, en lugar del código de un criterio de la agencia; las anclas,
+  las hojas del XLSX («Publicaciones», «Proyectos»…), la columna «Tema» y el archivo (`informe-idi-AAAA-AAAA.xlsx`) son neutros.
+- **Menú:** el grupo «Acreditación» pasa a «Aseguramiento de la Calidad»; la clave del grupo plegado
+  (`aseguramiento-de-la-calidad`) cambió, así que quien lo tenía plegado lo verá abierto una vez.
+- **Rol:** migración 0049, `comite_acreditacion` → `comision_calidad` («Comisión de calidad»), con los mismos permisos de
+  solo lectura; los permisos de escritura de la Comisión (juicios y evidencias, decisión 2) llegan con las etapas 4 y 5.
+  La auditoría anterior conserva el nombre antiguo.
+- **Guía retirada** (decisión 4, adelantada desde la etapa 7): se quitaron `guia_antecedentes.py`, su pantalla
+  (`/informes/guia-antecedentes`), su prueba y la plantilla `datos/iac-cinda/`. La prueba de las hojas 3 a 6 se convirtió
+  en una prueba de los conteos por cohorte (`tests/test_cohortes.py`), que siguen igual; el texto del formulario de
+  servicios ya no habla de dólares. `app/comun/xlsx_plantilla.py` se conserva para las correspondencias privadas.
+  La plantilla sigue en el historial de git (no se reescribe, §56).
+- **Textos:** pantallas, docstrings, guía de uso, README, mantenimiento y CLAUDE.md sin la agencia ni sus códigos de criterio;
+  «acreditación» queda solo donde se habla del proceso en general («evaluación y acreditación de la Carrera»).
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** los informes siguen bajo `/informes` (no se movieron a `/calidad`,
+  para no romper más direcciones de las necesarias); la asignación de dimensiones a cada sección del informe de I+D+i
+  (cuerpo académico D4, producción D5, servicios D6, internacionalización D7, estudiantes D3 · D5) es una propuesta.
+
+### Etapa 2: marco de calidad como datos (hecha, 6-nov-2026)
+
+- **Migración 0050:** `marco_calidad` (unidad, nombre, versión, vigencia, años de evidencia), `nivel_escala`,
+  `atributo_calidad`, `dimension_calidad` (con su alineación con las políticas), `criterio_calidad`, `indicador_calidad`
+  (tipo, fórmula, fuente `manual` o `auto:<clave>`, unidad, frecuencia, lectura, responsable, referencia, activo),
+  `indicador_atributo` y `meta_indicador` (una meta por año).
+- **Migración 0051:** carga el borrador de `datos/calidad/marco-carrera/` (CSV versionados, formato en su README) con
+  `app/calidad/marco_csv.py`: D1–D9, 37 criterios, 63 indicadores (45 automáticos y 18 manuales), los 20 criterios de la
+  Política de Calidad de la UMSA como atributos y la escala de 4 niveles. Los 8 objetivos del Anexo 3 que se pueden medir en
+  la Carrera (2 a 9) están como indicadores con su meta institucional en «referencia»; el 1 (carreras acreditadas) es de la
+  universidad. Ninguna fila nombra a una agencia.
+- **Pantalla** `/calidad/marco` (menú «Marco de calidad»): el marco por dimensión, filtro por atributo, ficha de cada indicador
+  con sus metas, edición de todo (Dirección de Carrera de la unidad, `gestionar_marco_calidad`) y XLSX con las columnas del
+  formato de carga. Lo ven la Coordinación académica, la Dirección del Instituto y la Comisión de calidad
+  (`ver_marco_calidad`, en cualquier unidad: es de solo lectura y sin datos personales). Todo cambio se audita.
+- **Reglas:** los códigos no se repiten dentro del marco; solo se elimina una dimensión sin criterios, un criterio sin
+  indicadores y un indicador sin metas (si no, se desactiva); la escala tiene de 2 a 7 niveles.
+- **Fuentes automáticas:** `marco.FUENTES_AUTOMATICAS` lista las 45 claves; su cálculo llegó con la etapa 3.
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** el contenido del borrador (criterios, indicadores, atributos marcados
+  y responsables) es una propuesta para la Comisión; las metas numéricas por año quedan vacías para que las fije la
+  Dirección de Carrera; la Dirección del Instituto ve el marco (responde por los indicadores de investigación) pero no lo edita.
+
+### Etapa 3: indicadores automáticos y tablero (hecha, 6-nov-2026)
+
+- **Migración 0052:** `valor_indicador` (cifras manuales, una por indicador y año, con base n, fuente y nota),
+  `valor_automatico` (instantánea de lo que solo se mide «a hoy»), `cierre_calidad` y `valor_cierre` (cifras y metas
+  congeladas al cerrar un año).
+- **Cálculos** (`app/calidad/indicadores.py`, `CALCULOS`): `clave → función(calculadora, año) → Resultado(valor, n, detalle)`,
+  una por cada fuente automática del marco (una prueba lo exige). Reutilizan los cálculos de los informes: memoria e
+  informe de I+D+i (producción, proyectos, transferencia, coautoría internacional, citas en la ventana de evidencia),
+  cuerpo académico, oferta (paralelos con docente, inscritos por paralelo), cohortes (ingresantes, retención al primer año,
+  deserción del año y su brecha por sexo, titulación oportuna en 10 + 2 semestres, tiempo de titulación), egresados (su
+  respuesta más reciente) y encuestas. Las cifras son del año calendario y la del año en curso es parcial. Las variaciones
+  se calculan contra el año anterior; sin base, quedan sin dato y lo dicen.
+- **«A hoy»:** la cobertura de la tutoría, las observaciones pendientes de los planes y las revisiones de calidad de datos
+  solo se pueden medir en el presente. El mantenimiento (`main._correr_mantenimiento`) guarda una vez al día la cifra del año
+  en curso; para un año pasado se usa la última guardada en él, o queda sin dato.
+- **Pendientes:** las acciones cumplidas del plan de mejora (etapa 6) dicen por qué aún no se calculan (la autoevaluación
+  vigente se calcula desde la etapa 5). El cumplimiento de las metas se calcula en el tablero: % de indicadores con meta y cifra que la cumplen.
+- **Tablero** `/calidad/indicadores` (menú «Indicadores»): las cifras de la ventana de evidencia por dimensión, con semáforo
+  (cumple, no cumple, sin meta, informativo, sin dato) según la lectura del indicador, el detalle y la base al pasar el
+  cursor, un resumen por estado y XLSX (cifras, n, meta y estado por año; detalle; método; cierres).
+- **Ficha del indicador:** la serie con base, meta y cómo se obtuvo; en los manuales, el registro de cifras
+  (`registrar_indicadores_calidad`: Dirección de Carrera y Gestión de datos de la unidad).
+- **Cierre de años:** la Dirección de Carrera cierra un año terminado, que congela cifras y metas; se puede reabrir. Las
+  cifras manuales de un año cerrado no se cambian. Todo se audita.
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** Gestión de datos registra cifras manuales y por eso ve el marco
+  (`ver_marco_calidad`); años calendario (no gestiones); la titulación oportuna usa 10 semestres más 2; la satisfacción de
+  egresados cuenta 4 o más en la escala de 1 a 5; la retención de doctores mira si tenían vínculo tres años antes del corte.
+- **Deserción:** se calculaba por año (desertores del año / matriculados en el año) mientras la fórmula hablaba de la
+  cohorte; el 7-nov-2026 se decidió por la cohorte (ver «Decisiones del 7-nov-2026»). Hecho el mismo día:
+  `indicadores._desercion_cohorte` (plazo de 6 ciclos, `PLAZO_DESERCION`, más los 2 que se espera a un congelado,
+  `cohortes.CICLOS_SIN_VOLVER`; el año a muestra las cohortes I y II de a − 4) y la **migración 0057**, que cambia el texto
+  de las fórmulas de D3.2.b y D3.4.a si nadie lo editó. Las cifras de los años ya cerrados no cambian.
+
+### Etapa 4: evidencias (hecha, 6-nov-2026)
+
+- **Migración 0053:** `evidencia_calidad` (documento, enlace o informe del sistema; título, descripción, fecha, vigencia;
+  archivo con nombre original, tipo, tamaño y huella SHA-256; el informe y sus parámetros) y `evidencia_criterio` (una o
+  más por evidencia).
+- **Archivos** (`app/calidad/evidencias.py`): se validan por contenido con la detección de `investigacion.adjuntos`,
+  ampliada a XLSX, DOCX y PPTX (un ZIP con su pieza característica); hasta 20 MB; con nombre aleatorio en `<datos>/evidencias`,
+  fuera de `/static`. No se usa la tabla `adjunto` (su CHECK de entidades y su límite de 10 por registro no sirven aquí).
+  El archivo de una evidencia no se reemplaza: así su huella sigue probando qué se entregó.
+- **Informes del sistema:** tablero de indicadores, marco, informe de I+D+i (su XLSX pasó a `rutas/anexo.contenido_xlsx`)
+  e indicadores del cuerpo académico, generados al guardarlos; solo los que la cuenta puede ver.
+- **Pantalla** `/calidad/evidencias` (menú «Evidencias»): lista con filtro por criterio y vigencia, aviso de los criterios sin
+  evidencia vigente, ficha con descarga y huella, alta y edición en ventana, y **verificación** de un archivo por su huella
+  (no se guarda). En el marco, cada criterio muestra sus evidencias vigentes; un criterio con evidencias no se elimina.
+- **Permisos:** `registrar_evidencias_calidad` (Dirección de Carrera de la unidad y Comisión de calidad, decisión 2) y
+  `ver_evidencias_calidad` (además, Coordinación académica y Dirección del Instituto). Todo cambio se audita (al eliminar,
+  con la huella).
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** Gestión de datos no ve las evidencias (actas y convenios no son de
+  su tarea, aunque ve el marco); cualquiera que registra evidencias puede editar o eliminar las de otros (queda en la
+  auditoría); una evidencia vencida deja de contar como respaldo pero no se oculta; la huella de un informe es la del XLSX
+  guardado (generar el mismo informe otra vez da otro archivo, porque el XLSX lleva la fecha de creación).
+
+### Etapa 5: autoevaluación (hecha, 6-nov-2026)
+
+- **Migración 0054:** `autoevaluacion` (marco, nombre, periodo evaluado en años, estado en curso o concluida, análisis
+  global; una sola en curso por marco, con índice único parcial), `juicio_criterio` (nivel y su nombre de ese momento, juicio
+  fundado, fortalezas y debilidades, una por línea) y `sintesis_dimension`. Un criterio con juicios o una dimensión con
+  síntesis no se eliminan del marco.
+- **Proceso** (`app/calidad/autoevaluacion.py`, pantalla `/calidad/autoevaluaciones`, menú «Autoevaluación»): avance y
+  distribución por nivel; página por criterio con sus indicadores en los años del periodo y sus evidencias; síntesis por
+  dimensión y análisis global; concluir exige nivel en todos los criterios; concluida, no cambia (se puede reabrir); solo se
+  elimina una en curso.
+- **Informe** imprimible con membrete (escala, resumen por dimensión y nivel, juicio de cada criterio con fortalezas,
+  debilidades, indicadores y evidencias, análisis global; «Borrador» mientras está en curso) y XLSX.
+- **Permisos:** `gestionar_autoevaluacion` (Dirección de Carrera de la unidad: abrir, datos, concluir, reabrir, eliminar),
+  `registrar_juicios_calidad` (Dirección de Carrera y Comisión de calidad, decisión 2: juicios, síntesis y análisis) y
+  `ver_autoevaluacion` (además, Coordinación académica y Dirección del Instituto). Todo se audita.
+- **Indicador** «Autoevaluación vigente»: 1 si hay una autoevaluación del marco concluida en los años de la ventana de
+  evidencia que terminan en el año.
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** el juicio fundado es obligatorio al elegir un nivel; concluir exige
+  todos los criterios juzgados (no las síntesis ni el análisis); la Coordinación académica y la Dirección del Instituto ven
+  los juicios (no son confidenciales, a diferencia de las notas de tutoría); el informe muestra las cifras del tablero, que
+  solo quedan fijas en los años cerrados (no se congela nada más al concluir); un representante estudiantil en la Comisión
+  juzga con la cuenta de personal de la decisión 2.
+
+### Etapa 6: plan de mejora y evaluación externa (hecha, 7-nov-2026)
+
+- **Migración 0055:** `accion_mejora` (título, descripción, origen autoevaluación · evaluación externa · otro, con la
+  debilidad o la recomendación de que sale; criterio, responsable, plazo, prioridad, indicador y meta; estado pendiente · en
+  curso · cumplida · cancelada, con la fecha en que se cumplió o el motivo de la cancelación), `avance_accion` (fecha, texto,
+  porcentaje y evidencia), `evaluacion_externa` (organismo, tipo, visita, dictamen, resultado, vigencia e informe como
+  evidencia) y `recomendacion_externa` (texto y criterio).
+- **Pantallas** (`app/calidad/mejora.py`, `/calidad/mejora`, menú «Plan de mejora»): lista con filtros y resumen; ficha de la
+  acción con sus avances; debilidades de la autoevaluación (una por línea de cada juicio) con «Crear acción»; evaluaciones
+  externas con sus recomendaciones, de las que salen acciones; XLSX (acciones, avances, evaluaciones).
+- **Avisos** (mantenimiento diario): al responsable 30 días antes del plazo; al vencer, al responsable y a la Dirección de
+  Carrera de la unidad. Uno por acción, plazo y umbral (`aviso_enviado`).
+- **Indicador** «Acciones de mejora cumplidas en plazo» (`auto:acciones_cumplidas`): de las acciones no canceladas con plazo
+  en el año, ya vencido o cumplidas, el % cumplido hasta su plazo. Con él, ningún indicador del marco queda sin cálculo.
+- **Permisos:** `gestionar_plan_mejora` (Dirección de Carrera: acciones, estados y evaluaciones externas) y `ver_plan_mejora`
+  (además, Comisión de calidad, Coordinación académica y Dirección del Instituto). El responsable de una acción, aunque no
+  tenga rol, ve sus acciones y registra y quita sus avances. Todo se audita.
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** el responsable puede ser cualquier cuenta del personal (no un
+  estudiante); el plazo es obligatorio; marcar cumplida, cancelar y reabrir son de la Dirección, no del responsable; una acción
+  con avances no se elimina, se cancela con motivo; la Comisión de calidad ve el plan pero no crea acciones (decisión 2: el plan
+  lo gestiona la Dirección); el aviso de vencida va también a la Dirección de Carrera.
+
+### Etapa 7: ficha estadística y exportación por correspondencia (hecha, 7-nov-2026)
+
+- **Ficha estadística** (`app/calidad/ficha.py`, `/calidad/ficha`, menú «Ficha estadística»; la ve quien ve el marco): para
+  los años de la ventana del marco, cuerpo académico (vinculados, JCE, grados, categorías, tramos de edad), oferta por
+  semestre (paralelos, inscripciones), admisión por cohorte (vía, sexo, procedencia, colegio, edad al ingresar) y trayectoria
+  de cada cohorte (matriculados al año, cursando, egresados, titulados, desertores). Reúne las cifras que llenaba la Guía
+  retirada en la etapa 1, sin la plantilla de la agencia. XLSX con una hoja por sección, las cifras del tablero y la hoja
+  «Claves».
+- **Claves estables** (`ficha.valores`): `academicos.<campo>.<año>`, `academicos.categoria.<categoría>.<año>`,
+  `academicos.edad.<tramo>.<año>`, `oferta.<paralelos|inscripciones>.<semestre>`, `admision.<campo>.<cohorte>`,
+  `cohorte.<campo>.<cohorte>` e `indicador.<código>.<año>`.
+- **Exportación por correspondencia** (`/calidad/ficha/plantilla`, decisión 4): se suben la plantilla XLSX del organismo y un
+  CSV `hoja,celda,clave`; `xlsx_plantilla` escribe solo esas celdas. Ninguno de los dos archivos se guarda; con una clave
+  desconocida, una hoja que no existe o una celda mal escrita no se genera nada y se dice qué fila corregir. Se audita (sin el
+  contenido).
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** la ficha la ven quienes ven el marco (incluida Gestión de datos); la
+  correspondencia no se guarda en el sistema (cada vez se sube el CSV); una clave sin dato deja la celda vacía.
+
+### Etapa 8: datos que faltan (hecha, 7-nov-2026)
+
+- **Migración 0056:** `encuesta` admite los públicos «docentes» (académicos con vínculo vigente) y «empleadores», y los tipos
+  «Opinión de los académicos» y «Encuesta a empleadores» (se recreó la tabla para cambiar el CHECK, sin tocar preguntas ni
+  respuestas); tablas `empleador`, `capacitacion`, `convenio` con `actividad_convenio` e `impacto_proyecto`. Seis indicadores
+  del marco de la Carrera pasan de manuales a calculados (si seguían manuales y sin cifras a mano): D2.4.a y D2.4.b (logro
+  del perfil según titulados y empleadores), D4.3.a (personal capacitado), D6.4.a (impacto social comprobado), D7.4.a
+  (convenios con actividad) y D8.3.b (satisfacción de los empleadores). El CSV del marco cambió igual.
+- **Encuestas:** plantillas «Encuesta a empleadores» (competencias del perfil con la clave `perfil`, satisfacción con
+  `satisfaccion`) y «Opinión de los académicos» (anónima). A un académico se le invita mediante una ficha externa enlazada a
+  su cuenta (`persona_externa.usuario_id`), que se crea la primera vez y se reutiliza. Los indicadores de encuestas excluyen
+  las anónimas con menos de 5 respuestas.
+- **Empleadores** (`app/egresados/empleadores.py`, `/docencia/empleadores`): organización, sector y contacto con correo; no se
+  eliminan, se desactivan. Los ve quien ve el seguimiento estudiantil; los registra quien gestiona encuestas.
+- **Capacitación** (`/calidad/capacitacion`, `registrar_capacitacion`: Dirección de Carrera y Gestión de datos), **convenios**
+  (`/calidad/convenios`, `registrar_convenios`: Dirección de Carrera) e **impacto social** (`/calidad/impacto`,
+  `registrar_impacto_proyectos`: las dos direcciones y el responsable o co-responsable del proyecto). Los ven quienes ven el
+  marco; el responsable de un proyecto ve los suyos. Todo se audita.
+- **Decisiones tomadas por el agente (confirmadas por el usuario el 7-nov-2026):** una capacitación cuenta en el año en que concluyó y no se registran
+  las que siguen en curso; cada académico no registra las suyas (lo hacen la Dirección o Gestión de datos); un convenio
+  «activo» en el año es uno vigente con al menos una actividad registrada en el año; un impacto «comprobado» exige una
+  evidencia y su descripción; la encuesta a empleadores es nominal por omisión (pocos empleadores: con anónima casi nunca se
+  llegaría a 5 respuestas); la encuesta a académicos va a quienes tienen vínculo vigente el día en que se abre.
+
+### Etapa 9: página pública de indicadores (hecha, 7-nov-2026)
+- **Migración 0058:** `indicador_calidad.publico` (0 o 1; ninguno se publica hasta marcarlo). La Dirección de Carrera lo
+  marca al editar el indicador en el marco («Publicar en la página pública»); la lista del marco lo señala con «Público» y
+  la ficha lo dice. El cambio queda en la auditoría como toda edición del marco.
+- **Página** `/publico/indicadores` (`app/calidad/publico.py`, sin sesión; enlazada desde la cabecera pública y desde el
+  tablero): el marco vigente de la Carrera, sus indicadores activos marcados, por dimensión, en los últimos años cerrados
+  (tantos como la ventana del marco), con las cifras congeladas al cerrar. De cada cifra, valor, base (n), meta y semáforo;
+  de cada indicador, su fórmula. No se publica el detalle (puede nombrar personas) ni una cifra con base menor que 5
+  (`publico.MIN_BASE`): se ve «n < 5».
+- **Brecha de deserción por sexo:** su base pasó a ser el grupo más pequeño (antes, la suma), para que el resguardo la
+  oculte cuando hay pocas mujeres o pocos hombres. Los años ya cerrados guardan la base anterior.
+- **Tablero y marco:** una cifra «sí/no» se muestra como «Sí» o «No», y la unidad «número» ya no se escribe.
+- **Decisiones tomadas por el agente (por confirmar):** la página es de la Carrera (el Instituto, cuando tenga su marco);
+  va bajo la cabecera pública que ya existía (la de los perfiles); el resguardo de 5 se aplica a toda cifra con base, sea de
+  personas o de otros casos (más simple y más prudente); un indicador sin base declarada (p. ej., un sí/no) se publica.
+
+### Decisiones (confirmadas por el usuario el 6-nov-2026, salvo la 6)
+1. **Nombre:** «Aseguramiento de la Calidad» en el menú y «SIAC de la Carrera» en los documentos.
+2. **Comisión de calidad:** la Dirección de Carrera gestiona el marco y el plan de mejora; la Comisión registra juicios y
+   evidencias; Administración solo asigna el rol. Por el cogobierno, la integra **un representante estudiantil con una
+   cuenta de personal limitada a la Comisión** (no una cuenta de estudiante: esas solo llegan a `/estudiante`, §49).
+3. **Escala de valoración:** configurable en el marco; por omisión, 4 niveles (no cumple · cumple parcialmente ·
+   cumple · cumple plenamente).
+4. **La Guía y la plantilla externa:** se retiran del sistema y del repositorio; queda el motor genérico
+   (`xlsx_plantilla`) con correspondencias privadas, que no se versionan.
+5. **Ámbito:** un marco por unidad evaluable, empezando por la Carrera (el Instituto, después).
+6. **Transparencia** (decidida el 7-nov-2026): los indicadores agregados se publican en una página pública (rendición de
+   cuentas). Qué se publica, desde qué fecha y con qué resguardos se define al diseñar esa etapa.
+7. **Documentación histórica:** las secciones anteriores de este PLAN y las migraciones aplicadas se conservan como
+   historia; todo lo nuevo (código, pantallas, guía, README, pruebas) se escribe neutro.
+8. **Dimensiones:** el borrador D1–D9 de arriba.
+
+### Decisiones del 7-nov-2026
+- Se confirman todas las decisiones que el agente tomó en las etapas 1 a 8 (marcadas en cada etapa).
+- **Transparencia:** página pública de indicadores (decisión 6).
+- **Tiempos de trámite** (D1.3.b): se registran a mano; TAU no mide trámites.
+- **Metas por año:** las fija la Dirección de Carrera en el marco (`gestionar_marco_calidad`).
+- **Inicio de sesión UMSA:** sigue pendiente del proveedor que confirme la DTIC.
+- **Deserción** (D3.2.b y la brecha D3.4.a): **por cohorte**, con plazo de 3 años (6 ciclos) y las cohortes I y II del
+  mismo año juntas: desertores antes de cumplir el plazo / ingresantes de la cohorte. Ya se calcula con los datos que hay
+  (cohorte, estado, último ciclo, motivo); exige que la carga de Seguimiento Académico traiga las cohortes completas,
+  también a quienes se fueron. Se descarta la tasa por año: sin la matrícula de cada ciclo su denominador es aproximado.
+- **Página pública** (etapa 9): solo los indicadores que la Dirección marque como públicos en el marco; solo años cerrados;
+  ninguna cifra calculada sobre menos de 5 personas; valor, n, meta y método; sin datos individuales ni inicio de sesión.
+
+## 58. Servicios: comunicados y eventos, auxiliaturas y proyectos de grado (7-nov-2026)
+
+Tres servicios para estudiantes y personal, diseñados sobre los reglamentos de la UMSA (Reglamento General de Auxiliares
+Académicos; reglamento de modalidades de graduación de la Carrera). Paquete `app/servicios`; pantallas del personal en
+`/servicios/*` (grupo «Servicios» del menú) y de los estudiantes en `/estudiante/comunicados`, `/estudiante/auxiliaturas`,
+`/estudiante/tribunal` y `/estudiante/grado`.
+
+### Decisiones del 7-nov-2026 (usuario)
+1. **Tribunales de auxiliatura:** los define la Coordinación académica o la Dirección de Carrera para cada materia
+   convocada: dos docentes y dos estudiantes.
+2. **Perfil:** el estudiante elige las secciones que sugiere el sistema; obligatorias: datos (título, autor, tutor),
+   introducción, planteamiento del problema, objetivos (general y específicos), metodología, calendario y bibliografía.
+3. **Plazo del tribunal de grado:** 15 días hábiles.
+4. **Dictámenes:** en el perfil y en el proyecto de grado deben dictaminar ambos miembros del tribunal; en las
+   auxiliaturas, cada fase necesita tres calificaciones.
+5. **Resoluciones:** se guarda obligatoriamente el número y, si se quiere, el PDF.
+6. **Auxiliaturas de investigación del IIMAT:** entran ahora, junto con las de docencia.
+7. **«Ayudantías»:** son las auxiliaturas (no hay un servicio aparte).
+8. **Impugnaciones:** se presentan y resuelven en papel; TAU solo las registra.
+9. **Asistencia a eventos:** la registra el organizador, salvo en los eventos para todos.
+
+### Qué se hizo
+- **Migración 0059** (`servicios-estudiantiles`): recrea `adjunto` (conserva sus filas) para admitir adjuntos de
+  convocatorias, requisitos de postulación y trámites de grado; agrega `comunicado`, `comunicado_destinatario`,
+  `convocatoria_auxiliatura`, `requisito_auxiliatura`, `item_auxiliatura`, `tribunal_auxiliatura`,
+  `postulacion_auxiliatura`, `postulacion_requisito`, `calificacion_auxiliatura`, `fase_auxiliatura`,
+  `impugnacion_auxiliatura`, `tramite_grado`, `tribunal_grado`, `informe_grado`, `observacion_grado` y
+  `recordatorio_grado`.
+- **Acciones:** `publicar_comunicados` (las dos direcciones y la Coordinación académica; los responsables de proyectos
+  publican a nombre de su proyecto sin la acción), `gestionar_auxiliaturas` (Dirección de Carrera y Coordinación),
+  `gestionar_auxiliaturas_investigacion` (además, la Dirección del Instituto) y `gestionar_grado` (Dirección de Carrera y
+  Coordinación).
+- **Comunicados** (`comunicados.py`): borrador → publicado → cancelado; destinatarios materializados al publicar (para
+  todos = cuentas activas); grupos por estudiantes, docentes, grado, cohorte, convocatoria y proyecto; respuesta hasta el
+  inicio del evento; asistencia del organizador.
+- **Auxiliaturas** (`auxiliaturas.py`): convocatoria con requisitos del reglamento precargados, ítems por materia de la
+  oferta o por proyecto, tribunal 2 + 2, postulación con documentos y declaraciones juradas, fases habilitación →
+  méritos (30, mín. 10) → escrito (35, mín. 17,5) → oral (35), titular con 56 de 100, impugnaciones de 24 h, sorteo del
+  tema oral, empate y acta.
+- **Grado** (`grado.py`, `latex.py`): perfil y documento final; visto bueno del tutor; tribunal de al menos dos docentes;
+  rondas de revisión de 15 días hábiles con informe por aspectos (art. 35), observaciones que el estudiante responde,
+  resolución, defensa y nota (literal: Excelente ≥ 90, Sobresaliente ≥ 80, Bueno ≥ 51); recordatorios diarios
+  (`recordar`, en el mantenimiento de `main.py`); ZIP en LaTeX con la clase `perfil-cmat` y nota de presentación
+  imprimible.
+- **«Le toca a usted»** en `/estudiante` y el menú del estudiante con cinco secciones.
+- Indicador de etapas (`componentes/etapas.py`): con más de cuatro pasos, en el teléfono se muestra una línea con el paso
+  en curso en vez de las etiquetas.
+
+### Decisiones del agente, por confirmar
+- Tribunal de grado: al menos dos docentes, sin el tutor; deben dictaminar todos. Un «no aprobado» rechaza; un
+  «observado» abre otra ronda.
+- Auxiliaturas: la nota de cada fase es el promedio de las calificaciones (mínimo tres); un empate en la habilitación no
+  habilita; la fase siguiente no se cierra antes de 24 h del cierre anterior ni con impugnaciones pendientes; cierran la
+  fase quien gestiona la convocatoria o un docente del tribunal.
+- Requisitos: se acreditan con documento o declaración jurada; el sistema solo verifica «no más de dos gestiones como
+  auxiliar de la materia», con sus propios registros.
+- Días hábiles: lunes a viernes, sin feriados.
+- Un responsable de proyecto convoca solo a su grupo y a personas sueltas.
+- El servidor no compila PDF: entrega el ZIP en LaTeX y la nota en HTML para imprimir.
+- Autoría individual del perfil (sin grupos).
+- Observaciones del tribunal: una por párrafo.
+- El perfil se aprueba al registrar la resolución; el documento final termina con la defensa (aprueba con 51).
+- Mientras la revisión está abierta, cada miembro ve solo su informe y el resto ve cuántos llegaron.
+
+## 59. IA con criterio humano (propuesta, 8-nov-2026)
+
+Plan para aplicar la hoja de ruta «IA con criterio humano en TAU», que el usuario entregó el 8-nov-2026. El documento
+no se versiona. Su objetivo es incorporar funciones de IA generativa que ahorren trabajo, gobernadas, medidas y con
+supervisión humana, siguiendo la metodología CriterIA: gobernanza; datos y proveedores; pilotos y medición; personas y
+competencias. La hoja de ruta pide adaptarse a la arquitectura: abajo está cómo, y cada adaptación irá a
+`docs/ia/decisiones.md`.
+
+### Principios (cada uno con al menos una prueba)
+1. La IA sugiere y la persona decide: toda salida nace como `borrador_ia` y no surte efecto sin aprobación.
+2. Hay módulos vedados, con bloqueo verificado en el servidor:
+   - auxiliaturas (calificación y fases);
+   - asignación docente y carga horaria;
+   - tutoría;
+   - tribunales y resoluciones de grado;
+   - toda decisión sobre una persona identificada;
+   - evaluación del desempeño (hoy TAU no la tiene; queda vedada de antemano).
+3. Ningún dato sensible sale del servidor: fecha de nacimiento, tutoría, respuestas individuales anónimas y datos de
+   contacto.
+4. Todo texto de IA lleva una marca visible: «Borrador generado con IA» y luego «Elaborado con apoyo de IA; revisado por
+   [rol], [fecha]».
+5. Cada uso queda en la auditoría existente (`db.auditar`).
+6. Todo está apagado por omisión: cada función se activa por separado, con un responsable.
+7. Sin puntajes, rankings ni predicciones sobre personas.
+
+### Adaptaciones a TAU
+- **Paquete `app/ia`** (no `ia/`):
+  - `clasificacion.py`: niveles 0–3 por campo;
+  - `servicio.py`: `generar(funcion, contexto, auth) -> uso_id`;
+  - `funciones.py`: catálogo en código; la base solo guarda si cada función está activa y quién responde por ella;
+  - `instrucciones/<funcion>/v<n>.md`;
+  - `rutas/`: administración, página «Uso de IA en TAU» y panel de revisión.
+- **Variables de entorno con el prefijo de la casa:**
+  - `PORTAL_IA_LOCAL_URL` y `PORTAL_IA_LOCAL_MODELO`;
+  - `PORTAL_IA_EXT_URL`, `PORTAL_IA_EXT_MODELO` y `PORTAL_IA_EXT_CLAVE`;
+  - `PORTAL_IA_EXT_ZDR`.
+
+  Es el anexo A con `PORTAL_` en lugar de `TAU_` (convención de `config.py`). Nada del proveedor va a la base.
+- **Cliente HTTP:** `httpx2`, que ya es dependencia; no se instala nada.
+- **Pruebas:** usan un proveedor falso que registra la carga útil enviada, de modo que ninguna sale a la red; así
+  funcionan en GitHub Actions.
+- **Generación en segundo plano:** un modelo local en procesador puede tardar minutos. Por eso:
+  - la generación corre en un hilo, como el mantenimiento de `main.py`;
+  - `ia_uso.estado` pasa de `generando` a `borrador_ia`, o a `error`;
+  - la pantalla consulta el estado con HTMX y llega un aviso al terminar.
+- **Módulos vedados:** se aplican en dos capas.
+  - El servicio rechaza (y audita) toda función cuyo módulo esté en `VEDADOS`.
+  - Una prueba estática verifica que ningún archivo de los módulos vedados importe `app.ia`:
+    - `servicios/auxiliaturas`;
+    - `servicios/grado` (tribunal, resolución y nota);
+    - `academico/oferta` y `academico/carga`;
+    - `estudiantil/tutoria`.
+- **Clasificación de datos:** el contexto que recibe `generar` es una lista de campos con su origen (`tabla.columna`).
+  - Un campo sin nivel declarado se rechaza: así, una columna nueva no se cuela sin clasificar.
+  - La seudonimización reemplaza a las personas del contexto por `[PERSONA_n]` y restituye los nombres en la respuesta;
+    la correspondencia queda solo en memoria.
+- **Permisos:**
+  - `gestionar_ia` (Dirección de Carrera): redacta y aprueba la política, activa funciones y designa responsables.
+  - `ver_uso_ia` (direcciones y Comisión de calidad): registro de usos y resultados del piloto.
+- **Distancia de edición:** `1 − SequenceMatcher.ratio()` de `difflib`, sin dependencias.
+- **Ya existe y se reaprovecha:**
+  - la memoria y el informe de proyecto (`calidad/informes.py`);
+  - el campo `investigador.bio` del perfil público (para `cv_resumen`);
+  - la capacitación (`calidad/capacitacion.py`, con su indicador);
+  - el motor de encuestas (`MIN_ANONIMO = 5`; la síntesis exige 10);
+  - las evidencias y la autoevaluación (§57).
+- **Clasificación de productos (fase 2):** los productos no tienen línea de investigación; tienen códigos MSC
+  (`producto_msc`, migración 0039). Ver la pregunta 5.
+
+### Etapas (un commit cada una)
+| Etapa | Contenido | Migración |
+|---|---|---|
+| 0a | Modelo de datos (`ia_politica`, `ia_funcion`, `ia_uso`, `ia_salida`), niveles de datos, servicio con enrutamiento local/externo y ZDR, seudonimización, vedados, auditoría. Sin pantallas. Pruebas de los principios 1, 2, 3, 5 y 6 y del anexo A | 0060 |
+| 0b | Panel de revisión reutilizable (Aprobar · Aprobar con cambios · Rechazar, valoración 1–5, marca visible), administración de la política y las funciones, registro de usos, página «Uso de IA en TAU», `docs/ia/decisiones.md` | — |
+| 1a | `memoria_borrador`: secciones narrativas de la memoria (presentación, síntesis por línea, logros); la revisa la Dirección del Instituto. Las cifras y tablas salen de las consultas (prueba que lo compara). La memoria impresa lleva la marca | 0061 si hace falta guardar las secciones aprobadas |
+| 1b | `informe_proyecto_borrador` (solo el responsable del proyecto), vista del piloto (tiempo hasta la aprobación, edición y valoración por función y periodo) y decisión de cierre (ampliar · ajustar · retirar) registrada | — |
+| 2 | `producto_clasificar` (sugerencia que el investigador confirma), `cv_resumen` (llena `bio`; solo el propio investigador; nivel 2 seudonimizado o local) y reporte de sesgos por tipo de producto y por código o línea | — |
+| 3a | `encuesta_sintesis`: ≥ 10 respuestas; anónimas solo con modelo local y sin metadatos; sin citas de temas con < 10 respuestas | — |
+| 3b | `evidencia_sugerir` (cada sugerencia enlaza su registro; la Comisión acepta o descarta) y `autoevaluacion_borrador` (solo la narrativa; el juicio de cumplimiento sigue siendo humano). La página pública no usa texto sin aprobar | — |
+| 4 | Capacitación en IA y competencias digitales (un área más en `capacitacion`, visible en el CV y en el indicador), guía breve de uso crítico (ventana desde el panel de revisión) y encuesta de percepción por gestión (una plantilla más) | 0062 (CHECK de área) |
+| 5 | TAU para otras instituciones: solo cuando estén resueltas la titularidad y la licencia con la UMSA | — |
+
+Orden: 0a → 0b → 1a → 1b, y entonces la Dirección decide. Después siguen 2 y 3; la 4 puede ir en paralelo con la 2. Sin
+un modelo de prueba se puede llegar hasta la 0b con el proveedor falso. Para probar los borradores de verdad hace falta
+un modelo local (por ejemplo, Ollama con un modelo pequeño), cuya instalación pide permiso.
+
+### Decisiones pendientes
+De la hoja de ruta, a cargo de personas:
+1. El proveedor: local en un servidor de la UMSA o externo con retención cero. Mientras tanto, queda configurable.
+2. El texto de la política de uso, que aprueba la Dirección de Carrera. El agente puede proponer un borrador.
+3. Los responsables de cada función.
+4. La titularidad y la licencia, antes de la fase 5.
+
+Del agente, para confirmar:
+5. A qué apunta `producto_clasificar`: a los códigos MSC (que ya existen) o a una nueva relación producto–línea.
+6. Si la página «Uso de IA en TAU» es pública (sin ingresar) o solo para usuarios con cuenta.
+7. Si la memoria la aprueba la Dirección del Instituto y la Dirección de Carrera la gestiona (política y activación).
+
+### Respuestas del 8-nov-2026
+- **Pregunta 5:** las sugerencias de `producto_clasificar` apuntan a las **líneas oficiales** (§60). Hoy un producto
+  hereda la línea de sus proyectos aprobados (`lineas.de_registro`). Clasificarlo directamente exigirá, en la fase 2,
+  una relación producto–línea confirmada por el investigador. Cómo convive con la herencia se define al diseñar esa
+  fase.
+- **Pregunta 6:** la página «Uso de IA en TAU» es solo para usuarios con cuenta.
+- **Pregunta 7:** sí. La Dirección de Carrera aprueba la política y activa las funciones; la Dirección del Instituto
+  aprueba los borradores de la memoria.
+
+## 60. Áreas y catálogo oficial de líneas de investigación (8-nov-2026)
+
+El usuario entregó el catálogo oficial: 15 líneas en 5 áreas, con los proyectos vigentes de cada una. Pidió que la
+Dirección del Instituto pueda actualizar las líneas.
+
+- **La pantalla ya existía** (`/admin/lineas`, acción `gestionar_catalogos`, de la Dirección del Instituto). Se amplió
+  con:
+  - **Áreas** (`area_investigacion`): crear, renombrar, ordenar y eliminar si no tienen líneas.
+  - El **área obligatoria** de cada línea (`linea_investigacion.area_id`). El orden de las líneas es por área y,
+    dentro de ella, por la línea; todas las consultas de `lineas.py` lo usan (constante `ORDEN`).
+  - **Proyectos desde la ficha de la línea:** la Dirección del Instituto agrega un proyecto vigente a una línea
+    vigente, o lo quita (con auditoría).
+- **Migración 0060** (`areas-de-investigacion`): crea las 5 áreas y carga las 15 líneas oficiales.
+  - Las 3 que ya existían con el mismo nombre (sin distinguir mayúsculas) solo reciben su área y su orden, y
+    conservan su nombre: Estructuras Algebraicas Ordenadas, Optimización Matemática y Sistemas Dinámicos.
+  - Las 3 anteriores que no figuran en la lista oficial (Teoría de Control, Modelos Matemáticos y Computación, Áreas
+    Fundamentales Complementarias) quedan **vigentes y sin área**. La Dirección les pone fecha de término o un área:
+    la migración no lo decide.
+- **Proyectos de la tabla oficial:** no se cargan, porque los proyectos vigentes del usuario (Dinámicas de Control,
+  Tópicos de Topología y Grafos, etc.) se adscriben desde la ficha de cada línea, o desde el proyecto, cuando estén
+  registrados en TAU.
+
+### Por confirmar
+- El área es obligatoria al crear o editar una línea.
+- Las 3 líneas anteriores no se cierran solas.
+- La Dirección del Instituto puede adscribir y quitar proyectos (también institucionales) desde la ficha de la línea.
+
+### Etapa 0a: fundaciones (hecha, 8-nov-2026)
+- **Migración 0061** (`ia`): `ia_politica`, `ia_funcion` (nace apagada y exige un responsable para activarse), `ia_uso`
+  y `ia_salida`.
+- **Código en `app/ia`:**
+  - `clasificacion.py`: niveles 0–3 por origen; lo no clasificado se rechaza.
+  - `funciones.py`: catálogo y `VEDADOS`.
+  - `servicio.py`:
+    - política y activación;
+    - instrucciones versionadas;
+    - seudonimización;
+    - enrutamiento local o externo con retención cero (`PORTAL_IA_*`);
+    - ejecución en segundo plano con aviso;
+    - revisión humana (`decidir`), `texto_aprobado` y `marca`.
+- Aún no hay funciones registradas ni pantallas (etapa 0b). TAU funciona exactamente igual.
+- Las adaptaciones, las decisiones del agente y la tabla de pruebas por principio están en `docs/ia/decisiones.md`.
+
+### Etapas 0b a 4 (hechas, 8-nov-2026)
+El usuario pidió ejecutar todas las etapas y commitear al final. La **etapa 5** (TAU para otras instituciones) **no se
+hizo**: la hoja de ruta la condiciona a resolver la titularidad y la licencia con la UMSA.
+
+- **Migración 0062** (`ia-etapas`):
+  - `ia_cierre`: decisión de cierre de cada piloto, con su fundamento.
+  - `producto_linea`: líneas asignadas directamente a un producto.
+  - `capacitacion`: el área nueva `ia_digital` (se recrea la tabla para cambiar su CHECK, con todas sus filas).
+- **Acciones:** `gestionar_ia` (Dirección de Carrera) y `ver_uso_ia` (las dos direcciones y la Comisión de calidad).
+- **0b · Pantallas:**
+  - `/ia` («Uso de IA en TAU»): para todo el personal, desde el menú del usuario.
+  - `/ia/admin`: política por versiones (con un borrador propuesto), activación y responsable de cada función.
+  - `/ia/usos`: resultados del piloto, usos recientes y decisiones de cierre.
+  - `/ia/sesgos`: el reporte de sesgos.
+  - `/ia/guia`: guía de uso crítico, en una ventana.
+  - El panel de revisión reutilizable (`app/ia/rutas/panel.py`): Aprobar o Descartar, corrección en el mismo texto o
+    con casillas, valoración de 1 a 5 y motivo. No se imprime; el documento solo lleva el texto aprobado con su marca.
+- **Funciones** (`app/ia/catalogo.py`, con sus instrucciones `v1.md`):
+  - 1a · `memoria_borrador`: la presentación y la síntesis por línea de la memoria. La piden y la aprueban
+    la Dirección del Instituto (decisión 7) y va en la memoria impresa.
+  - 1b · `informe_proyecto_borrador`: la síntesis del periodo, solo para el responsable del proyecto.
+  - 2 · `producto_clasificar`: sugiere hasta 3 líneas oficiales; se guarda solo lo que el investigador marca (decisión
+    5). `cv_resumen`: el resumen del perfil, solo para el propio investigador; su nombre va seudonimizado; al aprobarlo
+    reemplaza el resumen y la marca se ve en el perfil, el perfil público y el CV mientras el texto no cambie.
+  - 3a · `encuesta_sintesis`: los temas de una pregunta abierta. Desde 10 respuestas, solo con el modelo local, con las
+    respuestas mezcladas y sin metadatos. La síntesis no reproduce tramos de 8 palabras o más copiados de una
+    respuesta.
+  - 3b · `evidencia_sugerir`: sugiere registros del sistema del periodo evaluado (productos, proyectos y
+    actividades); cada uno aceptado se registra como evidencia de tipo enlace del criterio. `autoevaluacion_borrador`:
+    redacta solo el texto del juicio y el nivel lo sigue poniendo la Comisión. La página pública no usa ningún texto de
+    IA.
+- **Cifras:** el modelo nunca escribe una cifra. Recibe marcadores (`{{productos}}`) que `textos.cifras` reemplaza
+  por los valores de la base. Un número suyo que no esté en los datos queda como «[cifra por verificar]».
+- **1b · Medición** (`app/ia/medicion.py`), por función y año, sin cifras por persona:
+  - usos; aprobadas sin cambios, con cambios y descartadas; errores;
+  - horas hasta la decisión, edición media y valoración media.
+  - La decisión de cierre la registra la Dirección de Carrera; «retirar» apaga la función.
+- **2 · Sesgos:** tasa de descarte de las líneas sugeridas, por línea y por tipo de producto. Se señala lo que se
+  descarta al menos 1,5 veces más que el promedio (con 5 sugerencias o más).
+- **4 · Capacitación:**
+  - El área «IA y competencias digitales» se suma a la capacitación, que ahora aparece en el CV.
+  - Hay un indicador automático `personal_capacitado_ia`, que la Dirección puede agregar al marco.
+  - La plantilla de encuesta anónima `percepcion_ia` (académicos, tipo «otra», para no mezclarse con la satisfacción
+    docente).
+- **Pruebas:** `tests/test_ia_etapas.py`, con permisos por rol, cada función y los principios de cada etapa.
+- **Expectativa cambiada a propósito:** en `test_navegacion`, el grupo Administración de quien tiene `ver_uso_ia`
+  incluye ahora «IA: administración y piloto».
+- **Decisiones del agente por confirmar:** están en `docs/ia/decisiones.md`, sección «Etapas 0b a 4».
+
+## 61. Plan de mejora del informe de autoevaluación y carga desde la Guía de Antecedentes (8-nov-2026)
+
+El usuario pidió dos cosas: analizar si TAU se adecua al plan de mejora del informe de autoevaluación de la Carrera
+(15 acciones y 57 actividades, 2026–2030), y planificar el uso del informe y de la Guía de Antecedentes llenada para
+poblar TAU, en especial a las personas y el plan de estudios.
+
+### Adecuación al plan de mejora
+TAU cubre más o menos dos tercios de lo que el plan pide registrar o medir:
+- **Bien cubierto:** el SIAC (indicadores, evidencias, autoevaluación, encuestas y página pública), cohortes y
+  deserción, titulación oportuna, tutoría, egresados y empleadores, cuerpo académico y JCE, capacitación, producción
+  verificable, convenios, impacto de la interacción social, estancias y redes, y las pautas de IA.
+- **Brechas:**
+  - El módulo del plan de mejora no tiene la estructura del plan (ver abajo).
+  - La causa de cada deserción y las reincorporaciones (A4.1); las atenciones de acompañamiento en 1.º y 2.º año (A4.2).
+  - Las vacantes de admisión (A4.4); el rendimiento por gestión, solo como agregados del SSA (A4.5).
+  - La cobertura de contenidos y el cumplimiento del calendario (A6.4); el perfil de egreso versionado (A6.1–6.2).
+  - Inducción y mentoría docente (A7.3); el banco de proyectos (A8.4).
+  - El indicador de localización de titulados (A5.1) y el de mujeres entre los ingresantes (A10.1).
+  - El uso de la biblioteca (A13); la ejecución de Recursos Propios (A14).
+  - El aviso de privacidad en los formularios (A15.2).
+  - Lo de cogobierno (A3) se deja como evidencias.
+
+### Postergado por decisión del usuario (8-nov-2026): reestructurar el plan de mejora
+El usuario decidió **postergar** el ajuste del plan de mejora; queda registrado para retomarlo. Hoy `accion_mejora`
+tiene un solo nivel, con meta pero sin línea base, y el plazo se sobrescribe. El plan del informe pide:
+- **actividades** dentro de cada acción, con línea base, meta, indicador, responsable, plazo, **presupuesto y fuente**,
+  medio de verificación y de difusión;
+- **reprogramación** con la causa documentada (historial del plazo);
+- **seguimiento por corte**: trimestral (Comisión), anual (Dirección) y bienal (DEAGEC), con un informe que sirva de
+  evidencia;
+- prioridades P1, P2 y P3 (equivalen a alta, media y baja).
+
+Cuando se retome: tablas `actividad_mejora` y `reprogramacion_mejora`, un informe por corte en PDF y la carga de las 15
+acciones y 57 actividades del apéndice del informe (sin datos personales; los responsables se asignan en TAU).
+
+### Hecho (8-nov-2026)
+- **Etapa 1: línea formativa de las asignaturas.**
+  - Migración **0063** (`lineas-formativas`, en Python): `asignatura.linea_formativa`, `area_id` y `linea_id`, cargadas
+    de `datos/planes/lineas-formativas.csv`. Son las 95 asignaturas de las licenciaturas, con la clasificación de la
+    Comisión en la Guía (hojas 7.a y 7.b).
+  - El área sale del archivo o, si trae una línea oficial, de esa línea.
+  - La ficha de cada plan muestra la columna «Línea formativa».
+- **Etapa 2: cargas por CSV de los datos académicos.**
+  - **Historial de vínculos con carga horaria:** columnas opcionales `carga`, `docencia`, `investigacion`,
+    `extension`, `gestion` y `otras`, validadas como en el formulario del vínculo (múltiplos de 32 que suman la carga).
+    La columna `horas` sigue siendo la jornada semanal, por compatibilidad.
+  - **Importar grados** (`app/comun/importar_grados.py`, `/admin/usuarios/importar-grados`, acción
+    `gestionar_fichas`): solo agrega, omite lo ya registrado y entiende «Licenciado», «M.Sc.», «Doctor»….
+  - **Importar capacitaciones** (`app/calidad/importar_capacitacion.py`, `/calidad/capacitacion/importar`, acción
+    `registrar_capacitacion`).
+  - `importar_usuarios.leer_tabla`: el lector de CSV común de las cargas nuevas.
+- **Etapa 3: listados de la ficha estadística** (`app/calidad/listados.py`).
+  - Una fila por persona vinculada, capacitación, asignatura o electiva de cada plan, artículo, libro o capítulo,
+    proyecto y actividad de la ventana del marco.
+  - De las personas: grados, año y fecha de ingreso, unidad, cargo, categoría, carga por actividad, asignaturas
+    dictadas como titular con sus gestiones y tesis dirigidas defendidas; **sin fecha de nacimiento, edad ni correo**.
+  - De las asignaturas: semestre, requisitos, veces dictada, máximo de inscritos por paralelo, línea formativa y área.
+  - Cada columna es la clave `listado.<tabla>.<columna>`; `ficha.llenar` la escribe hacia abajo desde la celda de la
+    correspondencia. Así TAU llena las hojas 7.a, 7.b, 10, 13, 22 y 23 de la Guía.
+- **Etapa 4: conversor privado** (`iac-cinda/guia_a_tau.py`, no versionado; ver `docs/mantenimiento.md` §5.9).
+  - Lee la Guía llenada y deja los CSV de cuentas, historial, grados y capacitación, un `productos.bib` (hojas 22 y
+    23) y un informe con los avisos. También escribe la correspondencia privada para llenar la plantilla en blanco.
+  - Probado sobre una copia de la base de desarrollo, solo con la vista previa de cada carga, sin aplicar nada:
+    - se hallaron los correos de 29 de las 31 personas;
+    - 18 historiales sin errores; los demás son interinos o invitados sin fecha de término y 2 cargas que no son
+      múltiplos de 32;
+    - 63 grados nuevos y 32 productos nuevos;
+    - las 22 capacitaciones esperan a que las personas tengan vínculo.
+
+### Etapa 3: encabezados, fechas y números, aviso de carga (A11Y-02, UX-03, UX-05)
+- **Un `<h1>` por página:** `layout.con_h1`, llamado por `pagina()` y por la página pública, convierte en `<h1>` el
+  primer `<h2>` del contenido (conserva la clase `uk-h2`: se ve igual) o, en un estado vacío sin encabezados, antepone el
+  título de la página.
+- **Formatos legibles** (`app/comun/formato.py`): `fecha` («8 nov 2026»), `fecha_hora` («8 nov 2026, 22:43», hora de La
+  Paz), `periodo` («1 ago – 31 dic 2026») y `numero` («2,7», «1.500»). Los usan los registros, los periodos de vínculo,
+  la oferta, la carga horaria, los informes, el inicio, el cuerpo académico, egresados, propuestas y revistas. Las
+  exportaciones (CSV, XLSX) y los campos de formulario siguen en ISO.
+- **Aviso de carga:** una franja animada bajo la barra superior mientras hay una petición HTMX de más de 300 ms
+  (`estilos/entrada.css`, `body:has(.htmx-request)`); sin animación con `prefers-reduced-motion`.
+- **Prueba:** la de accesibilidad exige además un solo `<h1>` y ninguna fecha ISO en el texto de `<main>`.
+
+### Etapa 4: tablas en el teléfono y acciones con texto (UX-01, UX-04)
+- **Tarjetas bajo 640 px:** toda `table[data-tabla]` muestra cada fila como tarjeta, con el título de la columna junto a
+  cada dato (`tablas.js` pone `data-label`, también tras un reemplazo por htmx; CSS en `estilos/entrada.css`). Una grilla
+  que se lee por columnas puede quedar como tabla con `data-tabla-movil="tabla"`. La prueba
+  `test_tablas_como_tarjetas_en_el_telefono` revisa que no haya desplazamiento horizontal a 375 px.
+- **Usuarios:** las acciones de cada fila llevan ícono y texto («Ficha», «Desactivar», «Contraseña», «Dar acceso»,
+  «Desbloquear») en vez de íconos solos.
+
+### Etapa 5: pantallas largas más fáciles de recorrer (UX-02)
+- **Indicadores:** las cinco tarjetas del resumen filtran el tablero por estado (`?ver=cumple|no_cumple|sin_meta|`
+  `informativo|sin_dato`, según la cifra más reciente; otro clic lo quita). Cada dimensión es plegable
+  (`<details>`) y su resumen cuenta los indicadores por estado; un índice lleva a cada una. Con filtro, o con una sola
+  dimensión, se abren.
+- **Marco de calidad:** dimensiones y escala de valoración plegables, con índice; fechas de vigencia legibles. Un enlace
+  o una redirección a `#dimension-…`/`#criterio-…` abre lo que lo contiene (`acciones.js`).
+- **Oferta:** los programas de cada asignatura solo se muestran cuando difieren de los de la mayoría (que van una vez
+  sobre la tabla); «Ver los N sin docente» escribe ese filtro en la tabla (`data-accion="filtrar-tabla"`). `tablas.js`
+  ya no toma por valor de la celda el select de un formulario plegado dentro de ella.
+- La base de las pruebas en navegador tiene la gestión en curso con un paralelo sin docente.
+
+### Etapa 6: rendimiento (PERF-01, PERF-02, PERF-03)
+- **Compresión gzip** (`GZipMiddleware` en `main.py`, desde 1 KB): `tailwind.css` pasa de 49 a 9 KB, htmx de 51 a
+  16 KB y el HTML a menos de la mitad. Los estáticos con `?v=` ya se guardaban un año en el navegador.
+- **KaTeX bajo demanda:** `static/js/katex.mjs` pide la biblioteca y su hoja de estilos solo la primera vez que aparece
+  un delimitador (`$`, `\(`), también en contenido que llega por htmx; la URL versionada de la hoja va en
+  `<meta name="katex-css">`.
+- **Saltos al cargar (CLS):** medidos en las pantallas principales, bajo 0,1 (el umbral «bueno»): los íconos de
+  Franken UI no requieren cambios. `tests/navegador/test_rendimiento.py` lo vigila, junto con que KaTeX no se pida
+  donde no hay fórmulas.
+
+### Etapa 7: toda ruta declara quién la usa (SEC-03)
+- `tests/test_rutas_declaradas.py` recorre todas las rutas de la aplicación (unas 590). Fuera de `/admin` (que decide
+  `REGLAS_ADMIN`) y de las públicas, cada ruta debe comprobar algo en su función o en las que llama (tres niveles):
+  un permiso (`puede`), que el dato es de quien pide (`auth["id"]`, la ficha del estudiante) o responder 403/404.
+  Las 16 que son para todo el personal (sugerencias de formularios, formularios vacíos, el directorio, la guía de la
+  IA, una redirección antigua) están en `TODO_EL_PERSONAL` con su motivo; la lista no admite rutas que ya no existen
+  ni que ya tienen control. Una prueba comprueba que una ruta nueva sin control se detecta.
+- Es una revisión del código, no de la lógica: complementa la matriz por rol de `tests/test_permisos_rutas.py`.
+
+### Etapa 8: dependencias y flujos del estudiante en el navegador (OPS-01, TEST-01)
+- **Dependabot** (`.github/dependabot.yml`): cada mes revisa `uv.lock` y las acciones de GitHub y abre pull requests;
+  los parches menores van juntos, salvo FastHTML, MonsterUI, fastlite, fastmigrate y fastcore (uno a uno). Nada se
+  fusiona solo (docs/mantenimiento.md §4.6). Elegido en vez de pip-audit para no descargar herramientas (decisión del
+  usuario del 8-nov-2026).
+- **Flujos en Chrome** (`tests/navegador/test_servicios.py`): ingreso de una estudiante por el enlace del correo y
+  consentimiento, rechazo de las pantallas del personal, postulación a una auxiliatura con subida de un PDF y perfil de
+  proyecto de grado. La base de navegador (`preparar.py`) trae estudiantes (una por prueba: cada enlace anula el
+  anterior de la misma cuenta) y una convocatoria publicada con tribunal; la fixture `estudiante` entra con un enlace.
+- La prueba de accesibilidad revisa también el portal del estudiante. Encontró fechas ISO en los avisos y plazos de
+  las auxiliaturas: `formato.momento` («12 nov 2026, 14:30», hora local de un formulario, sin conversión de UTC)
+  reemplaza a las tres formas que había en servicios (incluida «12/11/2026», ambigua).
+
+### Etapa 9: arquitectura, menú, página pública y detalles (ARQ-01, UX-06, A11Y-04, SEC-04, DOC-01)
+- **Routers por paquete:** cada `app/<paquete>/rutas/__init__.py` da `routers()` en orden (lista `MODULOS`); `main.py`
+  pasó de 52 importaciones de routers a 8 paquetes. Se comprobó que cada ruta y método resuelve a la misma función que
+  antes.
+- **Menú:** el grupo «Aseguramiento de la Calidad» se llama «Calidad» (cabía en dos líneas centradas) y los rótulos
+  quedan alineados a la izquierda. El grupo «Servicios» no recordaba su estado plegado al recargar: le faltaba su regla.
+- **Página pública** (`/publico`): isotipo de la Carrera y nombre del sistema en la cabecera y el título, como el resto
+  (decisión del usuario del 8-nov-2026); el pie nombra a la Carrera y su instituto.
+- **Accesibilidad:** las tablas de trabajo sin `<caption>` toman su nombre del encabezado de su tarjeta
+  (`aria-labelledby`, `tablas.js`); foco visible de 2 px con separación en todo lo que se alcanza con el teclado. La
+  prueba de accesibilidad vigila ambas cosas.
+- **Límite de envío:** `LimiteCuerpo` (`app/comun/cabeceras.py`) responde 413 a una petición de más de 25 MB
+  (`PORTAL_MAX_CUERPO_MB`), por Content-Length o contando lo recibido.
+- **Documentación:** índice de este archivo, descripción de `pyproject.toml` y nota en mantenimiento sobre el riesgo de
+  que todo dependa de un solo equipo.
+
+### Decisiones del agente por confirmar
+- La columna «Otras» de la hoja 10 se carga como «otras» actividades y la ficha la exporta como extensión + otras. Si
+  en la Guía significa extensión, se cambia en el CSV antes de cargarlo.
+- El historial que arma el conversor tiene dos periodos:
+  - uno desde la fecha de ingreso hasta el 31 de diciembre del año anterior al de referencia, sin carga;
+  - otro desde el 1 de enero del año de referencia, con la carga de la Guía.
+  - Las categorías de antes no se conocen; la Dirección de Carrera lo revisa con Recursos Humanos.
+- La fecha de término de interinos, contratados e invitados no se inventa: queda vacía y la carga la rechaza hasta
+  que la Dirección la complete.
+- Una capacitación con solo el año se registra como concluida el 31 de diciembre (o hoy, en el año en curso).
+- No se cargan:
+  - las asignaturas dictadas de la hoja 10: la oferta de una gestión se importa completa y reemplaza la gestión;
+  - los proyectos (hoja 20) ni las actividades (hojas 19, 21 y 26 a 28): se registran en TAU por sus responsables.
+- Las hojas 9, 14 y 15 a 18 (Consejo, personal no académico, becas, bienestar y recursos) siguen sin destino en TAU.
+
+### Pendiente
+- El plan de mejora (postergado, arriba) y las brechas de la lista.
+- Una carga de actividades por CSV, si registrar a mano las ~85 filas de las hojas 19, 21 y 26 a 28 resulta pesado.
+
+## 62. Mejoras de la auditoría de software (8-nov-2026)
+
+El usuario pidió una auditoría integral (UX/UI, accesibilidad WCAG 2.2, FastHTML + HTMX, arquitectura, seguridad
+OWASP, rendimiento y pruebas) y luego ejecutar sus nueve etapas, un commit por etapa. Hallazgos: ninguno crítico,
+5 de prioridad alta, 16 media y 10 baja. Decisiones del usuario del 8-nov-2026:
+- Sin descargas para las pruebas: verificación propia de accesibilidad en Playwright (no axe-core) y Dependabot en vez
+  de pip-audit.
+- La página pública (`/publico`) usa la marca de la Carrera y el nombre del sistema, como el resto.
+
+### Etapa 1: sesión e ingreso (SEC-01, SEC-02)
+- **Revocación de sesiones** (migración 0064): `usuario.sesion_version`; la cookie guarda la versión al ingresar
+  (`sess["sv"]`) y `auth._cargar_usuario` la compara en cada petición. «Salir» (`usuarios.cerrar_sesiones`) y todo
+  cambio de contraseña (`usuarios.cambiar_password`: propio, por enlace o restablecido por la administración) la
+  incrementan. Quien cambia su propia contraseña sigue dentro (se fija la nueva versión en su sesión). Antes, una copia
+  de la cookie seguía valiendo tras salir (comprobado en la auditoría). Las sesiones anteriores al cambio valen como
+  versión 0: nadie pierde la sesión al desplegar.
+- **Límite por IP:** `config.LOGIN_MAX_FALLOS_IP` = 20 fallos en 15 minutos desde una dirección, con cualquier correo
+  (`usuarios.ip_bloqueada`, índice `ix_intento_login_ip_fecha`). El bloqueo por correo sigue (5 en 15 minutos) y su
+  mensaje ofrece recuperar la contraseña, que ya desbloqueaba la cuenta: nadie puede dejar a otro sin acceso.
+
+### Etapa 2: contraste y etiquetas (A11Y-01, A11Y-03)
+- **Contraste AA:** las insignias de contadores (menú, campana, pestañas de proyectos) y el paso «alerta» de las etapas
+  pasan de ámbar 500 (2,15:1 con texto blanco) a ámbar 700 (5:1); los textos de estado en verde y ámbar, de 600
+  (3,2–3,3:1) a 700 (5:1), con variante 400 en el tema oscuro. Todo texto de color 600–800 lleva su variante oscura.
+- **Etiquetas:** `layout.campo(texto, control, …)` une la etiqueta y el control con `for`/`id` (le da un id si no lo
+  tiene). Reemplaza el patrón `Div(FormLabel("…"), Select(…))`, que dejaba la etiqueta suelta, en 43 formularios.
+- **Prueba:** `tests/navegador/test_accesibilidad_pantallas.py` recorre 45 pantallas con cuatro perfiles, en tema claro y
+  oscuro, y falla con texto bajo 4,5:1 (3:1 si es grande), controles sin etiqueta, botones o enlaces sin nombre e ids
+  repetidos. `tests/navegador/preparar.py` agrega una cuenta con las dos direcciones (`direccion`).
+
+### Decisiones del agente por confirmar
+- «Salir» cierra la sesión en **todos** los equipos de la persona (una versión por cuenta, no una tabla de sesiones).
+  Es lo más simple que cierra la copia robada; si molesta salir del teléfono al salir de la computadora, se cambia por
+  una tabla de sesiones.
+- 20 fallos por IP: alto a propósito, porque una sala de computación o una red con NAT comparte la IP.
+- Indicadores y marco: las dimensiones empiezan **plegadas** (el resumen ya dice cuántos indicadores hay en cada estado).
+  Si la Comisión prefiere verlas abiertas, basta cambiar el valor por omisión.
+- El menú dice «Calidad» en vez de «Aseguramiento de la Calidad» (el nombre completo sigue en las pantallas y la guía
+  dice «Calidad → …»). Si la Comisión prefiere el nombre largo, es un cambio de una línea en `app/navegacion.py`.
+- Límite de 25 MB por envío (el adjunto mayor es de 20 MB). Se ajusta con `PORTAL_MAX_CUERPO_MB`.
+
+## 63. Identidad visual en la interfaz y optimización (10-nov-2026)
+
+Pedido del usuario: optimizar el sistema con criterios y estándares internacionales y mejorar su aspecto respetando la
+marca. La auditoría del 8-nov-2026 (§62) ya había cerrado accesibilidad WCAG 2.2 AA, seguridad y rendimiento; esta
+sección se ocupa de lo que quedaba: que la interfaz se vea como la Carrera, y lo que la medición mostró.
+
+### Qué se midió antes de tocar nada
+- **Servidor:** las 37 pantallas principales responden en menos de 40 ms sobre la base de ejemplo (la más lenta,
+  Indicadores de calidad: 38 ms; la mayoría, 10 ms). No hay nada que optimizar en el servidor ni en la base, y no se
+  cambió nada ahí.
+- **Navegador:** recursos propios, comprimidos y con caché de un año (§62). Quedaba un detalle: el título de cada página
+  cambiaba de letra al cargar (la fuente se pedía después de leer la hoja de estilos).
+
+### Etapa 1: identidad visual
+La referencia es el Manual de Identidad Institucional (§55): sus portadas, la tarjeta y la carpeta usan un **panel azul
+marino que baja hacia el turquesa, con la marca en blanco**, y un **rótulo rojo inclinado** para los títulos.
+- **Menú lateral como panel de la marca:** fondo azul marino (Pantone 2767C) con degradado hacia el turquesa, isotipo
+  en blanco (como pide el manual sobre fondos corporativos) y texto blanco. El enlace de la página actual va en claro
+  sobre el azul (12:1) con una cinta roja. Los colores están en `marca.PANEL` (`lateral`, `lateral-fin`,
+  `lateral-foreground`, `acento`) y `tests/test_marca.py` exige contraste AA arriba y abajo del degradado, también con
+  la opacidad de los enlaces (85 %) y de los títulos de grupo (70 %). El degradado termina en un turquesa oscurecido y
+  no en el 7713C puro: con el puro, el texto del final del menú no llegaba a 4,5:1.
+- **Títulos de pantalla:** una cinta roja inclinada antes del `h1`, eco del rótulo del manual (no se imprime).
+- **Páginas sin sesión** (ingreso, enlace del estudiante, recuperar contraseña, encuestas, error): la tarjeta blanca
+  sobre el lienzo de la marca (`.lienzo-marca`: azul marino hacia el turquesa con franjas inclinadas, solo CSS). La
+  página de error sin sesión pasa a ir en una tarjeta.
+- **Esquinas:** el tema pasa de radio `sm` (2 px) a `md` (6 px) en botones, campos y tarjetas.
+- **Botones:** separación fija entre ícono y texto (`.uk-btn`); antes dependía de cada botón y en varios el ícono
+  quedaba pegado («Importar CSV», «Nuevo usuario», «Agregar a la oferta»).
+- **Tablas de trabajo** (`table[data-tabla]`): encabezado con fondo, en mayúsculas chicas, y fila resaltada bajo el
+  cursor. Los informes impresos no cambian.
+- **Menú del usuario:** un círculo con sus iniciales junto al nombre; en el teléfono, solo el círculo (el nombre
+  accesible del botón es «Cuenta de …» en ambos).
+- **Carga:** la fuente de los títulos (Montserrat 700) se precarga (`<link rel="preload">`).
+
+### Etapa 2: el plan de estudios en la carga de cohortes
+Al escribir el informe de las importaciones (`docs/importaciones.md`, nuevo: los 16 procesos de entrada de datos, sus
+campos y cómo se vinculan) apareció un error en `app/estudiantil/importar.py`: el plan del estudiante se buscaba por
+nombre en un diccionario, y los cuatro planes vigentes se llaman «Plan 2017», así que el último pisaba a los demás. Un
+estudiante de licenciatura con `plan = Plan 2017` quedaba con el plan de la **Maestría en Matemática Aplicada**, sin
+aviso.
+- El plan se busca ahora solo entre los planes de **licenciatura** (`importar.planes_de_licenciatura`, `_plan`).
+- «Plan 2017» a secas es el del programa en que la carga registra a los estudiantes (`estudiantes.programa_por_omision`:
+  Licenciatura en Matemática). Para otro programa se escribe delante: «Licenciatura en Matemática Aplicada · Plan 2017»
+  (valen «·», «-», «–» y «:»).
+- Un nombre que tienen varios programas y no el de omisión es un error que lista cómo escribirlo; no se adivina.
+- Sin migración: la base de desarrollo no tiene estudiantes con plan. Donde ya se hayan cargado cohortes con la columna
+  `plan`, volver a subir el mismo archivo lo corrige (la carga actualiza por RU).
+
+### Decisiones del agente por confirmar
+- El menú lateral azul marino es el cambio más visible. Si la Dirección prefiere el menú blanco de antes, basta poner
+  en `marca.PANEL` los valores de `background` y `foreground`.
+- La cinta roja de los títulos y las mayúsculas de los encabezados de tabla son gusto del agente dentro del manual.
+- Esquinas de 6 px: el manual no fija nada para pantallas.
+- Carga de cohortes: «Plan 2017» sin programa es el de la Licenciatura en Matemática. La carga sigue registrando a
+  todos en ese programa (no tiene columna de programa): si Seguimiento Académico distingue a los de Matemática
+  Aplicada, conviene agregarla.
+
+## 64. Manual de usuario para la revisión de los usuarios (11-nov-2026)
+
+Pedido del usuario: un manual para usuarios no técnicos, con la marca de la Carrera, que describa la organización del
+sistema, los roles, los tipos de usuario y sus privilegios, con lenguaje claro y capturas. **Los usuarios lo revisarán y
+su opinión abre una fase de adecuación del sistema.**
+
+- **Dónde:** `docs/manual/` (capítulos en HTML, estilo, capturas) y `docs/manual/Manual-de-usuario-TAU.pdf`, que arma
+  `scripts/manual.py` con Chrome, como los informes. 14 capítulos: qué es TAU, cómo está organizado (con un esquema),
+  tipos de usuario, los seis roles y la matriz de privilegios, primeros pasos, un capítulo por módulo, informes,
+  administración, privacidad, preguntas frecuentes y glosario, y una **hoja de observaciones** para la revisión.
+- **Marca:** portada y aperturas de capítulo con el panel azul marino hacia el turquesa y el rótulo rojo inclinado,
+  como el Manual de Identidad (§55 y §63); Montserrat para títulos y EB Garamond para el texto.
+- **Capturas:** 54, tomadas sobre una base de demostración (seed más datos ficticios de estudiantes, tutoría,
+  servicios, encuestas y calidad), con la cuenta que corresponde a cada pantalla (dirección, docente o estudiante) y
+  algunas en tamaño de teléfono.
+- **Trato:** de usted, como la interfaz. Lo que solo puede hacer un rol lleva un recuadro «Quién puede hacerlo».
+- La guía de uso (`docs/guia-de-uso.md`) no cambia: es la referencia completa; el manual, la versión ilustrada.
+
+### Decisiones del agente por confirmar
+- La matriz de privilegios del capítulo 3 resume `permisos.ACCIONES` y las reglas de cada ruta al 11-nov-2026, agrupada
+  en tareas legibles; está escrita a mano y hay que revisarla si cambian los permisos.
+- Siglas de los roles en la matriz (DC, DI, CA, CC, GD, AS).
+- El PDF pesa unos 9 MB por las capturas; si hace falta enviarlo por correo, se pueden reducir.
+- La hoja de observaciones pide página, sección, qué ocurre y qué propone; las respuestas se volcarán aquí como
+  decisiones de la fase de adecuación.
+
+## 65. Módulo de creación y cierre de planes de estudio (propuesta, 12-nov-2026)
+
+Pedido del usuario: el plan de estudios se evalúa y cambia cada 10 años; hace falta un módulo para crear y cerrar planes,
+con menciones, materias, siglas, créditos, horas y ciclos. Hoy los planes se cargan por CSV desde una migración
+(§24, `app/academico/importar_planes.py`) y la pantalla `/docencia/planes` es de solo lectura.
+
+### Decisiones del 12-nov-2026
+- **Estados de un plan:** en elaboración → vigente → en proceso de cierre → cerrado. El borrador solo lo ven la
+  Coordinación académica y la Dirección de Carrera; no aparece en oferta, cohortes ni portal del estudiante.
+- **Programa = titulación; mención = énfasis dentro de un mismo título.** Las dos licenciaturas (y las dos maestrías
+  terminales) otorgan títulos distintos, por eso son **programas**, no menciones. Las menciones quedan para énfasis
+  dentro de un plan (itinerarios con sus materias propias y un mínimo de créditos u horas).
+- **Reforma curricular que agrupa planes.** Lo que se revisa cada 10 años es el conjunto (hoy: HCU 041/2017, cuatro
+  planes). Una reforma agrupa N planes, cada uno de un programa: pueden ser 1, 2, 3 o los que haga falta. El estado vive
+  en el plan, pero la reforma los pone en vigencia juntos y pasa a «en cierre» los que reemplazan. Un programa que
+  desaparece conserva su plan cerrado como historial.
+- **Equivalencias entre planes** (materia vieja ≡ materia nueva, 1 a 1 o agrupadas) y vista de brechas. Sirven para pasar
+  de 2 licenciaturas a 1, o de 1 a 3. Son solo del catálogo: TAU no guarda materias cursadas ni notas (§49).
+- **Permisos:** `elaborar_planes` (Coordinación académica y Dirección de Carrera); `decidir_planes` (poner en vigencia y
+  cerrar, solo la Dirección de Carrera, con resolución y auditoría). Los demás roles consultan.
+- **Un solo plan vigente por programa.** Al poner en vigencia el nuevo, el vigente pasa a «en proceso de cierre».
+  Un plan se cierra cuando no quedan estudiantes cursando en él; si quedan, se avisa cuántos y la Dirección de Carrera
+  puede cerrar dejando el motivo. Los planes 2017 pasan a «vigente»; los cuatro se agrupan en la reforma «Plan 2017».
+
+### Diseño
+- **Datos:** `reforma_curricular` (nombre, resolución, año); `plan_estudios` con `reforma_id`, `estado`, `ingreso_hasta`,
+  datos de la puesta en vigencia y del cierre (`vigente_desde` opcional mientras es borrador, lo que obliga a reconstruir
+  la tabla en SQLite); `plan_ciclo` (ciclos por rango de semestres: el ciclo de cada asignatura se deduce); `mencion` y
+  `mencion_asignatura`; `equivalencia` y `equivalencia_item`. El catálogo `asignatura` no cambia de esquema; se valida el
+  formato de sigla (`MAT-111`) y se avisa al renombrar una materia que está en varios planes.
+- **Nueva reforma (asistente de 3 pasos):** (1) nombre, resolución, año y nivel; (2) qué planes tendrá: por cada programa de
+  la reforma vigente, continuar (copiando su plan), unir con otro o no continuar, y «agregar programa nuevo» (nombre,
+  nivel, título que otorga); (3) cómo arranca cada plan: copiar, importar CSV (mismo formato, plantilla y vista previa) o
+  desde cero. Para licenciaturas con tronco común se copia un plan al otro y se edita lo que cambia (no hay malla común
+  compartida: sería mucho más compleja).
+- **Ficha del borrador:** pestañas Datos generales, Malla (columnas por semestre; buscar o crear la materia en el
+  catálogo; horas teóricas, prácticas y de laboratorio o créditos según el sistema; requisitos elegidos entre las
+  materias del plan; guardado al instante con «Deshacer»), Electivas, Menciones, Equivalencias y Validación. Un panel
+  «Para poner en vigencia» lista cada requisito en verde o ámbar con enlace a donde se corrige.
+- **Validaciones:** siglas únicas y con formato; requisitos que existen y sin ciclos; cada semestre con al menos una
+  materia; casillas de electiva con su lista; horas o créditos coherentes con el sistema; totales declarados contra la
+  suma; mención que cumple su mínimo; resolución y año de vigencia. Las observaciones (`observacion_plan`) siguen siendo
+  el mecanismo para lo que no cuadra.
+- **Efectos:** la oferta solo ofrece materias de planes vigentes o en cierre; la carga de cohortes solo asigna a planes
+  vigentes o en cierre.
+
+### Etapas (un commit cada una)
+1. (hecha, 12-nov-2026) Migración (reforma, estados), lista con filtros, permisos y auditoría; los planes 2017 pasan a vigentes.
+2. (hecha, 13-nov-2026) Asistente de nueva reforma y datos generales del borrador.
+3. (hecha, 13-nov-2026) Editor de malla con validaciones.
+4. (hecha, 13-nov-2026) Menciones.
+5. (hecha, 13-nov-2026) Equivalencias, puesta en vigencia y cierre, y efectos en oferta y cohortes.
+6. (hecha, 13-nov-2026) Pruebas de navegador por rol, accesibilidad, capturas, capítulo del manual, guía y este PLAN.
+
+### Por confirmar
+- **Editar un plan vigente:** solo erratas, con auditoría; los cambios estructurales exigirían un plan nuevo. Si hace falta
+  ajustar a mitad de los 10 años, habría que permitir una «modificación» con resolución.
+- **Mención del estudiante:** columna opcional `mencion` en la carga de cohortes y `estudiante.mencion_id` (etapa posterior).
+- **Menciones reales de hoy:** ¿existen y cómo se eligen (mínimo de créditos, materias propias o ambos)?
+
+### Etapa 1 (hecha): reformas y estados
+- **Migración 0065:** `reforma_curricular`; `plan_estudios` con `reforma_id`, `estado` (`elaboracion`, `vigente`, `cierre`,
+  `cerrado`) y los datos de la puesta en vigencia y del cierre; índice único «un plan vigente por programa». Los cuatro
+  planes 2017 quedan agrupados en la reforma «Plan 2017» y vigentes. `vigente_hasta` sigue siendo el año del último
+  ingreso (no se agregó otra columna) y `vigente_desde` sigue siendo obligatorio: un borrador lleva el año de su reforma.
+- **Permisos:** `elaborar_planes` (Dirección de Carrera y Coordinación académica) y `decidir_planes` (Dirección de Carrera).
+- **Visibilidad:** un borrador solo lo ven quienes elaboran; no entra en la oferta (`oferta.troncales`), en la búsqueda,
+  en los indicadores de calidad ni en la carga de cohortes (que solo asigna a planes vigentes o en cierre). Un plan
+  cargado con `importar_planes` nace como borrador.
+- **Pantalla:** la lista se agrupa por reforma, con el estado de cada plan y filtros por estado.
+
+### Etapa 2 (hecha): asistente de nueva reforma y datos del borrador
+- **Migración 0066:** `programa.titulo` (título que otorga; opcional).
+- **Asistente** (`/docencia/planes/reforma/nueva`, `app/academico/reformas.py`) en una sola pantalla en vez de tres: datos de
+  la reforma; por cada programa de la reforma vigente, copiar su plan, empezar vacío o no continuar; y hasta tres programas
+  nuevos (nombre, nivel, título, sistema y plan de partida). Todo en una transacción; los planes nacen en elaboración y
+  se copian asignaturas, casillas, electivas y requisitos (no los totales declarados ni las observaciones). El plan
+  vacío de un programa existente hereda sus parámetros (horas o créditos, semanas, nota mínima).
+- **Datos generales del borrador** (modal) y **eliminación** de un borrador (con la reforma y el programa que queden
+  sin planes). Un plan vigente, en cierre o cerrado no se edita ni se elimina por aquí.
+- La **importación por CSV** pasa a la etapa 3, como «Importar CSV» dentro de la malla de un borrador.
+
+### Etapa 3 (hecha): editor de malla y lista de verificación
+- **Migración 0067:** `plan_estudios.duracion_semestres` y `plan_ciclo` (ciclos como rangos de semestres; el ciclo de cada
+  asignatura se deduce y se vuelve a calcular al cambiar ciclos o semestres). Se migran los ciclos que ya tenían los planes.
+- **Editor** (`/docencia/planes/{id}/malla`, `app/academico/malla.py` y `rutas/malla.py`): una tarjeta por semestre, listas
+  de electivas, formulario por fila (tipo, semestre, sigla, nombre, línea formativa, horas o créditos, requisitos elegidos
+  entre las asignaturas del plan, «egresado»), ciclos, agregar semestre e importar CSV (reemplaza la malla; sin vista
+  previa: pide confirmación y no cambia nada si hay errores). Solo un plan en elaboración y solo quien elabora planes.
+- **Sigla:** formato `AAA-000` (2 a 4 letras); una nueva se agrega al catálogo (con `de_la_carrera` si empieza por MAT);
+  el nombre del catálogo no se cambia desde aquí (si el nombre escrito contradice al catálogo, se rechaza).
+- **Lista de verificación** (`malla.verificar`): datos generales y resolución, hay asignaturas, siglas válidas, requisitos
+  existentes, sin requisitos circulares, todos los semestres con asignaturas, casillas con su lista de electivas, horas o
+  créditos en cada fila; avisos (no impiden): totales declarados distintos de la suma y observaciones pendientes.
+  `malla.listo_para_vigencia` es lo que usará la etapa 5.
+- Quitar una asignatura que otras piden como requisito no las modifica: quedan marcadas en la lista de verificación.
+- **Por confirmar:** reordenar asignaturas dentro de un semestre (hoy van en el orden en que se agregan) y cambiar el
+  nombre de una asignatura del catálogo (afectaría a todos los planes).
+
+### Etapa 4 (hecha): menciones
+- **Migración 0068:** `mencion` (nombre, descripción, semestre de elección, mínimo de asignaturas y mínimo de créditos u
+  horas) y `mencion_asignatura` (qué filas del plan le son propias, obligatorias u optativas). Hoy no hay menciones
+  cargadas; el tronco común es lo que no pertenece a ninguna.
+- **Mínimo de «créditos u horas»:** en un plan por créditos suma los créditos; en uno por horas, las horas del semestre
+  completo (horas semanales × semanas del semestre), la misma medida de los totales del plan. Se decidió ofrecer ambos
+  mínimos (asignaturas y medida) porque no se sabía cuál usa la Carrera; los dos son opcionales.
+- Se editan en la tarjeta «Menciones» del editor de la malla; la ficha del plan las muestra de solo lectura. La lista de
+  verificación comprueba que cada mención tenga asignaturas y cumpla sus mínimos. Copiar un plan copia sus menciones.
+- **Pendiente (etapa posterior):** `estudiante.mencion_id` y la columna opcional `mencion` en la carga de cohortes.
+
+### Etapa 5 (hecha): equivalencias, vigencia y cierre
+- **Migración 0069:** `equivalencia` y `equivalencia_item` (grupos «asignaturas del plan anterior ≡ asignaturas del nuevo», una
+  a una o agrupadas). Como el catálogo de asignaturas es común, una asignatura con la misma sigla en los dos planes es
+  equivalente por sí sola y no se registra: solo se anotan las que cambian. Se registran desde el borrador, contra
+  cualquier plan que no lo sea (para unir dos licenciaturas, una vez por cada plan anterior). La lista de verificación
+  avisa (no impide) las obligatorias del plan anterior de su programa sin equivalente.
+- **Poner en vigencia** (`app/academico/vigencia.py`, `decidir_planes`): exige la lista de verificación sin puntos en rojo;
+  el plan vigente del mismo programa pasa a «en proceso de cierre» con `vigente_hasta` = año del plan nuevo − 1 (o su
+  propio año, si es menor) y el motivo «Reemplazado por…». Los planes de otros programas no se tocan. **La reforma**
+  (`/docencia/planes/reforma/{id}`) pone en vigencia todos sus borradores o ninguno.
+- **Iniciar el cierre** pide el año del último ingreso y la resolución o el motivo. Un programa que desaparece en la
+  reforma (sin plan en ella) **se cierra con la reforma**: su plan vigente pasa a «en proceso de cierre» con el último
+  ingreso en el año anterior (decisión de la Dirección, 13-nov-2026; el aviso del botón de la reforma los nombra).
+- **Cerrar:** cuenta los estudiantes con `estado` cursando o congelado en el plan; si quedan, solo cierra con la casilla
+  «aunque queden» y un motivo. Un plan cerrado sale de la oferta (`oferta.troncales` solo considera vigentes y en cierre) y
+  de la carga de cohortes, y no se reabre.
+- Toda transición queda en la auditoría (`poner_plan_en_vigencia`, `iniciar_cierre_plan`, `cerrar_plan`).
+
+### Etapa 6 (hecha): pruebas de navegador, manual y documentación
+- **Navegador:** la base de `tests/navegador/preparar.py` trae una reforma «Plan 2027» en elaboración (reforma 2; planes 5 y 6) con una
+  mención; las pantallas del módulo (lista con filtro, asistente, reforma, ficha del borrador, malla y equivalencias) entran en la
+  prueba de accesibilidad (contraste, etiquetas, un solo `h1`, claro y oscuro) y `test_elaborar_un_plan_nuevo` recorre el flujo
+  de la Dirección de Carrera: crear la reforma, agregar una asignatura y una mención.
+- **Manual de usuario:** nuevas secciones en el capítulo de Docencia (estados de un plan, elaborar un plan, poner en vigencia y
+  cerrar) con 10 capturas más, y dos filas en la matriz de privilegios. Ahora son 81 páginas y 64 capturas; los datos
+  de demostración incluyen un borrador con una asignatura nueva que reemplaza a dos, una equivalencia y una mención.
+- **CLAUDE.md:** regla de negocio de los planes (estados, reforma, borradores invisibles, un plan vigente por programa).
+- **Pendiente de confirmar con la Dirección de Carrera:** editar un plan vigente (hoy no se puede; solo erratas con auditoría
+  sería la alternativa), reordenar asignaturas dentro de un semestre, cambiar el nombre de una asignatura del catálogo,
+  la mención en la ficha del estudiante (`estudiante.mencion_id` y columna `mencion` en la carga de cohortes) 
+
+## 66. Ciclo de vida de las gestiones y planificación del semestre (propuesta, 13-nov-2026)
+
+Pedido del usuario: una gestión no se puede borrar una vez creada y no se vincula con la «Preparación del semestre»
+(§24, `app/academico/preparacion.py`, hoy un tablero que solo lee). Se quiere: planificar y seguir editando hasta
+**activar** el semestre; con el semestre activo, editar **con auditoría** tanto las materias (quitar o agregar: un semestre
+se cierra a medias por varias causas) como los docentes (reasignación, renuncia, fallecimiento…); y que un semestre (regular
+o de temporada) **pase a historial solo cuando concluye**.
+
+### Estado actual
+`gestion_academica` solo guarda año, tipo y fechas; «Crear las gestiones del año» crea las cuatro y no hay forma de borrar
+una. La referencian `oferta`, `carga_semestral` y `convocatoria_auxiliatura`. Quitar una materia o un docente de la oferta
+borra el dato sin dejar cuándo ni por qué.
+
+### Decisiones del 13-nov-2026
+- **Estados de una gestión:** *planificación* → *activa* → *concluida* (historial). Cada gestión (I, II, INV, VER) tiene su ciclo.
+- **Planificación:** se edita todo libremente y **se puede borrar** (con su oferta y docentes), salvo que ya la use una
+  carga semestral o una convocatoria: entonces se explica y no se borra. «Preparación del semestre» pasa a ser la lista de
+  verificación de la gestión y de ella sale el botón **Activar**: bloquean oferta cargada y titular en todos los paralelos;
+  avisan contratos por renovar y carga con observaciones.
+- **Activa:** los cambios piden **motivo y fecha de efecto** y quedan en un registro. No se borra nada: una materia retirada
+  queda marcada con su fecha y motivo; un docente reasignado conserva su fila con fecha de inicio y de fin y el nuevo entra
+  desde la fecha de efecto. Motivos: renuncia, fallecimiento, licencia o baja, reasignación, falta de inscritos, error de
+  planificación, otro. Se avisa al docente que entra o sale.
+- **Carga por meses dictados:** cada titular cuenta la materia solo por los meses en que la tuvo (32 h/mes × meses),
+  según la fecha de efecto.
+- **Permisos:** activar, concluir y reabrir, solo la Dirección de Carrera (`decidir_gestion`, nueva); los cambios con motivo
+  durante el semestre, la Dirección de Carrera y la Coordinación académica (`gestionar_oferta`, como hoy).
+- **Concluir:** manual con aviso. Al pasar la fecha de término aparece el pendiente «Concluir I-2026»; antes de la fecha
+  solo se concluye con motivo (cierre anticipado). Una gestión concluida es solo lectura; la Dirección puede reabrirla con
+  motivo. También aparece un pendiente al acercarse el inicio de una gestión sin activar.
+- **Historial por CSV:** se permite crear una gestión de un año pasado directamente como concluida; la carga por CSV
+  reemplaza su oferta con vista previa y auditoría. En una gestión activa no se importa.
+- **Creación:** además de «Crear las gestiones del año», se crea una gestión suelta (año y tipo).
+
+### Diseño
+- **Datos:** `gestion_academica.estado`, `activada_en/por`, `concluida_en/por`, `motivo_conclusion`. `oferta`: `retirada_en`
+  y `motivo_retiro` (retiro lógico) y `agregada_en` (si entró con el semestre activo). `oferta_docente`: `desde` y `hasta`
+  (vacíos = todo el semestre). `gestion_cambio`: el registro (gestión, fecha de efecto, tipo, materia y paralelo, docente
+  anterior y nuevo, motivo, detalle, quién y cuándo). Las gestiones existentes se clasifican solas: terminadas →
+  concluidas, en curso → activas, futuras → planificación.
+- **Pantallas:** «Gestiones» muestra estado, enlace «Planificar», borrar (solo en planificación) y crear una suelta;
+  «Planificación del semestre» (la página de preparación) muestra el estado y los botones Activar, Concluir, Reabrir y
+  Eliminar según corresponda; «Oferta y docentes» muestra el estado: libre en planificación, con un cuadro de motivo y
+  fecha en activa, de solo lectura en el historial, que se separa del resto en el selector. Una pestaña «Cambios del
+  semestre» lista el registro.
+- **Efectos:** carga horaria, «Mi docencia», indicadores y calidad cuentan por vigencia (meses dictados) y distinguen lo
+  planificado de lo activo y lo concluido; una materia retirada no cuenta desde su fecha de retiro.
+
+### Etapas (un commit cada una)
+1. (hecha, 13-nov-2026) Migración con el estado, borrado, creación suelta y lista de gestiones con estado y enlace a planificar.
+2. (hecha, 13-nov-2026) Planificación como lista de verificación y botón Activar; pendientes en el inicio.
+3. (hecha, 13-nov-2026) Semestre activo: cambios con motivo y fecha, vigencia de docentes, registro de cambios y avisos a los docentes.
+4. (hecha, 13-nov-2026) Concluir, historial de solo lectura, reabrir, CSV histórico y efectos en carga, «Mi docencia» e indicadores.
+5. (hecha, 13-nov-2026) Pruebas de navegador, manual, guía y este PLAN.
+
+### Etapa 1 (hecha): estado, borrado y creación de gestiones
+- **Migración 0070:** `gestion_academica.estado` (`planificacion`, `activa`, `concluida`), `activada_en/por`, `concluida_en/por` y
+  `motivo_conclusion`. Las gestiones existentes se clasifican por sus fechas (terminadas → concluidas, en curso → activas,
+  futuras → planificación). El seed hace lo mismo con las de 2026.
+- **Borrado** (`gestiones.eliminar`): solo en planificación; borra la oferta y los docentes; no se borra si hay
+  convocatorias a auxiliaturas. **Creación suelta** (`gestiones.crear`): año y tipo, y «ya terminó» la crea concluida (historial).
+  Una gestión concluida no cambia de fechas.
+- La lista de gestiones muestra el estado y los enlaces «Planificar» y de borrado. «Preparación del semestre» ya acepta los
+  cursos de temporada (sin etapas de contratos ni carga) y su selector incluye todas las gestiones.
+- Aún sin efecto (etapas 2 a 4): activar, los cambios con motivo y la lectura del historial.
+
+### Etapa 2 (hecha): planificación y activación
+- **Acción `decidir_gestion`** (Dirección de Carrera): activar, y luego concluir y reabrir. `app/academico/semestre.py`:
+  `bloqueos` (oferta cargada; titular en cada paralelo), `avisos` (contratos y carga, que no impiden) y `activar`.
+- **Preparación del semestre** es la planificación de la gestión: muestra el estado, el botón «Activar el semestre»
+  (con confirmación; deshabilitado mientras haya bloqueos, que se listan), «Borrar la gestión» (en planificación) y lo
+  que conviene revisar. Quien solo planifica (Coordinación académica) ve que la activa la Dirección de Carrera.
+- **Pendientes del inicio:** una gestión en planificación que empieza en 15 días o menos (o ya empezó) se avisa a la
+  Dirección de Carrera y a la Coordinación, con lo que falta para activarla.
+
+### Etapa 3 (hecha): el semestre activo
+- **Migración 0071:** `oferta.agregada_en`, `retirada_en` y `motivo_retiro`; `oferta_docente.desde` y `hasta` (vacíos = todo el
+  semestre); `gestion_cambio` (el registro: fecha de efecto, tipo, materia, docente anterior y nuevo, motivo, detalle, quién).
+- **`app/academico/cambios.py`:** agregar o retirar una materia; agregar, reasignar o retirar un docente. Siempre con fecha
+  dentro de la gestión, motivo (renuncia, fallecimiento, licencia, reasignación, falta de inscritos, error de planificación,
+  necesidad académica, otro —que pide detalle—) y registro + auditoría. Nada se borra: la materia retirada queda marcada
+  y el docente que sale conserva su fila con `hasta` = el día anterior a la fecha de efecto; el que entra tiene `desde` =
+  la fecha de efecto. Los dos reciben un aviso. Un paralelo sin titular vigente vuelve a aparecer en la planificación y en los
+  pendientes.
+- **Lo vigente:** `oferta.listar`, `docentes`, `materias_de` y `titular_de` devuelven solo lo vigente (sin materias retiradas
+  ni docentes que ya salieron); `historial=True` devuelve todo. También lo usan la preparación, el inicio y los chequeos de
+  calidad.
+- **Pantalla:** con la gestión activa, la oferta cierra la edición libre (las rutas responden 409) y ofrece los cambios en
+  ventanas con fecha y motivo, la materia retirada tachada con su motivo y los docentes con sus fechas; «Cambios del semestre»
+  es el registro. La importación por CSV no acepta una gestión activa.
+- **Pendiente (etapa 4):** la carga horaria sigue contando al docente vigente (todavía no por meses dictados), y una gestión
+  concluida sigue editándose libremente.
+
+### Etapa 4 (hecha): concluir, historial y carga por meses dictados
+- **Concluir** (`semestre.concluir`, `decidir_gestion`): de activa a concluida; antes de la fecha de término exige motivo
+  (cierre anticipado). **Reabrir** (`semestre.reabrir`): de concluida a activa, con motivo; borra los datos de la conclusión.
+  Ambos en la planificación de la gestión, con ventana de motivo y auditoría. El inicio avisa de una gestión activa que ya
+  terminó («Concluirlo»).
+- **Historial de solo lectura:** `gestiones.edicion_libre` es verdadera solo en planificación; una gestión concluida responde
+  409 a toda edición, sin botones, y sus fechas no cambian. La carga por CSV de un semestre pasado reemplaza su oferta con
+  vista previa (también en una concluida); una gestión pasada que no existía se crea ya concluida; una activa no se importa.
+- **Carga por meses dictados** (decisión del 13-nov-2026): `oferta.tramos_de`, `periodo_dictado`, `fraccion`: 32 h/mes × la
+  parte del semestre (por días) en que la persona dictó la materia, como promedio del semestre. `carga.resumen` compara esa
+  cifra con la docencia prevista y lo dice en el aviso (con decimales en coma); la ficha de carga y «Mi docencia» muestran el
+  periodo en que dictó cada materia y las retiradas. Las materias retiradas no cuentan en las cifras de oferta (auxiliaturas,
+  calidad, inscritos).
+- Las fechas de la planificación se muestran legibles (`formato.fecha`).
+
+### Etapa 5 (hecha): pruebas de navegador, manual y documentación
+- **Navegador:** la base de `tests/navegador/preparar.py` trae una gestión activa (id 5, con un docente reasignado) y una concluida
+  (id 6); sus pantallas (lista de gestiones, planificación en los tres estados, oferta y «Cambios del semestre») entran en la
+  prueba de accesibilidad, y tres flujos recorren crear y borrar una gestión, retirar una materia con motivo y concluir y
+  reabrir un semestre. Las fechas de los avisos y de la auditoría se muestran legibles.
+- **Manual de usuario:** el capítulo de Docencia pasa a «Gestiones y semestres», «Planificar y activar un semestre», «Oferta y
+  docentes», «Con el semestre en marcha» y «Concluir el semestre y el historial», con 6 capturas más (ahora 84 páginas y 69
+  capturas), la regla de carga por meses dictados y dos filas nuevas en la matriz de privilegios. Los datos de demostración
+  incluyen I-2027 en planificación y, en el semestre activo, un docente reasignado y una materia retirada.
+- **CLAUDE.md:** regla de negocio de las gestiones.
+- **Pendiente de confirmar con la Dirección de Carrera:** si un docente retirado vuelve al mismo paralelo (hoy no: la fila
+  queda y hay que usar otro paralelo o reabrir), si las materias retiradas deben contar en el cuerpo de materias dictadas de
+  los informes de calidad, y el aviso a docentes por correo cuando se cambia una asignación (hoy siguen su preferencia de
+  avisos).
+
+## 67. Más servicios para el estudiante (13-nov-2026)
+
+Pedido del usuario: ampliar el portal del estudiante (§49, §58) con servicios que se apoyen en lo que TAU ya tiene. **Quedan
+fuera las constancias**: las emite Kardex con el sistema de notas. TAU sigue sin guardar materias ni notas oficiales.
+
+### Decisiones del 13-nov-2026
+- **Alerta temprana y apoyo:** el estudiante **pide apoyo** en un clic y **ve en su pantalla las señales** que TAU observa de él
+  (estado, último ciclo, reuniones de tutoría, encuestas sin responder). Las señales se calculan al momento, no se guardan
+  como etiqueta. Su tutor y la Dirección de Carrera ven los casos abiertos (los que él pidió o abrió el tutor o la Dirección
+  avisándole) con fecha de vencimiento: ningún caso dura más de un semestre sin renovarse. Las notas confidenciales de
+  tutoría nunca entran.
+- **Buzón de consultas y reclamos:** identificado por omisión, con respuesta; puede marcarse **anónimo** (sin vínculo con la
+  cuenta: la respuesta se publica en las preguntas frecuentes). Lo atienden la Dirección de Carrera y la Coordinación académica.
+- **Bolsa de empleo:** la **Dirección de Carrera publica** las ofertas a nombre de los empleadores registrados (sin cuentas nuevas).
+- **«Mi plan de estudios»:** el estudiante marca lo que aprobó como ayuda personal, **privada**; puede **compartirla con su
+  tutor**. Nunca va a informes ni a la Dirección.
+- **Mentorías de egresados:** ya existen (§50, directorio de egresados); no se repiten.
+
+### Servicios y etapas (un commit cada una)
+1. (hecha, 13-nov-2026) Menú del estudiante agrupado y **Mi plan de estudios** (malla del plan, marcas privadas, compartir con el tutor).
+2. (hecha, 13-nov-2026) **Calendario académico:** semestre, plazos de convocatorias, defensas y eventos del estudiante; exportable (.ics).
+3. (hecha, 13-nov-2026) **Tutoría desde el estudiante:** ver su tutor y la fecha de sus reuniones (no su contenido), pedir una reunión; el tutor la ve.
+4. (hecha, 13-nov-2026) **Oportunidades:** becas, movilidad, pasantías, ayudantías de investigación (las publica el responsable de un proyecto) y
+   empleo para egresados, con postulación y decisión.
+5. (hecha, 13-nov-2026) **Banco de temas de grado:** los docentes publican temas; el estudiante pide tutor sobre un tema y, si lo aceptan, parte del perfil.
+6. (hecha, 13-nov-2026) **Eventos con inscripción:** cupos, lista de espera, asistencia y certificado de participación.
+7. (hecha, 13-nov-2026) **Encuestas con retorno:** el estudiante ve los resultados agregados (mínimo 5 respuestas) y las acciones que la Carrera toma.
+8. (hecha, 13-nov-2026) **Apoyo:** solicitud de apoyo, señales visibles para el estudiante y casos con vencimiento.
+9. (hecha, 13-nov-2026) **Bienestar y orientación:** preguntas frecuentes, directorio de servicios de apoyo y buzón de consultas y reclamos.
+10. (hecha, 13-nov-2026) **Biblioteca y recursos:** apuntes, guías y enlaces que suben los docentes, por asignatura.
+11. (hecha, 13-nov-2026) Pruebas de navegador, manual, guía y CLAUDE.md.
+
+### Etapa 1 (hecha): menú agrupado y «Mi plan de estudios»
+- **Migración 0072:** `estudiante_aprobada` (por asignatura, no por plan) y `cuenta_estudiante.comparte_plan_tutor`.
+- `app/estudiantil/mi_plan.py` y `rutas/mi_plan.py` (`/estudiante/plan`): avance en las obligatorias, asignaturas que puede cursar
+  (requisitos aprobados; «Egresado» exige las demás obligatorias) y las marcas, que alternan con un botón. Las marcas son
+  privadas; con «Compartir con mi tutor» las ve el tutor en `/tutoria/{id}`. No las ve ni la Dirección.
+- El menú del estudiante pasa a grupos (Mi carrera, Servicios) y la barra del teléfono tiene sus cuatro primeras secciones y «Más».
+
+### Etapa 2 (hecha): calendario académico
+- `app/estudiantil/calendario.py` y `rutas/calendario.py` (`/estudiante/calendario`, `.ics`): reúne, sin guardar nada, las gestiones, las
+  convocatorias de auxiliaturas publicadas (cierre y examen), los eventos de comunicados (convocados o para todos) y, del
+  proyecto de grado del estudiante, el plazo de revisión, la reunión y la defensa. Las etapas siguientes agregan sus fechas
+  en `calendario.eventos` (becas, reuniones de tutoría, encuestas).
+
+### Etapa 3 (hecha): tutoría desde el estudiante
+- **Migración 0073:** `tutoria_solicitud` (pendiente → programada → atendida o cancelada). No es una reunión registrada: las
+  notas de las reuniones siguen siendo confidenciales y el estudiante solo ve sus fechas.
+- `app/estudiantil/tutoria.py` (`solicitar`, `programar`, `atender`, `cancelar`) y `rutas/mi_tutoria.py` (`/estudiante/tutoria`). El
+  tutor recibe un aviso, programa la reunión desde la ficha del tutorado (`/tutoria/{id}`) y el estudiante recibe otro; la reunión
+  programada aparece en su calendario. Una solicitud abierta por estudiante a la vez; solo su tutor vigente la atiende.
+
+### Etapa 4 (hecha): oportunidades
+- **Migración 0074:** `oportunidad` (tipo beca, movilidad, pasantía, ayudantía de investigación o empleo; para estudiantes, egresados
+  o todos; borrador → publicada → cerrada) y `postulacion_oportunidad` (postulada, preseleccionada, seleccionada, no seleccionada,
+  retirada). Acción `gestionar_oportunidades` (Dirección de Carrera y Coordinación académica).
+- `app/servicios/oportunidades.py` y `rutas/oportunidades.py`: `/servicios/oportunidades` (quien publica, decide y avisa) y
+  `/estudiante/oportunidades` (ver y postular). Una ayudante de investigación la publica solo el responsable vigente del
+  proyecto (o la Dirección). El empleo es por omisión para egresados y se publica a nombre de un empleador registrado (decisión del
+  13-nov-2026). El cierre entra en el calendario del estudiante.
+
+### Etapa 5 (hecha): banco de temas de grado
+- **Migración 0075:** `tema_grado` (borrador, publicado, retirado; cupos y modalidad) y `solicitud_tema` (pendiente, aceptada, no
+  aceptada, retirada). `app/servicios/temas.py` y `rutas/temas.py`: los docentes con vínculo (los que pueden ser tutores) publican;
+  el estudiante pide tutor sobre un tema (hasta 3 pendientes; no si ya tiene un perfil en curso) y el docente acepta o no.
+- Un tema aceptado abre `/estudiante/grado/nuevo?tema=ID` con el título, la modalidad y el tutor ya puestos (solo para quien fue
+  aceptado). El tema deja de ofrecerse al completar sus cupos.
+
+### Etapa 6 (hecha): eventos con inscripción
+- **Migración 0076:** `comunicado.inscripcion`, `cupos`, `certificado` y `horas`, e `inscripcion_evento` (inscrito o en espera).
+  `comunicados.inscribir`, `cancelar_inscripcion` (promueve al primero de la lista de espera y lo avisa), `certificado`.
+- La inscripción es de quienes recibieron el comunicado (convocados; un evento «para todos» los convoca a todos al publicarse). La
+  asistencia sigue siendo `comunicado_destinatario.asistio` (ahora también se registra en eventos para todos con inscripción) y el
+  certificado exige estar inscrito (no en espera) y haber asistido. Código de verificación: hash corto del evento, la persona y
+  la fecha (no hay verificación pública).
+
+### Etapa 7 (hecha): encuestas con retorno
+- **Migración 0077:** `encuesta.retorno`, `acciones` y `retorno_publicado_en`. `encuestas.guardar_retorno`, `publicar_retorno` (encuesta
+  cerrada; si es anónima, desde `MIN_ANONIMO` respuestas), `retirar_retorno`, `por_responder` y `retornos_para`.
+- `/estudiante/encuestas`: las encuestas por responder (con su enlace personal; el cierre va al calendario) y el retorno de las que
+  cerraron, para los invitados: hallazgos, acciones y resultados agregados de escala y opciones. **Nunca** las respuestas
+  abiertas. El personal lo escribe y publica en los resultados de la encuesta (`gestionar_encuestas`).
+
+### Etapa 8 (hecha): apoyo estudiantil
+- **Migración 0078:** `caso_apoyo` (origen estudiante, tutor o dirección; abierto, en seguimiento, cerrado; `vence_el` a 180 días) y
+  `caso_apoyo_mensaje` (la conversación, visible a las dos partes). Acción `gestionar_apoyo` (Dirección de Carrera); el tutor(a)
+  vigente atiende los casos de sus tutorados.
+- `app/estudiantil/apoyo.py`: **las señales** (`senales`: congelado, último ciclo, sin reuniones en 6 meses, encuestas por responder)
+  se calculan al momento, no se guardan y **solo las ve el estudiante**; el personal ve únicamente los casos. Un caso vencido figura
+  como tal (`estado_efectivo`) hasta que se renueva. Abrir y responder avisan a la otra parte; todo queda en la auditoría.
+- Pantallas: `/estudiante/apoyo`, `/apoyo` y `/apoyo/{id}` (personal) y la tarjeta «Apoyo» de la ficha de tutoría, donde el tutor(a) o la
+  Dirección ofrecen apoyo explicando por qué.
+
+### Etapa 9 (hecha): bienestar y orientación
+- **Migración 0079:** `pregunta_frecuente`, `servicio_apoyo` y `consulta` (consulta, reclamo o sugerencia). Acción `gestionar_buzon`
+  (Dirección de Carrera y Coordinación académica).
+- **Anónimo de verdad** (decisión del 13-nov-2026): una consulta anónima no guarda `externo_id`, solo el día (no la hora), no se
+  audita y su ruta (`/estudiante/buzon/anonima`) no lleva el usuario en el registro de peticiones (`registros.RUTAS_ANONIMAS`). No
+  tiene respuesta personal: solo se responde publicándola en las preguntas frecuentes. La identificada se responde en el portal y
+  con un aviso, y puede publicarse también en las preguntas frecuentes (sin el nombre).
+- `app/estudiantil/orientacion.py` y `rutas/orientacion.py`: `/estudiante/orientacion` y `/estudiante/buzon`; para el personal,
+  `/servicios/buzon` y `/servicios/orientacion` (preguntas frecuentes y servicios de apoyo).
+
+### Etapa 10 (hecha): biblioteca y recursos
+- **Migración 0080:** `recurso` (apunte, guía, examen, libro, enlace u otro) y `recurso_asignatura`; la tabla `adjunto` se recrea para
+  aceptar la entidad «recurso» (SQLite no permite cambiar un CHECK). Acción `gestionar_recursos` (Dirección de Carrera y Coordinación
+  académica: retiran cualquiera; el autor retira lo suyo).
+- `app/servicios/recursos.py` y `rutas/recursos.py`: `/servicios/recursos` (docentes con vínculo: subir y retirar) y
+  `/estudiante/biblioteca` (buscar sin tildes, filtrar por asignatura y tipo, descargar). Un recurso retirado no se ve ni se descarga.
+
+### Etapa 11 (hecha): pruebas de navegador, manual y documentación
+- **Navegador:** la base de `tests/navegador/preparar.py` trae un plan, tutor, una beca, un tema, un recurso, preguntas frecuentes, un servicio de
+  apoyo y un evento con inscripción; las pantallas nuevas del estudiante y del personal entran en la prueba de accesibilidad, y
+  `test_el_estudiante_usa_sus_servicios` recorre plan, oportunidad, inscripción y buzón anónimo.
+- **Manual:** nuevas secciones «Los servicios del estudiante» (capítulo 7) y «Oportunidades», «Temas de grado», «Eventos con inscripción»
+  y «Biblioteca y recursos» (capítulo 8), con 16 capturas más (ahora 94 páginas y 85 capturas) y tres filas en la matriz de privilegios.
+- **CLAUDE.md:** reglas de privacidad de los servicios del estudiante.
+- **Pendiente de confirmar:** que los empleadores publiquen por sí mismos con un enlace (hoy los publica la Dirección), mentorías de
+  egresados desde el portal (existen en el directorio, §50), verificación pública de los certificados de participación y límites de
+  envío del buzón anónimo (hoy solo hay estudiantes autenticados, sin tope por persona).
+
+
+## 68. Servicios para el docente (13-nov-2026)
+
+Pedido del usuario: qué más puede tener el docente en su actividad. Se toma el alcance recomendado (sin reserva de aulas ni formación
+docente). TAU sigue sin guardar notas ni asistencia.
+
+### Decisiones del 13-nov-2026
+- **Lista de estudiantes por materia:** la genera el sistema de notas vía Kardex y, en el futuro próximo, se consumirá por una API con
+  un endpoint restringido. TAU se construye **ya para consumirla**: una interfaz de proveedor (`listas.proveedor`) con un
+  proveedor de archivo CSV hoy y el de la API después, sin cambiar las pantallas. Solo lectura, solo de las materias del docente
+  en la gestión, sin guardar la lista en TAU más allá de la carga (el CSV se usa para probar).
+- **Evaluación docente:** hoy es incipiente y a mano; la ven solo la Dirección y el docente, agregada o en medias. Se diseña con las
+  **políticas de transparencia** más documentadas: instrumento y criterios públicos con anticipación, anonimato con mínimo de
+  respuestas, el docente ve sus resultados y **quién los consultó**, la Dirección solo ve lo agregado, cada consulta se audita, y el
+  estudiante recibe el retorno de lo que la Carrera hizo (como las encuestas, §67). Nunca se muestran respuestas abiertas sin revisión.
+
+### Servicios y etapas (un commit cada una)
+1. (hecha, 13-nov-2026) **Mis pendientes y Mi calendario** del docente.
+2. (hecha, 13-nov-2026) **Preferencias para la oferta:** qué materias quiere o no puede dictar y en qué turnos no tiene disponibilidad, visibles para la Coordinación al armar la oferta.
+3. (hecha, 13-nov-2026) **Programa analítico (syllabus)** por materia y gestión, con versión; el estudiante lo ve en su plan.
+4. (hecha, 13-nov-2026) **Lista de estudiantes del curso** con interfaz de proveedor (CSV hoy, API de Kardex mañana).
+5. (hecha, 13-nov-2026) **Evaluación docente** con transparencia (instrumento público, anonimato, bitácora de consultas, retorno).
+6. (hecha, 13-nov-2026) **Mi historial docente** (materias, tesis tuteladas y juradas, proyectos) y **certificados** de tribunal y tutoría.
+7. (hecha, 13-nov-2026) Pruebas de navegador, manual y documentación.
+
+### Etapa 1 (hecha): mis pendientes y mi calendario
+- `app/academico/docente.py`: `pendientes` (visto bueno y informes de grado, notas de defensa, postulantes por calificar, reuniones
+  y temas que piden los estudiantes, fin del vínculo en 60 días) y `eventos` (gestiones, plazos y defensas, reuniones programadas,
+  eventos, fin del vínculo). No guardan nada y solo reúnen lo de la propia persona (`auth["id"]`, nunca la dirección).
+- `/docencia/pendientes`, `/docencia/calendario` y `.ics`, en las pestañas de Docencia para quien tenga algo como docente
+  (`docente.es_docente`). Lo vencido o a 7 días se marca.
+
+### Etapa 2 (hecha): preferencias para la oferta
+- **Migración 0081:** `preferencia_oferta` (por gestión, persona y asignatura: «la prefiere» o «no puede dictarla», con nota) y
+  `preferencia_gestion` (turnos sin disponibilidad `lun-manana,…`, comentario). Se borran con la gestión (`ON DELETE CASCADE`).
+- `app/academico/preferencias.py` y `rutas/preferencias.py`: `/docencia/preferencias` (la persona, con vínculo, mientras la gestión
+  está en planificación; la persona sale de la sesión) y `/docencia/preferencias/todas` (`gestionar_oferta`: lo que indicó cada uno y
+  quiénes faltan). Guardar reemplaza lo anterior y se audita.
+- Es una ayuda y no asigna: en «Oferta y docentes», el selector de docente pone primero a quien prefiere la materia y marca a
+  quien indicó que no puede. «Mis pendientes» recuerda indicarlas mientras hay una gestión en planificación sin respuesta.
+- **Decisión mía por confirmar:** solo pueden indicar quienes tienen vínculo con la Carrera al inicio de la gestión o ya dictaron
+  alguna materia; no hay fecha límite (se cierra al activar la gestión).
+
+### Etapa 3 (hecha): programa analítico
+- **Migración 0082:** `programa_analitico` (por asignatura y gestión; objetivos, contenido, metodología, evaluación y bibliografía;
+  borrador único por asignatura y gestión y versiones publicadas que no se editan). Se borra con la gestión (`ON DELETE CASCADE`).
+- `app/academico/programas.py` y `rutas/programas.py`: escribe y publica **solo el titular** de la materia en esa gestión (no la
+  Coordinación, que ve la cobertura en `/docencia/programas/cobertura`); gestión concluida = historial. Publicar exige objetivos y
+  contenido, asigna la versión y se audita. «Partir del último programa publicado» copia la versión vigente de cualquier gestión.
+- El estudiante ve la última versión publicada de la gestión más reciente en `/estudiante/programa/{aid}`, con enlace en «Mi plan de
+  estudios». Es información pública de la materia, no personal. «Mis pendientes» avisa de las materias sin programa publicado.
+- **Decisión mía por confirmar:** no hay adjunto (PDF) del programa, solo texto; no se avisa al estudiante cuando se publica una versión.
+
+### Etapa 4 (hecha): lista de estudiantes por paralelo
+- **Migración 0083:** `lista_curso` (RU, apellidos, nombres y correo por paralelo): copia **temporal** de lo que entrega Kardex, que se
+  borra al concluir la gestión (`semestre.concluir` llama `listas.purgar`) y con la oferta (`ON DELETE CASCADE`).
+- `app/academico/listas.py`: dos proveedores con la misma salida. **csv** (hoy): `cargar` lee el CSV de Kardex (todo o nada por
+  errores de fila; los paralelos que no están en la oferta se omiten y se informan). **api** (mañana): con `PORTAL_LISTAS_URL` y
+  `PORTAL_LISTAS_CLAVE`, `GET {URL}/gestiones/{codigo}/cursos/{sigla}/{paralelo}/estudiantes` con `Authorization: Bearer` y respuesta
+  `{"estudiantes": [{"ru", "apellidos", "nombres", "correo"}]}`; exige https (salvo localhost), no guarda nada y, si falla, muestra
+  un aviso sin datos. Las pruebas reemplazan `listas._pedir`: nunca salen a la red.
+- `/docencia/listas` y `/docencia/listas/{oid}`: solo los docentes vigentes del paralelo (titular o auxiliar) en una gestión no
+  concluida; cada consulta se audita (`ver_lista_curso`). **Ni la Dirección de Carrera ve nombres**: carga (`/docencia/listas/cargar`,
+  `gestionar_oferta`) y solo ve cuántos hay por paralelo. Sin exportación: la lista no se descarga.
+- **Decisiones mías por confirmar:** el auxiliar también ve la lista; el contrato de la API es una propuesta que habrá que ajustar a lo
+  que defina Kardex (nombres de campos y autenticación); la lista no cambia el número de inscritos de la oferta.
+
+### Etapa 5 (hecha): evaluación docente con transparencia
+- **Migración 0084:** `evaluacion_docente` (una por gestión: borrador → anunciada → abierta → cerrada, con el instrumento congelado en
+  `criterios`), `evaluacion_participacion` (sin hora y **sin rowid**, para que no se cruce con el orden de las respuestas),
+  `evaluacion_respuesta` y `evaluacion_valor` (sin autor ni hora), `evaluacion_contexto` y `evaluacion_consulta` (la bitácora).
+- `app/academico/evaluacion.py`. **Políticas de transparencia aplicadas:** instrumento y criterios públicos al **anunciar**, con
+  `ANTICIPACION_DIAS` = 7 antes de abrir; anonimato real (como las encuestas, §49) y mínimo `MIN_RESPUESTAS` = 5 (igual a
+  `encuestas.MIN_ANONIMO`, lo vigila una prueba); el desglose por paralelo solo si todos llegan al mínimo (si no, restar revelaría el que
+  no llega); sin respuestas abiertas; el docente ve sus resultados, agrega su **contexto** (derecho a réplica) y ve **quién los consultó**;
+  la Dirección ve la participación en lista pero los resultados **por docente**, y cada consulta va a la bitácora y a la auditoría;
+  el **retorno** a los estudiantes (qué hará la Carrera) se escribe y publica con la evaluación cerrada.
+- Responden los inscritos en el paralelo según la **lista de curso** (etapa 4) por su RU (`listas.ofertas_de_ru`); sin lista cargada ni API, nadie
+  puede evaluar. `/estudiante/evaluacion*` no lleva el usuario en el registro de peticiones (`registros.RUTAS_ANONIMAS`) y no se audita
+  la respuesta. Acción nueva `gestionar_evaluacion_docente` (Dirección de Carrera).
+- Pantallas: `/docencia/evaluacion` (todos los docentes: instrumento, estado y resultados propios), `/docencia/evaluacion/gestion`
+  (Dirección), `/docencia/evaluacion/{eid}/docente/{uid}` (el propio docente o la Dirección) y `/estudiante/evaluacion`.
+- **Decisiones mías por confirmar:** se evalúa al titular del paralelo (no a los auxiliares); ocho afirmaciones fijas (no editables por ahora);
+  una evaluación por semestre I o II (no de temporada); con la API de Kardex, saber en qué paralelos está un estudiante cuesta una
+  llamada por paralelo hasta que ofrezca una consulta por estudiante; los resultados no entran en el CV ni en los informes.
+
+### Etapa 6 (hecha): mi historial y certificados
+- Sin migración. `app/academico/historial.py` reúne materias (de `oferta_docente`, con su rol y las retiradas), tutorías y tribunales de grado,
+  tribunales de auxiliaturas, proyectos y la cifra de tutorados; solo de la propia persona (`auth["id"]`).
+- **Certificados:** tutoría y tribunal de **trámites de grado concluidos** (aprobado, defendido, rechazado, reprobado) y tribunal de auxiliaturas de
+  **convocatorias concluidas**. Código `TAU-` + hash corto de (tipo, referencia, persona). La Dirección y quienes ven la carga
+  (`ver_carga`) **verifican un código** en `/docencia/certificados/verificar` (se audita). Incluye el nombre del estudiante del trabajo.
+- **Decisiones mías por confirmar:** la verificación es interna (no hay página pública: expondría datos personales); el certificado de tutor de un trabajo
+  rechazado o reprobado también se emite (es un hecho: tuteló); no hay certificado de docencia (la emite la Universidad); las evaluaciones docentes
+  no entran en el historial.
+
+### Etapa 7 (hecha): pruebas de navegador, manual y documentación
+- **Navegador:** `preparar.py` carga la lista de curso de MAT-111 A (que dicta Emmy); `test_el_docente_usa_sus_servicios` indica preferencias, escribe
+  y publica un programa, abre la lista de su curso y recorre pendientes e historial; las pantallas nuevas entran en la prueba de accesibilidad
+  (personal y estudiante).
+- **Manual:** sección «Servicios del docente» en el capítulo 6 (pendientes, calendario, preferencias, programa analítico, listas, evaluación
+  docente, historial y certificados) con 14 capturas más (ahora 100 páginas) y tres filas en la matriz de privilegios. `datos()` agrega una lista
+  de curso, un programa publicado, preferencias, una evaluación cerrada con resultados y un trabajo de grado concluido.
+- **CLAUDE.md:** reglas de privacidad de los servicios del docente. **Mantenimiento:** última migración, 0084; variables `PORTAL_LISTAS_*` en el README.
+- **Ajuste:** «Mis pendientes» pide las preferencias solo del próximo semestre (I o II) en planificación.
+- **Pendiente de confirmar (resumen de §68):** contrato de la API de Kardex; si el auxiliar ve la lista; evaluación solo del titular y con ocho afirmaciones
+  fijas; verificación de certificados solo interna; sin adjunto en el programa analítico.
+
+## 69. Servicios para el investigador (13-nov-2026)
+
+Pedido del usuario: qué más puede tener el investigador en su actividad. De siete servicios propuestos se toman **1, 3 y 4**; la
+convocatoria externa (2), las citas e indicadores propios (5) y los estudiantes en proyectos (6) quedan para después, y el presupuesto de
+proyectos (7) fuera **mientras los proyectos no manejen fondos que TAU deba registrar** (decisión del usuario, 13-nov-2026).
+
+### Servicios y etapas (un commit cada una)
+1. (hecha, 13-nov-2026) **Mis pendientes y Mi calendario** de investigación.
+2. (hecha, 13-nov-2026) **Acceso abierto y datos** por producto: declaración propia, sin verificación ni obligación.
+3. (hecha, 13-nov-2026) **Coautores y colaboraciones:** mapa derivado de los productos y proyectos propios.
+4. (hecha, 13-nov-2026) Pruebas de navegador, manual y documentación.
+
+### Etapa 1 (hecha): mis pendientes y mi calendario
+- `app/investigacion/mis_pendientes.py`: `pendientes` (propuesta en borrador o con condiciones y continuidad de proyectos que terminan,
+  con la convocatoria abierta; registros por aprobar y avisos de carga, y plan atrasado, solo de los proyectos que la persona
+  responde; fin de proyecto en 60 días; productos «enviado» o «aceptado» sin novedades en 180 días; filiación sin declarar; preprint
+  parecido a un producto publicado; perfil incompleto) y `eventos` (convocatoria, actividades en que participa, fin de proyecto, fin del
+  mes previsto del plan y eventos convocados). No guardan nada y solo reúnen lo de la propia persona (`auth["id"]`).
+- `/investigacion/pendientes`, `/investigacion/calendario` y `.ics`, en el grupo Investigación del menú para quien tiene perfil de
+  investigador (`auth["es_investigador"]`; las demás cuentas reciben 403). Sin migración.
+- `docente.eventos_comunicados` pasó a ser público porque lo usa también el calendario del investigador.
+
+### Etapa 2 (hecha): acceso abierto y datos
+- **Migración 0085:** `producto_acceso` (una fila por producto declarado: situación del texto `abierto`, `depositado`, `embargo`,
+  `cerrado` o `no_aplica`; versión depositada; enlace; licencia; fin del embargo; situación de los datos `publicados`, `a_pedido`,
+  `reservados` o `no_hay` con su enlace; nota; quién y cuándo). Sin fila = «sin declarar». Se borra con el producto.
+- `app/investigacion/acceso_abierto.py` (validación, consultas, resumen) y `rutas/acceso_abierto.py`: `/investigacion/acceso-abierto`
+  (solo `es_investigador`; lista propia con filtros por situación y año) y `/productos/{pid}/acceso` (formulario en modal; GET, POST y
+  DELETE; solo quien puede editar el producto y solo productos aceptados o publicados que no sean presentación, tesis dirigida ni
+  patente). Guardar y quitar se auditan (`declarar_acceso_abierto`, `quitar_acceso_abierto`).
+- **Declaración propia, sin verificación:** TAU no comprueba los enlaces (solo exige una dirección http o https válida), no obliga a
+  declarar ni se usa para evaluar. Ningún indicador institucional ni informe la usa todavía.
+- **Visibilidad:** el perfil público y `/api/v1/*` muestran solo el enlace de un texto declarado `abierto` o `depositado`
+  (`acceso_abierto`: dirección o `null`); el embargo, lo cerrado, las notas y los datos no salen. Los enlaces públicos llevan
+  `rel="noopener noreferrer nofollow"`. La ficha del producto muestra la declaración completa a quien ve el producto.
+- «Mis pendientes» pide declarar lo de los últimos 5 años (`ANIOS_A_DECLARAR`) y avisa cuando vence un embargo; el calendario trae
+  el fin de cada embargo. Si el producto tiene arXiv, el formulario nuevo sugiere «copia en un repositorio» con ese enlace.
+- **Decisión mía por confirmar:** cualquier autor del producto puede declarar y cambiar la declaración (gana la última, con
+  auditoría); la lista de opciones de licencia y de versión es la habitual de las revistas, no una política del instituto.
+
+### Etapa 3 (hecha): mis colaboraciones
+- `app/investigacion/coautores.py` y `rutas/coautores.py`: `/investigacion/coautores` (con `?desde=&hasta=` y `?con=<ref>` para el detalle
+  de una persona) y `/investigacion/coautores.csv` (`exportar.a_csv`, celdas neutralizadas). Solo `es_investigador`; la persona
+  sale de la sesión. Sin migración: deriva de `producto_autor` y `proyecto_participante`.
+- Una colaboración es haber firmado un producto o haber participado en un proyecto con la persona (en cualquier estado). El filtro
+  por años usa el año del producto y, para los proyectos, que su periodo se cruce con el rango (un proyecto sin fecha de término
+  cuenta). Los países se cuentan por persona, no por producto; los externos sin país se señalan aparte con el enlace para completarlos.
+- **Privacidad:** de cada persona solo se muestra lo que ya se ve en el producto o el proyecto (nombre, institución, país, si es del
+  instituto). No hay correo, ORCID ni documento; y cada quien ve solo sus propias colaboraciones, nunca las de otro.
+- **Decisión mía por confirmar:** «colaboración internacional» = país distinto del propio (`config.PAIS`) con la regla de
+  `app/comun/paises.py`; los coautores del instituto cuentan como del propio país. No hay gráfico de red: una tabla es más
+  accesible y suficiente para informes. La Dirección no ve estas pantallas (la de colaboración internacional institucional sigue en Informes).
+
+### Etapa 4 (hecha): navegador, manual y documentación
+- **Navegador:** `preparar.py` crea un artículo de Emmy con un coautor extranjero; `test_la_investigadora_usa_sus_servicios` declara el
+  acceso abierto, ve la colaboración con esa persona y abre sus pendientes y su calendario; las cuatro pantallas nuevas entran en
+  `test_accesibilidad_pantallas` (claro y oscuro).
+- **Manual:** sección «Servicios del investigador» en el capítulo 5 (6 capturas nuevas, con productos de Emmy ya declarados y otros por
+  declarar) y dos filas en la tabla de privacidad del capítulo 12. **CLAUDE.md:** regla «Servicios del investigador (PLAN §69)».
+  **Mantenimiento:** última migración, 0085.
+- **Fuera de este plan** (decisión del 13-nov-2026): convocatorias y plazos externos, citas e indicadores propios con OpenAlex, estudiantes
+  en proyectos y presupuesto de proyectos. Ningún indicador ni informe institucional usa todavía el acceso abierto.
+
+## 70. Adecuación de las auxiliaturas al Reglamento Específico de Auxiliares Académicos del Pregrado (propuesta, 14-nov-2026)
+
+Pedido del usuario: el módulo de convocatorias (§58) se diseñó sobre el Reglamento General de Auxiliares Académicos (Res. HCU 251/2021,
+mod. 437/2021 y 623/2021), que ya no rige. Se adecua a la normativa vigente que entregó el usuario.
+
+### Normativa vigente (fuente: los dos PDF del usuario, leídos completos el 14-nov-2026)
+- **Res. HCU 424/2023 (18-oct-2023):** «Reglamento Específico de Auxiliares Académicos del Pregrado de la UMSA», 15 capítulos y 51 artículos,
+  con los formularios 1 (habilitación), 2-1/2-2/2-3 (méritos de docencia, investigación e interacción social), 3 (sorteo de tema),
+  4 (examen oral), 5 (acta final) y 6 (ficha de asistencia). Su art. 2.º **deja sin efecto** lo anterior, incluidas las resoluciones 251/2021,
+  437/2021 y 623/2021 que cita el código de TAU.
+- **Res. HCU 364/2025 (13-ago-2025):** modifica los arts. **6, 8, 10, 15, 23, 28, 38 y 40**. Es la redacción que rige para esos artículos.
+- Los PDF llevan la marca «NO VÁLIDO PARA TRÁMITES»: se usan como fuente del texto, no como documento oficial. Antes de cerrar la etapa 1, el
+  usuario confirma que no hubo otra modificación posterior.
+
+### Qué cambia en las reglas (norma vigente frente a lo que hoy hace TAU)
+| Tema | Hoy en TAU (§58) | Norma vigente |
+|---|---|---|
+| Mínimo de méritos | 10 de 30 | **5 de 30** para habilitarse (art. 18) |
+| Mínimo del examen escrito | 17,5 de 35 | **18 de 35** para pasar al oral (art. 18) |
+| Categorías | solo «titular» (≥ 56); el resto, «no seleccionada» | **Titular ≥ 56** e **invitado de 51 a 55** (art. 6, redacción 2025); si el invitado no acepta, o si tras dos convocatorias consecutivas la materia sigue vacía, se invita a los mejores estudiantes de la materia (últimas dos gestiones, verificado con Kardex) |
+| Modalidades | docencia e investigación | **Docencia, investigación (con Beca Tesis) e interacción social** (art. 7) |
+| Carga horaria del ítem | 20 o 40 h/mes | **Máximo 40 h/mes** (art. 8, redacción 2025) y el Consejo de Carrera la distribuye en ítems de 20 y 40 horas por resolución al inicio de cada gestión (art. 9): **no cambia** |
+| Plazo de presentación | «10 días hábiles entre la publicación y el examen escrito» (art. 10 de la norma anterior) | **10 días hábiles desde la publicación en la primera convocatoria y 5 en la segunda** para presentar los requisitos (art. 24) |
+| Calendario de publicación | sin control | Semestral (el único que aplica en TAU): 1.er semestre, 1.ª convocatoria 2.ª semana de noviembre y 2.ª la 1.ª de diciembre; 2.º semestre, 2.ª semana de mayo y 2.ª de junio; una sola convocatoria para ambos: 1.ª semana de noviembre (art. 12) |
+| Contenido de la convocatoria | título, fechas, lugar, resolución | Además: **permanencia** (en TAU, siempre semestral), **lugar y horario de recepción**, fecha, hora y lugar de los exámenes (art. 11); la aprueba una resolución del Consejo de Carrera con visto bueno del Vicedecano y la Facultad la homologa (arts. 11, 22, 27) |
+| Segunda convocatoria | independiente, sin relación | Si la primera es **desierta**, se publica la segunda en hasta 72 h; si se declara desierta la segunda, se invita a los mejores estudiantes; si solo hubo postulantes bajo la nota mínima, el Consejo emite la segunda para las plazas no cubiertas en 72 h (arts. 13 y 14) |
+| Comisión | 2 docentes (cualquier categoría con vínculo) y 2 estudiantes con cuenta | **Docencia:** un docente titular responsable de la materia y un docente titular del área; **investigación:** dos docentes investigadores titulares; **interacción social:** el responsable del proyecto y un docente titular relacionado. Siempre 2 estudiantes de cogobierno que aprobaron la materia con los mejores promedios; sesiona con mínimo 3. La designa el Consejo de Carrera y la aprueba el Consejo Facultativo (art. 15, redacción 2025) |
+| Condiciones del postulante | 6 requisitos (norma anterior) | Art. 10 (redacción 2025): regular; aprobó una materia el periodo anterior y **todas las del periodo de la materia**; egresados **solo dentro de los dos años consecutivos**, con certificado de Kardex; **máximo 2 gestiones en la misma materia, proyecto o programa** (y 2 gestiones o 4 semestres si presta servicio en otras carreras); **máximo 2 materias por convocatoria**; sin título profesional; delegados estudiantiles con licencia y que no integran la comisión; Beca Tesis con proyecto aprobado por el Consejo de Carrera y homologado; requisitos específicos de investigación e interacción social por Carrera |
+| Documentos de admisión | requisitos libres con documento o declaración | Art. 23 (redacción 2025): nota a la Dirección, fotocopia del carnet, récord con sello de Kardex o de la Dirección, certificado de conclusión (egresados), **plan de trabajo de la materia, proyecto o programa**, carta de compromiso de carga horaria y funciones, currículum documentado y todo foliado en sobre cerrado. De los ganadores, en 72 h: certificado de no tener deudas con la Carrera y la Facultad y de no tener proceso ejecutoriado; registro en SIGEP |
+| Méritos (30) | una nota 0–30 por miembro | **Formularios 2-1, 2-2 y 2-3**: seis secciones con tope (docencia 5+5+5+10+2+3; investigación 3+9+3+10+2+3; interacción social 5+7+3+10+2+3) y la nota de la materia convertida en puntos (51–59 = 2, 60–69 = 4, 70–79 = 6, 80–89 = 8, 90–100 = 10) |
+| Examen oral (35) | una nota 0–35 por miembro; sorteo entre al menos 2 temas | **Cinco temas** propuestos por la comisión y un sorteo; el tema sorteado lo diserta cada postulante dentro de las 24 h; 20 min de exposición y 10 de preguntas; rúbrica de **cinco criterios: conocimiento 7, preparación 8, didáctica 10, metodología 5, respuestas 5** (formularios 3 y 4) |
+| Plazos del proceso | 24 h para impugnar | 24 h para publicar los méritos antes del escrito y para publicar el escrito; oral dentro de 24 h del sorteo; **desempate en 48 h**; impugnaciones en 24 h; **informe final en 10 días** al Consejo de Carrera, que emite la resolución y la envía a la Facultad para homologar (arts. 18 a 22) |
+| Después del concurso | nada | Resolución de designación, **memorándum** (fecha, categoría, materia, carga, gestión) emitido en hasta 15 días (arts. 25 y 26) y entrega de 6 documentos a Bienestar Social en 15 días (art. 27); permanencia hasta el fin del periodo y **cesante al iniciar el trámite de titulación** (art. 28) |
+
+### Decisiones del usuario (14-nov-2026)
+1. **Seguimiento posterior a la designación** (ficha de asistencia mensual, informes, evaluación, remoción, pagos; arts. 29 a 47): se hará **después, en el §71**.
+2. **Interacción social y Beca Tesis entran:** no se convocan siempre, pero la Carrera los convoca cuando corresponde; el módulo debe admitirlos, sin exigirlos en cada gestión.
+3. **Las auxiliaturas son solo de los periodos regulares del semestre** (gestiones I y II), **no de los periodos de temporada** (INV y VER). Por eso rige solo el
+   calendario **semestral** del art. 12 y la permanencia es siempre semestral (no hace falta elegirla).
+
+### Decisiones del agente, por confirmar
+1. **Convocatorias ya cargadas:** conservan las reglas con que se hicieron. Se agrega `convocatoria_auxiliatura.reglamento` (`hcu_251_2021` para las existentes y
+   `hcu_424_2023` para las nuevas) y los mínimos, las categorías y los plazos salen de una tabla de reglas por versión. No se recalcula ningún resultado.
+2. **Calificación por miembro con promedio y al menos tres (decisión 4 del 7-nov-2026) se mantiene.** La norma habla de una comisión que califica y firma un acta
+   «en consenso»; TAU promedia lo que cada miembro registra y el acta imprimible lleva las firmas. Si se prefiere una calificación única por consenso, es un cambio
+   mayor (una sola fila por postulante y fase).
+3. **«Estudiantes de cogobierno con los mejores promedios»:** TAU no guarda notas ni sabe quién es delegado; la Dirección lo declara al designar la comisión
+   (número de resolución). El sistema exige que tengan cuenta, que no sean postulantes de la convocatoria y que no se hayan declarado delegados que postulan.
+4. **Invitación a los mejores estudiantes (arts. 6 y 13):** TAU solo registra a quién se invitó y si aceptó; la lista de mejores promedios la da Kardex.
+5. **Carga horaria:** se mantiene en **20 o 40 h/mes**. El art. 8 (2025) fija el máximo en 40 y el art. 9, que no se modificó, distribuye por ítems de 20 y 40 horas; cambiar la restricción de la base no aporta nada.
+6. **Calendario del art. 12:** advierte, no bloquea la publicación.
+7. **El invitado ocupa las plazas que no cubrieron los titulares** y su nota va de 51 a 55; por debajo de 51, «no seleccionado».
+8. **Fuera de este plan:** el seguimiento posterior a la designación (**§71**, decisión del usuario) y los beneficios de Odontología, Internado Rotatorio y Trabajo Dirigido (arts. 7, 9, 40, 45 y 46), que no son de la Carrera de Matemática.
+
+### Etapas (un commit cada una; la migración se prueba primero sobre una copia)
+1. **Normativa y plazos.** Migración: `reglamento`, `recepcion` (lugar y horario), `lugar_examenes`, `resolucion_hcf` en la convocatoria (sin `permanencia`: es semestral); **solo se puede convocar sobre gestiones I y II** (se rechaza INV y VER; se revisan en una copia las convocatorias existentes); tabla de
+   reglas por versión (mínimos 5 y 18, titular 56, invitado 51–55, plazos de 10 y 5 días hábiles, 72 h, 48 h, 10 y 15 días); control del calendario semestral
+   del art. 12 y del plazo del art. 24 (reemplaza el de «publicación a examen escrito»); la guía y los textos de pantalla citan Res. HCU 424/2023 y 364/2025.
+2. **Modalidades y requisitos.** Modalidad **interacción social** y subtipo **Beca Tesis** (opcionales: se usan solo en las gestiones en que la Carrera los convoca); requisitos del art. 23 precargados (ocho documentos) y las condiciones del
+   art. 10 (declaraciones y verificaciones del sistema: máximo 2 gestiones en la misma materia o proyecto, máximo 2 materias por convocatoria, egresado dentro de los
+   dos años); «propuesta de trabajo» pasa a «plan de trabajo»; **segunda convocatoria** generada desde la primera con las plazas no cubiertas (arts. 13 y 14) y su
+   control de 72 h.
+3. **Comisión.** Reglas del art. 15 por modalidad (titulares, responsable de la materia verificado con la oferta, responsable del proyecto), resolución de designación
+   (Consejo de Carrera y Facultad) y las exclusiones del art. 10 (delegados). Migración si hace falta una columna de resolución por ítem.
+4. **Calificación según los formularios.** Méritos estructurados (formularios 2-1, 2-2 y 2-3, con topes y escala de la nota de la materia), habilitación como lista de
+   verificación del formulario 1, escrito con mínimo 18, oral con **cinco temas**, sorteo, orden de participación y rúbrica de cinco criterios; plazos de 24 h y 48 h.
+5. **Resultado y designación.** Categorías titular e invitado, invitación y aceptación, invitación a los mejores estudiantes, informe final en 10 días con la resolución
+   del Consejo de Carrera y la homologación de la Facultad, documentos de los ganadores en 72 h, memorándum y los seis documentos para Bienestar Social. Migración: tablas de invitaciones y designaciones (sin recrear `postulacion_auxiliatura`).
+6. **Formularios imprimibles:** 1, 2-x, 3, 4 y 5 en HTML para imprimir, con el encabezado «Aprobado con Res. HCU 424/2023».
+7. **Pruebas de navegador, manual y documentación** (guía, manual capítulo 8, CLAUDE.md, mantenimiento) y la advertencia de las convocatorias hechas con la norma anterior.
+
+### Etapa 1 (hecha, 14-nov-2026): normativa y plazos
+- **Migración 0086:** `convocatoria_auxiliatura.reglamento` (`hcu_251_2021` por omisión, así que la convocatoria que ya había en la base de desarrollo, de un
+  semestre II, conserva sus reglas; `hcu_424_2023` para las nuevas), `recepcion_lugar`, `recepcion_horario` y `resolucion_hcf`. No se recalcula ningún resultado.
+- `auxiliaturas.REGLAS` por reglamento: mínimos de méritos (10 → **5**) y del escrito (17,5 → **18**) y el plazo de presentación (`reglas`, `minimo`,
+  `reglamento_texto`). `cerrar_fase` usa el mínimo de la convocatoria; `MINIMO` global desapareció.
+- `gestiones()` y `validar` solo admiten gestiones **I y II**. `chequeo_fechas` cuenta, con el reglamento de 2023, los **días hábiles de la publicación al cierre**
+  (art. 24: 10 y 5); con el de 2021 sigue contando hasta el examen. `chequeo_calendario` avisa si la publicación no cae en la semana del art. 12 (semana = días 1–7
+  u 8–14 del mes; una sola convocatoria para ambos semestres: 1.ª semana de noviembre). Solo advierten.
+- Para **publicar**, una convocatoria de 2023 exige también el lugar y el horario de recepción de los documentos (art. 11). Las pantallas dicen con qué reglamento se
+  hizo cada convocatoria y muestran sus mínimos; se quitaron los números de artículo del reglamento anterior.
+- La preparación de datos del navegador y la del manual toman un semestre cuando `gestiones.actual()` cae en una temporada.
+
+### Etapa 2 (hecha, 14-nov-2026): modalidades, requisitos y segunda convocatoria
+- **Migración 0087:** `convocatoria_auxiliatura` se recrea (el CHECK de `modalidad` admite `interaccion_social` y `beca_tesis`; las filas, los ítems y los requisitos se conservan,
+  probado sobre una copia con datos) y gana `primera_id`; `requisito_auxiliatura` gana `opcional` y `clave` (de lo que verifica el sistema).
+- **Modalidades:** docencia, investigación, interacción social y **Beca Tesis** (subtipo de investigación, con su propia modalidad). Las tres que no son de docencia las gestiona
+  `gestionar_auxiliaturas_investigacion` (Carrera, Coordinación y Dirección del Instituto) y sus ítems son proyectos: los de interacción social solo con proyectos de esa clase; las
+  demás, con los de investigación o individuales. *Decisión mía por confirmar:* quién gestiona interacción social y Beca Tesis.
+- **Requisitos precargados** (`requisitos_reglamento`): los ocho documentos del art. 23 (el plan de trabajo es el texto de la postulación; los foliados, una declaración) y las
+  condiciones del art. 10 (regular y aprobó el periodo, sin título profesional, máximo dos gestiones, delegados, certificado de conclusión **opcional** para egresados). La Beca Tesis exige
+  el certificado de conclusión y el proyecto aprobado y homologado, y no la declaración de estudiante regular. Un requisito opcional no impide enviar.
+- **Verifica el sistema:** máximo **dos gestiones** como auxiliar de la misma materia **o proyecto** (`veces_auxiliar`) y máximo **dos materias por convocatoria** (`otras_postulaciones`;
+  cuenta las postulaciones enviadas, así que retirar una libera el cupo).
+- **Segunda convocatoria** (arts. 13 y 14): un ítem sin postulantes queda **desierto** al cerrar la recepción y concluye. De una primera concluida con plazas sin cubrir, `generar_segunda`
+  arma el borrador con esas plazas, los requisitos, el lugar de recepción y los tribunales (`primera_id`); `chequeo_segunda` advierte si no sale dentro de las 72 horas de los resultados.
+  La invitación a los mejores estudiantes cuando la segunda también queda vacía es de la etapa 5.
+
+### Etapa 3 (hecha, 14-nov-2026): la comisión (art. 15)
+- **Migración 0088:** `convocatoria_auxiliatura.comision_resolucion` (Consejo de Carrera) y `comision_resolucion_hcf` (aprobación del Consejo Facultativo).
+- `revisar_comision` (solo convocatorias con el reglamento de 2023): los dos docentes deben ser **titulares**; en docencia, uno es el **titular de la materia en la gestión** (según
+  `oferta_docente`); en investigación y Beca Tesis, **investigadores**; en interacción social, uno es el **responsable del proyecto**. Lo que aún no se puede comprobar (la materia sin
+  titular asignado, un ítem de interacción social sin proyecto) no bloquea: queda como aviso en la página del ítem (`avisos_comision`). Las convocatorias de 2021 conservan su regla.
+- **Sin el número de la resolución que designa la comisión no se cierra la recepción** (`faltantes_cierre` de la fase de postulación); `/servicios/auxiliaturas/{cid}/comision` la guarda y
+  se audita. Siguen vigentes las exclusiones de que un postulante de la convocatoria no integre la comisión y el quórum de tres calificaciones.
+- **Decisiones mías por confirmar:** (a) la falta de titular asignado a la materia es un aviso y no un error, porque la convocatoria suele salir antes de que se asignen los docentes del
+  semestre; (b) el requisito de que los estudiantes sean de cogobierno y de los mejores promedios no se puede verificar y lo declara la Dirección con la resolución.
+
+### Etapa 4 (hecha, 14-nov-2026): calificación según los formularios
+- **Migración 0089:** `calificacion_detalle` (por postulante, fase —méritos u oral—, miembro y línea: cantidad), `item_auxiliatura.temas_oral` y `tema_oral_en`,
+  `postulacion_auxiliatura.orden_oral` y `hora_oral`.
+- `app/servicios/rubricas.py` (cálculo puro): **formularios 2-1, 2-2 y 2-3** (docencia; investigación y Beca Tesis; interacción social) con sus seis secciones y topes
+  —5+5+5+10+2+3, 3+9+3+10+2+3 y 5+7+3+10+2+3, siempre 30— y la nota de la materia convertida en puntos (51–59 = 2 … 90–100 = 10); **rúbrica del oral** (formulario 4): 7+8+10+5+5 = 35.
+- `calificar_detalle`: cada miembro anota las cantidades de cada línea o los puntos de cada criterio y el sistema calcula **su** calificación de la fase, que entra al promedio de
+  siempre (decisión 4 se mantiene). Solo con el reglamento de 2023; la pantalla del tribunal (del personal y de los estudiantes) muestra el formulario, y un formulario en blanco no
+  toca lo guardado. `calificar` con un valor único queda para las convocatorias de 2021 y como función interna.
+- **Oral:** la comisión propone **cinco temas** y se sortea uno una sola vez (con el reglamento de 2021 bastaban dos y se podía repetir); se guarda la hora del sorteo; el orden y la hora de
+  participación de cada postulante (formulario 3) se registran con `fijar_orden_oral`.
+- `avisos_plazos` (solo advierten): méritos publicados antes del examen escrito, notas del escrito dentro de las 24 horas, oral dentro de las 24 horas del sorteo y, si hay empate, el límite de
+  **48 horas** para el desempate (art. 20). La habilitación sigue siendo un sí o no por miembro; el formulario 1 se arma en la etapa 6 con los requisitos de cada postulante.
+- **Decisión mía por confirmar:** las unidades de las líneas («curso», «año», «semestre», «vez») y los textos de las secciones siguen los formularios del PDF; la línea 2 de investigación tiene siete
+  renglones (en el PDF dos llevan la misma letra «d»: se numeraron de la a a la g).
+
+### Etapa 5 (hecha, 14-nov-2026): resultado y designación
+- **Migración 0090:** `invitacion_auxiliatura` (a quién se invitó, de qué origen —postulante con 51 a 55 puntos o mejor estudiante—, orden, respuesta), `designacion_auxiliatura`
+  (un titular o invitado por plaza, con las fechas de los tres documentos de los ganadores y el memorándum), `documentacion_auxiliatura` (los seis documentos para Bienestar Social)
+  y, en la convocatoria, `informe_final_en`, `resolucion_resultados` y `resolucion_resultados_hcf`. No se recrea `postulacion_auxiliatura`: el invitado no es un estado de la
+  postulación sino una invitación aparte, que además cubre a quienes nunca postularon.
+- `app/servicios/designaciones.py` y `rutas/designaciones.py` (`/servicios/auxiliaturas/{cid}/designacion`, solo convocatorias del reglamento de 2023 y de quien las gestiona).
+  **Invitaciones:** solo en una **segunda convocatoria** concluida con plazas sin cubrir (dos convocatorias consecutivas, art. 6); primero los postulantes de **51 a 55** por puntaje y,
+  cuando ninguno acepta ni queda pendiente, los mejores estudiantes por registro universitario (nunca un miembro de la comisión); aceptar crea la designación de **invitado** y ocupa la plaza.
+  **Designaciones:** se crean al abrir la pantalla, una por cada titular; documentos en 72 horas desde que concluyó el proceso y memorándum que rige desde el 1 o el 15 (error si no).
+  **Informe final** con aviso de los 10 días y resoluciones; **documentación** con la fecha de entrega de cada documento y aviso de los 15 días desde el último memorándum. Todo se audita.
+- El estudiante responde sus invitaciones en `/estudiante/auxiliaturas` (solo las suyas) y ve sus designaciones y los documentos que le faltan, también en su postulación.
+- **Decisiones mías por confirmar:** (a) el invitado solo aparece tras la **segunda** convocatoria y entre quienes postularon a ese ítem en ella (el art. 6 dice que la invitación procede cuando
+  la materia no se cubrió tras dos convocatorias consecutivas y que primero se invita a los que «se presentaron en la convocatoria»); (b) los plazos del art. 22 (10 días corridos), del
+  art. 23 (72 horas) y del art. 27 (15 días desde el último memorándum) solo advierten; (c) no se registra aún la baja o el cese del auxiliar (art. 28): va con el seguimiento del §71.
+
+### Etapa 6 (hecha, 14-nov-2026): formularios imprimibles
+- `app/servicios/formularios.py` (datos) y `rutas/formularios.py`: `/servicios/auxiliaturas/item/{iid}/formulario/{1..5}`, en HTML para imprimir (botón «Imprimir») con el encabezado
+  «Aprobado con Res. HCU N.º 424/2023 …». **1** habilitación (requisitos verificados por postulante y resultado), **2-1/2-2/2-3** méritos (una hoja por postulante: líneas con la cantidad media,
+  puntaje por sección y total), **3** sorteo (postulantes, tribunal, cinco temas, tema sorteado y orden con hora), **4** oral (promedio de cada criterio) y **5** acta final.
+- Como cada miembro califica por su cuenta, el acta muestra el **promedio** de los miembros (coincide con la nota que entra al resultado) y las firmas de la comisión se ponen en el papel;
+  la «calificación en consenso» del formulario 5 queda así como el cierre firmado del promedio (decisión 2 de este plan, por confirmar).
+- Los ven quienes ven el ítem (gestor y docentes de la comisión; los estudiantes del tribunal no entran a `/servicios`), y solo existen con el reglamento de 2023: para las anteriores sigue el
+  «Acta de calificaciones». Enlaces desde la página del ítem. Sin migración.
+- Los formularios 6 (ficha de asistencia) y la seguimiento posterior son del §71.
+
+### Etapa 7 (hecha, 14-nov-2026): navegador, manual y documentación
+- **Navegador:** las pantallas nuevas de la Dirección (nueva convocatoria, convocatoria, resultado y designación, ítem y los cinco formularios) entran en `test_accesibilidad_pantallas` (claro y
+  oscuro); `test_la_direccion_registra_la_comision_y_abre_los_formularios` guarda la resolución de la comisión y abre el formulario 1. La preparación de datos del navegador y la del manual
+  toman un semestre cuando la gestión actual es de temporada.
+- **Manual:** el capítulo 8 se reescribe con el reglamento de 2023 (modalidades, comisión, mínimos 5 y 18, formularios de méritos y rúbrica del oral, cinco temas, segunda convocatoria,
+  invitados y designación) y trae cuatro capturas nuevas sobre una segunda convocatoria concluida que arma `scripts/manual.py` (formularios de méritos, oral y acta final, y la pantalla
+  de resultado y designación). **CLAUDE.md:** regla ampliada. **Mantenimiento:** última migración, 0090.
+- **Fuera de este plan** (decisión del usuario del 14-nov-2026): el seguimiento posterior a la designación —ficha de asistencia mensual (formulario 6), informes de actividades, evaluación,
+  remoción, cese y pagos (arts. 29 a 47)—, que será el §71.
+
+
+## 72. Consolidación: plan de mejora completo, rendimiento, brechas del plan y piloto (hecha, 14-nov-2026; piloto por realizar)
+
+Tras la evaluación global del 14-nov-2026 (TAU frente al informe de autoevaluación y su plan de mejora 2026–2030), el
+usuario aceptó **dejar de agregar módulos** y consolidar lo que existe. Este plan ordena ese trabajo pensando en quien
+usa el sistema: cada etapa debe dejar menos clics, menos datos escritos dos veces y pantallas que cargan rápido en el
+teléfono.
+
+### Principios de este plan
+- **Congelamiento de módulos:** hasta concluir el piloto (etapa 9) no se agrega ningún módulo. Una pantalla nueva solo
+  entra si la pide un usuario del piloto y tiene un responsable de sus datos. Se anota en CLAUDE.md. *Sin efecto desde
+  el 15-nov-2026: el piloto quedó en pausa y se vuelven a admitir módulos (ver «Piloto en pausa» al final de esta sección).*
+- **Lo que TAU puede calcular no se escribe a mano:** si una actividad del plan se mide con un indicador del SIAC, su
+  línea base y su valor actual salen del indicador.
+- **Cada persona ve primero lo suyo:** el responsable de una actividad la encuentra en «Mis pendientes», no buscándola
+  en el plan completo.
+- **Una sola fuente por dato:** TAU lee de SIA y de los sistemas centrales por archivo (con el RU como clave) y no los
+  duplica; la correspondencia es de AYNI BPM.
+- **Corrección de la evaluación:** el mantenimiento periódico **ya corre en un hilo aparte** (`main._mantenimiento`); lo
+  único que depende de la petición es que alguien entre. Con la máquina de Fly.io que se apaga sola eso es razonable y no
+  se cambia.
+
+### Etapa 1 (hecha, 14-nov-2026): rendimiento y lecturas sin efectos
+**Resultado** (base del manual con `--inflar`): `/estudiantes` pasó de 867 ms y 2,3 MB a 34 ms y 71 KB; acceso abierto, de
+1,2 MB a 75 KB; «Mis pendientes» del investigador, de 334 a 31 ms. Indicadores (159 ms), ficha estadística (194 ms) e
+informe de calidad de datos (120 ms) quedan bajo el umbral de 300 ms: **no se guarda el cálculo** de los indicadores.
+- `estudiantes.listar` hacía cinco consultas por estudiante: ahora cinco en total (`_en_bloques`, `_participaciones`).
+  La lista llega de 50 en 50 (`registros.cargar_mas_filas`, `/estudiantes/mas`) con el total arriba. La tabla lleva
+  `data-tabla-paginada` (`tablas.js`): conserva las tarjetas del teléfono, pero no ofrece conteo, orden ni CSV, que solo
+  verían las filas cargadas.
+- Acceso abierto consulta una vez (`acceso_abierto.filtrar`) y llega de 50 en 50 (`/investigacion/acceso-abierto/mas`).
+- `productos.preprints_sin_enlazar(uid=…)` para «Mis pendientes»; la comparación global usa las cotas baratas de
+  `SequenceMatcher` antes del cálculo completo.
+- **Lecturas sin escrituras:** las designaciones de los titulares nacen al cerrar la fase o resolver el empate
+  (`auxiliaturas._concluir_si_corresponde` → `designaciones.asegurar_designaciones`, en la misma transacción); la fila de
+  cada requisito de una postulación nace al declarar o subir algo (`auxiliaturas.fila_requisito`), no al abrir la postulación.
+- `scripts/medir.py` (tiempo y tamaño, `--inflar`, `--escrituras` con un *update hook* de apsw sobre dirección, docente y
+  estudiante: 232 pantallas cada una, ninguna escribe). Reemplaza a «una prueba que lo busque»: recorrer todas las
+  pantallas con datos tarda minutos y no cabe en las pruebas rápidas; quedan pruebas directas de los dos casos corregidos.
+- El plan de mejora muestra las fechas con `formato.fecha`.
+- **Corrección:** el mantenimiento periódico ya corría en un hilo aparte; no se toca (ver los principios).
+
+**Lo planificado:**
+- **Listas largas por partes:** `/estudiantes` y `/investigacion/acceso-abierto` cargan 50 filas y un «Ver más» (el
+  patrón de `productos/lista.pagina_de_items`), con la búsqueda y los filtros en el servidor y en la dirección (se puede
+  volver atrás o compartir el enlace). Los contadores de arriba siguen siendo del total. Meta: menos de 150 KB y 150 ms
+  con 3.000 estudiantes.
+- **Preprints:** «Mis pendientes» del investigador compara solo los productos de esa persona
+  (`productos.preprints_sin_enlazar(uid=…)`), y la comparación global de Calidad de datos descarta antes los pares de
+  largo de título muy distinto. Meta: «Mis pendientes» bajo 50 ms en la base inflada.
+- **Ningún GET escribe:** `designaciones.asegurar_designaciones` pasa al momento en que se publican los resultados o se
+  acepta una invitación (idempotente, con la misma prueba); se revisa `requisitos_de` y cualquier otro GET con
+  `insert`/`update` (una prueba lo busca en las funciones que llaman las rutas GET).
+- **Indicadores:** se miden de nuevo tras lo anterior; solo si siguen sobre 300 ms con la escala real se guarda el
+  cálculo por marco con hora («Calculado a las 10:42 · Recalcular»).
+- **Guardia:** `scripts/inflar.py` arma la base inflada sobre una copia y `scripts/medir.py` mide las pantallas
+  principales; `docs/mantenimiento.md` dice cuándo correrlos. No va en GitHub Actions (tarda).
+- Arreglo de paso: `rutas/mejora._fecha` usa `formato.fecha`, no «dd/mm/aaaa».
+
+### Etapa 2 (hecha, 14-nov-2026): plan de mejora con actividades (modelo)
+- **Migración 0091** (`plan-de-mejora-con-actividades`): `accion_mejora.codigo/objetivo/eje`,
+  `marco_calidad.plan_resolucion/plan_aprobado_en`, tablas `actividad_mejora` y `reprogramacion_mejora`,
+  `avance_accion.actividad_id`. No cambia ningún dato existente; probada sobre una copia de la base de desarrollo (90 → 91).
+- **`app/calidad/actividades_mejora.py`:** validación (persona del sistema o unidad en texto; con indicador, línea base y meta
+  numéricas las dos o ninguna; presupuesto «2.300,50»), alta, edición, cancelación, cumplimiento y avances; avance y semáforo
+  calculados; `resumen_accion`; `de_responsable` (para «Mis pendientes», etapa 6); aprobación del plan; reprogramaciones
+  (pedir, aprobar, rechazar, con avisos a la Dirección de Carrera y al solicitante).
+- El **plazo de una acción con actividades** es el último de sus actividades no canceladas (se mantiene solo): así el
+  indicador de acciones cumplidas a tiempo y los avisos de la acción siguen funcionando sin cambios.
+- Una acción con actividades, o una actividad con avances o reprogramaciones, **no se borra**: se cancela con su motivo.
+- El avance con indicador usa la cifra del año en curso o, si aún no la hay, la del anterior (no más años: haría lenta la
+  lista). Los códigos se ordenan como números («4.10» después de «4.9»).
+- Pruebas: `tests/test_actividades_mejora.py`. Las pantallas son la etapa 3.
+- **Decisiones del agente, confirmadas por el usuario el 14-nov-2026:** (a) sin fecha de inicio, el plazo corre desde la aprobación del plan o, si no está
+  aprobado, desde que se registró la actividad; (b) quien gestiona el plan (Dirección de Carrera) registra una
+  reprogramación ya aprobada, sin pedírsela a sí misma; (c) una actividad agregada después de aprobar el plan entra con
+  su plazo, sin reprogramación.
+
+**Lo planificado:** retoma lo postergado en el §61. Migración nueva:
+- **`accion_mejora`** gana `codigo` («A4»), `objetivo` y `eje` (opcional). La prioridad se muestra como P1, P2 y P3
+  (alta, media y baja; los valores guardados no cambian).
+- **`actividad_mejora`**: acción, `codigo` («4.2»), descripción, línea base, meta (texto y, si es numérica, valor),
+  indicador del SIAC opcional, responsable en TAU y unidad responsable en texto (DEAGEC, DTIC… cuando no es una persona
+  del sistema), inicio, plazo, presupuesto en Bs y fuente, medio de verificación, medio de difusión, estado (los mismos
+  que la acción) y fecha de cumplimiento o motivo de cancelación.
+- **`reprogramacion_mejora`**: actividad, plazo anterior y nuevo, causa (obligatoria), evidencia opcional, quién y cuándo.
+- **`avance_accion`** gana `actividad_id`: el avance se registra en la actividad; la acción suma lo de sus actividades.
+- **Plan aprobado:** el marco guarda la resolución y la fecha de aprobación del plan. Antes de aprobarlo, los plazos se
+  editan libremente; después, **solo por reprogramación** (como las gestiones activas del §66).
+- **Avance calculado, no guardado:** el de la actividad es el último porcentaje o, si tiene indicador, la distancia de la
+  línea base a la meta; el de la acción, el promedio de sus actividades vigentes. **Semáforo:** cumplida, al día, en
+  riesgo (pasó más de la mitad del plazo con menos de la mitad del avance, o vence en 30 días) y vencida.
+- Las acciones existentes quedan como acciones sin actividades y siguen funcionando.
+
+### Etapa 3 (hecha, 14-nov-2026): pantallas del plan
+- **Tablero** (`/calidad/mejora`): tarjetas por acción (código, P1–P3, semáforo, barra de avance, actividades por
+  semáforo), cuatro cifras que filtran (`?ver=`), filtros por prioridad, responsable y año en la dirección, aviso de
+  aprobación del plan y bandeja de reprogramaciones por resolver (solo para quien gestiona). Quien no ve el plan completo
+  ve solo las acciones en que es responsable (de la acción o de una actividad).
+- **Cronograma** (`/calidad/mejora/cronograma?anio=`): una tabla por trimestre; en el teléfono, tarjetas.
+- **Ficha de la acción:** sus actividades en una tabla; los avances sueltos solo se registran en acciones sin actividades.
+- **Ficha de la actividad** (`app/calidad/rutas/actividades_mejora.py`): datos, cifra del indicador, avances con
+  evidencia, historial de reprogramaciones (plazo anterior tachado) y los botones de cada rol. Todo cambio se audita.
+- **Aprobación del plan** (`/calidad/mejora/aprobacion`): resolución y fecha.
+- Arreglo: el presupuesto «2.500» se lee como 2.500 Bs (punto de miles), no 2,5.
+- La diferencia con lo planificado: las actividades se abren en su página, no en un modal (tienen avances, historial y
+  formularios propios; en el teléfono un modal tan largo se recorre mal). La «tabla plegable por estado» quedó como una
+  sola tabla con el semáforo en una columna: con 3 a 6 actividades por acción no hace falta plegar.
+
+**Lo planificado:**
+- **Tablero** (`/calidad/mejora`): una tarjeta por acción con código, prioridad, barra de avance, semáforo y cuántas
+  actividades hay en cada estado; filtros por prioridad, estado, responsable y año, en la dirección. Arriba, cuatro
+  cifras que filtran (al día, en riesgo, vencidas, cumplidas), como el tablero de indicadores.
+- **Cronograma:** una tabla por año (2026–2030) con las actividades que vencen en cada trimestre. Sin gráfico de Gantt
+  ni JavaScript nuevo: se lee en el teléfono como tarjetas.
+- **Ficha de la acción:** sus actividades en una tabla plegable por estado; cada fila abre su ficha en un modal.
+- **Ficha de la actividad:** datos, avances con evidencia, historial de reprogramaciones y botones «Registrar avance»,
+  «Reprogramar», «Dar por cumplida» y «Cancelar». Reprogramar pide la causa y muestra el plazo anterior tachado.
+- **Quién hace qué:** la Dirección de Carrera gestiona el plan (`gestionar_plan_mejora`); el responsable registra los
+  avances de lo suyo y **pide** una reprogramación, que la Dirección aprueba o rechaza (ver las preguntas); la Comisión
+  ve todo y comenta en los cortes.
+
+### Etapa 4 (hecha, 14-nov-2026): carga de las 15 acciones y 57 actividades
+- **`datos/calidad/plan-de-mejora-2026-2030.csv`**: el apéndice del informe convertido (una fila por actividad, columnas de
+  la acción repetidas). Sin nombres de agencias ni de sus instrumentos: «Guía de Antecedentes» se cambió por «ficha
+  estadística» (lo que TAU llama así). La columna `criterio` va **vacía**: los números del informe son los del
+  instrumento de la agencia y su correspondencia con el marco es privada (PLAN §57); se completa con códigos del marco
+  de TAU si se quiere.
+- **`app/calidad/importar_mejora.py`** y `/calidad/mejora/importar` (plantilla, vista previa, confirmación; solo
+  `gestionar_plan_mejora`). Recursos humanos y otros van al final de la descripción; el mecanismo de evaluación y el
+  indicador del informe, al medio de verificación; RP y TGN se escriben completos. Inicio y fin «MM/AAAA» → primer y
+  último día del mes.
+- **Responsables propuestos** (`CARGOS`): la primera unidad del texto («Dirección de Carrera / HCC») se busca entre quienes
+  hoy tienen el rol; si nadie lo tiene, la acción queda a cargo de quien carga. Las actividades guardan además la unidad
+  en texto.
+- **Indicadores propuestos** (`PISTAS`): palabras del indicador o de la línea base → un indicador del marco por su nombre
+  (13 de 57 en el plan de la Carrera); se ligan solo las que quedan marcadas, sin valores numéricos (el avance sigue
+  siendo el porcentaje registrado; la ficha muestra la cifra del indicador).
+- Se omite toda acción cuyo código ya está en el plan (idempotente). Pruebas: `tests/test_importar_mejora.py`.
+
+**Lo planificado:**
+- `/calidad/mejora/importar`: un CSV (una fila por actividad, con las columnas de la acción repetidas) con vista previa,
+  avisos y confirmación, como las demás cargas. Descarga de una plantilla vacía.
+- Los responsables se asignan después en TAU: el archivo trae la unidad en texto y la pantalla propone a la persona que
+  hoy ocupa ese cargo (Dirección de Carrera, Dirección del Instituto, Coordinación) cuando lo encuentra.
+- Las cifras de línea base que ya calcula un indicador del SIAC se enlazan a él en la vista previa («Ligar al
+  indicador Tasa de titulación oportuna»), y la cifra del archivo queda solo como referencia.
+- El archivo del plan de la Carrera se arma del apéndice del informe sin nombres de agencias (ver las preguntas).
+
+### Etapa 5 (hecha, 14-nov-2026): cortes de seguimiento e informe
+- **Migración 0092** (`cortes-del-plan-de-mejora`): `corte_mejora` y `corte_actividad` (copia de los textos, estado,
+  avance, semáforo, último avance, por qué pide atención y comentario). No cambia datos existentes; probada sobre una
+  copia de la base de desarrollo (91 → 92).
+- **`app/calidad/cortes_mejora.py`** y `/calidad/mejora/cortes`: abrir (tipo y fecha, no futura; uno abierto a la vez),
+  comentar lo que pide atención (vencidas, en riesgo, sin avance desde el corte cerrado anterior), cerrar (conclusión y
+  criterio del marco; por omisión, el del indicador «Acciones del plan de mejora cumplidas en plazo») y descartar uno
+  abierto. Abren, comentan y cierran quienes tienen `registrar_juicios_calidad` (Dirección de Carrera y Comisión de
+  calidad); lo ven quienes tienen `ver_plan_mejora`. El tipo (trimestral, anual, bienal) es una etiqueta: no limita quién.
+- **Informe del corte:** página imprimible con membrete (resumen por semáforo y prioridad con la diferencia respecto del
+  corte anterior, lo que pide atención con su comentario, las demás actividades, reprogramaciones del periodo y
+  conclusión) y XLSX. **Diferencia con lo planificado:** al cerrar se guarda como evidencia el **XLSX**, no un PDF: TAU no
+  genera PDF en el servidor (los informes se imprimen desde el navegador, PLAN §55); el PDF se obtiene con «Imprimir /
+  Guardar PDF» de la misma página, que no cambia porque el corte está congelado.
+- **Avisos** (`cortes_mejora.avisar`, en el mantenimiento diario): al responsable de cada actividad 30 y 7 días antes del
+  plazo, y 15 días antes del fin de cada trimestre si no tiene avance desde el último corte cerrado. Una acción con
+  actividades ya no avisa por su cuenta (avisan sus actividades).
+- El XLSX del plan suma las hojas «Actividades» y «Reprogramaciones».
+- La descripción de una actividad cargada del plan lleva los recursos en un párrafo aparte: listas y títulos muestran solo
+  el primero (`am.titulo`) y la ficha muestra el resto como «Recursos».
+- Pruebas: `tests/test_cortes_mejora.py`.
+
+**Lo planificado:**
+- **Corte** (`corte_mejora` y `corte_actividad`): trimestral (Comisión), anual (Dirección de Carrera) o bienal
+  (preparado en TAU para la DEAGEC). Abrir un corte **congela** el estado, el avance y el semáforo de cada actividad en ese
+  momento: el informe se puede volver a imprimir igual años después.
+- **Flujo en tres pasos:** (1) abrir el corte con su fecha; (2) TAU muestra primero lo que pide atención (vencidas, en
+  riesgo, sin avance desde el corte anterior) y la Comisión comenta solo eso; lo demás va con su último avance; (3)
+  cerrar el corte genera el informe en PDF y lo guarda como **evidencia** del criterio de gestión de la calidad.
+- **Informe del corte:** resumen (cifras por semáforo y por prioridad, comparadas con el corte anterior), tabla por
+  acción y actividad, reprogramaciones del periodo con su causa y comentarios de la Comisión.
+- **Avisos:** al responsable, 30 y 7 días antes del plazo (como hoy en las acciones, ahora por actividad) y 15 días
+  antes de cada corte trimestral si su actividad no tiene avance desde el último.
+- El XLSX del plan se amplía con las actividades y las reprogramaciones.
+- La hoja imprimible (`.hoja`) usa siempre los colores del tema claro, también en modo oscuro (es papel blanco):
+  `scripts/tema_marca.py` redefine las variables del tema dentro de ella. Lo detectó la prueba de accesibilidad con la
+  hoja del corte, la primera que lleva formularios e insignias.
+
+### Etapa 6 (hecha, 14-nov-2026): «Mi parte del plan» en los pendientes
+- `actividades_mejora.mi_parte(auth, volver)`: tarjeta con las actividades abiertas a cargo de la persona (la más urgente
+  primero, con semáforo, plazo y avance) y «Registrar avance», que abre un modal (`/calidad/mejora/actividades/{id}/avance`)
+  y al guardar vuelve a la misma pantalla (`volver`, solo direcciones del propio sitio). Va en «Mis pendientes» del docente
+  y del investigador.
+- **Inicio:** «Lo mío» dice cuántas actividades del plan tiene la persona y cuántas están vencidas o en riesgo; el enlace
+  lleva a sus pendientes o, si no tiene esa pantalla, al plan (que le muestra solo lo suyo).
+- **Calendario** (y su `.ics`), del docente y del investigador: el plazo de cada actividad abierta y el fin de cada
+  trimestre (`cortes_mejora.eventos`), solo si la persona tiene actividades. Los cortes no tienen fecha fija hasta que se
+  abren; el fin del trimestre es cuando suelen hacerse.
+- Pruebas: `tests/test_mi_parte_mejora.py`.
+
+**Lo planificado:**
+- En «Mis pendientes» del docente y del investigador (y en el inicio de quien no los tiene): las actividades del plan a
+  cargo de la persona, con plazo, semáforo y un botón que abre «Registrar avance» en un modal sin salir de la pantalla.
+- En el calendario personal (y su `.ics`): los plazos de esas actividades y las fechas de los cortes.
+
+### Etapa 7 (hecha, 14-nov-2026): brechas baratas del plan (A4.4 y A4.5)
+Migración 0093 (`vacante_admision`, `rendimiento_asignatura`); lógica en `app/estudiantil/rendimiento.py`, pantallas en
+`app/estudiantil/rutas/rendimiento.py` (`/docencia/cohortes/vacantes` y `/docencia/cohortes/rendimiento`, enlazadas desde la
+cabecera de Cohortes estudiantiles). Ven quienes tienen `ver_seguimiento_estudiantil`; registran y cargan quienes tienen
+`gestionar_cohortes` (Dirección de Carrera y Gestión de datos). Cálculos `auto:cobertura_vacantes` y
+`auto:postulantes_por_vacante` (indicadores D3.1.c y D3.1.d del borrador del marco; en un marco ya creado se agregan a mano
+eligiendo esa fuente) y filas de vacantes, postulantes y cobertura en la admisión de la ficha estadística. La página pública
+los muestra como a todo indicador del marco con año cerrado. Decisiones tomadas al implementarla (por confirmar):
+- **Sin programa:** las vacantes se registran por admisión (año y semestre I o II), no por programa, porque hoy la Carrera
+  admite a un solo programa de pregrado; si eso cambia, se agrega la columna.
+- **Rendimiento sin indicador del marco:** aprobación y abandono por asignatura y por línea formativa se muestran en su
+  pantalla y se exportan en CSV, pero no se agregaron como indicadores del marco (el plan de mejora no fija cuál de ellos
+  seguir). La regla del mínimo es la de la etapa: «menos de 5» y fuera de los totales, también en el CSV.
+- La sigla del CSV debe estar en el catálogo de asignaturas (común a los planes); una asignatura y gestión ya cargadas se
+  reemplazan.
+
+- **Vacantes de admisión (A4.4):** la Dirección de Carrera registra por gestión y programa las vacantes ofertadas y los
+  postulantes; los admitidos salen de las cohortes cargadas (no se escriben dos veces). Indicadores: cobertura de
+  vacantes y relación postulantes/vacantes, en la ficha estadística y en la página pública.
+- **Rendimiento por asignatura (A4.5), solo agregados:** carga del CSV agregado del SSA por asignatura y gestión
+  (inscritos, aprobados, reprobados, abandonos), sin RU, nombres ni notas. Indicadores de aprobación y abandono por
+  asignatura y por línea formativa; una celda con menos de 5 inscritos se muestra como «menos de 5» y no entra en un
+  desglose que permita restarla.
+
+### Etapa 8 (hecha, 14-nov-2026): aviso de privacidad (A15.2)
+`app/comun/privacidad.py` (tabla `TRATAMIENTOS`, lista `FORMULARIOS`, `CONTACTO`), `layout.aviso_privacidad(clave)` en nueve
+formularios (consentimiento del estudiante, encuesta por enlace, evaluación docente, buzón, auxiliaturas, oportunidades,
+perfil de egresado, empleadores y datos del perfil) y la página pública `/publico/privacidad` con diez tratamientos (los
+nueve más apoyo estudiantil y tutoría, que no tienen formulario del estudiante). `tests/test_privacidad.py` exige el aviso
+en cada módulo de `FORMULARIOS` y comprueba la página sin sesión. Decisiones tomadas al implementarla (por confirmar):
+- La página va en **`/publico/privacidad`** y no en `/privacidad`: ya es pública por el patrón `/publico/.*` y sale en la
+  cabecera de las páginas públicas junto a Investigadores e Indicadores.
+- El aviso tiene una frase propia por tratamiento (`aviso`), escrita a partir de las reglas vigentes; la conservación dice lo
+  que el sistema hace hoy (no hay borrado automático salvo los casos de apoyo, los enlaces de encuesta y las listas de curso).
+  **Los textos debe revisarlos la Dirección de Carrera** antes del piloto: son el compromiso público del sistema.
+
+- `layout.aviso_privacidad(finalidad, quien_ve, conservacion)`: una franja breve sobre el botón de enviar de cada
+  formulario que pide datos personales (consentimiento del estudiante, postulaciones, encuestas, egresados, directorio,
+  empleadores, buzón, perfil), con enlace a `/privacidad`.
+- `/privacidad` (pública): qué datos guarda TAU por módulo, para qué, quién los ve, cuánto se conservan y a quién
+  dirigirse, en lenguaje llano. Se arma de una tabla en el código, la misma que usa el aviso, para que no se
+  contradigan.
+- Una prueba recorre la lista de formularios con datos personales y exige el aviso.
+
+### Etapa 9 (hecha, 14-nov-2026): piloto con usuarios reales
+Migración 0094 (`comentario_piloto`: ruta, rol, texto y día; sin cuenta ni hora). `app/comun/piloto.py` y
+`app/comun/rutas/piloto.py`: con `PORTAL_PILOTO=1`, el pie de cada pantalla lleva **Comentar esta pantalla**
+(`/piloto/comentar`, abierta también a las cuentas de estudiante y anónima en los registros de peticiones); la
+Administración del sistema (`ver_auditoria`) ve en `/admin/piloto` los comentarios, los marca como atendidos con una nota y
+ve la **adopción** por rol y semana (personas que entraron / que registraron algo, de la auditoría; consultar no cuenta como
+registrar). `docs/piloto.md` (grupos escalonados según la decisión del usuario, datos previos y su responsable, cinco
+tareas por rol, encuesta SUS de cierre con el módulo de encuestas), `docs/gobernanza.md` (DTIC, titularidad, alojamiento,
+respaldo, privacidad) y `scripts/restaurar_prueba.sh` (simulacro sobre una base temporal; los dos primeros ensayos, con
+una copia y un paquete, quedan en mantenimiento §5.3; falta el de la réplica del servidor). Decisiones tomadas al
+implementarla (por confirmar):
+- El comentario **no guarda la cuenta** (ni en la tabla ni en los registros de peticiones): así nadie duda en criticar.
+  El costo es que no se puede preguntar a quién comentó; si hace falta, la persona puede escribir su correo en el texto.
+- Los números y los enlaces largos de la dirección se reemplazan por «:id», para que la ruta no identifique un registro.
+- La adopción cuenta a una persona en cada uno de sus roles; sin rol, como «Estudiantes» o «Docentes e investigadores».
+
+- **Comentarios en el sistema:** un enlace «Comentar esta pantalla» en el pie (solo durante el piloto, con
+  `PORTAL_PILOTO=1`) guarda el texto, la ruta sin parámetros y el rol, no los datos de la pantalla; la Administración los
+  ve en una lista y los marca como atendidos.
+- **Encuesta de cierre:** con el módulo de encuestas que ya existe (anónima, escala SUS de 10 preguntas y dos abiertas):
+  no hace falta código nuevo.
+- **Adopción:** una tabla en `/admin` con, por rol y por semana, cuántas personas entraron y cuántas registraron algo,
+  sacada de la auditoría existente (sin nombres).
+- **Guía del piloto** (`docs/piloto.md`): 3 a 5 personas por rol, cinco tareas por rol con lo que se espera, cuatro
+  semanas, qué datos reales se cargan antes (personas, plan de estudios, plan de mejora) y quién es responsable de cada
+  dato.
+- **Respaldo probado:** `scripts/restaurar_prueba.sh` baja la última copia, la restaura en una base temporal, corre las
+  comprobaciones de integridad y cuenta filas por tabla; el procedimiento y el último simulacro quedan en mantenimiento.
+- **Gobernanza** (`docs/gobernanza.md`, documento, no código): acuerdo con la DTIC sobre las exportaciones de SIA que
+  TAU consume; titularidad del software (consulta a la Dirección); dónde se alojan los datos de los estudiantes frente a
+  la Política TIC de la UMSA (por verificar; alternativa: un servidor de la DTIC).
+
+### Etapa 10 (hecha, 14-nov-2026): navegador, manual y documentación
+- `tests/navegador/test_plan_de_mejora.py`: la Dirección carga el plan desde el CSV del repositorio (14 acciones nuevas;
+  A4 se omite), la responsable registra su avance desde «Mis pendientes» y vuelve a esa pantalla, la Dirección registra la
+  aprobación, la responsable pide una reprogramación y la Dirección la aprueba, y la Dirección cierra el corte, cuyo informe
+  queda en Evidencias. Las pantallas nuevas de las etapas 3 a 9 ya estaban en `test_accesibilidad_pantallas` (claro y
+  oscuro).
+- La prueba encontró una fecha ISO en el título de la evidencia del corte («al 2026-11-14»): ahora usa `formato.fecha`.
+- Manual (`scripts/manual.py`): la base de demostración carga el plan 2026–2030 desde el CSV, registra avances, aprueba el
+  plan, deja una reprogramación por resolver a cargo de Emmy y abre un corte; el capítulo 9 explica tablero, semáforo,
+  cronograma, carga del CSV, «Mi parte del plan», aprobación y reprogramación, y cortes, con seis capturas nuevas; el
+  capítulo 12 suma la página de privacidad y el aviso de los formularios.
+- La tabla de privacidad aclara que el perfil sale fuera del sistema solo si la persona activa «Perfil público» (lo dice el
+  manual desde antes; el texto de la etapa 8 lo omitía).
+- La revisión de `/admin/auditoria` encontró fechas ISO en los detalles que registran el plan de mejora (aprobación del
+  plan, cumplir, reprogramar, aprobar una reprogramación, abrir un corte): ahora se guardan con `formato.fecha`.
+- CLAUDE.md: cortes congelados, carga del plan, hojas imprimibles en colores claros.
+
+### Etapa 11 (hecha, 15-nov-2026): ensayo sintético del piloto y sus correcciones
+**Ensayo.** Antes del piloto real, cinco agentes (Dirección de Carrera, Comisión de calidad, Coordinación académica, docente
+investigadora y estudiante) intentaron las cinco tareas de su rol de `docs/piloto.md`, cada uno con su base de demostración
+(seed + datos del manual) y su servidor, con `PORTAL_PILOTO=1`; comentaron con «Comentar esta pantalla» y probaron 35 accesos
+indebidos (ninguno pasó). De 52 hallazgos, cerca de un tercio era ruido de la base o pedidos de pantallas nuevas (anotados,
+no hechos: módulos congelados). **No cuenta como piloto**: no mide adopción ni utilidad, y sus pedidos no son pedidos de
+usuarios del piloto. Lo verificado y corregido:
+- **Cohortes:** «Cursan» sumaba los congelados que ya eran desertores (un estudiante en dos columnas); ahora
+  `cohortes.resumen` da `cursan` (cursando + congelados que aún pueden volver), también en el informe de seguimiento.
+- **Vacantes:** una admisión sin su cohorte cargada mostraba 0 admitidos y 0 % de cobertura; ahora dice «sin cohorte» y
+  no entra en el indicador (que avisa «Faltan las cohortes cargadas»). Las admisiones se escriben como las cohortes (2025-I).
+- **Encuestas anónimas:** el mínimo de 5 se comprobaba por encuesta, no por pregunta: una pregunta opcional respondida por
+  pocos se mostraba. Ahora sale `oculta` (sin conteos) en `resultados`, en la pantalla, el CSV y el retorno; el retorno
+  muestra el n también en las preguntas de opciones.
+- **Privacidad:** el pie de cada pantalla con sesión enlaza «Sus datos y su privacidad» (`/publico/privacidad`); antes no
+  había cómo volver a leerla dentro del sistema.
+- **Fechas ISO** en avisos (evaluación docente, informe de grado, continuidad de proyectos), tutoría, actividades
+  estudiantiles, periodos de proyectos en informes y anexo, y el inicio: ahora con `formato`. La prueba de accesibilidad no
+  las veía porque su base no tenía esos datos: `preparar.py` suma una reunión de tutoría y una actividad estudiantil, y la
+  lista suma `/tutoria` y `/docencia/cohortes/actividades`.
+- **Teléfono:** las tablas del corte se desplazan dentro de su recuadro, y el membrete de las hojas imprimibles pasa a dos
+  filas en vez de salirse (al imprimir en A4 sigue en una). Con un corte abierto, la lista explica por qué no
+  se puede abrir otro.
+- **Textos:** rendimiento vacío ya no pide cargar el CSV a quien no puede; la diferencia de carga que no es un número entero
+  de materias se dice en h/mes («falta asignar 25,5 h/mes de docencia», no «0,8 materias»: cambia la expectativa de
+  `test_gestiones`); el buzón enlaza las preguntas frecuentes y ya no habla de «marcar Anónimo»; la introducción de Avisos
+  del estudiante habla de lo suyo; el formulario de producto ya no tutea.
+
+**Evidencias del responsable (decisión del usuario, 15-nov-2026, opción A; corrige la B que se había hecho primero
+por un malentendido):** el responsable de una actividad no tenía cómo adjuntar su evidencia (el repositorio le daba 403 y
+el avance le ofrecía documentos ajenos). Ahora el formulario del avance (también el modal de «Mi parte del plan») lleva
+**Adjuntar la evidencia**: el archivo se registra en el repositorio como evidencia ligada a la actividad (migración
+**0095**, `evidencia_calidad.actividad_id`; `actividades_mejora.registrar_evidencia`), con un título que dice de qué
+actividad y avance es y el criterio de la acción si lo tiene (si no, sin criterios: los marca después la Comisión o la
+Dirección). El responsable ve y descarga solo las evidencias de su actividad y puede volver a elegirlas en otro avance o en
+una reprogramación (`actividades_mejora.evidencias_elegibles`); quien gestiona el plan elige además del repositorio entero.
+Se descartó la B (subir la evidencia en un paso aparte y volver al avance). Confirmado por el usuario el 15-nov-2026: el
+archivo se adjunta solo en el avance; al pedir una reprogramación, el responsable elige una evidencia ya registrada de su
+actividad, sin subir un archivo nuevo ahí.
+
+Queda anotado para después del piloto (pedidos del ensayo, sin hacer): reasignar responsables del plan en bloque; avisar
+al asignar un docente que excede su carga; que «Mis preferencias» abra en la gestión siguiente y no en verano; el inicio de
+la Dirección con las reprogramaciones por resolver; la n de los indicadores visible sin el ratón; confirmación al registrar
+una actividad estudiantil; la barra del teléfono del estudiante.
+
+### Etapa 12 (hecha, 15-nov-2026): auditoría de la documentación
+
+Pedida por el usuario: revisar la documentación de todo el stack y del repositorio frente al código.
+- **Defecto encontrado y corregido:** el paquete de datos (`scripts/paquete.py`) no llevaba la carpeta `evidencias/`
+  (archivos de las evidencias del SIAC, con su huella SHA-256, y desde la etapa 11 los que adjuntan los responsables).
+  Un respaldo o una mudanza con el paquete los perdía sin aviso. Ahora `ARCHIVOS` reúne cada carpeta con su tabla, los
+  conteos del manifiesto incluyen `evidencia_calidad` y se comparan solo los que trae el paquete (los anteriores se
+  siguen importando). `tests/test_paquete.py` exige que toda carpeta bajo `dir_datos()` esté en el paquete. El
+  `--reset` del seed borra también `evidencias/`, y el ejemplo de respaldo nocturno de `docs/despliegue.md` la copia.
+- **Documentación al día:** cifras de pruebas (~1.060 y ~50 en navegador; decían 675 y 15); estructura del README
+  (faltaban unos 50 módulos de rutas y de lógica, `app/ia` y `app/servicios` en las dependencias); variables
+  `PORTAL_CARRERA`, `PORTAL_FACULTAD` y `PORTAL_OPENALEX_URL`; rutas públicas (`/acceso`, `/encuesta`, `/salud`,
+  `/publico/privacidad`); paquetes de `docs/mantenimiento.md` (decía que `app/academico` estaba vacío), tareas del
+  mantenimiento periódico, numeración de recetas y referencias cruzadas; las cargas 17 a 20 de `docs/importaciones.md`
+  (plan de mejora, rendimiento, lista de curso y malla); índice de la guía de uso y sin referencias al PLAN en ella; el
+  capítulo 9 del manual con la evidencia en el avance (opción A); `docs/autoevaluacion-usabilidad.md` sin nombre de
+  agencia y con los roles actuales; índice de este documento hasta la §72 y aviso de que las secciones 1 a 10 son del
+  estado inicial; skills `cerrar-etapa` y `nueva-ruta-o-permiso`.
+- **Pendientes que no se resuelven con documentación:** `main` está 74 commits por delante de GitHub (no se publica
+  desde el 7-nov) y la última corrida de GitHub Actions de ese día terminó en falla; la batería con navegador ronda los
+  13 minutos frente al límite de 20 del trabajo. Falta el archivo `LICENSE` (gobernanza §3).
+- **Publicación (15-nov-2026, a pedido del usuario):** antes de enviar los commits a GitHub, el límite del trabajo de
+  integración continua sube a 45 minutos. La falla del 7-nov fue una espera agotada en
+  `test_enlazar_preprint_con_su_version_publicada`, que pasa siempre en el equipo de desarrollo. Publicado ese día: la
+  corrida de `main` pasó (1.113 pruebas, unos 28 minutos).
+- **Fechas en la auditoría y Dependabot (15-nov-2026):** el detalle de la auditoría es texto libre y varias acciones
+  guardan fechas ISO (tutoría, plazos de convocatoria, fechas de gestión); la pantalla las mostraba tal cual y la prueba
+  de accesibilidad fallaba a veces. Ahora la pantalla las escribe con `formato.fechas_en_texto`; lo guardado y la
+  exportación siguen en ISO. Con eso pasan las cinco actualizaciones que propuso Dependabot (httpx2 2.16, bibtexparser
+  2.1, pytest 9.2, pytest-playwright 0.10 y playwright 1.65), probadas juntas antes de aceptarlas.
+- **Piloto en pausa (decisión del usuario, 15-nov-2026):** el piloto con usuarios reales se suspende para hacer nuevas
+  modificaciones y **se levanta el congelamiento de módulos**: se pueden volver a agregar módulos y pantallas.
+  `docs/piloto.md` queda como plan para cuando se retome (habrá que revisar sus tareas por rol y sus fechas).
+  `PORTAL_PILOTO` y las pantallas del piloto (comentarios, adopción) se conservan sin cambios.
+- **Manual de usuario sin actualizar (decisión del usuario, 15-nov-2026):** `docs/manual/` queda como está y no se
+  regenera al cambiar una pantalla. Sus capturas son anteriores a la etapa 11 (evidencia adjunta en el avance). La
+  referencia vigente para los usuarios es `docs/guia-de-uso.md`.
+- **Repositorio:** se quita el correo personal del autor de `pyproject.toml` (ya había quedado en el historial
+  público) y se borra `app/data/portal.db`, una base vacía de septiembre que nunca se versionó.
+
+- **Adopción por semana con la fecha local (15-nov-2026):** `piloto.adopcion` contaba la semana con el día en UTC de la
+  auditoría: lo hecho un domingo después de las 20:00 de La Paz caía en la semana siguiente y no se veía hasta el
+  lunes (así se descubrió: `test_adopcion_por_rol_y_semana` fallaba los domingos por la noche). Ahora cada registro se
+  pasa a la fecha local antes de ubicarlo en su semana.
+
+### Orden y commits
+Un commit por etapa. Las etapas 1 y 2 no dependen entre sí; 3 a 6 van en orden; 7 y 8 son independientes del plan; 9
+necesita las anteriores; 10 cierra. Estimación honesta: 1, 7 y 8 son cortas; 2 a 6 son el grueso.
+
+### Decisiones del usuario (14-nov-2026)
+1. El archivo del plan de la Carrera (15 acciones, 57 actividades) **se versiona** en `datos/calidad/`, sin nombres de
+   agencias ni datos personales.
+2. **Reprogramación:** el responsable la pide con la causa y la Dirección de Carrera la aprueba o la rechaza; queda el
+   historial de ambas cosas.
+3. **Rendimiento por asignatura:** se guardan solo los agregados del SSA por asignatura y gestión, sin RU ni notas, con
+   el mínimo de 5.
+4. **Piloto:** entran todos los roles (direcciones y Comisión, docentes e investigadores, estudiantes y Coordinación
+   académica). Como son muchos a la vez, la guía del piloto los escalona: primero direcciones y Comisión con el plan de
+   mejora (semana 1), luego Coordinación y docentes e investigadores (semana 2) y al final estudiantes (semana 3), con
+   las cuatro semanas de uso contadas desde que entra cada grupo.
+
+## 73. Modularización para otras unidades de la UMSA (hecha, 16-nov-2026)
+
+**Objetivo:** que la misma base de código sirva a otras unidades de la UMSA: lo mínimo activo por defecto y el resto
+habilitable desde un panel de Administración del sistema. El diseño completo (capas, manifiesto de módulo, compuerta de
+rutas, puntos de extensión, catálogo de 17 módulos, perfiles y etapas) está en `docs/modularizacion-plan.md`; el
+análisis previo de la liberación como software libre, en `docs/liberacion-borrador.md` (borrador, sin decidir).
+
+### Decisiones del usuario (15-nov-2026)
+1. **Vínculos:** los define siempre la Dirección de Carrera, que es la máxima instancia ejecutiva y quien gestiona esa
+   relación. No hay una regla aparte para unidades sin carrera.
+2. **Roles por tipo de unidad:** para la liberación, cada rol se ata al tipo de unidad (carrera, instituto) y no a
+   siglas fijas (`permisos.ROLES` hoy nombra `UMSA`, `IIMAT` y `CMAT`). Se hace en la etapa 6.
+3. **Piloto:** sigue en pausa (§72), así que las etapas que reescriben el menú, el inicio y los pendientes no esperan.
+4. **Perfil por defecto:** una instalación nueva arranca con el perfil **mínimo** (la plataforma y los comunicados); los
+   demás módulos se activan desde el panel. La base de la Carrera migra con todos activos.
+5. Todos los módulos funcionales se pueden apagar; la plataforma (cuentas, roles, unidades, vínculos, avisos,
+   auditoría, privacidad) no. Apagar oculta y nunca borra datos.
+6. **Una instalación es de una carrera:** como el vínculo lo define la Dirección de Carrera, toda instalación de TAU
+   tiene una carrera; el instituto es una unidad opcional dentro de ella. El perfil «Instituto» es una carrera que solo
+   activa investigación.
+7. **Proyectos de grado para otras carreras:** el módulo de proyectos de grado (trámite de titulación: perfil, documento
+   final, tutor, tribunal y revisiones; más los temas de grado) se ofrece en la versión para otras unidades. Sus plazos
+   (hoy 15 días hábiles) y su plantilla pasan a ser parámetros de la instancia cuando se haga esa etapa.
+
+### Etapas
+- **Etapa 0 (hecha, 15-nov-2026): línea base de la arquitectura.** `tests/test_arquitectura.py` recorre los `import` de
+  `app/` y exige que `app/comun` no importe de otros paquetes, que nadie importe de los agregadores (`inicio`,
+  `busqueda`, `navegacion`) y que todo cruce entre paquetes esté en su lista `CRUCES`: 56 archivos con 82 cruces al
+  15-nov-2026 (más `manifiestos.py` desde la etapa 1). La lista solo puede achicarse: un cruce nuevo falla y uno que desaparece obliga a quitarlo. No cambia
+  el comportamiento del sistema.
+- **Etapa 1 (hecha, 15-nov-2026): registro de módulos, compuerta y panel.**
+  - **Registro:** `app/comun/modulos.py` (clase `Modulo`, estado, compuerta) y un manifiesto por paquete
+    (`app/<paquete>/modulo.py`) que `app/manifiestos.py` junta. Son 17 módulos en 6 áreas más la plataforma. Un módulo
+    es una lista de archivos de rutas y de acciones de permisos, no un paquete de Python.
+  - **Compuerta:** `modulos.marcar_rutas(app)` anota en cada ruta los módulos que exige (por el archivo donde está su
+    función) y `modulos.compuerta`, el primer `Beforeware` y sin excepciones, responde 404 si alguno está apagado;
+    también en `/publico/*`, `/api/v1/*` y `/encuesta/<enlace>`. Una ruta sin dueño impide arrancar.
+  - **Permisos y menú:** `permisos.puede()` niega las acciones de un módulo apagado y `navegacion.menu` quita los
+    ítems que darían 404 (`modulos.direccion_activa`). Las tareas periódicas de `main.TAREAS` corren solo si su
+    módulo está activo.
+  - **Estado:** tabla `modulo` (migración `0096`). Una base con cuentas migra con todo activo; una base nueva se
+    siembra con `PORTAL_PERFIL` (`minimo` por defecto; `instituto`, `carrera`, `carrera_instituto`, `completo`). Un
+    módulo que se agregue después entra apagado. `scripts/seed.py` y las pruebas usan `completo`.
+  - **Panel:** Administración → Módulos (`/admin/modulos`, acción nueva `gestionar_modulos`, solo Administración del
+    sistema), con auditoría. Activar trae los requisitos; no deja apagar un módulo que otro activo necesita.
+  - **Pruebas:** `tests/test_modulos.py` (toda ruta y toda acción tienen dueño; cada módulo apagado da 404 en todas
+    sus rutas, con y sin sesión; el sistema se recorre con el perfil mínimo, el de instituto y el de carrera sin
+    enlaces rotos en el menú; perfiles, migración y panel).
+  - **Asignaciones que no siguen al paquete** (decididas al hacer la etapa y confirmadas por el usuario el 15-nov-2026): el informe del
+    cuerpo académico y de carga docente es de `oferta` y el de seguimiento estudiantil es de `estudiantes`, aunque
+    viven en `app/calidad`; los adjuntos, `/fotos/{uid}` y `/publico/privacidad` son de la plataforma, aunque viven en
+    `app/investigacion`; «Mi plan de estudios» exige `estudiantes` y `planes`; `ver_informes_institucionales` y
+    `ver_evidencias` son acciones de la plataforma porque las usan varios módulos.
+  - **Queda para las etapas siguientes:** con un módulo apagado, la página de inicio, la búsqueda y «Mis pendientes»
+    todavía pueden mostrar bloques o enlaces suyos (etapas 2 y 3); el panel no avisa aún lo que queda en curso al
+    apagar (etapa 3).
+- **Etapa 2 (hecha, 15-nov-2026): menú, búsqueda e inicio como puntos de extensión.**
+  - **Puntos de extensión:** `Modulo.aportes` (punto → función o lista) y `modulos.aportes(punto)`, que devuelve lo de la
+    plataforma y de los módulos activos. Puntos: `menu`, `menu_estudiante`, `busqueda`, `inicio` (pendientes de la
+    bandeja) y `cifras`; lo que entrega cada uno está en `modulos.PUNTOS`.
+  - **Aportes:** un `aportes.py` por paquete (también `app/comun`), con una función por módulo. Los ítems del menú llevan
+    grupo y orden; los pendientes del inicio, su sección (`inicio.SECCIONES`) y orden. Son datos: el dibujo queda en
+    el agregador. Piezas compartidas en `app/comun/menu.py` y `app/comun/componentes/bandeja.py`.
+  - **Agregadores:** `app/navegacion.py`, `app/busqueda.py` y `app/inicio.py` solo juntan y ordenan; ya no importan de
+    ningún paquete (salen 3 archivos y 8 cruces de `CRUCES`; lo vigila también `tests/test_modulos.py`). Un pendiente
+    cuyo enlace lleva a un módulo apagado no se muestra y una cifra queda sin enlace.
+  - **Sin cambios a la vista con todo activo:** mismas pantallas y mismo orden (las pruebas del menú, la búsqueda y el
+    inicio pasan sin tocarlas). Con Investigación apagada, la búsqueda de «Cuentas» incluye a todos los usuarios.
+  - **Deuda anotada:** el pendiente del plan de mejora elige su enlace repitiendo la consulta de «tiene docencia»
+    (`calidad/aportes._tiene_docencia`) para no importar `academico`; desaparece con la pantalla única de pendientes
+    (etapa 3). Los pendientes de vínculos por vencer y de docentes sin carga los aporta `oferta`, porque usan su código.
+- **Etapa 3 (hecha, 16-nov-2026): pendientes, calendarios, tareas, privacidad y aviso al apagar.**
+  - **Pendientes y calendarios:** `app/comun/calendario.py` tiene el formato (`pendiente`, `evento`, `situacion`, `ics`) y
+    junta los aportes de los módulos activos (`pendientes_de`, `eventos_de`, `bloques`) para tres ámbitos: docente,
+    investigador y estudiante. Puntos nuevos: `pendientes`, `eventos` y `bloque_pendientes` («Mi parte del plan de
+    mejora»). `academico/docente.py`, `investigacion/mis_pendientes.py` y `estudiantil/calendario.py` conservan sus
+    funciones y sus pantallas, pero solo aportan lo propio: ya no importan de otros paquetes (5 archivos y 11 cruces
+    menos en `CRUCES`).
+  - **Tareas periódicas:** punto `mantenimiento` (lista de tareas en el `aportes.py` de cada paquete). `main.py` ya no
+    importa los módulos de cada tarea ni tiene `TAREAS`.
+  - **Privacidad:** cada módulo declara en `privacidad=` los tratamientos de `privacidad.TRATAMIENTOS` que son suyos y
+    `/publico/privacidad` muestra solo los de los módulos activos. `privacidad.FORMULARIOS` no cambia.
+  - **Aviso al apagar:** punto `en_curso` (convocatorias publicadas, encuestas abiertas, trámites de grado, semestres
+    activos, casos de apoyo, oportunidades, convocatoria de proyectos). El panel lo muestra en la fila del módulo y
+    en la confirmación de «Apagar». Es un aviso: no impide apagar.
+  - **Respaldo sin cambios (decisión de la etapa):** `scripts/paquete.py` sigue llevando todas las carpetas de
+    archivos, esté o no activo su módulo, porque apagar no borra y el respaldo debe poder restaurarlo todo.
+  - **No se unificaron las pantallas:** «Mis pendientes» y «Mi calendario» siguen siendo dos (docente e investigador),
+    cada una con sus pruebas. Unificarlas en una sola es ahora un cambio de pantalla y no de arquitectura (queda como
+    mejora propuesta); por eso sigue la consulta repetida de `calidad/aportes._tiene_docencia`.
+- **Etapa 4 (hecha, 16-nov-2026): nudos de código.**
+  - **A la plataforma:** `app/comun/adjuntos.py` (antes en `investigacion`; lo usan cinco paquetes),
+    `estudiantes.requiere` (la ficha del estudiante de la sesión; `_requiere` de las rutas es un alias),
+    `componentes/publica.py` (marco de las páginas públicas, que enlaza solo las secciones de módulos activos),
+    `componentes/bandeja.le_toca` y las rutas `/publico` y `/publico/privacidad` (`comun/rutas/privacidad.py`). `/publico`
+    lleva a la primera sección pública de un módulo activo.
+  - **«Le toca a usted»** del portal del estudiante se arma con el punto `pendientes` (ámbito `estudiante`): lo aportan
+    comunicados, grado y auxiliaturas. Las filas salen ahora por orden alfabético.
+  - **IA:** con el módulo apagado, `ia.servicio.activa` es falso para toda función, así que los botones de pedir un
+    borrador desaparecen de las demás pantallas; la marca de un texto ya aprobado se sigue mostrando.
+  - **Correcciones de la etapa 1:** las rutas `/adjuntos/*` y la acción `ver_evidencias` son de `investigacion` (solo
+    sirven a productos y actividades), no de la plataforma.
+  - **Línea base:** quedan 35 archivos con 50 cruces (eran 56 y 82), agrupados en `tests/test_arquitectura.py` por su
+    motivo: el catálogo de módulos; **requisitos declarados** en el manifiesto (informes → investigación, egresados →
+    estudiantes, «Mi plan» → planes); **uso opcional de la IA**; y los **nudos que quedan**.
+  - **Nudos que quedan, a propósito:** (1) `calidad/indicadores.py`, `ficha.py` y los informes de `calidad` leen datos
+    de estudiantes, egresados y docencia sin exigir esos módulos: con ellos apagados las cifras salen vacías, no
+    fallan; (2) el historial docente (`academico/historial.py`) junta trámites de grado y auxiliaturas; (3)
+    `servicios` lee proyectos de investigación (auxiliaturas de investigación, oportunidades), la oferta (biblioteca)
+    y empleadores; (4) el currículum en BibTeX usa `calidad.informes`. Deshacerlos pide mover los informes fuera de
+    `app/calidad` o más puntos de extensión; no impiden apagar módulos, solo quitar carpetas del árbol.
+- **Etapa 5 (hecha, 16-nov-2026): una instalación nueva.**
+  - **«Primeros pasos»:** la plataforma aporta al inicio, para la Administración del sistema, por dónde empezar (elegir
+    módulos, crear cuentas, asignar la Dirección de Carrera) mientras haya a lo sumo un módulo activo o una sola cuenta.
+  - **Prueba de punta a punta** (`test_instalacion_nueva_con_el_perfil_minimo`): base nueva con el perfil mínimo,
+    primera cuenta, ingreso, lo apagado da 404, se activa un módulo con sus requisitos y sus pantallas responden. La
+    integración continua ya la corre con el resto; no hace falta un trabajo aparte.
+  - **Datos de ejemplo:** `scripts/seed.py` respeta `PORTAL_PERFIL` (por defecto `completo`) e informa los módulos
+    activos. Carga siempre los datos completos: los de un módulo apagado aparecen al activarlo.
+  - **Guía de despliegue:** `docs/despliegue.md` §3 explica los perfiles y que cada unidad instala su propia copia.
+  - **Queda fuera, a propósito:** el estado «ausente» (quitar la carpeta de un módulo). Hoy ningún paquete se puede
+    quitar sin romper imports por los nudos que quedan (etapa 4), así que no se escribió código para un caso que aún
+    no puede darse.
+- **Etapa 6 (hecha, 16-nov-2026): roles y unidades por tipo.**
+  - **Unidades por tipo:** `unidades.carrera()`, `instituto()`, `universidad()` y `de_tipo(tipo)` buscan la unidad por
+    su tipo; se quitaron las constantes `INSTITUTO = "IIMAT"` y `CARRERA = "CMAT"` y todos los `id_de("CMAT")` y
+    `id_de("UMSA")` de `app/` (calidad, reformas, cuentas, vínculos, adscripción). Una prueba impide que vuelvan.
+  - **Roles por tipo:** `permisos.ROLES` nombra tipos de unidad (`carrera`, `instituto`, `universidad`) y
+    `permisos.unidades_de(rol)` da las unidades de la instalación donde se asigna; la pantalla de roles y los mensajes
+    muestran las siglas que haya en la base. La carga del plan de mejora ubica a los responsables por tipo.
+  - **Otra carrera:** `unidades.configurar(tipo, sigla, nombre)` y `scripts/unidades.py` cambian la sigla y el nombre
+    de cada unidad, con auditoría. La migración `0022` sigue sembrando las de la Carrera de Matemática (no se edita);
+    los ids no cambian, así que nada más se mueve.
+  - **Sin cambios para la Carrera de Matemática:** sus siglas siguen en la base y las pruebas que usan `id_de("CMAT")`
+    pasan igual.
+  - **Queda como dato de instancia, no resuelto aquí:** los nombres de los membretes y de las páginas públicas salen de
+    `PORTAL_UNIVERSIDAD`, `PORTAL_FACULTAD`, `PORTAL_CARRERA` y `PORTAL_INSTITUTO`, aparte de la tabla `unidad`: son
+    dos fuentes para el mismo dato. Tampoco se parametrizaron los datos propios de la Carrera (planes en
+    `datos/planes/`, marco de calidad, marca): son la tarea de «instancia» del borrador de liberación.
+
+### Evaluación final de la modularización (16-nov-2026)
+
+**Qué quedó.** 17 módulos en 6 áreas más la plataforma; 10 puntos de extensión (`modulos.PUNTOS`); un `modulo.py` y un
+`aportes.py` por paquete; panel en Administración → Módulos; perfiles de instalación; unidades y roles por tipo. Las
+siete etapas (0 a 6) están hechas, una por commit.
+
+**Afinado de cierre.** La ruta `/fotos/{uid}` pasó a `app/comun/rutas/fotos.py` y con ella desapareció la única
+excepción del registro (`Modulo.direcciones`): hoy toda ruta se asigna por el archivo donde está, sin casos especiales.
+
+**Medido el 16-nov-2026.**
+- Batería completa con navegador: pasa (unos 15 minutos en el equipo de desarrollo).
+- `scripts/medir.py`: todas las pantallas medidas entre 13 y 46 ms (indicadores 46 ms y 180 KB, ficha 45 ms); armar el
+  menú, el inicio y la búsqueda con aportes no se nota.
+- `scripts/medir.py --escrituras`: ninguna pantalla escribe al abrirse (249 pantallas por cada uno de tres roles).
+- Línea base de arquitectura: de 56 archivos con 82 cruces a 35 con 50, cada uno con su motivo en la prueba.
+
+**Límites que conviene tener presentes.**
+1. **Apagar sí; quitar carpetas, todavía no.** Los nudos de la etapa 4 impiden sacar un paquete del árbol. La «versión
+   reducida» es hoy la misma base de código con módulos apagados.
+2. **Calidad lee sin exigir.** Con estudiantes, egresados o docencia apagados, sus indicadores automáticos salen
+   vacíos (no fallan). Falta decidir si se muestran como «sin fuente» o como cifra manual.
+3. **Dos fuentes para los nombres de las unidades:** la tabla `unidad` y las variables `PORTAL_*`.
+4. **Los datos de la Carrera siguen en el repositorio** (planes, marco de calidad, plan de mejora, marca) y las
+   migraciones siembran sus unidades: separar la «instancia» es la tarea siguiente de la liberación.
+5. **Combinaciones.** Se prueban el perfil mínimo, el de instituto, el de carrera, el completo y cada módulo apagado por
+   separado; no todas las combinaciones.
+
+**Mejoras propuestas, en el orden en que rinden más.**
+1. Mover los informes de investigación de `app/calidad` a un paquete propio (`app/informes`): deshace el nudo más
+   grande y deja a `calidad` solo con el SIAC.
+2. Punto de extensión `fuentes_de_indicadores`, para que cada módulo entregue sus cifras a Calidad.
+3. Una sola pantalla de «Mis pendientes» y otra de «Mi calendario» para toda la persona (hoy hay dos de cada una): ya
+   es solo un cambio de pantalla, porque los datos llegan por aportes.
+4. Leer los nombres de las unidades de la tabla `unidad` y una pantalla de Administración para editarlas (hoy,
+   `scripts/unidades.py`).
+5. El historial docente por aportes (grado y auxiliaturas).
+6. Tareas periódicas con un trabajador propio y cola persistente, en lugar de dispararlas una petición web.
+7. Integración continua más corta: migrar la base una vez por sesión de pruebas y copiarla por prueba.
+8. Experiencia de uso: migas de pan, indicador de carga global y manifiesto web para instalar en el teléfono.
+
+### Mejoras posteriores a la evaluación (16-nov-2026, a pedido del usuario)
+
+Las ocho mejoras propuestas arriba, una por commit.
+
+- **1. Informes de investigación en su paquete (hecha).** `app/informes` (antes en `app/calidad`): `informes.py`,
+  `anexo.py`, `programados.py`, `calidad_datos.py`, `estudiantes.py` y sus tres archivos de rutas, con su `modulo.py` y
+  su `aportes.py`. Las piezas de la hoja imprimible (estilo, membrete, barra, cifras, descargas) pasaron a
+  `app/comun/componentes/informe.py`, porque las usan también los informes de docencia, de estudiantes y de calidad.
+  Las direcciones no cambian. **Lo que mostró el cambio:** los cruces contados subieron de 50 a 59, porque la
+  dependencia entre los informes y el SIAC ya existía, oculta dentro de un mismo paquete: Calidad usa el informe de
+  I+D+i y la memoria para sus indicadores, y el CV incluye la capacitación. Los informes del cuerpo académico y de
+  seguimiento estudiantil se quedan en `app/calidad` (son de `oferta` y de `estudiantes`, y moverlos crearía cruces
+  nuevos).
+- **2. Indicadores «sin fuente» (hecha, con otro alcance).** `indicadores.FUENTES` declara de qué módulos salen los
+  datos de cada cálculo; con uno apagado, `calcular` no devuelve un cero engañoso sino «Sin fuente: el módulo … no
+  está activo. Puede registrar la cifra a mano». Una prueba exige que todo cálculo declare su fuente. **No se
+  repartieron los cálculos entre los paquetes** (el punto `fuentes_de_indicadores`): son unas cincuenta funciones que
+  comparten un mismo contexto de cálculo y producen las cifras oficiales de calidad; moverlas arriesga esas cifras sin
+  cambiar lo que ve el usuario. `calidad/indicadores.py` sigue importando de los otros paquetes.- **5. Historial docente por aportes (hecha).** «Mi historial docente» y sus certificados se arman con tres puntos
+  nuevos (`historial`, `certificados`, `titulares_de_certificados`): grado y auxiliaturas aportan sus tutorías,
+  tribunales y constancias; investigación, los proyectos; tutoría, la cifra de tutorados. El código de verificación y el
+  formato de un certificado están en `app/comun/certificados.py`. `academico/historial.py` ya no importa de `servicios`
+  (2 cruces menos) y, con un módulo apagado, su sección no aparece.
+- **4. Una sola fuente para los nombres de las unidades (hecha).** `config.NOMBRE_CARRERA`, `NOMBRE_INSTITUTO`,
+  `UNIVERSIDAD`, `FACULTAD`, `DESCRIPCION_SISTEMA`, `NOMBRE_COMPLETO` y `FILIACIONES` se leen de la tabla `unidad` al
+  pedirlos (`config.__getattr__`); la variable de entorno, si está puesta, manda. Pantalla nueva **Administración →
+  Unidades** (`/admin/unidades`, acción `configurar_unidades`, solo Administración del sistema, con auditoría).
+  `scripts/unidades.py` queda para antes de tener una cuenta.
+- **3. Una pantalla de pendientes y una de calendario (hecha).** `/pendientes`, `/calendario` y `/calendario.ics`
+  (`app/comun/rutas/agenda.py`) juntan lo de la docencia y lo de la investigación de la persona, sin repetir lo que
+  llega por los dos lados. El menú lleva a ellas bajo «Inicio» («Mis pendientes», «Mi calendario») y pierde los cuatro
+  ítems anteriores; las aporta cada módulo que le da algo que hacer (docencia, investigación, plan de mejora) y el menú
+  las muestra una vez. Las direcciones anteriores (`/docencia/pendientes`, `/investigacion/pendientes` y sus calendarios)
+  siguen respondiendo con lo de su ámbito. El dibujo de las tres parejas de pantallas es uno solo
+  (`app/comun/componentes/agenda.py`) y desapareció la consulta repetida de `calidad/aportes._tiene_docencia`: el
+  pendiente del plan de mejora lleva siempre a `/pendientes`.
+- **6. Reloj propio para las tareas periódicas (hecha).** Las lanzaba una petición web (`Beforeware(_mantenimiento)`):
+  sin visitas no salían los recordatorios ni se reintentaban los correos. Ahora un hilo del servidor
+  (`main._reloj`, que arranca y se detiene con él) mira cada 5 minutos si toca; el candado y los plazos de cada tarea
+  no cambian. Las pruebas crean la aplicación sin servidor, así que no tienen reloj. **No se agregó una cola
+  persistente:** las tareas son revisiones que se repiten y cada una ya recuerda qué avisó; lo que debe sobrevivir a un
+  reinicio (los correos) ya tiene su cola. Los pedidos a la IA siguen en hilos sueltos.
+- **7. Pruebas más cortas (hecha).** Medido: crear la aplicación de una prueba costaba 444 ms por las 96 migraciones y
+  60 ms sobre una base ya migrada. `tests/conftest.py` migra una base «plantilla» por sesión y cada base nueva parte de
+  su copia. La batería completa con navegador bajó de unos 15 minutos a 6 min 40 s en el equipo de desarrollo (1.173
+  pruebas). No se agregó `pytest-xdist` (sería una dependencia nueva) ni se tocó el límite de 45 minutos del trabajo de
+  integración continua.
+- **8. Experiencia de uso (hecha en dos de tres; la tercera ya existía).**
+  - **Migas de pan:** «Grupo › Sección › Página» sobre el título en las páginas que están dentro de una sección del menú
+    (en la raíz de la sección no se muestran). El marcador va en `layout.pagina` y lo llena `static/js/acciones.js` con
+    el enlace activo del menú, sin JavaScript en el HTML. Algunas pantallas ya tenían su propio enlace «← volver»; se
+    dejaron.
+  - **Manifiesto web:** `/manifest.webmanifest` (público, con el nombre de la instalación) e iconos de 180, 192 y 512 px
+    (`static/img/marca/icono-*.png`, generados del isotipo): el sistema se puede instalar en el teléfono o el escritorio.
+    No guarda nada fuera de línea.
+  - **Indicador de carga global:** ya existía desde PLAN §62 (una barra bajo la franja superior cuando una petición
+    tarda más de 300 ms). La observación de la evaluación («solo 4 archivos lo usan») contaba los indicadores
+    particulares y era equivocada: no había nada que hacer.
+
+**Estado tras las mejoras (16-nov-2026).** Hechas las ocho; dos con menos alcance del propuesto y dicho en su punto
+(los cálculos de los indicadores no se repartieron entre paquetes; no hubo cola persistente de tareas) y una que ya
+existía (el indicador de carga). Quedan 35 archivos con 57 cruces entre paquetes: el aumento respecto de los 50 de la
+evaluación viene de haber separado los informes de `app/calidad`, que hizo visible una dependencia que ya existía.
+Siguen pendientes, fuera de este trabajo: separar los datos de la Carrera como «instancia», repartir los cálculos de
+los indicadores y quitar del árbol la carpeta de un módulo apagado.
+
+## 74. Instancia y esquema base: el sistema empieza de cero (en curso, 16-nov-2026)
+
+**Objetivo:** separar lo que es de la Carrera de Matemática de lo que es el sistema, para que otra unidad instale TAU
+sin recibir los planes, el marco de calidad ni la marca de Matemática. El diseño está en `docs/instancia-plan.md`.
+
+### Decisiones del usuario (16-nov-2026)
+1. **Todo lo que había es de prueba y se da por perdido:** la base de desarrollo y la desplegada se crean de nuevo. Por
+   eso se pudo reemplazar las migraciones (la regla de no editar una migración aplicada protege bases en uso).
+2. **Instancia de ejemplo ficticia y chica** en el repositorio; los planes y el marco de Matemática se guardan aparte,
+   en `instancias/cmat/`.
+3. **El repositorio público empieza con un historial nuevo** (se hace al final de esta sección, con confirmación).
+4. **Nombres técnicos:** confirmado el 17-nov-2026. `PORTAL_*` pasa a `TAU_*`, `portal.db` a `tau.db`, el servicio a `tau`,
+   la cookie a `tau_sesion`, el registro a `tau` y el proyecto a `tau`. Las variables `PORTAL_*` ya no se leen: el sistema
+   avisa al arrancar si el entorno aún las trae. «Portal del estudiante» sigue siendo el nombre de esa función.
+
+### Etapas
+- **I1 e I2 (hechas, 16-nov-2026): instancia, cargador y esquema base.**
+  - **Esquema base:** `migrations/0001-esquema.sql` reemplaza las 96 migraciones. Se generó de una base migrada con ellas
+    y se verificó que una base nueva tiene los mismos 264 objetos (tablas e índices, sentencia por sentencia) y los
+    mismos datos de referencia (tipos de producto y de actividad, índices). No trae datos de ninguna unidad: las cuatro
+    unidades llevan nombres genéricos (UNIV, FAC, CARR, INST).
+  - **Instancia:** una carpeta con `instancia.toml` (nombre, perfil de módulos, `departamento_propio`), `unidades.csv`,
+    `catalogos/` (áreas y líneas de investigación; MSC2020 si la unidad lo usa), `planes/` y `calidad/`. La de esta
+    instalación es `config.INSTANCIA` (`PORTAL_INSTANCIA`; por omisión, `instancias/ejemplo`); sus parámetros se leen con
+    `app/comun/instancia.py`.
+  - **Cargador:** `app/instalacion.py` (cada paso carga solo lo que falta) y `scripts/instalar.py`, que crea la base,
+    carga la instancia y fija los módulos de su perfil; sobre una base con cuentas se niega. Los planes de la instancia
+    quedan vigentes en la reforma de su nombre, con duración y ciclos.
+  - **Verificación de la carga:** instalar `instancias/cmat` deja las mismas filas que dejaban las migraciones en las 18
+    tablas de planes, calidad, unidades y líneas (comparadas sin fechas ni ids).
+  - **Dos instancias en el repositorio:** `instancias/ejemplo` (Carrera de Ejemplo: 8 asignaturas, 3 líneas, 6
+    indicadores) y `instancias/cmat` (Matemática: lo que estaba en `datos/` y `catalogos/`).
+  - **Pruebas:** usan `instancias/cmat` como datos de prueba (40 archivos nombran sus siglas y 19 sus asignaturas); la
+    base «plantilla» de la sesión se instala una vez y cada prueba parte de su copia. `tests/test_instancia.py` instala
+    la de ejemplo desde cero y recorre el sistema. El seed y las capturas también cargan `instancias/cmat`.
+  - **Se quitaron cuatro pruebas** que ejecutaban migraciones que ya no existen
+    (`test_la_migracion_clasifica_las_gestiones_por_sus_fechas`, `test_la_migracion_deja_todo_activo_en_una_base_en_uso`,
+    `test_migracion_renombra_el_comite_a_comision_de_calidad` y `test_migracion_une_los_periodos`): no hay bases que
+    migrar. La regla «una base con cuentas migra con todos los módulos activos» (§73, etapa 1) deja de existir.
+  - **Una base anterior no arranca:** `init_db` falla con un mensaje claro si el esquema de la base es de un número
+    mayor que el del código. Hay que crearla de nuevo (`scripts/instalar.py` o `scripts/seed.py --reset`).
+  - **Si las pruebas dependen de `instancias/cmat`**, esa carpeta no se puede sacar del repositorio sin darles otros
+    datos: queda anotado para cuando se decida qué se publica.
+- **I3 (hecha, 17-nov-2026): marca genérica y marca de la instancia.**
+  - **Marca genérica** en el código: isotipo τ, logotipo «TAU · Gestión académica y científica», iconos y una paleta
+    azul petróleo (`app/comun/marca.py`; `PRINCIPAL`, `ACENTO`, `SECUNDARIO`, `NEUTRO`, con `AZUL`, `ROJO`, `TURQUESA` y
+    `GRIS` como nombres anteriores).
+  - **Marca de la instancia:** su carpeta `marca/` trae `marca.toml` (colores, tema claro y oscuro, panel, series de los
+    gráficos) y las imágenes con los mismos nombres de `static/img/marca/`, más `instituto.png` para el membrete. La de
+    Matemática pasó completa a `instancias/cmat/marca/`; la de ejemplo no trae marca y usa la genérica.
+  - **Imágenes:** se piden en las mismas direcciones (`/static/img/marca/…`, `/static/favicon.svg`) y
+    `componentes/recursos.py` sirve las de la instancia si existen. Sin logo del instituto, el membrete lo omite.
+  - **Tema:** ya no se compila con Tailwind (salen `estilos/tema-cmat.css` y `scripts/tema_marca.py`). La aplicación lo
+    genera de la marca y lo sirve en `/tema.css` (público, con la dirección versionada). La clase del tema pasa a
+    `uk-theme-tau`. Cambiar un color ya no pide recompilar.
+  - **Pruebas:** el contraste AA se revisa en la paleta de la instalación, en la de cada instancia con marca y, en un
+    proceso sin instancia, en la genérica.
+- **I4 (hecha, 17-nov-2026): los textos ya no nombran a una unidad.**
+  - **Filiación:** «IIMAT/UMSA» y «IIMAT, CMAT, FCPN o UMSA» salen de las siglas de la tabla `unidad`
+    (`unidades.filiacion_corta()` y `filiacion_larga()`), en la interfaz, los informes y sus exportaciones.
+  - **Nombre de la carrera y de la universidad:** correos de encuestas y del directorio, la página de gracias, el
+    vínculo, el formulario de estudiantes y el acta de auxiliaturas usan `config.NOMBRE_CARRERA` y `config.UNIVERSIDAD`.
+  - **IA:** las instrucciones llevan `{carrera}`, `{instituto}` y `{universidad}`, que `ia.servicio.instrucciones` llena
+    con los nombres de la instalación.
+  - **Ejemplos de las plantillas CSV y de las ayudas:** correos `@universidad.example` y nombres genéricos.
+  - **LaTeX del perfil de grado:** la clase pasa de `perfil-cmat` a `perfil-grado`.
+  - **Prueba:** `test_ningun_texto_de_app_nombra_a_una_unidad` recorre los textos de `app/` (no los comentarios ni la
+    documentación del código) y las instrucciones de la IA. Excepción declarada: el módulo de auxiliaturas cita el
+    reglamento del HCU de la UMSA que implementa.
+  - **Lo que no se tocó:** los comentarios y la documentación del código que cuentan de dónde viene una regla
+    («Política de Calidad de la UMSA», PLAN §…), y `PLAN.md`, que es la historia de las decisiones de la Carrera.
+- **I5 (hecha, 17-nov-2026): instalación desde cero.** `docs/despliegue.md` §3 explica cómo armar la instancia de una
+  unidad y crear la base con ella; `instancias/README.md` describe las dos del repositorio; en el contenedor,
+  `scripts/iniciar.sh` carga la instancia en el primer arranque si no hay base ni réplica y `PORTAL_INSTANCIA` está
+  definida. `tests/test_instancia.py` instala la de ejemplo desde cero y recorre el sistema.
+- **`instancias/cmat` fuera del repositorio público (decisión del 17-nov-2026).** Está en `.gitignore` (solo se versionan
+  `instancias/ejemplo` y `instancias/README.md`) y vive en el equipo de desarrollo. Consecuencias: (1) con la instancia
+  de ejemplo, de ~1.130 pruebas pasan 746 y se omiten ~390 que dependen de los datos de Matemática
+  (`tests/requieren_cmat.txt`, generada con `TAU_INSTANCIA=instancias/ejemplo`) más los flujos en Chrome; la
+  integración continua de GitHub corre solo esa parte. (2) El seed y las capturas piden `instancias/cmat` y avisan si
+  falta. (3) El formato de los planes y del marco quedó documentado en la instancia de ejemplo, junto con una plantilla de
+  `marca.toml`. **Para recuperar la cobertura completa en el repositorio público** hace falta una instancia de pruebas
+  sintética que imite esos datos (siglas MAT-111…, cuatro planes, líneas): unos días de trabajo, no hecho.
+- **Manual de usuario fuera del repositorio público (decisión del 17-nov-2026).** El manual de Matemática (15 capítulos,
+  116 capturas, PDF de 30 MB) pasó a `instancias/cmat/manual/` y no se versiona; el README ya no enlaza el PDF. El manual es
+  ahora de la instancia: `scripts/manual.py` lo busca en `manual/` de `TAU_INSTANCIA` (o con `--manual` / `TAU_MANUAL`) y lo
+  arma con la marca de esa instancia. Dependencias depuradas: las rutas relativas a `static/` (fuentes y logotipo) se
+  resuelven al armar, ya no dependen de `docs/manual/`; `datos()` usa `unidades.carrera()` e `instituto()` en vez de siglas;
+  `scripts/instancia_demo.py` centraliza qué instancia usan el seed, el manual y `scripts/medir.py` (antes estaba repetido,
+  y `medir.py` dependía de Matemática sin avisarlo); las capturas exigen `instancias/cmat` y avisan si falta. El plan para
+  escribir el manual del sistema genérico está en `docs/manual-plan.md` (etapas M0 a M5; M0 hecha). El manual de Matemática
+  sigue sin actualizar desde el 15-nov-2026.
+- **Hecho el 17-nov-2026:** nombres técnicos. **Pendiente de confirmar:** el envío del historial nuevo de git (el usuario decidió
+  que `instancias/cmat` no entra en el repositorio público).
+
+### Lo que queda atado a Matemática, a propósito
+- **Las pruebas, el seed, las capturas y `scripts/manual.py`** usan `instancias/cmat` (40 archivos de prueba nombran
+  sus siglas y 19 sus asignaturas). Sacar esa carpeta del repositorio pide darles otros datos.
+- **El módulo de auxiliaturas** implementa un reglamento del HCU de la UMSA y lo cita.
+- **`PLAN.md`, `docs/piloto.md`, `docs/gobernanza.md` y la guía de uso** cuentan la historia y el uso en la Carrera de
+  Matemática: no se reescribieron.
+- **Los comentarios del código** siguen citando las políticas de la UMSA de donde sale cada regla.
+

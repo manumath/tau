@@ -1,0 +1,7 @@
+criterio,codigo,nombre,tipo,formula,fuente,unidad_medida,frecuencia,sentido,responsable,referencia,atributos
+D1.1,D1.1.a,Antigüedad del plan de estudios vigente,estructura,Año en curso − año de aprobación del plan vigente.,auto:antiguedad_plan,años,anual,menor,Dirección de Carrera,,pertinencia
+D1.1,D1.1.b,Plan de desarrollo aprobado y vigente,estructura,"Existe un plan de desarrollo aprobado y vigente (1 = sí, 0 = no).",manual,sí/no,anual,mayor,Dirección de Carrera,,transparencia
+D1.2,D1.2.a,Jornadas completas equivalentes,estructura,Carga horaria contratada / 160.,auto:jce,número,anual,mayor,Dirección de Carrera,,eficacia
+D1.2,D1.2.b,Docentes con posgrado,estructura,Docentes con maestría o doctorado / docentes vinculados × 100.,auto:pct_posgrado,%,anual,mayor,Dirección de Carrera,,eficacia
+D2.1,D2.1.a,Estudiantes que ingresan,resultado,Estudiantes de la cohorte del año.,auto:ingresantes,número,anual,mayor,Dirección de Carrera,,pertinencia
+D2.1,D2.1.b,Artículos indexados,resultado,Artículos en revistas indexadas con filiación de la unidad en el año.,auto:articulos_indexados,número,anual,mayor,Dirección del Instituto,,eficacia

@@ -1,0 +1,322 @@
+"""Estudiantes en la investigación: periodos de estudio de personas externas y su participación
+en tesis, publicaciones, proyectos y actividades.
+
+- Una persona era **estudiante** un año si ese año cae entre su ingreso y su egreso (o sigue
+  cursando). Es **graduada** un año si egresó titulada antes de ese año.
+- Tesis dirigida: producto del tipo «Tesis dirigida» con el tesista entre sus autores; los autores
+  del instituto son quienes la dirigen. En curso = «en preparación»; defendida = «publicado».
+"""
+from app.comun import config
+from app.comun.db import AHORA, get_db, sin_tildes, transaccion
+
+NIVELES = {"licenciatura": "Licenciatura", "maestria": "Maestría", "doctorado": "Doctorado"}
+TIPO_TESIS = "Tesis dirigida"
+
+
+def programa_por_omision(nivel: str) -> str:
+    return {"licenciatura": "Licenciatura en Matemática", "maestria": "Maestría en Matemática",
+            "doctorado": "Doctorado en Matemática"}.get(nivel, "") + f" ({config.UNIVERSIDAD})"
+
+
+def periodos(externo_id: int) -> list[dict]:
+    return get_db().q("SELECT * FROM estudiante WHERE externo_id = ? ORDER BY desde, id", [externo_id])
+
+
+def obtener_periodo(eid: int) -> dict | None:
+    filas = get_db().q("SELECT * FROM estudiante WHERE id = ?", [eid])
+    return filas[0] if filas else None
+
+
+def estudiante_en(externo_id: int, anio: int) -> dict | None:
+    """Periodo de estudios que cubre el año (o None)."""
+    return next((p for p in periodos(externo_id) if p["desde"] <= anio and (p["hasta"] is None or anio <= p["hasta"])),
+                None)
+
+
+def graduado_en(externo_id: int, anio: int) -> dict | None:
+    """Periodo del que egresó titulado antes del año (o None)."""
+    return next((p for p in reversed(periodos(externo_id)) if p["titulado"] and p["hasta"] is not None
+                 and p["hasta"] < anio), None)
+
+
+def etiqueta(externo_id: int, anio: int | None = None) -> str | None:
+    """«Estudiante de maestría» / «Graduado(a) de licenciatura» (hoy, o en el año dado)."""
+    from datetime import date
+    anio = anio or date.today().year
+    if (p := estudiante_en(externo_id, anio)):
+        return f"Estudiante de {NIVELES[p['nivel']].lower()}"
+    if (p := graduado_en(externo_id, anio)):
+        return f"Graduado(a) de {NIVELES[p['nivel']].lower()}"
+    return None
+
+
+def validar(d: dict, externo_id: int, excluir: int | None = None) -> tuple[dict, list[str]]:
+    errores = []
+    nivel = d.get("nivel")
+    if nivel not in NIVELES:
+        errores.append("Elija el nivel.")
+    desde, hasta = str(d.get("desde") or "").strip(), str(d.get("hasta") or "").strip()
+    if not (desde.isdigit() and 1950 <= int(desde) <= 2100):
+        errores.append("Indique el año de ingreso.")
+    if hasta and not (hasta.isdigit() and 1950 <= int(hasta) <= 2100):
+        errores.append("El año de egreso no es válido.")
+    elif hasta and desde.isdigit() and int(hasta) < int(desde):
+        errores.append("El egreso no puede ser anterior al ingreso.")
+    titulado = str(d.get("titulado") or "") in ("1", "on", "true")
+    if titulado and not hasta:
+        errores.append("Para marcar la titulación, indique el año de egreso.")
+    datos = {"nivel": nivel, "programa": (d.get("programa") or "").strip() or (programa_por_omision(nivel) if nivel in NIVELES else None),
+             "del_programa": 0 if str(d.get("del_programa") or "1") in ("0", "") else 1,
+             "desde": int(desde) if desde.isdigit() else None, "hasta": int(hasta) if hasta.isdigit() else None,
+             "titulado": int(titulado)}
+    if not errores:
+        for p in periodos(externo_id):
+            if p["id"] != excluir and p["nivel"] == nivel and p["desde"] <= (datos["hasta"] or 9999) \
+                    and (p["hasta"] or 9999) >= datos["desde"]:
+                errores.append(f"Ya tiene un periodo de {NIVELES[nivel].lower()} que se superpone ({p['desde']}–{p['hasta'] or 'hoy'}).")
+    return datos, errores
+
+
+def agregar(externo_id: int, d: dict, uid: int) -> list[str]:
+    datos, errores = validar(d, externo_id)
+    if not errores:
+        get_db().t.estudiante.insert(externo_id=externo_id, registrado_por=uid, **datos)
+    return errores
+
+
+def editar(eid: int, d: dict) -> list[str]:
+    p = obtener_periodo(eid)
+    if not p:
+        return ["Periodo no encontrado."]
+    datos, errores = validar(d, p["externo_id"], excluir=eid)
+    if not errores:
+        get_db().t.estudiante.update(id=eid, **datos)
+    return errores
+
+
+def eliminar(eid: int):
+    get_db().execute("DELETE FROM estudiante WHERE id = ?", [eid])
+
+
+# --- Consultas -------------------------------------------------------------------------------------------------
+
+def listar(texto: str = "", nivel: str = "", estado: str = "", con_seguimiento: bool = True) -> list[dict]:
+    """Personas con algún periodo de estudios. `estado`: 'cursando' | 'egresado'. Sin `con_seguimiento`, se omiten
+    los estudiantes de la Carrera cargados desde Seguimiento Académico (con RU) que no participan en la
+    investigación: su situación académica no es para quien solo mira la investigación (PLAN §49)."""
+    from datetime import date
+    hoy = date.today().year
+    patron = f"%{sin_tildes(texto.strip())}%"
+    filas = get_db().q(
+        """SELECT DISTINCT pe.* FROM persona_externa pe JOIN estudiante e ON e.externo_id = pe.id
+           WHERE (:t = '' OR sin_tildes(pe.nombres || ' ' || pe.apellidos) LIKE :p
+                  OR sin_tildes(pe.apellidos || ' ' || pe.nombres) LIKE :p)
+             AND (:n = '' OR e.nivel = :n)
+           ORDER BY sin_tildes(pe.apellidos), sin_tildes(pe.nombres)""", {"t": texto.strip(), "p": patron, "n": nivel})
+    if not filas:
+        return []
+    ids = [f["id"] for f in filas]
+    por_persona: dict[int, list[dict]] = {}
+    for p in _en_bloques("SELECT * FROM estudiante WHERE externo_id IN ({}) ORDER BY desde, id", ids):
+        por_persona.setdefault(p["externo_id"], []).append(p)
+    participaciones = _participaciones(ids)
+    res = []
+    for f in filas:
+        ps = por_persona.get(f["id"], [])
+        cursando = any(p["desde"] <= hoy and (p["hasta"] is None or hoy <= p["hasta"]) for p in ps)
+        if estado == "cursando" and not cursando or estado == "egresado" and cursando:
+            continue
+        part = participaciones[f["id"]]
+        if not con_seguimiento and _solo_seguimiento(ps, part):
+            continue
+        res.append({**f, "periodos": ps, "cursando": cursando, "participacion": part})
+    return res
+
+
+_BLOQUE = 900   # SQLite admite hasta 999 parámetros por consulta en versiones antiguas
+
+
+def _en_bloques(sql: str, ids: list[int]) -> list[dict]:
+    """Ejecuta `sql` (con un `IN ({})`) por bloques de ids: una consulta por bloque en vez de una por persona."""
+    res = []
+    for i in range(0, len(ids), _BLOQUE):
+        trozo = ids[i:i + _BLOQUE]
+        res += get_db().q(sql.format(",".join("?" * len(trozo))), trozo)
+    return res
+
+
+def _participaciones(ids: list[int]) -> dict[int, dict]:
+    """`resumen_participacion` de varias personas a la vez (cuatro consultas agrupadas)."""
+    res = {i: {"tesis": 0, "productos": 0, "proyectos": 0, "actividades": 0} for i in ids}
+    for f in _en_bloques(f"""SELECT pa.externo_id AS id, SUM(t.nombre = '{TIPO_TESIS}') AS tesis,
+                                    SUM(t.nombre != '{TIPO_TESIS}') AS productos
+                             FROM producto_autor pa JOIN producto p ON p.id = pa.producto_id
+                             JOIN tipo_producto t ON t.id = p.tipo_id
+                             WHERE pa.externo_id IN ({{}}) GROUP BY pa.externo_id""", ids):
+        res[f["id"]]["tesis"], res[f["id"]]["productos"] = f["tesis"], f["productos"]
+    for tabla, clave in (("proyecto_participante", "proyectos"), ("actividad_participante", "actividades")):
+        for f in _en_bloques(f"SELECT externo_id AS id, COUNT(*) AS n FROM {tabla} WHERE externo_id IN ({{}}) "
+                             "GROUP BY externo_id", ids):
+            res[f["id"]][clave] = f["n"]
+    return res
+
+
+def _solo_seguimiento(ps: list[dict], participacion: dict) -> bool:
+    return any(p["registro_universitario"] for p in ps) and not any(participacion.values())
+
+
+def visible(externo_id: int, con_seguimiento: bool) -> bool:
+    """¿Puede verse la ficha? Ver `listar`."""
+    return con_seguimiento or not _solo_seguimiento(periodos(externo_id), resumen_participacion(externo_id))
+
+
+def resumen_participacion(externo_id: int) -> dict:
+    db = get_db()
+    return {
+        "tesis": db.q("""SELECT COUNT(*) n FROM producto_autor pa JOIN producto p ON p.id = pa.producto_id
+                         JOIN tipo_producto t ON t.id = p.tipo_id WHERE pa.externo_id = ? AND t.nombre = ?""",
+                      [externo_id, TIPO_TESIS])[0]["n"],
+        "productos": db.q("""SELECT COUNT(*) n FROM producto_autor pa JOIN producto p ON p.id = pa.producto_id
+                             JOIN tipo_producto t ON t.id = p.tipo_id WHERE pa.externo_id = ? AND t.nombre != ?""",
+                          [externo_id, TIPO_TESIS])[0]["n"],
+        "proyectos": db.q("SELECT COUNT(*) n FROM proyecto_participante WHERE externo_id = ?", [externo_id])[0]["n"],
+        "actividades": db.q("SELECT COUNT(*) n FROM actividad_participante WHERE externo_id = ?", [externo_id])[0]["n"],
+    }
+
+
+def participacion(externo_id: int) -> dict:
+    """Detalle para la ficha: tesis, productos, proyectos y actividades en que participa."""
+    db = get_db()
+    return {
+        "productos": db.q("""SELECT p.id, p.titulo, p.anio, t.nombre AS tipo, p.estado_publicacion
+                             FROM producto_autor pa JOIN producto p ON p.id = pa.producto_id
+                             JOIN tipo_producto t ON t.id = p.tipo_id WHERE pa.externo_id = ?
+                             ORDER BY p.anio DESC""", [externo_id]),
+        "proyectos": db.q("""SELECT p.id, p.nombre, pp.rol, pp.fecha_desde, pp.fecha_hasta FROM proyecto_participante pp
+                             JOIN proyecto p ON p.id = pp.proyecto_id WHERE pp.externo_id = ?
+                             ORDER BY p.fecha_inicio DESC""", [externo_id]),
+        "actividades": db.q("""SELECT a.id, a.titulo, a.fecha_inicio, ap.rol FROM actividad_participante ap
+                               JOIN actividad a ON a.id = ap.actividad_id WHERE ap.externo_id = ?
+                               ORDER BY a.fecha_inicio DESC""", [externo_id]),
+    }
+
+
+def ficha(p: dict) -> int | None:
+    """La ficha de persona externa que guarda los periodos de estudiante de `p` (autor o participante):
+    la propia si es externa; si tiene cuenta, la ficha que se le vinculó al recibirla (PLAN §42)."""
+    if not p.get("id"):
+        return None
+    if not p.get("interno"):
+        return p["id"]
+    filas = get_db().q("SELECT id FROM persona_externa WHERE usuario_id = ? LIMIT 1", [p["id"]])
+    return filas[0]["id"] if filas else None
+
+
+def estudiante_de(p: dict, anio: int) -> dict | None:
+    """Periodo de estudios de la persona (externa o con cuenta) que cubre el año."""
+    f = ficha(p)
+    return estudiante_en(f, anio) if f else None
+
+
+def graduado_de(p: dict, anio: int) -> dict | None:
+    f = ficha(p)
+    return graduado_en(f, anio) if f else None
+
+
+def es_estudiante_ref(autores: list[dict], anio: int) -> list[dict]:
+    """Autores de un producto que eran estudiantes ese año (también quien luego recibió cuenta)."""
+    return [a for a in autores if estudiante_de(a, anio)]
+
+
+# --- Cuentas de estudiante (PLAN §49, etapa 2) ---------------------------------------------------------------------
+# La cuenta se une a la ficha por `cuenta_estudiante` (no por `persona_externa.usuario_id`, que es el paso de
+# externo a investigador, PLAN §42). Se crea sin contraseña: se ingresa con un enlace al correo.
+
+def cuenta_de(uid: int) -> int | None:
+    """Ficha (persona externa) de la cuenta de estudiante del usuario, o None."""
+    filas = get_db().q("SELECT externo_id FROM cuenta_estudiante WHERE usuario_id = ?", [uid])
+    return filas[0]["externo_id"] if filas else None
+
+
+def usuario_de(externo_id: int) -> dict | None:
+    filas = get_db().q("""SELECT u.* FROM usuario u JOIN cuenta_estudiante c ON c.usuario_id = u.id
+                          WHERE c.externo_id = ?""", [externo_id])
+    return filas[0] if filas else None
+
+
+def solo_estudiante(usuario: dict) -> bool:
+    """¿Es una cuenta solo de estudiante? Tiene ficha de estudiante y nada del personal: ni perfil de investigador,
+    ni roles vigentes, ni vínculo con la Carrera, ni administración. Solo ve su propio seguimiento."""
+    return bool(cuenta_de(usuario["id"]) and not usuario.get("es_investigador") and not usuario.get("es_admin")
+                and not usuario.get("categoria") and not usuario.get("roles"))
+
+
+def crear_cuenta(externo_id: int, creada_por: int | None) -> dict | None:
+    """Crea la cuenta (sin contraseña) de un estudiante con correo. None si no se puede: sin correo, ya tiene
+    cuenta o el correo ya lo usa otra cuenta (no se vincula sola: podría ser un correo mal escrito)."""
+    from app.comun import usuarios
+    filas = get_db().q("SELECT * FROM persona_externa WHERE id = ?", [externo_id])
+    if not filas or not (filas[0]["email"] or "").strip() or usuario_de(externo_id) \
+            or usuarios.por_email(filas[0]["email"]):
+        return None
+    p = filas[0]
+    with transaccion():
+        u = usuarios.crear(p["email"], p["nombres"], p["apellidos"], None, es_investigador=False)
+        get_db().t.cuenta_estudiante.insert(externo_id=externo_id, usuario_id=u["id"], creada_por=creada_por)
+    return u
+
+
+def crear_cuentas(creada_por: int | None) -> dict:
+    """Cuentas para los estudiantes de la Carrera que cursan (o están congelados), tienen correo y aún no tienen
+    cuenta. → cuántas creó y cuántos quedaron sin correo o con el correo en uso."""
+    creadas = sin_correo = en_uso = 0
+    for f in get_db().q("""SELECT DISTINCT pe.id, pe.email FROM persona_externa pe JOIN estudiante e ON e.externo_id = pe.id
+                           WHERE e.cohorte_anio IS NOT NULL AND e.estado IN ('cursando', 'congelado')
+                             AND pe.id NOT IN (SELECT externo_id FROM cuenta_estudiante)"""):
+        if not (f["email"] or "").strip():
+            sin_correo += 1
+        elif crear_cuenta(f["id"], creada_por):
+            creadas += 1
+        else:
+            en_uso += 1
+    return {"creadas": creadas, "sin_correo": sin_correo, "en_uso": en_uso}
+
+
+def aceptar_consentimiento(externo_id: int):
+    get_db().execute(f"UPDATE cuenta_estudiante SET consentimiento_en = {AHORA} WHERE externo_id = ?", [externo_id])
+
+
+def consintio(externo_id: int) -> bool:
+    filas = get_db().q("SELECT consentimiento_en FROM cuenta_estudiante WHERE externo_id = ?", [externo_id])
+    return bool(filas and filas[0]["consentimiento_en"])
+
+
+def es_tutor(uid: int) -> bool:
+    """¿Tiene estudiantes asignados como tutor? (para mostrar «Tutoría» en la barra)."""
+    return bool(get_db().q("SELECT 1 FROM tutoria_asignacion WHERE tutor_id = ? AND hasta IS NULL LIMIT 1", [uid]))
+
+
+def tutor_de(externo_id: int) -> dict | None:
+    """Tutor(a) vigente del estudiante (nombre y correo), o None."""
+    filas = get_db().q("""SELECT u.id, u.nombres, u.apellidos, u.email FROM tutoria_asignacion t JOIN usuario u ON u.id = t.tutor_id
+                          WHERE t.externo_id = ? AND t.hasta IS NULL""", [externo_id])
+    return filas[0] if filas else None
+
+
+def es_egresado(externo_id: int) -> bool:
+    """¿Se tituló de la licenciatura de la Carrera?"""
+    return bool(get_db().q("""SELECT 1 FROM estudiante WHERE externo_id = ? AND nivel = 'licenciatura' AND del_programa = 1
+                              AND estado = 'titulado' LIMIT 1""", [externo_id]))
+
+
+def requiere(auth: dict):
+    """La ficha del estudiante de la sesión → (ficha, None) si la cuenta es de estudiante y ya aceptó el uso de sus datos;
+    si no, (None, respuesta). Toda ruta de `/estudiante/*`, del módulo que sea, saca la ficha de aquí y nunca de la
+    dirección (PLAN §49)."""
+    from fasthtml.common import Response   # diferida: este módulo es de lógica y casi nadie más responde desde aquí
+    externo = cuenta_de(auth["id"])
+    if externo is None:
+        return None, Response("Esta cuenta no es de estudiante.", status_code=403)
+    if not consintio(externo):
+        return None, Response("Primero acepte el uso de sus datos.", status_code=403)
+    return externo, None

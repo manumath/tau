@@ -1,0 +1,9 @@
+sigla,nombre,tipo,semestre,ciclo,horas_teoricas,horas_practicas,horas_laboratorio,creditos,requisitos
+EJE-101,Introducción a la disciplina,obligatoria,1,básico,4,2,,,
+EJE-102,Métodos I,obligatoria,1,básico,4,2,,,
+EJE-201,Fundamentos I,obligatoria,2,básico,4,2,,,EJE-101
+EJE-202,Métodos II,obligatoria,2,básico,4,2,2,,EJE-102
+EJE-301,Fundamentos II,obligatoria,3,superior,4,2,,,EJE-201
+EJE-302,Análisis de datos,obligatoria,3,superior,4,2,2,,EJE-202
+EJE-401,Seminario,obligatoria,4,superior,4,2,,,EJE-301
+EJE-402,Trabajo de grado,trabajo_final,4,superior,4,4,,,EJE-301;EJE-302

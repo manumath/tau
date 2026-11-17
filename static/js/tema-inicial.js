@@ -1,0 +1,22 @@
+// Tema inicial de Franken UI (tema «tau»: los colores de la marca de la instalación, que sirve /tema.css) (lo que MonsterUI ponía en línea con headers_theme): clases de tema y
+// modo oscuro antes de pintar la página. Se carga sin defer en <head>. tests/test_csp.py comprueba que
+// coincide con headers_theme('cmat', mode='auto', radii = md, shadows/font = sm).
+const htmlElement = document.documentElement;
+        
+          
+          const __FRANKEN__ = JSON.parse(localStorage.getItem("__FRANKEN__") || "{}");
+    
+          if (
+            __FRANKEN__.mode === "dark" ||
+            (!__FRANKEN__.mode &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches)
+          ) {
+            htmlElement.classList.add("dark");
+          } else {
+            htmlElement.classList.remove("dark");
+          }
+        
+          htmlElement.classList.add(__FRANKEN__.theme || "uk-theme-tau");
+          htmlElement.classList.add(__FRANKEN__.radii || "uk-radii-md");
+          htmlElement.classList.add(__FRANKEN__.shadows || "uk-shadows-sm");
+          htmlElement.classList.add(__FRANKEN__.font || "uk-font-sm");
