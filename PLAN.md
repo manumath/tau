@@ -4667,7 +4667,8 @@ sin recibir los planes, el marco de calidad ni la marca de Matemática. El dise�
   `scripts/instancia_demo.py` centraliza qué instancia usan el seed, el manual y `scripts/medir.py` (antes estaba repetido,
   y `medir.py` dependía de Matemática sin avisarlo); las capturas exigen `instancias/cmat` y avisan si falta. El plan para
   escribir el manual del sistema genérico está en `docs/manual-plan.md` (etapas M0 a M5; M0 hecha). El manual de Matemática
-  sigue sin actualizar desde el 15-nov-2026.
+  se actualizó el 18-nov-2026 (decisión del usuario): 17 capítulos con los módulos, unidades, perfiles, agenda unificada y teléfono;
+  120 capturas con datos ficticios nuevos de calidad; la versión del 15-nov quedó en `instancias/cmat/manual-anterior/`.
 - **Hecho el 17-nov-2026:** nombres técnicos. **Pendiente de confirmar:** el envío del historial nuevo de git (el usuario decidió
   que `instancias/cmat` no entra en el repositorio público).
 

@@ -433,8 +433,11 @@ carpeta (`instancias/<nombre>/manual/`) y se arma con la marca de esa instancia.
 versión ilustrada y por roles. El plan para escribir el del sistema genérico, y no solo el de una Carrera, está en
 [manual-plan.md](manual-plan.md).
 
-**Sin actualizar desde el 15-nov-2026 (decisión del usuario):** el de Matemática quedó como estaba y no se regenera al
-cambiar una pantalla. Ya no coincide del todo con el sistema (menú, pendientes y calendario, módulos, instancias).
+**Actualizado el 18-nov-2026:** el de Matemática describe el sistema modular (menú, «Mis pendientes» y «Mi calendario»,
+módulos y perfiles, unidades, primer día de una instalación, indicadores «sin fuente», privacidad por módulo, instalación en el
+teléfono; capítulos 14 y 15 nuevos). No se regenera al cambiar una pantalla, sino por entregas. Las capturas incluyen metas y
+cifras manuales ficticias de calidad (`datos()`), la confirmación de apagar un módulo y una instalación nueva con el perfil mínimo
+(`CAPTURAS_NUEVA`). Una captura que lleva a una pantalla ausente se avisa al final (`fallas`).
 
 ```sh
 uv run python scripts/manual.py              # base de demostración, capturas y PDF (necesita instancias/cmat)

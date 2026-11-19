@@ -13,7 +13,7 @@ Nació en 2026 como «Portal de Investigación» del IIMAT. Los nombres técnico
 
 | Documento | Para qué |
 |---|---|
-| [Plan del manual de usuario](docs/manual-plan.md) | El manual de usuario **no se distribuye con el repositorio** (decisión del 17-nov-2026): el de la Carrera de Matemática vive en su instancia (`instancias/cmat/manual/`) y está desactualizado desde el 15-nov-2026. Este documento propone cómo escribir el del sistema. La referencia vigente es la guía de uso |
+| [Plan del manual de usuario](docs/manual-plan.md) | El manual de usuario **no se distribuye con el repositorio** (decisión del 17-nov-2026): el de la Carrera de Matemática vive en su instancia (`instancias/cmat/manual/`) y se actualizó el 18-nov-2026. Este documento propone cómo escribir el del sistema genérico. La referencia vigente es la guía de uso |
 | [Guía de uso](docs/guia-de-uso.md) | Referencia completa para cada rol: docentes e investigadores, direcciones, Comisión de calidad, estudiantes y administración |
 | [Importaciones](docs/importaciones.md) | Todas las cargas de datos (CSV, DOI, arXiv, BibTeX, OpenAlex): campos, claves de unión y orden de carga |
 | [Mantenimiento](docs/mantenimiento.md) | Para TI: cómo está armado, recetas (migraciones, pantallas, estilos, dependencias), operación y problemas frecuentes |

@@ -59,7 +59,7 @@ def datos(ruta: str):
 
     import main
     from app.academico import gestiones
-    from app.calidad import autoevaluacion, evidencias, marco, mejora
+    from app.calidad import autoevaluacion, evidencias, indicadores, marco, mejora
     from app.comun import estudiantes, permisos, tokens, unidades, usuarios
     from app.comun.db import get_db
     from app.estudiantil import actividad, encuestas, tutoria
@@ -271,6 +271,22 @@ def datos(ruta: str):
                                                 "fortalezas": fortalezas, "debilidades": debilidades}, escala)
         assert not err, err
         autoevaluacion.guardar_juicio(aid, k["id"], x, ada)
+    # Metas y cifras manuales (ficticias): sin ellas el tablero sale casi todo «sin meta» y «sin dato». Unos indicadores
+    # cumplen su meta y otros no, para que el semáforo y los filtros se vean como en uso.
+    por_codigo = {i["codigo"]: i["id"] for d in marco.arbol(m["id"], inactivos=False)
+                  for c in d["criterios"] for i in c["indicadores"]}
+    metas = {"D1.1.b": 80, "D1.2.a": 90, "D1.3.a": 90, "D1.3.b": 5, "D1.4.b": 70, "D1.5.a": 5, "D2.2.b": 3, "D2.3.b": 70,
+             "D3.1.d": 1.5, "D3.2.a": 75, "D3.2.b": 20, "D3.3.a": 50, "D3.3.b": 60, "D4.2.a": 40, "D4.3.a": 60,
+             "D5.1.b": 60, "D5.2.a": 8, "D8.1.a": 30, "D9.1.a": 1, "D9.2.a": 60, "D9.3.a": 2}
+    cifras = {"D1.1.a": 1, "D1.1.b": 72, "D1.2.a": 100, "D1.3.b": 6, "D1.4.a": 4, "D1.4.b": 68, "D2.1.a": 85, "D2.3.b": 74,
+              "D3.3.b": 61, "D7.2.b": 3, "D7.3.a": 20, "D9.3.a": 2}
+    for codigo, valor in metas.items():
+        if codigo in por_codigo:
+            marco.guardar_meta(por_codigo[codigo], {"anio": hoy, "valor": valor, "nota": None})
+    for codigo, valor in cifras.items():
+        if codigo in por_codigo:
+            indicadores.registrar(por_codigo[codigo], {"anio": hoy, "valor": valor, "n": None,
+                                                       "fuente": "Registro de la Dirección de Carrera", "nota": None}, ada)
     x, err = mejora.validar({"titulo": "Consultar los propósitos de la Carrera con egresados y empleadores",
                              "plazo": (date.today() + timedelta(days=150)).isoformat(), "responsable_id": str(sofia),
                              "criterio_id": str(criterios[0]["id"]), "prioridad": "alta", "origen": "autoevaluacion",
@@ -507,8 +523,8 @@ CAPTURAS = [
     ("cv", "docente", "/informes/cv", {"alto": 1000}),
     ("investigadores", "docente", "/investigadores", {"alto": 560}),
     ("mi-docencia", "docente", "/docencia", {"alto": 1000}),
-    ("docente-pendientes", "docente", "/docencia/pendientes", {"alto": 560}),
-    ("docente-calendario", "docente", "/docencia/calendario", {"alto": 560}),
+    ("pendientes", "docente", "/pendientes", {"alto": 700}),
+    ("calendario-personal", "docente", "/calendario", {"alto": 820}),
     ("docente-preferencias", "docente", "/docencia/preferencias", {"alto": 760}),
     ("docente-programas", "docente", "/docencia/programas", {"alto": 460}),
     ("docente-listas", "docente", "/docencia/listas", {"alto": 460}),
@@ -517,8 +533,6 @@ CAPTURAS = [
     ("docente-resultados", "docente", "resultados-evaluacion", {"alto": 1000}),
     ("docente-historial", "docente", "/docencia/historial", {"alto": 900}),
     ("docente-certificado", "docente", "certificado", {"alto": 620}),
-    ("inv-pendientes", "docente", "/investigacion/pendientes", {"alto": 640}),
-    ("inv-calendario", "docente", "/investigacion/calendario", {"alto": 560}),
     ("inv-acceso", "docente", "/investigacion/acceso-abierto", {"alto": 900}),
     ("inv-acceso-formulario", "docente", "/investigacion/acceso-abierto", {"clics": ["button:has-text('Declarar')"], "alto": 1000}),
     ("inv-colaboraciones", "docente", "/investigacion/coautores", {"alto": 1000}),
@@ -600,10 +614,22 @@ CAPTURAS = [
     ("auditoria", "direccion", "/admin/auditoria", {"alto": 560}),
     ("revistas", "direccion", "/admin/revistas", {"alto": 560}),
     ("propuestas", "direccion", "/admin/propuestas", {"alto": 600}),
+    ("modulos", "direccion", "/admin/modulos", {"alto": 1100}),
+    ("unidades", "direccion", "/admin/unidades", {"alto": 760}),
     ("ia", "direccion", "/ia", {}),
     ("publico", "nadie", "/publico", {"alto": 400}),
     ("privacidad", "nadie", "/publico/privacidad", {"alto": 900}),
     ("aviso-privacidad", "estudiante", "/estudiante/buzon", {"alto": 640}),
+    # Al final, porque apagan un módulo y lo vuelven a activar: Egresados y empleadores alimenta indicadores de
+    # calidad, que pasan a «sin fuente». La confirmación es un <dialog> propio (static/js/acciones.js).
+    ("modulos-confirmar", "direccion", "/admin/modulos", {"clics": ["button[aria-label='Apagar Egresados y empleadores']"],
+                                                          "alto": 900}),
+    ("modulos-apagado", "direccion", "/admin/modulos", {"clics": ["button[aria-label='Apagar Egresados y empleadores']",
+                                                                  "dialog.confirmacion .uk-btn-primary"], "alto": 1100}),
+    ("indicadores-sin-fuente", "direccion", "/calidad/indicadores", {"abrir": "details:has(summary:has-text('Resultados y egresados'))",
+                                                                 "alto": 1000}),
+    ("modulos-reactivar", "direccion", "/admin/modulos", {"clics": ["button[aria-label='Activar Egresados y empleadores']"],
+                                                          "omitir": True}),
 ]
 
 
@@ -618,6 +644,8 @@ def _rutas_de_la_base(db: Path) -> dict:
     import sqlite3
     con = sqlite3.connect(db)
     uno = lambda sql: con.execute(sql).fetchone()[0]  # noqa: E731
+    de_andrea = uno("""SELECT t.id FROM tramite_grado t JOIN persona_externa p ON p.id = t.externo_id
+                       WHERE p.nombres = 'Andrea' AND p.apellidos = 'Limachi' ORDER BY t.id DESC LIMIT 1""")
     rutas = {
         "proyecto": f"/proyectos/{uno("SELECT id FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01'")}",
         "plan": f"/docencia/planes/{uno('SELECT MIN(id) FROM plan_estudios')}",
@@ -637,8 +665,8 @@ def _rutas_de_la_base(db: Path) -> dict:
         "formulario-meritos": f"/servicios/auxiliaturas/item/{uno('SELECT MAX(id) FROM item_auxiliatura')}/formulario/2",
         "formulario-oral": f"/servicios/auxiliaturas/item/{uno('SELECT MAX(id) FROM item_auxiliatura')}/formulario/4",
         "formulario-final": f"/servicios/auxiliaturas/item/{uno('SELECT MAX(id) FROM item_auxiliatura')}/formulario/5",
-        "grado": f"/servicios/grado/{uno('SELECT MAX(id) FROM tramite_grado')}",
-        "grado-estudiante": f"/estudiante/grado/{uno('SELECT MAX(id) FROM tramite_grado')}",
+        "grado": f"/servicios/grado/{de_andrea}",
+        "grado-estudiante": f"/estudiante/grado/{de_andrea}",
         "autoevaluacion": f"/calidad/autoevaluaciones/{uno('SELECT MAX(id) FROM autoevaluacion')}",
         "mejora-actividad": f"/calidad/mejora/actividades/{uno('SELECT actividad_id FROM reprogramacion_mejora LIMIT 1')}",
         "mejora-corte": f"/calidad/mejora/cortes/{uno('SELECT MAX(id) FROM corte_mejora')}",
@@ -649,6 +677,66 @@ def _rutas_de_la_base(db: Path) -> dict:
     }
     con.close()
     return rutas
+
+
+def _servidor(entorno: dict, carpeta: Path, nombre: str):
+    """Levanta TAU en un puerto libre con ese entorno → (proceso, dirección). Espera a que responda."""
+    puerto = _puerto_libre()
+    proceso = subprocess.Popen([sys.executable, "-m", "uvicorn", "main:app", "--port", str(puerto)], cwd=RAIZ, env=entorno,
+                               stdout=open(carpeta / f"{nombre}.log", "w"), stderr=subprocess.STDOUT)
+    url = f"http://127.0.0.1:{puerto}"
+    for _ in range(80):
+        try:
+            urllib.request.urlopen(f"{url}/login", timeout=1)
+            return proceso, url
+        except OSError:
+            time.sleep(0.25)
+    proceso.terminate()
+    sys.exit(f"El servidor no arrancó: ver {carpeta / (nombre + '.log')}")
+
+
+# El primer día de una instalación: base nueva con el perfil mínimo y una sola cuenta, sin los datos del seed.
+CAPTURAS_NUEVA = [
+    ("primeros-pasos", "/", {"alto": 640}),
+    ("modulos-nueva", "/admin/modulos", {"alto": 1100}),
+    ("privacidad-minima", "/publico/privacidad", {"alto": 900}),
+]
+CREAR_ADMIN = """import os
+from app.comun import usuarios
+from app.comun.db import init_db
+init_db(os.environ["TAU_DB"])
+usuarios.crear("admin@instituto.test", "Ada", "Administradora", "Admin-portal-2026", es_admin=True,
+               es_investigador=False, debe_cambiar_pass=False)"""
+
+
+def _instalacion_nueva(carpeta: Path, entorno: dict):
+    from playwright.sync_api import sync_playwright
+    entorno = {**entorno, "TAU_DB": str(carpeta / "nueva.db"), "TAU_PERFIL": "minimo"}
+    subprocess.run([sys.executable, "scripts/instalar.py", "--perfil", "minimo"], cwd=RAIZ, env=entorno, check=True,
+                   stdout=subprocess.DEVNULL)
+    subprocess.run([sys.executable, "-c", CREAR_ADMIN], cwd=RAIZ, env=entorno, check=True)
+    servidor, url = _servidor(entorno, carpeta, "servidor-nueva")
+    try:
+        with sync_playwright() as p:
+            navegador = p.chromium.launch(channel=os.environ.get("PLAYWRIGHT_CANAL", "chrome") or None)
+            ctx = navegador.new_context(viewport={"width": ANCHO, "height": ALTO}, device_scale_factor=1.5,
+                                        color_scheme="light", locale="es-BO")
+            pagina = ctx.new_page()
+            pagina.goto(f"{url}/login")
+            pagina.fill("input[name=email]", DIRECCION)
+            pagina.fill("input[name=password]", "Admin-portal-2026")
+            pagina.click("button[type=submit]")
+            pagina.wait_for_load_state("networkidle")
+            for nombre, ruta, op in CAPTURAS_NUEVA:
+                pagina.set_viewport_size({"width": ANCHO, "height": op.get("alto", ALTO)})
+                pagina.goto(url + ruta)
+                pagina.wait_for_load_state("networkidle")
+                pagina.wait_for_timeout(250)
+                pagina.screenshot(path=str(IMG / f"{nombre}.png"))
+                print(f"  {nombre}.png")
+            navegador.close()
+    finally:
+        servidor.terminate()
 
 
 def capturar():
@@ -664,19 +752,8 @@ def capturar():
     subprocess.run([sys.executable, "scripts/seed.py"], cwd=RAIZ, env=entorno, check=True, stdout=subprocess.DEVNULL)
     subprocess.run([sys.executable, "scripts/manual.py", "--datos", str(db)], cwd=RAIZ, env=entorno, check=True)
     rutas = _rutas_de_la_base(db)
-    puerto = _puerto_libre()
-    servidor = subprocess.Popen([sys.executable, "-m", "uvicorn", "main:app", "--port", str(puerto)], cwd=RAIZ,
-                                env=entorno, stdout=open(carpeta / "servidor.log", "w"), stderr=subprocess.STDOUT)
-    url = f"http://127.0.0.1:{puerto}"
+    servidor, url = _servidor(entorno, carpeta, "servidor")
     try:
-        for _ in range(80):
-            try:
-                urllib.request.urlopen(f"{url}/login", timeout=1)
-                break
-            except OSError:
-                time.sleep(0.25)
-        else:
-            sys.exit(f"El servidor no arrancó: ver {carpeta / 'servidor.log'}")
         IMG.mkdir(parents=True, exist_ok=True)
         with sync_playwright() as p:
             navegador = p.chromium.launch(channel=os.environ.get("PLAYWRIGHT_CANAL", "chrome") or None)
@@ -689,6 +766,7 @@ def capturar():
                 ctx = navegador.new_context(viewport={"width": 390, "height": 800} if movil else {"width": ANCHO, "height": ALTO},
                                             device_scale_factor=1.5, color_scheme="light", locale="es-BO")
                 pagina = ctx.new_page()
+                pagina.on("dialog", lambda dialogo: dialogo.accept())     # «¿Apagar el módulo?» y similares
                 if quien in ("direccion", "docente"):
                     pagina.goto(f"{url}/login")
                     pagina.fill("input[name=email]", DIRECCION if quien == "direccion" else DOCENTE)
@@ -706,13 +784,16 @@ def capturar():
                 sesiones[clave] = pagina
                 return pagina
 
+            fallas = []
             for nombre, quien, ruta, op in CAPTURAS:
                 movil = bool(op.get("movil"))
                 pagina = contexto(quien, movil)
                 if not movil:
                     pagina.set_viewport_size({"width": ANCHO, "height": op.get("alto", ALTO)})
-                pagina.goto(url + rutas.get(ruta, ruta))
+                respuesta = pagina.goto(url + rutas.get(ruta, ruta))
                 pagina.wait_for_load_state("networkidle")
+                if respuesta is None or respuesta.status >= 400 or "/login" in pagina.url and quien != "nadie":
+                    fallas.append(f"{nombre}: {rutas.get(ruta, ruta)} → {respuesta.status if respuesta else '?'} ({pagina.url})")
                 if op.get("abrir"):
                     pagina.locator(op["abrir"]).first.locator("summary").first.click()
                 for selector in op.get("clics", []):
@@ -723,9 +804,14 @@ def capturar():
                 if op.get("recorte"):
                     x, y, ancho, alto = op["recorte"]
                     extra["clip"] = {"x": x, "y": y, "width": ancho, "height": alto}
+                if op.get("omitir"):
+                    continue
                 pagina.screenshot(path=str(IMG / f"{nombre}.png"), full_page=bool(op.get("completa")), **extra)
                 print(f"  {nombre}.png")
             navegador.close()
+        if fallas:
+            print("\nCapturas con la pantalla ausente o con error (revise CAPTURAS):\n  " + "\n  ".join(fallas))
+        _instalacion_nueva(carpeta, entorno)
     finally:
         servidor.terminate()
         shutil.rmtree(carpeta, ignore_errors=True)

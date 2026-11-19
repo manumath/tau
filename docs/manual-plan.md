@@ -12,7 +12,10 @@ independiente de una unidad (PLAN §74).
   `instancias/cmat/manual/`, junto al resto de lo propio de esa Carrera, y `scripts/manual.py` lo arma desde ahí con la
   marca de la instancia (`--manual CARPETA` o `TAU_MANUAL` para otra carpeta). Sin esa carpeta, quien clone el
   repositorio no tiene manual.
-- **Lo que está desactualizado** (15-nov-2026 en adelante): el menú de las capturas, los pendientes y el calendario (hoy
+- **Actualizado el 18-nov-2026 (manual de Matemática):** se reescribieron los capítulos 1 a 4, 9, 11 y 12, se ajustaron 0, 5 a 8, 10 y 13,
+  se agregaron «Módulos y perfiles» (14) e «Instalarlo en el teléfono» (15) y se retomaron las capturas (120) con datos ficticios nuevos
+  de calidad. Lo de abajo describe lo que faltaba y sigue siendo la base del manual **genérico**, que no existe aún.
+- **Lo que estaba desactualizado** (15-nov-2026 en adelante): el menú de las capturas, los pendientes y el calendario (hoy
   son una sola pantalla), las migas de pan, la administración de módulos y de unidades, los perfiles de instalación, el
   «Primeros pasos» del primer día, las cifras de calidad «sin fuente», la página de privacidad que cambia con los
   módulos activos y la instalación en el teléfono.
