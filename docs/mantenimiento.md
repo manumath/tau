@@ -425,9 +425,11 @@ CSV) y productos (Productos → Importar BibTeX). La capacitación exige que la 
 
 ### 5.10 Manual de usuario
 
-El manual es **de la instancia**, no del repositorio (PLAN §74, decisión del 17-nov-2026): vive en `manual/` de su
-carpeta (`instancias/<nombre>/manual/`) y se arma con la marca de esa instancia. El de la Carrera de Matemática está en
-`instancias/cmat/manual/`, que no se versiona en el repositorio público. Un manual tiene un archivo HTML por capítulo en
+El manual se arma **por capas** (PLAN §74; decisiones del 17 y el 19-nov-2026). La capa base es el **manual del sistema**
+(genérico), cuyo texto y estilo versiona el repositorio en `instancias/ejemplo/manual/` (el PDF, las capturas y `manual.html`
+los ignora `.gitignore`: cada quien los genera). Encima va la capa de la **instancia** en `instancias/<nombre>/manual/`: un
+capítulo suyo con el mismo nombre reemplaza al del sistema, uno nuevo se suma y los que no tiene los toma del sistema. El de la
+Carrera de Matemática está en `instancias/cmat/manual/`, que no se versiona. Un manual tiene un archivo HTML por capítulo en
 `capitulos/`, el estilo en `estilo.css`, las capturas en `img/` y el resultado (`manual.html`, `manual.css` y
 `Manual-de-usuario-TAU.pdf`). La [guía de uso](guia-de-uso.md) sigue siendo la referencia completa; el manual es la
 versión ilustrada y por roles. El plan para escribir el del sistema genérico, y no solo el de una Carrera, está en
@@ -440,16 +442,20 @@ cifras manuales ficticias de calidad (`datos()`), la confirmación de apagar un 
 (`CAPTURAS_NUEVA`). Una captura que lleva a una pantalla ausente se avisa al final (`fallas`).
 
 ```sh
-uv run python scripts/manual.py              # base de demostración, capturas y PDF (necesita instancias/cmat)
+uv run python scripts/manual.py              # base de demostración, capturas y PDF (la instancia: cmat si existe, si no ejemplo)
+TAU_INSTANCIA=instancias/ejemplo uv run python scripts/manual.py   # el manual del sistema, con datos neutros
 uv run python scripts/manual.py --solo-pdf   # tras corregir un capítulo: solo vuelve a armar el PDF
 uv run python scripts/manual.py --manual /ruta/otra/carpeta     # o TAU_MANUAL: otra carpeta de manual
 ```
 
 - Una captura es `<captura archivo="nombre" clase="media|chica|telefono">pie</captura>`; la lista de capturas (quién
   ingresa, qué ruta, qué botón se pulsa antes) está en `CAPTURAS` de `scripts/manual.py`. Las figuras se numeran solas.
-- Las capturas usan una base temporal con el seed y los datos de `datos()` en el mismo script, todo ficticio y de la
-  Carrera de Matemática: por eso **solo se toman con `instancias/cmat`**. Con otra instancia, `--solo-pdf` arma el PDF con
-  las capturas que ya tenga (ver `scripts/instancia_demo.py`). Nunca `data/tau.db`.
+- Las capturas usan una base temporal con el seed y los datos de `datos()` en el mismo script, todo ficticio. Con la instancia
+  `cmat` salen los de Matemática; con `ejemplo` (la de cualquier clon del repositorio) `manual.neutralizar` cambia al final los
+  nombres de las personas, las siglas, las instituciones y los eventos por neutros (Elena Ríos, Carrera de Ejemplo…) y la
+  instancia trae su propio marco de calidad y plan de mejora ficticios. Una instancia nueva necesita que el seed encuentre
+  sus siglas y líneas (se toman de su catálogo) y su `calidad/plan-de-mejora.csv`. Nunca `data/tau.db`.
+- Un cambio de texto en un capítulo del sistema que tenga su versión en `instancias/cmat/manual/capitulos/` se hace en las dos.
 - Las rutas a `static/` (fuentes y logotipo) de los capítulos y del estilo se resuelven al armar el documento: no
   dependen de dónde esté la carpeta. El logotipo de la portada es el de la marca de la instancia.
 - Cuando cambie una pantalla que sale en el manual, vuelva a tomar las capturas. Si cambian los permisos

@@ -4668,7 +4668,14 @@ sin recibir los planes, el marco de calidad ni la marca de Matemática. El dise�
   y `medir.py` dependía de Matemática sin avisarlo); las capturas exigen `instancias/cmat` y avisan si falta. El plan para
   escribir el manual del sistema genérico está en `docs/manual-plan.md` (etapas M0 a M5; M0 hecha). El manual de Matemática
   se actualizó el 18-nov-2026 (decisión del usuario): 17 capítulos con los módulos, unidades, perfiles, agenda unificada y teléfono;
-  120 capturas con datos ficticios nuevos de calidad; la versión del 15-nov quedó en `instancias/cmat/manual-anterior/`.
+  120 capturas con datos ficticios nuevos de calidad.
+  **Manual del sistema (19-nov-2026, decisión del usuario «realiza todo»):** etapas M1 a M5 hechas. El seed y `datos()` corren sobre
+  `instancias/ejemplo` (`instancia_demo.fijar` ya no se detiene sin `cmat`); `manual.neutralizar` reemplaza al final los nombres, siglas,
+  instituciones y eventos de Matemática por neutros; la instancia de ejemplo suma un `calidad/plan-de-mejora.csv` (8 acciones, 24
+  actividades) y tres indicadores más. Los capítulos genéricos (texto y estilo) se versionan en `instancias/ejemplo/manual/`; el PDF y
+  las capturas, no. El manual de una instancia se arma encima del del sistema (`scripts/manual.py::_capitulos`). Decisión por mi cuenta,
+  para confirmar: versionar el **texto** del manual genérico (no el PDF ni las capturas), pues es la única forma de que el repositorio
+  traiga «indicaciones de cómo generarlo».
 - **Hecho el 17-nov-2026:** nombres técnicos. **Pendiente de confirmar:** el envío del historial nuevo de git (el usuario decidió
   que `instancias/cmat` no entra en el repositorio público).
 

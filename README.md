@@ -13,7 +13,7 @@ Nació en 2026 como «Portal de Investigación» del IIMAT. Los nombres técnico
 
 | Documento | Para qué |
 |---|---|
-| [Plan del manual de usuario](docs/manual-plan.md) | El manual de usuario **no se distribuye con el repositorio** (decisión del 17-nov-2026): el de la Carrera de Matemática vive en su instancia (`instancias/cmat/manual/`) y se actualizó el 18-nov-2026. Este documento propone cómo escribir el del sistema genérico. La referencia vigente es la guía de uso |
+| [Plan del manual de usuario](docs/manual-plan.md) | El manual de usuario **no se distribuye con el repositorio** (decisión del 17-nov-2026): el repositorio trae el texto del manual del sistema (`instancias/ejemplo/manual/`, que se arma con `scripts/manual.py`) y cada instancia suma sus capítulos; el de la Carrera de Matemática vive en `instancias/cmat/manual/`. La referencia vigente es la guía de uso |
 | [Guía de uso](docs/guia-de-uso.md) | Referencia completa para cada rol: docentes e investigadores, direcciones, Comisión de calidad, estudiantes y administración |
 | [Importaciones](docs/importaciones.md) | Todas las cargas de datos (CSV, DOI, arXiv, BibTeX, OpenAlex): campos, claves de unión y orden de carga |
 | [Mantenimiento](docs/mantenimiento.md) | Para TI: cómo está armado, recetas (migraciones, pantallas, estilos, dependencias), operación y problemas frecuentes |
@@ -261,7 +261,7 @@ migrations/0001-esquema.sql    esquema base, sin datos de ninguna unidad; las mi
 scripts/seed.py                datos de ejemplo
 scripts/crear_admin.py         primer administrador en producción
 scripts/manual.py              manual de usuario de una instancia: capturas sobre datos de demostración y PDF (manual/ de la instancia)
-scripts/instancia_demo.py      qué instancia usan el seed, el manual y las mediciones (instancias/cmat o TAU_INSTANCIA)
+scripts/instancia_demo.py      qué instancia usan el seed, el manual y las mediciones (instancias/cmat si existe, si no la de ejemplo; o TAU_INSTANCIA)
 scripts/paquete.py             exportar e importar todos los datos (base, fotos, adjuntos, evidencias): respaldos y mudanzas
 scripts/restaurar_prueba.sh    simulacro de restauración sobre una base temporal (docs/mantenimiento.md §5.3)
 scripts/medir.py               rendimiento de las pantallas y GET que escriben (docs/mantenimiento.md §5.11)

@@ -1,5 +1,10 @@
 # Plan: actualización del manual de usuario (propuesta, 17-nov-2026)
 
+> **Estado al 19-nov-2026:** las etapas M0 a M5 están hechas (ver PLAN §74). El manual del sistema (genérico) vive en
+> `instancias/ejemplo/manual/` (texto y estilo versionados; el PDF y las capturas se generan) y el de Matemática, en
+> `instancias/cmat/manual/`, se arma encima con solo los capítulos que difieren. El resto de este documento es el análisis
+> original.
+
 Propuesta de trabajo, **sin decidir**: no está en `PLAN.md`. El manual existente es del 15-nov-2026 y describe el sistema
 como era cuando solo servía a la Carrera de Matemática. Desde entonces el sistema se volvió modular (PLAN §73) y
 independiente de una unidad (PLAN §74).

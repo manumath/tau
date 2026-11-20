@@ -191,12 +191,15 @@ las acciones (por hash) están fijadas ahí; al cambiarlas, ver `docs/mantenimie
 - **Piloto en pausa (PLAN §72, 15-nov-2026):** el piloto con usuarios reales se suspendió para hacer modificaciones y ya
   no rige el congelamiento de módulos del 14-nov: se pueden agregar módulos y pantallas. `docs/piloto.md` queda como plan
   para cuando se retome.
-- **Manual de usuario (15 y 17-nov-2026, decisiones del usuario):** **ya no está en el repositorio**: vive en
-  `instancias/cmat/manual/` (`scripts/manual.py` lo arma con la marca de la instancia). Se actualizó el 18-nov-2026 (17 capítulos, 120
-  capturas; la versión del 15-nov quedó en `instancias/cmat/manual-anterior/`). No retome capturas al cambiar una pantalla: se
-  regenera por entregas. La referencia vigente es `docs/guia-de-uso.md`; el plan para el manual del sistema
-  está en `docs/manual-plan.md`. El seed, el manual y `scripts/medir.py` usan `scripts/instancia_demo.py` para elegir la
-  instancia (`instancias/cmat` o `TAU_INSTANCIA`).
+- **Manual de usuario (15, 17 y 19-nov-2026, decisiones del usuario):** el **PDF y las capturas no están en el repositorio**. El
+  repositorio versiona solo el **texto y el estilo del manual del sistema** (genérico) en `instancias/ejemplo/manual/` (`capitulos/` y
+  `estilo.css`); `scripts/manual.py` lo arma con los datos de `instancias/ejemplo` (neutralizados con `manual.neutralizar`) y lo que
+  genera (`img/`, `manual.html`, PDF) lo ignora `.gitignore`. Cada instancia pone **encima** sus capítulos en su propio
+  `manual/capitulos/` (el del mismo nombre reemplaza, uno nuevo se suma): el de Matemática vive en `instancias/cmat/manual/` y no se
+  versiona. No retome capturas al cambiar una pantalla: se regenera por entregas. La referencia vigente es `docs/guia-de-uso.md`; el
+  plan está en `docs/manual-plan.md`. El seed, el manual y `scripts/medir.py` usan `scripts/instancia_demo.py` para elegir la
+  instancia (`instancias/cmat` si existe, si no `instancias/ejemplo`, o `TAU_INSTANCIA`). Un cambio de texto propio de Matemática en un
+  capítulo genérico se hace en los dos manuales.
 - **Privacidad (PLAN §72, etapa 8):** un formulario nuevo que pida datos personales lleva `layout.aviso_privacidad(clave)` sobre
   el botón de enviar y su módulo va en `privacidad.FORMULARIOS`. Si cambia quién ve un dato o cuánto se conserva, cambie el
   texto en `app/comun/privacidad.py` en el mismo commit: de ahí salen el aviso y la página `/publico/privacidad`.
