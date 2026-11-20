@@ -5,3 +5,6 @@ D1.2,D1.2.a,Jornadas completas equivalentes,estructura,Carga horaria contratada 
 D1.2,D1.2.b,Docentes con posgrado,estructura,Docentes con maestría o doctorado / docentes vinculados × 100.,auto:pct_posgrado,%,anual,mayor,Dirección de Carrera,,eficacia
 D2.1,D2.1.a,Estudiantes que ingresan,resultado,Estudiantes de la cohorte del año.,auto:ingresantes,número,anual,mayor,Dirección de Carrera,,pertinencia
 D2.1,D2.1.b,Artículos indexados,resultado,Artículos en revistas indexadas con filiación de la unidad en el año.,auto:articulos_indexados,número,anual,mayor,Dirección del Instituto,,eficacia
+D2.1,D2.1.c,Titulación oportuna,resultado,Titulados de la cohorte hasta dos ciclos después de la duración del plan / ingresantes de la cohorte × 100.,auto:titulacion_oportuna,%,anual,mayor,Dirección de Carrera,,eficacia
+D2.1,D2.1.d,Egresados con empleo relacionado con su formación,resultado,"Respuestas «empleo relacionado» / respuestas × 100, en el seguimiento al año de titularse.",auto:empleabilidad,%,anual,mayor,Dirección de Carrera,,pertinencia
+D2.1,D2.1.e,Satisfacción de los empleadores,percepcion,"Respuestas favorables / respuestas × 100, en la encuesta a empleadores.",auto:satisfaccion_empleadores,%,por_periodo,mayor,Comisión de calidad,,pertinencia

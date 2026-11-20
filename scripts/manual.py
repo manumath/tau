@@ -6,7 +6,9 @@
 
 - El manual es de la instancia: vive en `manual/` de su carpeta (`instancias/cmat/manual/`, que no se versiona en el
   repositorio público) y se arma con la marca de esa instancia. El texto está en `capitulos/*.html` (un archivo por
-  capítulo, en orden) y el estilo en `estilo.css`. Para corregir el manual se editan esos archivos y se vuelve a ejecutar
+  capítulo, en orden) y el estilo en `estilo.css`. Se arma **sobre el manual del sistema** (`instancias/ejemplo/manual/`,
+  genérico y versionado): un capítulo de la instancia con el mismo nombre reemplaza al del sistema, uno nuevo se suma y los
+  que no tiene los toma del sistema. Para corregir el manual se editan esos archivos y se vuelve a ejecutar
   con --solo-pdf. Las rutas a `static/` (fuentes y logotipo) se resuelven al armar: no dependen de dónde esté la carpeta.
 - Las capturas se toman sobre una base temporal: los datos de ejemplo de scripts/seed.py más lo que agrega `datos()`
   (estudiantes con cuenta, tutoría, una convocatoria a auxiliaturas, un perfil de grado, un comunicado, una encuesta,
@@ -15,7 +17,8 @@
   número de página de cada capítulo (se imprime dos veces: la primera para saber en qué página cae cada uno).
 
 Salida, en la carpeta del manual: manual.html (se puede abrir en el navegador), manual.css y Manual-de-usuario-TAU.pdf.
-Las capturas usan los datos de ejemplo de la Carrera de Matemática (seed.py y `datos()`): ver scripts/instancia_demo.py.
+Las capturas usan los datos de ejemplo de seed.py y `datos()` sobre la instancia elegida (scripts/instancia_demo.py); con la
+de ejemplo se neutralizan los nombres propios de Matemática (`neutralizar`).
 """
 import argparse
 import os
@@ -39,15 +42,30 @@ instancia_demo.fijar()          # antes de importar `app`: la instancia decide d
 
 from app.comun import config  # noqa: E402
 
-MANUAL = Path(os.environ.get("TAU_MANUAL") or config.INSTANCIA / "manual")
+MANUAL = Path(os.environ.get("TAU_MANUAL") or config.INSTANCIA / "manual").resolve()
 STATIC = RAIZ / "static"
+BASE = RAIZ / "instancias" / "ejemplo" / "manual"      # el manual del sistema (genérico): lo versiona el repositorio
 IMG = MANUAL / "img"
 PDF = MANUAL / "Manual-de-usuario-TAU.pdf"
 CLAVE = "Manual-de-usuario-2026"            # solo en la base temporal
 ANCHO, ALTO = 1120, 720                     # ventana de las capturas de escritorio
 DIRECCION = "admin@instituto.test"          # Ada: administración y las dos direcciones (ve casi todo)
-DOCENTE = "emmy.noether@instituto.test"     # Emmy: docente investigadora, tutora y tribunal
 ESTUDIANTE = "andrea.limachi@estudiante.test"
+# Con la instancia de ejemplo el manual es neutro: al final de `datos()` las personas, las siglas y las instituciones de
+# Matemática se reemplazan (`neutralizar`) y las cuentas de ejemplo cambian de correo.
+NEUTRO = config.INSTANCIA.name != "cmat"
+if NEUTRO:
+    DOCENTE, SOFIA, ALAN, APELLIDO = ("elena.rios@instituto.test", "sara.villarroel@instituto.test",
+                                      "andres.torres@instituto.test", "rios")
+else:   # Emmy: docente investigadora, tutora y tribunal
+    DOCENTE, SOFIA, ALAN, APELLIDO = ("emmy.noether@instituto.test", "sofia.kovalevskaya@instituto.test",
+                                      "alan.turing@instituto.test", "noether")
+# Dimensiones del marco de calidad que las capturas abren: una con indicadores propios y otra con alguno «sin fuente».
+DIMENSION_CUERPO, DIMENSION_EGRESADOS = (("Gestión y docencia", "Resultados") if NEUTRO
+                                         else ("Cuerpo académico", "Resultados y egresados"))
+CODIGO = "IEJ-2025-01" if NEUTRO else "IIMAT-IDH-2025-01"          # el proyecto institucional de ejemplo
+ORIGINAL = {"DOCENTE": "emmy.noether@instituto.test", "SOFIA": "sofia.kovalevskaya@instituto.test",
+            "ALAN": "alan.turing@instituto.test"}
 
 
 # --- Base de demostración -----------------------------------------------------------------------------------------
@@ -68,8 +86,7 @@ def datos(ruta: str):
 
     db = get_db()
     uid = lambda email: usuarios.por_email(email)["id"]  # noqa: E731
-    ada, emmy, sofia, alan = (uid(e) for e in (DIRECCION, DOCENTE, "sofia.kovalevskaya@instituto.test",
-                                              "alan.turing@instituto.test"))
+    ada, emmy, sofia, alan = (uid(e) for e in (DIRECCION, ORIGINAL["DOCENTE"], ORIGINAL["SOFIA"], ORIGINAL["ALAN"]))
     for rol, unidad in (("direccion_carrera", unidades.carrera()), ("direccion_instituto", unidades.instituto())):
         permisos.asignar(ada, rol, unidad)
     usuarios.cambiar_password(emmy, CLAVE, temporal=False)
@@ -280,6 +297,9 @@ def datos(ruta: str):
              "D5.1.b": 60, "D5.2.a": 8, "D8.1.a": 30, "D9.1.a": 1, "D9.2.a": 60, "D9.3.a": 2}
     cifras = {"D1.1.a": 1, "D1.1.b": 72, "D1.2.a": 100, "D1.3.b": 6, "D1.4.a": 4, "D1.4.b": 68, "D2.1.a": 85, "D2.3.b": 74,
               "D3.3.b": 61, "D7.2.b": 3, "D7.3.a": 20, "D9.3.a": 2}
+    if NEUTRO:    # el marco de ejemplo tiene otros códigos
+        metas = {"D1.1.b": 80, "D1.2.a": 90, "D1.2.b": 50, "D2.1.a": 10, "D2.1.b": 2, "D2.1.c": 40}
+        cifras = {"D1.1.a": 2, "D1.1.b": 72, "D1.2.a": 100, "D2.1.a": 16}
     for codigo, valor in metas.items():
         if codigo in por_codigo:
             marco.guardar_meta(por_codigo[codigo], {"anio": hoy, "valor": valor, "nota": None})
@@ -320,30 +340,36 @@ def datos(ruta: str):
     # Planes (PLAN §65): una reforma en elaboración con la Licenciatura en Matemática copiada (con una asignatura nueva
     # que reemplaza a dos, y una mención) y la Maestría en Matemática vacía.
     from app.academico import equivalencias, malla, menciones, planes as planes_, reformas
-    ids = {r["nombre"]: r["id"] for r in db.q("SELECT id, nombre FROM programa")}
+    # La primera licenciatura vigente se copia a la reforma; la primera maestría (si la hay) entra vacía.
+    lic = db.q("SELECT id FROM programa WHERE nivel = 'licenciatura' ORDER BY id LIMIT 1")[0]["id"]
+    mae = db.q("SELECT id FROM programa WHERE nivel = 'maestria' ORDER BY id LIMIT 1")
     rid, err = reformas.crear(ada, "Plan 2027", "HCU 9/2027", "2027",
-                              {ids["Licenciatura en Matemática"]: "copia", ids["Maestría en Matemática"]: "vacio"}, [])
+                              {lic: "copia", **({mae[0]["id"]: "vacio"} if mae else {})}, [])
     assert not err, err
-    borrador = db.q("SELECT id FROM plan_estudios WHERE reforma_id = ? AND programa_id = ?",
-                    [rid, ids["Licenciatura en Matemática"]])[0]["id"]
-    vigente = db.q("SELECT id FROM plan_estudios WHERE nombre = 'Plan 2017' AND programa_id = ?",
-                   [ids["Licenciatura en Matemática"]])[0]["id"]
+    borrador = db.q("SELECT id FROM plan_estudios WHERE reforma_id = ? AND programa_id = ?", [rid, lic])[0]["id"]
+    vigente = db.q("SELECT id FROM plan_estudios WHERE estado = 'vigente' AND programa_id = ?", [lic])[0]["id"]
+    # Las siglas de Matemática; otra instancia usa las que su catálogo tenga en esa posición.
+    catalogo = [a["sigla"] for a in db.q("SELECT sigla FROM asignatura ORDER BY sigla")]
+    sg = lambda sigla, k: sigla if sigla in catalogo else catalogo[min(k, len(catalogo) - 1)]  # noqa: E731
+    prefijo = sg("MAT-111", 0).split("-")[0]
+    fusion = (sg("MAT-112", 1), sg("MAT-122", 3))
+    nueva = f"{prefijo}-190"
     db.execute("""DELETE FROM requisito WHERE plan_asignatura_id IN (SELECT id FROM plan_asignatura WHERE plan_id = ?)
                   AND sigla IN ('MAT-241', 'MAT-242')""", [borrador])         # requisitos que el plan 2017 trae rotos
     por_sigla = {f["sigla"]: f["id"] for f in planes_.asignaturas(borrador) if f["sigla"]}
-    for sigla in ("MAT-112", "MAT-122"):
+    for sigla in fusion:
         malla.quitar_fila(borrador, por_sigla[sigla], ada)
-    assert not malla.guardar_fila(borrador, None, {"tipo": "obligatoria", "semestre": "1", "sigla": "MAT-190",
+    assert not malla.guardar_fila(borrador, None, {"tipo": "obligatoria", "semestre": "1", "sigla": nueva,
                                                   "nombre": "Cálculo en una y varias variables", "horas_teoricas": "6",
                                                   "horas_practicas": "4"}, [], ada)
     ant = {a["sigla"]: a["id"] for a in db.q("SELECT id, sigla FROM asignatura")}
-    assert not equivalencias.crear(vigente, borrador, [ant["MAT-112"], ant["MAT-122"]], [ant["MAT-190"]],
+    assert not equivalencias.crear(vigente, borrador, [ant[fusion[0]], ant[fusion[1]]], [ant[nueva]],
                                    "Se fusionan en un solo curso", ada)
-    assert not menciones.guardar(borrador, None, {"nombre": "Matemática pura", "semestre_eleccion": "6",
+    assert not menciones.guardar(borrador, None, {"nombre": "Matemática pura", "semestre_eleccion": "3" if NEUTRO else "6",
                                                   "descripcion": "Énfasis en álgebra, análisis y topología.",
                                                   "minimo_asignaturas": "3"}, ada)
     pura = menciones.listar(borrador)[0]["id"]
-    tardias = [f["id"] for f in planes_.asignaturas(borrador) if f["sigla"] and (f["semestre"] or 0) >= 7][:4]
+    tardias = [f["id"] for f in planes_.asignaturas(borrador) if f["sigla"] and (f["semestre"] or 0) >= (3 if NEUTRO else 7)][:4]
     assert not menciones.asignar(borrador, pura, {i: "o" for i in tardias}, ada)
 
     # Gestiones (PLAN §66): I-2027 en planificación, con las troncales y algunos titulares.
@@ -374,10 +400,10 @@ def datos(ruta: str):
     from app.estudiantil import apoyo, mi_plan, orientacion
     from app.servicios import comunicados as com_
     from app.servicios import oportunidades, recursos, temas
-    plan_lic = db.q("""SELECT p.id FROM plan_estudios p JOIN programa pr ON pr.id = p.programa_id
-                       WHERE pr.nombre = 'Licenciatura en Matemática' AND p.estado = 'vigente'""")[0]["id"]
+    plan_lic = vigente
     db.execute("UPDATE estudiante SET plan_id = ?", [plan_lic])
-    for sigla in ("MAT-111", "MAT-112", "MAT-113", "MAT-114", "MAT-117", "MAT-131"):
+    for sigla in ([s for s in ("MAT-111", "MAT-112", "MAT-113", "MAT-114", "MAT-117", "MAT-131") if s in catalogo]
+                  or catalogo[:6]):
         mi_plan.marcar(andrea["externo"], db.q("SELECT id FROM asignatura WHERE sigla = ?", [sigla])[0]["id"], plan_lic)
     db.execute("UPDATE cuenta_estudiante SET comparte_plan_tutor = 1 WHERE externo_id = ?", [andrea["externo"]])
     ada_u, emmy_u = usuarios.por_id(ada), usuarios.por_id(emmy)
@@ -401,10 +427,10 @@ def datos(ruta: str):
         assert not err, err
         assert not temas.cambiar_estado(tid_, "publicado", emmy_u)
     assert not recursos.crear({"tipo": "guia", "titulo": "Guía de ejercicios de Álgebra I", "descripcion": "Con soluciones al final."},
-                              [str(db.q("SELECT id FROM asignatura WHERE sigla = 'MAT-111'")[0]["id"])], emmy_u,
+                              [str(db.q("SELECT id FROM asignatura WHERE sigla = ?", [sg('MAT-111', 0)])[0]["id"])], emmy_u,
                               (b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF", "algebra-guia.pdf"))[1]
     assert not recursos.crear({"tipo": "enlace", "titulo": "Cálculo diferencial en video", "enlace": "https://videos.ejemplo.test/calculo"},
-                              [str(db.q("SELECT id FROM asignatura WHERE sigla = 'MAT-112'")[0]["id"])], emmy_u, None)[1]
+                              [str(db.q("SELECT id FROM asignatura WHERE sigla = ?", [sg('MAT-112', 1)])[0]["id"])], emmy_u, None)[1]
     for cat, preg, resp in (("Trámites", "¿Dónde pido una constancia de estudios?", "En Kardex, con su registro universitario (RU)."),
                             ("Becas", "¿Cuándo abren las becas?", "Se publican en «Oportunidades» y en el calendario."),
                             ("Grado", "¿Cuántos días tiene el tribunal para revisar mi perfil?", "Quince días hábiles.")):
@@ -494,8 +520,60 @@ def datos(ruta: str):
         assert not errores, errores
         aa.guardar(f["id"], valores, emmy)
 
+    if NEUTRO:
+        neutralizar(db)
+
     # Enlace de ingreso de la estudiante (como el que le llega por correo).
     Path(ruta).with_suffix(".enlace").write_text(f"/acceso/{tokens.emitir(andrea['uid'], 'acceso')}")
+
+
+# --- Manual neutro ------------------------------------------------------------------------------------------------
+
+# Con la instancia de ejemplo, lo propio de la Carrera de Matemática que carga el seed y `datos()` se reemplaza por nombres
+# neutros, de más específico a más general. Se aplica a la base temporal, nunca a data/tau.db.
+PERSONAS = [("emmy.noether@instituto.test", "Emmy", "Noether", "elena.rios@instituto.test", "Elena", "Ríos"),
+            ("sofia.kovalevskaya@instituto.test", "Sofía", "Kovalévskaya", "sara.villarroel@instituto.test", "Sara",
+             "Villarroel"),
+            ("alan.turing@instituto.test", "Alan", "Turing", "andres.torres@instituto.test", "Andrés", "Torres"),
+            ("srinivasa.ramanujan@instituto.test", "Srinivasa", "Ramanujan", "rafael.mendieta@instituto.test", "Rafael",
+             "Mendieta")]
+EXTERNOS = [("Hermann", "Weyl", "Walter", "Ibáñez"), ("Pavel", "Alexandrov", "Pablo", "Alcón")]
+TEXTOS = [
+    ("Facultad de Ciencias Puras y Naturales, UMSA", "Facultad de Ciencias, UDEMO"),
+    ("Carrera de Matemática (UMSA)", "Carrera de Ejemplo, UDEMO"), ("Carrera de Matemática, UMSA", "Carrera de Ejemplo, UDEMO"),
+    ("Olimpiada Boliviana de Matemática Universitaria", "Olimpiada Nacional Universitaria"),
+    ("Sociedad Boliviana de Matemática", "Sociedad Nacional de la Disciplina"),
+    ("Jornadas de Matemática de la FCPN", "Jornadas de la Facultad de Ciencias"),
+    ("Universidad Mayor de San Simón", "Universidad de Provincia"),
+    ("Recursos IDH – UMSA", "Recursos propios de la Universidad"),
+    ("Licenciatura en Matemática o afín.", "Licenciatura afín."), ("Licenciatura en Matemática", "Licenciatura de Ejemplo"),
+    ("Olimpiadas de matemática", "Olimpiadas de la disciplina"), ("Matemática pura", "Línea teórica"),
+    ("Cálculo en una y varias variables", "Métodos integrados"), ("Carrera de Matemática", "Carrera de Ejemplo"),
+    ("IIMAT-IDH-2025-01", "IEJ-2025-01"), ("ISP-BOL-2025", "INT-2025"),
+    ("Hermann Weyl", "Walter Ibáñez"), ("Pavel Alexandrov", "Pablo Alcón"), ("Emmy Noether", "Elena Ríos"),
+    ("Sofía Kovalévskaya", "Sara Villarroel"), ("Alan Turing", "Andrés Torres"), ("Srinivasa Ramanujan", "Rafael Mendieta"),
+    ("Kowalevski", "Villarroel"), ("Kovalévskaya", "Villarroel"), ("Noether", "Ríos"), ("Turing", "Torres"),
+    ("Ramanujan", "Mendieta"), ("Weyl", "Ibáñez"), ("Alexandrov", "Alcón"), ("Emmy", "Elena"),
+    ("IIMAT", "IEJ"), ("UMSA", "UDEMO"), ("FCPN", "FCIE"), ("CMAT", "CEJ")]
+
+
+def neutralizar(db):
+    """Cambia en la base de demostración los nombres y las siglas de Matemática por los neutros de la instancia de ejemplo."""
+    for viejo, _nombres, _apellidos, nuevo, n2, a2 in PERSONAS:
+        db.execute("UPDATE usuario SET email = ?, nombres = ?, apellidos = ? WHERE email = ?", [nuevo, n2, a2, viejo])
+    for nombres, apellidos, n2, a2 in EXTERNOS:
+        db.execute("UPDATE persona_externa SET nombres = ?, apellidos = ? WHERE nombres = ? AND apellidos = ?",
+                   [n2, a2, nombres, apellidos])
+    pares = TEXTOS + [(v, n) for v, _a, _b, n, _c, _d in PERSONAS]
+    pares += [(v.split("@")[0], n.split("@")[0]) for v, _a, _b, n, _c, _d in PERSONAS]
+    pares.sort(key=lambda p: -len(p[0]))
+    for tabla in [t["name"] for t in db.q("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")]:
+        for col in db.q(f"PRAGMA table_info([{tabla}])"):
+            if (col["type"] or "TEXT").upper().startswith(("TEXT", "VARCHAR")) and "hash" not in col["name"]:
+                expr, params = f"[{col['name']}]", []
+                for viejo, nuevo in pares:
+                    expr, params = f"replace({expr}, ?, ?)", params + [viejo, nuevo]
+                db.execute(f"UPDATE [{tabla}] SET [{col['name']}] = {expr} WHERE [{col['name']}] IS NOT NULL", params)
 
 
 # --- Capturas -----------------------------------------------------------------------------------------------------
@@ -508,7 +586,7 @@ CAPTURAS = [
     ("inicio", "direccion", "/", {}),
     ("menu-usuario", "direccion", "/", {"clics": ["button[aria-label^='Cuenta de']"], "recorte": (ANCHO - 400, 0, 400, 440)}),
     ("avisos", "direccion", "/avisos", {"alto": 460}),
-    ("buscar", "direccion", "/buscar?q=noether", {"alto": 520}),
+    ("buscar", "direccion", f"/buscar?q={APELLIDO}", {"alto": 520}),
     ("inicio-telefono", "docente", "/", {"movil": True}),
     ("menu-telefono", "docente", "/", {"movil": True, "clics": ["button:has-text('Más')"]}),
     ("inicio-docente", "docente", "/", {"alto": 600}),
@@ -561,7 +639,7 @@ CAPTURAS = [
     ("concluir", "direccion", "/docencia/preparacion?semestre=II-2026", {"clics": ["text=Concluir el semestre"], "alto": 700}),
     ("carga", "direccion", "/docencia/carga", {"alto": 600}),
     ("preparacion", "direccion", "preparacion-planificacion", {"alto": 760}),
-    ("vinculo", "direccion", "/admin/usuarios?q=noether", {"clics": ["text=Vínculo"], "alto": 900}),
+    ("vinculo", "direccion", f"/admin/usuarios?q={APELLIDO}", {"clics": ["text=Vínculo"], "alto": 900}),
     ("cohortes", "direccion", "/docencia/cohortes", {"alto": 640}),
     ("encuestas", "direccion", "/docencia/encuestas", {"alto": 480}),
     ("encuesta-resultados", "direccion", "encuesta", {"clics": ["text=Ver resultados"], "alto": 1000}),
@@ -597,7 +675,7 @@ CAPTURAS = [
     ("auxiliaturas-formulario-final", "direccion", "formulario-final", {"alto": 760}),
     ("grado-tribunal", "direccion", "grado", {"alto": 1000}),
     ("marco", "direccion", "/calidad/marco", {}),
-    ("indicadores", "direccion", "/calidad/indicadores", {"abrir": "details:has(summary:has-text('Cuerpo académico'))",
+    ("indicadores", "direccion", "/calidad/indicadores", {"abrir": f"details:has(summary:has-text('{DIMENSION_CUERPO}'))",
                                                           "alto": 1000}),
     ("evidencias", "direccion", "/calidad/evidencias", {"alto": 500}),
     ("autoevaluacion", "direccion", "autoevaluacion", {"alto": 1000}),
@@ -626,7 +704,7 @@ CAPTURAS = [
                                                           "alto": 900}),
     ("modulos-apagado", "direccion", "/admin/modulos", {"clics": ["button[aria-label='Apagar Egresados y empleadores']",
                                                                   "dialog.confirmacion .uk-btn-primary"], "alto": 1100}),
-    ("indicadores-sin-fuente", "direccion", "/calidad/indicadores", {"abrir": "details:has(summary:has-text('Resultados y egresados'))",
+    ("indicadores-sin-fuente", "direccion", "/calidad/indicadores", {"abrir": f"details:has(summary:has-text('{DIMENSION_EGRESADOS}'))",
                                                                  "alto": 1000}),
     ("modulos-reactivar", "direccion", "/admin/modulos", {"clics": ["button[aria-label='Activar Egresados y empleadores']"],
                                                           "omitir": True}),
@@ -647,15 +725,15 @@ def _rutas_de_la_base(db: Path) -> dict:
     de_andrea = uno("""SELECT t.id FROM tramite_grado t JOIN persona_externa p ON p.id = t.externo_id
                        WHERE p.nombres = 'Andrea' AND p.apellidos = 'Limachi' ORDER BY t.id DESC LIMIT 1""")
     rutas = {
-        "proyecto": f"/proyectos/{uno("SELECT id FROM proyecto WHERE codigo = 'IIMAT-IDH-2025-01'")}",
+        "proyecto": f"/proyectos/{uno(f"SELECT id FROM proyecto WHERE codigo = '{CODIGO}'")}",
         "plan": f"/docencia/planes/{uno('SELECT MIN(id) FROM plan_estudios')}",
         "oferta-planificacion": f"/docencia/oferta?gestion={uno("SELECT id FROM gestion_academica WHERE anio = 2027 AND tipo = 'I'")}",
         "preparacion-planificacion": f"/docencia/preparacion?semestre={uno("SELECT tipo || '-' || anio FROM gestion_academica WHERE anio = 2027 AND tipo = 'I'")}",
         "cambios": f"/docencia/oferta/{uno("SELECT id FROM gestion_academica WHERE estado = 'activa' ORDER BY fecha_inicio DESC LIMIT 1")}/cambios",
         "oportunidad-beca": f"/estudiante/oportunidades/{uno("SELECT id FROM oportunidad WHERE tipo = 'beca'")}",
-        "plan-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}",
-        "malla-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}/malla",
-        "equivalencias-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' AND programa_id = (SELECT id FROM programa WHERE nombre = 'Licenciatura en Matemática')")}/equivalencias",
+        "plan-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' ORDER BY id LIMIT 1")}",
+        "malla-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' ORDER BY id LIMIT 1")}/malla",
+        "equivalencias-borrador": f"/docencia/planes/{uno("SELECT id FROM plan_estudios WHERE estado = 'elaboracion' ORDER BY id LIMIT 1")}/equivalencias",
         "reforma": f"/docencia/planes/reforma/{uno("SELECT id FROM reforma_curricular WHERE nombre = 'Plan 2027'")}",
         "encuesta": f"/docencia/encuestas/{uno('SELECT MAX(id) FROM encuesta')}",
         "comunicado": f"/servicios/comunicados/{uno('SELECT MAX(id) FROM comunicado')}",
@@ -673,7 +751,7 @@ def _rutas_de_la_base(db: Path) -> dict:
         "lista-curso": f"/docencia/listas/{uno('SELECT oferta_id FROM lista_curso LIMIT 1')}",
         "resultados-evaluacion": f"/docencia/evaluacion/{uno('SELECT id FROM evaluacion_docente')}/docente/{uno("SELECT docente_id FROM evaluacion_consulta LIMIT 1")}",
         "certificado": f"/docencia/certificados/tutor_grado/{uno("SELECT id FROM tramite_grado WHERE estado = 'aprobado'")}",
-        "colaborador": f"/investigacion/coautores?con=e:{uno("SELECT externo_id FROM producto_autor WHERE externo_id IS NOT NULL AND producto_id IN (SELECT producto_id FROM producto_autor WHERE investigador_id = (SELECT id FROM usuario WHERE email = 'emmy.noether@instituto.test')) GROUP BY externo_id ORDER BY COUNT(*) DESC LIMIT 1")}",
+        "colaborador": f"/investigacion/coautores?con=e:{uno(f"SELECT externo_id FROM producto_autor WHERE externo_id IS NOT NULL AND producto_id IN (SELECT producto_id FROM producto_autor WHERE investigador_id = (SELECT id FROM usuario WHERE email = '{DOCENTE}')) GROUP BY externo_id ORDER BY COUNT(*) DESC LIMIT 1")}",
     }
     con.close()
     return rutas
@@ -741,10 +819,6 @@ def _instalacion_nueva(carpeta: Path, entorno: dict):
 
 def capturar():
     from playwright.sync_api import sync_playwright
-    if config.INSTANCIA.name != "cmat":
-        sys.exit("Las capturas usan los datos de ejemplo de la Carrera de Matemática (seed.py y datos()): otra instancia\n"
-                 "necesita sus propios datos de demostración (docs/manual-plan.md). Con --solo-pdf se arma el PDF con las\n"
-                 "capturas que ya tenga.")
     carpeta = Path(tempfile.mkdtemp(prefix="manual-tau-"))
     db = carpeta / "tau.db"
     entorno = {**os.environ, "TAU_DB": str(db), "TAU_CORREO_MODO": "desactivado", "TAU_INSTANCIA": str(config.INSTANCIA),
@@ -847,12 +921,13 @@ def _con_rutas(texto: str) -> str:
 
 
 def _css():
-    (MANUAL / "manual.css").write_text(_con_rutas((MANUAL / "estilo.css").read_text()))
+    estilo = MANUAL / "estilo.css"
+    (MANUAL / "manual.css").write_text(_con_rutas((estilo if estilo.exists() else BASE / "estilo.css").read_text()))
 
 
 def _html(paginas: dict | None = None) -> str:
     """Une los capítulos, numera las figuras y arma el índice. `paginas`: {id del capítulo: n.º de página}."""
-    capitulos = [_con_rutas(c.read_text()) for c in sorted((MANUAL / "capitulos").glob("*.html"))]
+    capitulos = [_con_rutas(c.read_text()) for c in _capitulos()]
     cuerpo = "\n".join(capitulos)
     n = 0
 
@@ -903,6 +978,14 @@ def _imprimir(pagina):
     pagina.pdf(path=str(PDF), prefer_css_page_size=True, print_background=True)
 
 
+def _capitulos() -> list[Path]:
+    """Los capítulos del manual: los del sistema (`instancias/ejemplo/manual/capitulos`) y, encima, los de la instancia. Un
+    archivo de la instancia con el mismo nombre reemplaza al del sistema y uno nuevo se suma; se ordenan por nombre."""
+    por_nombre = {c.name: c for c in (BASE / "capitulos").glob("*.html")} if MANUAL != BASE else {}
+    por_nombre.update({c.name: c for c in (MANUAL / "capitulos").glob("*.html")})
+    return [por_nombre[n] for n in sorted(por_nombre)]
+
+
 def _paginas_de_los_capitulos() -> dict:
     """{id del capítulo: página}, leyendo en el PDF la marca invisible que lleva cada capítulo («§id§»)."""
     if not shutil.which("pdftotext"):
@@ -942,9 +1025,8 @@ if __name__ == "__main__":
     if args.manual:
         MANUAL = Path(args.manual).resolve()
         IMG, PDF = MANUAL / "img", MANUAL / "Manual-de-usuario-TAU.pdf"
-    if not args.datos and not (MANUAL / "capitulos").is_dir():
-        sys.exit(f"La instancia {config.INSTANCIA.name} no tiene manual: falta {MANUAL}/capitulos/ (y estilo.css). El manual de\n"
-                 "una instancia se escribe en esa carpeta; el plan para el del sistema genérico está en docs/manual-plan.md.")
+    if not args.datos and not _capitulos():
+        sys.exit(f"No hay capítulos: ni {MANUAL}/capitulos/ ni el manual del sistema ({BASE}/capitulos/).")
     if args.datos:
         from app.comun.db import init_db
         init_db(args.datos)

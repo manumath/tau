@@ -49,7 +49,7 @@ def test_instalar_la_instancia_de_ejemplo_y_usar_el_sistema(tmp_path):
     plan = get_db().q("SELECT * FROM plan_estudios")
     assert len(plan) == 1 and plan[0]["estado"] == "vigente" and plan[0]["duracion_semestres"] == 4
     assert get_db().q("SELECT COUNT(*) n FROM observacion_plan")[0]["n"] == 0             # la malla de ejemplo cuadra
-    assert get_db().q("SELECT COUNT(*) n FROM indicador_calidad")[0]["n"] == 6
+    assert get_db().q("SELECT COUNT(*) n FROM indicador_calidad")[0]["n"] == 9
     usuarios.crear("admin@ejemplo.test", "Ana", "Admin", PASS_ADMIN, es_admin=True, es_investigador=False,
                    debe_cambiar_pass=False)
     assert login(app, "admin@ejemplo.test", PASS_ADMIN).headers["hx-redirect"] == "/"

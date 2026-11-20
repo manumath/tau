@@ -386,15 +386,20 @@ def _cargar_lineas() -> bool:
     db = get_db()
     if db.q("SELECT 1 FROM investigador_linea UNION ALL SELECT 1 FROM proyecto_linea LIMIT 1"):
         return False
-    por_email = {"emmy.noether@instituto.test": [2], "alan.turing@instituto.test": [4],
-                 "sofia.kovalevskaya@instituto.test": [1], "srinivasa.ramanujan@instituto.test": [6]}
+    # Por posición en el catálogo de la instancia (la de ejemplo tiene tres líneas; la de Matemática, más).
+    existentes = [x["id"] for x in lineas.todas()]
+    if not existentes:
+        return False
+    pos = lambda *n: sorted({existentes[(i - 1) % len(existentes)] for i in n})  # noqa: E731
+    por_email = {"emmy.noether@instituto.test": pos(2), "alan.turing@instituto.test": pos(4),
+                 "sofia.kovalevskaya@instituto.test": pos(1), "srinivasa.ramanujan@instituto.test": pos(6)}
     for email, ids in por_email.items():
         u = usuarios.por_email(email)
         if u:
             lineas.adscribir_investigador(u["id"], ids)
-    por_proyecto = {"Estructuras algebraicas y computación": [2, 4],
-                    "Ecuaciones diferenciales y mecánica del sólido rígido": [1],
-                    "Sistemas integrables y geometría de trompos": [1]}
+    por_proyecto = {"Estructuras algebraicas y computación": pos(2, 4),
+                    "Ecuaciones diferenciales y mecánica del sólido rígido": pos(1),
+                    "Sistemas integrables y geometría de trompos": pos(1)}
     for nombre, ids in por_proyecto.items():
         for f in db.q("SELECT id FROM proyecto WHERE nombre = ?", [nombre]):
             lineas.fijar_proyecto(f["id"], ids)
@@ -438,8 +443,12 @@ def _cargar_docencia() -> bool:
         oferta.ofertar_troncales(por[tipo], emmy["id"] if emmy else None)
     ofertadas = {(o["sigla"], o["paralelo"]): o["id"] for o in oferta.listar(por["II"]["id"])}
     # Troncales con docente, un segundo paralelo y una electiva.
-    for sigla, paralelo, inscritos, docente in (("MAT-111", "A", 42, emmy), ("MAT-111", "B", 38, alan),
-                                                ("MAT-251", "A", 15, emmy), ("MAT-392", "A", 8, None)):
+    # Las siglas son las de la Carrera de Matemática; otra instancia usa las primeras de su catálogo (PLAN §74).
+    catalogo = [a["sigla"] for a in get_db().q("SELECT sigla FROM asignatura ORDER BY sigla")]
+    sg = lambda sigla, k: sigla if sigla in catalogo else catalogo[min(k, len(catalogo) - 1)]  # noqa: E731
+    s1, s2, s3 = sg("MAT-111", 0), sg("MAT-251", 2), sg("MAT-392", 4)
+    for sigla, paralelo, inscritos, docente in ((s1, "A", 42, emmy), (s1, "B", 38, alan),
+                                                (s2, "A", 15, emmy), (s3, "A", 8, None)):
         oid = ofertadas.get((sigla, paralelo))
         if oid:
             get_db().execute("UPDATE oferta SET inscritos = ? WHERE id = ?", [inscritos, oid])
@@ -465,7 +474,8 @@ def _clasificar_productos() -> int:
     for titulo, codigos in MSC_PRODUCTOS.items():
         fila = get_db().q("""SELECT id FROM producto p WHERE titulo = ?
                              AND NOT EXISTS (SELECT 1 FROM producto_msc WHERE producto_id = p.id)""", [titulo])
-        if fila:
+        codigos = [c for c in codigos if c in msc.existentes(codigos)]    # la instancia puede no traer el MSC
+        if fila and codigos:
             msc.guardar_de_producto(fila[0]["id"], codigos)
             n += 1
     return n
@@ -482,7 +492,7 @@ def _cargar_preprint() -> bool:
     d, errores = productos.preparar(dict(tipo_id=str(_id_tipo("tipo_producto", "Preprint")), anio="2025", mes="9",
                                          titulo="Anillos noetherianos: ideales primarios y cadenas ascendentes",
                                          estado_publicacion="publicado", revision="sin_arbitraje",
-                                         medio="arXiv [math.AC]", arxiv_id="2509.04321", msc=["13E05"]), autores, [])
+                                         medio="arXiv [math.AC]", arxiv_id="2509.04321", msc=msc.existentes(["13E05"])), autores, [])
     assert not errores, errores
     pre = productos.guardar(d, autores, emmy["id"], filiaciones=[1])
     assert productos.enlazar_version(pre, articulo[0]["id"]) is None
