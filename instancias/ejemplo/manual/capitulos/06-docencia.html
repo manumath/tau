@@ -1,0 +1,346 @@
+<section class="capitulo" id="docencia" data-numero="6" data-titulo="Docencia"
+         data-resumen="Planes de estudio, gestiones, oferta de materias, asignación de docentes y carga horaria.">
+
+<p class="entrada">Aquí la Carrera organiza cada semestre: qué materias se dictan, quién las dicta y cómo se
+distribuye la carga horaria de cada persona. Los docentes consultan lo suyo; lo gestionan la Dirección de Carrera y
+la Coordinación académica.</p>
+
+<div class="nota"><span class="rotulo">Si el módulo está apagado</span>
+  Este capítulo trata tres módulos: <strong>Planes de estudio</strong>, <strong>Oferta y asignación docente</strong> (que necesita planes) y <strong>Evaluación docente</strong> (que necesita oferta y seguimiento estudiantil). Un módulo no se apaga mientras otro activo lo use, y al apagar «Oferta» el panel avisa si hay un semestre activo. Con Oferta apagada no hay «Mi docencia», carga horaria ni gestiones.</div>
+
+<h2>Mi docencia</h2>
+<p><span class="ruta">Docencia → Mi docencia</span> muestra, para usted: sus materias por gestión (como titular o
+auxiliar, con los inscritos), la docencia prevista frente a la asignada, su vínculo, su carga horaria por actividad,
+su carga en proyectos y su historial.</p>
+<captura archivo="mi-docencia">«Mi docencia»: materias del semestre, vínculo y carga horaria, carga en proyectos e historial.</captura>
+<div class="nota"><span class="rotulo">Es solo lectura</span>
+  Si algo no coincide, la carga y el vínculo los corrige la Dirección de Carrera; las materias, la Dirección de Carrera
+  o la Coordinación académica.</div>
+
+<h2>Servicios del docente</h2>
+<p>Además de «Mi docencia», cada docente tiene en <span class="ruta">Docencia</span> unas pantallas para su trabajo diario, y al comienzo del menú
+«Mis pendientes» y «Mi calendario». Todas son <strong>solo suyas</strong>: se calculan al abrirlas y no las ve nadie más.</p>
+
+<h3>Mis pendientes y mi calendario</h3>
+<p><span class="ruta">Mis pendientes</span> (capítulo 4) incluye, para los docentes: el informe y la nota
+de defensa de un tribunal, el visto bueno de un trámite de grado, las reuniones y los temas que le piden los estudiantes, las
+postulaciones por calificar, sus preferencias de oferta, los programas por publicar y el término de su vínculo. Lo vencido o a siete días se marca.</p>
+<p><span class="ruta">Mi calendario</span> trae de la docencia el semestre, los plazos y las defensas de grado, las reuniones de tutoría y los
+eventos, y se lleva al teléfono con el archivo <code>.ics</code>.</p>
+
+<h3>Preferencias para la oferta</h3>
+<p>Antes de armar un semestre, <span class="ruta">Docencia → Mis preferencias</span> le deja indicar qué materias prefiere dictar o no puede
+dictar, en qué turnos no tiene disponibilidad y un comentario. Es una <strong>ayuda</strong>: no asigna nada. La Dirección de Carrera y la
+Coordinación académica las ven en <span class="ruta">Docencia → Preferencias de docentes</span>, y al asignar un docente a una materia el
+selector marca a quien la prefiere.</p>
+<captura archivo="docente-preferencias" clase="media">Sus preferencias: materias, turnos sin disponibilidad y un comentario.</captura>
+<captura archivo="preferencias-personal" clase="media">Lo que ven la Dirección de Carrera y la Coordinación al armar la oferta.</captura>
+
+<h3>Programa analítico</h3>
+<p><span class="ruta">Docencia → Mis programas</span> lista las materias que dicta como titular. Para cada una escribe el programa (objetivos y
+contenido son obligatorios) y lo publica. Cada publicación es una <strong>versión</strong> que ya no se edita: para cambiar algo se parte
+de la última y se publica otra. Sus estudiantes lo ven desde su plan de estudios.</p>
+<captura archivo="docente-programas" clase="media">«Mis programas»: el estado del programa de cada materia.</captura>
+<captura archivo="programas-cobertura" clase="media">La cobertura de la oferta, para la Dirección y la Coordinación.</captura>
+
+<h3>Listas de mis cursos</h3>
+<p><span class="ruta">Docencia → Listas de cursos</span> muestra los estudiantes inscritos en cada paralelo que dicta (titular o auxiliar), tal como
+los registra el sistema de notas (Kardex). <strong>Solo los docentes de ese paralelo</strong> la ven, ni siquiera la Dirección de Carrera, y
+cada consulta queda registrada. Hoy la Dirección o la Coordinación cargan el CSV de Kardex; cuando Kardex ofrezca su API, TAU consultará la
+lista en el momento y no guardará nada.</p>
+<captura archivo="docente-listas" clase="media">Los paralelos que dicta y si su lista ya está cargada.</captura>
+<captura archivo="docente-lista" clase="media">La lista de un paralelo.</captura>
+<captura archivo="listas-cargar" clase="media">La carga de las listas (Dirección de Carrera y Coordinación académica): solo ven cuántos estudiantes hay por paralelo.</captura>
+<div class="nota"><span class="rotulo">Copia temporal</span>
+  Mientras no haya API, la lista cargada es una copia que se <strong>retira al concluir la gestión</strong>. TAU no guarda notas ni asistencia.</div>
+
+<h3>Evaluación docente</h3>
+<p>Una vez por semestre, la Dirección de Carrera la <strong>anuncia</strong> (el instrumento, las fechas y cómo se usan los resultados quedan a la
+vista de docentes y estudiantes, con al menos una semana de anticipación), la abre y la cierra. Los estudiantes inscritos la responden una
+sola vez por paralelo, de forma <strong>anónima</strong>.</p>
+<captura archivo="docente-evaluacion" clase="media">El instrumento, el estado de la evaluación y las reglas que la rigen.</captura>
+<ul>
+  <li>Los resultados de un docente se muestran con la evaluación cerrada y solo desde <strong>5 respuestas</strong>; con menos, nadie los ve.</li>
+  <li>El docente ve los suyos, agrega su <strong>contexto</strong> y ve <strong>quién los consultó</strong> y cuándo.</li>
+  <li>La Dirección de Carrera ve cuántos respondieron, pero los resultados solo <strong>por docente</strong>: cada consulta queda en su bitácora y en la auditoría.</li>
+  <li>No hay respuestas abiertas, y los estudiantes reciben el <strong>retorno</strong> de lo que la Carrera hizo.</li>
+</ul>
+<captura archivo="docente-resultados" clase="media">Los resultados de un docente, su contexto y la bitácora de quién los consultó.</captura>
+<captura archivo="evaluacion-gestion" clase="media">La administración de la evaluación (Dirección de Carrera): participación por docente y retorno.</captura>
+
+<h3>Mi historial y mis certificados</h3>
+<p><span class="ruta">Docencia → Mi historial</span> reúne sus materias, tutorías y tribunales de grado, auxiliaturas y proyectos. Cada módulo activo aporta su sección: si uno está apagado, la suya no aparece. Desde ahí,
+«Mis certificados» emite una constancia imprimible de cada tutoría o tribunal ya <strong>concluido</strong>, con un código que la Dirección de
+Carrera puede verificar.</p>
+<captura archivo="docente-historial" clase="media">«Mi historial»: lo que ha hecho en la Carrera, sin cargar nada.</captura>
+<captura archivo="docente-certificado" clase="media">Un certificado imprimible, con su código de verificación.</captura>
+
+<h2>Cómo se cuenta la carga horaria</h2>
+<p>Estas reglas explican las cifras de todas las pantallas de docencia:</p>
+<ul>
+  <li>La carga se mide en <strong>unidades de 32 horas al mes</strong>. Una persona tiene una carga contratada de 32,
+    64, 96, 128 o 160 h/mes; 160 es tiempo completo.</li>
+  <li>La carga se <strong>distribuye por actividad</strong>: docencia, investigación, extensión y servicios, gestión
+    y otras. La suma debe dar el total. Por ejemplo: 160 = docencia 64 + investigación 64 + extensión 32.</li>
+  <li>Cada materia dictada como <strong>titular</strong> en un semestre cuenta 32 h/mes, <strong>por los meses que la
+    dictó</strong>. Si un titular deja una materia a mitad de semestre y entra otro, cada uno cuenta la parte del semestre
+    en que la tuvo (quien dictó 31 de 153 días aporta 6,5 h/mes y quien siguió, 25,5). Los auxiliares no suman carga.</li>
+  <li>Los <strong>cursos de verano e invierno</strong> solo los dictan docentes titulares y no forman parte de la
+    carga: cuentan como docencia dictada.</li>
+  <li>La <strong>jornada completa equivalente</strong> (JCE) de los informes es la carga contratada dividida entre 160.</li>
+</ul>
+
+<h2>Planes de estudio</h2>
+<p><span class="ruta">Docencia → Planes de estudio</span> muestra los programas de la Carrera con su plan vigente:
+las dos licenciaturas y las dos maestrías. Todos pueden consultarlos; quien elabora un plan nuevo lo hace aquí
+mismo (ver «Elaborar un plan nuevo» más abajo).</p>
+<captura archivo="planes">Los planes de estudio. La última columna indica cuántas observaciones tiene cada plan por revisar.</captura>
+<p>La ficha de cada plan lista las asignaturas por semestre, con sus horas o créditos, sus requisitos y su línea
+formativa. Los planes se cargaron <strong>tal como están en los documentos oficiales</strong>: lo que no cuadra
+(un requisito que no existe, un total que no suma) no se corrigió, sino que quedó anotado como
+<strong>observación</strong>.</p>
+<captura archivo="plan-ficha">La ficha de un plan, con las observaciones del documento. La Dirección de Carrera o la Coordinación académica las marcan como resueltas indicando cómo se resolvió.</captura>
+
+<h2>Estados de un plan</h2>
+<p>Cada plan está en uno de cuatro estados, que decide quién lo ve y qué puede hacerse con él:</p>
+<table>
+  <thead><tr><th>Estado</th><th>Quién lo ve</th><th>Qué significa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>En elaboración</strong></td><td>Dirección de Carrera y Coordinación académica</td><td>Es un borrador. Se edita libremente y no aparece en la oferta, en las cohortes ni en la búsqueda.</td></tr>
+    <tr><td><strong>Vigente</strong></td><td>Todos</td><td>Es el plan de los nuevos ingresos. Cada programa tiene uno solo.</td></tr>
+    <tr><td><strong>En proceso de cierre</strong></td><td>Todos</td><td>Ya no admite nuevos ingresos, pero sigue en la oferta mientras egresan quienes lo cursan.</td></tr>
+    <tr><td><strong>Cerrado</strong></td><td>Todos</td><td>Solo historial. Sale de la oferta y no se vuelve a abrir.</td></tr>
+  </tbody>
+</table>
+<p>Los planes se agrupan por <strong>reforma curricular</strong>: el conjunto de planes que se aprueba junto, con una sola
+resolución (hoy, el Plan 2017). Una reforma puede traer uno, dos o tres programas, según lo que decida la Carrera.</p>
+<captura archivo="planes-elaboracion" clase="media">La lista de planes agrupada por reforma, con el estado de cada plan. «En elaboración» solo lo ven quienes elaboran planes.</captura>
+
+<h2>Elaborar un plan nuevo</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Dirección de Carrera</strong> y la <strong>Coordinación académica</strong> elaboran. Solo la Dirección de
+  Carrera pone en vigencia y cierra.</div>
+
+<h3>1. Crear la reforma</h3>
+<p>En <span class="ruta">Docencia → Planes de estudio</span>, el botón <span class="ui">Nueva reforma curricular</span>
+abre un asistente de una sola pantalla.</p>
+<ol class="pasos">
+  <li><strong>Datos de la reforma:</strong> el nombre («Plan 2027»), el año en que rige y la resolución, si ya la tiene.</li>
+  <li><strong>Qué programas tendrá:</strong> para cada programa actual, elija <span class="ui">Copiar su plan</span>
+    (parte de las mismas asignaturas y requisitos), <span class="ui">Empezar vacío</span> o
+    <span class="ui">No continúa</span>. Para pasar de dos licenciaturas a una, se copia una y la otra queda en «No continúa».</li>
+  <li><strong>Programas nuevos</strong> (opcional): una reforma puede crear titulaciones que hoy no existen, con su
+    nombre, nivel, título que otorga y plan de partida.</li>
+</ol>
+<captura archivo="reforma-nueva" clase="media">El asistente de nueva reforma curricular.</captura>
+<div class="nota consejo"><span class="rotulo">¿Programa o mención?</span>
+  Si dos carreras otorgan <strong>títulos distintos</strong> (por ejemplo, una licenciatura y una licenciatura aplicada de la
+  misma disciplina) son <strong>programas</strong>. Si el título es el mismo y solo cambia un grupo de materias, son
+  <strong>menciones</strong> de un solo plan.</div>
+
+<h3>2. Completar los datos y la malla</h3>
+<p>Cada plan nuevo nace «en elaboración». Su ficha tiene tres botones: <span class="ui">Editar la malla</span>,
+<span class="ui">Editar datos generales</span> y <span class="ui">Equivalencias</span>; y, arriba, la lista
+<strong>«Para poner en vigencia»</strong>, que dice con una marca qué está listo y qué falta.</p>
+<captura archivo="plan-borrador">La ficha de un plan en elaboración, con su lista de verificación.</captura>
+<p><span class="ui">Editar datos generales</span> cambia el nombre, el año, la resolución, el título que otorga el
+programa, la duración en semestres, si el plan se mide en horas o en créditos, la nota mínima y los totales que declara
+el documento del plan.</p>
+<captura archivo="plan-datos" clase="media">Los datos generales de un plan en elaboración.</captura>
+
+<h3>La malla</h3>
+<p>El editor muestra una tarjeta por semestre, con su ciclo, y debajo las listas de electivas. Cada cambio se guarda al
+instante y la lista de verificación se actualiza sola.</p>
+<captura archivo="malla">El editor de la malla: la lista de verificación, las menciones y la tarjeta de cada semestre.</captura>
+<ul>
+  <li><span class="ui">Agregar</span> (en cada semestre) abre el formulario de una asignatura. El lápiz de cada fila la
+    modifica y el bote de basura la quita.</li>
+  <li><strong>Sigla:</strong> escriba la sigla como «EJE-101». Si ya existe en el catálogo, deje el nombre en blanco: se
+    usa el que tiene, porque todos los planes comparten el catálogo. Si es nueva, escriba su nombre y queda agregada.</li>
+  <li><strong>Horas o créditos:</strong> el formulario pide las horas teóricas, prácticas y de laboratorio, o los
+    créditos, según cómo se mida el plan.</li>
+  <li><strong>Requisitos:</strong> se marcan entre las asignaturas del plan, o «Exige ser egresado». No se escriben a mano.</li>
+  <li><strong>Tipo:</strong> obligatoria, trabajo final, o una electiva. Una <em>casilla de electiva</em> no lleva sigla:
+    se llena con una de la lista de electivas del mismo grupo.</li>
+</ul>
+<captura archivo="malla-fila" clase="media">El formulario para agregar una asignatura al plan.</captura>
+<ul>
+  <li><span class="ui">Ciclos</span> define los ciclos (por ejemplo, básico del semestre 1 al 4); el ciclo de cada
+    asignatura se deduce de su semestre.</li>
+  <li><span class="ui">Agregar un semestre</span> amplía la duración del plan.</li>
+  <li><span class="ui">Importar CSV</span> reemplaza <strong>toda</strong> la malla por la de un archivo. Hay una
+    plantilla para descargar. Si el archivo tiene errores, no cambia nada y se listan.</li>
+</ul>
+<div class="nota importante"><span class="rotulo">Lo que comprueba la lista de verificación</span>
+  Datos completos (incluida la resolución), siglas válidas, requisitos que existen y que no son circulares (A pide B y
+  B pide A), todos los semestres con asignaturas, casillas de electiva con su lista, y horas o créditos en cada fila.
+  Como aviso, que los totales declarados cuadren con la suma. Mientras haya puntos en rojo, el plan no se puede poner en
+  vigencia.</div>
+
+<h3>Menciones</h3>
+<p>La tarjeta <strong>Menciones</strong> del editor permite agregar una mención con su nombre, descripción, el semestre
+en que se elige y sus mínimos (de asignaturas y de créditos u horas). Con <span class="ui">Asignaturas</span> se marca
+cuáles son propias de la mención, obligatorias u optativas; una asignatura puede ser de varias menciones. Lo que no es de
+ninguna mención es el tronco común.</p>
+<captura archivo="mencion-asignaturas" clase="media">Las asignaturas propias de una mención.</captura>
+
+<h3>3. Equivalencias con el plan anterior</h3>
+<p><span class="ui">Equivalencias</span> compara el plan nuevo con el que reemplaza (se puede elegir otro). Cada asignatura
+del plan anterior queda <strong>igual</strong> (la misma sigla está en el plan nuevo; no hay que hacer nada),
+<strong>equivalente</strong> (se registró un grupo) o <strong>sin equivalente</strong>. Con
+<span class="ui">Agregar equivalencia</span> se marcan las asignaturas del plan anterior y las del nuevo que las
+reemplazan, una a una o varias por una. TAU no guarda materias cursadas ni notas: las equivalencias son del catálogo.</p>
+<captura archivo="equivalencias">Las equivalencias con el plan 2017: dos asignaturas se fusionan en una.</captura>
+
+<h2>Poner en vigencia y cerrar</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Solo la <strong>Dirección de Carrera</strong>.</div>
+<ul>
+  <li><strong>Poner en vigencia:</strong> el botón está en la ficha del plan y se habilita cuando la lista de
+    verificación no tiene puntos en rojo. El plan vigente del mismo programa pasa solo a «en proceso de cierre», con el
+    último ingreso en el año anterior. La página de la <strong>reforma</strong> (el título de cada grupo en la lista)
+    pone en vigencia todos sus planes a la vez, o ninguno. Los programas que no tienen plan en la reforma dejan de
+    existir: su plan vigente pasa también a «en proceso de cierre».</li>
+  <li><strong>Iniciar el cierre</strong> (plan vigente): pide el año del último ingreso y la resolución o el motivo.
+</li>
+  <li><strong>Cerrar el plan</strong> (en proceso de cierre): muestra cuántos estudiantes siguen cursando en él. Si
+    quedan, hay que marcar «Cerrar aunque queden estudiantes cursando» y dar el motivo.</li>
+</ul>
+<captura archivo="reforma" clase="media">La página de la reforma: todos sus planes y si están listos para ponerse en vigencia.</captura>
+<captura archivo="plan-cierre" clase="media">Iniciar el cierre de un plan vigente.</captura>
+<div class="nota importante"><span class="rotulo">No se puede deshacer</span>
+  Un plan que pasó a vigente ya no se edita, y uno cerrado no se vuelve a abrir. Por eso cada paso pide confirmación.</div>
+
+<h2>Gestiones y semestres</h2>
+<p>Una <strong>gestión</strong> es un periodo académico. Hay cuatro por año:</p>
+<table>
+  <thead><tr><th>Código</th><th>Qué es</th><th>Ejemplo</th></tr></thead>
+  <tbody>
+    <tr><td>I</td><td>Primer semestre</td><td>I-2026</td></tr>
+    <tr><td>INV</td><td>Curso de invierno (julio)</td><td>INV-2026</td></tr>
+    <tr><td>II</td><td>Segundo semestre</td><td>II-2026</td></tr>
+    <tr><td>VER</td><td>Curso de verano (enero del año siguiente, contado con el año anterior)</td><td>VER-2026 se dicta en enero de 2027</td></tr>
+  </tbody>
+</table>
+<p>Cada gestión, semestre o curso de temporada, pasa por tres estados y se maneja por separado:</p>
+<table>
+  <thead><tr><th>Estado</th><th>Qué significa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>En planificación</strong></td><td>Se arma la oferta y se asignan los docentes. Se edita con libertad y <strong>se puede borrar</strong>.</td></tr>
+    <tr><td><strong>Activa</strong></td><td>El semestre está en marcha. Cada cambio pide fecha de efecto y motivo, y queda registrado.</td></tr>
+    <tr><td><strong>Concluida</strong></td><td>Es historial, de solo lectura. La Dirección de Carrera puede reabrirla para corregirla.</td></tr>
+  </tbody>
+</table>
+<p>En <span class="ruta">Docencia → Gestiones</span>, <span class="ui">Crear las gestiones del año</span> propone las
+fechas y deja ofertadas las materias troncales de las licenciaturas en ambos semestres, en el paralelo A y sin
+docente. <span class="ui">Crear una sola gestión</span> crea una suelta; si ya terminó, se marca «Ya terminó» y se crea
+directamente como concluida, para cargar su historial. Cada fila tiene su estado, el enlace
+<span class="ui">Planificar</span> y, mientras está en planificación, el botón para borrarla (no se borra si ya tiene
+convocatorias a auxiliaturas).</p>
+<captura archivo="gestiones" clase="media">Las gestiones con su estado. Las de 2026 que ya terminaron son historial; la que está en curso, activa.</captura>
+
+<h2>Planificar y activar un semestre</h2>
+<p><span class="ruta">Docencia → Preparación del semestre</span> es la planificación de cada gestión: un tablero con las
+etapas para que arranque (gestión creada, oferta cargada, contratos renovados, docentes asignados y carga cuadrada; los
+cursos de temporada solo tienen gestión, oferta y docentes). Cada etapa muestra lo que falta y enlaza a donde se
+resuelve. Mientras la gestión está en planificación se sigue editando con libertad.</p>
+<captura archivo="preparacion">La planificación de una gestión, con su estado, el botón «Activar el semestre» y lo que falta para activarlo.</captura>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La Dirección de Carrera y la Coordinación académica planifican. <strong>Solo la Dirección de Carrera activa</strong> el
+  semestre.</div>
+<p>Para activar hace falta que la <strong>oferta esté cargada</strong> y que <strong>cada paralelo tenga titular</strong>.
+Contratos por renovar y carga con observaciones solo se avisan. Al activar, el semestre pasa a «Activa». El inicio muestra
+un pendiente cuando una gestión empieza en menos de 15 días, o ya empezó, y sigue en planificación.</p>
+<p><span class="ui">Renovar contratos</span> (en «Carga horaria») abre en bloque un periodo nuevo, con la misma
+categoría y la misma carga, para contratados, interinos e invitados cuyo periodo terminó.</p>
+
+<h2>Oferta y docentes</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La editan la <strong>Dirección de Carrera</strong> y la <strong>Coordinación académica</strong>. Todo el personal
+  la consulta.</div>
+<captura archivo="oferta">La oferta de un semestre en planificación: cada paralelo con sus inscritos y sus docentes. Los paralelos sin docente se marcan en ámbar.</captura>
+<ol class="pasos">
+  <li>Elija la gestión en el selector de arriba.</li>
+  <li>Para agregar un paralelo, escriba la asignatura, el paralelo y los inscritos, y pulse <span class="ui">Agregar a
+    la oferta</span>.</li>
+  <li>En cada fila, <span class="ui">Asignar docente</span> agrega un titular o un auxiliar.</li>
+  <li><span class="ui">Ver los N sin docente</span> deja a la vista solo los paralelos que aún no tienen docente.</li>
+</ol>
+<p>Para trabajar más rápido (solo con la gestión en planificación):</p>
+<ul>
+  <li><span class="ui">Agregar las troncales</span> completa las materias obligatorias que falten.</li>
+  <li><span class="ui">Asignar en grilla</span> muestra todos los paralelos con un selector de titular y guarda todo de
+    una vez.</li>
+  <li><span class="ui">Copiar de…</span> trae los paralelos del mismo semestre del año anterior y, si se marca, sus
+    docentes.</li>
+  <li><span class="ui">Importar CSV</span> carga la oferta de un semestre pasado desde una planilla. Hay una plantilla
+    para descargar. No sirve con un semestre activo.</li>
+</ul>
+
+<h2>Con el semestre en marcha</h2>
+<p>Un semestre <strong>activo</strong> ya no se edita con libertad: las materias se cierran a medio semestre y los
+docentes cambian por renuncia, licencia, fallecimiento u otras causas. Por eso cada cambio pide una <strong>fecha de
+efecto</strong> (el primer día en que rige), un <strong>motivo</strong> y, si quiere, un detalle (obligatorio si el motivo
+es «Otro»). Los botones de las troncales, la copia, la grilla y la importación desaparecen.</p>
+<captura archivo="oferta-activa">La oferta de un semestre activo: cada fila ofrece retirar la materia, reasignar o retirar a un docente y asignar otro.</captura>
+<ul>
+  <li><strong>Agregar una materia</strong> al semestre.</li>
+  <li><strong>Retirar una materia</strong> (la ✕ de su fila). No se borra: queda tachada, con la fecha y el motivo, y sus
+    docentes dejan el paralelo desde esa fecha.</li>
+  <li><strong>Asignar un docente</strong> a un paralelo, <strong>reasignarlo</strong> a otra persona o
+    <strong>retirarlo</strong>. Quien deja un paralelo queda en la fila con sus fechas; el que entra figura desde la fecha
+    de efecto, con el mismo rol.</li>
+</ul>
+<captura archivo="cambio-docente" clase="media">Reasignar un docente: se elige a la persona, la fecha de efecto y el motivo.</captura>
+<p>Los docentes que entran o salen reciben un <strong>aviso</strong>. <span class="ui">Cambios del semestre</span> lista
+todo lo que cambió, con su fecha, su motivo y quién lo registró.</p>
+<captura archivo="cambios-semestre">El registro de cambios de un semestre.</captura>
+
+<h2>Concluir el semestre y el historial</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Solo la <strong>Dirección de Carrera</strong>.</div>
+<p>Cuando un semestre termina, el inicio muestra un pendiente «terminó… y sigue activa». En la planificación de la
+gestión, <span class="ui">Concluir el semestre</span> la pasa al <strong>historial</strong>: queda de solo lectura y sale
+de los pendientes. Antes de su fecha de término solo se concluye con motivo (por ejemplo, un cierre anticipado).</p>
+<captura archivo="concluir" clase="media">Concluir un semestre.</captura>
+<ul>
+  <li>Una gestión concluida no cambia: ni la oferta, ni los docentes, ni sus fechas.</li>
+  <li>Si hay algo que corregir, <span class="ui">Reabrir para corregir</span> (con motivo) la devuelve a «Activa».
+    Después se vuelve a concluir.</li>
+  <li>La oferta de un semestre pasado se carga por CSV (<span class="ui">Importar CSV</span>); una gestión que no existía
+    y ya terminó se crea directamente como concluida.</li>
+</ul>
+
+<h2>Carga horaria</h2>
+<p><span class="ruta">Docencia → Carga horaria</span> muestra, por semestre, la carga contratada de cada persona y su
+distribución, y compara la docencia prevista con la asignada en la oferta. Avisa si a alguien le faltan materias o
+le sobran.</p>
+<captura archivo="carga">La carga horaria de un semestre. El nombre de cada persona abre su ficha de docente.</captura>
+<div class="nota"><span class="rotulo">Quién puede verla</span>
+  Dirección de Carrera, Coordinación académica, Dirección del Instituto y Comisión de calidad.</div>
+
+<h2>Vínculo y carga de una persona</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Solo la <strong>Dirección de Carrera</strong>.</div>
+<p>El vínculo se registra por <strong>periodos</strong>. Se abre desde <span class="ruta">Administración →
+Usuarios</span>, con el botón <span class="ui">Vínculo</span> de cada persona, o desde su ficha en «Carga horaria».</p>
+<captura archivo="vinculo">El historial de vínculo de una persona: fue contratada y luego titular, con su carga por actividad.</captura>
+<table>
+  <thead><tr><th>Categoría</th><th>Cómo se vincula</th></tr></thead>
+  <tbody>
+    <tr><td>Titular</td><td>Vínculo <strong>permanente</strong>, sin fecha de término. Se termina a mano, con su motivo: retiro, renuncia, despido, fallecimiento u otro.</td></tr>
+    <tr><td>Contratado(a), interino(a), invitado(a)</td><td>Por un <strong>periodo con fecha de término obligatoria</strong>.</td></tr>
+    <tr><td>Externo(a)</td><td>Colaborador(a) con cuenta que no pertenece a la planta de la Carrera.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><span class="ui">Cambiar de categoría o de carga</span> cierra el periodo vigente el día anterior y abre uno
+    nuevo.</li>
+  <li><span class="ui">Terminar el vínculo</span> pide la fecha y el motivo.</li>
+  <li><span class="ui">Agregar un periodo</span> sirve para un contrato nuevo o para completar el historial.</li>
+</ul>
+<div class="nota importante"><span class="rotulo">Por qué importa el historial</span>
+  Los informes cuentan lo que una persona produjo <strong>mientras estaba vinculada</strong>, con la categoría de
+  ese momento. Un vínculo sin fechas correctas deja producción fuera de los informes.</div>
+
+</section>

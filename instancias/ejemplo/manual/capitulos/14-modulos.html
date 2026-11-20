@@ -1,0 +1,86 @@
+<section class="capitulo" id="modulos" data-numero="14" data-titulo="Módulos y perfiles"
+         data-resumen="Qué hace cada módulo de TAU, qué necesita y con qué perfil conviene empezar. Para quien administra el sistema.">
+
+<p class="entrada">TAU es un solo sistema formado por <strong>módulos</strong>. Cada unidad activa los que usa y deja apagados los
+demás. Este capítulo es la referencia de esa decisión: qué es cada módulo, de cuál depende y qué conviene activar al empezar.</p>
+
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  Activar y apagar módulos es de la <strong>Administración del sistema</strong>, en <span class="ruta">Administración → Módulos</span> (capítulo 11).</div>
+
+<h2>Las reglas</h2>
+<ol class="pasos">
+  <li><strong>Apagar oculta y no borra.</strong> Las pantallas de un módulo apagado no se ven ni se pueden abrir escribiendo su dirección; sus avisos y
+    tareas programadas se detienen. Los datos quedan intactos y reaparecen al volver a activarlo.</li>
+  <li><strong>Un módulo necesita a otros.</strong> Al activarlo, el sistema activa también lo que necesita y lo avisa. Y no se puede apagar uno
+    mientras otro activo lo use.</li>
+  <li><strong>Se avisa lo que queda en curso.</strong> Antes de apagar, el sistema dice si hay algo a medias (un semestre activo, una convocatoria
+    abierta, una autoevaluación en curso).</li>
+  <li><strong>La plataforma no se apaga.</strong> Cuentas e ingreso, roles, unidades, vínculos, personas, avisos, auditoría, privacidad y adjuntos
+    están siempre activos.</li>
+  <li><strong>Los indicadores avisan.</strong> Un indicador de calidad que dependía de un módulo apagado queda «sin fuente», no en cero.</li>
+</ol>
+
+<h2>Los módulos</h2>
+<p>Son diecisiete, agrupados por área. «Necesita» indica lo que debe estar activo para que el módulo funcione.</p>
+<table>
+  <thead><tr><th>Módulo</th><th>Qué hace</th><th>Necesita</th></tr></thead>
+  <tbody>
+    <tr><td class="grupo" colspan="3">Investigación</td></tr>
+    <tr><td>Investigación</td><td>Perfiles de investigadores, productos, actividades, proyectos y propuestas, con el directorio público y la API</td><td>—</td></tr>
+    <tr><td>Informes de investigación</td><td>Memoria anual, informe de I+D+i, currículum, listados y tablero de calidad de datos</td><td>Investigación</td></tr>
+    <tr><td class="grupo" colspan="3">Docencia</td></tr>
+    <tr><td>Planes de estudio</td><td>Reformas curriculares, planes, malla, menciones y equivalencias</td><td>—</td></tr>
+    <tr><td>Oferta y asignación docente</td><td>Gestiones, oferta de materias, asignación de docentes, carga horaria y los servicios del docente</td><td>Planes de estudio</td></tr>
+    <tr><td>Evaluación docente</td><td>Evaluación anónima de los docentes por sus estudiantes, con resultados por paralelo</td><td>Oferta, Seguimiento estudiantil</td></tr>
+    <tr><td class="grupo" colspan="3">Estudiantes</td></tr>
+    <tr><td>Seguimiento estudiantil</td><td>Cohortes desde el CSV de Seguimiento Académico, rendimiento, actividad estudiantil y el portal del estudiante</td><td>—</td></tr>
+    <tr><td>Encuestas</td><td>Encuestas a estudiantes y egresados, anónimas o nominales, con su retorno de resultados</td><td>Seguimiento estudiantil</td></tr>
+    <tr><td>Tutoría y apoyo</td><td>Tutoría confidencial, casos de apoyo estudiantil, orientación y buzón de consultas</td><td>Seguimiento estudiantil</td></tr>
+    <tr><td>Egresados y empleadores</td><td>Titulación, seguimiento de egresados por hitos, directorio opcional y registro de empleadores</td><td>Seguimiento estudiantil, Encuestas</td></tr>
+    <tr><td class="grupo" colspan="3">Servicios</td></tr>
+    <tr><td>Comunicados y eventos</td><td>Comunicados a la comunidad y eventos con convocados e inscripción</td><td>—</td></tr>
+    <tr><td>Auxiliaturas</td><td>Convocatorias a auxiliares académicos: comisión, calificación por formularios, designaciones e impresos</td><td>Oferta, Seguimiento estudiantil</td></tr>
+    <tr><td>Oportunidades y biblioteca</td><td>Becas, movilidad, pasantías y empleo para estudiantes, y la biblioteca de recursos</td><td>Seguimiento estudiantil</td></tr>
+    <tr><td>Proyectos de grado</td><td>Trámites de titulación (perfil y documento final, tutor, tribunal y revisiones) y temas de grado</td><td>Seguimiento estudiantil</td></tr>
+    <tr><td class="grupo" colspan="3">Calidad</td></tr>
+    <tr><td>Aseguramiento de la calidad</td><td>Marco de calidad, indicadores, evidencias, autoevaluación, ficha estadística, capacitación, convenios e impacto</td><td>—</td></tr>
+    <tr><td>Plan de mejora</td><td>Acciones y actividades, avances con evidencia, cortes trimestrales y reprogramaciones</td><td>Calidad</td></tr>
+    <tr><td class="grupo" colspan="3">Transversales</td></tr>
+    <tr><td>Comentarios del piloto</td><td>«Comentar esta pantalla» y el tablero de comentarios y adopción por rol</td><td>—</td></tr>
+    <tr><td>IA con criterio humano</td><td>Borradores generados por un modelo, que solo surten efecto cuando una persona los aprueba</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h2>Perfiles de partida</h2>
+<p>Una instalación nueva arranca con un <strong>perfil</strong>: un conjunto de módulos ya activos. Lo elige quien instala el sistema, y es solo el
+punto de partida. Desde que la base tiene datos, manda <span class="ruta">Administración → Módulos</span>.</p>
+<table>
+  <thead><tr><th>Perfil</th><th>Módulos activos</th><th>Para quién</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Mínimo</strong></td><td>Comunicados y eventos</td><td>Una unidad que empieza: cuentas, roles y comunicados, sin nada más. Es el perfil por omisión</td></tr>
+    <tr><td><strong>Instituto</strong></td><td>Investigación, Informes de investigación, Comunicados</td><td>Un instituto de investigación sin carrera propia</td></tr>
+    <tr><td><strong>Carrera</strong></td><td>Planes de estudio, Oferta y asignación docente, Seguimiento estudiantil, Comunicados</td><td>Una carrera que gestiona planes, oferta y estudiantes</td></tr>
+    <tr><td><strong>Carrera con instituto</strong></td><td>La unión de los dos anteriores</td><td>Una carrera con su instituto de investigación</td></tr>
+    <tr><td><strong>Completo</strong></td><td>Todos</td><td>Una carrera con instituto que quiere todas las funciones, y quien quiera probarlo todo</td></tr>
+  </tbody>
+</table>
+<captura archivo="modulos-nueva">Una instalación con el perfil mínimo: casi todo apagado, listo para que la Administración elija.</captura>
+
+<div class="nota consejo"><span class="rotulo">Cómo elegir</span>
+  Empiece por lo que su unidad ya hace con planillas: active ese módulo, cargue sus datos y recién después pase al siguiente. Es más fácil sumar un
+  módulo cuando el anterior ya se usa todos los días que apagar uno que nadie entiende.</div>
+
+<h2>Qué cambia para cada persona</h2>
+<table>
+  <thead><tr><th>Cuando un módulo se apaga…</th><th>…las personas ven</th></tr></thead>
+  <tbody>
+    <tr><td>El menú</td><td>Desaparecen sus opciones y los grupos que quedan vacíos</td></tr>
+    <tr><td>«Mis pendientes», «Mi calendario» y el inicio</td><td>Ya no traen lo de ese módulo; las cifras del inicio que llevaban a él quedan sin enlace</td></tr>
+    <tr><td>La búsqueda</td><td>No devuelve resultados de ese módulo</td></tr>
+    <tr><td>Una dirección escrita a mano</td><td>«No encontrado»</td></tr>
+    <tr><td>Los avisos y el correo</td><td>No se envían los de ese módulo</td></tr>
+    <tr><td>Los indicadores de calidad</td><td>Los que dependían de él quedan «sin fuente»</td></tr>
+    <tr><td>La página de privacidad</td><td>Deja de mencionar los datos de ese módulo</td></tr>
+  </tbody>
+</table>
+</section>

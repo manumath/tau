@@ -42,3 +42,9 @@ static/img/membrete/logo_*
 # El manual de usuario es de cada instancia (instancias/<nombre>/manual/) y no se versiona en el repositorio (PLAN §74).
 # Si se arma en docs/manual/ con TAU_MANUAL, tampoco.
 /docs/manual/
+
+# El manual del sistema (instancias/ejemplo/manual) versiona solo el texto y el estilo; lo que se genera no va.
+/instancias/ejemplo/manual/img/
+/instancias/ejemplo/manual/manual.html
+/instancias/ejemplo/manual/manual.css
+/instancias/ejemplo/manual/*.pdf

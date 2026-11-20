@@ -1,0 +1,125 @@
+<section class="capitulo" id="administracion" data-numero="11" data-titulo="Administración"
+         data-resumen="Módulos, unidades, cuentas, roles, cargas de datos en bloque, catálogos y auditoría.">
+
+<p class="entrada">Estas pantallas sostienen al resto del sistema. Las usan la Administración del sistema, las
+direcciones y Gestión de datos, cada una en lo suyo.</p>
+
+<h2>Módulos</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Administración del sistema</strong>.</div>
+<p><span class="ruta">Administración → Módulos</span> lista las funciones de TAU, agrupadas por área, con su estado y lo que cada una necesita. Sirve
+para que cada unidad use solo lo que le corresponde. El capítulo 14 describe cada módulo y los perfiles de partida.</p>
+<captura archivo="modulos">Los módulos de una instalación completa: cada uno con su descripción, lo que requiere y el último cambio.</captura>
+<ul>
+  <li><strong>Activar</strong> un módulo hace aparecer sus pantallas para quienes tienen permiso. Si necesita otros, el sistema los activa
+    también y lo avisa antes.</li>
+  <li><strong>Apagar</strong> lo oculta: las pantallas dejan de verse (devuelven «no encontrado», no solo desaparecen del menú), no se envían sus
+    avisos y sus tareas programadas se detienen. <strong>No se borra ningún dato</strong>: al activarlo otra vez, todo queda como estaba.</li>
+  <li>Un módulo <strong>no se puede apagar mientras otro activo lo use</strong>: la fila dice cuáles.</li>
+  <li>Antes de apagar, el sistema pregunta y dice <strong>lo que queda en curso</strong> (por ejemplo, un semestre activo o una convocatoria
+    abierta), para que no se apague a mitad de un trámite.</li>
+  <li>Cada cambio queda en la auditoría con la persona y la hora.</li>
+</ul>
+<captura archivo="modulos-confirmar" clase="media">La confirmación al apagar «Egresados y empleadores»: recuerda que no se borra ningún dato.</captura>
+<captura archivo="modulos-apagado">Con el módulo apagado, la fila pasa a «Apagado» y ofrece «Activar»; su menú ya no aparece.</captura>
+<div class="nota importante"><span class="rotulo">Qué pasa con lo demás</span>
+  Los indicadores de calidad que se calculan con un módulo apagado quedan «sin fuente» (capítulo 9) y la página pública de privacidad deja de
+  mencionar sus datos (capítulo 12). Las cuentas, los roles, los vínculos, los avisos y la auditoría no se pueden apagar.</div>
+
+<h2>Unidades</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Administración del sistema</strong>.</div>
+<p><span class="ruta">Administración → Unidades</span> guarda la sigla y el nombre de la universidad, la facultad, la carrera y el instituto de esta
+instalación. De ahí salen los membretes de los informes, las páginas públicas, los correos y los nombres con que se asignan los roles.
+Una instalación es de <strong>una carrera</strong>; si no tiene instituto, se deja el que viene y no se le asigna ningún rol.</p>
+<captura archivo="unidades">Los nombres y las siglas de las unidades de la instalación de ejemplo.</captura>
+<p>Cambiar un nombre no toca los datos: los vínculos, los roles y los planes siguen ligados a la unidad, aunque cambie su sigla.</p>
+
+<h2>Usuarios</h2>
+<captura archivo="usuarios">La lista de usuarios, con el perfil, el estado y las acciones de cada cuenta.</captura>
+
+<h3>Crear una cuenta</h3>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Administración del sistema</strong>.</div>
+<ol class="pasos">
+  <li>En <span class="ruta">Administración → Usuarios</span>, pulse <span class="ui">Nuevo usuario</span>.</li>
+  <li>Escriba el correo, los nombres y los apellidos.</li>
+  <li>Con <span class="ui">Enviar invitación por correo</span>, la persona define su contraseña. Sin invitación, el
+    sistema muestra una contraseña temporal para entregarla a mano.</li>
+</ol>
+<ul>
+  <li><strong>Sin acceso al sistema:</strong> registra a una persona solo por sus datos, por ejemplo un docente que no
+    usa el sistema. Tiene vínculo y ficha, pero no puede ingresar.</li>
+  <li><strong>La categoría</strong> (titular, contratado…) la define solo la Dirección de Carrera. Si quien crea la
+    cuenta no tiene ese rol, la cuenta queda «Sin categoría» hasta que la Dirección la registre.</li>
+</ul>
+
+<h3>Acciones sobre una cuenta</h3>
+<table>
+  <thead><tr><th>Acción</th><th>Qué hace</th><th>Quién</th></tr></thead>
+  <tbody>
+    <tr><td>Ficha</td><td>Abre los grados académicos de la persona</td><td>Direcciones y Gestión de datos</td></tr>
+    <tr><td>Roles</td><td>Asigna o quita roles, con su unidad y sus fechas</td><td>Administración del sistema</td></tr>
+    <tr><td>Vínculo</td><td>Abre el historial de vínculo y carga (capítulo 6)</td><td>Dirección de Carrera</td></tr>
+    <tr><td>Contraseña</td><td>Genera una contraseña temporal nueva</td><td>Administración del sistema</td></tr>
+    <tr><td>Desbloquear</td><td>Libera una cuenta bloqueada por intentos fallidos</td><td>Administración del sistema</td></tr>
+    <tr><td>Desactivar</td><td>La persona ya no puede ingresar; su sesión se cierra de inmediato</td><td>Administración del sistema</td></tr>
+  </tbody>
+</table>
+<div class="nota"><span class="rotulo">Al desactivar una cuenta</span>
+  Lo que la persona publicó mientras estuvo vinculada sigue contando en los informes. Desactivar no borra nada.</div>
+
+<h2>Roles</h2>
+<ol class="pasos">
+  <li>En la fila de la persona, pulse <span class="ui">Roles</span>.</li>
+  <li>Elija el rol y la unidad, la fecha desde la que rige y, si corresponde, hasta cuándo.</li>
+  <li>Anote en <span class="ui">Pedido de</span> qué dirección lo pidió y con qué documento.</li>
+  <li><span class="ui">Asignar rol</span>. Para terminarlo, <span class="ui">Quitar</span>: deja de regir desde hoy y
+    queda en el historial.</li>
+</ol>
+<captura archivo="roles" clase="media">Los roles de una persona, con su unidad y su vigencia.</captura>
+
+<h2>Cargar datos en bloque</h2>
+<p>Varias pantallas aceptan una planilla (CSV) para no escribir registro por registro. Todas funcionan igual:</p>
+<ol class="pasos">
+  <li><strong>Descargue la plantilla</strong> de esa pantalla y llénela en Excel.</li>
+  <li><strong>Súbala.</strong> El sistema no guarda nada todavía: muestra una <strong>vista previa</strong> con lo que se
+    creará y los errores de cada fila.</li>
+  <li><strong>Confirme.</strong> Solo se guarda lo que no tiene errores.</li>
+</ol>
+<table>
+  <thead><tr><th>Carga</th><th>Dónde</th><th>Qué hace con lo que ya existe</th><th>Quién</th></tr></thead>
+  <tbody>
+    <tr><td>Cuentas</td><td>Usuarios → Importar CSV</td><td>Omite las cuentas que ya existen</td><td>Administración del sistema</td></tr>
+    <tr><td>Historial de vínculos</td><td>Usuarios → Importar historial</td><td><strong>Reemplaza</strong> el historial de cada persona del archivo</td><td>Dirección de Carrera</td></tr>
+    <tr><td>Grados académicos</td><td>Usuarios → Importar grados</td><td>Agrega; omite los repetidos</td><td>Direcciones y Gestión de datos</td></tr>
+    <tr><td>Oferta de gestiones pasadas</td><td>Oferta y docentes → Importar CSV</td><td><strong>Reemplaza</strong> la oferta de cada gestión del archivo</td><td>Dirección de Carrera y Coordinación académica</td></tr>
+    <tr><td>Cohortes de estudiantes</td><td>Cohortes → Cargar CSV</td><td>Actualiza a cada estudiante por su RU</td><td>Dirección de Carrera y Gestión de datos</td></tr>
+    <tr><td>Capacitaciones</td><td>Capacitación → Importar CSV</td><td>Agrega; omite las repetidas</td><td>Dirección de Carrera y Gestión de datos</td></tr>
+    <tr><td>Revistas</td><td>Catálogo de revistas → Importar CSV</td><td>Completa las existentes, sin borrar</td><td>Dirección del Instituto</td></tr>
+  </tbody>
+</table>
+<div class="nota importante"><span class="rotulo">Las dos cargas que reemplazan</span>
+  El historial de vínculos y la oferta de una gestión <strong>sustituyen</strong> lo que había para las personas o
+  las gestiones incluidas en el archivo. Lo que no figura en el archivo no cambia.</div>
+
+<h2>Catálogos del Instituto</h2>
+<div class="nota"><span class="rotulo">Quién puede hacerlo</span>
+  La <strong>Dirección del Instituto</strong>.</div>
+<ul>
+  <li><strong>Catálogo de revistas:</strong> las revistas donde publica el Instituto y los índices en que figura cada
+    una, año por año, con la fuente consultada. Una revista <strong>verificada</strong> define la clasificación de los
+    artículos publicados en ella.</li>
+  <li><strong>Líneas de investigación:</strong> el catálogo de líneas institucionales, agrupadas por áreas. Cuando una
+    línea deja de regir, se le pone fecha de término en lugar de eliminarla.</li>
+  <li><strong>Tipos e índices:</strong> los tipos de actividad y de producto y los índices que ofrecen los formularios.
+    Los que trae el sistema se pueden reordenar y desactivar, pero no renombrar.</li>
+</ul>
+<captura archivo="revistas">El catálogo de revistas, con una revista verificada y otra pendiente de verificar.</captura>
+
+<h2>Auditoría</h2>
+<p><span class="ruta">Administración → Auditoría</span> muestra quién hizo qué y cuándo, con filtros por persona,
+acción, texto y fechas. <span class="ui">Descargar CSV</span> exporta todo lo filtrado; esa descarga también queda
+registrada.</p>
+<captura archivo="auditoria">La auditoría: cada acción con su fecha, su persona y su detalle.</captura>
+</section>

@@ -1,0 +1,134 @@
+<section class="capitulo" id="organizacion" data-numero="2" data-titulo="Cómo está organizado"
+         data-resumen="La arquitectura de TAU explicada sin tecnicismos: qué entra, qué guarda, qué sale y quién cuida cada dato.">
+
+<p class="entrada">No hace falta saber de informática para usar TAU, pero ayuda tener un mapa. Este capítulo
+muestra las piezas del sistema y cómo se conectan.</p>
+
+<h2>TAU en una imagen</h2>
+<figure class="diagrama">
+<svg viewBox="0 0 870 470" xmlns="http://www.w3.org/2000/svg" font-family="Montserrat, Arial, sans-serif">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#273353"/><stop offset="1" stop-color="#16435a"/></linearGradient>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#6c6c6c"/></marker>
+  </defs>
+  <!-- Lo que entra -->
+  <text x="100" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#007c8f" letter-spacing="1.2">LO QUE ENTRA</text>
+  <g font-size="10.5" fill="#1b2135">
+    <rect x="10" y="36" width="180" height="78" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="56" font-weight="700" fill="#273353">Cada persona</text>
+    <text x="22" y="73">registra lo suyo: perfil,</text><text x="22" y="88">productos, actividades,</text><text x="22" y="103">trámites, respuestas</text>
+    <rect x="10" y="126" width="180" height="62" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="146" font-weight="700" fill="#273353">Seguimiento Académico</text>
+    <text x="22" y="163">lista de estudiantes por</text><text x="22" y="178">cohorte (sin notas)</text>
+    <rect x="10" y="200" width="180" height="62" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="220" font-weight="700" fill="#273353">Recursos Humanos</text>
+    <text x="22" y="237">vínculos y carga horaria</text><text x="22" y="252">contratada</text>
+    <rect x="10" y="274" width="180" height="78" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="294" font-weight="700" fill="#273353">Catálogos abiertos</text>
+    <text x="22" y="311">Crossref, arXiv, OpenAlex</text><text x="22" y="326">y zbMATH: datos de las</text><text x="22" y="341">publicaciones</text>
+    <rect x="10" y="364" width="180" height="62" rx="6" fill="#f2f4f8" stroke="#d9dde8"/>
+    <text x="22" y="384" font-weight="700" fill="#273353">Documentos oficiales</text>
+    <text x="22" y="401">planes de estudio, marco</text><text x="22" y="416">de calidad, resoluciones</text>
+  </g>
+  <g stroke="#6c6c6c" stroke-width="1.4" marker-end="url(#flecha)">
+    <line x1="194" y1="75" x2="232" y2="120"/><line x1="194" y1="157" x2="232" y2="175"/><line x1="194" y1="231" x2="232" y2="231"/>
+    <line x1="194" y1="313" x2="232" y2="285"/><line x1="194" y1="395" x2="232" y2="335"/>
+  </g>
+  <!-- TAU -->
+  <rect x="236" y="36" width="398" height="390" rx="10" fill="url(#panel)"/>
+  <polygon points="236,52 330,52 320,78 236,78" fill="#e1222a"/>
+  <text x="250" y="70" font-size="13" font-weight="700" fill="#fff" letter-spacing="1.5">TAU</text>
+  <g font-size="10.5" font-weight="700" fill="#273353" text-anchor="middle">
+    <rect x="254" y="96" width="114" height="62" rx="6" fill="#fff"/><text x="311" y="124">Investigación</text>
+    <text x="311" y="141" font-size="8.5" font-weight="400" fill="#6c6c6c">productos · proyectos</text>
+    <rect x="378" y="96" width="114" height="62" rx="6" fill="#fff"/><text x="435" y="124">Docencia</text>
+    <text x="435" y="141" font-size="8.5" font-weight="400" fill="#6c6c6c">planes · oferta · carga</text>
+    <rect x="502" y="96" width="114" height="62" rx="6" fill="#fff"/><text x="559" y="119">Estudiantes</text><text x="559" y="133">y egresados</text>
+    <text x="559" y="149" font-size="8.5" font-weight="400" fill="#6c6c6c">cohortes · tutoría</text>
+    <rect x="316" y="168" width="114" height="62" rx="6" fill="#fff"/><text x="373" y="196">Servicios</text>
+    <text x="373" y="213" font-size="8.5" font-weight="400" fill="#6c6c6c">avisos · auxiliaturas · grado</text>
+    <rect x="440" y="168" width="114" height="62" rx="6" fill="#fff"/><text x="497" y="196">Calidad</text>
+    <text x="497" y="213" font-size="8.5" font-weight="400" fill="#6c6c6c">indicadores · evidencias</text>
+  </g>
+  <g fill="#fff" text-anchor="middle">
+    <rect x="254" y="246" width="362" height="58" rx="6" fill="rgb(255 255 255 / 0.14)" stroke="rgb(255 255 255 / 0.5)"/>
+    <text x="435" y="270" font-size="10.5" font-weight="700">Personas, cuentas, roles y vínculos</text>
+    <text x="435" y="288" font-size="9">una sola ficha por persona, compartida por todos los módulos</text>
+    <rect x="254" y="314" width="176" height="46" rx="6" fill="rgb(255 255 255 / 0.14)" stroke="rgb(255 255 255 / 0.5)"/>
+    <text x="342" y="334" font-size="10" font-weight="700">Permisos</text><text x="342" y="350" font-size="8.5">cada pantalla comprueba el rol</text>
+    <rect x="440" y="314" width="176" height="46" rx="6" fill="rgb(255 255 255 / 0.14)" stroke="rgb(255 255 255 / 0.5)"/>
+    <text x="528" y="334" font-size="10" font-weight="700">Auditoría</text><text x="528" y="350" font-size="8.5">queda quién hizo qué y cuándo</text>
+    <text x="435" y="392" font-size="9.5">Base de datos única, en un servidor a cargo de la Carrera</text>
+    <text x="435" y="408" font-size="9.5">y el Instituto, con copias de respaldo</text>
+  </g>
+  <!-- Lo que sale -->
+  <text x="770" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#007c8f" letter-spacing="1.2">LO QUE SALE</text>
+  <g stroke="#6c6c6c" stroke-width="1.4" marker-end="url(#flecha)">
+    <line x1="638" y1="120" x2="676" y2="80"/><line x1="638" y1="190" x2="676" y2="170"/><line x1="638" y1="260" x2="676" y2="262"/>
+    <line x1="638" y1="330" x2="676" y2="352"/>
+  </g>
+  <g font-size="10.5" fill="#1b2135">
+    <rect x="680" y="36" width="180" height="78" rx="6" fill="#e6f3f5" stroke="#b9dbe0"/>
+    <text x="692" y="56" font-weight="700" fill="#273353">Informes con membrete</text>
+    <text x="692" y="73">CV, informe de proyecto,</text><text x="692" y="88">memoria anual, carga</text><text x="692" y="103">docente… en PDF</text>
+    <rect x="680" y="126" width="180" height="78" rx="6" fill="#e6f3f5" stroke="#b9dbe0"/>
+    <text x="692" y="146" font-weight="700" fill="#273353">Planillas</text>
+    <text x="692" y="163">XLSX y CSV para seguir</text><text x="692" y="178">trabajando o llenar</text><text x="692" y="193">formularios externos</text>
+    <rect x="680" y="216" width="180" height="78" rx="6" fill="#e6f3f5" stroke="#b9dbe0"/>
+    <text x="692" y="236" font-weight="700" fill="#273353">Avisos</text>
+    <text x="692" y="253">en la campana del sistema</text><text x="692" y="268">y, si usted quiere,</text><text x="692" y="283">por correo</text>
+    <rect x="680" y="306" width="180" height="78" rx="6" fill="#e6f3f5" stroke="#b9dbe0"/>
+    <text x="692" y="326" font-weight="700" fill="#273353">Página pública</text>
+    <text x="692" y="343">perfiles que cada quien</text><text x="692" y="358">publica e indicadores que</text><text x="692" y="373">la Dirección decide mostrar</text>
+  </g>
+</svg>
+<figcaption><b>Figura.</b> Las piezas de TAU: a la izquierda, de dónde llegan los datos; al centro, los módulos sobre
+una base común; a la derecha, lo que el sistema entrega.</figcaption>
+</figure>
+
+<h2>Cinco ideas que explican todo lo demás</h2>
+<ol class="pasos">
+  <li><strong>Una sola ficha por persona.</strong> Un docente, un estudiante o un coautor externo existe una vez en
+    el sistema, y todos los módulos usan esa misma ficha. Por eso un estudiante que es tesista en un proyecto y
+    postulante a una auxiliatura es la misma persona en los dos lugares.</li>
+  <li><strong>Cada dato tiene un dueño.</strong> Usted registra su producción; la Dirección de Carrera, los vínculos y
+    la carga horaria; la Dirección del Instituto, las decisiones sobre los proyectos institucionales. Nadie más puede
+    cambiarlos. El capítulo 3 detalla quién es dueño de qué.</li>
+  <li><strong>El rol decide lo que se ve.</strong> El menú de cada persona muestra solo lo que puede usar, y el
+    sistema vuelve a comprobar el permiso cada vez que se abre una pantalla o se guarda algo.</li>
+  <li><strong>Todo deja rastro.</strong> Las acciones importantes (crear una cuenta, cambiar un vínculo, decidir una
+    propuesta, abrir las notas de una tutoría) quedan en la auditoría con la persona, la fecha y la hora.</li>
+  <li><strong>Cada unidad elige sus módulos.</strong> La Administración del sistema activa o apaga las funciones en
+    <span class="ruta">Administración → Módulos</span>. Apagar un módulo oculta sus pantallas y sus avisos, pero
+    <strong>nunca borra datos</strong>: si se vuelve a activar, todo queda como estaba. Las cuentas, los roles, los vínculos,
+    los avisos y la auditoría están siempre activos.</li>
+</ol>
+
+<h2>Cómo se conectan los módulos</h2>
+<p>Lo que se registra en un lugar reaparece en otros. Esta tabla muestra los recorridos más comunes. Si un
+módulo de origen está apagado, lo que tomaba de él no aparece (en calidad, el indicador queda «sin fuente», no en cero):</p>
+<table>
+  <thead><tr><th>Lo que se registra</th><th>Quién lo registra</th><th>Dónde reaparece</th></tr></thead>
+  <tbody>
+    <tr><td>Un artículo</td><td>Uno de sus autores</td><td>Perfil y CV de cada autor de la Carrera, informe del proyecto, memoria anual, informe de I+D+i e indicadores de investigación</td></tr>
+    <tr><td>El vínculo y la carga horaria</td><td>Dirección de Carrera</td><td>«Mi docencia» de la persona, carga horaria del semestre, carga en proyectos, cuerpo académico e indicadores</td></tr>
+    <tr><td>La oferta de materias y sus docentes</td><td>Dirección de Carrera o Coordinación académica</td><td>«Mi docencia», carga horaria, convocatorias a auxiliaturas, ficha estadística</td></tr>
+    <tr><td>La lista de estudiantes por cohorte</td><td>Dirección de Carrera o Gestión de datos</td><td>Tablero de cohortes, tutoría, encuestas, portal del estudiante, egresados, indicadores</td></tr>
+    <tr><td>La respuesta a una encuesta</td><td>Estudiante, egresado, docente o empleador</td><td>Resultados de la encuesta e indicadores de percepción</td></tr>
+    <tr><td>Una evidencia</td><td>Dirección de Carrera o Comisión de calidad</td><td>Criterios del marco, autoevaluación, avances del plan de mejora</td></tr>
+  </tbody>
+</table>
+
+<h2>Dónde vive y cómo se cuida</h2>
+<ul>
+  <li><strong>Se entra por una dirección web</strong>, con cualquier navegador actual (Chrome, Edge, Firefox, Safari), en
+    la computadora o en el teléfono. La pantalla se acomoda sola al tamaño y, si quiere, se instala como una
+    aplicación (capítulo 15).</li>
+  <li><strong>Los datos están en un solo lugar</strong>: un servidor a cargo del equipo técnico de la Carrera y el
+    Instituto, con copias de respaldo. No quedan copias en su computadora, salvo los archivos que usted descargue.</li>
+  <li><strong>La conexión es cifrada</strong> y el sistema no carga nada de otros sitios web: ni publicidad ni
+    rastreadores.</li>
+  <li><strong>Las contraseñas no se guardan legibles</strong>: nadie, tampoco el equipo técnico, puede leer la suya.</li>
+</ul>
+<p>El capítulo 12 trata con más detalle la privacidad de los datos personales.</p>
+</section>
